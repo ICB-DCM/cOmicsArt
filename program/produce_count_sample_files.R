@@ -1,4 +1,5 @@
 ## RNA raw Input to count matrix
+basePath="/Volumes/lseep@uni-bonn.de/SFB1454-P14/Clivia/"
 sampleAnno=as.data.frame(readxl::read_xlsx(paste0(basePath,"sample overview RNAseq melanoma HSD.xlsx"),skip = 2))
 colnames(sampleAnno)[7]="global_ID" #NEEDS TO BE NAMED LIKE THIS
 rownames(sampleAnno)=sampleAnno$global_ID
