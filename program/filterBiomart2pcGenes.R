@@ -13,12 +13,21 @@ extract_attributes <- function(gtf_attributes, att_of_interest){
 }
 colnames(biomart)=c("chr","source","type","start","end","score","strand","phase","attributes")
 table(biomart$type)
-# filter to gene
+# filter to gene - Clicia wants full annotation potetniallly looking in miRNA
 biomart_gene=biomart[biomart$type=="gene",]
 biomart_gene$geneID<- unlist(lapply(biomart_gene$attributes, extract_attributes, "gene_id"))
 biomart_gene$gene_type<- unlist(lapply(biomart_gene$attributes, extract_attributes, "gene_biotype"))
 biomart_gene$gene_type=gsub(";","",biomart_gene$gene_type)
 table(biomart_gene$gene_type)
+fre2order=as.data.frame(table(biomart_gene$gene_type))
+newOrder=order(fre2order$Freq,decreasing = T)
+biomart_gene$gene_type=factor(biomart_gene$gene_type,levels = fre2order$Var1[newOrder])
+library(ggplot2)
+ggplot(biomart_gene,aes(y=gene_type))+
+  geom_bar()+
+  theme_bw()+
+  theme(axis.text.x=element_text(angle = 90))
+
 biomart_gene=biomart_gene[biomart_gene$gene_type=="protein_coding",]
 
 ##########
