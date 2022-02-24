@@ -14,7 +14,7 @@ extract_attributes <- function(gtf_attributes, att_of_interest){
 colnames(biomart)=c("chr","source","type","start","end","score","strand","phase","attributes")
 table(biomart$type)
 # filter to gene - Clicia wants full annotation potetniallly looking in miRNA
-biomart_gene=biomart[biomart$type=="gene",]
+biomart_gene=biomart[biomart$type=="gene",]  # transcripts ? or gene # to have splicing variants
 biomart_gene$geneID<- unlist(lapply(biomart_gene$attributes, extract_attributes, "gene_id"))
 biomart_gene$gene_type<- unlist(lapply(biomart_gene$attributes, extract_attributes, "gene_biotype"))
 biomart_gene$gene_type=gsub(";","",biomart_gene$gene_type)
@@ -28,8 +28,8 @@ ggplot(biomart_gene,aes(y=gene_type))+
   theme_bw()+
   theme(axis.text.x=element_text(angle = 90))
 
-biomart_gene=biomart_gene[biomart_gene$gene_type=="protein_coding",]
+#biomart_gene=biomart_gene[biomart_gene$gene_type=="protein_coding",]
 
 ##########
 # save Bimart protein coding genes as file for faste access
-write.csv(biomart_gene,file = "../data/Biomart_GRCm38_proteinCodingGenesOnly.csv")
+write.csv(biomart_gene,file = "../data/Biomart_GRCm38_GenesOnly.csv")

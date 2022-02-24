@@ -1,22 +1,3 @@
-#### Init renv
-#renv::init()
-#### Read in raw Data
-setwd("program")
-
-countData_raw=read.csv("../data/count_matrix_raw_HighSalt.csv",header = T,row.names = 1)
-sampleAnno=read.csv("../data/sample_anno_HighSalt.csv",header = T,row.names = 1)
-all(colnames(countData_raw) == rownames(sampleAnno))
-biomart_gene=read.csv("../data/Biomart_GRCm38_GenesOnly.csv",header = T, row.names = 1)
-# Annotate present genes
-geneAnno=data.frame(rownames(countData_raw))
-rownames(biomart_gene)=biomart_gene$geneID
-geneAnno$AnnoType=NA
-geneAnno$AnnoType=biomart_gene[rownames(countData_raw),"gene_type"]
-table(geneAnno$AnnoType)
-colnames(geneAnno)=c("Gene","type")
-
-write.csv(geneAnno,"../data/geneAnnotation.csv",)
-# custom function
 plotPCA <- function(pca_input = dds_vst,
                     ntop="all", 
                     xPC=1, 
@@ -45,7 +26,7 @@ plotPCA <- function(pca_input = dds_vst,
   }
   
   if(xPC=="idx"){
-    print("DO WE COME TILL HERE?")
+    #print("DO WE COME TILL HERE?")
     # xPC="global_ID"
     pca_input$x[,"idx"]=as.character(sample_table$global_ID)
     
@@ -96,8 +77,8 @@ plotPCA <- function(pca_input = dds_vst,
                         color = sample_table[[color]],
                         ID= as.character(sample_table$global_ID),
                         stringsAsFactors = F)
-  print("DO WE COME HERE")
-  print(anno_colour)
+  #print("DO WE COME HERE")
+  #print(anno_colour)
   print(unique(pcaData$color))
   if(anno_colour[1] != "default"){
     # Order PCA Data in fixed order
@@ -180,42 +161,8 @@ plotPCA <- function(pca_input = dds_vst,
     #                  segment.size = 0.5)
     df_out_r$ID=rownames(df_out_r)
     pca_plot2 <- pca_plot + geom_segment(data=df_out_r[which(df_out_r$feature!=""),], aes(x=0, y=0, xend=v1, yend=v2), 
-                                        arrow=arrow(length=unit(1,"cm")),linetype="solid", alpha=0.5, color="#ab0521")
+                                         arrow=arrow(length=unit(1,"cm")),linetype="solid", alpha=0.5, color="#ab0521")
   }
   
   pca_plot
 }
-
-# filter down countData to genes only (already done?)
-table(rownames(countData_raw)%in%biomart_gene$geneID)
-countData_raw_nonGenes=rownames(countData_raw)[!(rownames(countData_raw)%in%biomart_gene$geneID)]
-countData_raw=countData_raw[rownames(countData_raw)%in%biomart_gene$geneID,]
-
-genes_to_keep <- rowSums(countData_raw) >= 10
-countData_geneCountFiltered <- countData_raw[genes_to_keep,]
-
-#print(paste0("Genes left after removing rowsums < 10: ",nrow(dds)," (",nrow(countData_raw),")"))
-
-
-install.packages("DESeq2")
-library(DESeq2)
-library(ggplot2)
-library(vsn)
-dds_obj <- DESeqDataSetFromMatrix(countData  = countData_geneCountFiltered, 
-                                    colData = sampleAnno,
-                                    design = ~ condition )
-
-
-de_seq <- DESeq(dds_obj)
-norm_anno <- as.data.frame(counts(de_seq, normalized=T))
-de_seq_vst <- vst(de_seq, blind = TRUE)
-de_seq_rlog <- rlog(de_seq, blind = TRUE)
-
-meanSdPlot(as.matrix(assay(de_seq_vst)), ranks = FALSE) # favored
-#meanSdPlot(as.matrix(assay(de_seq_rlog)), ranks = FALSE)
-sampleAnno$replicate=as.factor(sampleAnno$replicate)
-plotPCA(pca_input = de_seq_vst,
-        shape = "NULL",
-        sample_table = sampleAnno,
-        color="condition")
-
