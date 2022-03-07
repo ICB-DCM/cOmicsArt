@@ -1,20 +1,20 @@
 
-# Data to Select
-geneAnno=read.csv("../data/geneAnnotation.csv",header = T, row.names = 1)
-GeneClasses=unique(geneAnno$type) # more than 100 genes
-FreqTable=as.data.frame(table(geneAnno$type))
-toRemove=as.character(FreqTable[FreqTable$Freq<500,"Var1"])
-GeneClasses=setdiff(GeneClasses,toRemove)
-
-metabAnno=read.csv("../data/MetabAnnotation.csv",header=T, row.names = 1)
-metabClasses=unique(metabAnno$SUPER_PATHWAY)
-metabClasses_sub=unique(metabAnno$SUB_PATHWAY)
-
-sampleAnno_RNA=read.csv("../data/sample_anno_HighSalt.csv",header = T, row.names = 1)
-colnames(sampleAnno_RNA)[9]="TREATMENT"
-#sampleAnno_RNA$SAMPLE_NAME=paste0("RNA",sampleAnno_RNA$global_ID)
-
-sampleAnno_METAB=read.csv("../data/sampleAnno_Metab.csv",header = T, row.names = 1)
+# # Data to Select
+# geneAnno=read.csv("../data/geneAnnotation.csv",header = T, row.names = 1)
+# GeneClasses=unique(geneAnno$type) # more than 100 genes
+# FreqTable=as.data.frame(table(geneAnno$type))
+# toRemove=as.character(FreqTable[FreqTable$Freq<500,"Var1"])
+# GeneClasses=setdiff(GeneClasses,toRemove)
+# 
+# metabAnno=read.csv("../data/MetabAnnotation.csv",header=T, row.names = 1)
+# metabClasses=unique(metabAnno$SUPER_PATHWAY)
+# metabClasses_sub=unique(metabAnno$SUB_PATHWAY)
+# 
+# sampleAnno_RNA=read.csv("../data/sample_anno_HighSalt.csv",header = T, row.names = 1)
+# colnames(sampleAnno_RNA)[9]="TREATMENT"
+# #sampleAnno_RNA$SAMPLE_NAME=paste0("RNA",sampleAnno_RNA$global_ID)
+# 
+# sampleAnno_METAB=read.csv("../data/sampleAnno_Metab.csv",header = T, row.names = 1)
 
 ui <- fluidPage(
   #shinyjs::useShinyjs(),
