@@ -15,7 +15,7 @@ geneAnno$AnnoType=biomart_gene[rownames(countData_raw),"gene_type"]
 table(geneAnno$AnnoType)
 colnames(geneAnno)=c("Gene","type")
 
-write.csv(geneAnno,"../data/geneAnnotation.csv",)
+write.csv(geneAnno,"../data/geneAnnotation.csv")
 # custom function
 plotPCA <- function(pca_input = dds_vst,
                     ntop="all", 
