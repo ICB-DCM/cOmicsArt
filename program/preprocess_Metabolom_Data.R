@@ -38,7 +38,7 @@ all(colnames(rawData) == rownames(sampleAnno))
 eps=10^-10
 rowMedians=apply(rawData,1,median)+eps
 scaled_Data=sweep(rawData,1,rowMedians,"-")/rowMedians
-scaled_Data=scaled_Data  +1       
+scaled_Data=scaled_Data+1       
 
 write.csv(scaled_Data,"../data/scaledData_unsure.csv")
 

@@ -17,7 +17,7 @@
 # sampleAnno_METAB=read.csv("../data/sampleAnno_Metab.csv",header = T, row.names = 1)
 
 ui <- fluidPage(
-  #shinyjs::useShinyjs(),
+  shinyjs::useShinyjs(),
   tabsetPanel(id = "inTabset",
               ################################################################################
               # Tab Selection w Upload
@@ -51,8 +51,10 @@ ui <- fluidPage(
                          h3("Pre-Processing Procedures"), # this could be enhanced with personalized procedures
                          radioButtons(inputId = "PreProcessing_Procedure",
                                       label = "Pre-Processing Procedures",
-                                      choices = c("DE_Seq_alike","simpleCenterScaling","none"),
+                                      choices = c("none","vst_DESeq","simpleCenterScaling","Scaling_0_1",
+                                                  "log10","pareto_scaling"),
                                       selected = "none"),
+                         uiOutput("DESeq_formula_ui"),
                          actionButton(inputId = "Do_preprocessing",
                                       label = "Pre-Process",
                                       icon("fas fa-laptop-code")),
@@ -74,8 +76,21 @@ ui <- fluidPage(
                          actionButton(inputId = "Do_Volcano",
                                       label = "Do Volcano Plot",
                                       icon("fas fa-laptop-code")),
+                         uiOutput("sample_annotation_types_cmp_ui"),
                          uiOutput("Groups2Compare_ref_ui"),
-                         uiOutput("Groups2Compare_treat_ui")
+                         uiOutput("Groups2Compare_treat_ui"),
+                         uiOutput("psig_threhsold_ui"),
+                         uiOutput("lfc_threshold_ui"),
+                         
+                         actionButton(inputId = "Do_Heatmap",
+                                      label = "Do Heatmap to display",
+                                      icon("fas fa-laptop-code")),
+                         uiOutput("anno_options_ui"),
+                         uiOutput("row_anno_options_ui"),
+                         uiOutput("cluster_cols_ui"),
+                         uiOutput("cluster_rows_ui"),
+                         uiOutput("row_selection_options_ui"),
+                         uiOutput("TopK_ui")
                          
                        ),
                        mainPanel(
@@ -92,15 +107,25 @@ ui <- fluidPage(
                            splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
                                        fileInput("data_row_anno1", "Upload entities Annotatio Matrix (rows must be entities)", accept = ".csv"),
                                        fileInput("data_preDone", "Load precompiled data (saved in this procedure)", accept = ".RDS")),
-                           
+                           downloadButton("SaveInputAsList",label="Save file input to upload later",class = "btn-info"),
+                           #downloadHandler()downloadButton('foo')
                            splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                        #plotOutput("PCA_final_gg"),
                                        plotlyOutput("Plot_position_01"),
                                        textOutput('Options_selected_out_1', container = pre)),
+                           splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","15%","15%"),
+                                       NULL,
+                                       downloadButton("SavePlot_pos1",label="Save plot",class = "btn-info"),
+                                       radioButtons(input="file_ext_plot1",label = "File Type:",
+                                                   choices = c(".png",".svg",".tiff",".pdf"))),
                           splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                        #plotOutput("PCA_final_gg"),
                                        plotlyOutput("Plot_position_02"),
-                                       textOutput('Options_selected_out_2', container = pre))
+                                       textOutput('Options_selected_out_2', container = pre)),
+                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("100%"),
+                                      #plotOutput("PCA_final_gg"),
+                                      plotOutput("Plot_position_03")),
+                          textOutput('Options_selected_out_3', container = pre)
                            
                          ))),
               ################################################################################

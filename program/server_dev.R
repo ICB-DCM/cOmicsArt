@@ -49,11 +49,31 @@ server <- function(input, output, session) {
     data_input
   })
   
+  output$SaveInputAsList=downloadHandler(
+    filename = function() { paste(input$omicType,"_only_precompiled", " ",Sys.Date(),".RDS",sep="") },
+    content = function(file){
+      saveRDS(data_input_shiny(),file)
+    }
+  )
+
+  #downloadPlot()
+  # observeEvent(input$SaveInputAsList,{
+  #   # Save Data input as precomplied list to save later on
+  #   showModal(popupModal())
+  # })
+  # observeEvent(input$ok,{
+  #   removeModal()
+  #   userInputName <- input$userInput
+  #   userInputName <- gsub(" ",".",trimws(userInputName))
+  #   saveRDS(data_input_shiny(),paste0(userInputName,".RDS"))
+  # })
   #isolate(data_input_shiny())
   output$debug=renderText(names(data_input_shiny()))
   #print("Data Input done")
+  
   ################################################################################################
   # Responsive UI Section on Data Selection
+  # somehow add that any input dependent on buttons is removed upon other button click
   ################################################################################################
   # Row
   output$providedRowAnnotationTypes_ui=renderUI({
@@ -144,18 +164,36 @@ server <- function(input, output, session) {
         choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
         multiple = F # would be cool if true, to be able to merge vars ?!
       )
-  })
+    })
+      output$Show_loadings_ui=renderUI({
+        radioGroupButtons(
+          inputId = "Show_loadings",
+          label = "Plot Loadings on top? (currently top 5)",
+          choices = c("Yes","No"),
+          direction = "horizontal",
+          selected = "No"
+        )
+    })
   })
   
-    
+  output$sample_annotation_types_cmp_ui=renderUI({
+    req(data_input_shiny())
+    pickerInput(
+      inputId = "sample_annotation_types_cmp",
+      label = "Choose type for LFC comparison",
+      choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
+      multiple = F ,
+      selected = NULL
+    )
+  })
   output$Groups2Compare_ref_ui=renderUI({
     req(data_input_shiny())
         pickerInput(
           inputId = "Groups2Compare_ref",
           label = "Choose reference of log2 FoldChange",
-          choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes]),
+          choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]),
           multiple = F ,
-          selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes])[1]
+          selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp])[1]
         )
     }) 
   output$Groups2Compare_treat_ui=renderUI({
@@ -163,11 +201,109 @@ server <- function(input, output, session) {
         pickerInput(
           inputId = "Groups2Compare_treat",
           label = "Choose treatment group of log2 FoldChange",
-          choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes]),
+          choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]),
           multiple = F ,
-          selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes])[2]
+          selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp])[2]
         )
     }) 
+  
+  output$DESeq_formula_ui=renderUI({
+     req(data_input_shiny())
+     if(input$PreProcessing_Procedure=="vst_DESeq"){
+       pickerInput(
+         inputId = "DESeq_formula",
+         label = "Choose factors for desing formula in DESeq pipeline (currently only one factor allowed + App might crash if your factor as only 1 sample per level)",
+         choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
+         multiple = F,
+         selected = "condition"
+       )
+     }else{
+       NULL
+     }
+
+   })
+  
+#  observeEvent(input$Do_Heatmap,{
+#    req(data_input_shiny())
+  output$anno_options_ui=renderUI({
+      req(data_input_shiny())
+      pickerInput(
+        inputId = "anno_options",
+        label = "Choose the variable to color the samples after (Multiples are possible)",
+        choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
+        multiple = T, # would be cool if true, to be able to merge vars ?!,
+        selected= c(colnames(data_input_shiny()[[input$omicType]]$sample_table))[1]
+      )
+  })
+  output$row_anno_options_ui=renderUI({
+    req(data_input_shiny())
+    pickerInput(
+      inputId = "row_anno_options",
+      label = "Choose the variable to color the rows after (Multiples are possible)",
+      choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
+      multiple = T, # would be cool if true, to be able to merge vars ?!,
+      selected=c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows))[length(c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)))]
+    )
+  })
+  output$cluster_cols_ui=renderUI({
+        req(data_input_shiny())
+        checkboxInput(inputId ="cluster_cols",
+                      label="Column Clustering?",
+                      value = TRUE,
+                      width = "20%")
+  })
+  output$cluster_rows_ui=renderUI({
+    req(data_input_shiny())
+    checkboxInput(inputId ="cluster_rows",
+                  label="Row Clustering?",
+                  value = TRUE,
+                  width = "20%")
+  })
+  output$row_selection_options_ui=renderUI({
+    req(data_input_shiny())
+    pickerInput(
+      inputId = "row_selection_options",
+      label = "Row selection",
+      choices = c("TopK","significant_LFC","DE_genes","rowAnno_based"),
+      multiple = F, #
+      selected="TopK"
+    )
+  })
+  output$TopK_ui=renderUI({
+    req(data_input_shiny())
+    if(input$row_selection_options=="TopK"){
+    numericInput(inputId = "TopK",
+                 label = "Choose number of top entities to show (order based on p-val (LFC) or rowCount)",
+                 min = 1,
+                 step = 1)
+    }else{
+      NULL
+    }
+      
+  })
+  
+    
+ #   })
+
+  
+  observeEvent(input$Do_Volcano,{
+    output$psig_threhsold_ui=renderUI({
+      req(data_input_shiny())
+      numericInput(inputId ="psig_threhsold" ,
+                        label = "adj. p-value threshold",
+                        min=0, max=1, step=0.01,
+                        value = 0.05)
+    })
+    output$lfc_threshold_ui=renderUI({
+      numericInput(inputId ="lfc_threshold" ,
+                        label = "Log FC threshold (both sides!)",
+                        min=0, max=10, step=0.1,
+                        value = 1)
+    })
+  })
+  
+  ## Plot Saving Region
+
 
 
   
@@ -177,14 +313,14 @@ server <- function(input, output, session) {
   ################################################################################################
   # Data Selection Upon Input - to be saved and passed to explorative analysis and further tabs
   ################################################################################################
-  output$debug=renderText(input$row_selection)
+  output$debug=renderText(dim(data_input_shiny()[[input$omicType]]$Matrix))
 
   selectedData=reactive({
     # data_output[[input$omicType]]<-list(type=input$omicType)
     #####
     # Row Selection
     #####
-    print(paste0("Do we come here?",input$row_selection))
+    #print(paste0("Do we come here?",input$row_selection))
     shiny::req(input$row_selection,input$sample_selection)
     print("Alright do Row selection")
     selected=c()
@@ -192,16 +328,22 @@ server <- function(input, output, session) {
     #print(input$providedRowAnnotationTypes)
     if(any(input$row_selection=="all")){
       selected=rownames(data_input_shiny()[[input$omicType]]$annotation_rows)
-    }else{
-      if(any(input$row_selection=="High Values+IQR")){
-        #To Do take user chosen propensity into account
-        filteredIQR_Expr <- data_input_shiny()[[input$omicType]]$Matrix[filter_rna(data_input_shiny()[[input$omicType]]$Matrix,prop=input$propensityChoiceUser),]
-        selected=c(selected,rownames(filteredIQR_Expr))
-        remove(filteredIQR_Expr)
-      }
-      selected=c(selected,rownames(data_input_shiny()[[input$omicType]]$annotation_rows)[which(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes]%in%input$row_selection)])
+    }else if(!(length(input$row_selection)==1 & input$row_selection=="High Values+IQR")){
+        selected=unique(c(selected,rownames(data_input_shiny()[[input$omicType]]$annotation_rows)[which(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes]%in%input$row_selection)]))
     }
-    
+    if(any(input$row_selection=="High Values+IQR")){
+      #To Do take user chosen propensity into account
+      # if this is chosen make sure that this should reduce the data set, hence no union but intersection!
+      # if only High Values + IQR then for all
+      if(length(input$row_selection)==1){
+        filteredIQR_Expr <- data_input_shiny()[[input$omicType]]$Matrix[filter_rna(data_input_shiny()[[input$omicType]]$Matrix,prop=input$propensityChoiceUser),]
+        selected=rownames(filteredIQR_Expr)
+      }else{
+        filteredIQR_Expr <- data_input_shiny()[[input$omicType]]$Matrix[filter_rna(data_input_shiny()[[input$omicType]]$Matrix[selected,],prop=input$propensityChoiceUser),]
+        selected=intersect(selected,rownames(filteredIQR_Expr))
+      }
+      remove(filteredIQR_Expr)
+    }
     #####
     # Column Selection
     #####
@@ -236,20 +378,47 @@ server <- function(input, output, session) {
       # as general remove all genes which are constant over all rows
       print("As general remove all entities which are constant over all samples")
       processedData_all[[input$omicType]]$Matrix=processedData_all[[input$omicType]]$Matrix[which(apply(processedData_all[[input$omicType]]$Matrix,1,sd)!=0),]
+      print("Also remove anything of rowCOunt <=10")
+      print(dim(processedData_all[[input$omicType]]$Matrix))
+      processedData_all[[input$omicType]]$Matrix=processedData_all[[input$omicType]]$Matrix[which(rowSums(processedData_all[[input$omicType]]$Matrix)>10),]
+      print(dim(processedData_all[[input$omicType]]$Matrix))
+      
       if(input$PreProcessing_Procedure!="none"){
         print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
         if(input$PreProcessing_Procedure=="simpleCenterScaling"){
-          processedData=as.data.frame(t(scale(as.data.frame(t(processedData_all[[input$omicType]]$Matrix)),scale = T,center = T)))
+          processedData<<-as.data.frame(t(scale(as.data.frame(t(processedData_all[[input$omicType]]$Matrix)),scale = T,center = T)))
           processedData_all[[input$omicType]]$Matrix=processedData
           }
-        if(input$PreProcessing_Procedure=="DE_Seq_alike"){
-          processedData=processedData_all[[input$omicType]]$Matrix
+        if(input$PreProcessing_Procedure=="vst_DESeq"){
+          processedData<<-processedData_all[[input$omicType]]$Matrix
+          print(input$DESeq_formula)
+          processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"]=as.factor(processedData_all[[input$omicType]]$sample_table[,input$DESeq_formula])
+          
           dds <- DESeqDataSetFromMatrix(countData = processedData,
                                         colData = processedData_all[[input$omicType]]$sample_table,
-                                        design = ~global_ID)
-          dds_vst <- vst(dds, blind = TRUE)
+                                        design = ~DE_SeqFactor) #input$DESeq_formula
+          de_seq_result <- DESeq(dds) # Do this global incase we need later on
+          dds_vst <- vst(de_seq_result, blind = TRUE) # not biased to design
           processedData_all[[input$omicType]]$Matrix=assay(dds_vst)
-          }
+        }
+        if(input$PreProcessing_Procedure=="Scaling_0_1"){
+          processedData=as.data.frame(t(apply(processedData_all[[input$omicType]]$Matrix,1,function(x){(x-min(x))/(max(x)-min(x))})))
+          #head(processedData)
+          processedData_all[[input$omicType]]$Matrix=processedData
+        }
+        if(input$PreProcessing_Procedure=="log10"){
+          processedData=as.data.frame(log10(processedData_all[[input$omicType]]$Matrix))
+          #head(processedData)
+          processedData_all[[input$omicType]]$Matrix=processedData
+        }
+        if(input$PreProcessing_Procedure=="pareto_scaling"){
+          centered <- as.data.frame(t(apply(processedData_all[[input$omicType]]$Matrix, 1, function(x) x - mean(x))))
+          pareto.matrix <- as.data.frame(t(apply(centered, 1, function(x) x/sqrt(sd(x)))))
+          
+          #processedData=as.data.frame(t(apply(processedData_all[[input$omicType]]$Matrix,1,function(x){(x-min(x))/(max(x)-min(x))})))
+          #head(processedData)
+          processedData_all[[input$omicType]]$Matrix=pareto.matrix
+        }
       }
       processedData_all
   })
@@ -274,7 +443,7 @@ server <- function(input, output, session) {
     # output should be a plot, other reactive input$... vars can be added
     # do custom title depedning on analysis and the selected data!
     # somehow smart way with Plot positions ? (props radio button)+ checking if in certain plots are plots before over writing (?)
-    customTitle=paste0("PCA - ",input$omicType,"-",paste0("entities:",input$row_selection,collapse = "_"),"-samples",ifelse(input$sample_selection!="all",paste0(" (with: ",paste(input$sample_selection,collapse = ", "),")"),""))
+    customTitle=paste0("PCA - ",input$omicType,"-",paste0("entities:",input$row_selection,collapse = "_"),"-samples",ifelse(input$sample_selection!="all",paste0(" (with: ",paste(input$sample_selection,collapse = ", "),")"),""),"-preprocessing: ",input$PreProcessing_Procedure)
     print(customTitle)
     plotPosition="Plot_position_01"
       
@@ -289,6 +458,8 @@ server <- function(input, output, session) {
       pcaData <- data.frame(pca$x, 
                             selectedData_processed()[[input$omicType]]$sample_table)
       pcaData[,input$coloring_options]=as.factor(pcaData[,input$coloring_options])
+      str(pcaData)
+      print(levels(pcaData[,input$coloring_options]))
       if(length(levels(pcaData[,input$coloring_options]))>8){
         ## Future : Do Here the plotting (Work on sophisticase plotPCA function)
         pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
@@ -317,16 +488,63 @@ server <- function(input, output, session) {
         theme(aspect.ratio = 1)+
         ggtitle(customTitle)
       
-      output[[plotPosition]] <- renderPlotly({ggplotly(pca_plot_final,
+      ## Add Loadings if wanted
+      if(input$Show_loadings=="Yes"){
+        df_out=pca$x
+        df_out_r <- as.data.frame(pca$rotation)
+        df_out_r$feature <- row.names(df_out_r)
+        
+        TopK=rownames(df_out_r)[order(sqrt((df_out_r[,input$x_axis_selection])^2+(df_out_r[,input$y_axis_selection])^2),decreasing = T)[1:5]]
+        df_out_r$feature[!df_out_r$feature%in%TopK]=""
+        
+        mult <- min(
+          (max(df_out[,input$y_axis_selection]) - min(df_out[,input$y_axis_selection])/(max(df_out_r[,input$y_axis_selection])-min(df_out_r[,input$y_axis_selection]))),
+          (max(df_out[,input$x_axis_selection]) - min(df_out[,input$x_axis_selection])/(max(df_out_r[,input$x_axis_selection])-min(df_out_r[,input$x_axis_selection])))
+        )
+        df_out_r <- transform(df_out_r,
+                              v1 = .7 * mult * (get(input$x_axis_selection)),
+                              v2 = .7 * mult * (get(input$y_axis_selection))
+        )
+       
+        df_out_r$ID=rownames(df_out_r)
+        pca_plot_final <- pca_plot_final + geom_segment(data=df_out_r[which(df_out_r$feature!=""),], aes(x=0, y=0, xend=v1, yend=v2), 
+                                            arrow=arrow(length=unit(1,"cm")),linetype="solid", alpha=0.5, color="#ab0521")
+        
+      }
+      
+      
+      output[["Plot_position_01"]] <- renderPlotly({ggplotly(pca_plot_final,
                                                        tooltip = "global_ID",legendgroup="color")})
+      
+      output$SavePlot_pos1=downloadHandler(
+        filename = function() { paste(customTitle, " ",Sys.Date(),input$file_ext_plot1,sep="") },
+        
+        content = function(file){
+           ggsave(file,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
+        }
+        
+      )
+      ## add accomponaid plots to PCA
+      
+      var_explained_df <- data.frame(PC= paste0("PC",1:ncol(pca$x)),
+                                     var_explained=(pca$sdev)^2/sum((pca$sdev)^2))
+      var_explained_df$Var=paste0(round(var_explained_df$var_explained,4)*100,"%")
+      var_explained_df$PC=factor(var_explained_df$PC,levels = paste0("PC",1:ncol(pca$x)))
+      scree_plot=ggplot(var_explained_df,aes(x=PC,y=var_explained, group=1))+
+                    geom_point(size=4,aes(label=Var))+
+                    geom_line()+
+                    ylab("Variance explained")+
+                    theme_bw()+
+                    ggtitle("Scree-Plot for shown PCA")
+      
+      output[["Plot_position_02"]] <- renderPlotly({ggplotly(scree_plot,
+                                                       tooltip = "Var",legendgroup="color")})
   })
   ################################################################################################
   # Explorative Analysis - UMAP (to come)
   ################################################################################################
   toListen2UMAP <- reactive({
-        list(input$Do_UMAP,
-             input$omicType,
-             input$row_selection)
+        list(input$Do_UMAP) # if either of those changes!!!
     })
    observeEvent(toListen2UMAP(),{
         req(input$omicType,input$row_selection,isTruthy(selectedData_processed()))
@@ -334,40 +552,109 @@ server <- function(input, output, session) {
         output$debug=renderText("Not yet implemented on Back-End")
     })
   ################################################################################################
-  # Explorative Analysis - Volcano Plot (to come)
+  # Explorative Analysis - Volcano Plot (Something wrong ?!)
   ################################################################################################
   toListen2Volcano <- reactive({
         list(input$Do_Volcano,
-             input$omicType,
-             input$row_selection,
-             input$Groups2Compare_treat,
-             input$Groups2Compare_ref)
+             input$psig_threhsold,
+             input$lfc_threshold)
+             #input$omicType,
+             #input$row_selection,
+             #input$Groups2Compare_treat,
+             #input$Groups2Compare_ref)
   })
   observeEvent(toListen2Volcano(),{
-        req(input$omicType,input$row_selection,isTruthy(selectedData_processed()))
+        req(input$omicType,input$row_selection,isTruthy(selectedData_processed()),input$psig_threhsold,input$lfc_threshold)
         print("Volcano analysis on pre-selected data")
         # no responsive elements here hence selected data can be passed to function
         # only selective is which groups to compare
         # input$Groups2Compare_ref, input$Groups2Compare_treat
-        print(input$providedSampleAnnotationTypes)
-        ctrl_samples_idx<<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes]%in%input$Groups2Compare_ref)
-        comparison_samples_idx<<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes]%in%input$Groups2Compare_treat)
+        print(input$sample_annotation_types_cmp)
+        ctrl_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_ref)
+        comparison_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_treat)
         print(ctrl_samples_idx)
         print(comparison_samples_idx)
+        if(length(comparison_samples_idx)<=1 | length(ctrl_samples_idx)<=1){
+          output$debug=renderText("Choose variable with at least two samples per condition!")
+          req(FALSE)
+        }
         if(input$PreProcessing_Procedure=="simpleCenterScaling"|any(selectedData_processed()[[input$omicType]]$Matrix<0)){
           print("Remember do not use normal center + scaling (negative Values!)")
           output$debug=renderText("Choose another preprocessing, as there are negative values!")
+        #}else if(input$PreProcessing_Procedure=="DE_Seq_alike"){
+        #  DE_Seq_alike
         }else{
+          print(dim(selectedData_processed()[[input$omicType]]$Matrix))
           VolcanoPlot=Volcano_Plot(selectedData_processed()[[input$omicType]]$Matrix,
                                    ctrl_samples_idx,
                                    comparison_samples_idx,
-                                   p_sig_threshold=0.05,
-                                   LFC_threshold=2)
-          plotPosition="Plot_position_01"
+                                   p_sig_threshold=input$psig_threhsold,
+                                   LFC_threshold=input$lfc_threshold)
+          plotPosition="Plot_position_02"
           output[[plotPosition]] <- renderPlotly({ggplotly(VolcanoPlot,
-                                                           legendgroup="color")})
+                                                           tooltip="probename",legendgroup="color")})
         }
         
       })
       
-} # end server
+  ################################################################################################
+  # Explorative Analysis - Heatmap (to come)
+  ################################################################################################
+  toListen2Heatmap <- reactive({
+    list(input$Do_Heatmap,
+         #input$omicType,
+         #input$row_selection,
+         input$anno_options)
+  })
+  
+  observeEvent(toListen2Heatmap(),{
+    req(input$omicType,input$row_selection,isTruthy(selectedData_processed()),input$anno_options,input$row_anno_options)
+    print("Heatmap on selected Data")
+    ### atm raw data plotted
+    data2Plot<<-selectedData_processed()
+    colorTheme=c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
+    customTitleHeatmap=paste0("Heatmap - ",input$omicType,"-",paste0("entities:",input$row_selection,collapse = "_"),"-samples",ifelse(input$sample_selection!="all",paste0(" (with: ",paste(input$sample_selection,collapse = ", "),")"),""),"-preprocessing: ",input$PreProcessing_Procedure)
+    #data2Plot_Matrix=as.numeric(data2Plot[[input$omicType]]$Matrix)
+    mycolors <- list()
+    print(input$anno_options)
+    if(length(input$anno_options)==1){
+      if(length(unique(data2Plot[[input$omicType]]$sample_table[,input$anno_options]))<=8){
+          names(colorTheme)=unique(data2Plot[[input$omicType]]$sample_table[,input$anno_options])
+          colorTheme=colorTheme[!is.na(names(colorTheme))]
+          mycolors[[input$anno_options]]=colorTheme
+        }
+    }
+    print("Till Here?")
+    print(input$anno_options)
+    print(input$row_anno_options)
+    print(input$cluster_rows)
+    # Do a "If plot is too small plot in new tab")
+    heatmap_plot<<-pheatmap(as.matrix(data2Plot[[input$omicType]]$Matrix),
+                  main=customTitleHeatmap,
+                  show_rownames=ifelse(nrow(data2Plot[[input$omicType]]$Matrix)<=25,TRUE,FALSE),
+                  show_colnames=TRUE,
+                  cluster_cols = input$cluster_cols,
+                  cluster_rows = input$cluster_rows,
+                 # cutree_cols = 4,
+             #fontsize = font.size,
+             annotation_col = data2Plot[[input$omicType]]$sample_table[,input$anno_options,drop=F],
+             annotation_row = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F],
+             annotation_colors = mycolors,
+             silent = F
+             #breaks = scaleColors(data = as.matrix(data2Plot[[input$omicType]]$Matrix), maxvalue = max.value)[["breaks"]], 
+             #color = scaleColors(data = as.matrix(data2Plot[[input$omicType]]$Matrix), maxvalue = max.value)[["color"]]
+             )
+    # legend.grob <- addGrob(heatmap_plot$gtable$grob[[10]]) 
+    
+    output[["Plot_position_03"]] <- renderPlot({heatmap_plot})
+    
+    output$debug=renderText("Not yet fully implemented on Back-End")
+  })
+  #####################
+  # Shiny js section for more pleasent output
+  ####################
+  # Put in hide and show buttons
+  # observeEvent(input$Do_preprocessing,{
+  #   hide(id = "providedRowAnnotationTypes_ui")
+  # })
+} # end servera
