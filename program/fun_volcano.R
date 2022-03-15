@@ -43,6 +43,7 @@ Volcano_Plot=function(data,
   alphaScheme=c(0.8,0.1)
   names(alphaScheme)=c("change","steady")
   
+  
   plot=ggplot(results,aes(label=probename)) +
     geom_point(aes(x = LFC, y = -log10(p_adj), colour = threshold,alpha=threshold_fc))+
     geom_hline(yintercept=-log10(p_sig_threshold),color="lightgrey")+

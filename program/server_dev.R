@@ -44,6 +44,7 @@ server <- function(input, output, session) {
       # Precompiled list
       data_input[[input$omicType]]<-readRDS(input$data_preDone$datapath)[[input$omicType]]
       ## Include here possible Data Checks
+#ENSURE DATA SAMPLE TABLE AND IN MATRIX AS WELL AS ROW ANNO ARE IN THE SAME ORDER!!!
     }
     show_toast(title = "Data Upload",text = "Data upload was successful",position = "top",timer = 1500,timerProgressBar = T)
     data_input
@@ -157,14 +158,7 @@ server <- function(input, output, session) {
         selected = "PC2"
       )
     })
-    output$coloring_options_ui=renderUI({
-      pickerInput(
-        inputId = "coloring_options",
-        label = "Choose the variable to color the samples after",
-        choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
-        multiple = F # would be cool if true, to be able to merge vars ?!
-      )
-    })
+
       output$Show_loadings_ui=renderUI({
         radioGroupButtons(
           inputId = "Show_loadings",
@@ -174,6 +168,16 @@ server <- function(input, output, session) {
           selected = "No"
         )
     })
+  })
+  
+  output$coloring_options_ui=renderUI({
+    req(data_input_shiny())
+    pickerInput(
+      inputId = "coloring_options",
+      label = "Choose the variable to color the samples after",
+      choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
+      multiple = F # would be cool if true, to be able to merge vars ?!
+    )
   })
   
   output$sample_annotation_types_cmp_ui=renderUI({
@@ -259,46 +263,114 @@ server <- function(input, output, session) {
                   value = TRUE,
                   width = "20%")
   })
+  
+  output$LFC_toHeatmap_ui=renderUI({
+    req(data_input_shiny())
+    checkboxInput(inputId ="LFC_toHeatmap",
+                  label="Show log Fold Changes?",
+                  value = FALSE,
+                  width = "20%")
+  })
   output$row_selection_options_ui=renderUI({
     req(data_input_shiny())
     pickerInput(
       inputId = "row_selection_options",
       label = "Row selection",
-      choices = c("TopK","significant_LFC","DE_genes","rowAnno_based"),
-      multiple = F, #
+      choices = c("TopK","significant_LFC","LFC_onlySig","rowAnno_based"),
+      multiple = T, #
       selected="TopK"
     )
   })
   output$TopK_ui=renderUI({
-    req(data_input_shiny())
-    if(input$row_selection_options=="TopK"){
+    req(data_input_shiny(),isTruthy(input$row_selection_options))
+    if(any(input$row_selection_options=="TopK")){
     numericInput(inputId = "TopK",
                  label = "Choose number of top entities to show (order based on p-val (LFC) or rowCount)",
                  min = 1,
-                 step = 1)
+                 step = 1,
+                 value = 20)
     }else{
       NULL
     }
       
   })
   
+  output$sample_annotation_types_cmp_heatmap_ui=renderUI({
+    req(data_input_shiny())
+    pickerInput(
+      inputId = "sample_annotation_types_cmp_heatmap",
+      label = "Choose type for LFC based ordering",
+      choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
+      multiple = F ,
+      selected = NULL
+    )
+  })
+  output$Groups2Compare_ref_heatmap_ui=renderUI({
+    req(data_input_shiny())
+    pickerInput(
+      inputId = "Groups2Compare_ref_heatmap",
+      label = "Choose reference of log2 FoldChange",
+      choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap]),
+      multiple = F ,
+      selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap])[1]
+    )
+  }) 
+  output$Groups2Compare_treat_heatmap_ui=renderUI({
+    req(data_input_shiny())
+    pickerInput(
+      inputId = "Groups2Compare_treat_heatmap",
+      label = "Choose treatment group of log2 FoldChange",
+      choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap]),
+      multiple = F ,
+      selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap])[2]
+    )
+  }) 
+  output$psig_threhsold_heatmap_ui=renderUI({
+    req(data_input_shiny())
+    numericInput(inputId ="psig_threhsold_heatmap" ,
+                 label = "adj. p-value threshold",
+                 min=0, max=0.1, step=0.01,
+                 value = 0.05)
+  })
     
  #   })
-
   
+  output$anno_options_heatmap_ui=renderUI({
+    req(selectedData_processed())
+    pickerInput(
+      inputId = "anno_options_heatmap",
+      label = "Choose the variable to select the rows after (Multiples are possible)",
+      choices = c(colnames(selectedData_processed()[[input$omicType]]$annotation_rows)),
+      multiple = T # would be cool if true, to be able to merge vars ?!,
+      )
+  })
+  output$row_anno_options_heatmap_ui=renderUI({
+    req(selectedData_processed())
+    pickerInput(
+      inputId = "row_anno_options_heatmap",
+      label = "Which entities to use? (Will be the union if multiple selected)",
+      choices = c("all",unique(selectedData_processed()[[input$omicType]]$annotation_rows[,input$anno_options_heatmap])),
+      selected="all",
+      multiple = T
+    )
+  }) 
+  
+
+  # uiOutput("anno_options_heatmap_ui"),
+  # uiOutput("row_anno_options_heatmap_ui"),
   observeEvent(input$Do_Volcano,{
     output$psig_threhsold_ui=renderUI({
       req(data_input_shiny())
       numericInput(inputId ="psig_threhsold" ,
                         label = "adj. p-value threshold",
-                        min=0, max=1, step=0.01,
+                        min=0, max=0.1, step=0.01,
                         value = 0.05)
     })
     output$lfc_threshold_ui=renderUI({
       numericInput(inputId ="lfc_threshold" ,
                         label = "Log FC threshold (both sides!)",
                         min=0, max=10, step=0.1,
-                        value = 1)
+                        value = 1.0)
     })
   })
   
@@ -402,11 +474,21 @@ server <- function(input, output, session) {
           processedData_all[[input$omicType]]$Matrix=assay(dds_vst)
         }
         if(input$PreProcessing_Procedure=="Scaling_0_1"){
+          
           processedData=as.data.frame(t(apply(processedData_all[[input$omicType]]$Matrix,1,function(x){(x-min(x))/(max(x)-min(x))})))
           #head(processedData)
           processedData_all[[input$omicType]]$Matrix=processedData
         }
         if(input$PreProcessing_Procedure=="log10"){
+          # add small eps to 0 + check if strictly positive
+          if(any(processedData_all[[input$omicType]]$Matrix<0)){
+            output$debug=renderText({"Negative entries, cannot take log10!! Choose differen pre-processing"})
+            req(FALSE)
+          }
+          if(any(processedData_all[[input$omicType]]$Matrix==0)){
+            #macht es mehr sinn nur die nullen + eps zu machen oder lieber alle daten punkte + eps?
+            processedData_all[[input$omicType]]$Matrix=processedData_all[[input$omicType]]$Matrix+10^-15
+          }
           processedData=as.data.frame(log10(processedData_all[[input$omicType]]$Matrix))
           #head(processedData)
           processedData_all[[input$omicType]]$Matrix=processedData
@@ -572,8 +654,6 @@ server <- function(input, output, session) {
         print(input$sample_annotation_types_cmp)
         ctrl_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_ref)
         comparison_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_treat)
-        print(ctrl_samples_idx)
-        print(comparison_samples_idx)
         if(length(comparison_samples_idx)<=1 | length(ctrl_samples_idx)<=1){
           output$debug=renderText("Choose variable with at least two samples per condition!")
           req(FALSE)
@@ -581,11 +661,16 @@ server <- function(input, output, session) {
         if(input$PreProcessing_Procedure=="simpleCenterScaling"|any(selectedData_processed()[[input$omicType]]$Matrix<0)){
           print("Remember do not use normal center + scaling (negative Values!)")
           output$debug=renderText("Choose another preprocessing, as there are negative values!")
-        #}else if(input$PreProcessing_Procedure=="DE_Seq_alike"){
-        #  DE_Seq_alike
+          req(FALSE)
         }else{
-          print(dim(selectedData_processed()[[input$omicType]]$Matrix))
-          VolcanoPlot=Volcano_Plot(selectedData_processed()[[input$omicType]]$Matrix,
+          data2Volcano= selectedData_processed()[[input$omicType]]$Matrix
+          if(any(data2Volcano==0)){
+            #macht es mehr sinn nur die nullen + eps zu machen oder lieber alle daten punkte + eps?
+            data2Volcano=data2Volcano+10^-15
+          }
+          print(dim(data2Volcano))
+          report<<-data2Volcano
+          VolcanoPlot<-Volcano_Plot(data2Volcano,
                                    ctrl_samples_idx,
                                    comparison_samples_idx,
                                    p_sig_threshold=input$psig_threhsold,
@@ -604,7 +689,8 @@ server <- function(input, output, session) {
     list(input$Do_Heatmap,
          #input$omicType,
          #input$row_selection,
-         input$anno_options)
+         input$anno_options,
+         input$row_selection_options)
   })
   
   observeEvent(toListen2Heatmap(),{
@@ -624,26 +710,107 @@ server <- function(input, output, session) {
           mycolors[[input$anno_options]]=colorTheme
         }
     }
+    # colors to fill in the tiles
+    paletteLength <- 25
+    myColor_fill <- colorRampPalette(c("blue", "white", "firebrick"))(paletteLength)
+   
+    
     print("Till Here?")
     print(input$anno_options)
     print(input$row_anno_options)
     print(input$cluster_rows)
-    # Do a "If plot is too small plot in new tab")
-    heatmap_plot<<-pheatmap(as.matrix(data2Plot[[input$omicType]]$Matrix),
-                  main=customTitleHeatmap,
-                  show_rownames=ifelse(nrow(data2Plot[[input$omicType]]$Matrix)<=25,TRUE,FALSE),
-                  show_colnames=TRUE,
-                  cluster_cols = input$cluster_cols,
-                  cluster_rows = input$cluster_rows,
-                 # cutree_cols = 4,
-             #fontsize = font.size,
-             annotation_col = data2Plot[[input$omicType]]$sample_table[,input$anno_options,drop=F],
-             annotation_row = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F],
-             annotation_colors = mycolors,
-             silent = F
-             #breaks = scaleColors(data = as.matrix(data2Plot[[input$omicType]]$Matrix), maxvalue = max.value)[["breaks"]], 
-             #color = scaleColors(data = as.matrix(data2Plot[[input$omicType]]$Matrix), maxvalue = max.value)[["color"]]
-             )
+    ##### Do PreSselection of input to Heatmap to show
+    # to cover: c("TopK","significant_LFC","DE_genes","rowAnno_based")
+     data2HandOver<<-entitieSelection(selectedData_processed()[[input$omicType]]$Matrix,
+                                   type=input$row_selection_options,
+                                   TopK2Show=ifelse(any(input$row_selection_option=="TopK"),input$TopK,NA),
+                                   additionalInput=ifelse(any(input$row_selection_option=="rowAnno_based"),input$rowAnno_based,NA))
+    
+    if(!is.null(data2HandOver)){
+      output$debug=renderText({"Were not able to select as chosen criteria do not make sense together, e.g. TopK on it's own, try TopK + significant_LFC"})
+      req(FALSE)
+    }
+    print("Does this work?")
+    # Dependent to plot raw data or LFCs
+    if(input$LFC_toHeatmap){
+      ctrl_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_ref)
+      comparison_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_treat)
+      if(length(comparison_samples_idx)<=1 | length(ctrl_samples_idx)<=1){
+        output$debug=renderText("Choose variable with at least two samples per condition!")
+        req(FALSE)
+      }
+      if(input$PreProcessing_Procedure=="simpleCenterScaling"|any(selectedData_processed()[[input$omicType]]$Matrix<0)){
+        print("Remember do not use normal center + scaling (negative Values!)")
+        output$debug=renderText("Choose another preprocessing, as there are negative values!")
+        #}else if(input$PreProcessing_Procedure=="DE_Seq_alike"){
+        #  DE_Seq_alike
+      }else{
+        print(dim(selectedData_processed()[[input$omicType]]$Matrix))
+        Data2Plot=getLFC(data2Plot[[input$omicType]]$Matrix,
+                         ctrl_samples_idx,
+                         comparison_samples_idx)
+        # adjust sample annotation
+        # if the value is accross all group-members the same keep 1 col otherwise remove
+        keep_ctrl=apply(data2Plot[[input$omicType]]$sample_table[ctrl_samples_idx,],2,function (x) length(unique(x))==1)
+        keep_treat=apply(data2Plot[[input$omicType]]$sample_table[comparison_samples_idx,],2,function (x) length(unique(x))==1)
+        # keep  only if both TRUE
+        keep_final=names(data2Plot[[input$omicType]]$sample_table)[keep_ctrl & keep_treat]
+        # output$anno_options=renderUI({
+        #   pickerInput(
+        #     inputId = "anno_options",
+        #     label = "Choose the variable to color the samples after (Multiples are possible)",
+        #     choices = keep_final,
+        #     multiple = T
+        #   )
+        # })
+        ## do pheatmap
+        #remove anything non sig
+        Data2Plot=Data2Plot[Data2Plot$p_adj<0.05,]
+        # use floor and ceiling to deal with even/odd length pallettelengths
+        myBreaks <- c(seq(min(test), 0, length.out=ceiling(paletteLength/2) + 1), 
+                      seq(max(test)/paletteLength, max(test), length.out=floor(paletteLength/2)))
+        
+        heatmap_plot<-pheatmap((t(Data2Plot[,"LFC",drop=F])),
+                               main=gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
+                               show_rownames=ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
+                               show_colnames=TRUE,
+                               cluster_cols = input$cluster_cols,
+                               cluster_rows = FALSE, # input$cluster_rows,
+                               # cutree_cols = 4,
+                               #fontsize = font.size,
+                               #annotation_col = NULL,
+                               #annotation_row = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F],
+                               #annotation_colors = mycolors,
+                               silent = F,
+                               breaks = c(seq(min(t(Data2Plot[,"LFC",drop=F])), 0, length.out=ceiling(paletteLength/2) + 1), 
+                                          seq(max(t(Data2Plot[,"LFC",drop=F]))/paletteLength, max(t(Data2Plot[,"LFC",drop=F])), length.out=floor(paletteLength/2))),
+                               color = myColor_fill
+        )
+        
+      }
+    }else{
+      heatmap_plot<-pheatmap(as.matrix(data2Plot[[input$omicType]]$Matrix),
+                             main=customTitleHeatmap,
+                             show_rownames=ifelse(nrow(data2Plot[[input$omicType]]$Matrix)<=25,TRUE,FALSE),
+                             show_colnames=TRUE,
+                             cluster_cols = input$cluster_cols,
+                             cluster_rows = input$cluster_rows,
+                             # cutree_cols = 4,
+                             #fontsize = font.size,
+                             annotation_col = data2Plot[[input$omicType]]$sample_table[,input$anno_options,drop=F],
+                             annotation_row = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F],
+                             annotation_colors = mycolors,
+                             silent = F
+                             #breaks = c(seq(min(data2Plot[[input$omicType]]$Matrix), 0, length.out=ceiling(paletteLength/2) + 1), 
+                            #            seq(max(data2Plot[[input$omicType]]$Matrix)/paletteLength, max(data2Plot[[input$omicType]]$Matrix), length.out=floor(paletteLength/2))),
+                             #color = myColor_fill
+                             #breaks = scaleColors(data = as.matrix(data2Plot[[input$omicType]]$Matrix), maxvalue = max.value)[["breaks"]], 
+                             #color = scaleColors(data = as.matrix(data2Plot[[input$omicType]]$Matrix), maxvalue = max.value)[["color"]]
+      )
+    }
+    
+    
+    
     # legend.grob <- addGrob(heatmap_plot$gtable$grob[[10]]) 
     
     output[["Plot_position_03"]] <- renderPlot({heatmap_plot})

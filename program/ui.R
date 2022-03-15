@@ -85,12 +85,23 @@ ui <- fluidPage(
                          actionButton(inputId = "Do_Heatmap",
                                       label = "Do Heatmap to display",
                                       icon("fas fa-laptop-code")),
+                         uiOutput("LFC_toHeatmap_ui"),
                          uiOutput("anno_options_ui"),
                          uiOutput("row_anno_options_ui"),
                          uiOutput("cluster_cols_ui"),
                          uiOutput("cluster_rows_ui"),
+                         
                          uiOutput("row_selection_options_ui"),
-                         uiOutput("TopK_ui")
+                         uiOutput("TopK_ui"),
+                         
+                         #uiOutput("rowAnno_based_ui"),
+                         uiOutput("anno_options_heatmap_ui"),
+                         uiOutput("row_anno_options_heatmap_ui"),
+                         
+                         uiOutput("sample_annotation_types_cmp_heatmap_ui"),
+                         uiOutput("Groups2Compare_ref_heatmap_ui"),
+                         uiOutput("Groups2Compare_treat_heatmap_ui"),
+                         uiOutput("psig_threhsold_heatmap_ui")
                          
                        ),
                        mainPanel(

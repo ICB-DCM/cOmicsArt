@@ -1,4 +1,4 @@
-#setwd("program")
+setwd("program")
 renv::restore(lockfile = "renv.lock")
 library(plotly)
 library(shiny)
@@ -7,6 +7,7 @@ library(shinymanager)
 library(shinyjs) 
 library(DESeq2) 
 library(grid)
+library(pheatmap)
 
 ########
 # Set Up security 
@@ -22,6 +23,7 @@ library(grid)
 # )
 source("fun_filterRNA.R")
 source("fun_plotPCA.R")
+source("fun_LFC.R")
 source("fun_volcano.R")
 source("fun_popupModal.R")
 source("server_dev.R")
