@@ -1,0 +1,14 @@
+name: shinyOmics
+title: shinyOmics
+username:
+account: leaseep
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5903326
+bundleId: 5752949
+url: https://leaseep.shinyapps.io/shinyOmics/
+when: 1648800834.28574
+lastSyncTime: 1648800834.28575
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: mmu04145.png|mmu04145.xml|mmu05022.png|mmu05022.xml
