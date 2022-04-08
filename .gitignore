@@ -3,3 +3,4 @@ results/
 program/renv/*
 .Rproj.user
 program/.*
+program/old
