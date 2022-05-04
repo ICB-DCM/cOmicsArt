@@ -1,8 +1,8 @@
 ## Server 2.0
 #setwd("program")
-if(!(renv::status()$synchronized)){
-  renv::restore(lockfile = "renv.lock")
-}
+# if(!(renv::status()$synchronized)){
+#   renv::restore(lockfile = "renv.lock")
+# }
 
 library(DT)
 library(plotly)
@@ -19,6 +19,7 @@ library(BiocManager)
 library(shinyhelper)
 library(dplyr)
 library(shinycssloaders)
+
 
 options(repos = BiocManager::repositories())
 options(spinner.color="#1c8a3b", spinner.color.background="#ffffff", spinner.size=2)
