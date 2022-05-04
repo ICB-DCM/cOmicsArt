@@ -1,8 +1,8 @@
 ## Server 2.0
 #setwd("program")
-if(!(renv::status()$synchronized)){
-  renv::restore(lockfile = "renv.lock")
-}
+#if(!(renv::status()$synchronized)){
+#  renv::restore(lockfile = "renv.lock")
+#}
 
 library(DT)
 library(plotly)
