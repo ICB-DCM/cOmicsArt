@@ -11,7 +11,7 @@ server <- function(input,output,session){
   ################################################################################################
   # Security section
   ################################################################################################
-  
+  options(shiny.maxRequestSize=10*1024^2) # request 10MB
   # #call the server part
   # #check_credentials returns a function to authenticate users
   # res_auth <- secure_server(
@@ -25,7 +25,10 @@ server <- function(input,output,session){
   
   print("Hello Shiny")
   observe_helpers()
-  
+  #session$allowReconnect(TRUE) # To allow Reconnection wiht lost Session, potential
+  # security issue + more than one user issues potentially ?! Thats why further security
+  # what if complete new start (should have button for this ?!)
+  #session$allowReconnect("force") # To test locally
   ################################################################################################
   # Layout upon Start
   ################################################################################################
@@ -42,17 +45,17 @@ server <- function(input,output,session){
   output$data_matrix1_ui=renderUI({
     shiny::fileInput(inputId = "data_matrix1",
                      label = "Upload data Matrix (rows entities, cols samples)",
-                     accept = ".csv")
+                     accept = c(".csv"))
   })
   output$data_sample_anno1_ui=renderUI({
     shiny::fileInput("data_sample_anno1",
                      "Upload sample Annotation (rows must be samples)",
-                     accept = ".csv")
+                     accept = c(".csv"))
   })
   output$data_row_anno1_ui=renderUI({
     shiny::fileInput("data_row_anno1",
                      "Upload entities Annotation Matrix (rows must be entities)",
-                     accept = ".csv")
+                     accept = c(".csv"))
   })
   output$data_preDone_ui=renderUI({
     shiny::fileInput("data_preDone",
@@ -89,6 +92,7 @@ server <- function(input,output,session){
     # What Input is required? (raw data)
     if(!isTruthy(input$data_preDone)){
       shiny::req(input$data_matrix1,input$data_sample_anno1,input$data_row_anno1)
+      
       data_input[[input$omicType]]<-list(type=as.character(input$omicType),
                                          Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1),
                                          sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1),
@@ -354,7 +358,7 @@ server <- function(input,output,session){
     if(any(is.na(processedData_all[[input$omicType]]$Matrix))){
       processedData_all[[input$omicType]]$Matrix=processedData_all[[input$omicType]]$Matrix[complete.cases(processedData_all[[input$omicType]]$Matrix),]
     }
-    
+    TEST<<-processedData_all
     #### Potentially some entities removed hence update the annotation table
     processedData_all[[input$omicType]]$sample_table=processedData_all[[input$omicType]]$sample_table[colnames(processedData_all[[input$omicType]]$Matrix),]
     processedData_all[[input$omicType]]$annotation_rows=processedData_all[[input$omicType]]$annotation_rows[rownames(processedData_all[[input$omicType]]$Matrix),]
