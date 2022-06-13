@@ -1155,20 +1155,34 @@ server <- function(input,output,session){
     print(input$Select_Gene)
     # Select data for the gene based on gene Selection & group Selection
     if(input$type_of_data_gene=="preprocessed"){
-      Test<<-selectedData_processed()[[input$omicType]]
-      GeneData=as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix[input$Select_Gene,,drop=F]))
-      print(input$accross_condition)
-      GeneData$anno=selectedData_processed()[[input$omicType]]$sample_table[,input$accross_condition]
-      print(dim(selectedData_processed()[[input$omicType]]$Matrix))
-      print(dim(GeneData))
+      #Test<<-selectedData_processed()[[input$omicType]]
+      
+      if(input$Select_Gene %in% rownames(selectedData_processed()[[input$omicType]]$Matrix)){
+        GeneData=as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix[input$Select_Gene,,drop=F]))
+        print(input$accross_condition)
+        GeneData$anno=selectedData_processed()[[input$omicType]]$sample_table[,input$accross_condition]
+        print(dim(selectedData_processed()[[input$omicType]]$Matrix))
+        print(dim(GeneData))
+        GeneDataFlag=T
+      }else{
+        print("different Gene")
+        GeneDataFlag=F
+      }
+      
+      
     }else if(input$type_of_data_gene=="raw"){
-      GeneData=as.data.frame(t(data_input_shiny()[[input$omicType]]$Matrix[input$Select_Gene,]))
-      GeneData$anno=data_input_shiny()[[input$omicType]]$sample_table[,input$accross_condition]
-      print(dim(data_input_shiny()[[input$omicType]]$Matrix))
+      if(input$Select_Gene %in% rownames(data_input_shiny()[[input$omicType]]$Matrix)){
+        GeneData=as.data.frame(t(data_input_shiny()[[input$omicType]]$Matrix[input$Select_Gene,]))
+        GeneData$anno=data_input_shiny()[[input$omicType]]$sample_table[,input$accross_condition]
+        print(dim(data_input_shiny()[[input$omicType]]$Matrix))
+        GeneDataFlag=T
+      }else{
+        GeneDataFlag=F
+      }
     }
     
     # Make graphics
-    if(input$type_of_visualitsation=="boxplots"){
+    if(input$type_of_visualitsation=="boxplots" & GeneDataFlag){
       
       GeneData$anno=as.factor(GeneData$anno)
       P_boxplots=ggplot(GeneData, aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],x=anno,fill=anno))+
@@ -1192,9 +1206,13 @@ server <- function(input,output,session){
                              ref.group = ".all.", hide.ns = TRUE)    
       }
       output$SingleGenePlot=renderPlot(P_boxplots)
+
+    }else{
+      
+      output$SingleGenePlot=renderPlot(ggplot() + theme_void())
     }
     customTitle_boxplot=paste0("Boxplot_",input$type_of_data_gene,"_data_",colnames(GeneData)[-ncol(GeneData)])
-    print(customTitle_boxplot)
+    #print(customTitle_boxplot)
     
     output$SavePlot_singleGene=downloadHandler(
       filename = function() { paste(customTitle_boxplot, " ",Sys.Date(),input$file_ext_singleGene,sep="") },
