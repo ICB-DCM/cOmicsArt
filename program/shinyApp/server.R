@@ -241,7 +241,7 @@ server <- function(input,output,session){
     print(length(selected))
     print(length(samples_selected))
     
-    str(processedData_all[[input$omicType]]$sample_table)
+    
     data_output
   })
   
@@ -321,7 +321,7 @@ server <- function(input,output,session){
         processedData<-processedData_all[[input$omicType]]$Matrix
         print(input$DESeq_formula)
         processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"]=as.factor(processedData_all[[input$omicType]]$sample_table[,input$DESeq_formula])
-        str(processedData_all[[input$omicType]]$sample_table)
+        
         print(processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"])
         dds <- DESeqDataSetFromMatrix(countData = processedData,
                                       colData = processedData_all[[input$omicType]]$sample_table,
