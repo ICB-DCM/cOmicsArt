@@ -19,6 +19,7 @@ library(BiocManager)
 library(shinyhelper)
 library(dplyr)
 library(shinycssloaders)
+library(ggpubr)
 
 
 options(repos = BiocManager::repositories())
@@ -133,9 +134,9 @@ ui <- shiny::fluidPage(
               tabPanel("Pre-processing",fluid=T,
                        h4("Data Pre-processing")%>% helper(type = "markdown",content="PreProcessing_help"),
                        sidebarPanel(id="sidebar2",
-                                    #########################################
-                                    # Do Center & scaling + potential other pre-processing stuff
-                                    #########################################
+                       #########################################
+                       # Do Center & scaling + potential other pre-processing stuff
+                       #########################################
                                     h5("Pre-Processing Procedures"), # this could be enhanced with personalized procedures
                                     radioButtons(inputId = "PreProcessing_Procedure",
                                                  label = "Pre-Processing Procedures",
@@ -150,6 +151,7 @@ ui <- shiny::fluidPage(
                        mainPanel(
                          # Statistics to the data
                          helpText("general statistics to the input data, stuff like dimensions"),
+                         #hidden(div(id = 'Spinner_Statisitcs_Data', plotOutput("Statisitcs_Data")%>% withSpinner(type=8))),
                          htmlOutput("Statisitcs_Data") %>% withSpinner(type=8),
                          HTML("<br>"),
                          HTML("<br>"),
@@ -162,10 +164,10 @@ ui <- shiny::fluidPage(
               tabPanel("Projection to lower Dimensions", fluid=T,
                        h4("Projection to lower Dimensions"),
                        sidebarPanel(id="sidebar3",
-                                    #########################################
-                                    # explorative analysis
-                                    # PCA , UMAP
-                                    #########################################
+                       #########################################
+                       # explorative analysis
+                       # PCA , UMAP
+                       #########################################
                                     h4("Explorative Analysis"),
                                     
                                     actionButton(inputId = "Do_PCA",label = "Perform PCA",icon("fas fa-laptop-code")),
@@ -234,9 +236,9 @@ ui <- shiny::fluidPage(
               tabPanel("Volcano Plot",fluid=T,
                        h4("Volcano Plot"),
                        sidebarPanel(id="sidebar4",
-                                    #########################################
-                                    # VOLCANO
-                                    #########################################
+                       #########################################
+                       # VOLCANO
+                       #########################################
                                     uiOutput("sample_annotation_types_cmp_ui"),
                                     uiOutput("Groups2Compare_ref_ui"),
                                     uiOutput("Groups2Compare_treat_ui"),
@@ -272,9 +274,9 @@ ui <- shiny::fluidPage(
               tabPanel("Heatmap",fluid=T,
                        h4("Heatmap"),
                        sidebarPanel(id="sidebar5",
-                                    #########################################
-                                    # Heatmap
-                                    #########################################
+                       #########################################
+                       # Heatmap
+                       #########################################
                                     uiOutput("row_selection_options_ui"),
                                     uiOutput("LFC_toHeatmap_ui"),
                                     h5("Further row selection (LFC based)"),
@@ -341,6 +343,28 @@ ui <- shiny::fluidPage(
                          )
                        )
               ),
+              tabPanel("Single Gene Visualisations",fluid = TRUE,
+                       h4("Single Gene Visualisations"),
+                       #########################################
+                       # Single Gene Visualisations
+                       #########################################
+                       sidebarPanel(
+                         uiOutput("type_of_data_gene_ui"),
+                         uiOutput("type_of_visualitsation_ui"),
+                         uiOutput("Select_Gene_ui"),
+                         uiOutput("accross_condition_ui"),
+                         actionButton("singleGeneGo",label="Get single gene visualisation"),
+                         hr(style = "border-top: 1px solid #858585;")
+                       ),
+                       mainPanel(
+                        # hidden(div(id = 'Spinner_SingleGene', plotOutput("SingleGenePlot")%>% withSpinner(type=8))),
+                                  splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
+                                              plotOutput("SingleGenePlot"),NULL),
+                                 splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                             NULL,
+                                             radioGroupButtons(input="file_ext_singleGene",label = "File Type:",
+                                                               choices = c(".png",".svg",".tiff",".pdf"),selected = ".png")))
+                       ),
               tabPanel("Enrichment Analysis", fluid = TRUE,
                        h4("Enrichment Analysis"),
                        #########################################
@@ -360,7 +384,9 @@ ui <- shiny::fluidPage(
                        mainPanel(
                          textOutput("EnrichmentInfo",container = pre),
                          tabsetPanel(
-                           tabPanel("KEGG_Enrichment",plotOutput("KEGG_Enrichment")%>% withSpinner(type=8),
+                           tabPanel("KEGG_Enrichment",
+                                    #hidden(div(id = 'Spinner_KEGG_Enrichment', plotOutput("KEGG_Enrichment")%>% withSpinner(type=8))),
+                                    plotOutput("KEGG_Enrichment")%>% withSpinner(type=8),
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                 NULL,
                                                 downloadButton("SavePlot_KEGG",label="Save plot",class = "btn-info")

@@ -36,6 +36,7 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Projection to lower Dimensions")
   hideTab(inputId = "tabsetPanel1", target = "Volcano Plot")
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
+  hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   
   ################################################################################################
   # Data Upload + checks
@@ -286,6 +287,8 @@ server <- function(input,output,session){
   })
   
   selectedData_processed=eventReactive(input$Do_preprocessing,{
+    #show('Spinner_Statisitcs_Data')
+    #toggle(id = 'Spinner_Statisitcs_Data', condition = TRUE)
     processedData_all=selectedData()
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
@@ -366,6 +369,7 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1", target = "Projection to lower Dimensions")
     showTab(inputId = "tabsetPanel1", target = "Volcano Plot")
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
+    showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
     processedData_all
   })
   
@@ -1102,6 +1106,91 @@ server <- function(input,output,session){
   
   output$Options_selected_out_3=renderText({paste0("The number of selected entities: ",length(heatmap_genelist()))})
   
+  ################################################################################################
+  # Single Gene Visualisations
+  ################################################################################################
+  #Ui section
+  output$type_of_data_gene_ui=renderUI({
+    req(data_input_shiny())
+    selectInput(
+      inputId = "type_of_data_gene",
+      label = "Choose Data to use (in case of DESeq- vst normalized counts are used)",
+      choices = c("raw","preprocessed"),
+      multiple = F ,
+      selected = "preprocessed"
+    )
+  })
+  output$accross_condition_ui=renderUI({
+    req(data_input_shiny())
+    selectInput(
+      inputId = "accross_condition",
+      label = "Choose the groups to show the data for",
+      choices = unique(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
+      multiple = F
+    )
+  })
+  output$type_of_visualitsation_ui=renderUI({
+    req(data_input_shiny())
+    selectInput(
+      inputId = "type_of_visualitsation",
+      label = "Choose the style of visualisation",
+      choices = c("boxplots"),
+      multiple = F ,
+      selected = "boxplot"
+    )
+  })
+  output$Select_Gene_ui=renderUI({
+    req(data_input_shiny())
+    selectInput(
+      inputId = "Select_Gene",
+      label = "Select the Gene from the list",
+      choices = rownames(data_input_shiny()[[input$omicType]]$Matrix)[1:10], # for TESTING restricting to top 10
+      multiple = F 
+    )
+  })
+  observeEvent(input$singleGeneGo,{
+    print(input$Select_Gene)
+    # Select data for the gene based on gene Selection & group Selection
+    if(input$type_of_data_gene=="preprocessed"){
+      GeneData=as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix[input$Select_Gene,]))
+      GeneData$anno=selectedData_processed()[[input$omicType]]$sample_table[,input$accross_condition]
+      print(dim(selectedData_processed()[[input$omicType]]$Matrix))
+      print(dim(GeneData))
+    }else if(input$type_of_data_gene=="raw"){
+      GeneData=as.data.frame(t(data_input_shiny()[[input$omicType]]$Matrix[input$Select_Gene,]))
+      GeneData$anno=data_input_shiny()[[input$omicType]]$sample_table[,input$accross_condition]
+      print(dim(data_input_shiny()[[input$omicType]]$Matrix))
+      
+    }
+    
+    # Make graphics
+    if(input$type_of_visualitsation=="boxplots"){
+      
+      GeneData$anno=as.factor(GeneData$anno)
+      P_boxplots=ggplot(GeneData, aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],x=anno,fill=anno))+
+        geom_boxplot()+
+        scale_fill_brewer(palette="RdBu")+
+        xlab(colnames(GeneData)[-ncol(GeneData)])+
+        ylab(input$type_of_data_gene)+
+        theme_bw()
+      
+      if(length(levels(GeneData$anno)==2)){
+        #t.test (option for Kruskal Wallas as non-paramettric?)
+        my_comparisons=list(c(levels(GeneData$anno)[1],levels(GeneData$anno)[2]))
+        testMethod="t.test"
+        P_boxplots=P_boxplots+
+          stat_compare_means(comparisons=my_comparisons,method = testMethod,label = "p.signif")
+      }else if(length(levels(GeneData$anno)>2)){
+        P_boxplots=P_boxplots+
+          geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
+          stat_compare_means(method = "anova")+        # Add global annova p-value
+          stat_compare_means(label = "p.signif", method = "t.test",
+                             ref.group = ".all.", hide.ns = TRUE)    
+      }
+      output$SingleGenePlot=renderPlot(P_boxplots)
+    }
+    
+  })
   
   
   ################################################################################################
@@ -1150,6 +1239,7 @@ server <- function(input,output,session){
   
   observeEvent(input$enrichmentGO,{
     print("Start Enrichment")
+    show('Spinner_KEGG_Enrichment')
     req(geneSetChoice(),selectedData_processed())
     print("Translation needed?") # Build in check if EntrezIDs provided?!
     print(geneSetChoice())
