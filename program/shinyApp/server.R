@@ -11,7 +11,7 @@ server <- function(input,output,session){
   ################################################################################################
   # Security section
   ################################################################################################
-  options(shiny.maxRequestSize=10*1024^2) # request 10MB
+  options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
   # #call the server part
   # #check_credentials returns a function to authenticate users
   # res_auth <- secure_server(
@@ -95,9 +95,9 @@ server <- function(input,output,session){
       shiny::req(input$data_matrix1,input$data_sample_anno1,input$data_row_anno1)
       
       data_input[[input$omicType]]<-list(type=as.character(input$omicType),
-                                         Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1),
-                                         sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1),
-                                         annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1))
+                                         Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F),
+                                         sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1,check.names = F),
+                                         annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F))
       ## Include here possible Data Checks
     }else{
       # Precompiled list
@@ -240,6 +240,8 @@ server <- function(input,output,session){
     print("Alright do Column selection")
     print(length(selected))
     print(length(samples_selected))
+    
+    str(processedData_all[[input$omicType]]$sample_table)
     data_output
   })
   
@@ -319,7 +321,8 @@ server <- function(input,output,session){
         processedData<-processedData_all[[input$omicType]]$Matrix
         print(input$DESeq_formula)
         processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"]=as.factor(processedData_all[[input$omicType]]$sample_table[,input$DESeq_formula])
-        
+        str(processedData_all[[input$omicType]]$sample_table)
+        print(processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"])
         dds <- DESeqDataSetFromMatrix(countData = processedData,
                                       colData = processedData_all[[input$omicType]]$sample_table,
                                       design = ~DE_SeqFactor) #input$DESeq_formula
@@ -363,6 +366,9 @@ server <- function(input,output,session){
     }
     TEST<<-processedData_all
     #### Potentially some entities removed hence update the annotation table
+    print("What are the colnmaes here? X at the beginning??")
+    print(colnames(processedData_all[[input$omicType]]$Matrix))
+    
     processedData_all[[input$omicType]]$sample_table=processedData_all[[input$omicType]]$sample_table[colnames(processedData_all[[input$omicType]]$Matrix),]
     processedData_all[[input$omicType]]$annotation_rows=processedData_all[[input$omicType]]$annotation_rows[rownames(processedData_all[[input$omicType]]$Matrix),]
     
