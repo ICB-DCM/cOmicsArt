@@ -1155,7 +1155,9 @@ server <- function(input,output,session){
     print(input$Select_Gene)
     # Select data for the gene based on gene Selection & group Selection
     if(input$type_of_data_gene=="preprocessed"){
-      GeneData=as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix[input$Select_Gene,]))
+      Test<<-selectedData_processed()[[input$omicType]]
+      GeneData=as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix[input$Select_Gene,,drop=F]))
+      print(input$accross_condition)
       GeneData$anno=selectedData_processed()[[input$omicType]]$sample_table[,input$accross_condition]
       print(dim(selectedData_processed()[[input$omicType]]$Matrix))
       print(dim(GeneData))
@@ -1163,7 +1165,6 @@ server <- function(input,output,session){
       GeneData=as.data.frame(t(data_input_shiny()[[input$omicType]]$Matrix[input$Select_Gene,]))
       GeneData$anno=data_input_shiny()[[input$omicType]]$sample_table[,input$accross_condition]
       print(dim(data_input_shiny()[[input$omicType]]$Matrix))
-      
     }
     
     # Make graphics
