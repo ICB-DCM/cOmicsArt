@@ -3,7 +3,7 @@ cd program
 git pull
 Rscript -e "library(renv)"
 # Rscript -e "renv::init(bioconductor = TRUE)"
-Rscript -e "print(getwd())"
+echo pwd
 Rscript -e "renv::restore(lockfile='renv.lock')"
 RScript -e "renv::init(bioconductor = TRUE)"
 Rscript -e "library(shiny)"
