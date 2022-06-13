@@ -1148,6 +1148,9 @@ server <- function(input,output,session){
       multiple = F 
     )
   })
+  
+
+  
   observeEvent(input$singleGeneGo,{
     print(input$Select_Gene)
     # Select data for the gene based on gene Selection & group Selection
@@ -1189,9 +1192,21 @@ server <- function(input,output,session){
       }
       output$SingleGenePlot=renderPlot(P_boxplots)
     }
+    customTitle_boxplot=paste0("Boxplot_",input$type_of_data_gene,"_data_",colnames(GeneData)[-ncol(GeneData)])
+    print(customTitle_boxplot)
+    
+    output$SavePlot_singleGene=downloadHandler(
+      filename = function() { paste(customTitle_boxplot, " ",Sys.Date(),input$file_ext_singleGene,sep="") },
+      
+      content = function(file){
+        ggsave(file,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
+      }
+    )
     
   })
   
+  
+
   
   ################################################################################################
   # KEGG enrichment
@@ -1201,31 +1216,48 @@ server <- function(input,output,session){
     selectInput("OrganismChoice","Specificy your current organism",choices=c("hsa","mmu"),selected="mmu")
   })
   tmp_selection<<-"DE_Genes"
-  output$GeneSet2Enrich_ui=renderUI({
-    selectInput(inputId = "GeneSet2Enrich",
-                label = "Choose a gene set to hand over to enrich",
-                choices=c("DE_Genes","ProvidedGeneSet","heatmap_genes"),
-                selected = tmp_selection)
-  })
+  # output$GeneSet2Enrich_ui=renderUI({
+  #   selectInput(inputId = "GeneSet2Enrich",
+  #               label = "Choose a gene set to hand over to enrich",
+  #               choices=c("DE_Genes","ProvidedGeneSet","heatmap_genes"),
+  #               selected = tmp_selection)
+  # })
   
-  #Ui section
-  geneSetChoice=reactive({
+  observe({
     if(input$GeneSet2Enrich=="DE_Genes"){
-      output$UploadedGeneSet<-renderUI({NULL})
+      output$UploadedGeneSet_ui<-renderUI({NULL})
       # atm this is not done
       # geneSetChoice<-DE_GenesGlobal_4comp
       print("not done atm")
-      req(FALSE)
       # print(paste("Gene Set provided to check for enrichment: ",length(geneSetChoice)))
     }
     if(input$GeneSet2Enrich=="ProvidedGeneSet"){
       output$UploadedGeneSet_ui<-renderUI({shiny::fileInput(inputId = "UploadedGeneSet",
                                                             label = "Select a file (.csv, 1 column, ENSEMBL, e.g. ENSMUSG....)")
       })
-      if(!is.null(input$GenSetFile)){
-        Tmp<-read.csv(input$UploadedGeneSet,header = F)
+    }
+    })
+  
+  geneSetChoice=reactive({
+    if(input$GeneSet2Enrich=="DE_Genes"){
+      # atm this is not done
+    }
+    if(input$GeneSet2Enrich=="ProvidedGeneSet"){
+      if(!is.null(input$UploadedGeneSet)){
+        Tmp<-read.csv(input$UploadedGeneSet$datapath,header = F)
+        # check take first column as acharacter vector
         geneSetChoice_tmp<-Tmp$V1
         ## Here somehow if value next to gene provieded needs to be considered further down
+        # print(head(geneSetChoice_tmp))
+        # Check if they start with "ENS.."
+        if(!length(which(grepl("ENS.*",geneSetChoice_tmp)==TRUE))==length(geneSetChoice_tmp)){
+          print("wrong data!")
+          output$EnrichmentInfo=renderText("Check your input format, should be only gene names ENSMBL-IDs")
+          geneSetChoice_tmp=NULL
+        }else{
+          geneSetChoice_tmp=geneSetChoice_tmp
+        }
+        
       }else{
         print("No File!!")
         req(FALSE)
@@ -1236,11 +1268,12 @@ server <- function(input,output,session){
     }
     geneSetChoice_tmp
   })
+
   
   observeEvent(input$enrichmentGO,{
-    print("Start Enrichment")
-    show('Spinner_KEGG_Enrichment')
-    req(geneSetChoice(),selectedData_processed())
+    print("Start Enrichment2")
+    
+    req(geneSetChoice())
     print("Translation needed?") # Build in check if EntrezIDs provided?!
     print(geneSetChoice())
     geneSetChoice_tranlsated <- bitr(geneSetChoice(),
@@ -1252,6 +1285,7 @@ server <- function(input,output,session){
       universeSelected_tranlsated=NULL
     }
     if(input$UniverseOfGene=="allPresentGenes_after_pre_process"){
+      req(selectedData_processed())
       universeSelected=rownames(selectedData_processed()[[input$omicType]]$Matrix)
       print(paste0("Universe genes untranslated: ",length(universeSelected)))
       universeSelected_tranlsated <- bitr(universeSelected,
@@ -1262,6 +1296,7 @@ server <- function(input,output,session){
     }
     
     if(input$UniverseOfGene=="allPresentGenes_before_pre_process"){
+      req(data_input_shiny())
       universeSelected=rownames(data_input_shiny()[[input$omicType]]$Matrix)
       # Note if transcripts are used this will be ignored for enrichment analysis
       universeSelected=unique(gsub("\\..*$","",universeSelected))

@@ -360,6 +360,10 @@ ui <- shiny::fluidPage(
                         # hidden(div(id = 'Spinner_SingleGene', plotOutput("SingleGenePlot")%>% withSpinner(type=8))),
                                   splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
                                               plotOutput("SingleGenePlot"),NULL),
+                                  splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                              NULL,
+                                              downloadButton("SavePlot_singleGene",label="Save plot",class = "btn-info")
+                                  ),
                                  splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                              NULL,
                                              radioGroupButtons(input="file_ext_singleGene",label = "File Type:",
@@ -373,7 +377,13 @@ ui <- shiny::fluidPage(
                        h4("NOTE THAT THIS ONLY MAKES SENSE FOR TRANSCRIPTOMICS DATA AT THE MOMENT!"),
                        sidebarPanel(
                          uiOutput("OrganismChoice_ui"),
-                         uiOutput("GeneSet2Enrich_ui"),
+                         #uiOutput("GeneSet2Enrich_ui"),
+                         
+                         selectInput(inputId = "GeneSet2Enrich",
+                                       label = "Choose a gene set to hand over to enrich",
+                                       choices=c("DE_Genes","ProvidedGeneSet","heatmap_genes"),
+                                       selected = "DE_Genes"),
+                         
                          uiOutput("UploadedGeneSet_ui"),
                          selectInput("UniverseOfGene","Select an Universe for enrichment (default is clusterProfilers default",choices = c("default","allPresentGenes_after_pre_process","allPresentGenes_before_pre_process"),selected = "default"),
                          actionButton("enrichmentGO",label="Do enrichment analysis"),
