@@ -20,6 +20,7 @@ library(shinyhelper)
 library(dplyr)
 library(shinycssloaders)
 library(ggpubr)
+library(org.Mm.eg.db)
 
 
 options(repos = BiocManager::repositories())
