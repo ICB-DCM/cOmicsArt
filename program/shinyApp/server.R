@@ -8,6 +8,7 @@ server <- function(input,output,session){
   source("fun_popupModal.R",local = T)
   source("fun_entitieSelection.R",local = T)
   source("fun_savePheatmap.R",local = T)
+  source("fun_LogIt.R",local = T)
   ################################################################################################
   # Security section
   ################################################################################################
@@ -75,6 +76,7 @@ server <- function(input,output,session){
   data_output<-list()
   observeEvent(input$refresh1,{
     omicType_selected=input$omicType
+    fun_LogIt(paste0("Uploaded Omic Type: ",input$omicType))
     if(!(isTruthy(input$data_preDone) |(isTruthy(input$data_matrix1)&isTruthy(input$data_sample_anno1)&isTruthy(input$data_row_anno1)))){
       output$debug=renderText("The Upload has failed, or you haven't uploaded anything yet")
     }else{
@@ -1091,7 +1093,16 @@ server <- function(input,output,session){
       content = function(file){
         save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
       }
+    )
+    
+    
+    
+    output$SaveGeneList_Heatmap=downloadHandler(
+      filename = function() { paste("GeneList_",customTitleHeatmap, " ",Sys.Date(),".csv",sep="") },
       
+      content = function(file){
+        write.csv(heatmap_genelist(), file)
+      }
     )
     
     if(is.null(data2HandOver)){
