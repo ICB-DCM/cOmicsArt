@@ -1,27 +1,53 @@
 ## log function
-fun_LogIt=function(message="Hello",fileName="ShinyOmics.md",funMode=T){
+fun_LogIt=function(message="",
+                   funMode=F,
+                   addPlot=F,
+                   tableSaved=F,
+                   Filename=NULL,
+                   jokes=jokesDF){
   # sophisticated "Where to place log file"
   # how to name it ?
+  LogfileName="www/Report.md" # DO NOT CHANGE THE NAME!
   line=message
-  if(funMode){
-    # exten message with a sampled joke
-    # should make a joke database that comes with the shiny
-    line=paste0(line,"\t *How I met your mother*")
+  workingDir=getwd()
+  if(!is.null(Filename) & !(file.exists(paste0(workingDir,"/",Filename)))){
+    warning("The file does not exist!")
+    addPlot=F
+    tableSaved=F
+  }
+  if(addPlot==T){
+    
+    # functioning
+    # important - to capture the correct name ?! (esspcially if user changes it)
+    # probably in Shiny important which order
+    line=paste0(message,"\n","![](",workingDir,"/",Filename)
+  }
+  if(tableSaved==T){
+    # state where the file was saved and show header
+    line=paste0(message,"\n","The corresponding file was saved and can be found [here](",workingDir,"/",Filename)
+    # would have to check file extension.. TO DO
   }
   
-  if(file.exists(fileName)){
-    write(line,file=fileName,append=TRUE)
+  if(funMode==T){
+    # extend message with a sampled joke by a certain probability
+    # should make a joke database that comes with the shiny
+    n=sample(1:10,1)
+    if(n==6){ # ==6
+      randJoke=sample(1:nrow(jokes),1)
+      line=paste0(line,"\t ","<span style='color:orange;'>",jokes[randJoke,"Joke"],"</span>")
+    }
+   
+  }
+  
+  
+  # Add Line break
+  line=paste0(line,"\n")
+  if(file.exists(LogfileName)){
+    write(line,file=LogfileName,append=TRUE)
   }else{
     ### Überschrift mit links zu versionen und textbausteinen (eventuell rein linken)
-    write(line,file=fileName)
+    write(line,file=LogfileName)
   }
-  
-  # somehow ("at the end") crawl through it an add necassary information
-  # e.g. DESeq does this, this package was used, more information here (in brief blahblah)
-  # we cannot forseen the end of the application
-  # additional button that says populate log? or similar
-  # could be automatiacally invoked at each "saving button"
-  # question where and how to add ? (all add the end)-> possibility to additional file and merge them?!
   
 }
 

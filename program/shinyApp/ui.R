@@ -1,4 +1,6 @@
 ## Server 2.0
+
+## eigentlich getestet auf 4.1.2
 #setwd("program")
 #if(!(renv::status()$synchronized)){
 #  renv::restore(lockfile = "renv.lock")
@@ -21,7 +23,7 @@ library(dplyr)
 library(shinycssloaders)
 library(ggpubr)
 library(org.Mm.eg.db)
-
+library(jsonlite)
 
 options(repos = BiocManager::repositories())
 options(spinner.color="#1c8a3b", spinner.color.background="#ffffff", spinner.size=2)
@@ -83,7 +85,10 @@ ui <- shiny::fluidPage(
       }
   "))),
   ##########
+  div(style = "display:inline-block; float:right", actionButton(inputId = "Quit_App",label="Quit App",class = "btn-secondary")), 
   titlePanel("Omics-Analysis")%>% helper(type = "markdown",content="Inital_help",size="l",colour = "red",style="zoom: 500%;"),
+  #actionLink(inputId = "Quit_App",label="Quit App",class = "btn-secondary"),
+  a(href="Report.md", "Download Report", download=NA, target="_blank"),
   shinyjs::useShinyjs(),
   tabsetPanel(id = "tabsetPanel1",
               #textOutput('debug', container = pre),
@@ -92,6 +97,7 @@ ui <- shiny::fluidPage(
               ################################################################################
               tabPanel("Data selection",fluid=T,
                        h4("Data Selection + explorative Analysis"),
+                       
                        ################################################################################
                        # Data Selection 
                        ################################################################################
@@ -123,7 +129,7 @@ ui <- shiny::fluidPage(
                          ),
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
                                      uiOutput("data_row_anno1_ui"),
-                                     uiOutput("data_preDone_ui")
+                                     uiOutput("data_preDone_ui")%>% helper(type = "markdown",content="SummarizedExp_help")
                          ),
                          downloadButton("SaveInputAsList",label="Save file input to upload later") %>% helper(type = "markdown",content="compilation_help"),
                          htmlOutput('debug', container = pre),
@@ -453,7 +459,9 @@ ui <- shiny::fluidPage(
                          )
                        )
               )
-  )
+
+  ),
+  absolutePanel("Brought to you by Lea Seep", bottom = 0, left = 0, fixed = TRUE)
 )
 
 # Wrap your UI with secure_app

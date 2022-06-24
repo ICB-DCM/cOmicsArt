@@ -9,6 +9,8 @@ server <- function(input,output,session){
   source("fun_entitieSelection.R",local = T)
   source("fun_savePheatmap.R",local = T)
   source("fun_LogIt.R",local = T)
+  
+  
   ################################################################################################
   # Security section
   ################################################################################################
@@ -24,7 +26,13 @@ server <- function(input,output,session){
   #   reactiveValuesToList(res_auth)
   # })
   
+  ###########################################
+  # Load external Data
+  ##########################################
+  jokesDF <- read.csv("joke-db.csv")
+  jokesDF <- jokesDF[nchar(jokesDF$Joke)>0 & nchar(jokesDF$Joke)<180,]
   print("Hello Shiny")
+  
   observe_helpers()
   #session$allowReconnect(TRUE) # To allow Reconnection wiht lost Session, potential
   # security issue + more than one user issues potentially ?! Thats why further security
@@ -38,6 +46,28 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Volcano Plot")
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
+  
+  ## Quit App Button
+  observeEvent(input$Quit_App,{
+    showModal(modalDialog(
+      tags$h4('You can download the complete report by clicking on the link'),
+      footer=tagList(
+        a(href="Report.md", "Downlaod report", download=NA, target="_blank"),
+        actionButton(inputId = "Done",label = "Done"),
+        modalButton('Cancel')
+      )
+    ))
+  })
+  
+  observeEvent(input$Done,{
+    removeModal()
+    show_toast("Good Bye!",
+               type = "success",
+               position = "top",
+               timerProgressBar = FALSE,
+               width = "100%")
+    shiny::stopApp()
+  })
   
   ################################################################################################
   # Data Upload + checks
@@ -61,7 +91,7 @@ server <- function(input,output,session){
   })
   output$data_preDone_ui=renderUI({
     shiny::fileInput("data_preDone",
-                     "Load precompiled data (saved in this procedure)",
+                     HTML("Load precompiled data <br/> (saved in this procedure or type SummarizedExperiment)"),
                      accept = ".RDS")
   })
   output$SaveInputAsList=downloadHandler(
@@ -76,13 +106,22 @@ server <- function(input,output,session){
   data_output<-list()
   observeEvent(input$refresh1,{
     omicType_selected=input$omicType
-    fun_LogIt(paste0("Uploaded Omic Type: ",input$omicType))
+    fun_LogIt(paste0("DataInput - Uploaded Omic Type: ",input$omicType))
+    
     if(!(isTruthy(input$data_preDone) |(isTruthy(input$data_matrix1)&isTruthy(input$data_sample_anno1)&isTruthy(input$data_row_anno1)))){
       output$debug=renderText("The Upload has failed, or you haven't uploaded anything yet")
     }else{
       if(any(names(data_input_shiny())==omicType_selected)){
         show_toast(title = paste0(input$omicType,"Data Upload"),text = paste0(input$omicType,"-data upload was successful"),position = "top",timer = 1500,timerProgressBar = T)
         output$debug=renderText({"<font color=\"#00851d\"><b>Upload successful</b></font>"})
+        if(isTruthy(input$data_preDone)){
+          # precomplied set used
+          fun_LogIt(paste0("DataInput - The used data was precompiled. Filename: \n\t",input$data_preDone$name))
+        }else{
+          # 3 sets uploaded # bit harder to get to actual data path... TO DO
+          fun_LogIt(paste0("The following data was used: \n\t",input$data_matrix1$name,"\n\t",input$data_sample_anno1$name,"\n\t",input$data_row_anno1$name))
+        }
+       
         showTab(inputId = "tabsetPanel1", target = "Pre-processing")
       }else{
         print("The precompiled lists types, does not match the input type!")
@@ -95,7 +134,7 @@ server <- function(input,output,session){
     # What Input is required? (raw data)
     if(!isTruthy(input$data_preDone)){
       shiny::req(input$data_matrix1,input$data_sample_anno1,input$data_row_anno1)
-      
+     
       data_input[[input$omicType]]<-list(type=as.character(input$omicType),
                                          Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F),
                                          sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1,check.names = F),
@@ -107,8 +146,17 @@ server <- function(input,output,session){
       ## Include here possible Data Checks
       #ENSURE DATA SAMPLE TABLE AND IN MATRIX AS WELL AS ROW ANNO ARE IN THE SAME ORDER!!!
     }
+    
+    if(class(data_input[[input$omicType]])[1]!="SummarizedExperiment"){
+      ## Lets Make a SummarizedExperment Object for reproducibility and further usage
+      data_input[[input$omicType]]=SummarizedExperiment(assays  = data_input[[input$omicType]]$Matrix,
+                                                        rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
+                                                        colData = data_input[[input$omicType]]$sample_table)
+
+    }
     data_input
   })
+  
   
   print("Data Input done")
   
@@ -119,13 +167,14 @@ server <- function(input,output,session){
   observe({
     req(data_input_shiny())
     print(input$omicType)
+    print(class(data_input_shiny()[[input$omicType]]))
     # Row
     output$providedRowAnnotationTypes_ui=renderUI({
       req(data_input_shiny())
       selectInput(
         inputId = "providedRowAnnotationTypes",
         label = "Which annotation type do you want to select on?",
-        choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
+        choices = c(names(data_input_shiny()[[input$omicType]])),
         multiple = F
       )
     })
@@ -178,7 +227,7 @@ server <- function(input,output,session){
       selectInput(
         inputId = "sample_selection",
         label = "Which entities to use? (Will be the union if multiple selected)",
-        choices = c("High Values+IQR","all",unique(data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes])),
+        choices = c("all",unique(data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes])),
         selected="all",
         multiple = T
       )
@@ -187,9 +236,26 @@ server <- function(input,output,session){
     output$NextPanel_ui=renderUI({
       actionButton(inputId = "NextPanel",label = "Start the Journey",width = "100%",icon = icon("fas fa-angle-double-right"))
     })
+    fun_LogIt(message = paste0("DataInput - The raw data dimensions are:",paste0(dim(data_input_shiny()[[input$omicType]]$Matrix),collapse = ", ")))
+    
   })
   
   observeEvent(input$NextPanel,{
+    # add row and col selection options
+    # input$propensityChoiceUser (conditional!)
+    # input$providedSampleAnnotationTypes
+    # input$sample_selection
+    fun_LogIt(message = "DataSelection - The following selection was conducted:")
+    print(length(input$sample_selection))
+    fun_LogIt(message = paste0("DataSelection - Samples:\n\t DataSelection - based on: ",input$providedSampleAnnotationTypes,": ",paste(input$sample_selection,collapse = ", ")))
+    fun_LogIt(message = paste0("DataSelection - Entities:\n\t DataSelection - based on: ",input$providedRowAnnotationTypes,": ",paste(input$row_selection,collapse = ", ")))
+    if(!is.null(input$propensityChoiceUser) & length(input$row_selection)>1){
+      # also record IQR if this + other selection was selected
+      fun_LogIt(message = paste0("DataSelection - IQR treshold: ", input$propensityChoiceUser))
+      
+    }
+    # fun_LogIt(paste0(input$row_selection,))
+    
     updateTabsetPanel(session, "tabsetPanel1",
                       selected = "Pre-processing")
   })
@@ -243,6 +309,7 @@ server <- function(input,output,session){
     print(length(selected))
     print(length(samples_selected))
     
+
     
     data_output
   })
@@ -368,7 +435,7 @@ server <- function(input,output,session){
     }
     TEST<<-processedData_all
     #### Potentially some entities removed hence update the annotation table
-    print("What are the colnmaes here? X at the beginning??")
+    print("What are the colnamaes here? X at the beginning??")
     print(colnames(processedData_all[[input$omicType]]$Matrix))
     
     processedData_all[[input$omicType]]$sample_table=processedData_all[[input$omicType]]$sample_table[colnames(processedData_all[[input$omicType]]$Matrix),]
@@ -379,12 +446,35 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
     processedData_all
+    
+
   })
   
   output$Statisitcs_Data=renderText({paste0("The data has the dimensions of: ",paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", "),
                                             "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
                                             "<br","See help for details",
                                             "<br>",ifelse(any(selectedData_processed()[[input$omicType]]$Matrix<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))})
+  
+  ### Add Log Messages
+  observeEvent(input$Do_preprocessing,{
+    if(input$omicType=="Transcriptomics"){
+      tmp_logMessage = "Remove anything which row Count <= 10"
+    }else if(input$omicType=="Metabolomics"){
+      tmp_logMessage ="Remove anything which has a row median of 0"
+    }else{
+      tmp_logMessage = "none"
+    }
+    
+    fun_LogIt(message = "PreProcessing - As general remove all entities which are constant over all samples (automatically)")
+    fun_LogIt(message = paste0("PreProcessing - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage))
+    fun_LogIt(message = paste0("PreProcessing - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula),input$PreProcessing_Procedure)))
+    
+    fun_LogIt(message = paste0("PreProcessing - The resulting dimensions are:",paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", ")))
+    # Dimenesions
+  })
+  
+  
+  
   output$debug=renderText(dim(selectedData_processed()[[input$omicType]]$Matrix))
   ################################################################################################
   # Explorative Analysis - PCA
@@ -527,10 +617,24 @@ server <- function(input,output,session){
     
     output$SavePlot_pos1=downloadHandler(
       filename = function() { paste(customTitle, " ",Sys.Date(),input$file_ext_plot1,sep="") },
-      
+      # cannot get the final destination as this is a download on server side
       content = function(file){
+        print(file)
         ggsave(file,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
+        
+        on.exit({
+          print(getwd())
+          TEST=paste0(getwd(),"/www/",paste(customTitle, " ",Sys.Date(),input$file_ext_plot1,sep=""))
+          ggsave(TEST,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
+          
+          # Add Log Messages
+          fun_LogIt(message = paste0("PCA - The following PCA-plot is colored after: ", input$coloring_options))
+          fun_LogIt(message = paste0("PCA - ![PCA](",TEST,")"))
+        })
       }
+      
+      ## Log File
+      
       
     )
     
