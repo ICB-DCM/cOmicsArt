@@ -148,15 +148,21 @@ server <- function(input,output,session){
     }
     
     if(class(data_input[[input$omicType]])[1]!="SummarizedExperiment"){
-      ## Lets Make a SummarizedExperment Object for reproducibility and further usage
-      data_input[[input$omicType]]=SummarizedExperiment(assays  = data_input[[input$omicType]]$Matrix,
+      ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
+      data_input[[paste0(input$omicType,"_SumExp")]]=SummarizedExperiment(assays  = data_input[[input$omicType]]$Matrix,
                                                         rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
                                                         colData = data_input[[input$omicType]]$sample_table)
 
     }
+    # Due to Object change a  lot needs to be changed Downstream! For the moment revert back to "original" obj
+    # data_input[[input$omicType]]=list(type=as.character(input$omicType),
+    #                                   Matrix=as.data.frame(assay(SummarizedExperiment)),
+    #                                   sample_table=as.data.frame(colData(tmp)),
+    #                                   annotation_rows=as.data.frame(rowData(tmp)))
+    # 
+    
     data_input
   })
-  
   
   print("Data Input done")
   
@@ -167,14 +173,13 @@ server <- function(input,output,session){
   observe({
     req(data_input_shiny())
     print(input$omicType)
-    print(class(data_input_shiny()[[input$omicType]]))
     # Row
     output$providedRowAnnotationTypes_ui=renderUI({
       req(data_input_shiny())
       selectInput(
         inputId = "providedRowAnnotationTypes",
         label = "Which annotation type do you want to select on?",
-        choices = c(names(data_input_shiny()[[input$omicType]])),
+        choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
         multiple = F
       )
     })
@@ -469,7 +474,7 @@ server <- function(input,output,session){
     fun_LogIt(message = paste0("PreProcessing - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage))
     fun_LogIt(message = paste0("PreProcessing - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula),input$PreProcessing_Procedure)))
     
-    fun_LogIt(message = paste0("PreProcessing - The resulting dimensions are:",paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", ")))
+    fun_LogIt(message = paste0("PreProcessing - The resulting dimensions are: ",paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", ")))
     # Dimenesions
   })
   
@@ -629,12 +634,10 @@ server <- function(input,output,session){
           
           # Add Log Messages
           fun_LogIt(message = paste0("PCA - The following PCA-plot is colored after: ", input$coloring_options))
+          ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))))
           fun_LogIt(message = paste0("PCA - ![PCA](",TEST,")"))
         })
       }
-      
-      ## Log File
-      
       
     )
     
@@ -658,6 +661,15 @@ server <- function(input,output,session){
       
       content = function(file){
         ggsave(file,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
+        
+        on.exit({
+          tmp_filename=paste0(getwd(),"/www/",paste(customTitle, " ",Sys.Date(),input$file_ext_Scree,sep=""))
+          ggsave(tmp_filename,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
+          
+          # Add Log Messages
+          fun_LogIt(message = paste0("ScreePlot - The scree Plot shows the Variance explained per Principle Component"))
+          fun_LogIt(message = paste0("ScreePlot - ![ScreePlot](",tmp_filename,")"))
+        })
       }
       
     )
@@ -667,9 +679,9 @@ server <- function(input,output,session){
     LoadingsDF=data.frame(entitie=rownames(pca$rotation),Loading=pca$rotation[,input$x_axis_selection])
     #LoadingsDF$Loading=scale(LoadingsDF$Loading)
     LoadingsDF=LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
-    LoadingsDF=rbind(LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF)-input$bottomSlider),],LoadingsDF[1:input$topSlider,])
-    LoadingsDF$entitie=factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
-    
+    LoadingsDF=rbind(LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF)-input$bottomSlider),],LoadingsDF[input$topSlider:1,])
+    #LoadingsDF$entitie=factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
+
     plotOut=ggplot(LoadingsDF,aes(x=Loading,y=entitie))+
       geom_col(aes(fill=Loading))+
       scale_fill_gradient2(low="#277d6a",mid="white",high="grey")+
@@ -684,6 +696,16 @@ server <- function(input,output,session){
       
       content = function(file){
         ggsave(file,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings))
+        
+        on.exit({
+          tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.Date(),input$file_ext_Loadings,sep=""))
+          ggsave(tmp_filename,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings))
+          
+          # Add Log Messages
+          fun_LogIt(message = paste0("LoadingsPCA - Loadings plot for Principle Component: ",input$x_axis_selection))
+          fun_LogIt(message = paste0("LoadingsPCA - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
+          fun_LogIt(message = paste0("LoadingsPCA - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
+        })
       }
       
     )
@@ -775,7 +797,7 @@ server <- function(input,output,session){
       data2Volcano= selectedData_processed()[[input$omicType]]$Matrix
       if(any(data2Volcano==0)){
         #macht es mehr sinn nur die nullen + eps zu machen oder lieber alle daten punkte + eps?
-        #data2Volcano=data2Volcano+10^-15
+        #data2Volcano=data2Volcano+10^-15  => Log(data +1)
       }
       print(dim(data2Volcano))
       report<-data2Volcano
@@ -793,6 +815,16 @@ server <- function(input,output,session){
         
         content = function(file){
           ggsave(file,plot=VolcanoPlot,device = gsub("\\.","",input$file_ext_Volcano))
+          
+          on.exit({
+            
+            tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.Date(),input$file_ext_Volcano,sep="")))
+            ggsave(tmp_filename,plot=VolcanoPlot,device = gsub("\\.","",input$file_ext_Volcano))
+            
+            # Add Log Messages
+            fun_LogIt(message = paste0("VOLCANO - Underlying Volcano Comparison: ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat))
+            fun_LogIt(message = paste0("VOLCANO - ![VOLCANO](",tmp_filename,")"))
+          })
         }
         
       )
