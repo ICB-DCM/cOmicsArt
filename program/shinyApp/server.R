@@ -1239,6 +1239,9 @@ server <- function(input,output,session){
 
          
           fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",input$row_selection_options))
+          if(any(input$row_selection_options=="rowAnno_based")){
+            fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",input$anno_options_heatmap," :",input$row_anno_options_heatmap))
+          }
           if(!is.null(input$TopK)){
             fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",input$TopK))
             fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",input$row_selection_options))
@@ -1263,7 +1266,6 @@ server <- function(input,output,session){
         
       }
     )
-    
     
     
     output$SaveGeneList_Heatmap=downloadHandler(
