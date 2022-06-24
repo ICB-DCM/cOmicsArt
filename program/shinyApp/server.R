@@ -106,7 +106,7 @@ server <- function(input,output,session){
   data_output<-list()
   observeEvent(input$refresh1,{
     omicType_selected=input$omicType
-    fun_LogIt(paste0("DataInput - Uploaded Omic Type: ",input$omicType))
+    fun_LogIt(paste0("**DataInput** - Uploaded Omic Type: ",input$omicType))
     
     if(!(isTruthy(input$data_preDone) |(isTruthy(input$data_matrix1)&isTruthy(input$data_sample_anno1)&isTruthy(input$data_row_anno1)))){
       output$debug=renderText("The Upload has failed, or you haven't uploaded anything yet")
@@ -116,7 +116,7 @@ server <- function(input,output,session){
         output$debug=renderText({"<font color=\"#00851d\"><b>Upload successful</b></font>"})
         if(isTruthy(input$data_preDone)){
           # precomplied set used
-          fun_LogIt(paste0("DataInput - The used data was precompiled. Filename: \n\t",input$data_preDone$name))
+          fun_LogIt(paste0("**DataInput** - The used data was precompiled. Filename: \n\t",input$data_preDone$name))
         }else{
           # 3 sets uploaded # bit harder to get to actual data path... TO DO
           fun_LogIt(paste0("The following data was used: \n\t",input$data_matrix1$name,"\n\t",input$data_sample_anno1$name,"\n\t",input$data_row_anno1$name))
@@ -241,7 +241,7 @@ server <- function(input,output,session){
     output$NextPanel_ui=renderUI({
       actionButton(inputId = "NextPanel",label = "Start the Journey",width = "100%",icon = icon("fas fa-angle-double-right"))
     })
-    fun_LogIt(message = paste0("DataInput - The raw data dimensions are:",paste0(dim(data_input_shiny()[[input$omicType]]$Matrix),collapse = ", ")))
+    fun_LogIt(message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input_shiny()[[input$omicType]]$Matrix),collapse = ", ")))
     
   })
   
@@ -250,13 +250,13 @@ server <- function(input,output,session){
     # input$propensityChoiceUser (conditional!)
     # input$providedSampleAnnotationTypes
     # input$sample_selection
-    fun_LogIt(message = "DataSelection - The following selection was conducted:")
+    fun_LogIt(message = "**DataSelection** - The following selection was conducted:")
     print(length(input$sample_selection))
-    fun_LogIt(message = paste0("DataSelection - Samples:\n\t DataSelection - based on: ",input$providedSampleAnnotationTypes,": ",paste(input$sample_selection,collapse = ", ")))
-    fun_LogIt(message = paste0("DataSelection - Entities:\n\t DataSelection - based on: ",input$providedRowAnnotationTypes,": ",paste(input$row_selection,collapse = ", ")))
+    fun_LogIt(message = paste0("**DataSelection** - Samples:\n\t DataSelection - based on: ",input$providedSampleAnnotationTypes,": ",paste(input$sample_selection,collapse = ", ")))
+    fun_LogIt(message = paste0("**DataSelection** - Entities:\n\t DataSelection - based on: ",input$providedRowAnnotationTypes,": ",paste(input$row_selection,collapse = ", ")))
     if(!is.null(input$propensityChoiceUser) & length(input$row_selection)>1){
       # also record IQR if this + other selection was selected
-      fun_LogIt(message = paste0("DataSelection - IQR treshold: ", input$propensityChoiceUser))
+      fun_LogIt(message = paste0("**DataSelection** - IQR treshold: ", input$propensityChoiceUser))
       
     }
     # fun_LogIt(paste0(input$row_selection,))
@@ -469,12 +469,11 @@ server <- function(input,output,session){
     }else{
       tmp_logMessage = "none"
     }
+    fun_LogIt(message = "**PreProcessing** - As general remove all entities which are constant over all samples (automatically)")
+    fun_LogIt(message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage))
+    fun_LogIt(message = paste0("**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula),input$PreProcessing_Procedure)))
     
-    fun_LogIt(message = "PreProcessing - As general remove all entities which are constant over all samples (automatically)")
-    fun_LogIt(message = paste0("PreProcessing - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage))
-    fun_LogIt(message = paste0("PreProcessing - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula),input$PreProcessing_Procedure)))
-    
-    fun_LogIt(message = paste0("PreProcessing - The resulting dimensions are: ",paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", ")))
+    fun_LogIt(message = paste0("**PreProcessing** - The resulting dimensions are: ",paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", ")))
     # Dimenesions
   })
   
@@ -633,9 +632,9 @@ server <- function(input,output,session){
           ggsave(TEST,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
           
           # Add Log Messages
-          fun_LogIt(message = paste0("PCA - The following PCA-plot is colored after: ", input$coloring_options))
+          fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
           ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))))
-          fun_LogIt(message = paste0("PCA - ![PCA](",TEST,")"))
+          fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
         })
       }
       
@@ -667,8 +666,8 @@ server <- function(input,output,session){
           ggsave(tmp_filename,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
           
           # Add Log Messages
-          fun_LogIt(message = paste0("ScreePlot - The scree Plot shows the Variance explained per Principle Component"))
-          fun_LogIt(message = paste0("ScreePlot - ![ScreePlot](",tmp_filename,")"))
+          fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
+          fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
         })
       }
       
@@ -702,9 +701,9 @@ server <- function(input,output,session){
           ggsave(tmp_filename,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings))
           
           # Add Log Messages
-          fun_LogIt(message = paste0("LoadingsPCA - Loadings plot for Principle Component: ",input$x_axis_selection))
-          fun_LogIt(message = paste0("LoadingsPCA - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
-          fun_LogIt(message = paste0("LoadingsPCA - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
+          fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",input$x_axis_selection))
+          fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
+          fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
         })
       }
       
@@ -822,8 +821,8 @@ server <- function(input,output,session){
             ggsave(tmp_filename,plot=VolcanoPlot,device = gsub("\\.","",input$file_ext_Volcano))
             
             # Add Log Messages
-            fun_LogIt(message = paste0("VOLCANO - Underlying Volcano Comparison: ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat))
-            fun_LogIt(message = paste0("VOLCANO - ![VOLCANO](",tmp_filename,")"))
+            fun_LogIt(message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat))
+            fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
           })
         }
         
@@ -1028,21 +1027,23 @@ server <- function(input,output,session){
       hide(id = "row_anno_options_heatmap",anim = T)
     }
   })
-  
+
   
   toListen2Heatmap <- reactive({
     list(input$Do_Heatmap,
          input$cluster_cols,
          input$cluster_rows,
          input$row_anno_options,
-         input$anno_options,
-         input$row_selection_options)
+         input$anno_options#,
+         #input$row_selection_options
+         )
   })
   
   heatmap_genelist <- eventReactive(toListen2Heatmap(),{
     req(input$omicType,input$row_selection_options,input$anno_options)
     req(selectedData_processed())
     print("Heatmap on selected Data")
+
     ### atm raw data plotted
     data2Plot<-selectedData_processed()
     colorTheme=c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
@@ -1228,6 +1229,38 @@ server <- function(input,output,session){
       
       content = function(file){
         save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
+        
+        on.exit({
+          
+          tmp_filename=paste0(getwd(),"/www/",paste(paste(customTitleHeatmap, " ",Sys.Date(),input$file_ext_Heatmap,sep="")))
+          save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
+          
+          # Add Log Messages
+
+         
+          fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",input$row_selection_options))
+          if(!is.null(input$TopK)){
+            fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",input$TopK))
+            fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",input$row_selection_options))
+            # either based on LFC or on pVal
+          }
+          fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",input$anno_options))
+          fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",input$row_anno_options))
+          if(input$cluster_cols==TRUE){
+            fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
+          }
+          if(input$cluster_rows==TRUE){
+            fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
+          }
+          
+          if(input$LFC_toHeatmap==TRUE){
+            fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
+            fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",input$sample_annotation_types_cmp_heatmap,": ",input$Groups2Compare_ref_heatmap," vs ",input$Groups2Compare_ctrl_heatmap))
+          }
+          
+          fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
+        })
+        
       }
     )
     
@@ -1256,8 +1289,10 @@ server <- function(input,output,session){
                       selected = "Enrichment Analysis")
     tmp_selection<<-"heatmap_genes"
   })
-  
-  output$Options_selected_out_3=renderText({paste0("The number of selected entities: ",length(heatmap_genelist()))})
+  observeEvent(input$Do_Heatmap,{
+    output$Options_selected_out_3=renderText({paste0("The number of selected entities: ",length((heatmap_genelist())))})
+    
+  })
   
   ################################################################################################
   # Single Gene Visualisations
@@ -1436,7 +1471,7 @@ server <- function(input,output,session){
       }
     }
     if(input$GeneSet2Enrich=="heatmap_genes"){
-      geneSetChoice_tmp=heatmap_genelist()
+      geneSetChoice_tmp=isolate(heatmap_genelist())
     }
     geneSetChoice_tmp
   })
