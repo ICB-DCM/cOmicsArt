@@ -249,18 +249,18 @@ ui <- shiny::fluidPage(
                                     uiOutput("sample_annotation_types_cmp_ui"),
                                     uiOutput("Groups2Compare_ref_ui"),
                                     uiOutput("Groups2Compare_treat_ui"),
-                                    switchInput(
-                                      inputId="get_entire_table",
-                                      label="show next to LFCs also the raw data that was used to calculate",
-                                      inline=T,
-                                      size="mini"
-                                    ),
+                                    
                                     actionButton(inputId = "Do_Volcano",
                                                  label = "Do Volcano Plot",
                                                  icon("fas fa-laptop-code")),
                                     hr(style = "border-top: 1px solid #000000;"),
                                     uiOutput("psig_threhsold_ui"),
-                                    uiOutput("lfc_threshold_ui")),
+                                    uiOutput("lfc_threshold_ui"),
+                                    switchInput(
+                                      inputId="get_entire_table",
+                                      label="show next to LFCs also the raw data that was used to calculate",
+                                      inline=T
+                                    )),
                        
                        mainPanel(
                          tabsetPanel(
@@ -461,7 +461,7 @@ ui <- shiny::fluidPage(
               )
 
   ),
-  absolutePanel("Brought to you by Lea Seep", bottom = 0, left = 0, fixed = TRUE)
+  absolutePanel("Brought to you by Lea Seep", bottom = 0, left = 10, fixed = TRUE)
 )
 
 # Wrap your UI with secure_app
