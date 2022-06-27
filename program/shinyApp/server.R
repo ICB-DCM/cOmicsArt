@@ -690,7 +690,7 @@ server <- function(input,output,session){
           
           # Add Log Messages
           fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
-          ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))))
+          ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print("Args!"))
           fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
         })
       }
