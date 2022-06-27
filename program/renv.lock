@@ -384,10 +384,10 @@
     },
     "R.methodsS3": {
       "Package": "R.methodsS3",
-      "Version": "1.8.1",
+      "Version": "1.8.2",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "4bf6453323755202d5909697b6f7c109",
+      "Hash": "278c286fd6e9e75d0c2e8f731ea445c8",
       "Requirements": []
     },
     "R.oo": {
@@ -463,10 +463,10 @@
     },
     "RcppArmadillo": {
       "Package": "RcppArmadillo",
-      "Version": "0.11.1.1.0",
+      "Version": "0.11.2.0.0",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "631929e53829901562986c504f86104b",
+      "Hash": "1d3c02a90401734e893954c7f8f92f3e",
       "Requirements": [
         "Rcpp"
       ]
@@ -788,10 +788,10 @@
     },
     "car": {
       "Package": "car",
-      "Version": "3.0-13",
+      "Version": "3.1-0",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "69e00596e08b7f64e5a7d16447bec44d",
+      "Hash": "afd3f5c7d144f00d05db8e7701af7829",
       "Requirements": [
         "MASS",
         "abind",
@@ -825,13 +825,13 @@
     },
     "clusterProfiler": {
       "Package": "clusterProfiler",
-      "Version": "4.4.2",
+      "Version": "4.4.3",
       "Source": "Bioconductor",
       "git_url": "https://git.bioconductor.org/packages/clusterProfiler",
       "git_branch": "RELEASE_3_15",
-      "git_last_commit": "4097794",
-      "git_last_commit_date": "2022-06-05",
-      "Hash": "1bb912b6e8e676c8ea18bd049fa3a25b",
+      "git_last_commit": "0367ca2",
+      "git_last_commit_date": "2022-06-13",
+      "Hash": "a893a86f12606ccc64843d5b1ad1cab8",
       "Requirements": [
         "AnnotationDbi",
         "DOSE",
@@ -1011,12 +1011,13 @@
       "Package": "enrichplot",
       "Version": "1.16.1",
       "Source": "Bioconductor",
+      "RemoteType": "bioconductor",
       "Remotes": "YuLab-SMU/tidydr",
       "git_url": "https://git.bioconductor.org/packages/enrichplot",
       "git_branch": "RELEASE_3_15",
       "git_last_commit": "cff77b6",
       "git_last_commit_date": "2022-05-04",
-      "Hash": "784df85d54c1b0ae4c0fbcaaab3ac112",
+      "Hash": "9584113050add1bf63522e9638d95ce4",
       "Requirements": [
         "DOSE",
         "GOSemSim",
@@ -1341,12 +1342,13 @@
       "Package": "ggtree",
       "Version": "3.4.0",
       "Source": "Bioconductor",
+      "RemoteType": "bioconductor",
       "Remotes": "GuangchuangYu/treeio",
       "git_url": "https://git.bioconductor.org/packages/ggtree",
       "git_branch": "RELEASE_3_15",
       "git_last_commit": "23f08a3",
       "git_last_commit_date": "2022-04-26",
-      "Hash": "d177d1ae1d0a1d725031bc9da9774e23",
+      "Hash": "04572487a803db1af787216dcd96761b",
       "Requirements": [
         "ape",
         "aplot",
@@ -1503,10 +1505,10 @@
     },
     "igraph": {
       "Package": "igraph",
-      "Version": "1.3.1",
+      "Version": "1.3.2",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "820595efd173f9bac4ea76c1be007299",
+      "Hash": "48e890b2ccaeb5cdce18f14781ae76d6",
       "Requirements": [
         "Matrix",
         "magrittr",
@@ -1777,6 +1779,15 @@
       "Version": "3.15.0",
       "Source": "Bioconductor",
       "Hash": "ea73036cd4946b4577e0aa9e51d0a61b",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "org.Mm.eg.db": {
+      "Package": "org.Mm.eg.db",
+      "Version": "3.15.0",
+      "Source": "Bioconductor",
+      "Hash": "ad876508bf40966eaad1a0e89a83d522",
       "Requirements": [
         "AnnotationDbi"
       ]
