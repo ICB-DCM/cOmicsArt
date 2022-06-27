@@ -24,6 +24,7 @@ library(shinycssloaders)
 library(ggpubr)
 library(org.Mm.eg.db)
 library(jsonlite)
+library(rmarkdown)
 
 options(repos = BiocManager::repositories())
 options(spinner.color="#1c8a3b", spinner.color.background="#ffffff", spinner.size=2)
@@ -88,7 +89,22 @@ ui <- shiny::fluidPage(
   div(style = "display:inline-block; float:right", actionButton(inputId = "Quit_App",label="Quit App",class = "btn-secondary")), 
   titlePanel("Omics-Analysis")%>% helper(type = "markdown",content="Inital_help",size="l",colour = "red",style="zoom: 500%;"),
   #actionLink(inputId = "Quit_App",label="Quit App",class = "btn-secondary"),
-  a(href="Report.md", "Download Report", download=NA, target="_blank"),
+  #a(href="Report.md", "Download Report (as md)", download=NA, target="_blank"),
+  actionLink(inputId = "DownloadReport",label = "Download Report (as pdf)"),
+  #downloadLink("DownloadReport",label="Download Report (as pdf)") ,
+  
+  # a(href="Report.pdf", "Download Report (as pdf)", download=NA, target="_blank",.renderHook = function(x){
+  #   print(getwd())
+  #   if(file.exists("./www/Report.md")){
+  #     rmarkdown::render("./www/Report.md","pdf_document")
+  #     a(href="Report.pdf", "Download Report (as pdf)", download=NA, target="_blank")
+  #   }else{
+  #     a(href="Report.md", "Download Report (as pdf)", download=NA, target="_blank")
+  #   }
+  #   }
+  #   ),
+    
+                                                                                                                           
   shinyjs::useShinyjs(),
   tabsetPanel(id = "tabsetPanel1",
               #textOutput('debug', container = pre),

@@ -45,6 +45,29 @@ server <- function(input,output,session){
   }
   
   observe_helpers()
+  
+  ##################
+  # Download Report pdf
+  ##################
+  observeEvent(input$DownloadReport,{
+    if(file.exists("./www/Report.md")){
+      show_toast("Generating Report....please wait",
+                 type = "info",
+                 position = "top",
+                 timerProgressBar = TRUE,
+                 width = "30%")
+          rmarkdown::render("./www/Report.md","pdf_document")
+          showModal(modalDialog(
+            tags$h4(a(href="Report.pdf", "Download report", download=NA, target="_blank")),
+            footer=tagList(
+          modalButton('Return')
+        )))
+        }else{
+           warning("No Report File yet! Do something first")
+          output$debug=renderText({"<font color=\"#FF0000\"><b>No Report File yet! Do something first</b></font>"})
+        }
+  })
+  
   #session$allowReconnect(TRUE) # To allow Reconnection wiht lost Session, potential
   # security issue + more than one user issues potentially ?! Thats why further security
   # what if complete new start (should have button for this ?!)
@@ -63,7 +86,7 @@ server <- function(input,output,session){
     showModal(modalDialog(
       tags$h4('You can download the complete report by clicking on the link'),
       footer=tagList(
-        a(href="Report.md", "Downlaod report", download=NA, target="_blank"),
+        a(href="Report.pdf", "Downlaod report", download=NA, target="_blank"),
         actionButton(inputId = "Done",label = "Done"),
         modalButton('Cancel')
       )
@@ -547,7 +570,6 @@ server <- function(input,output,session){
     req(input$omicType,input$row_selection,input$x_axis_selection,input$y_axis_selection,input$coloring_options)
     
     print("PCA analysis on pre-selected data")
-    browser()
     # here insert your analysis code which gets the selectedData as input
     # output should be a plot, other reactive input$... vars can be added
     # do custom title depedning on analysis and the selected data!
