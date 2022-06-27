@@ -4,23 +4,23 @@
     "Repositories": [
       {
         "Name": "BioCsoft",
-        "URL": "https://bioconductor.org/packages/3.14/bioc"
+        "URL": "https://bioconductor.org/packages/3.15/bioc"
       },
       {
         "Name": "BioCann",
-        "URL": "https://bioconductor.org/packages/3.14/data/annotation"
+        "URL": "https://bioconductor.org/packages/3.15/data/annotation"
       },
       {
         "Name": "BioCexp",
-        "URL": "https://bioconductor.org/packages/3.14/data/experiment"
+        "URL": "https://bioconductor.org/packages/3.15/data/experiment"
       },
       {
         "Name": "BioCworkflows",
-        "URL": "https://bioconductor.org/packages/3.14/workflows"
+        "URL": "https://bioconductor.org/packages/3.15/workflows"
       },
       {
         "Name": "BioCbooks",
-        "URL": "https://bioconductor.org/packages/3.14/books"
+        "URL": "https://bioconductor.org/packages/3.15/books"
       },
       {
         "Name": "CRAN",
@@ -1011,13 +1011,12 @@
       "Package": "enrichplot",
       "Version": "1.16.1",
       "Source": "Bioconductor",
-      "RemoteType": "bioconductor",
       "Remotes": "YuLab-SMU/tidydr",
       "git_url": "https://git.bioconductor.org/packages/enrichplot",
       "git_branch": "RELEASE_3_15",
       "git_last_commit": "cff77b6",
       "git_last_commit_date": "2022-05-04",
-      "Hash": "9584113050add1bf63522e9638d95ce4",
+      "Hash": "784df85d54c1b0ae4c0fbcaaab3ac112",
       "Requirements": [
         "DOSE",
         "GOSemSim",
@@ -1342,13 +1341,12 @@
       "Package": "ggtree",
       "Version": "3.4.0",
       "Source": "Bioconductor",
-      "RemoteType": "bioconductor",
       "Remotes": "GuangchuangYu/treeio",
       "git_url": "https://git.bioconductor.org/packages/ggtree",
       "git_branch": "RELEASE_3_15",
       "git_last_commit": "23f08a3",
       "git_last_commit_date": "2022-04-26",
-      "Hash": "04572487a803db1af787216dcd96761b",
+      "Hash": "d177d1ae1d0a1d725031bc9da9774e23",
       "Requirements": [
         "ape",
         "aplot",
@@ -1730,10 +1728,10 @@
     },
     "nlme": {
       "Package": "nlme",
-      "Version": "3.1-157",
+      "Version": "3.1-158",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "dbca60742be0c9eddc5205e5c7ca1f44",
+      "Hash": "9469aeaeddf4f48a7ac70877d0b7ba36",
       "Requirements": [
         "lattice"
       ]
@@ -2108,6 +2106,25 @@
       "Repository": "CRAN",
       "Hash": "04884d9a75d778aca22c7154b8333ec9",
       "Requirements": []
+    },
+    "rmarkdown": {
+      "Package": "rmarkdown",
+      "Version": "2.14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "31b60a882fabfabf6785b8599ffeb8ba",
+      "Requirements": [
+        "bslib",
+        "evaluate",
+        "htmltools",
+        "jquerylib",
+        "jsonlite",
+        "knitr",
+        "stringr",
+        "tinytex",
+        "xfun",
+        "yaml"
+      ]
     },
     "rprojroot": {
       "Package": "rprojroot",
@@ -2504,6 +2521,16 @@
         "tidyr",
         "tidyselect",
         "yulab.utils"
+      ]
+    },
+    "tinytex": {
+      "Package": "tinytex",
+      "Version": "0.40",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e7b654da5e77bc4e5435a966329cd25f",
+      "Requirements": [
+        "xfun"
       ]
     },
     "treeio": {
