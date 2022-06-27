@@ -33,6 +33,17 @@ server <- function(input,output,session){
   jokesDF <- jokesDF[nchar(jokesDF$Joke)>0 & nchar(jokesDF$Joke)<180,]
   print("Hello Shiny")
   
+  #### Clean Up
+  list.files(pattern = "mmu.*.png")
+  # create www folder if not present
+  if(dir.exists("www")){
+    setwd("www")
+    print(list.files())
+    file.remove(list.files())
+    print("Removed old Report files for fresh start")
+    setwd("..")
+  }
+  
   observe_helpers()
   #session$allowReconnect(TRUE) # To allow Reconnection wiht lost Session, potential
   # security issue + more than one user issues potentially ?! Thats why further security
@@ -413,13 +424,12 @@ server <- function(input,output,session){
       if(input$PreProcessing_Procedure=="log10"){
         # add small eps to 0 + check if strictly positive
         if(any(processedData_all[[input$omicType]]$Matrix<0)){
-          output$debug=renderText({"Negative entries, cannot take log10!! Choose differen pre-processing"})
+          output$Statisitcs_Data=renderText({"Negative entries, cannot take log10!! Choose differen pre-processing"})
           req(FALSE)
         }
         if(any(processedData_all[[input$omicType]]$Matrix==0)){
-          #macht es mehr sinn nur die nullen + eps zu machen oder lieber alle daten punkte + eps?
-          # Makes problems!!!
-          #processedData_all[[input$omicType]]$Matrix=processedData_all[[input$omicType]]$Matrix+10^-15
+          
+          processedData=as.data.frame(log10(processedData_all[[input$omicType]]$Matrix+1))
         }
         processedData=as.data.frame(log10(processedData_all[[input$omicType]]$Matrix))
         #head(processedData)
@@ -457,6 +467,7 @@ server <- function(input,output,session){
   
   output$Statisitcs_Data=renderText({paste0("The data has the dimensions of: ",paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", "),
                                             "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
+                                            "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
                                             "<br","See help for details",
                                             "<br>",ifelse(any(selectedData_processed()[[input$omicType]]$Matrix<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))})
   
@@ -553,17 +564,36 @@ server <- function(input,output,session){
     percentVar <- round(100 * explVar, digits=1)
     # Define data for plotting
     pcaData <- data.frame(pca$x,selectedData_processed()[[input$omicType]]$sample_table)
-    pcaData[,input$coloring_options]=as.factor(pcaData[,input$coloring_options])
-    
-    print(levels(pcaData[,input$coloring_options]))
-    if(length(levels(pcaData[,input$coloring_options]))>8){
+    continiousColors=F
+    if(is.double(pcaData[,input$coloring_options])){
+      print("color Option is numeric! automatically binned into 10 bins") 
+      pcaData[,input$coloring_options]=(cut_interval(pcaData[,input$coloring_options],n=10))
+      continiousColors=T
+    }else{
+      pcaData[,input$coloring_options]=as.factor(pcaData[,input$coloring_options])
       
-      pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
-                                      y = pcaData[,input$y_axis_selection],
-                                      color=pcaData[,input$coloring_options],
-                                      label=global_ID)) +
-        geom_point(size =3)+
-        scale_color_discrete(name = input$coloring_options)
+      print(levels(pcaData[,input$coloring_options]))
+      
+    }
+     if(length(levels(pcaData[,input$coloring_options]))>8){
+       if(continiousColors){
+         colorTheme=viridis::viridis(10)
+         
+         pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
+                                         y = pcaData[,input$y_axis_selection],
+                                         color=pcaData[,input$coloring_options],
+                                         label=global_ID)) +
+           geom_point(size =3)+
+           scale_color_manual(name = input$coloring_options,values=colorTheme)
+       }else{
+         pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
+                                         y = pcaData[,input$y_axis_selection],
+                                         color=pcaData[,input$coloring_options],
+                                         label=global_ID)) +
+           geom_point(size =3)+
+           scale_color_discrete(name = input$coloring_options)
+       }
+     
     }else{
       colorTheme=c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
       
@@ -679,7 +709,7 @@ server <- function(input,output,session){
     #LoadingsDF$Loading=scale(LoadingsDF$Loading)
     LoadingsDF=LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
     LoadingsDF=rbind(LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF)-input$bottomSlider),],LoadingsDF[input$topSlider:1,])
-    #LoadingsDF$entitie=factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
+    LoadingsDF$entitie=factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
 
     plotOut=ggplot(LoadingsDF,aes(x=Loading,y=entitie))+
       geom_col(aes(fill=Loading))+
@@ -1340,7 +1370,6 @@ server <- function(input,output,session){
   })
   
 
-  
   observeEvent(input$singleGeneGo,{
     print(input$Select_Gene)
     # Select data for the gene based on gene Selection & group Selection

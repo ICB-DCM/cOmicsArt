@@ -335,8 +335,10 @@ ui <- shiny::fluidPage(
                        mainPanel(
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("100%"),
                                      #plotOutput("PCA_final_gg"),
-                                     plotOutput("HeatmapPlot")%>% withSpinner(type=8)),
-                         textOutput('Options_selected_out_3', container = pre)%>% withSpinner(type=8),
+                                     plotOutput("HeatmapPlot")
+                                     #%>% withSpinner(type=8,color = getOption("spinner.color", default = "#b8cee0"))
+                                     ),
+                         textOutput('Options_selected_out_3', container = pre) %>% withSpinner(type=8),
                          
                          downloadButton("SaveGeneList_Heatmap",label="Save genes shown in Heatmap as list"),
                          
