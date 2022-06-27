@@ -552,7 +552,11 @@ server <- function(input,output,session){
     # output should be a plot, other reactive input$... vars can be added
     # do custom title depedning on analysis and the selected data!
     # somehow smart way with Plot positions ? (props radio button)+ checking if in certain plots are plots before over writing (?)
-    customTitle=paste0("PCA - ",input$omicType,"-",paste0("entities:",input$row_selection,collapse = "_"),"-samples",ifelse(input$sample_selection!="all",paste0(" (with: ",paste(input$sample_selection,collapse = ", "),")"),""),"-preprocessing: ",input$PreProcessing_Procedure)
+    customTitle=paste0("PCA - ",input$omicType,"-",
+                       paste0("entities:",input$row_selection,collapse = "_"),
+                       "-samples",ifelse(any(input$sample_selection!="all"),
+                                         paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),"")
+                       ,"-preprocessing: ",input$PreProcessing_Procedure)
     print(customTitle)
     plotPosition="PCA_plot"
     
