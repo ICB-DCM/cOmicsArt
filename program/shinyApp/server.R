@@ -547,6 +547,7 @@ server <- function(input,output,session){
     req(input$omicType,input$row_selection,input$x_axis_selection,input$y_axis_selection,input$coloring_options)
     
     print("PCA analysis on pre-selected data")
+    browser()
     # here insert your analysis code which gets the selectedData as input
     # output should be a plot, other reactive input$... vars can be added
     # do custom title depedning on analysis and the selected data!
@@ -645,7 +646,7 @@ server <- function(input,output,session){
     }
     
     #Some identify the current active tab and then specifcy the correct plot to it
-    
+
     output[["PCA_plot"]] <- renderPlotly({ggplotly(pca_plot_final,
                                                    tooltip = "global_ID",legendgroup="color")})
     
