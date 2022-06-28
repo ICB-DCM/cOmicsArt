@@ -203,6 +203,7 @@ server <- function(input,output,session){
           error=function(cond){
             print("Error! Names From SampleTable and Matrix do not fit")
             output$debug=renderText({"<font color=\"#FF0000\"><b>Your Sample Names from the Metadata Sheet and from your Matrix do not match!! Data cannot be loaded</b></font>"})
+            reset('metadataInput')
             return(NULL)
           }
         )
