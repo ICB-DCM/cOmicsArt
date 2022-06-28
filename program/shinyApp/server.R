@@ -9,6 +9,7 @@ server <- function(input,output,session){
   source("fun_entitieSelection.R",local = T)
   source("fun_savePheatmap.R",local = T)
   source("fun_LogIt.R",local = T)
+  source("fun_readInSampleTable.R",local=T)
   
   
   ################################################################################################
@@ -110,23 +111,27 @@ server <- function(input,output,session){
   # Ui Section
   output$data_matrix1_ui=renderUI({
     shiny::fileInput(inputId = "data_matrix1",
-                     label = "Upload data Matrix (rows entities, cols samples)",
-                     accept = c(".csv"))
+                     label = HTML("Upload data Matrix <br/> (rows entities, cols samples)"),
+                     accept = c(".csv"),
+                     width = "80%")
   })
   output$data_sample_anno1_ui=renderUI({
     shiny::fileInput("data_sample_anno1",
-                     "Upload sample Annotation (rows must be samples)",
-                     accept = c(".csv"))
+                     HTML("Upload sample Annotation <br/> (rows must be samples)"),
+                     accept = c(".csv"),
+                     width = "80%")
   })
   output$data_row_anno1_ui=renderUI({
     shiny::fileInput("data_row_anno1",
-                     "Upload entities Annotation Matrix (rows must be entities)",
-                     accept = c(".csv"))
+                     HTML("Upload entities Annotation Matrix <br/> (rows must be entities)"),
+                     accept = c(".csv"),
+                     width = "80%")
   })
   output$data_preDone_ui=renderUI({
     shiny::fileInput("data_preDone",
                      HTML("Load precompiled data <br/> (saved in this procedure or type SummarizedExperiment)"),
-                     accept = ".RDS")
+                     accept = ".RDS",
+                     width = "80%")
   })
   output$SaveInputAsList=downloadHandler(
     filename = function() {
@@ -172,12 +177,39 @@ server <- function(input,output,session){
   data_input_shiny=eventReactive(input$refresh1,{
     # What Input is required? (raw data)
     if(!isTruthy(input$data_preDone)){
-      shiny::req(input$data_matrix1,input$data_sample_anno1,input$data_row_anno1)
-     
-      data_input[[input$omicType]]<-list(type=as.character(input$omicType),
-                                         Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F),
-                                         sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1,check.names = F),
-                                         annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F))
+      # Include here, that the sample anno can be replaced by metadatashett
+      # potentially this will be extended to all of the fields
+      shiny::req(input$data_matrix1,input$data_row_anno1)
+      
+      if(isTruthy(input$data_sample_anno1)){
+        data_input[[input$omicType]]<-list(type=as.character(input$omicType),
+                                           Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F),
+                                           sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1,check.names = F),
+                                           annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F))
+        
+      }else if(isTruthy(input$metadataInput)){
+       
+        tmp_sampleTable=fun_readInSampleTable(input$metadataInput$datapath)
+        # ensure the correct order (done in Matrix odering the cols) 
+        # props gives an error if wrongly
+        tryCatch(
+          {
+            data_input[[input$omicType]]<-list(type=as.character(input$omicType),
+                                               Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F)[,rownames(my_data_tmp)],
+                                               sample_table=tmp_sampleTable,
+                                               annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F))
+            return(data_input)
+          },
+          error=function(cond){
+            print("Error! Names From SampleTable and Matrix do not fit")
+            output$debug=renderText({"<font color=\"#FF0000\"><b>Your Sample Names from the Metadata Sheet and from your Matrix do not match!! Data cannot be loaded</b></font>"})
+            return(NULL)
+          }
+        )
+
+         }
+      
+      
       ## Include here possible Data Checks
     }else{
       # Precompiled list

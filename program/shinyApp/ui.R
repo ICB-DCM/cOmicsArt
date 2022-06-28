@@ -99,23 +99,8 @@ ui <- shiny::fluidPage(
     condition = 'input.element = true',
     h2(HTML('<span style="color:#E75A5A">S</span><span style="color:#E7AF5A">h</span><span style="color:#CBE75A">i</span><span style="color:#76E75A">n</span><span style="color:#5AE792">y</span><span style="color:#5AE7E7">O</span><span style="color:#5A92E7">m</span><span style="color:#765AE7">i</span><span style="color:#CB5AE7">c</span><span style="color:#E75AAF">s</span>')),
   ),
-  #actionLink(inputId = "Quit_App",label="Quit App",class = "btn-secondary"),
-  #a(href="Report.md", "Download Report (as md)", download=NA, target="_blank"),
   actionLink(inputId = "DownloadReport",label = "Download Report (as html)"),
-  #downloadLink("DownloadReport",label="Download Report (as pdf)") ,
-  
-  # a(href="Report.pdf", "Download Report (as pdf)", download=NA, target="_blank",.renderHook = function(x){
-  #   print(getwd())
-  #   if(file.exists("./www/Report.md")){
-  #     rmarkdown::render("./www/Report.md","pdf_document")
-  #     a(href="Report.pdf", "Download Report (as pdf)", download=NA, target="_blank")
-  #   }else{
-  #     a(href="Report.md", "Download Report (as pdf)", download=NA, target="_blank")
-  #   }
-  #   }
-  #   ),
-    
-                                                                                                                           
+
   shinyjs::useShinyjs(),
   tabsetPanel(id = "tabsetPanel1",
               #textOutput('debug', container = pre),
@@ -156,7 +141,8 @@ ui <- shiny::fluidPage(
                          ),
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
                                      uiOutput("data_row_anno1_ui"),
-                                     uiOutput("data_preDone_ui")%>% helper(type = "markdown",content="SummarizedExp_help")
+                                     uiOutput("data_preDone_ui")%>%helper(type = "markdown",content="SummarizedExp_help")
+
                          ),
                          hr(style = "border-top: 2px solid #cbedca;"),
                          uiOutput("metadataInput_ui"),
