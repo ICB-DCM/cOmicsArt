@@ -1373,7 +1373,12 @@ server <- function(input,output,session){
       
       content = function(file){
         write.csv(heatmap_genelist(), file)
+        on.exit({
+          fun_LogIt(message = paste0("**HEATMAP** - The corresponding entitie list was saved by the user"))
+          fun_LogIt(message = paste0("**HEATMAP** - Number of entities: ",length(heatmap_genelist())))
+        })
       }
+      
     )
     
     if(is.null(data2HandOver)){
@@ -1480,24 +1485,26 @@ server <- function(input,output,session){
         xlab(colnames(GeneData)[-ncol(GeneData)])+
         ylab(input$type_of_data_gene)+
         theme_bw()
-      
-      if(length(levels(GeneData$anno)==2)){
+      testMethod="t.test"
+
+      if(length(levels(GeneData$anno))==2){
         #t.test (option for Kruskal Wallas as non-paramettric?)
         my_comparisons=list(c(levels(GeneData$anno)[1],levels(GeneData$anno)[2]))
-        testMethod="t.test"
+        #testMethod="t.test"
         P_boxplots=P_boxplots+
           stat_compare_means(comparisons=my_comparisons,method = testMethod,label = "p.signif")
-      }else if(length(levels(GeneData$anno)>2)){
+      }else if(length(levels(GeneData$anno))>2){
         P_boxplots=P_boxplots+
           geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
           stat_compare_means(method = "anova")+        # Add global annova p-value
-          stat_compare_means(label = "p.signif", method = "t.test",
+          stat_compare_means(label = "p.signif", method = testMethod,
                              ref.group = ".all.", hide.ns = TRUE)    
       }
+      
+      # add points +geom_point(alpha=0.4,pch=4)
       output$SingleGenePlot=renderPlot(P_boxplots)
 
     }else{
-      
       output$SingleGenePlot=renderPlot(ggplot() + theme_void())
     }
     customTitle_boxplot=paste0("Boxplot_",input$type_of_data_gene,"_data_",colnames(GeneData)[-ncol(GeneData)])
@@ -1508,6 +1515,18 @@ server <- function(input,output,session){
       
       content = function(file){
         ggsave(file,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
+        on.exit({
+          tmp_filename=paste0(getwd(),"/www/",customTitle_boxplot)
+          ggsave(tmp_filename,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
+          
+          fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",input$Select_Gene))
+          fun_LogIt(message = paste0("**Single Entitie** - Values shown are: ",input$type_of_data_gene, " data input"))
+          fun_LogIt(message = paste0("**Single Entitie** - Values are grouped for all levels within: ",input$accross_condition, " (",paste0(levels(GeneData$anno),collapse = ";"),")"))
+          fun_LogIt(message = paste0("**Single Entitie** - Test for differences: ",testMethod))
+          ifelse(length(levels(GeneData$anno))>2,fun_LogIt(message = paste0("**Single Entitie** - ANOVA performed, reference group is the overall mean")),fun_LogIt(message = paste0("**Single Entitie** - pairwise tested")))
+          
+          fun_LogIt(message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")"))
+        })
       }
     )
     
