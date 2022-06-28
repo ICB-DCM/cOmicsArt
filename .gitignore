@@ -1,10 +1,12 @@
 data/
 results/
-program/renv/*
+program/old
 .Rproj.user
 .*
-program/.*
+program/renv*
 !program/renv.lock
-!program/shinyApp/.*
-program/old
-
+!program/shinyApp
+program/shinyApp/.*md
+program/shinyApp/.*RDS
+program/shinyApp/.*png
+program/shinyApp/.*xml
