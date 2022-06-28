@@ -2,11 +2,13 @@ data/
 results/
 program/old
 .Rproj.user
+*rds
 .*
 *Rproj
 program/renv/
 !program/shinyApp
-program/.*RDS
+program/*.RDS
+program/*.Rmd
 program/*.md
 program/shinyApp/*.md
 program/shinyApp/*.RDS

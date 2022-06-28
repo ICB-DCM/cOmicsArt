@@ -133,6 +133,7 @@ ui <- shiny::fluidPage(
                        ),
                        
                        mainPanel(
+                         
                          h3("Upload section"),
                          
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
