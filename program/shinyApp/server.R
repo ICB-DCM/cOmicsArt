@@ -135,6 +135,11 @@ server <- function(input,output,session){
       saveRDS(data_input_shiny(),file)
     }
   )
+  output$metadataInput_ui=renderUI({
+    shiny::fileInput("metadataInput",
+                     "Upload your Meta Data Sheet (currently replaces sample annotation",
+                     accept = c(".xlsx"),buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),width = "100%")
+  })
   
   data_input<-list()
   data_output<-list()
@@ -181,19 +186,24 @@ server <- function(input,output,session){
       #ENSURE DATA SAMPLE TABLE AND IN MATRIX AS WELL AS ROW ANNO ARE IN THE SAME ORDER!!!
     }
     
-    if(class(data_input[[input$omicType]])[1]!="SummarizedExperiment"){
+    if(class(data_input[[input$omicType]])[1]!="SummarizedExperiment" ){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
       data_input[[paste0(input$omicType,"_SumExp")]]=SummarizedExperiment(assays  = data_input[[input$omicType]]$Matrix,
                                                         rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
                                                         colData = data_input[[input$omicType]]$sample_table)
 
     }
-    # Due to Object change a  lot needs to be changed Downstream! For the moment revert back to "original" obj
+    
+    # For Loading summarizedExperiemnt make sure to to more extensive check 
+    # Option1 comcing from complete outside
+    # Option2 coming from inside here
+    
+    # # Due to Object change a  lot needs to be changed Downstream! For the moment revert back to "original" obj
     # data_input[[input$omicType]]=list(type=as.character(input$omicType),
     #                                   Matrix=as.data.frame(assay(SummarizedExperiment)),
     #                                   sample_table=as.data.frame(colData(tmp)),
     #                                   annotation_rows=as.data.frame(rowData(tmp)))
-    # 
+
     
     data_input
   })
