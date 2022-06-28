@@ -25,6 +25,7 @@ library(ggpubr)
 library(org.Mm.eg.db)
 library(jsonlite)
 library(rmarkdown)
+library(tinytex)
 
 options(repos = BiocManager::repositories())
 options(spinner.color="#1c8a3b", spinner.color.background="#ffffff", spinner.size=2)
