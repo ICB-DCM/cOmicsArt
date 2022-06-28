@@ -3,10 +3,11 @@ results/
 program/old
 .Rproj.user
 .*
+.*Rproj
 program/renv/
 !program/shinyApp
 program/.*RDS
-program/shinyApp/.*.md
-program/shinyApp/.*.RDS
-program/shinyApp/.*.png
-program/shinyApp/.*.xml
+program/shinyApp/*.md
+program/shinyApp/*.RDS
+program/shinyApp/*.png
+program/shinyApp/*.xml
