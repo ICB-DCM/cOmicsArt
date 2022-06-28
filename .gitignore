@@ -2,6 +2,7 @@ data/
 results/
 program/renv/*
 .Rproj.user
+.*
 program/.*
 !program/renv.lock
 !program/shinyApp/.*
