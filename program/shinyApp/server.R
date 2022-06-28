@@ -56,9 +56,9 @@ server <- function(input,output,session){
                  position = "top",
                  timerProgressBar = TRUE,
                  width = "30%")
-          rmarkdown::render("./www/Report.md","pdf_document")
+          rmarkdown::render("./www/Report.md","html_document")
           showModal(modalDialog(
-            tags$h4(a(href="Report.pdf", "Download report", download=NA, target="_blank")),
+            tags$h4(a(href="Report.html", "Download report", download=NA, target="_blank")),
             footer=tagList(
           modalButton('Return')
         )))
@@ -86,7 +86,7 @@ server <- function(input,output,session){
     showModal(modalDialog(
       tags$h4('You can download the complete report by clicking on the link'),
       footer=tagList(
-        a(href="Report.pdf", "Downlaod report", download=NA, target="_blank"),
+        a(href="Report.html", "Downlaod report", download=NA, target="_blank"),
         actionButton(inputId = "Done",label = "Done"),
         modalButton('Cancel')
       )
@@ -1391,7 +1391,7 @@ server <- function(input,output,session){
     selectInput(
       inputId = "Select_Gene",
       label = "Select the Gene from the list",
-      choices = rownames(data_input_shiny()[[input$omicType]]$Matrix)[1:10], # for TESTING restricting to top 10
+      choices = rownames(data_input_shiny()[[input$omicType]]$Matrix), # for TESTING restricting to top 10
       multiple = F 
     )
   })
