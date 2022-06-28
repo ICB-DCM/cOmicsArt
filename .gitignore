@@ -3,10 +3,10 @@ results/
 program/old
 .Rproj.user
 .*
-program/renv*
-!program/renv.lock
+program/renv/
 !program/shinyApp
-program/shinyApp/.*md
-program/shinyApp/.*RDS
-program/shinyApp/.*png
-program/shinyApp/.*xml
+program/.*RDS
+program/shinyApp/.*.md
+program/shinyApp/.*.RDS
+program/shinyApp/.*.png
+program/shinyApp/.*.xml
