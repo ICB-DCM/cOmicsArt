@@ -150,6 +150,7 @@ server <- function(input,output,session){
   data_output<-list()
   observeEvent(input$refresh1,{
     omicType_selected=input$omicType
+    fun_LogIt("## Data Input")
     fun_LogIt(paste0("**DataInput** - Uploaded Omic Type: ",input$omicType))
     
     if(!(isTruthy(input$data_preDone) |(isTruthy(input$data_matrix1)&isTruthy(input$data_sample_anno1)&isTruthy(input$data_row_anno1)))){
@@ -327,6 +328,7 @@ server <- function(input,output,session){
     # input$propensityChoiceUser (conditional!)
     # input$providedSampleAnnotationTypes
     # input$sample_selection
+    fun_LogIt("## Data Selection")
     fun_LogIt(message = "**DataSelection** - The following selection was conducted:")
     print(length(input$sample_selection))
     fun_LogIt(message = paste0("**DataSelection** - Samples:\n\t DataSelection - based on: ",input$providedSampleAnnotationTypes,": ",paste(input$sample_selection,collapse = ", ")))
@@ -490,7 +492,8 @@ server <- function(input,output,session){
       if(input$PreProcessing_Procedure=="log10"){
         # add small eps to 0 + check if strictly positive
         if(any(processedData_all[[input$omicType]]$Matrix<0)){
-          output$Statisitcs_Data=renderText({"Negative entries, cannot take log10!! Choose differen pre-processing"})
+          output$Statisitcs_Data=renderText({"Negative entries, cannot take log10!!"})
+          
           req(FALSE)
         }
         if(any(processedData_all[[input$omicType]]$Matrix==0)){
@@ -546,6 +549,7 @@ server <- function(input,output,session){
     }else{
       tmp_logMessage = "none"
     }
+    fun_LogIt("## Pre Processing")
     fun_LogIt(message = "**PreProcessing** - As general remove all entities which are constant over all samples (automatically)")
     fun_LogIt(message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage))
     fun_LogIt(message = paste0("**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula),input$PreProcessing_Procedure)))
@@ -732,6 +736,7 @@ server <- function(input,output,session){
           ggsave(TEST,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
           
           # Add Log Messages
+          fun_LogIt("## PCA")
           fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
           ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print("Args!"))
           fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
@@ -762,10 +767,11 @@ server <- function(input,output,session){
         ggsave(file,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
         
         on.exit({
-          tmp_filename=paste0(getwd(),"/www/",paste(customTitle, " ",Sys.Date(),input$file_ext_Scree,sep=""))
+          tmp_filename=paste0(getwd(),"/www/",paste("Scree",customTitle, " ",Sys.Date(),input$file_ext_Scree,sep=""))
           ggsave(tmp_filename,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
           
           # Add Log Messages
+          fun_LogIt("### PCA ScreePlot")
           fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
           fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
         })
@@ -801,6 +807,7 @@ server <- function(input,output,session){
           ggsave(tmp_filename,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings))
           
           # Add Log Messages
+          fun_LogIt("### PCA Loadings")
           fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",input$x_axis_selection))
           fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
           fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
@@ -909,6 +916,10 @@ server <- function(input,output,session){
       output[[plotPosition]] <- renderPlotly({ggplotly(VolcanoPlot,
                                                        tooltip="probename",legendgroup="color")})
       
+      
+      # not nice coding here as LFC now needs to be calculated twice ! Change for performance enhancement
+      LFCTable=getLFC(data2Volcano,ctrl_samples_idx,comparison_samples_idx,input$get_entire_table)
+      
       output$SavePlot_Volcano=downloadHandler(
         filename = function() { paste("VOLCANO_",Sys.Date(),input$file_ext_Volcano,sep="") },
         
@@ -921,16 +932,18 @@ server <- function(input,output,session){
             ggsave(tmp_filename,plot=VolcanoPlot,device = gsub("\\.","",input$file_ext_Volcano))
             
             # Add Log Messages
+            fun_LogIt("## VOLCANO")
             fun_LogIt(message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat))
             fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
+            
+            fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
+            fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "markdown")))
+            
           })
         }
         
       )
-      
-      # not nice coding here as LFC now needs to be calculated twice ! Change for performance enhancement
-      LFCTable=getLFC(data2Volcano,ctrl_samples_idx,comparison_samples_idx,input$get_entire_table)
-      
+
       output[["Volcano_table_final"]]=DT::renderDataTable({DT::datatable(
         {LFCTable},
         extensions = 'Buttons',
@@ -946,8 +959,29 @@ server <- function(input,output,session){
         class = "display"
       )})
       
+
+      DE_UP=subset(LFCTable,subset= p_adj<input$psig_threhsold && LFC>=input$lfc_threshold )
+      DE_DOWN=subset(LFCTable,subset= p_adj<input$psig_threhsold && LFC<=input$lfc_threshold )
+      
+      DE_UP=data.frame(Entities=rownames(DE_UP),status= rep("up",nrow(DE_UP)))
+      DE_Down=data.frame(Entities=rownames(DE_DOWN),status= rep("down",nrow(DE_DOWN)))
+      DE_total=rbind(DE_UP,DE_Down)
+      output$SaveDE_List=downloadHandler(
+        filename = function() { paste("DE_Genes ",input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat," vs. ",input$Groups2Compare_ref,"_",Sys.Date(),".csv",sep="") },
+        content = function(file){
+          write.csv(DE_total,file = file)
+        }
+      )
+      
+      #SendDE_Genes2Enrichment
+      
+      
     }
     
+  })
+  observeEvent(input$SendDE_Genes2Enrichment,{
+    print("Send DE Genes to Enrichment")
+    browser()
   })
   
   ################################################################################################
@@ -1333,11 +1367,11 @@ server <- function(input,output,session){
         on.exit({
           
           tmp_filename=paste0(getwd(),"/www/",paste(paste(customTitleHeatmap, " ",Sys.Date(),input$file_ext_Heatmap,sep="")))
-          save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
+          save_pheatmap(heatmap_plot,filename=tmp_filename,type=gsub("\\.","",input$file_ext_Heatmap))
           
           # Add Log Messages
 
-         
+          fun_LogIt("## HEATMAP")
           fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",input$row_selection_options))
           if(any(input$row_selection_options=="rowAnno_based")){
             fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",input$anno_options_heatmap," :",input$row_anno_options_heatmap))
@@ -1507,6 +1541,7 @@ server <- function(input,output,session){
     }else{
       output$SingleGenePlot=renderPlot(ggplot() + theme_void())
     }
+    req(GeneData)
     customTitle_boxplot=paste0("Boxplot_",input$type_of_data_gene,"_data_",colnames(GeneData)[-ncol(GeneData)])
     #print(customTitle_boxplot)
     
@@ -1515,10 +1550,11 @@ server <- function(input,output,session){
       
       content = function(file){
         ggsave(file,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
+        
         on.exit({
-          tmp_filename=paste0(getwd(),"/www/",customTitle_boxplot)
-          ggsave(tmp_filename,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
-          
+          tmp_filename=paste0(getwd(),"/www/",paste(customTitle_boxplot, " ",Sys.Date(),input$file_ext_singleGene,sep=""))
+          ggsave(filename = tmp_filename,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
+          fun_LogIt("## Single Entitie")
           fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",input$Select_Gene))
           fun_LogIt(message = paste0("**Single Entitie** - Values shown are: ",input$type_of_data_gene, " data input"))
           fun_LogIt(message = paste0("**Single Entitie** - Values are grouped for all levels within: ",input$accross_condition, " (",paste0(levels(GeneData$anno),collapse = ";"),")"))
@@ -1599,7 +1635,7 @@ server <- function(input,output,session){
   
   observeEvent(input$enrichmentGO,{
     print("Start Enrichment2")
-    
+    fun_LogIt("## ENRICHMENT")
     req(geneSetChoice())
     print("Translation needed?") # Build in check if EntrezIDs provided?!
     print(geneSetChoice())
@@ -1661,7 +1697,7 @@ server <- function(input,output,session){
             on.exit({
               tmp_filename=paste0("/www/",paste("KEGG_",Sys.Date(),input$file_ext_KEGG,sep=""))
               ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = gsub("\\.","",input$file_ext_KEGG))
-              
+              fun_LogIt("### KEGG ENRICHMENT")
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - KEGG Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
@@ -1719,7 +1755,7 @@ server <- function(input,output,session){
           on.exit({
             tmp_filename=paste0("/www/",paste("GO_",Sys.Date(),input$file_ext_GO,sep="") )
             ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
-            
+            fun_LogIt("### GO ENRICHMENT")
             fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
             fun_LogIt(message = paste0("**GO ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
             fun_LogIt(message = paste0("**GO ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
@@ -1772,7 +1808,7 @@ server <- function(input,output,session){
           on.exit({
             tmp_filename=paste0("/www/",paste("REACTOME_",Sys.Date(),input$file_ext_REACTOME,sep="") )
             ggsave(tmp_filename,plot=clusterProfiler::dotplot(REACTOME_Enrichment),device = gsub("\\.","",input$file_ext_REACTOME))
-            
+            fun_LogIt("### REACTOME ENRICHMENT")
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - REACTOME Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))

@@ -290,7 +290,12 @@ ui <- shiny::fluidPage(
                                                 NULL,
                                                 radioGroupButtons(input="file_ext_Volcano",label = "File Type:",
                                                                   choices = c(".png",".svg",".tiff",".pdf"),selected = ".png")
+                                    ),
+                                    splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
+                                                downloadButton("SaveDE_List",label="Save diff. express. entities (DE defined as your input (all red points)"),
+                                                actionButton(inputId = "SendDE_Genes2Enrichment",label = "Send DE Genes to enrichment analysis",block = F )
                                     )
+                                    
                                     ),
                            tabPanel("Volcano_table",DT::dataTableOutput("Volcano_table_final"))
                          )
