@@ -46,10 +46,14 @@ fun_LogIt=function(message="",
     write(line,file=LogfileName,append=TRUE)
   }else{
     ### Überschrift mit links zu versionen und textbausteinen (eventuell rein linken)
-    write(line,file=LogfileName)
+    # SetUp Hea
+    write(paste0("# ShinyOmics Report (",format(Sys.Date(),'%d/%m/%Y'),")"),file=LogfileName)
+    write(line,file=LogfileName,append=TRUE)
   }
   
 }
+
+#knitr::kable(head(jokes), format = "markdown")
 
 # save files in directory
 # [Text](Link)

@@ -57,7 +57,7 @@ server <- function(input,output,session){
                  position = "top",
                  timerProgressBar = TRUE,
                  width = "30%")
-          rmarkdown::render("./www/Report.md","html_document")
+          rmarkdown::render("./www/Report.md",html_document(toc = TRUE, toc_float = T ,fig_caption = T))
           showModal(modalDialog(
             tags$h4(a(href="Report.html", "Download report", download=NA, target="_blank")),
             footer=tagList(
@@ -1657,6 +1657,21 @@ server <- function(input,output,session){
           
           content = function(file){
             ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = gsub("\\.","",input$file_ext_KEGG))
+            
+            on.exit({
+              tmp_filename=paste0("/www/",paste("KEGG_",Sys.Date(),input$file_ext_KEGG,sep=""))
+              ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = gsub("\\.","",input$file_ext_KEGG))
+              
+              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - KEGG Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
+              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
+              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
+              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
+              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(resultData)))
+              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
+              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = T),],5),format = "markdown")))
+              
+            })
           }
           
         )
@@ -1700,7 +1715,24 @@ server <- function(input,output,session){
         
         content = function(file){
           ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
+          
+          on.exit({
+            tmp_filename=paste0("/www/",paste("GO_",Sys.Date(),input$file_ext_GO,sep="") )
+            ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
+            
+            fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
+            fun_LogIt(message = paste0("**GO ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
+            fun_LogIt(message = paste0("**GO ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
+            fun_LogIt(message = paste0("**GO ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
+            fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,])))
+            fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
+            fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+            fun_LogIt(message = paste0("**GO ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = T),],5),format = "markdown")))
+            
+          })
         }
+        
+        
         
       )
       output$EnrichmentResults_GO=DT::renderDataTable({DT::datatable(
@@ -1736,6 +1768,22 @@ server <- function(input,output,session){
         
         content = function(file){
           ggsave(file,plot=clusterProfiler::dotplot(REACTOME_Enrichment),device = gsub("\\.","",input$file_ext_REACTOME))
+          
+          on.exit({
+            tmp_filename=paste0("/www/",paste("REACTOME_",Sys.Date(),input$file_ext_REACTOME,sep="") )
+            ggsave(tmp_filename,plot=clusterProfiler::dotplot(REACTOME_Enrichment),device = gsub("\\.","",input$file_ext_REACTOME))
+            
+            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - REACTOME Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
+            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
+            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
+            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
+            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(REACTOME_Enrichment@result[REACTOME_Enrichment@result$p.adjust<0.05,])))
+            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - ![REACTOME ENRICHMENT](",tmp_filename,")"))
+            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - \n",knitr::kable(head(REACTOME_Enrichment@result[order(REACTOME_Enrichment@result$p.adjust,decreasing = T),],5),format = "markdown")))
+            
+          })
+          
         }
         
       )
@@ -1887,29 +1935,10 @@ server <- function(input,output,session){
     print("Done")
   })
   
-  # output$SavePlot_KeggPathwayOutput=downloadHandler(
-  #   filename = function() { paste(customTitle, " ",Sys.Date(),input$file_ext_SavePlot_KeggPathwayOutput,sep="") },
-  #
-  #   content = function(file){
-  #     ggsave(file,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_SavePlot_KeggPathwayOutput))
-  #   }
-  
-  # )
+
   
 }
 
-# server <- function(input,output,session){
-#   print("oui")
-# }
-
-# output$SavePlot_pos1=downloadHandler(
-#   filename = function() { paste(customTitle, " ",Sys.Date(),input$file_ext_plot1,sep="") },
-#   
-#   content = function(file){
-#     ggsave(file,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
-#   }
-#   
-# )
 
 
 
