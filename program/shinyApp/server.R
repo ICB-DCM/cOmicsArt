@@ -723,15 +723,29 @@ server <- function(input,output,session){
     output[["PCA_plot"]] <- renderPlotly({ggplotly(pca_plot_final,
                                                    tooltip = "global_ID",legendgroup="color")})
     
+
+    observeEvent(input$only2Report_pca,{
+      notificationID<-showNotification("Saving...",duration = 0)
+      TEST=paste0(getwd(),"/www/",paste(customTitle, " ",Sys.Date(),".png",sep=""))
+      ggsave(TEST,plot=pca_plot_final,device = "png")
+      
+      # Add Log Messages
+      fun_LogIt("## PCA")
+      fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
+      ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print("Args!"))
+      fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
+      removeNotification(notificationID)
+      showNotification("Saved!",type = "message", duration = 1)
+    })
+    
     output$SavePlot_pos1=downloadHandler(
+
       filename = function() { paste(customTitle, " ",Sys.Date(),input$file_ext_plot1,sep="") },
       # cannot get the final destination as this is a download on server side
       content = function(file){
-        print(file)
         ggsave(file,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
-        
         on.exit({
-          print(getwd())
+          
           TEST=paste0(getwd(),"/www/",paste(customTitle, " ",Sys.Date(),input$file_ext_plot1,sep=""))
           ggsave(TEST,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
           
@@ -760,6 +774,22 @@ server <- function(input,output,session){
     
     output[["Scree_Plot"]] <- renderPlotly({ggplotly(scree_plot,
                                                      tooltip = "Var",legendgroup="color")})
+    
+    observeEvent(input$only2Report_Scree_Plot,{
+      notificationID<-showNotification("Saving...",duration = 0)
+      
+      tmp_filename=paste0(getwd(),"/www/",paste("Scree",customTitle, " ",Sys.Date(),".png",sep=""))
+      ggsave(tmp_filename,plot=scree_plot,device = "png")
+      
+      # Add Log Messages
+      fun_LogIt("### PCA ScreePlot")
+      fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
+      fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
+      
+      removeNotification(notificationID)
+      showNotification("Saved!",type = "message", duration = 1)
+    })
+    
     output$SavePlot_Scree=downloadHandler(
       filename = function() { paste(customTitle, " ",Sys.Date(),input$file_ext_Scree,sep="") },
       
@@ -795,6 +825,22 @@ server <- function(input,output,session){
       theme_bw(base_size = 20)
     
     output[["PCA_Loadings_plot"]]<- renderPlot({plotOut})
+    
+    observeEvent(input$only2Report_Loadings,{
+      notificationID<-showNotification("Saving...",duration = 0)
+      
+      tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.Date(),".png",sep=""))
+      ggsave(tmp_filename,plot=plotOut,device = "png")
+      
+      # Add Log Messages
+      fun_LogIt("### PCA Loadings")
+      fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",input$x_axis_selection))
+      fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
+      fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
+      
+      removeNotification(notificationID)
+      showNotification("Saved!",type = "message", duration = 1)
+    })
     
     output$SavePlot_Loadings=downloadHandler(
       filename = function() { paste("LOADINGS_PCA_",Sys.Date(),input$file_ext_Loadings,sep="") },
@@ -920,6 +966,25 @@ server <- function(input,output,session){
       # not nice coding here as LFC now needs to be calculated twice ! Change for performance enhancement
       LFCTable=getLFC(data2Volcano,ctrl_samples_idx,comparison_samples_idx,input$get_entire_table)
       
+      observeEvent(input$only2Report_Volcano,{
+        notificationID<-showNotification("Saving...",duration = 0)
+        
+        tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.Date(),".png",sep="")))
+        ggsave(tmp_filename,plot=VolcanoPlot,device = "png")
+        
+        # Add Log Messages
+        fun_LogIt("## VOLCANO")
+        fun_LogIt(message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat))
+        fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
+        
+        fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
+        fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "markdown")))
+        
+        
+        removeNotification(notificationID)
+        showNotification("Saved!",type = "message", duration = 1)
+      })
+      
       output$SavePlot_Volcano=downloadHandler(
         filename = function() { paste("VOLCANO_",Sys.Date(),input$file_ext_Volcano,sep="") },
         
@@ -959,13 +1024,12 @@ server <- function(input,output,session){
         class = "display"
       )})
       
-
       DE_UP=subset(LFCTable,subset= p_adj<input$psig_threhsold && LFC>=input$lfc_threshold )
       DE_DOWN=subset(LFCTable,subset= p_adj<input$psig_threhsold && LFC<=input$lfc_threshold )
       
       DE_UP=data.frame(Entities=rownames(DE_UP),status= rep("up",nrow(DE_UP)))
       DE_Down=data.frame(Entities=rownames(DE_DOWN),status= rep("down",nrow(DE_DOWN)))
-      DE_total=rbind(DE_UP,DE_Down)
+      DE_total<<-rbind(DE_UP,DE_Down)
       output$SaveDE_List=downloadHandler(
         filename = function() { paste("DE_Genes ",input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat," vs. ",input$Groups2Compare_ref,"_",Sys.Date(),".csv",sep="") },
         content = function(file){
@@ -979,9 +1043,16 @@ server <- function(input,output,session){
     }
     
   })
-  observeEvent(input$SendDE_Genes2Enrichment,{
+  
+  
+  DE_genelist <- eventReactive(input$SendDE_Genes2Enrichment,{
     print("Send DE Genes to Enrichment")
-    browser()
+    DE_total$Entities
+  })
+  observeEvent(input$SendDE_Genes2Enrichment,{
+    updateTabsetPanel(session, "tabsetPanel1",
+                      selected = "Volcano Plot")
+    print(DE_genelist())
   })
   
   ################################################################################################
@@ -1358,6 +1429,45 @@ server <- function(input,output,session){
     # legend.grob <- addGrob(heatmap_plot$gtable$grob[[10]])
     
     output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
+    
+    observeEvent(input$only2Report_Heatmap,{
+      notificationID<-showNotification("Saving...",duration = 0)
+      
+      tmp_filename=paste0(getwd(),"/www/",paste(paste(customTitleHeatmap, " ",Sys.Date(),".png",sep="")))
+      save_pheatmap(heatmap_plot,filename=tmp_filename,type="png")
+      
+      # Add Log Messages
+      
+      fun_LogIt("## HEATMAP")
+      fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",input$row_selection_options))
+      if(any(input$row_selection_options=="rowAnno_based")){
+        fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",input$anno_options_heatmap," :",input$row_anno_options_heatmap))
+      }
+      if(!is.null(input$TopK)){
+        fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",input$TopK))
+        fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",input$row_selection_options))
+        # either based on LFC or on pVal
+      }
+      fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",input$anno_options))
+      fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",input$row_anno_options))
+      if(input$cluster_cols==TRUE){
+        fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
+      }
+      if(input$cluster_rows==TRUE){
+        fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
+      }
+      
+      if(input$LFC_toHeatmap==TRUE){
+        fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
+        fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",input$sample_annotation_types_cmp_heatmap,": ",input$Groups2Compare_ref_heatmap," vs ",input$Groups2Compare_ctrl_heatmap))
+      }
+      
+      fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
+      
+      removeNotification(notificationID)
+      showNotification("Saved!",type = "message", duration = 1)
+    })
+    
     output$SavePlot_Heatmap=downloadHandler(
       filename = function() { paste(customTitleHeatmap, " ",Sys.Date(),input$file_ext_Heatmap,sep="") },
       
@@ -1541,9 +1651,31 @@ server <- function(input,output,session){
     }else{
       output$SingleGenePlot=renderPlot(ggplot() + theme_void())
     }
-    req(GeneData)
+
     customTitle_boxplot=paste0("Boxplot_",input$type_of_data_gene,"_data_",colnames(GeneData)[-ncol(GeneData)])
     #print(customTitle_boxplot)
+    
+    observeEvent(input$only2Report_SingleEntities,{
+      notificationID<-showNotification("Saving...",duration = 0)
+      tmp_filename=paste0(getwd(),"/www/",paste(customTitle_boxplot, " ",Sys.Date(),".png",sep=""))
+      ggsave(filename = tmp_filename,plot=P_boxplots,device = "png")
+      fun_LogIt("## Single Entitie")
+      fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",input$Select_Gene))
+      fun_LogIt(message = paste0("**Single Entitie** - Values shown are: ",input$type_of_data_gene, " data input"))
+      fun_LogIt(message = paste0("**Single Entitie** - Values are grouped for all levels within: ",input$accross_condition, " (",paste0(levels(GeneData$anno),collapse = ";"),")"))
+      fun_LogIt(message = paste0("**Single Entitie** - Test for differences: ",testMethod))
+      if(length(levels(GeneData$anno))>2){
+        fun_LogIt(message = paste0("**Single Entitie** - ANOVA performed, reference group is the overall mean"))
+      }else{
+          fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
+      }
+      
+      fun_LogIt(message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")"))
+      
+      
+      removeNotification(notificationID)
+      showNotification("Saved!",type = "message", duration = 1)
+    })
     
     output$SavePlot_singleGene=downloadHandler(
       filename = function() { paste(customTitle_boxplot, " ",Sys.Date(),input$file_ext_singleGene,sep="") },
@@ -1559,8 +1691,12 @@ server <- function(input,output,session){
           fun_LogIt(message = paste0("**Single Entitie** - Values shown are: ",input$type_of_data_gene, " data input"))
           fun_LogIt(message = paste0("**Single Entitie** - Values are grouped for all levels within: ",input$accross_condition, " (",paste0(levels(GeneData$anno),collapse = ";"),")"))
           fun_LogIt(message = paste0("**Single Entitie** - Test for differences: ",testMethod))
-          ifelse(length(levels(GeneData$anno))>2,fun_LogIt(message = paste0("**Single Entitie** - ANOVA performed, reference group is the overall mean")),fun_LogIt(message = paste0("**Single Entitie** - pairwise tested")))
           
+          if(length(levels(GeneData$anno))>2){
+            fun_LogIt(message = paste0("**Single Entitie** - ANOVA performed, reference group is the overall mean"))
+          }else{
+            fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
+          }
           fun_LogIt(message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")"))
         })
       }
@@ -1604,6 +1740,7 @@ server <- function(input,output,session){
   geneSetChoice=reactive({
     if(input$GeneSet2Enrich=="DE_Genes"){
       # atm this is not done
+      geneSetChoice_tmp=isolate(DE_genelist())
     }
     if(input$GeneSet2Enrich=="ProvidedGeneSet"){
       if(!is.null(input$UploadedGeneSet)){
@@ -1688,6 +1825,25 @@ server <- function(input,output,session){
       }else{
         output$KEGG_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_Kegg)})
         
+        observeEvent(input$only2Report_KEGG,{
+          notificationID<-showNotification("Saving...",duration = 0)
+          
+          tmp_filename=paste0("/www/",paste("KEGG_",Sys.Date(),".png",sep=""))
+          ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = "png")
+          fun_LogIt("### KEGG ENRICHMENT")
+          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - KEGG Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
+          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
+          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
+          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
+          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(resultData)))
+          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
+          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = T),],5),format = "markdown")))
+          
+          removeNotification(notificationID)
+          showNotification("Saved!",type = "message", duration = 1)
+        })
+        
         output$SavePlot_KEGG=downloadHandler(
           filename = function() { paste("KEGG_",Sys.Date(),input$file_ext_KEGG,sep="") },
           
@@ -1746,6 +1902,27 @@ server <- function(input,output,session){
     }else{
       print("GO Enrichment Done")
       output$GO_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_GO)})
+     
+       observeEvent(input$only2Report_GO,{
+        notificationID<-showNotification("Saving...",duration = 0)
+        
+        tmp_filename=paste0("/www/",paste("GO_",Sys.Date(),".png",sep="") )
+        ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = "png")
+        fun_LogIt("### GO ENRICHMENT")
+        fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
+        fun_LogIt(message = paste0("**GO ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
+        fun_LogIt(message = paste0("**GO ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
+        fun_LogIt(message = paste0("**GO ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
+        fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,])))
+        fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
+        fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+        fun_LogIt(message = paste0("**GO ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = T),],5),format = "markdown")))
+        
+        
+        removeNotification(notificationID)
+        showNotification("Saved!",type = "message", duration = 1)
+      })
+      
       output$SavePlot_GO=downloadHandler(
         filename = function() { paste("GO_",Sys.Date(),input$file_ext_GO,sep="") },
         
@@ -1799,6 +1976,26 @@ server <- function(input,output,session){
     }else{
       print("reactome Enrichment Done")
       output$REACTOME_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_RACTOME)})
+      
+      observeEvent(input$only2Report_REACTOME,{
+        notificationID<-showNotification("Saving...",duration = 0)
+        
+        tmp_filename=paste0("/www/",paste("REACTOME_",Sys.Date(),".png",sep="") )
+        ggsave(tmp_filename,plot=clusterProfiler::dotplot(REACTOME_Enrichment),device = "png")
+        fun_LogIt("### REACTOME ENRICHMENT")
+        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - REACTOME Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
+        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
+        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
+        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
+        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(REACTOME_Enrichment@result[REACTOME_Enrichment@result$p.adjust<0.05,])))
+        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - ![REACTOME ENRICHMENT](",tmp_filename,")"))
+        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - \n",knitr::kable(head(REACTOME_Enrichment@result[order(REACTOME_Enrichment@result$p.adjust,decreasing = T),],5),format = "markdown")))
+        
+        removeNotification(notificationID)
+        showNotification("Saved!",type = "message", duration = 1)
+      })
+      
       output$SavePlot_REACTOME=downloadHandler(
         filename = function() { paste("REACTOME_",Sys.Date(),input$file_ext_REACTOME,sep="") },
         

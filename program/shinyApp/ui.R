@@ -26,6 +26,7 @@ library(org.Mm.eg.db)
 library(jsonlite)
 library(rmarkdown)
 library(tinytex)
+library(svglite)
 
 options(repos = BiocManager::repositories())
 options(spinner.color="#1c8a3b", spinner.color.background="#ffffff", spinner.size=2)
@@ -215,6 +216,10 @@ ui <- shiny::fluidPage(
                                                           textOutput('PCA_plot_Options_selected', container = pre)),
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           NULL,
+                                                          actionButton(inputId = "only2Report_pca",label="Send only to Report",class = "btn-info"),
+                                              ),
+                                              splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                                          NULL,
                                                           downloadButton("SavePlot_pos1",label="Save plot",class = "btn-info")
                                                           ),
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
@@ -233,6 +238,10 @@ ui <- shiny::fluidPage(
                                               sliderInput(inputId = "bottomSlider",label = "Top k negative Loadings",min = 1,max = 25,value = 10,step = 1),
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           NULL,
+                                                          actionButton(inputId = "only2Report_Loadings",label="Send only to Report",class = "btn-info"),
+                                              ),
+                                              splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                                          NULL,
                                                           downloadButton("SavePlot_Loadings",label="Save plot",class = "btn-info")
                                               ),
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
@@ -245,6 +254,10 @@ ui <- shiny::fluidPage(
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           plotlyOutput("Scree_Plot"),
                                                           textOutput('Scree_Plot_Options_selected_out', container = pre)),
+                                              splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                                          NULL,
+                                                          actionButton(inputId = "only2Report_Scree_Plot",label="Send only to Report",class = "btn-info"),
+                                              ),
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           NULL,
                                                           downloadButton("SavePlot_Scree",label="Save plot",class = "btn-info")
@@ -282,6 +295,10 @@ ui <- shiny::fluidPage(
                        mainPanel(
                          tabsetPanel(
                            tabPanel("Volcano_Plot",plotlyOutput("Volcano_Plot_final")%>% withSpinner(type=8),
+                                    splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                                NULL,
+                                                actionButton(inputId = "only2Report_Volcano",label="Send only to Report",class = "btn-info"),
+                                    ),
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                 NULL,
                                                 downloadButton("SavePlot_Volcano",label="Save plot",class = "btn-info")
@@ -367,6 +384,10 @@ ui <- shiny::fluidPage(
                          actionButton(inputId = "SendHeatmap2Enrichment",label = "Send genes shown to enrichment analysis",block = F ),
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                      NULL,
+                                     actionButton(inputId = "only2Report_Heatmap",label="Send only to Report",class = "btn-info"),
+                         ),
+                         splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                     NULL,
                                      downloadButton("SavePlot_Heatmap",label="Save plot",class = "btn-info")
                          ),
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
@@ -393,6 +414,10 @@ ui <- shiny::fluidPage(
                         # hidden(div(id = 'Spinner_SingleGene', plotOutput("SingleGenePlot")%>% withSpinner(type=8))),
                                   splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
                                               plotOutput("SingleGenePlot"),NULL),
+                                  splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                              NULL,
+                                              actionButton(inputId = "only2Report_SingleEntities",label="Send only to Report",class = "btn-info"),
+                                  ),
                                   splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                               NULL,
                                               downloadButton("SavePlot_singleGene",label="Save plot",class = "btn-info")
@@ -432,6 +457,10 @@ ui <- shiny::fluidPage(
                                     plotOutput("KEGG_Enrichment")%>% withSpinner(type=8),
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                 NULL,
+                                                actionButton(inputId = "only2Report_KEGG",label="Send only to Report",class = "btn-info"),
+                                    ),
+                                    splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                                NULL,
                                                 downloadButton("SavePlot_KEGG",label="Save plot",class = "btn-info")
                                     ),
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
@@ -458,6 +487,10 @@ ui <- shiny::fluidPage(
                            tabPanel("GO_Enrichment",plotOutput("GO_Enrichment"),
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                 NULL,
+                                                actionButton(inputId = "only2Report_GO",label="Send only to Report",class = "btn-info"),
+                                    ),
+                                    splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                                NULL,
                                                 downloadButton("SavePlot_GO",label="Save plot",class = "btn-info")
                                     ),
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
@@ -468,6 +501,10 @@ ui <- shiny::fluidPage(
                            ),
                            tabPanel("GO_Enrichment_table",DT::dataTableOutput("EnrichmentResults_GO")),
                            tabPanel("REACTOME_Enrichment",plotOutput("REACTOME_Enrichment"),
+                                    splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                                NULL,
+                                                actionButton(inputId = "only2Report_REACTOME",label="Send only to Report",class = "btn-info"),
+                                    ),
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                 NULL,
                                                 downloadButton("SavePlot_REACTOME",label="Save plot",class = "btn-info")
