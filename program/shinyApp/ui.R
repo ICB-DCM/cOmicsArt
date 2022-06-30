@@ -26,7 +26,7 @@ library(org.Mm.eg.db)
 library(jsonlite)
 library(rmarkdown)
 library(tinytex)
-library(svglite)
+#library(svglite)
 
 options(repos = BiocManager::repositories())
 options(spinner.color="#1c8a3b", spinner.color.background="#ffffff", spinner.size=2)
@@ -225,7 +225,7 @@ ui <- shiny::fluidPage(
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           NULL,
                                                           radioGroupButtons(input="file_ext_plot1",label = "File Type:",
-                                                                      choices = c(".png",".svg",".tiff",".pdf"),selected = ".png")
+                                                                      choices = c(".png",".tiff",".pdf"),selected = ".png")
                                                           )
                                               
                                      ),
@@ -247,7 +247,7 @@ ui <- shiny::fluidPage(
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           NULL,
                                                           radioGroupButtons(input="file_ext_Loadings",label = "File Type:",
-                                                                            choices = c(".png",".svg",".tiff",".pdf"),selected = ".png")
+                                                                            choices = c(".png",".tiff",".pdf"),selected = ".png")
                                               )
                                      ),
                                      tabPanel("Scree_Plot",
@@ -265,7 +265,7 @@ ui <- shiny::fluidPage(
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           NULL,
                                                           radioGroupButtons(input="file_ext_Scree",label = "File Type:",
-                                                                            choices = c(".png",".svg",".tiff",".pdf"),selected = ".png")
+                                                                            choices = c(".png",".tiff",".pdf"),selected = ".png")
                                               )
                                      )
                          )
@@ -306,7 +306,7 @@ ui <- shiny::fluidPage(
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                 NULL,
                                                 radioGroupButtons(input="file_ext_Volcano",label = "File Type:",
-                                                                  choices = c(".png",".svg",".tiff",".pdf"),selected = ".png")
+                                                                  choices = c(".png",".tiff",".pdf"),selected = ".png")
                                     ),
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
                                                 downloadButton("SaveDE_List",label="Save diff. express. entities (DE defined as your input (all red points)"),
@@ -393,7 +393,7 @@ ui <- shiny::fluidPage(
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                      NULL,
                                      radioGroupButtons(input="file_ext_Heatmap",label = "File Type:",
-                                                       choices = c(".png",".svg",".tiff",".pdf"),selected = ".png")
+                                                       choices = c(".png",".tiff",".pdf"),selected = ".png")
                          )
                        )
               ),
@@ -425,7 +425,7 @@ ui <- shiny::fluidPage(
                                  splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                              NULL,
                                              radioGroupButtons(input="file_ext_singleGene",label = "File Type:",
-                                                               choices = c(".png",".svg",".tiff",".pdf"),selected = ".png")))
+                                                               choices = c(".png",".tiff",".pdf"),selected = ".png")))
                        ),
               tabPanel("Enrichment Analysis", fluid = TRUE,
                        h4("Enrichment Analysis"),
@@ -466,7 +466,7 @@ ui <- shiny::fluidPage(
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                 NULL,
                                                 radioGroupButtons(input="file_ext_KEGG",label = "File Type:",
-                                                                  choices = c(".png",".svg",".tiff",".pdf"),selected = ".png")
+                                                                  choices = c(".png",".tiff",".pdf"),selected = ".png")
                                     )
                            ),
                            tabPanel("KEGG_Enrichment_table",DT::dataTableOutput("EnrichmentResults_KEGG")),
@@ -482,7 +482,7 @@ ui <- shiny::fluidPage(
                                     sliderInput("imageHeight",label="Adjust Height",min=400,max=1500,step = 20,value=640),
                                     # downloadButton("SavePlot_KeggPathwayOutput",label="Save plot"),
                                     # selectInput(input="file_ext_SavePlot_KeggPathwayOutput",label = "File Type:",
-                                    #             choices = c(".png",".svg",".tiff",".pdf"),selected = ".png"),
+                                    #             choices = c(".png",".tiff",".pdf"),selected = ".png"),
                                     imageOutput("KeggPathwayOutput_img")%>% withSpinner(type=8)),
                            tabPanel("GO_Enrichment",plotOutput("GO_Enrichment"),
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
@@ -496,7 +496,7 @@ ui <- shiny::fluidPage(
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                 NULL,
                                                 radioGroupButtons(input="file_ext_GO",label = "File Type:",
-                                                                  choices = c(".png",".svg",".tiff",".pdf"),selected = ".png")
+                                                                  choices = c(".png",".tiff",".pdf"),selected = ".png")
                                     )
                            ),
                            tabPanel("GO_Enrichment_table",DT::dataTableOutput("EnrichmentResults_GO")),
@@ -512,7 +512,7 @@ ui <- shiny::fluidPage(
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                 NULL,
                                                 radioGroupButtons(input="file_ext_REACTOME",label = "File Type:",
-                                                                  choices = c(".png",".svg",".tiff",".pdf"),selected = ".png")
+                                                                  choices = c(".png",".tiff",".pdf"),selected = ".png")
                                     )
                            ),
                            tabPanel("REACTOME_Enrichment_table",DT::dataTableOutput("EnrichmentResults_REACTOME"))
