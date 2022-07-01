@@ -91,7 +91,7 @@ ui <- shiny::fluidPage(
   
   div(style = "display:inline-block; float:right", actionButton(inputId = "Quit_App",label="Quit App",class = "btn-secondary")),
   div(style = "display:inline-block; float:right" ,helpText(" ")%>%helper(type = "markdown",content="Inital_help",size="l",colour = "red",style="zoom: 600%;")),
-  hidden(selectInput("element",label="PrideMonth?", choices = c(0,1),selected = ifelse(format(as.POSIXct(Sys.time()),"%m")=="07",1,0))),
+  hidden(selectInput("element",label="PrideMonth?", choices = c(0,1),selected = ifelse(format(as.POSIXct(Sys.time()),"%m")=="06",1,0))),
   conditionalPanel(
     condition = 'input.element == 0',
     titlePanel("ShinyOmics"),
