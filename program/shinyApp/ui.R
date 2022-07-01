@@ -105,10 +105,12 @@ ui <- shiny::fluidPage(
   shinyjs::useShinyjs(),
   tabsetPanel(id = "tabsetPanel1",
               #textOutput('debug', container = pre),
+ 
               ################################################################################
               # Tab Selection w Upload
               ################################################################################
               tabPanel("Data selection",fluid=T,
+                       
                        h4("Data Selection"),
                        
                        ################################################################################
@@ -134,9 +136,11 @@ ui <- shiny::fluidPage(
                        ),
                        
                        mainPanel(
-                         
                          h3("Upload section"),
-                         
+                         splitLayout(style = "border: 1px solid silver:", cellWidths = c("95%","5%"),
+                                     NULL,
+                                     actionButton(inputId = "Reset",label="Reset"),
+                         ),
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
                                      uiOutput("data_matrix1_ui"),
                                      uiOutput("data_sample_anno1_ui")

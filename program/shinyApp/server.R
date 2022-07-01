@@ -27,6 +27,7 @@ server <- function(input,output,session){
   #   reactiveValuesToList(res_auth)
   # })
   
+  
   ###########################################
   # Load external Data
   ##########################################
@@ -35,7 +36,7 @@ server <- function(input,output,session){
   print("Hello Shiny")
   
   #### Clean Up
-  list.files(pattern = "mmu.*.png")
+  # list.files(pattern = "mmu.*.png")
   # create www folder if not present
   if(dir.exists("www")){
     setwd("www")
@@ -109,6 +110,16 @@ server <- function(input,output,session){
   ################################################################################################
   print("Data Upload")
   # Ui Section
+  
+  observeEvent(input$Reset,{
+    print("Jip")
+    shinyjs::reset(id="data_matrix1")
+    shinyjs::reset(id="data_sample_anno1")
+    shinyjs::reset(id="data_row_anno1")
+    shinyjs::reset(id="data_preDone")
+    shinyjs::reset(id="metadataInput")
+  })
+  
   output$data_matrix1_ui=renderUI({
     shiny::fileInput(inputId = "data_matrix1",
                      label = HTML("Upload data Matrix <br/> (rows entities, cols samples)"),
