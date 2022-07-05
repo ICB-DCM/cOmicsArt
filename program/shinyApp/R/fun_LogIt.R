@@ -7,6 +7,7 @@ fun_LogIt=function(message="",
                    jokes=jokesDF){
   # sophisticated "Where to place log file"
   # how to name it ?
+
   LogfileName="www/Report.md" # DO NOT CHANGE THE NAME!
   line=message
   workingDir=getwd()
@@ -44,11 +45,13 @@ fun_LogIt=function(message="",
   line=paste0(line,"\n")
   if(file.exists(LogfileName)){
     write(line,file=LogfileName,append=TRUE)
+    return(NULL)
   }else{
     ### Überschrift mit links zu versionen und textbausteinen (eventuell rein linken)
     # SetUp Hea
     write(paste0("# ShinyOmics Report (",format(Sys.Date(),'%d/%m/%Y'),")"),file=LogfileName)
     write(line,file=LogfileName,append=TRUE)
+    return(NULL)
   }
   
 }
