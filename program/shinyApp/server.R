@@ -1135,6 +1135,13 @@ server <- function(input,output,session){
     )
   })
   
+  output$rowWiseScaled_ui=renderUI({
+    req(data_input_shiny())
+    checkboxInput(inputId = "rowWiseScaled",
+                  label = "row-wise scaling?",
+                  value = FALSE)
+  })
+  
   observe({
     if(input$Selection_show_LFC){
       output$sample_annotation_types_cmp_heatmap_ui=renderUI({
@@ -1251,7 +1258,8 @@ server <- function(input,output,session){
          input$cluster_cols,
          input$cluster_rows,
          input$row_anno_options,
-         input$anno_options#,
+         input$anno_options,
+         input$rowWiseScaled
          #input$row_selection_options
          )
   })
@@ -1260,7 +1268,7 @@ server <- function(input,output,session){
     req(input$omicType,input$row_selection_options,input$anno_options)
     req(selectedData_processed())
     print("Heatmap on selected Data")
-
+    browser()
     ### atm raw data plotted
     data2Plot<-selectedData_processed()
     colorTheme=c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
@@ -1391,6 +1399,7 @@ server <- function(input,output,session){
                                show_colnames=TRUE,
                                cluster_cols = input$cluster_cols,
                                cluster_rows = FALSE, # input$cluster_rows,
+                               scale=ifelse(input$rowWiseScaled,"row","none"),
                                # cutree_cols = 4,
                                #fontsize = font.size,
                                annotation_col = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F],
@@ -1422,6 +1431,7 @@ server <- function(input,output,session){
                              show_colnames=TRUE,
                              cluster_cols = input$cluster_cols,
                              cluster_rows = clusterRowspossible,
+                             scale=ifelse(input$rowWiseScaled,"row","none"),
                              # cutree_cols = 4,
                              #fontsize = font.size,
                              annotation_col = annotation_col,

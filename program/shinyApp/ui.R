@@ -103,11 +103,11 @@ ui <- shiny::fluidPage(
     h2(HTML('<span style="color:#E75A5A">S</span><span style="color:#E7AF5A">h</span><span style="color:#CBE75A">i</span><span style="color:#76E75A">n</span><span style="color:#5AE792">y</span><span style="color:#5AE7E7">O</span><span style="color:#5A92E7">m</span><span style="color:#765AE7">i</span><span style="color:#CB5AE7">c</span><span style="color:#E75AAF">s</span>')),
   ),
   actionLink(inputId = "DownloadReport",label = "Download Report (as html)"),
-
+  
   shinyjs::useShinyjs(),
   tabsetPanel(id = "tabsetPanel1",
               #textOutput('debug', container = pre),
- 
+              
               ################################################################################
               # Tab Selection w Upload
               ################################################################################
@@ -151,7 +151,7 @@ ui <- shiny::fluidPage(
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
                                      uiOutput("data_row_anno1_ui"),
                                      uiOutput("data_preDone_ui")%>%helper(type = "markdown",content="SummarizedExp_help")
-
+                                     
                          ),
                          hr(style = "border-top: 2px solid #cbedca;"),
                          uiOutput("metadataInput_ui"),
@@ -166,9 +166,9 @@ ui <- shiny::fluidPage(
               tabPanel("Pre-processing",fluid=T,
                        h4("Data Pre-processing")%>% helper(type = "markdown",content="PreProcessing_help"),
                        sidebarPanel(id="sidebar2",
-                       #########################################
-                       # Do Center & scaling + potential other pre-processing stuff
-                       #########################################
+                                    #########################################
+                                    # Do Center & scaling + potential other pre-processing stuff
+                                    #########################################
                                     h5("Pre-Processing Procedures"), # this could be enhanced with personalized procedures
                                     radioButtons(inputId = "PreProcessing_Procedure",
                                                  label = "Pre-Processing Procedures",
@@ -196,10 +196,10 @@ ui <- shiny::fluidPage(
               tabPanel("Projection to lower Dimensions", fluid=T,
                        h4("Projection to lower Dimensions"),
                        sidebarPanel(id="sidebar3",
-                       #########################################
-                       # explorative analysis
-                       # PCA , UMAP
-                       #########################################
+                                    #########################################
+                                    # explorative analysis
+                                    # PCA , UMAP
+                                    #########################################
                                     h4("Explorative Analysis"),
                                     
                                     actionButton(inputId = "Do_PCA",label = "Perform PCA",icon("fas fa-laptop-code")),
@@ -228,12 +228,12 @@ ui <- shiny::fluidPage(
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           NULL,
                                                           downloadButton("SavePlot_pos1",label="Save plot",class = "btn-info")
-                                                          ),
+                                              ),
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           NULL,
                                                           radioGroupButtons(input="file_ext_plot1",label = "File Type:",
-                                                                      choices = c(".png",".tiff",".pdf"),selected = ".png")
-                                                          )
+                                                                            choices = c(".png",".tiff",".pdf"),selected = ".png")
+                                              )
                                               
                                      ),
                                      tabPanel("PCA_Loadings",
@@ -280,9 +280,9 @@ ui <- shiny::fluidPage(
               tabPanel("Volcano Plot",fluid=T,
                        h4("Volcano Plot"),
                        sidebarPanel(id="sidebar4",
-                       #########################################
-                       # VOLCANO
-                       #########################################
+                                    #########################################
+                                    # VOLCANO
+                                    #########################################
                                     uiOutput("sample_annotation_types_cmp_ui"),
                                     uiOutput("Groups2Compare_ref_ui"),
                                     uiOutput("Groups2Compare_treat_ui"),
@@ -320,16 +320,16 @@ ui <- shiny::fluidPage(
                                                 actionButton(inputId = "SendDE_Genes2Enrichment",label = "Send DE Genes to enrichment analysis",block = F )
                                     )
                                     
-                                    ),
+                           ),
                            tabPanel("Volcano_table",DT::dataTableOutput("Volcano_table_final"))
                          )
                        )),
               tabPanel("Heatmap",fluid=T,
                        h4("Heatmap"),
                        sidebarPanel(id="sidebar5",
-                       #########################################
-                       # Heatmap
-                       #########################################
+                                    #########################################
+                                    # Heatmap
+                                    #########################################
                                     uiOutput("row_selection_options_ui"),
                                     uiOutput("LFC_toHeatmap_ui"),
                                     h5("Further row selection (LFC based)"),
@@ -354,8 +354,10 @@ ui <- shiny::fluidPage(
                                       label = "show options",
                                       size="mini",value=T
                                     ),
+                                    
                                     uiOutput("anno_options_ui"),
                                     uiOutput("row_anno_options_ui"),
+                                    uiOutput("rowWiseScaled_ui"),
                                     uiOutput("cluster_cols_ui"),
                                     uiOutput("cluster_rows_ui"),
                                     hr(style = "border-top: 1px solid #858585;"),
@@ -383,7 +385,7 @@ ui <- shiny::fluidPage(
                                      #plotOutput("PCA_final_gg"),
                                      plotOutput("HeatmapPlot")
                                      #%>% withSpinner(type=8,color = getOption("spinner.color", default = "#b8cee0"))
-                                     ),
+                         ),
                          textOutput('Options_selected_out_3', container = pre) %>% withSpinner(type=8),
                          
                          downloadButton("SaveGeneList_Heatmap",label="Save genes shown in Heatmap as list"),
@@ -418,22 +420,22 @@ ui <- shiny::fluidPage(
                          hr(style = "border-top: 1px solid #858585;")
                        ),
                        mainPanel(
-                        # hidden(div(id = 'Spinner_SingleGene', plotOutput("SingleGenePlot")%>% withSpinner(type=8))),
-                                  splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
-                                              plotOutput("SingleGenePlot"),NULL),
-                                  splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
-                                              NULL,
-                                              actionButton(inputId = "only2Report_SingleEntities",label="Send only to Report",class = "btn-info"),
-                                  ),
-                                  splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
-                                              NULL,
-                                              downloadButton("SavePlot_singleGene",label="Save plot",class = "btn-info")
-                                  ),
-                                 splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
-                                             NULL,
-                                             radioGroupButtons(input="file_ext_singleGene",label = "File Type:",
-                                                               choices = c(".png",".tiff",".pdf"),selected = ".png")))
-                       ),
+                         # hidden(div(id = 'Spinner_SingleGene', plotOutput("SingleGenePlot")%>% withSpinner(type=8))),
+                         splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
+                                     plotOutput("SingleGenePlot"),NULL),
+                         splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                     NULL,
+                                     actionButton(inputId = "only2Report_SingleEntities",label="Send only to Report",class = "btn-info"),
+                         ),
+                         splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                     NULL,
+                                     downloadButton("SavePlot_singleGene",label="Save plot",class = "btn-info")
+                         ),
+                         splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
+                                     NULL,
+                                     radioGroupButtons(input="file_ext_singleGene",label = "File Type:",
+                                                       choices = c(".png",".tiff",".pdf"),selected = ".png")))
+              ),
               tabPanel("Enrichment Analysis", fluid = TRUE,
                        h4("Enrichment Analysis"),
                        #########################################
@@ -445,9 +447,9 @@ ui <- shiny::fluidPage(
                          #uiOutput("GeneSet2Enrich_ui"),
                          
                          selectInput(inputId = "GeneSet2Enrich",
-                                       label = "Choose a gene set to hand over to enrich",
-                                       choices=c("DE_Genes","ProvidedGeneSet","heatmap_genes"),
-                                       selected = "DE_Genes"),
+                                     label = "Choose a gene set to hand over to enrich",
+                                     choices=c("DE_Genes","ProvidedGeneSet","heatmap_genes"),
+                                     selected = "DE_Genes"),
                          
                          uiOutput("UploadedGeneSet_ui"),
                          selectInput("UniverseOfGene","Select an Universe for enrichment (default is clusterProfilers default",choices = c("default","allPresentGenes_after_pre_process","allPresentGenes_before_pre_process"),selected = "default"),
@@ -527,7 +529,7 @@ ui <- shiny::fluidPage(
                          )
                        )
               )
-
+              
   ),
   absolutePanel("Brought to you by Lea Seep", bottom = 0, left = 10, fixed = TRUE)
 )
