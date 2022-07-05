@@ -509,9 +509,9 @@ server <- function(input,output,session){
         }
         if(any(processedData_all[[input$omicType]]$Matrix==0)){
           
-          processedData=as.data.frame(log10(processedData_all[[input$omicType]]$Matrix+1))
+          processedData=as.data.frame(log10((processedData_all[[input$omicType]]$Matrix)+1))
         }
-        processedData=as.data.frame(log10(processedData_all[[input$omicType]]$Matrix))
+        processedData=as.data.frame(log10(processedData_all[[input$omicType]]$Matrix+1))
         #head(processedData)
         processedData_all[[input$omicType]]$Matrix=processedData
       }
@@ -663,18 +663,19 @@ server <- function(input,output,session){
      if(length(levels(pcaData[,input$coloring_options]))>8){
        if(continiousColors){
          colorTheme=viridis::viridis(10)
-         
          pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
                                          y = pcaData[,input$y_axis_selection],
                                          color=pcaData[,input$coloring_options],
-                                         label=global_ID)) +
+                                         label=global_ID,
+                                         global_ID=global_ID)) +
            geom_point(size =3)+
            scale_color_manual(name = input$coloring_options,values=colorTheme)
        }else{
          pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
                                          y = pcaData[,input$y_axis_selection],
                                          color=pcaData[,input$coloring_options],
-                                         label=global_ID)) +
+                                         label=global_ID,
+                                         global_ID=global_ID)) +
            geom_point(size =3)+
            scale_color_discrete(name = input$coloring_options)
        }
@@ -730,9 +731,9 @@ server <- function(input,output,session){
     }
     
     #Some identify the current active tab and then specifcy the correct plot to it
-
+    
     output[["PCA_plot"]] <- renderPlotly({ggplotly(pca_plot_final,
-                                                   tooltip = "global_ID",legendgroup="color")})
+                                                   tooltip = ifelse("global_ID"%in%colnames(pca_plot_final$data),"global_ID","all"),legendgroup="color")})
     
 
     observeEvent(input$only2Report_pca,{

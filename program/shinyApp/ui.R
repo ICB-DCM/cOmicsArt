@@ -26,6 +26,8 @@ library(org.Mm.eg.db)
 library(jsonlite)
 library(rmarkdown)
 library(tinytex)
+library(testthat)
+library(shinytest)
 #library(svglite)
 
 options(repos = BiocManager::repositories())
@@ -137,9 +139,10 @@ ui <- shiny::fluidPage(
                        
                        mainPanel(
                          h3("Upload section"),
-                         splitLayout(style = "border: 1px solid silver:", cellWidths = c("95%","5%"),
+                         splitLayout(style = "border: 1px solid silver:", cellWidths = c("85%","10%","5%"),
                                      NULL,
                                      actionButton(inputId = "Reset",label="Reset"),
+                                     NULL
                          ),
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
                                      uiOutput("data_matrix1_ui"),
