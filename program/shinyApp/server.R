@@ -157,6 +157,26 @@ server <- function(input,output,session){
                      accept = c(".xlsx"),buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),width = "100%")
   })
   
+  observeEvent(input$omicType,{
+    if(input$omicType=="Transcriptomics"){
+      output$AddGeneSymbols_ui=renderUI({
+        checkboxInput(inputId = "AddGeneSymbols", label="Adding gene Annotation?",value=F)
+        
+      })
+      output$AddGeneSymbols_organism_ui=renderUI({
+        selectInput(inputId = "AddGeneSymbols_organism", 
+                    label="Which Organisms?",
+                    choices=c("hsapiens","mus_musculus"),
+                    selected = "hsapiens")
+        
+      })
+    }else{
+      output$AddGeneSymbols_ui=NULL
+      output$AddGeneSymbols_organism_ui=NULL
+    }
+
+  })
+  
   data_input<-list()
   data_output<-list()
   observeEvent(input$refresh1,{
@@ -230,6 +250,28 @@ server <- function(input,output,session){
       ## Include here possible Data Checks
       #ENSURE DATA SAMPLE TABLE AND IN MATRIX AS WELL AS ROW ANNO ARE IN THE SAME ORDER!!!
     }
+
+    ### Added here gene annotation if asked for 
+    if(input$AddGeneSymbols & input$omicType=="Transcriptomics"){
+      fun_LogIt(message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added")
+      fun_LogIt(message = paste0("**DataInput** - chosen Organism: ",input$AddGeneSymbols_organism))
+      print("Add gene annotation")
+      if(input$AddGeneSymbols_organism=="hsapiens"){
+        ensembl<- readRDS("data/ENSEMBL_Human_05_07_22")
+      }else{
+        ensembl <- readRDS("data/ENSEMBL_Mouse_05_07_22")
+      }
+      
+      out <- getBM(attributes=c("ensembl_gene_id", "gene_biotype"), values=rownames(data_input[[input$omicType]]$annotation_rows), mart=ensembl)
+    
+      out <- out[base::match(rownames(data_input[[input$omicType]]$annotation_rows), out$ensembl_gene_id),] 
+      
+      data_input[[input$omicType]]$annotation_rows$gene_type=out$gene_biotype
+      
+      # data_matrix$gene_type=out$gene_biotype
+      
+    }
+    
     
     if(class(data_input[[input$omicType]])[1]!="SummarizedExperiment" ){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
@@ -1268,7 +1310,7 @@ server <- function(input,output,session){
     req(input$omicType,input$row_selection_options,input$anno_options)
     req(selectedData_processed())
     print("Heatmap on selected Data")
-    browser()
+
     ### atm raw data plotted
     data2Plot<-selectedData_processed()
     colorTheme=c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")

@@ -28,6 +28,7 @@ library(rmarkdown)
 library(tinytex)
 library(testthat)
 library(shinytest)
+library(biomaRt)
 #library(svglite)
 
 options(repos = BiocManager::repositories())
@@ -125,6 +126,8 @@ ui <- shiny::fluidPage(
                                       choices = c("Transcriptomics", "Lipidomics","Metabolomics"),
                                       selected = ""
                                     ) ,
+                                    uiOutput("AddGeneSymbols_ui"),
+                                    uiOutput("AddGeneSymbols_organism_ui"),
                                     actionButton(inputId = "refresh1",label="Do"),
                                     hr(style = "border-top: 1px solid #000000;"),
                                     h4("Row selection -  biochemical entities"),
