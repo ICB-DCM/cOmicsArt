@@ -1,15 +1,15 @@
 
 ##############################################################################################################
 server <- function(input,output,session){
-  source("fun_filterRNA.R",local = T)
-  source("fun_plotPCA.R",local = T)
-  source("fun_LFC.R",local = T)
-  source("fun_volcano.R",local = T)
-  source("fun_popupModal.R",local = T)
-  source("fun_entitieSelection.R",local = T)
-  source("fun_savePheatmap.R",local = T)
-  source("fun_LogIt.R",local = T)
-  source("fun_readInSampleTable.R",local=T)
+  source("R/fun_filterRNA.R",local = T)
+  source("R/fun_plotPCA.R",local = T)
+  source("R/fun_LFC.R",local = T)
+  source("R/fun_volcano.R",local = T)
+  source("R/fun_popupModal.R",local = T)
+  source("R/fun_entitieSelection.R",local = T)
+  source("R/fun_savePheatmap.R",local = T)
+  source("R/fun_LogIt.R",local = T)
+  source("R/fun_readInSampleTable.R",local=T)
   
   
   ################################################################################################
