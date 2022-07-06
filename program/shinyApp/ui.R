@@ -226,7 +226,7 @@ ui <- shiny::fluidPage(
                                                           textOutput('PCA_plot_Options_selected', container = pre)),
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           NULL,
-                                                          actionButton(inputId = "only2Report_pca",label="Send only to Report",class = "btn-info"),
+                                                          actionButton(inputId = "only2Report_pca",label="Send only to Report")
                                               ),
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           NULL,

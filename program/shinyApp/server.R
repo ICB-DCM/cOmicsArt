@@ -11,6 +11,7 @@ server <- function(input,output,session){
   source("R/fun_LogIt.R",local = T)
   source("R/fun_readInSampleTable.R",local=T)
   
+  global_Vars<-reactiveValues()
   
   ################################################################################################
   # Security section
@@ -655,6 +656,8 @@ server <- function(input,output,session){
     )
   })
   
+
+  
   toListen2PCA <- reactive({
     list(input$Do_PCA,
          input$omicType,
@@ -777,29 +780,18 @@ server <- function(input,output,session){
     output[["PCA_plot"]] <- renderPlotly({ggplotly(pca_plot_final,
                                                    tooltip = ifelse("global_ID"%in%colnames(pca_plot_final$data),"global_ID","all"),legendgroup="color")})
     
-
-    observeEvent(input$only2Report_pca,{
-      notificationID<-showNotification("Saving...",duration = 0)
-      TEST=paste0(getwd(),"/www/",paste(customTitle, " ",Sys.Date(),".png",sep=""))
-      ggsave(TEST,plot=pca_plot_final,device = "png")
-      
-      # Add Log Messages
-      fun_LogIt("## PCA")
-      fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
-      ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print("Args!"))
-      fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
-      removeNotification(notificationID)
-      showNotification("Saved!",type = "message", duration = 1)
-    })
+    print(input$only2Report_pca)
+    global_Vars$PCA_plot=pca_plot_final
+    global_Vars$PCA_customTitle=customTitle
+    global_Vars$PCA_coloring=input$coloring_options
+    global_Vars$PCA_noLoadings=ifelse(input$Show_loadings=="Yes",length(TopK),0)
     
     output$SavePlot_pos1=downloadHandler(
-
       filename = function() { paste(customTitle, " ",Sys.Date(),input$file_ext_plot1,sep="") },
       # cannot get the final destination as this is a download on server side
       content = function(file){
         ggsave(file,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
         on.exit({
-          
           TEST=paste0(getwd(),"/www/",paste(customTitle, " ",Sys.Date(),input$file_ext_plot1,sep=""))
           ggsave(TEST,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
           
@@ -810,7 +802,6 @@ server <- function(input,output,session){
           fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
         })
       }
-      
     )
     
     ## add Scree plot
@@ -829,20 +820,11 @@ server <- function(input,output,session){
     output[["Scree_Plot"]] <- renderPlotly({ggplotly(scree_plot,
                                                      tooltip = "Var",legendgroup="color")})
     
-    observeEvent(input$only2Report_Scree_Plot,{
-      notificationID<-showNotification("Saving...",duration = 0)
-      
-      tmp_filename=paste0(getwd(),"/www/",paste("Scree",customTitle, " ",Sys.Date(),".png",sep=""))
-      ggsave(tmp_filename,plot=scree_plot,device = "png")
-      
-      # Add Log Messages
-      fun_LogIt("### PCA ScreePlot")
-      fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
-      fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
-      
-      removeNotification(notificationID)
-      showNotification("Saved!",type = "message", duration = 1)
-    })
+    
+    global_Vars$Scree_plot=scree_plot
+    global_Vars$Scree_customTitle=customTitle
+    
+   
     
     output$SavePlot_Scree=downloadHandler(
       filename = function() { paste(customTitle, " ",Sys.Date(),input$file_ext_Scree,sep="") },
@@ -880,21 +862,9 @@ server <- function(input,output,session){
     
     output[["PCA_Loadings_plot"]]<- renderPlot({plotOut})
     
-    observeEvent(input$only2Report_Loadings,{
-      notificationID<-showNotification("Saving...",duration = 0)
-      
-      tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.Date(),".png",sep=""))
-      ggsave(tmp_filename,plot=plotOut,device = "png")
-      
-      # Add Log Messages
-      fun_LogIt("### PCA Loadings")
-      fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",input$x_axis_selection))
-      fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
-      fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
-      
-      removeNotification(notificationID)
-      showNotification("Saved!",type = "message", duration = 1)
-    })
+    global_Vars$Loadings_x_axis=input$x_axis_selection
+    global_Vars$Loadings_bottomSlider=input$bottomSlider
+    global_Vars$Loadings_filename=tmp_filename
     
     output$SavePlot_Loadings=downloadHandler(
       filename = function() { paste("LOADINGS_PCA_",Sys.Date(),input$file_ext_Loadings,sep="") },
@@ -916,6 +886,55 @@ server <- function(input,output,session){
       
     )
   })
+  
+  ### Download only to Report Section
+  observeEvent(input$only2Report_pca,{
+      # needs global var ?! do we want that?
+      notificationID<-showNotification("Saving...",duration = 0)
+      TEST=paste0(getwd(),"/www/",paste(global_Vars$PCA_customTitle, " ",Sys.Date(),".png",sep=""))
+      ggsave(TEST,plot=global_Vars$PCA_plot,device = "png")
+
+      # Add Log Messages
+      fun_LogIt("## PCA")
+      fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
+      ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
+      fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
+      removeNotification(notificationID)
+      showNotification("Saved!",type = "message", duration = 1)
+
+  })
+  
+  observeEvent(input$only2Report_Scree_Plot,{
+    notificationID<-showNotification("Saving...",duration = 0)
+    browser()
+    tmp_filename=paste0(getwd(),"/www/",paste("Scree",global_Vars$Scree_plot, " ",Sys.Date(),".png",sep=""))
+    ggsave(tmp_filename,plot=scree_plot,device = "png")
+    
+    # Add Log Messages
+    fun_LogIt("### PCA ScreePlot")
+    fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
+    fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
+    
+    removeNotification(notificationID)
+    showNotification("Saved!",type = "message", duration = 1)
+  })
+  
+  observeEvent(input$only2Report_Loadings,{
+    notificationID<-showNotification("Saving...",duration = 0)
+    browser()
+    tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.Date(),".png",sep=""))
+    ggsave(tmp_filename,plot=plotOut,device = "png")
+    
+    # Add Log Messages
+    fun_LogIt("### PCA Loadings")
+    fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",input$x_axis_selection))
+    fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
+    fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
+    
+    removeNotification(notificationID)
+    showNotification("Saved!",type = "message", duration = 1)
+  })
+  
   ################################################################################################
   # Explorative Analysis - UMAP (to come)
   ################################################################################################
@@ -1020,24 +1039,13 @@ server <- function(input,output,session){
       # not nice coding here as LFC now needs to be calculated twice ! Change for performance enhancement
       LFCTable=getLFC(data2Volcano,ctrl_samples_idx,comparison_samples_idx,input$get_entire_table)
       
-      observeEvent(input$only2Report_Volcano,{
-        notificationID<-showNotification("Saving...",duration = 0)
-        
-        tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.Date(),".png",sep="")))
-        ggsave(tmp_filename,plot=VolcanoPlot,device = "png")
-        
-        # Add Log Messages
-        fun_LogIt("## VOLCANO")
-        fun_LogIt(message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat))
-        fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
-        
-        fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
-        fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "markdown")))
-        
-        
-        removeNotification(notificationID)
-        showNotification("Saved!",type = "message", duration = 1)
-      })
+      global_Vars$Volcano_plot=VolcanoPlot
+      global_Vars$Volcano_sampleAnnoTypes_cmp=input$sample_annotation_types_cmp
+      global_Vars$Volcano_groupRef=input$Groups2Compare_ref
+      global_Vars$Volcano_groupTreat=input$Groups2Compare_treat
+      global_Vars$Volcano_filename=tmp_filename
+      global_Vars$Volcano_table=LFCTable[order(LFCTable$p_adj,decreasing = T),]
+      
       
       output$SavePlot_Volcano=downloadHandler(
         filename = function() { paste("VOLCANO_",Sys.Date(),input$file_ext_Volcano,sep="") },
@@ -1107,6 +1115,26 @@ server <- function(input,output,session){
     updateTabsetPanel(session, "tabsetPanel1",
                       selected = "Volcano Plot")
     print(DE_genelist())
+  })
+  
+  ## download only to report
+  observeEvent(input$only2Report_Volcano,{
+    notificationID<-showNotification("Saving...",duration = 0)
+    
+    tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.Date(),".png",sep="")))
+    ggsave(tmp_filename,plot=VolcanoPlot,device = "png")
+    
+    # Add Log Messages
+    fun_LogIt("## VOLCANO")
+    fun_LogIt(message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat))
+    fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
+    
+    fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
+    fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "markdown")))
+    
+    
+    removeNotification(notificationID)
+    showNotification("Saved!",type = "message", duration = 1)
   })
   
   ################################################################################################
