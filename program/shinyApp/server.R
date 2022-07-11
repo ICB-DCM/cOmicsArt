@@ -2039,7 +2039,7 @@ server <- function(input,output,session){
             fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,])))
             fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
             fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-            fun_LogIt(message = paste0("**GO ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),],5),format = "markdown")))
+            fun_LogIt(message = knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),],5),format = "markdown"))
             
           })
         }
@@ -2063,7 +2063,7 @@ server <- function(input,output,session){
       )})
 
     }
-    
+    browser()
     EnrichmentRes_RACTOME <-ReactomePA::enrichPathway(gene=geneSetChoice_tranlsated,
                                                        pvalueCutoff=0.05,
                                                        organism = ifelse(input$OrganismChoice=="hsa","human","mouse"),
@@ -2103,7 +2103,7 @@ server <- function(input,output,session){
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_RACTOME@result[EnrichmentRes_RACTOME@result$p.adjust<0.05,])))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - ![REACTOME ENRICHMENT](",tmp_filename,")"))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),],5),format = "markdown")))
+            fun_LogIt(message = knitr::kable(head(EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),],5),format = "markdown"))
             
           })
           
@@ -2144,7 +2144,7 @@ server <- function(input,output,session){
     fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$KEGG_resultData)))
     fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
     fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = paste0("**KEGG ENRICHMENT** - \n",knitr::kable(head(global_Vars$KEGG_EnrichmentRes_Kegg_terms,5),format = "markdown")))
+    fun_LogIt(message = knitr::kable(head(global_Vars$KEGG_EnrichmentRes_Kegg_terms,5),format = "markdown"))
     
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
@@ -2162,7 +2162,7 @@ server <- function(input,output,session){
     fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$GO_EnrichmentRes_GO@result[global_Vars$GO_EnrichmentRes_GO@result$p.adjust<0.05,])))
     fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
     fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = paste0("**GO ENRICHMENT** - \n",knitr::kable(head(global_Vars$GO_EnrichmentRes_GO@result[order(global_Vars$GO_EnrichmentRes_GO@result$p.adjust,decreasing = T),],5),format = "markdown")))
+    fun_LogIt(message = knitr::kable(head(global_Vars$GO_EnrichmentRes_GO@result[order(global_Vars$GO_EnrichmentRes_GO@result$p.adjust,decreasing = T),],5),format = "markdown"))
     
     
     removeNotification(notificationID)
@@ -2182,7 +2182,7 @@ server <- function(input,output,session){
     fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$Reactome_REACTOME_Enrichment_result[global_Vars$Reactome_REACTOME_Enrichment_result$p.adjust<0.05,])))
     fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - ![REACTOME ENRICHMENT](",tmp_filename,")"))
     fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - \n",knitr::kable(head(global_Vars$Reactome_REACTOME_Enrichment_result[order(global_Vars$Reactome_REACTOME_Enrichment_result$p.adjust,decreasing = T),],5),format = "markdown")))
+    fun_LogIt(message = knitr::kable(head(global_Vars$Reactome_REACTOME_Enrichment_result[order(global_Vars$Reactome_REACTOME_Enrichment_result$p.adjust,decreasing = T),],5),format = "markdown"))
     
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
