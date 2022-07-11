@@ -864,8 +864,9 @@ server <- function(input,output,session){
     
     global_Vars$Loadings_x_axis=input$x_axis_selection
     global_Vars$Loadings_bottomSlider=input$bottomSlider
-    global_Vars$Loadings_filename=tmp_filename
-    
+    global_Vars$Loadings_topSlider=input$topSlider
+    global_Vars$Loadings_file_ext_Loadings=input$file_ext_Loadings
+    global_Vars$Loadings_plotOut=plotOut
     output$SavePlot_Loadings=downloadHandler(
       filename = function() { paste("LOADINGS_PCA_",Sys.Date(),input$file_ext_Loadings,sep="") },
       
@@ -906,9 +907,8 @@ server <- function(input,output,session){
   
   observeEvent(input$only2Report_Scree_Plot,{
     notificationID<-showNotification("Saving...",duration = 0)
-    browser()
-    tmp_filename=paste0(getwd(),"/www/",paste("Scree",global_Vars$Scree_plot, " ",Sys.Date(),".png",sep=""))
-    ggsave(tmp_filename,plot=scree_plot,device = "png")
+    tmp_filename=paste0(getwd(),"/www/",paste("Scree",global_Vars$Scree_customTitle, " ",Sys.Date(),".png",sep=""))
+    ggsave(tmp_filename,plot=global_Vars$Scree_plot,device = "png")
     
     # Add Log Messages
     fun_LogIt("### PCA ScreePlot")
@@ -921,14 +921,13 @@ server <- function(input,output,session){
   
   observeEvent(input$only2Report_Loadings,{
     notificationID<-showNotification("Saving...",duration = 0)
-    browser()
     tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.Date(),".png",sep=""))
-    ggsave(tmp_filename,plot=plotOut,device = "png")
+    ggsave(tmp_filename,plot=global_Vars$Loadings_plotOut,device = "png")
     
     # Add Log Messages
     fun_LogIt("### PCA Loadings")
-    fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",input$x_axis_selection))
-    fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
+    fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",global_Vars$Loadings_x_axis))
+    fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",global_Vars$Loadings_topSlider," and the lowest ",global_Vars$Loadings_bottomSlider," Loadings"))
     fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
     
     removeNotification(notificationID)
@@ -1043,7 +1042,7 @@ server <- function(input,output,session){
       global_Vars$Volcano_sampleAnnoTypes_cmp=input$sample_annotation_types_cmp
       global_Vars$Volcano_groupRef=input$Groups2Compare_ref
       global_Vars$Volcano_groupTreat=input$Groups2Compare_treat
-      global_Vars$Volcano_filename=tmp_filename
+      global_Vars$Volcano_file_ext_Volcano=input$file_ext_Volcano
       global_Vars$Volcano_table=LFCTable[order(LFCTable$p_adj,decreasing = T),]
       
       
@@ -1085,9 +1084,8 @@ server <- function(input,output,session){
         ),
         class = "display"
       )})
-      
-      DE_UP=subset(LFCTable,subset= p_adj<input$psig_threhsold && LFC>=input$lfc_threshold )
-      DE_DOWN=subset(LFCTable,subset= p_adj<input$psig_threhsold && LFC<=input$lfc_threshold )
+      DE_UP=subset(LFCTable,subset= (p_adj<input$psig_threhsold & LFC>=input$lfc_threshold))
+      DE_DOWN=subset(LFCTable,subset= p_adj<input$psig_threhsold & LFC<=input$lfc_threshold )
       
       DE_UP=data.frame(Entities=rownames(DE_UP),status= rep("up",nrow(DE_UP)))
       DE_Down=data.frame(Entities=rownames(DE_DOWN),status= rep("down",nrow(DE_DOWN)))
@@ -1122,15 +1120,15 @@ server <- function(input,output,session){
     notificationID<-showNotification("Saving...",duration = 0)
     
     tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.Date(),".png",sep="")))
-    ggsave(tmp_filename,plot=VolcanoPlot,device = "png")
+    ggsave(tmp_filename,plot=global_Vars$Volcano_plot,device = "png")
     
     # Add Log Messages
     fun_LogIt("## VOLCANO")
-    fun_LogIt(message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat))
+    fun_LogIt(message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", global_Vars$Volcano_sampleAnnoTypes_cmp,": ",global_Vars$Volcano_groupRef," vs ", global_Vars$Volcano_sampleAnnoTypes_cmp,": ",global_Vars$Volcano_groupTreat))
     fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
     
     fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "markdown")))
+    fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(global_Vars$Volcano_table[order(global_Vars$Volcano_table$p_adj,decreasing = T),],10),format = "markdown")))
     
     
     removeNotification(notificationID)
@@ -1522,43 +1520,20 @@ server <- function(input,output,session){
     
     output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
     
-    observeEvent(input$only2Report_Heatmap,{
-      notificationID<-showNotification("Saving...",duration = 0)
-      
-      tmp_filename=paste0(getwd(),"/www/",paste(paste(customTitleHeatmap, " ",Sys.Date(),".png",sep="")))
-      save_pheatmap(heatmap_plot,filename=tmp_filename,type="png")
-      
-      # Add Log Messages
-      
-      fun_LogIt("## HEATMAP")
-      fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",input$row_selection_options))
-      if(any(input$row_selection_options=="rowAnno_based")){
-        fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",input$anno_options_heatmap," :",input$row_anno_options_heatmap))
-      }
-      if(!is.null(input$TopK)){
-        fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",input$TopK))
-        fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",input$row_selection_options))
-        # either based on LFC or on pVal
-      }
-      fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",input$anno_options))
-      fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",input$row_anno_options))
-      if(input$cluster_cols==TRUE){
-        fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
-      }
-      if(input$cluster_rows==TRUE){
-        fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
-      }
-      
-      if(input$LFC_toHeatmap==TRUE){
-        fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
-        fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",input$sample_annotation_types_cmp_heatmap,": ",input$Groups2Compare_ref_heatmap," vs ",input$Groups2Compare_ctrl_heatmap))
-      }
-      
-      fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
-      
-      removeNotification(notificationID)
-      showNotification("Saved!",type = "message", duration = 1)
-    })
+    global_Vars$Heatmap_customTitleHeatmap=customTitleHeatmap
+    global_Vars$Heatmap_heatmap_plot=heatmap_plot
+    global_Vars$Heatmap_row_selection_options=input$row_selection_options
+    global_Vars$Heatmap_row_anno_options_heatmap=input$row_anno_options_heatmap
+    global_Vars$Heatmap_TopK=input$TopK
+    global_Vars$Heatmap_row_selection_options=input$row_selection_options
+    global_Vars$Heatmap_anno_options=input$anno_options
+    global_Vars$Heatmap_row_anno_options=input$row_anno_options
+    global_Vars$Heatmap_cluster_cols=input$cluster_cols
+    global_Vars$Heatmap_cluster_rows=input$cluster_rows
+    global_Vars$Heatmap_LFC_toHeatmap=input$LFC_toHeatmap
+    global_Vars$Heatmap_sample_annotation_types_cmp_heatmap=input$sample_annotation_types_cmp_heatmap
+    global_Vars$Heatmap_Groups2Compare_ref_heatmap=input$Groups2Compare_ref_heatmap
+    global_Vars$Heatmap_Groups2Compare_ctrl_heatmap=input$Groups2Compare_ctrl_heatmap
     
     output$SavePlot_Heatmap=downloadHandler(
       filename = function() { paste(customTitleHeatmap, " ",Sys.Date(),input$file_ext_Heatmap,sep="") },
@@ -1626,6 +1601,7 @@ server <- function(input,output,session){
     
   })
   
+  
   observeEvent(input$SendHeatmap2Enrichment,{
     #GeneSet2Enrich
     updateTabsetPanel(session, "tabsetPanel1",
@@ -1635,6 +1611,45 @@ server <- function(input,output,session){
   observeEvent(input$Do_Heatmap,{
     output$Options_selected_out_3=renderText({paste0("The number of selected entities: ",length((heatmap_genelist())))})
     
+  })
+  
+  # send only to report
+  observeEvent(input$only2Report_Heatmap,{
+    notificationID<-showNotification("Saving...",duration = 0)
+    
+    tmp_filename=paste0(getwd(),"/www/",paste(paste(global_Vars$Heatmap_customTitleHeatmap, " ",Sys.Date(),".png",sep="")))
+    save_pheatmap(global_Vars$Heatmap_heatmap_plot,filename=tmp_filename,type="png")
+    
+    # Add Log Messages
+    
+    fun_LogIt("## HEATMAP")
+    fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",global_Vars$Heatmap_row_selection_options))
+    if(any(global_Vars$Heatmap_row_selection_options=="rowAnno_based")){
+      fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ", global_Vars$Heatmap_row_anno_options," :",global_Vars$Heatmap_row_anno_options_heatmap))
+    }
+    if(!is.null(global_Vars$Heatmap_TopK)){
+      fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",global_Vars$Heatmap_TopK))
+      fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",global_Vars$Heatmap_row_selection_options))
+      # either based on LFC or on pVal
+    }
+    fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",global_Vars$Heatmap_anno_options))
+    fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",global_Vars$Heatmap_row_anno_options))
+    if(input$cluster_cols==TRUE){
+      fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
+    }
+    if(global_Vars$Heatmap_cluster_rows==TRUE){
+      fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
+    }
+    
+    if(global_Vars$Heatmap_LFC_toHeatmap==TRUE){
+      fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
+      fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",global_Vars$Heatmap_sample_annotation_types_cmp_heatmap,": ",global_Vars$Heatmap_Groups2Compare_ref_heatmap," vs ",global_Vars$Heatmap_Groups2Compare_ctrl_heatmap))
+    }
+    
+    fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
+    
+    removeNotification(notificationID)
+    showNotification("Saved!",type = "message", duration = 1)
   })
   
   ################################################################################################
@@ -1683,6 +1698,7 @@ server <- function(input,output,session){
 
   observeEvent(input$singleGeneGo,{
     print(input$Select_Gene)
+    GeneDataFlag=F
     # Select data for the gene based on gene Selection & group Selection
     if(input$type_of_data_gene=="preprocessed"){
       #Test<<-selectedData_processed()[[input$omicType]]
@@ -1700,7 +1716,7 @@ server <- function(input,output,session){
       }
       
       
-    }else if(input$type_of_data_gene=="raw"){
+    }else if(input$type_of_data_gene=="raw" ){
       if(input$Select_Gene %in% rownames(data_input_shiny()[[input$omicType]]$Matrix)){
         GeneData=as.data.frame(t(data_input_shiny()[[input$omicType]]$Matrix[input$Select_Gene,]))
         GeneData$anno=data_input_shiny()[[input$omicType]]$sample_table[,input$accross_condition]
@@ -1744,30 +1760,21 @@ server <- function(input,output,session){
       output$SingleGenePlot=renderPlot(ggplot() + theme_void())
     }
 
-    customTitle_boxplot=paste0("Boxplot_",input$type_of_data_gene,"_data_",colnames(GeneData)[-ncol(GeneData)])
+    if(GeneDataFlag){
+      customTitle_boxplot=paste0("Boxplot_",input$type_of_data_gene,"_data_",colnames(GeneData)[-ncol(GeneData)])
+      global_Vars$SingleEnt_customTitle_boxplot=customTitle_boxplot
+      global_Vars$SingleEnt_P_boxplots=P_boxplots
+      global_Vars$SingleEnt_Select_Gene=input$Select_Gene
+      global_Vars$SingleEnt_type_of_data_gene=input$type_of_data_gene
+      global_Vars$SingleEnt_accross_condition=input$accross_condition
+      global_Vars$SingleEnt_testMethod=testMethod
+      global_Vars$SingleEnt_GeneData_anno=GeneData$anno
+    }else{
+      customTitle_boxplot="NoBoxplot"
+    }
+   
     #print(customTitle_boxplot)
-    
-    observeEvent(input$only2Report_SingleEntities,{
-      notificationID<-showNotification("Saving...",duration = 0)
-      tmp_filename=paste0(getwd(),"/www/",paste(customTitle_boxplot, " ",Sys.Date(),".png",sep=""))
-      ggsave(filename = tmp_filename,plot=P_boxplots,device = "png")
-      fun_LogIt("## Single Entitie")
-      fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",input$Select_Gene))
-      fun_LogIt(message = paste0("**Single Entitie** - Values shown are: ",input$type_of_data_gene, " data input"))
-      fun_LogIt(message = paste0("**Single Entitie** - Values are grouped for all levels within: ",input$accross_condition, " (",paste0(levels(GeneData$anno),collapse = ";"),")"))
-      fun_LogIt(message = paste0("**Single Entitie** - Test for differences: ",testMethod))
-      if(length(levels(GeneData$anno))>2){
-        fun_LogIt(message = paste0("**Single Entitie** - ANOVA performed, reference group is the overall mean"))
-      }else{
-          fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
-      }
-      
-      fun_LogIt(message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")"))
-      
-      
-      removeNotification(notificationID)
-      showNotification("Saved!",type = "message", duration = 1)
-    })
+
     
     output$SavePlot_singleGene=downloadHandler(
       filename = function() { paste(customTitle_boxplot, " ",Sys.Date(),input$file_ext_singleGene,sep="") },
@@ -1796,7 +1803,28 @@ server <- function(input,output,session){
     
   })
   
-  
+  ## download only to report
+  observeEvent(input$only2Report_SingleEntities,{
+    notificationID<-showNotification("Saving...",duration = 0)
+    tmp_filename=paste0(getwd(),"/www/",paste(global_Vars$SingleEnt_customTitle_boxplot, " ",Sys.Date(),".png",sep=""))
+    ggsave(filename = tmp_filename,plot=global_Vars$SingleEnt_P_boxplots,device = "png")
+    fun_LogIt("## Single Entitie")
+    fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",global_Vars$SingleEnt_Select_Gene))
+    fun_LogIt(message = paste0("**Single Entitie** - Values shown are: ",global_Vars$SingleEnt_type_of_data_gene, " data input"))
+    fun_LogIt(message = paste0("**Single Entitie** - Values are grouped for all levels within: ",global_Vars$SingleEnt_accross_condition, " (",paste0(levels(global_Vars$SingleEnt_GeneData_anno),collapse = ";"),")"))
+    fun_LogIt(message = paste0("**Single Entitie** - Test for differences: ",global_Vars$SingleEnt_testMethod))
+    if(length(levels(global_Vars$SingleEnt_GeneData_anno))>2){
+      fun_LogIt(message = paste0("**Single Entitie** - ANOVA performed, reference group is the overall mean"))
+    }else{
+      fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
+    }
+    
+    fun_LogIt(message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")"))
+    
+    
+    removeNotification(notificationID)
+    showNotification("Saved!",type = "message", duration = 1)
+  })
 
   
   ################################################################################################
@@ -1916,25 +1944,14 @@ server <- function(input,output,session){
         output$EnrichmentInfo=renderText("No of enriched terms found")
       }else{
         output$KEGG_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_Kegg)})
-        
-        observeEvent(input$only2Report_KEGG,{
-          notificationID<-showNotification("Saving...",duration = 0)
-          
-          tmp_filename=paste0("/www/",paste("KEGG_",Sys.Date(),".png",sep=""))
-          ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = "png")
-          fun_LogIt("### KEGG ENRICHMENT")
-          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - KEGG Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
-          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
-          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
-          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
-          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(resultData)))
-          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
-          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = T),],5),format = "markdown")))
-          
-          removeNotification(notificationID)
-          showNotification("Saved!",type = "message", duration = 1)
-        })
+        global_Vars$KEGG_EnrichmentRes_Kegg=EnrichmentRes_Kegg
+        global_Vars$KEGG_geneSetChoice_tranlsated=geneSetChoice_tranlsated
+        global_Vars$KEGG_geneSetChoice=geneSetChoice()
+        global_Vars$KEGG_OrganismChoice=input$OrganismChoice
+        global_Vars$KEGG_UniverseOfGene=input$UniverseOfGene
+        global_Vars$KEGG_universeSelected_tranlsated=universeSelected_tranlsated
+        global_Vars$KEGG_resultData=resultData
+        global_Vars$KEGG_EnrichmentRes_Kegg_terms=EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = F),]
         
         output$SavePlot_KEGG=downloadHandler(
           filename = function() { paste("KEGG_",Sys.Date(),input$file_ext_KEGG,sep="") },
@@ -1943,7 +1960,7 @@ server <- function(input,output,session){
             ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = gsub("\\.","",input$file_ext_KEGG))
             
             on.exit({
-              tmp_filename=paste0("/www/",paste("KEGG_",Sys.Date(),input$file_ext_KEGG,sep=""))
+              tmp_filename=paste0("www/",paste("KEGG_",Sys.Date(),input$file_ext_KEGG,sep=""))
               ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = gsub("\\.","",input$file_ext_KEGG))
               fun_LogIt("### KEGG ENRICHMENT")
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - KEGG Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
@@ -1953,7 +1970,7 @@ server <- function(input,output,session){
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(resultData)))
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = T),],5),format = "markdown")))
+              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = F),],5),format = "markdown")))
               
             })
           }
@@ -1995,25 +2012,15 @@ server <- function(input,output,session){
       print("GO Enrichment Done")
       output$GO_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_GO)})
      
-       observeEvent(input$only2Report_GO,{
-        notificationID<-showNotification("Saving...",duration = 0)
-        
-        tmp_filename=paste0("/www/",paste("GO_",Sys.Date(),".png",sep="") )
-        ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = "png")
-        fun_LogIt("### GO ENRICHMENT")
-        fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
-        fun_LogIt(message = paste0("**GO ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
-        fun_LogIt(message = paste0("**GO ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
-        fun_LogIt(message = paste0("**GO ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
-        fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,])))
-        fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
-        fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-        fun_LogIt(message = paste0("**GO ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = T),],5),format = "markdown")))
-        
-        
-        removeNotification(notificationID)
-        showNotification("Saved!",type = "message", duration = 1)
-      })
+      global_Vars$GO_EnrichmentRes_GO=EnrichmentRes_GO
+      global_Vars$GO_geneSetChoice_tranlsated=geneSetChoice_tranlsated
+      global_Vars$GO_geneSetChoice=geneSetChoice()
+      global_Vars$GO_OrganismChoice=input$OrganismChoice
+      global_Vars$GO_UniverseOfGene=input$UniverseOfGene
+      global_Vars$GO_universeSelected_tranlsated=universeSelected_tranlsated
+      global_Vars$GO_EnrichmentRes_GO_nrow=EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,]
+      global_Vars$GO_EnrichmentRes_GO_result=EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),]
+      
       
       output$SavePlot_GO=downloadHandler(
         filename = function() { paste("GO_",Sys.Date(),input$file_ext_GO,sep="") },
@@ -2022,7 +2029,7 @@ server <- function(input,output,session){
           ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
           
           on.exit({
-            tmp_filename=paste0("/www/",paste("GO_",Sys.Date(),input$file_ext_GO,sep="") )
+            tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.Date(),input$file_ext_GO,sep="") )
             ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
             fun_LogIt("### GO ENRICHMENT")
             fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
@@ -2032,7 +2039,7 @@ server <- function(input,output,session){
             fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,])))
             fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
             fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-            fun_LogIt(message = paste0("**GO ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = T),],5),format = "markdown")))
+            fun_LogIt(message = paste0("**GO ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),],5),format = "markdown")))
             
           })
         }
@@ -2057,7 +2064,7 @@ server <- function(input,output,session){
 
     }
     
-    EnrichmentRes_RACTOME <<-ReactomePA::enrichPathway(gene=geneSetChoice_tranlsated,
+    EnrichmentRes_RACTOME <-ReactomePA::enrichPathway(gene=geneSetChoice_tranlsated,
                                                        pvalueCutoff=0.05,
                                                        organism = ifelse(input$OrganismChoice=="hsa","human","mouse"),
                                                        universe = universeSelected_tranlsated, 
@@ -2069,43 +2076,34 @@ server <- function(input,output,session){
       print("reactome Enrichment Done")
       output$REACTOME_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_RACTOME)})
       
-      observeEvent(input$only2Report_REACTOME,{
-        notificationID<-showNotification("Saving...",duration = 0)
-        
-        tmp_filename=paste0("/www/",paste("REACTOME_",Sys.Date(),".png",sep="") )
-        ggsave(tmp_filename,plot=clusterProfiler::dotplot(REACTOME_Enrichment),device = "png")
-        fun_LogIt("### REACTOME ENRICHMENT")
-        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - REACTOME Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
-        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
-        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
-        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
-        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(REACTOME_Enrichment@result[REACTOME_Enrichment@result$p.adjust<0.05,])))
-        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - ![REACTOME ENRICHMENT](",tmp_filename,")"))
-        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-        fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - \n",knitr::kable(head(REACTOME_Enrichment@result[order(REACTOME_Enrichment@result$p.adjust,decreasing = T),],5),format = "markdown")))
-        
-        removeNotification(notificationID)
-        showNotification("Saved!",type = "message", duration = 1)
-      })
+      
+      global_Vars$Reactome_REACTOME_Enrichment=EnrichmentRes_RACTOME
+      global_Vars$Reactome_geneSetChoice_tranlsated=geneSetChoice_tranlsated
+      global_Vars$Reactome_geneSetChoice=geneSetChoice()
+      global_Vars$Reactome_OrganismChoice=input$OrganismChoice
+      global_Vars$Reactome_UniverseOfGene=input$UniverseOfGene
+      global_Vars$Reactome_universeSelected_tranlsated=universeSelected_tranlsated
+      global_Vars$Reactome_REACTOME_Enrichment_result=EnrichmentRes_RACTOME@result
+      global_Vars$Reactome_Enrichment_padj=EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),]
       
       output$SavePlot_REACTOME=downloadHandler(
         filename = function() { paste("REACTOME_",Sys.Date(),input$file_ext_REACTOME,sep="") },
         
         content = function(file){
-          ggsave(file,plot=clusterProfiler::dotplot(REACTOME_Enrichment),device = gsub("\\.","",input$file_ext_REACTOME))
+          ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME),device = gsub("\\.","",input$file_ext_REACTOME))
           
           on.exit({
-            tmp_filename=paste0("/www/",paste("REACTOME_",Sys.Date(),input$file_ext_REACTOME,sep="") )
-            ggsave(tmp_filename,plot=clusterProfiler::dotplot(REACTOME_Enrichment),device = gsub("\\.","",input$file_ext_REACTOME))
+            tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.Date(),input$file_ext_REACTOME,sep="") )
+            ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME),device = gsub("\\.","",input$file_ext_REACTOME))
             fun_LogIt("### REACTOME ENRICHMENT")
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - REACTOME Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
-            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(REACTOME_Enrichment@result[REACTOME_Enrichment@result$p.adjust<0.05,])))
+            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_RACTOME@result[EnrichmentRes_RACTOME@result$p.adjust<0.05,])))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - ![REACTOME ENRICHMENT](",tmp_filename,")"))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - \n",knitr::kable(head(REACTOME_Enrichment@result[order(REACTOME_Enrichment@result$p.adjust,decreasing = T),],5),format = "markdown")))
+            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),],5),format = "markdown")))
             
           })
           
@@ -2131,8 +2129,64 @@ server <- function(input,output,session){
     
     
   })
+  ####### Section about download only to report
+  observeEvent(input$only2Report_KEGG,{
+
+    notificationID<-showNotification("Saving...",duration = 0)
+    
+    tmp_filename=paste0(getwd(),"/www/",paste("KEGG_",Sys.Date(),".png",sep=""))
+    ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$KEGG_EnrichmentRes_Kegg),device = "png")
+    fun_LogIt("### KEGG ENRICHMENT")
+    fun_LogIt(message = paste0("**KEGG ENRICHMENT** - KEGG Enrichment was performed with a gene set of interest of size: ",length(global_Vars$KEGG_geneSetChoice_tranlsated)))
+    fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(global_Vars$KEGG_geneSetChoice)))
+    fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Chosen Organism (needed for translation): ",global_Vars$KEGG_OrganismChoice))
+    fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",global_Vars$KEGG_UniverseOfGene, " (",length(global_Vars$KEGG_universeSelected_tranlsated)," genes)"))
+    fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$KEGG_resultData)))
+    fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
+    fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+    fun_LogIt(message = paste0("**KEGG ENRICHMENT** - \n",knitr::kable(head(global_Vars$KEGG_EnrichmentRes_Kegg_terms,5),format = "markdown")))
+    
+    removeNotification(notificationID)
+    showNotification("Saved!",type = "message", duration = 1)
+  })
   
- 
+  observeEvent(input$only2Report_GO,{
+    notificationID<-showNotification("Saving...",duration = 0)
+    tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.Date(),".png",sep="") )
+    ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$GO_EnrichmentRes_GO),device = "png")
+    fun_LogIt("### GO ENRICHMENT")
+    fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(global_Vars$GO_geneSetChoice_tranlsated)))
+    fun_LogIt(message = paste0("**GO ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(global_Vars$GO_geneSetChoice)))
+    fun_LogIt(message = paste0("**GO ENRICHMENT** - Chosen Organism (needed for translation): ",global_Vars$GO_OrganismChoice))
+    fun_LogIt(message = paste0("**GO ENRICHMENT** - The universe of genes was selected to be: ",global_Vars$GO_UniverseOfGene, " (",length(global_Vars$GO_universeSelected_tranlsated)," genes)"))
+    fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$GO_EnrichmentRes_GO@result[global_Vars$GO_EnrichmentRes_GO@result$p.adjust<0.05,])))
+    fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
+    fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+    fun_LogIt(message = paste0("**GO ENRICHMENT** - \n",knitr::kable(head(global_Vars$GO_EnrichmentRes_GO@result[order(global_Vars$GO_EnrichmentRes_GO@result$p.adjust,decreasing = T),],5),format = "markdown")))
+    
+    
+    removeNotification(notificationID)
+    showNotification("Saved!",type = "message", duration = 1)
+  })
+  
+  observeEvent(input$only2Report_REACTOME,{
+    notificationID<-showNotification("Saving...",duration = 0)
+    browser()
+    tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.Date(),".png",sep="") )
+    ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$Reactome_REACTOME_Enrichment),device = "png")
+    fun_LogIt("### REACTOME ENRICHMENT")
+    fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - REACTOME Enrichment was performed with a gene set of interest of size: ",length(global_Vars$Reactome_geneSetChoice_tranlsated)))
+    fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(global_Vars$Reactome_geneSetChoice)))
+    fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Chosen Organism (needed for translation): ",global_Vars$Reactome_OrganismChoice))
+    fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The universe of genes was selected to be: ",global_Vars$Reactome_UniverseOfGene, " (",length(global_Vars$Reactome_universeSelected_tranlsated)," genes)"))
+    fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$Reactome_REACTOME_Enrichment_result[global_Vars$Reactome_REACTOME_Enrichment_result$p.adjust<0.05,])))
+    fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - ![REACTOME ENRICHMENT](",tmp_filename,")"))
+    fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+    fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - \n",knitr::kable(head(global_Vars$Reactome_REACTOME_Enrichment_result[order(global_Vars$Reactome_REACTOME_Enrichment_result$p.adjust,decreasing = T),],5),format = "markdown")))
+    
+    removeNotification(notificationID)
+    showNotification("Saved!",type = "message", duration = 1)
+  })
   
   observe({
     req(input$KeggPathwayID)
@@ -2259,8 +2313,6 @@ server <- function(input,output,session){
     }, deleteFile = TRUE)
     print("Done")
   })
-  
-
   
 }
 
