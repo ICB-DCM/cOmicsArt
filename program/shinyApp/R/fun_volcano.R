@@ -42,7 +42,6 @@ Volcano_Plot=function(data,
   LFC=log2(FC)
   
   
-  
   # Data 2 Plot
   results = cbind(LFC, rawpvalue,p_adj)
   results = as.data.frame(results)
