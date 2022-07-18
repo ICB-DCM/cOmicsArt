@@ -72,6 +72,26 @@
         "BiocGenerics"
       ]
     },
+    "BiocFileCache": {
+      "Package": "BiocFileCache",
+      "Version": "2.4.0",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/BiocFileCache",
+      "git_branch": "RELEASE_3_15",
+      "git_last_commit": "2c00eee",
+      "git_last_commit_date": "2022-04-26",
+      "Hash": "450e5bba6c68cbab059b39f88b740ade",
+      "Requirements": [
+        "DBI",
+        "RSQLite",
+        "curl",
+        "dbplyr",
+        "dplyr",
+        "filelock",
+        "httr",
+        "rappdirs"
+      ]
+    },
     "BiocGenerics": {
       "Package": "BiocGenerics",
       "Version": "0.42.0",
@@ -685,6 +705,27 @@
         "shiny"
       ]
     },
+    "biomaRt": {
+      "Package": "biomaRt",
+      "Version": "2.52.0",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/biomaRt",
+      "git_branch": "RELEASE_3_15",
+      "git_last_commit": "cf4932a",
+      "git_last_commit_date": "2022-04-26",
+      "Hash": "afebc123951ea8778af2d67042737948",
+      "Requirements": [
+        "AnnotationDbi",
+        "BiocFileCache",
+        "XML",
+        "digest",
+        "httr",
+        "progress",
+        "rappdirs",
+        "stringr",
+        "xml2"
+      ]
+    },
     "bit": {
       "Package": "bit",
       "Version": "4.0.4",
@@ -957,6 +998,31 @@
       "Hash": "36b67b5adf57b292923f5659f5f0c853",
       "Requirements": []
     },
+    "dbplyr": {
+      "Package": "dbplyr",
+      "Version": "2.2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f6c7eb9617e4d2a86bb7182fff99c805",
+      "Requirements": [
+        "DBI",
+        "R6",
+        "assertthat",
+        "blob",
+        "cli",
+        "dplyr",
+        "glue",
+        "lifecycle",
+        "magrittr",
+        "pillar",
+        "purrr",
+        "rlang",
+        "tibble",
+        "tidyselect",
+        "vctrs",
+        "withr"
+      ]
+    },
     "debugme": {
       "Package": "debugme",
       "Version": "1.1.0",
@@ -1123,6 +1189,14 @@
         "ggplot2",
         "gridExtra"
       ]
+    },
+    "filelock": {
+      "Package": "filelock",
+      "Version": "1.0.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "38ec653c2613bed60052ba3787bd8a2c",
+      "Requirements": []
     },
     "fontawesome": {
       "Package": "fontawesome",
@@ -2539,17 +2613,6 @@
         "Matrix"
       ]
     },
-    "svglite": {
-      "Package": "svglite",
-      "Version": "2.1.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "68dfdf211af6aa4e5f050f064f64d401",
-      "Requirements": [
-        "cpp11",
-        "systemfonts"
-      ]
-    },
     "sys": {
       "Package": "sys",
       "Version": "3.4",
@@ -2557,16 +2620,6 @@
       "Repository": "CRAN",
       "Hash": "b227d13e29222b4574486cfcbde077fa",
       "Requirements": []
-    },
-    "systemfonts": {
-      "Package": "systemfonts",
-      "Version": "1.0.4",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "90b28393209827327de889f49935140a",
-      "Requirements": [
-        "cpp11"
-      ]
     },
     "testthat": {
       "Package": "testthat",
@@ -2817,6 +2870,14 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "a318c6f752b8dcfe9fb74d897418ab2b",
+      "Requirements": []
+    },
+    "xml2": {
+      "Package": "xml2",
+      "Version": "1.3.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "40682ed6a969ea5abfd351eb67833adc",
       "Requirements": []
     },
     "xtable": {

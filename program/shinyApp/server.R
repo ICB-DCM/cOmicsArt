@@ -1,5 +1,3 @@
-
-##############################################################################################################
 server <- function(input,output,session){
   source("R/fun_filterRNA.R",local = T)
   source("R/fun_plotPCA.R",local = T)
@@ -13,25 +11,12 @@ server <- function(input,output,session){
   
   global_Vars<-reactiveValues()
   
-  ################################################################################################
-  # Security section
-  ################################################################################################
+# Security section ---- 
   options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
-  # #call the server part
-  # #check_credentials returns a function to authenticate users
-  # res_auth <- secure_server(
-  #   check_credentials = check_credentials(credentials),
-  #   timeout = 0
-  # )
-  #
-  # output$auth_output <- renderPrint({
-  #   reactiveValuesToList(res_auth)
-  # })
+
   
   
-  ###########################################
-  # Load external Data
-  ##########################################
+# Load external Data ----
   jokesDF <- read.csv("joke-db.csv")
   jokesDF <- jokesDF[nchar(jokesDF$Joke)>0 & nchar(jokesDF$Joke)<180,]
   print("Hello Shiny")
@@ -49,9 +34,8 @@ server <- function(input,output,session){
   
   observe_helpers()
   
-  ##################
-  # Download Report pdf
-  ##################
+# Download Report pdf ----
+
   observeEvent(input$DownloadReport,{
     if(file.exists("./www/Report.md")){
       show_toast("Generating Report....please wait",
@@ -75,16 +59,15 @@ server <- function(input,output,session){
   # security issue + more than one user issues potentially ?! Thats why further security
   # what if complete new start (should have button for this ?!)
   #session$allowReconnect("force") # To test locally
-  ################################################################################################
-  # Layout upon Start
-  ################################################################################################
+  
+# Layout upon Start ----
   hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
   hideTab(inputId = "tabsetPanel1", target = "Projection to lower Dimensions")
   hideTab(inputId = "tabsetPanel1", target = "Volcano Plot")
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   
-  ## Quit App Button
+## Quit App Button ----
   observeEvent(input$Quit_App,{
     showModal(modalDialog(
       tags$h4('You can download the complete report by clicking on the link'),
@@ -106,11 +89,9 @@ server <- function(input,output,session){
     shiny::stopApp()
   })
   
-  ################################################################################################
-  # Data Upload + checks
-  ################################################################################################
-  print("Data Upload")
-  # Ui Section
+# Data Upload + checks ----
+print("Data Upload")
+## Ui Section ----
   
   observeEvent(input$Reset,{
     print("Jip")
@@ -146,7 +127,7 @@ server <- function(input,output,session){
                      width = "80%")
   })
   output$SaveInputAsList=downloadHandler(
-    filename = function() {
+   filename = function() {
       paste(input$omicType,"_only_precompiled", " ",Sys.Date(),".RDS",sep="") },
     content = function(file){
       saveRDS(data_input_shiny(),file)
@@ -178,6 +159,8 @@ server <- function(input,output,session){
 
   })
   
+## Do Upload ----
+  
   data_input<-list()
   data_output<-list()
   observeEvent(input$refresh1,{
@@ -206,7 +189,8 @@ server <- function(input,output,session){
       }
     }
   })
-  
+
+## create data object ----
   data_input_shiny=eventReactive(input$refresh1,{
     # What Input is required? (raw data)
     if(!isTruthy(input$data_preDone)){
@@ -274,7 +258,7 @@ server <- function(input,output,session){
     }
     
     
-    if(class(data_input[[input$omicType]])[1]!="SummarizedExperiment" ){
+    if(!any(class(data_input[[input$omicType]])=="SummarizedExperiment")){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
       data_input[[paste0(input$omicType,"_SumExp")]]=SummarizedExperiment(assays  = data_input[[input$omicType]]$Matrix,
                                                         rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
@@ -298,10 +282,8 @@ server <- function(input,output,session){
   
   print("Data Input done")
   
-  ################################################################################################
-  # Data Selection Upon Input
-  ################################################################################################
-  # Ui Section
+# Data Selection  ----
+## Ui Section ----
   observe({
     req(data_input_shiny())
     print(input$omicType)
@@ -376,7 +358,7 @@ server <- function(input,output,session){
     fun_LogIt(message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input_shiny()[[input$omicType]]$Matrix),collapse = ", ")))
     
   })
-  
+## Log Selection ----
   observeEvent(input$NextPanel,{
     # add row and col selection options
     # input$propensityChoiceUser (conditional!)
@@ -398,10 +380,11 @@ server <- function(input,output,session){
                       selected = "Pre-processing")
   })
   
+  ## Do Selection ----  
   selectedData=reactive({
-    #####
+    
     # Row Selection
-    #####
+
     #print(paste0("Do we come here?",input$row_selection))
     shiny::req(input$row_selection,input$sample_selection)
     print("Alright do Row selection")
@@ -426,18 +409,18 @@ server <- function(input,output,session){
       }
       remove(filteredIQR_Expr)
     }
-    #####
+
     # Column Selection
-    #####
+
     samples_selected=c()
     if(any(input$sample_selection=="all")){
       samples_selected=colnames(data_input_shiny()[[input$omicType]]$Matrix)
     }else{
       samples_selected=c(samples_selected,rownames(data_input_shiny()[[input$omicType]]$sample_table)[which(data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes]%in%input$sample_selection)])
     }
-    #####
+
     # Data set selection
-    #####
+
     data_output[[input$omicType]]<-list(type=input$omicType,
                                         Matrix=data_input_shiny()[[input$omicType]]$Matrix[selected,samples_selected],
                                         sample_table=data_input_shiny()[[input$omicType]]$sample_table[samples_selected,],
@@ -452,11 +435,8 @@ server <- function(input,output,session){
     data_output
   })
   
-  ################################################################################################
-  # Preprocessing after Selection
-  ################################################################################################
-  
-  #UI section
+# Preprocessing after Selection ----
+## UI section ----
   output$DESeq_formula_ui=renderUI({
     req(data_input_shiny())
     if(input$PreProcessing_Procedure=="vst_DESeq"){
@@ -494,7 +474,8 @@ server <- function(input,output,session){
     updateTabsetPanel(session, "tabsetPanel1",
                       selected = "Heatmap")
   })
-  
+
+## Do preprocessing ----  
   selectedData_processed=eventReactive(input$Do_preprocessing,{
     #show('Spinner_Statisitcs_Data')
     #toggle(id = 'Spinner_Statisitcs_Data', condition = TRUE)
@@ -594,7 +575,7 @@ server <- function(input,output,session){
                                             "<br","See help for details",
                                             "<br>",ifelse(any(selectedData_processed()[[input$omicType]]$Matrix<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))})
   
-  ### Add Log Messages
+## Log preprocessing ----
   observeEvent(input$Do_preprocessing,{
     if(input$omicType=="Transcriptomics"){
       tmp_logMessage = "Remove anything which row Count <= 10"
@@ -615,10 +596,9 @@ server <- function(input,output,session){
   
   
   output$debug=renderText(dim(selectedData_processed()[[input$omicType]]$Matrix))
-  ################################################################################################
-  # Explorative Analysis - PCA
-  ################################################################################################
-  #ui Section
+# Explorative Analysis - PCA ---- 
+  
+## UI Section ----
   output$x_axis_selection_ui=renderUI({
     radioGroupButtons(
       inputId = "x_axis_selection",
@@ -657,7 +637,7 @@ server <- function(input,output,session){
   })
   
 
-  
+## Do PCA & Co ----
   toListen2PCA <- reactive({
     list(input$Do_PCA,
          input$omicType,
@@ -669,6 +649,7 @@ server <- function(input,output,session){
          input$topSlider,
          input$Show_loadings)
   })
+
   observeEvent(toListen2PCA(),{
     req(input$omicType,input$row_selection,input$x_axis_selection,input$y_axis_selection,input$coloring_options)
     
@@ -705,6 +686,13 @@ server <- function(input,output,session){
       print(levels(pcaData[,input$coloring_options]))
       
     }
+    
+    # check if global_ID is there, if not add
+
+    if(!any(colnames(pcaData)=="global_ID")){
+      pcaData$global_ID=rownames(pcaData)
+    }
+    
      if(length(levels(pcaData[,input$coloring_options]))>8){
        if(continiousColors){
          colorTheme=viridis::viridis(10)
@@ -776,7 +764,7 @@ server <- function(input,output,session){
     }
     
     #Some identify the current active tab and then specifcy the correct plot to it
-    
+
     output[["PCA_plot"]] <- renderPlotly({ggplotly(pca_plot_final,
                                                    tooltip = ifelse("global_ID"%in%colnames(pca_plot_final$data),"global_ID","all"),legendgroup="color")})
     
@@ -804,7 +792,7 @@ server <- function(input,output,session){
       }
     )
     
-    ## add Scree plot
+### Do Scree plot ----
     
     var_explained_df <- data.frame(PC= paste0("PC",1:ncol(pca$x)),
                                    var_explained=(pca$sdev)^2/sum((pca$sdev)^2))
@@ -820,11 +808,9 @@ server <- function(input,output,session){
     output[["Scree_Plot"]] <- renderPlotly({ggplotly(scree_plot,
                                                      tooltip = "Var",legendgroup="color")})
     
-    
     global_Vars$Scree_plot=scree_plot
     global_Vars$Scree_customTitle=customTitle
     
-   
     
     output$SavePlot_Scree=downloadHandler(
       filename = function() { paste(customTitle, " ",Sys.Date(),input$file_ext_Scree,sep="") },
@@ -845,7 +831,7 @@ server <- function(input,output,session){
       
     )
     
-    # add Loadings Plot
+### Do Loadings Plot ----
     print("Do LoadingsPlot an issue?")
     LoadingsDF=data.frame(entitie=rownames(pca$rotation),Loading=pca$rotation[,input$x_axis_selection])
     #LoadingsDF$Loading=scale(LoadingsDF$Loading)
@@ -886,9 +872,9 @@ server <- function(input,output,session){
       }
       
     )
+    
   })
-  
-  ### Download only to Report Section
+## Log it ----
   observeEvent(input$only2Report_pca,{
       # needs global var ?! do we want that?
       notificationID<-showNotification("Saving...",duration = 0)
@@ -934,9 +920,7 @@ server <- function(input,output,session){
     showNotification("Saved!",type = "message", duration = 1)
   })
   
-  ################################################################################################
-  # Explorative Analysis - UMAP (to come)
-  ################################################################################################
+# UMAP (to come) ----
   toListen2UMAP <- reactive({
     list(input$Do_UMAP) # if either of those changes!!!
   })
@@ -945,8 +929,7 @@ server <- function(input,output,session){
     print("UMAP analysis on pre-selected data")
     output$debug=renderText("Not yet implemented on Back-End")
   })
-  ################################################################################################
-  # Explorative Analysis - Volcano Plot
+# Volcano Plot----
   ################################################################################################
   #UI Section
   output$sample_annotation_types_cmp_ui=renderUI({
