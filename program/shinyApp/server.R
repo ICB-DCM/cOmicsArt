@@ -258,7 +258,7 @@ print("Data Upload")
     }
     
     
-    if(class(data_input[[input$omicType]])[1]!="SummarizedExperiment" ){
+    if(!any(class(data_input[[input$omicType]])=="SummarizedExperiment")){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
       data_input[[paste0(input$omicType,"_SumExp")]]=SummarizedExperiment(assays  = data_input[[input$omicType]]$Matrix,
                                                         rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
@@ -686,6 +686,13 @@ print("Data Upload")
       print(levels(pcaData[,input$coloring_options]))
       
     }
+    
+    # check if global_ID is there, if not add
+
+    if(!any(colnames(pcaData)=="global_ID")){
+      pcaData$global_ID=rownames(pcaData)
+    }
+    
      if(length(levels(pcaData[,input$coloring_options]))>8){
        if(continiousColors){
          colorTheme=viridis::viridis(10)
