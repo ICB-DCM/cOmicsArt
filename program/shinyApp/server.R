@@ -526,7 +526,7 @@ print("Data Upload")
       }
       if(input$PreProcessing_Procedure=="ln"){
         
-        processedData=as.data.frame(ln(processedData_all[[input$omicType]]$Matrix))
+        processedData=as.data.frame(log(processedData_all[[input$omicType]]$Matrix))
         #head(processedData)
         processedData_all[[input$omicType]]$Matrix=processedData
       }
