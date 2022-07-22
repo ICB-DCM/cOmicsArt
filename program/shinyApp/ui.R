@@ -176,7 +176,7 @@ ui <- shiny::fluidPage(
                                     radioButtons(inputId = "PreProcessing_Procedure",
                                                  label = "Pre-Processing Procedures",
                                                  choices = c("none","vst_DESeq","simpleCenterScaling","Scaling_0_1",
-                                                             "log10","pareto_scaling"),
+                                                             "log10","pareto_scaling","ln"),
                                                  selected = "none"),
                                     uiOutput("DESeq_formula_ui"),
                                     actionButton(inputId = "Do_preprocessing",

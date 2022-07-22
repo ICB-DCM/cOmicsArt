@@ -524,6 +524,12 @@ print("Data Upload")
         #head(processedData)
         processedData_all[[input$omicType]]$Matrix=processedData
       }
+      if(input$PreProcessing_Procedure=="ln"){
+        
+        processedData=as.data.frame(ln(processedData_all[[input$omicType]]$Matrix))
+        #head(processedData)
+        processedData_all[[input$omicType]]$Matrix=processedData
+      }
       if(input$PreProcessing_Procedure=="log10"){
         # add small eps to 0 + check if strictly positive
         if(any(processedData_all[[input$omicType]]$Matrix<0)){
