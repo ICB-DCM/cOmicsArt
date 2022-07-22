@@ -876,9 +876,8 @@ print("Data Upload")
     LoadingsDF$entitie=factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
     if(!is.null(input$EntitieAnno_Loadings)){
       req(data_input_shiny()[[input$omicType]])
-
       LoadingsDF$entitie=factor(make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])),levels = make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])))
-      LoadingsDF$entitie=make.unique(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])
+      #LoadingsDF$entitie=make.unique(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])
     }
 
     
