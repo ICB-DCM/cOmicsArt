@@ -636,6 +636,23 @@ print("Data Upload")
     )
   })
   
+  output$PCA_anno_tooltip_ui=renderUI({
+    selectInput(
+      inputId = "PCA_anno_tooltip",
+      label = "Select the anno to be shown at tooltip",
+      choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
+      multiple = F
+    )
+  })
+  
+  output$EntitieAnno_Loadings_ui=renderUI({
+    selectInput(
+      inputId = "EntitieAnno_Loadings",
+      label = "Select the annotype shown at y-axis",
+      choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
+      multiple = F
+    )
+  })
 
 ## Do PCA & Co ----
   toListen2PCA <- reactive({
@@ -647,7 +664,9 @@ print("Data Upload")
          input$coloring_options,
          input$bottomSlider,
          input$topSlider,
-         input$Show_loadings)
+         input$Show_loadings,
+         input$PCA_anno_tooltip,
+         input$EntitieAnno_Loadings)
   })
 
   observeEvent(toListen2PCA(),{
@@ -692,7 +711,14 @@ print("Data Upload")
     if(!any(colnames(pcaData)=="global_ID")){
       pcaData$global_ID=rownames(pcaData)
     }
-    
+    if(!is.null(input$PCA_anno_tooltip)){
+      req(input$PCA_anno_tooltip)
+      adj2colname=gsub(" ",".",input$PCA_anno_tooltip)
+      pcaData$chosenAnno=pcaData[,adj2colname]
+    }else{
+      pcaData$chosenAnno=pcaData$global_ID
+    }
+
      if(length(levels(pcaData[,input$coloring_options]))>8){
        if(continiousColors){
          colorTheme=viridis::viridis(10)
@@ -700,7 +726,8 @@ print("Data Upload")
                                          y = pcaData[,input$y_axis_selection],
                                          color=pcaData[,input$coloring_options],
                                          label=global_ID,
-                                         global_ID=global_ID)) +
+                                         global_ID=global_ID,
+                                         chosenAnno=chosenAnno)) +
            geom_point(size =3)+
            scale_color_manual(name = input$coloring_options,values=colorTheme)
        }else{
@@ -708,7 +735,8 @@ print("Data Upload")
                                          y = pcaData[,input$y_axis_selection],
                                          color=pcaData[,input$coloring_options],
                                          label=global_ID,
-                                         global_ID=global_ID)) +
+                                         global_ID=global_ID,
+                                         chosenAnno=chosenAnno)) +
            geom_point(size =3)+
            scale_color_discrete(name = input$coloring_options)
        }
@@ -719,7 +747,9 @@ print("Data Upload")
       pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
                                       y = pcaData[,input$y_axis_selection],
                                       color=pcaData[,input$coloring_options],
-                                      label=global_ID)) +
+                                      label=global_ID,
+                                      global_ID=global_ID,
+                                      chosenAnno=chosenAnno)) +
         geom_point(size =3)+
         scale_color_manual(values=colorTheme,
                            name = input$coloring_options)
@@ -766,7 +796,7 @@ print("Data Upload")
     #Some identify the current active tab and then specifcy the correct plot to it
 
     output[["PCA_plot"]] <- renderPlotly({ggplotly(pca_plot_final,
-                                                   tooltip = ifelse("global_ID"%in%colnames(pca_plot_final$data),"global_ID","all"),legendgroup="color")})
+                                                   tooltip = ifelse(is.null(input$PCA_anno_tooltip),"all","chosenAnno"),legendgroup="color")})
     
     print(input$only2Report_pca)
     global_Vars$PCA_plot=pca_plot_final
@@ -838,11 +868,19 @@ print("Data Upload")
     LoadingsDF=LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
     LoadingsDF=rbind(LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF)-input$bottomSlider),],LoadingsDF[input$topSlider:1,])
     LoadingsDF$entitie=factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
+    if(!is.null(input$EntitieAnno_Loadings)){
+      req(data_input_shiny()[[input$omicType]])
+      browser()
+      LoadingsDF$entitie=factor(make.unique(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings]),levels = make.unique(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+      LoadingsDF$entitie=make.unique(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])
+    }
 
+    
     plotOut=ggplot(LoadingsDF,aes(x=Loading,y=entitie))+
       geom_col(aes(fill=Loading))+
-      scale_fill_gradient2(low="#277d6a",mid="white",high="grey")+
-      ylab("")+
+      scale_y_discrete(breaks=LoadingsDF$entitie,labels=gsub("\\.[0-9].*$","",LoadingsDF$entitie))+
+      scale_fill_gradient2(low="#277d6a",mid="white",high="orange")+
+      ylab(ifelse(is.null(input$EntitieAnno_Loadings),"",input$EntitieAnno_Loadings))+
       xlab(paste0("Loadings: ",input$x_axis_selection))+
       theme_bw(base_size = 20)
     
@@ -930,8 +968,7 @@ print("Data Upload")
     output$debug=renderText("Not yet implemented on Back-End")
   })
 # Volcano Plot----
-  ################################################################################################
-  #UI Section
+## UI Section----
   output$sample_annotation_types_cmp_ui=renderUI({
     req(data_input_shiny())
     selectInput(
@@ -983,6 +1020,7 @@ print("Data Upload")
          input$lfc_threshold,
          input$get_entire_table)
   })
+  ## Do Volcano----
   observeEvent(toListen2Volcano(),{
     req(input$omicType,input$row_selection,isTruthy(selectedData_processed()),input$psig_threhsold,input$lfc_threshold)
     print("Volcano analysis on pre-selected data")
@@ -1087,7 +1125,7 @@ print("Data Upload")
     
   })
   
-  
+## Create gene list----
   DE_genelist <- eventReactive(input$SendDE_Genes2Enrichment,{
     print("Send DE Genes to Enrichment")
     DE_total$Entities
@@ -1118,10 +1156,9 @@ print("Data Upload")
     showNotification("Saved!",type = "message", duration = 1)
   })
   
-  ################################################################################################
-  # Explorative Analysis - Heatmap (to come)
-  ################################################################################################
-  # ui Section
+
+# Heatmap ----
+## UI Section ----
   observe({
     #print(colnames(data_input_shiny()[[input$omicType]]$sample_table))
     if(input$Aesthetics_show){
@@ -1143,6 +1180,17 @@ print("Data Upload")
           choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
           multiple = T, # would be cool if true, to be able to merge vars ?!,
           selected=c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows))[length(c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)))]
+        )
+      })
+      output$row_label_options_ui=renderUI({
+        req(data_input_shiny())
+        req(input$row_anno_options)
+        selectInput(
+          inputId = "row_label_options",
+          label = "Choose the label of rows",
+          choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
+          multiple = F, # would be cool if true, to be able to merge vars ?!,
+          selected=input$row_anno_options
         )
       })
       output$cluster_cols_ui=renderUI({
@@ -1289,10 +1337,10 @@ print("Data Upload")
         req(selectedData_processed())
         selectInput(
           inputId = "row_anno_options_heatmap",
-          label = "Which entities to use? (Will be the union if multiple selected)",
+          label = "Which entities to use?",
           choices = c("all",unique(selectedData_processed()[[input$omicType]]$annotation_rows[,input$anno_options_heatmap])),
           selected="all",
-          multiple = T
+          multiple = F
         )
       })
     }else{
@@ -1303,14 +1351,16 @@ print("Data Upload")
     }
   })
 
-  
+## Do Heatmap
   toListen2Heatmap <- reactive({
     list(input$Do_Heatmap,
          input$cluster_cols,
          input$cluster_rows,
          input$row_anno_options,
          input$anno_options,
-         input$rowWiseScaled
+         input$rowWiseScaled,
+         input$row_label_options,
+         input$row_label_no
          #input$row_selection_options
          )
   })
@@ -1475,10 +1525,12 @@ print("Data Upload")
       }
       clusterRowspossible=ifelse(nrow(as.matrix(data2HandOver))>1,input$cluster_rows,F)
       print(input$anno_options)
-      print(input$row_anno_options)
+      print(input$row_label_options)
+      #row_label_options
       heatmap_plot<-pheatmap(as.matrix(data2HandOver),
                              main=customTitleHeatmap,
-                             show_rownames=ifelse(nrow(data2HandOver)<=25,TRUE,FALSE),
+                             show_rownames=ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
+                             labels_row = selectedData_processed()[[input$omicType]]$annotation_rows[rownames(data2HandOver),input$row_label_options],
                              show_colnames=TRUE,
                              cluster_cols = input$cluster_cols,
                              cluster_rows = clusterRowspossible,
@@ -1635,10 +1687,10 @@ print("Data Upload")
     showNotification("Saved!",type = "message", duration = 1)
   })
   
-  ################################################################################################
-  # Single Gene Visualisations
-  ################################################################################################
-  #Ui section
+
+# Single Gene Visualisations ----
+
+## Ui section ----
   output$type_of_data_gene_ui=renderUI({
     req(data_input_shiny())
     selectInput(
@@ -1663,19 +1715,59 @@ print("Data Upload")
     selectInput(
       inputId = "type_of_visualitsation",
       label = "Choose the style of visualisation",
-      choices = c("boxplots"),
+      choices = c("boxplots","boxplots_withTesting"),
       multiple = F ,
-      selected = "boxplot"
+      selected = "boxplots_withTesting"
+    )
+  })
+  output$Select_GeneAnno_ui=renderUI({
+    req(data_input_shiny())
+    selectInput(
+      inputId = "Select_GeneAnno",
+      label = "Select Annotation you want to select an entitie from",
+      choices = colnames(data_input_shiny()[[input$omicType]]$annotation_rows), # for TESTING restricting to top 10
+      multiple = F 
     )
   })
   output$Select_Gene_ui=renderUI({
     req(data_input_shiny())
+    req(input$Select_GeneAnno)
     selectInput(
       inputId = "Select_Gene",
       label = "Select the Gene from the list",
-      choices = rownames(data_input_shiny()[[input$omicType]]$Matrix), # for TESTING restricting to top 10
+      choices = unique(data_input_shiny()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno]),
       multiple = F 
     )
+  })
+  
+  output$chooseComparisons_ui=renderUI({
+    req(selectedData_processed())
+    req(input$Select_GeneAnno)
+    req(input$type_of_data_gene)
+    if(input$type_of_data_gene=="raw"){
+      annoToSelect=c(data_input_shiny()[[input$omicType]]$sample_table[,input$accross_condition])
+    }else{
+      annoToSelect=c(selectedData_processed()[[input$omicType]]$sample_table[,input$accross_condition])
+    }
+
+    if(length(annoToSelect)==length(unique(annoToSelect))){
+      # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
+      helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
+    }else{
+      my_comparisons=t(combn(unique(annoToSelect),2))
+      xy.list <- vector("list", nrow(my_comparisons))
+      for (i in 1:nrow(my_comparisons)) {
+        xy.list[[i]] <- c(as.character(my_comparisons[i,1]),as.character(my_comparisons[i,2]))
+      }
+      selectInput(
+        inputId = "chooseComparisons",
+        label = "Select your desired comparisons",
+        choices = sapply(xy.list, paste, collapse=":"),
+        multiple = T,
+        selected = sapply(xy.list, paste, collapse=":")[1]
+      )
+    }
+    
   })
   
 
@@ -1685,13 +1777,13 @@ print("Data Upload")
     # Select data for the gene based on gene Selection & group Selection
     if(input$type_of_data_gene=="preprocessed"){
       #Test<<-selectedData_processed()[[input$omicType]]
-      
-      if(input$Select_Gene %in% rownames(selectedData_processed()[[input$omicType]]$Matrix)){
-        GeneData=as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix[input$Select_Gene,,drop=F]))
+      if(input$Select_Gene %in% selectedData_processed()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno]){
+        #get IDX to data
+        idx_selected=which(input$Select_Gene == selectedData_processed()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno])
+        GeneData=as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix[idx_selected,,drop=F]))
         print(input$accross_condition)
         GeneData$anno=selectedData_processed()[[input$omicType]]$sample_table[,input$accross_condition]
-        print(dim(selectedData_processed()[[input$omicType]]$Matrix))
-        print(dim(GeneData))
+
         GeneDataFlag=T
       }else{
         print("different Gene")
@@ -1700,8 +1792,11 @@ print("Data Upload")
       
       
     }else if(input$type_of_data_gene=="raw" ){
-      if(input$Select_Gene %in% rownames(data_input_shiny()[[input$omicType]]$Matrix)){
-        GeneData=as.data.frame(t(data_input_shiny()[[input$omicType]]$Matrix[input$Select_Gene,]))
+      if(input$Select_Gene %in% data_input_shiny()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno]){
+        #get IDX to data
+        idx_selected=which(input$Select_Gene == data_input_shiny()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno])
+        
+        GeneData=as.data.frame(t(data_input_shiny()[[input$omicType]]$Matrix[idx_selected,,drop=F]))
         GeneData$anno=data_input_shiny()[[input$omicType]]$sample_table[,input$accross_condition]
         print(dim(data_input_shiny()[[input$omicType]]$Matrix))
         GeneDataFlag=T
@@ -1711,29 +1806,52 @@ print("Data Upload")
     }
     
     # Make graphics
-    if(input$type_of_visualitsation=="boxplots" & GeneDataFlag){
-      
+    if(GeneDataFlag){
+      if(length(idx_selected)>1){
+        # summarise the data
+        GeneData_medians=rowMedians(as.matrix(GeneData[,-ncol(GeneData)]))
+        GeneData=GeneData[,ncol(GeneData),drop=F]
+        GeneData$rowMedian=GeneData_medians
+        GeneData=GeneData[,c("rowMedian","anno")]
+      }
       GeneData$anno=as.factor(GeneData$anno)
       P_boxplots=ggplot(GeneData, aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],x=anno,fill=anno))+
         geom_boxplot()+
         scale_fill_brewer(palette="RdBu")+
-        xlab(colnames(GeneData)[-ncol(GeneData)])+
+        xlab(input$Select_Gene)+
         ylab(input$type_of_data_gene)+
         theme_bw()
       testMethod="t.test"
-
-      if(length(levels(GeneData$anno))==2){
-        #t.test (option for Kruskal Wallas as non-paramettric?)
-        my_comparisons=list(c(levels(GeneData$anno)[1],levels(GeneData$anno)[2]))
-        #testMethod="t.test"
-        P_boxplots=P_boxplots+
-          stat_compare_means(comparisons=my_comparisons,method = testMethod,label = "p.signif")
-      }else if(length(levels(GeneData$anno))>2){
-        P_boxplots=P_boxplots+
-          geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
-          stat_compare_means(method = "anova")+        # Add global annova p-value
-          stat_compare_means(label = "p.signif", method = testMethod,
-                             ref.group = ".all.", hide.ns = TRUE)    
+      
+      if(input$type_of_visualitsation=="boxplots_withTesting"){
+        
+        if(isTruthy(input$chooseComparisons)){
+          newList=input$chooseComparisons
+          xy.list <- vector("list", length(newList))
+          for (i in 1:length(newList)) {
+            xy.list[[i]] <- unlist(strsplit(x = newList[i],split = ":"))
+          }
+        }
+        
+        # if(length(levels(GeneData$anno))==2){ # not neede
+        #   #t.test (option for Kruskal Wallas as non-paramettric?)
+        #   my_comparisons=list(c(levels(GeneData$anno)[1],levels(GeneData$anno)[2]))
+        #   
+        #   #testMethod="t.test"
+        #   P_boxplots=P_boxplots+
+        #     stat_compare_means(comparisons=my_comparisons,method = testMethod,label = "p.signif")
+        # }else if(length(levels(GeneData$anno))>2){
+        #   
+          P_boxplots=P_boxplots+
+            geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
+            #stat_compare_means(method = "anova")+        # Add global annova p-value
+            stat_compare_means(comparisons = xy.list,
+                               method = testMethod,
+                               label = "p.signif",
+                               hide.ns = TRUE)#+
+          #stat_compare_means(label = "p.signif", method = testMethod,
+          #                   ref.group = ".all.", hide.ns = TRUE)    
+        #}
       }
       
       # add points +geom_point(alpha=0.4,pch=4)

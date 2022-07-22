@@ -224,6 +224,7 @@ ui <- shiny::fluidPage(
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           plotlyOutput("PCA_plot")%>% withSpinner(type=8),
                                                           textOutput('PCA_plot_Options_selected', container = pre)),
+                                              uiOutput("PCA_anno_tooltip_ui"),
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           NULL,
                                                           actionButton(inputId = "only2Report_pca",label="Send only to Report")
@@ -244,6 +245,7 @@ ui <- shiny::fluidPage(
                                                           plotOutput("PCA_Loadings_plot")%>% withSpinner(type=8),
                                                           textOutput('Loadings_plot_Options_selected_out', container = pre)
                                               ),
+                                              uiOutput("EntitieAnno_Loadings_ui"),
                                               sliderInput(inputId = "topSlider",label = "Top k positive Loadings",min = 1,max = 25,value = 10,step = 1),
                                               sliderInput(inputId = "bottomSlider",label = "Top k negative Loadings",min = 1,max = 25,value = 10,step = 1),
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
@@ -390,7 +392,7 @@ ui <- shiny::fluidPage(
                                      #%>% withSpinner(type=8,color = getOption("spinner.color", default = "#b8cee0"))
                          ),
                          textOutput('Options_selected_out_3', container = pre) %>% withSpinner(type=8),
-                         
+                         uiOutput("row_label_options_ui"),numericInput(inputId="row_label_no",min=0,step=1,label = "Threshold upon which explicit labels are shown",value=25),
                          downloadButton("SaveGeneList_Heatmap",label="Save genes shown in Heatmap as list"),
                          
                          actionButton(inputId = "SendHeatmap2Enrichment",label = "Send genes shown to enrichment analysis",block = F ),
@@ -417,7 +419,9 @@ ui <- shiny::fluidPage(
                        sidebarPanel(
                          uiOutput("type_of_data_gene_ui"),
                          uiOutput("type_of_visualitsation_ui"),
+                         uiOutput("Select_GeneAnno_ui"),
                          uiOutput("Select_Gene_ui"),
+                         helpText("Note: if you choose a group rather than a single entitie, the values will be summarized by taking the median"),
                          uiOutput("accross_condition_ui"),
                          actionButton("singleGeneGo",label="Get single gene visualisation"),
                          hr(style = "border-top: 1px solid #858585;")
@@ -426,6 +430,7 @@ ui <- shiny::fluidPage(
                          # hidden(div(id = 'Spinner_SingleGene', plotOutput("SingleGenePlot")%>% withSpinner(type=8))),
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
                                      plotOutput("SingleGenePlot"),NULL),
+                         uiOutput("chooseComparisons_ui"),
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                      NULL,
                                      actionButton(inputId = "only2Report_SingleEntities",label="Send only to Report",class = "btn-info"),
