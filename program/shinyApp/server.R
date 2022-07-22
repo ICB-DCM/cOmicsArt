@@ -1836,6 +1836,15 @@ print("Data Upload")
           for (i in 1:length(newList)) {
             xy.list[[i]] <- unlist(strsplit(x = newList[i],split = ":"))
           }
+          P_boxplots=P_boxplots+
+            geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
+            #stat_compare_means(method = "anova")+        # Add global annova p-value
+            stat_compare_means(comparisons = xy.list,
+                               method = testMethod,
+                               label = "p.signif",
+                               hide.ns = TRUE)
+        }else{
+          xy.list=NULL
         }
         
         # if(length(levels(GeneData$anno))==2){ # not neede
@@ -1847,13 +1856,7 @@ print("Data Upload")
         #     stat_compare_means(comparisons=my_comparisons,method = testMethod,label = "p.signif")
         # }else if(length(levels(GeneData$anno))>2){
         #   
-          P_boxplots=P_boxplots+
-            geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
-            #stat_compare_means(method = "anova")+        # Add global annova p-value
-            stat_compare_means(comparisons = xy.list,
-                               method = testMethod,
-                               label = "p.signif",
-                               hide.ns = TRUE)#+
+          #+
           #stat_compare_means(label = "p.signif", method = testMethod,
           #                   ref.group = ".all.", hide.ns = TRUE)    
         #}
