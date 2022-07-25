@@ -1434,7 +1434,7 @@ print("Data Upload")
     
     # select TopK (if there is an ordering)
     TopK2Show<-ifelse(any(input$row_selection_options=="TopK"),input$TopK,NA)
-    
+
     #print(input$row_selection_options)
     # data_test<-selectedData_processed()[[input$omicType]]
     # # to cover: c("TopK","significant_LFC","DE_genes","rowAnno_based")

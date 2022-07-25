@@ -93,7 +93,7 @@ ui <- shiny::fluidPage(
   ##########
   
   div(style = "display:inline-block; float:right", actionButton(inputId = "Quit_App",label="Quit App",class = "btn-secondary")),
-  div(style = "display:inline-block; float:right" ,helpText(" ")%>%helper(type = "markdown",content="Inital_help",size="l",colour = "red",style="zoom: 600%;")),
+  div(style = "display:inline-block; float:right" ,helpText(" ",align="right")%>%helper(type = "markdown",content="Inital_help",size="l",colour = "red",style="zoom: 600%;")),
   hidden(selectInput("element",label="PrideMonth?", choices = c(0,1),selected = ifelse(format(as.POSIXct(Sys.time()),"%m")=="06",1,0))),
   conditionalPanel(
     condition = 'input.element == 0',
@@ -103,10 +103,13 @@ ui <- shiny::fluidPage(
     condition = 'input.element == 1',
     h2(HTML('<span style="color:#E75A5A">S</span><span style="color:#E7AF5A">h</span><span style="color:#CBE75A">i</span><span style="color:#76E75A">n</span><span style="color:#5AE792">y</span><span style="color:#5AE7E7">O</span><span style="color:#5A92E7">m</span><span style="color:#765AE7">i</span><span style="color:#CB5AE7">c</span><span style="color:#E75AAF">s</span>')),
   ),
-  actionLink(inputId = "DownloadReport",label = "Download Report (as html)"),
-  
+  splitLayout(cellWidths = c("75%","10%","15%"),
+              actionLink(inputId = "DownloadReport",label = "Download Report (as html)"),
+              helpText("Metabolon Help",align="center")%>%helper(type = "markdown",content="Metabolon_help",size="l",colour = "blue",style="position: relative;top: -18px;left: 15px;; zoom: 200%;"),
+              NULL
+              ),
   shinyjs::useShinyjs(),
-  tabsetPanel(id = "tabsetPanel1",
+  tabsetPanel(id = "tabsetPanel1", 
               #textOutput('debug', container = pre),
               
               ################################################################################
@@ -125,7 +128,7 @@ ui <- shiny::fluidPage(
                                       label = "Omic Type that is uploaded", 
                                       choices = c("Transcriptomics", "Lipidomics","Metabolomics"),
                                       selected = ""
-                                    ) ,
+                                    ),
                                     uiOutput("AddGeneSymbols_ui"),
                                     uiOutput("AddGeneSymbols_organism_ui"),
                                     actionButton(inputId = "refresh1",label="Do"),
@@ -321,7 +324,7 @@ ui <- shiny::fluidPage(
                                                                   choices = c(".png",".tiff",".pdf"),selected = ".png")
                                     ),
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
-                                                downloadButton("SaveDE_List",label="Save diff. express. entities (DE defined as your input (all red points)"),
+                                                downloadButton("SaveDE_List",label="Save intresting entities (all red points)"),
                                                 actionButton(inputId = "SendDE_Genes2Enrichment",label = "Send DE Genes to enrichment analysis",block = F )
                                     )
                                     
