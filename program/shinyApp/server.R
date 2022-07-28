@@ -536,7 +536,6 @@ print("Data Upload")
         
       }
       if(input$PreProcessing_Procedure=="Scaling_0_1"){
-        
         processedData=as.data.frame(t(apply(processedData_all[[input$omicType]]$Matrix,1,function(x){(x-min(x))/(max(x)-min(x))})))
         #head(processedData)
         processedData_all[[input$omicType]]$Matrix=processedData
