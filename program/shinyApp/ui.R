@@ -310,6 +310,7 @@ ui <- shiny::fluidPage(
                        mainPanel(
                          tabsetPanel(
                            tabPanel("Volcano_Plot",plotlyOutput("Volcano_Plot_final")%>% withSpinner(type=8),
+                                    uiOutput("VOLCANO_anno_tooltip_ui"),
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                 NULL,
                                                 actionButton(inputId = "only2Report_Volcano",label="Send only to Report",class = "btn-info"),

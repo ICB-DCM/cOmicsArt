@@ -277,6 +277,18 @@ print("Data Upload")
     #                                   annotation_rows=as.data.frame(rowData(tmp)))
 
     
+    for(dataFrameToClean in names(data_input[[input$omicType]])){
+      if(!(dataFrameToClean%in%c("type","Matrix"))){
+        print(paste0("(before) No. anno options ",dataFrameToClean, ": ",ncol(data_input[[input$omicType]][[dataFrameToClean]])))
+        data_input[[input$omicType]][[dataFrameToClean]]=data_input[[input$omicType]][[dataFrameToClean]] %>% purrr::keep(~length(unique(.x)) != 1)
+        print(paste0("(after) No. anno options ",dataFrameToClean, ": ",ncol(data_input[[input$omicType]][[dataFrameToClean]])))
+      }
+    }
+    
+    # Here we will exclude all constant annotation for entities and rows as there carry no information gain!
+    data_input
+    
+    fun_LogIt(message = paste0("**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!"))
     data_input
   })
   
@@ -506,17 +518,22 @@ print("Data Upload")
         processedData_all[[input$omicType]]$Matrix=processedData
       }
       if(input$PreProcessing_Procedure=="vst_DESeq"){
-        processedData<-processedData_all[[input$omicType]]$Matrix
-        print(input$DESeq_formula)
-        processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"]=as.factor(processedData_all[[input$omicType]]$sample_table[,input$DESeq_formula])
+        if(input$omicType=="Transcriptomics"){
+          processedData<-processedData_all[[input$omicType]]$Matrix
+          print(input$DESeq_formula)
+          processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"]=as.factor(processedData_all[[input$omicType]]$sample_table[,input$DESeq_formula])
+          
+          print(processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"])
+          dds <- DESeqDataSetFromMatrix(countData = processedData,
+                                        colData = processedData_all[[input$omicType]]$sample_table,
+                                        design = ~DE_SeqFactor) #input$DESeq_formula
+          de_seq_result <- DESeq(dds) # Do this global incase we need later on
+          dds_vst <- vst(de_seq_result, blind = TRUE) # not biased to design
+          processedData_all[[input$omicType]]$Matrix=assay(dds_vst)
+        }else{
+          output$Statisitcs_Data=renderText({"<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"})
+        }
         
-        print(processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"])
-        dds <- DESeqDataSetFromMatrix(countData = processedData,
-                                      colData = processedData_all[[input$omicType]]$sample_table,
-                                      design = ~DE_SeqFactor) #input$DESeq_formula
-        de_seq_result <- DESeq(dds) # Do this global incase we need later on
-        dds_vst <- vst(de_seq_result, blind = TRUE) # not biased to design
-        processedData_all[[input$omicType]]$Matrix=assay(dds_vst)
       }
       if(input$PreProcessing_Procedure=="Scaling_0_1"){
         
@@ -1017,13 +1034,22 @@ print("Data Upload")
                  min=0, max=10, step=0.1,
                  value = 1.0)
   })
-  
+  output$VOLCANO_anno_tooltip_ui=renderUI({
+    req(data_input_shiny())
+    selectInput(
+      inputId = "VOLCANO_anno_tooltip",
+      label = "Select the anno to be shown at tooltip",
+      choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
+      multiple = F
+    )
+  })
   
   toListen2Volcano <- reactive({
     list(input$Do_Volcano,
          input$psig_threhsold,
          input$lfc_threshold,
-         input$get_entire_table)
+         input$get_entire_table,
+         input$VOLCANO_anno_tooltip)
   })
   ## Do Volcano----
   observeEvent(toListen2Volcano(),{
@@ -1055,15 +1081,21 @@ print("Data Upload")
                                 ctrl_samples_idx,
                                 comparison_samples_idx,
                                 p_sig_threshold=input$psig_threhsold,
-                                LFC_threshold=input$lfc_threshold)
+                                LFC_threshold=input$lfc_threshold,
+                                annotation_add=input$VOLCANO_anno_tooltip,
+                                annoData=selectedData_processed()[[input$omicType]]$annotation_rows)
       plotPosition="Volcano_Plot_final"
+      
       output[[plotPosition]] <- renderPlotly({ggplotly(VolcanoPlot,
-                                                       tooltip="probename",legendgroup="color")})
+                                                       tooltip=ifelse(!is.null(input$VOLCANO_anno_tooltip),"tooltip","all"),
+                                                       legendgroup="color")})
       
       
       # not nice coding here as LFC now needs to be calculated twice ! Change for performance enhancement
       LFCTable=getLFC(data2Volcano,ctrl_samples_idx,comparison_samples_idx,input$get_entire_table)
-      
+      # add annotation to Table
+      LFCTable=merge(LFCTable,selectedData_processed()[[input$omicType]]$annotation_rows,by=0, all=TRUE)
+      rownames(LFCTable)=LFCTable$Row.names
       global_Vars$Volcano_plot=VolcanoPlot
       global_Vars$Volcano_sampleAnnoTypes_cmp=input$sample_annotation_types_cmp
       global_Vars$Volcano_groupRef=input$Groups2Compare_ref
@@ -1113,8 +1145,11 @@ print("Data Upload")
       DE_UP=subset(LFCTable,subset= (p_adj<input$psig_threhsold & LFC>=input$lfc_threshold))
       DE_DOWN=subset(LFCTable,subset= p_adj<input$psig_threhsold & LFC<=input$lfc_threshold )
       
-      DE_UP=data.frame(Entities=rownames(DE_UP),status= rep("up",nrow(DE_UP)))
-      DE_Down=data.frame(Entities=rownames(DE_DOWN),status= rep("down",nrow(DE_DOWN)))
+      DE_UP=data.frame(Entities=(DE_UP[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),status= rep("up",nrow(DE_UP)))
+      DE_Down=data.frame(Entities=(DE_DOWN[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),status= rep("down",nrow(DE_DOWN)))
+      
+      #Use annotation selected in plot also for the outputof the names
+      
       DE_total<<-rbind(DE_UP,DE_Down)
       output$SaveDE_List=downloadHandler(
         filename = function() { paste("DE_Genes ",input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat," vs. ",input$Groups2Compare_ref,"_",Sys.Date(),".csv",sep="") },
@@ -1556,7 +1591,7 @@ print("Data Upload")
     
     
     
-    # legend.grob <- addGrob(heatmap_plot$gtable$grob[[10]])
+    #
     
     output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
     
@@ -1625,6 +1660,13 @@ print("Data Upload")
       content = function(file){
         write.csv(heatmap_genelist(), file)
         on.exit({
+          if(FLAG_nonUnique_Heatmap){
+            showModal(modalDialog(
+              title = "Warning!",
+              "The download includes non-unique entries, hence you will not be able to distinguish the entities uniquely. You might want to change the entry in 'choose the label of rows' for the next download",
+              easyClose = TRUE
+            ))
+          }
           fun_LogIt(message = paste0("**HEATMAP** - The corresponding entitie list was saved by the user"))
           fun_LogIt(message = paste0("**HEATMAP** - Number of entities: ",length(heatmap_genelist())))
         })
@@ -1632,13 +1674,23 @@ print("Data Upload")
       
     )
     
+    ## adjust the returned names depending on chosen label of rows
     if(is.null(data2HandOver)){
+      FLAG_nonUnique_Heatmap<<-F
       NA
     }else{
-      rownames(data2HandOver)
+      selectedData_processed()[[input$omicType]]$annotation_rows[rownames(data2HandOver),input$row_label_options]
+      mergedData=merge(data2HandOver,selectedData_processed()[[input$omicType]]$annotation_rows,by=0, all=T)
+      # maybe insert save to avoid download of unmeaningfull annotation?
+      if(length(unique( mergedData[,input$row_label_options]))<nrow(mergedData) ){
+        FLAG_nonUnique_Heatmap<<-T
+        
+        mergedData[,input$row_label_options]
+      }else{
+        FLAG_nonUnique_Heatmap<<-F
+        mergedData[,input$row_label_options]
+      }
     }
-    
-    
   })
   
   
