@@ -9,6 +9,3 @@
   - MUST have a column called global_ID (same as rownames) with unique entries
 3. entitie annotation (e.g. type of gene or assoc pathway of metab)
   - rownames must match the rownames from (1.)
-
-
-rhrtg
