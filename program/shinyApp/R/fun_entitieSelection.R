@@ -55,6 +55,7 @@ entitieSelection=function(data,
      }else{
        filtered_data=filtered_data[rownames(LFC_output)[which(LFC_output$p_adj<psig_threhsold)],,drop=F]
        filtered_data=filtered_data[rownames(LFC_output)[order(LFC_output$LFC,decreasing = F)],,drop=F]
+       filtered_data=filtered_data[complete.cases(filtered_data), ]
        orderMakesSense_flag=T
      }
      

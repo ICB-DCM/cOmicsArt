@@ -93,7 +93,7 @@ ui <- shiny::fluidPage(
   ##########
   
   div(style = "display:inline-block; float:right", actionButton(inputId = "Quit_App",label="Quit App",class = "btn-secondary")),
-  div(style = "display:inline-block; float:right" ,helpText(" ")%>%helper(type = "markdown",content="Inital_help",size="l",colour = "red",style="zoom: 600%;")),
+  div(style = "display:inline-block; float:right" ,helpText(" ",align="right")%>%helper(type = "markdown",content="Inital_help",size="l",colour = "red",style="zoom: 600%;")),
   hidden(selectInput("element",label="PrideMonth?", choices = c(0,1),selected = ifelse(format(as.POSIXct(Sys.time()),"%m")=="06",1,0))),
   conditionalPanel(
     condition = 'input.element == 0',
@@ -103,10 +103,13 @@ ui <- shiny::fluidPage(
     condition = 'input.element == 1',
     h2(HTML('<span style="color:#E75A5A">S</span><span style="color:#E7AF5A">h</span><span style="color:#CBE75A">i</span><span style="color:#76E75A">n</span><span style="color:#5AE792">y</span><span style="color:#5AE7E7">O</span><span style="color:#5A92E7">m</span><span style="color:#765AE7">i</span><span style="color:#CB5AE7">c</span><span style="color:#E75AAF">s</span>')),
   ),
-  actionLink(inputId = "DownloadReport",label = "Download Report (as html)"),
-  
+  splitLayout(cellWidths = c("75%","10%","15%"),
+              actionLink(inputId = "DownloadReport",label = "Download Report (as html)"),
+              helpText("Metabolon Help",align="center")%>%helper(type = "markdown",content="Metabolon_help",size="l",colour = "blue",style="position: relative;top: -18px;left: 15px;; zoom: 200%;"),
+              NULL
+              ),
   shinyjs::useShinyjs(),
-  tabsetPanel(id = "tabsetPanel1",
+  tabsetPanel(id = "tabsetPanel1", 
               #textOutput('debug', container = pre),
               
               ################################################################################
@@ -125,7 +128,7 @@ ui <- shiny::fluidPage(
                                       label = "Omic Type that is uploaded", 
                                       choices = c("Transcriptomics", "Lipidomics","Metabolomics"),
                                       selected = ""
-                                    ) ,
+                                    ),
                                     uiOutput("AddGeneSymbols_ui"),
                                     uiOutput("AddGeneSymbols_organism_ui"),
                                     actionButton(inputId = "refresh1",label="Do"),
@@ -176,7 +179,7 @@ ui <- shiny::fluidPage(
                                     radioButtons(inputId = "PreProcessing_Procedure",
                                                  label = "Pre-Processing Procedures",
                                                  choices = c("none","vst_DESeq","simpleCenterScaling","Scaling_0_1",
-                                                             "log10","pareto_scaling"),
+                                                             "log10","pareto_scaling","ln"),
                                                  selected = "none"),
                                     uiOutput("DESeq_formula_ui"),
                                     actionButton(inputId = "Do_preprocessing",
@@ -224,6 +227,7 @@ ui <- shiny::fluidPage(
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           plotlyOutput("PCA_plot")%>% withSpinner(type=8),
                                                           textOutput('PCA_plot_Options_selected', container = pre)),
+                                              uiOutput("PCA_anno_tooltip_ui"),
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                           NULL,
                                                           actionButton(inputId = "only2Report_pca",label="Send only to Report")
@@ -244,6 +248,7 @@ ui <- shiny::fluidPage(
                                                           plotOutput("PCA_Loadings_plot")%>% withSpinner(type=8),
                                                           textOutput('Loadings_plot_Options_selected_out', container = pre)
                                               ),
+                                              uiOutput("EntitieAnno_Loadings_ui"),
                                               sliderInput(inputId = "topSlider",label = "Top k positive Loadings",min = 1,max = 25,value = 10,step = 1),
                                               sliderInput(inputId = "bottomSlider",label = "Top k negative Loadings",min = 1,max = 25,value = 10,step = 1),
                                               splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
@@ -305,6 +310,7 @@ ui <- shiny::fluidPage(
                        mainPanel(
                          tabsetPanel(
                            tabPanel("Volcano_Plot",plotlyOutput("Volcano_Plot_final")%>% withSpinner(type=8),
+                                    uiOutput("VOLCANO_anno_tooltip_ui"),
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                                 NULL,
                                                 actionButton(inputId = "only2Report_Volcano",label="Send only to Report",class = "btn-info"),
@@ -319,7 +325,7 @@ ui <- shiny::fluidPage(
                                                                   choices = c(".png",".tiff",".pdf"),selected = ".png")
                                     ),
                                     splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
-                                                downloadButton("SaveDE_List",label="Save diff. express. entities (DE defined as your input (all red points)"),
+                                                downloadButton("SaveDE_List",label="Save intresting entities (all red points)"),
                                                 actionButton(inputId = "SendDE_Genes2Enrichment",label = "Send DE Genes to enrichment analysis",block = F )
                                     )
                                     
@@ -390,7 +396,7 @@ ui <- shiny::fluidPage(
                                      #%>% withSpinner(type=8,color = getOption("spinner.color", default = "#b8cee0"))
                          ),
                          textOutput('Options_selected_out_3', container = pre) %>% withSpinner(type=8),
-                         
+                         uiOutput("row_label_options_ui"),numericInput(inputId="row_label_no",min=0,step=1,label = "Threshold upon which explicit labels are shown",value=25),
                          downloadButton("SaveGeneList_Heatmap",label="Save genes shown in Heatmap as list"),
                          
                          actionButton(inputId = "SendHeatmap2Enrichment",label = "Send genes shown to enrichment analysis",block = F ),
@@ -417,7 +423,9 @@ ui <- shiny::fluidPage(
                        sidebarPanel(
                          uiOutput("type_of_data_gene_ui"),
                          uiOutput("type_of_visualitsation_ui"),
+                         uiOutput("Select_GeneAnno_ui"),
                          uiOutput("Select_Gene_ui"),
+                         helpText("Note: if you choose a group rather than a single entitie, the values will be summarized by taking the median"),
                          uiOutput("accross_condition_ui"),
                          actionButton("singleGeneGo",label="Get single gene visualisation"),
                          hr(style = "border-top: 1px solid #858585;")
@@ -426,6 +434,7 @@ ui <- shiny::fluidPage(
                          # hidden(div(id = 'Spinner_SingleGene', plotOutput("SingleGenePlot")%>% withSpinner(type=8))),
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("50%","50%"),
                                      plotOutput("SingleGenePlot"),NULL),
+                         uiOutput("chooseComparisons_ui"),
                          splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%","30%"),
                                      NULL,
                                      actionButton(inputId = "only2Report_SingleEntities",label="Send only to Report",class = "btn-info"),
