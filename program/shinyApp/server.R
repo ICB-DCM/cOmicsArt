@@ -204,6 +204,13 @@ print("Data Upload")
                                            sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1,check.names = F),
                                            annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F))
         
+        # check if only 1 col in anno row, add dummy col to ensure R does not turn it into a vector
+        
+        if(ncol(data_input[[input$omicType]]$annotation_rows)<2){
+          print("Added dummy column to annotation row")
+          data_input[[input$omicType]]$annotation_rows$origRownames=rownames(data_input[[input$omicType]]$annotation_rows)
+        }
+        
       }else if(isTruthy(input$metadataInput)){
        
         tmp_sampleTable=fun_readInSampleTable(input$metadataInput$datapath)
@@ -215,6 +222,8 @@ print("Data Upload")
                                                Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F)[,rownames(my_data_tmp)],
                                                sample_table=tmp_sampleTable,
                                                annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F))
+
+            
             return(data_input)
           },
           error=function(cond){
@@ -229,6 +238,9 @@ print("Data Upload")
       
       
       ## Include here possible Data Checks
+      
+      
+      
     }else{
       # Precompiled list
       data_input[[input$omicType]]<-readRDS(input$data_preDone$datapath)[[input$omicType]]
