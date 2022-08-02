@@ -1375,7 +1375,7 @@ print("Data Upload")
           label = "Choose the variable to select the rows after (Multiples are not possible)",
           choices = c(colnames(selectedData_processed()[[input$omicType]]$annotation_rows)),
           selected=colnames(selectedData_processed()[[input$omicType]]$annotation_rows)[1],
-          multiple = T # would be cool if true, to be able to merge vars ?!,
+          multiple = F # would be cool if true, to be able to merge vars ?!,
         )
       })
       output$row_anno_options_heatmap_ui=renderUI({
@@ -1385,7 +1385,7 @@ print("Data Upload")
           label = "Which entities to use?",
           choices = c("all",unique(selectedData_processed()[[input$omicType]]$annotation_rows[,input$anno_options_heatmap])),
           selected="all",
-          multiple = F
+          multiple = T
         )
       })
     }else{
@@ -1439,7 +1439,7 @@ print("Data Upload")
     # selection based on row Annotation:
     if(!(any(input$row_selection_options=="all"))){
       if(any(input$row_selection_options=="rowAnno_based")){
-        if(input$row_anno_options_heatmap=="SELECT_AN_OPTION"){ #old
+        if(any(input$row_anno_options_heatmap=="SELECT_AN_OPTION")){ #old
           output$Options_selected_out_3=renderText({"If you go with rowAnno_based you must select a varaible to select the rows after! (See Section Further row selection). Now it is defaulting to show all to omit an error"})
           additionalInput_row_anno="all"
           additionalInput_row_anno_factor=NA
@@ -1455,7 +1455,7 @@ print("Data Upload")
         }
       }else{
         additionalInput_row_anno<-ifelse(any(input$row_selection_options=="rowAnno_based"),input$anno_options_heatmap,NA)
-        additionalInput_row_anno_factor<-ifelse(any(input$row_selection_options=="rowAnno_based"),input$row_anno_options_heatmap,NA)
+        additionalInput_row_anno_factor<-ifelse(any(input$row_selection_options=="rowAnno_based"),c(input$row_anno_options_heatmap),NA)
       }
     }else{
       additionalInput_row_anno<-"all"
