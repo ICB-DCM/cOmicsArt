@@ -313,7 +313,13 @@ print("Data Upload")
       req(data_input_shiny())
       req(input$providedRowAnnotationTypes)
       if(is.numeric(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes])){
-        helpText("Your input category is numeric, selection is currently only supported for categorical data")
+        selectInput(
+          inputId = "row_selection",
+          label = "Which entities to use? (Your input category is numeric, selection is currently only supported for categorical data!)",
+          choices = c("all"),
+          selected="all",
+          multiple = T
+        )
       }else{
         selectInput(
           inputId = "row_selection",
