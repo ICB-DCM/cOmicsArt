@@ -1099,7 +1099,7 @@ print("Data Upload")
       # not nice coding here as LFC now needs to be calculated twice ! Change for performance enhancement
       LFCTable=getLFC(data2Volcano,ctrl_samples_idx,comparison_samples_idx,input$get_entire_table)
       # add annotation to Table
-      LFCTable=merge(LFCTable,selectedData_processed()[[input$omicType]]$annotation_rows,by=0, all=TRUE)
+      LFCTable=merge(LFCTable,selectedData_processed()[[input$omicType]]$annotation_rows,by=0, all.x=TRUE,all.y=F)
       rownames(LFCTable)=LFCTable$Row.names
       global_Vars$Volcano_plot=VolcanoPlot
       global_Vars$Volcano_sampleAnnoTypes_cmp=input$sample_annotation_types_cmp
@@ -1685,7 +1685,8 @@ print("Data Upload")
       NA
     }else{
       selectedData_processed()[[input$omicType]]$annotation_rows[rownames(data2HandOver),input$row_label_options]
-      mergedData=merge(data2HandOver,selectedData_processed()[[input$omicType]]$annotation_rows,by=0, all=T)
+      mergedData=merge(data2HandOver,selectedData_processed()[[input$omicType]]$annotation_rows,by=0, all.x=T,all.y=F,sort = F)
+      
       # maybe insert save to avoid download of unmeaningfull annotation?
       if(length(unique( mergedData[,input$row_label_options]))<nrow(mergedData) ){
         FLAG_nonUnique_Heatmap<<-T
@@ -1705,6 +1706,7 @@ print("Data Upload")
                       selected = "Enrichment Analysis")
     tmp_selection<<-"heatmap_genes"
   })
+  
   observeEvent(input$Do_Heatmap,{
     output$Options_selected_out_3=renderText({paste0("The number of selected entities: ",length((heatmap_genelist())))})
     
