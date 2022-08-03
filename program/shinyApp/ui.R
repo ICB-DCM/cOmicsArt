@@ -456,15 +456,20 @@ ui <- shiny::fluidPage(
                        h4("NOTE THAT THIS ONLY MAKES SENSE FOR TRANSCRIPTOMICS DATA AT THE MOMENT!"),
                        sidebarPanel(
                          uiOutput("OrganismChoice_ui"),
-                         #uiOutput("GeneSet2Enrich_ui"),
                          
-                         selectInput(inputId = "GeneSet2Enrich",
-                                     label = "Choose a gene set to hand over to enrich",
-                                     choices=c("DE_Genes","ProvidedGeneSet","heatmap_genes"),
-                                     selected = "DE_Genes"),
+                         uiOutput("ORA_or_GSE_ui"),
+                         uiOutput("ValueToAttach_ui"),
                          
+                         uiOutput("sample_annotation_types_cmp_GSEA_ui"),
+                         uiOutput("Groups2Compare_ref_GSEA_ui"),
+                         uiOutput("Groups2Compare_treat_GSEA_ui"),
+                         uiOutput("psig_threhsold_GSEA_ui"),
+                         
+                         uiOutput("GeneSet2Enrich_ui"),
                          uiOutput("UploadedGeneSet_ui"),
-                         selectInput("UniverseOfGene","Select an Universe for enrichment (default is clusterProfilers default",choices = c("default","allPresentGenes_after_pre_process","allPresentGenes_before_pre_process"),selected = "default"),
+                         uiOutput("UniverseOfGene_ui"),
+
+                         
                          actionButton("enrichmentGO",label="Do enrichment analysis"),
                          hr(style = "border-top: 1px solid #858585;"),
                          uiOutput("KeggPathwayID_ui")
