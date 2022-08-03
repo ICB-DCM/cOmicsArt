@@ -259,11 +259,12 @@ print("Data Upload")
         ensembl <- readRDS("data/ENSEMBL_Mouse_05_07_22")
       }
       
-      out <- getBM(attributes=c("ensembl_gene_id", "gene_biotype"), values=rownames(data_input[[input$omicType]]$annotation_rows), mart=ensembl)
+      out <- getBM(attributes=c("ensembl_gene_id", "gene_biotype","external_gene_name"), values=rownames(data_input[[input$omicType]]$annotation_rows), mart=ensembl)
     
       out <- out[base::match(rownames(data_input[[input$omicType]]$annotation_rows), out$ensembl_gene_id),] 
       
       data_input[[input$omicType]]$annotation_rows$gene_type=out$gene_biotype
+      data_input[[input$omicType]]$annotation_rows$GeneName=out$external_gene_name
       
       # data_matrix$gene_type=out$gene_biotype
       
@@ -2014,7 +2015,7 @@ print("Data Upload")
   output$OrganismChoice_ui=renderUI({
     selectInput("OrganismChoice","Specificy your current organism",choices=c("hsa","mmu"),selected="mmu")
   })
-  tmp_selection<<-"DE_Genes"
+  #tmp_selection<<-"DE_Genes"
   # output$GeneSet2Enrich_ui=renderUI({
   #   selectInput(inputId = "GeneSet2Enrich",
   #               label = "Choose a gene set to hand over to enrich",
@@ -2040,7 +2041,7 @@ print("Data Upload")
   geneSetChoice=reactive({
     if(input$GeneSet2Enrich=="DE_Genes"){
       # atm this is not done
-      geneSetChoice_tmp=isolate(DE_genelist())
+      geneSetChoice_tmp=DE_genelist()
     }
     if(input$GeneSet2Enrich=="ProvidedGeneSet"){
       if(!is.null(input$UploadedGeneSet)){
@@ -2064,7 +2065,7 @@ print("Data Upload")
       }
     }
     if(input$GeneSet2Enrich=="heatmap_genes"){
-      geneSetChoice_tmp=isolate(heatmap_genelist())
+      geneSetChoice_tmp=heatmap_genelist()
     }
     geneSetChoice_tmp
   })
@@ -2074,13 +2075,64 @@ print("Data Upload")
     print("Start Enrichment2")
     fun_LogIt("## ENRICHMENT")
     req(geneSetChoice())
-    print("Translation needed?") # Build in check if EntrezIDs provided?!
-    print(geneSetChoice())
+    print("Translation needed?") 
+    # Build in check if EntrezIDs or gene Names provided, if nothing of the two return message to user
+    providedDataType="None"
+    tryCatch(
+      expr = {
+        bitr(geneSetChoice()[1],
+             fromType="SYMBOL",
+             toType="ENTREZID",
+             OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+        providedDataType="SYMBOL"
+      },
+      error = function(e){ 
+        # Not a Symbol!
+        print("Not a Gene Symbol")
+      }
+    )
+    if(providedDataType=="None"){
+      tryCatch(
+        expr = {
+          bitr(geneSetChoice()[1],
+               fromType="GENENAME",
+               toType="ENTREZID",
+               OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+          providedDataType="SYMBOL"
+        },
+        error = function(e){ 
+          # Not a Symbol!
+          print("Not a Genename")
+        }
+      )
+    }
+    if(providedDataType=="None"){
+      tryCatch(
+        expr = {
+          bitr(geneSetChoice()[1],
+               fromType="ENSEMBL",
+               toType="ENTREZID",
+               OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+          providedDataType="ENSEMBL"
+        },
+        error = function(e){ 
+          # Not a Symbol!
+          print("Not a ENSEMBL")
+        }
+      )
+    }
+    
+    #GENENAME
+    print(providedDataType)
+    if(providedDataType=="None"){
+      output$EnrichmentInfo=renderText("Enrichment Failed - Make sure you provid the genelist with entries of type SYMBOL, GENENAME or ENSEMBL. (If you send genes from within the App, double check your annotation and re-send; for gene list from outside the App-World check and translate: https://david.ncifcrf.gov/conversion.jsp")
+      req(FALSE)
+    }
     geneSetChoice_tranlsated <- bitr(geneSetChoice(),
-                                     fromType="ENSEMBL",
+                                     fromType=providedDataType,
                                      toType="ENTREZID",
                                      OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-    print("Enrichment")
+    print(paste0("Enrichment of ",length(geneSetChoice_tranlsated)," genes"))
     if(input$UniverseOfGene=="default"){
       universeSelected_tranlsated=NULL
     }
@@ -2121,6 +2173,7 @@ print("Data Upload")
       # Only include p.adj significant terms
       resultData=resultData[resultData$p.adjust<0.05,]
       if(nrow(resultData)==0){
+        print("No of enriched terms found")
         output$EnrichmentInfo=renderText("No of enriched terms found")
       }else{
         output$KEGG_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_Kegg)})
