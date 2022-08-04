@@ -2194,7 +2194,6 @@ print("Data Upload")
     print("Start Enrichment2")
     fun_LogIt("## ENRICHMENT")
     req(geneSetChoice())
-    output$KEGG_Enrichment<-renderPlot({ggplot()})
     # Separate in GSEA or ORA
     if(input$ORA_or_GSE=="GeneSetEnrichment"){
       #sort List=
