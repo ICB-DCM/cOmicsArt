@@ -760,7 +760,7 @@ print("Data Upload")
       pcaData$chosenAnno=pcaData$global_ID
     }
 
-     if(length(levels(pcaData[,input$coloring_options]))>8){
+    if(length(levels(pcaData[,input$coloring_options]))>8){
        if(continiousColors){
          colorTheme=viridis::viridis(10)
          pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
@@ -771,6 +771,7 @@ print("Data Upload")
                                          chosenAnno=chosenAnno)) +
            geom_point(size =3)+
            scale_color_manual(name = input$coloring_options,values=colorTheme)
+         scenario=1
        }else{
          pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
                                          y = pcaData[,input$y_axis_selection],
@@ -780,6 +781,7 @@ print("Data Upload")
                                          chosenAnno=chosenAnno)) +
            geom_point(size =3)+
            scale_color_discrete(name = input$coloring_options)
+         scenario=2
        }
      
     }else{
@@ -794,6 +796,7 @@ print("Data Upload")
         geom_point(size =3)+
         scale_color_manual(values=colorTheme,
                            name = input$coloring_options)
+      scenario=3
     }
     
     pca_plot_final <- pca_plot+
@@ -831,7 +834,16 @@ print("Data Upload")
                                                       #linetype="solid",
                                                       #alpha=0.5,
                                                       color="#ab0521")
-      
+      if(scenario==1){
+        scenario=4
+      }
+      if(scenario==2){
+        scenario=5
+      }
+      if(scenario==3){
+        scenario=6
+      }
+     
     }
     
     #Some identify the current active tab and then specifcy the correct plot to it
@@ -875,7 +887,7 @@ print("Data Upload")
       ylab("Variance explained")+
       theme_bw()+
       ggtitle("Scree-Plot for shown PCA")
-    
+    scenario=7
     output[["Scree_Plot"]] <- renderPlotly({ggplotly(scree_plot,
                                                      tooltip = "Var",legendgroup="color")})
     
@@ -923,7 +935,7 @@ print("Data Upload")
       ylab(ifelse(is.null(input$EntitieAnno_Loadings),"",input$EntitieAnno_Loadings))+
       xlab(paste0("Loadings: ",input$x_axis_selection))+
       theme_bw(base_size = 20)
-    
+    scenario = 8
     output[["PCA_Loadings_plot"]]<- renderPlot({plotOut})
     
     global_Vars$Loadings_x_axis=input$x_axis_selection
