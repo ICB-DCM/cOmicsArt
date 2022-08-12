@@ -827,9 +827,15 @@ print("Data Upload")
       )
       
       df_out_r$global_ID=rownames(df_out_r)
+      df_out_r$chosenAnno=rownames(df_out_r)
+      if(!is.null(input$EntitieAnno_Loadings)){
+        req(data_input_shiny()[[input$omicType]])
+        df_out_r$chosenAnno=factor(make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])),levels = make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])))
+        #LoadingsDF$entitie=make.unique(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])
+      }
       
       pca_plot_final <- pca_plot_final + geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
-                                                      aes(x=0, y=0, xend=v1, yend=v2),
+                                                      aes(x=0, y=0, xend=v1, yend=v2,chosenAnno=chosenAnno),
                                                       arrow=arrow(type="closed",unit(0.01, "inches"),ends = "both"),
                                                       #linetype="solid",
                                                       #alpha=0.5,
