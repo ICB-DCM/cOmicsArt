@@ -942,7 +942,6 @@ print("Data Upload")
       xlab(paste0("Loadings: ",input$x_axis_selection))+
       theme_bw(base_size = 15)
 
-    browser()
     scenario = 8
     output[["PCA_Loadings_plot"]]<- renderPlot({plotOut})
     
