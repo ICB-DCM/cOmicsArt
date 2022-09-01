@@ -128,7 +128,7 @@ print("Data Upload")
   })
   output$SaveInputAsList=downloadHandler(
    filename = function() {
-      paste(input$omicType,"_only_precompiled", " ",Sys.Date(),".RDS",sep="") },
+      paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep="") },
     content = function(file){
       saveRDS(data_input_shiny(),file)
     }
@@ -858,18 +858,18 @@ print("Data Upload")
                                                    tooltip = ifelse(is.null(input$PCA_anno_tooltip),"all","chosenAnno"),legendgroup="color")})
     
     print(input$only2Report_pca)
-    global_Vars$PCA_plot=pca_plot_final
+    global_Vars$PCA_plot<-pca_plot_final # somehow does not update ? or just return the latest?
     global_Vars$PCA_customTitle=customTitle
     global_Vars$PCA_coloring=input$coloring_options
     global_Vars$PCA_noLoadings=ifelse(input$Show_loadings=="Yes",length(TopK),0)
     
     output$SavePlot_pos1=downloadHandler(
-      filename = function() { paste(customTitle, " ",Sys.Date(),input$file_ext_plot1,sep="") },
+      filename = function() { paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="") },
       # cannot get the final destination as this is a download on server side
       content = function(file){
         ggsave(file,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
         on.exit({
-          TEST=paste0(getwd(),"/www/",paste(customTitle, " ",Sys.Date(),input$file_ext_plot1,sep=""))
+          TEST=paste0(getwd(),"/www/",paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep=""))
           ggsave(TEST,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
           
           # Add Log Messages
@@ -902,13 +902,13 @@ print("Data Upload")
     
     
     output$SavePlot_Scree=downloadHandler(
-      filename = function() { paste(customTitle, " ",Sys.Date(),input$file_ext_Scree,sep="") },
+      filename = function() { paste(customTitle, " ",Sys.time(),input$file_ext_Scree,sep="") },
       
       content = function(file){
         ggsave(file,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
         
         on.exit({
-          tmp_filename=paste0(getwd(),"/www/",paste("Scree",customTitle, " ",Sys.Date(),input$file_ext_Scree,sep=""))
+          tmp_filename=paste0(getwd(),"/www/",paste("Scree",customTitle, " ",Sys.time(),input$file_ext_Scree,sep=""))
           ggsave(tmp_filename,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
           
           # Add Log Messages
@@ -936,11 +936,13 @@ print("Data Upload")
     
     plotOut=ggplot(LoadingsDF,aes(x=Loading,y=entitie))+
       geom_col(aes(fill=Loading))+
-      scale_y_discrete(breaks=LoadingsDF$entitie,labels=gsub("\\.[0-9].*$","",LoadingsDF$entitie))+
+      scale_y_discrete(breaks=LoadingsDF$entitie,labels=stringr::str_wrap(gsub("\\.[0-9].*$","",LoadingsDF$entitie),20))+
       scale_fill_gradient2(low="#277d6a",mid="white",high="orange")+
       ylab(ifelse(is.null(input$EntitieAnno_Loadings),"",input$EntitieAnno_Loadings))+
       xlab(paste0("Loadings: ",input$x_axis_selection))+
-      theme_bw(base_size = 20)
+      theme_bw(base_size = 15)
+
+    browser()
     scenario = 8
     output[["PCA_Loadings_plot"]]<- renderPlot({plotOut})
     
@@ -950,14 +952,14 @@ print("Data Upload")
     global_Vars$Loadings_file_ext_Loadings=input$file_ext_Loadings
     global_Vars$Loadings_plotOut=plotOut
     output$SavePlot_Loadings=downloadHandler(
-      filename = function() { paste("LOADINGS_PCA_",Sys.Date(),input$file_ext_Loadings,sep="") },
+      filename = function() { paste("LOADINGS_PCA_",Sys.time(),input$file_ext_Loadings,sep="") },
       
       content = function(file){
-        ggsave(file,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings))
+        ggsave(file,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings), dpi = "print")
         
         on.exit({
-          tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.Date(),input$file_ext_Loadings,sep=""))
-          ggsave(tmp_filename,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings))
+          tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.time(),input$file_ext_Loadings,sep=""))
+          ggsave(tmp_filename,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings), dpi = "print")
           
           # Add Log Messages
           fun_LogIt("### PCA Loadings")
@@ -974,7 +976,7 @@ print("Data Upload")
   observeEvent(input$only2Report_pca,{
       # needs global var ?! do we want that?
       notificationID<-showNotification("Saving...",duration = 0)
-      TEST=paste0(getwd(),"/www/",paste(global_Vars$PCA_customTitle, " ",Sys.Date(),".png",sep=""))
+      TEST=paste0(getwd(),"/www/",paste(global_Vars$PCA_customTitle, "__",Sys.time(),".png",sep=""))
       ggsave(TEST,plot=global_Vars$PCA_plot,device = "png")
 
       # Add Log Messages
@@ -982,6 +984,12 @@ print("Data Upload")
       fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
       ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
       fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
+      if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
+        fun_LogIt("### Personal Notes:")
+        fun_LogIt(message = input$NotesPCA)
+      }
+     
+      
       removeNotification(notificationID)
       showNotification("Saved!",type = "message", duration = 1)
 
@@ -989,7 +997,7 @@ print("Data Upload")
   
   observeEvent(input$only2Report_Scree_Plot,{
     notificationID<-showNotification("Saving...",duration = 0)
-    tmp_filename=paste0(getwd(),"/www/",paste("Scree",global_Vars$Scree_customTitle, " ",Sys.Date(),".png",sep=""))
+    tmp_filename=paste0(getwd(),"/www/",paste("Scree",global_Vars$Scree_customTitle, " ",Sys.time(),".png",sep=""))
     ggsave(tmp_filename,plot=global_Vars$Scree_plot,device = "png")
     
     # Add Log Messages
@@ -1003,7 +1011,7 @@ print("Data Upload")
   
   observeEvent(input$only2Report_Loadings,{
     notificationID<-showNotification("Saving...",duration = 0)
-    tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.Date(),".png",sep=""))
+    tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.time(),".png",sep=""))
     ggsave(tmp_filename,plot=global_Vars$Loadings_plotOut,device = "png")
     
     # Add Log Messages
@@ -1141,14 +1149,14 @@ print("Data Upload")
       
       
       output$SavePlot_Volcano=downloadHandler(
-        filename = function() { paste("VOLCANO_",Sys.Date(),input$file_ext_Volcano,sep="") },
+        filename = function() { paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="") },
         
         content = function(file){
           ggsave(file,plot=VolcanoPlot,device = gsub("\\.","",input$file_ext_Volcano))
           
           on.exit({
             
-            tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.Date(),input$file_ext_Volcano,sep="")))
+            tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="")))
             ggsave(tmp_filename,plot=VolcanoPlot,device = gsub("\\.","",input$file_ext_Volcano))
             
             # Add Log Messages
@@ -1188,7 +1196,7 @@ print("Data Upload")
       
       DE_total<<-rbind(DE_UP,DE_Down)
       output$SaveDE_List=downloadHandler(
-        filename = function() { paste("DE_Genes ",input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat," vs. ",input$Groups2Compare_ref,"_",Sys.Date(),".csv",sep="") },
+        filename = function() { paste("DE_Genes ",input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat," vs. ",input$Groups2Compare_ref,"_",Sys.time(),".csv",sep="") },
         content = function(file){
           write.csv(DE_total,file = file)
         }
@@ -1216,7 +1224,7 @@ print("Data Upload")
   observeEvent(input$only2Report_Volcano,{
     notificationID<-showNotification("Saving...",duration = 0)
     
-    tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.Date(),".png",sep="")))
+    tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),".png",sep="")))
     ggsave(tmp_filename,plot=global_Vars$Volcano_plot,device = "png")
     
     # Add Log Messages
@@ -1647,14 +1655,14 @@ print("Data Upload")
     global_Vars$Heatmap_Groups2Compare_ctrl_heatmap=input$Groups2Compare_ctrl_heatmap
     
     output$SavePlot_Heatmap=downloadHandler(
-      filename = function() { paste(customTitleHeatmap, " ",Sys.Date(),input$file_ext_Heatmap,sep="") },
+      filename = function() { paste(customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="") },
       
       content = function(file){
         save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
         
         on.exit({
           
-          tmp_filename=paste0(getwd(),"/www/",paste(paste(customTitleHeatmap, " ",Sys.Date(),input$file_ext_Heatmap,sep="")))
+          tmp_filename=paste0(getwd(),"/www/",paste(paste(customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="")))
           save_pheatmap(heatmap_plot,filename=tmp_filename,type=gsub("\\.","",input$file_ext_Heatmap))
           
           # Add Log Messages
@@ -1691,7 +1699,7 @@ print("Data Upload")
     
     
     output$SaveGeneList_Heatmap=downloadHandler(
-      filename = function() { paste("GeneList_",customTitleHeatmap, " ",Sys.Date(),".csv",sep="") },
+      filename = function() { paste("GeneList_",customTitleHeatmap, " ",Sys.time(),".csv",sep="") },
       
       content = function(file){
         write.csv(heatmap_genelist(), file)
@@ -1747,7 +1755,7 @@ print("Data Upload")
   observeEvent(input$only2Report_Heatmap,{
     notificationID<-showNotification("Saving...",duration = 0)
     
-    tmp_filename=paste0(getwd(),"/www/",paste(paste(global_Vars$Heatmap_customTitleHeatmap, " ",Sys.Date(),".png",sep="")))
+    tmp_filename=paste0(getwd(),"/www/",paste(paste(global_Vars$Heatmap_customTitleHeatmap, " ",Sys.time(),".png",sep="")))
     save_pheatmap(global_Vars$Heatmap_heatmap_plot,filename=tmp_filename,type="png")
     
     # Add Log Messages
@@ -1976,13 +1984,13 @@ print("Data Upload")
 
     
     output$SavePlot_singleGene=downloadHandler(
-      filename = function() { paste(customTitle_boxplot, " ",Sys.Date(),input$file_ext_singleGene,sep="") },
+      filename = function() { paste(customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep="") },
       
       content = function(file){
         ggsave(file,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
         
         on.exit({
-          tmp_filename=paste0(getwd(),"/www/",paste(customTitle_boxplot, " ",Sys.Date(),input$file_ext_singleGene,sep=""))
+          tmp_filename=paste0(getwd(),"/www/",paste(customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep=""))
           ggsave(filename = tmp_filename,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
           fun_LogIt("## Single Entitie")
           fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",input$Select_Gene))
@@ -2005,7 +2013,7 @@ print("Data Upload")
   ## download only to report
   observeEvent(input$only2Report_SingleEntities,{
     notificationID<-showNotification("Saving...",duration = 0)
-    tmp_filename=paste0(getwd(),"/www/",paste(global_Vars$SingleEnt_customTitle_boxplot, " ",Sys.Date(),".png",sep=""))
+    tmp_filename=paste0(getwd(),"/www/",paste(global_Vars$SingleEnt_customTitle_boxplot, " ",Sys.time(),".png",sep=""))
     ggsave(filename = tmp_filename,plot=global_Vars$SingleEnt_P_boxplots,device = "png")
     fun_LogIt("## Single Entitie")
     fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",global_Vars$SingleEnt_Select_Gene))
@@ -2387,13 +2395,13 @@ print("Data Upload")
         global_Vars$KEGG_EnrichmentRes_Kegg_terms=EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = F),]
         
         output$SavePlot_KEGG=downloadHandler(
-          filename = function() { paste("KEGG_",Sys.Date(),input$file_ext_KEGG,sep="") },
+          filename = function() { paste("KEGG_",Sys.time(),input$file_ext_KEGG,sep="") },
           
           content = function(file){
             ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = gsub("\\.","",input$file_ext_KEGG))
             
             on.exit({
-              tmp_filename=paste0("www/",paste("KEGG_",Sys.Date(),input$file_ext_KEGG,sep=""))
+              tmp_filename=paste0("www/",paste("KEGG_",Sys.time(),input$file_ext_KEGG,sep=""))
               ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = gsub("\\.","",input$file_ext_KEGG))
               # missing to separated between GSEA and ORA
               # if(input$ORA_or_GSE=="GeneSetEnrichment"){}
@@ -2458,13 +2466,13 @@ print("Data Upload")
       
       
       output$SavePlot_GO=downloadHandler(
-        filename = function() { paste("GO_",Sys.Date(),input$file_ext_GO,sep="") },
+        filename = function() { paste("GO_",Sys.time(),input$file_ext_GO,sep="") },
         
         content = function(file){
           ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
           
           on.exit({
-            tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.Date(),input$file_ext_GO,sep="") )
+            tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.time(),input$file_ext_GO,sep="") )
             ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
             fun_LogIt("### GO ENRICHMENT")
             # missing to separated between GSEA and ORA
@@ -2522,13 +2530,13 @@ print("Data Upload")
       global_Vars$Reactome_Enrichment_padj=EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),]
       
       output$SavePlot_REACTOME=downloadHandler(
-        filename = function() { paste("REACTOME_",Sys.Date(),input$file_ext_REACTOME,sep="") },
+        filename = function() { paste("REACTOME_",Sys.time(),input$file_ext_REACTOME,sep="") },
         
         content = function(file){
           ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME),device = gsub("\\.","",input$file_ext_REACTOME))
           
           on.exit({
-            tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.Date(),input$file_ext_REACTOME,sep="") )
+            tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.time(),input$file_ext_REACTOME,sep="") )
             ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME),device = gsub("\\.","",input$file_ext_REACTOME))
             fun_LogIt("### REACTOME ENRICHMENT")
             # missing to separated between GSEA and ORA
@@ -2573,7 +2581,7 @@ print("Data Upload")
 
     notificationID<-showNotification("Saving...",duration = 0)
     
-    tmp_filename=paste0(getwd(),"/www/",paste("KEGG_",Sys.Date(),".png",sep=""))
+    tmp_filename=paste0(getwd(),"/www/",paste("KEGG_",Sys.time(),".png",sep=""))
     ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$KEGG_EnrichmentRes_Kegg),device = "png")
     fun_LogIt("### KEGG ENRICHMENT")
     fun_LogIt(message = paste0("**KEGG ENRICHMENT** - KEGG Enrichment was performed with a gene set of interest of size: ",length(global_Vars$KEGG_geneSetChoice_tranlsated)))
@@ -2591,7 +2599,7 @@ print("Data Upload")
   
   observeEvent(input$only2Report_GO,{
     notificationID<-showNotification("Saving...",duration = 0)
-    tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.Date(),".png",sep="") )
+    tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.time(),".png",sep="") )
     ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$GO_EnrichmentRes_GO),device = "png")
     fun_LogIt("### GO ENRICHMENT")
     fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(global_Vars$GO_geneSetChoice_tranlsated)))
@@ -2611,7 +2619,7 @@ print("Data Upload")
   observeEvent(input$only2Report_REACTOME,{
     notificationID<-showNotification("Saving...",duration = 0)
     browser()
-    tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.Date(),".png",sep="") )
+    tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.time(),".png",sep="") )
     ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$Reactome_REACTOME_Enrichment),device = "png")
     fun_LogIt("### REACTOME ENRICHMENT")
     fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - REACTOME Enrichment was performed with a gene set of interest of size: ",length(global_Vars$Reactome_geneSetChoice_tranlsated)))

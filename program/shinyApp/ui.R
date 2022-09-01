@@ -266,7 +266,9 @@ ui <- shiny::fluidPage(
                 input = "file_ext_plot1", label = "File Type:",
                 choices = c(".png", ".tiff", ".pdf"), selected = ".png"
               )
-            )
+            ),
+            textAreaInput(inputId="NotesPCA", label="Notes:", placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+            helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
           ),
           tabPanel(
             "PCA_Loadings",
