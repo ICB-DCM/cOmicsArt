@@ -382,8 +382,11 @@ ui <- shiny::fluidPage(
               actionButton(inputId = "SendDE_Genes2Enrichment", label = "Send DE Genes to enrichment analysis", block = F)
             )
           ),
-          tabPanel("Volcano_table", DT::dataTableOutput("Volcano_table_final"))
-        )
+          tabPanel("Volcano_table", DT::dataTableOutput("Volcano_table_final")),
+          
+        ),
+        textAreaInput(inputId="NotesVolcano", label="Notes:", placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+        helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
       )
     ),
     tabPanel("Heatmap",
@@ -468,7 +471,9 @@ ui <- shiny::fluidPage(
             input = "file_ext_Heatmap", label = "File Type:",
             choices = c(".png", ".tiff", ".pdf"), selected = ".png"
           )
-        )
+        ),
+        textAreaInput(inputId="NotesHeatmap", label="Notes:", placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+        helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
       )
     ),
     tabPanel("Single Gene Visualisations",
@@ -511,7 +516,10 @@ ui <- shiny::fluidPage(
             input = "file_ext_singleGene", label = "File Type:",
             choices = c(".png", ".tiff", ".pdf"), selected = ".png"
           )
-        )
+        ),
+        textAreaInput(inputId="NotesSingleEntities", label="Notes:", placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+        helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+        
       )
     ),
     tabPanel("Enrichment Analysis",
@@ -560,7 +568,9 @@ ui <- shiny::fluidPage(
                 input = "file_ext_KEGG", label = "File Type:",
                 choices = c(".png", ".tiff", ".pdf"), selected = ".png"
               )
-            )
+            ),
+            textAreaInput(inputId="NotesKEGG", label="Notes:", placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+            helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
           ),
           tabPanel("KEGG_Enrichment_table", DT::dataTableOutput("EnrichmentResults_KEGG")),
           tabPanel(
@@ -598,7 +608,9 @@ ui <- shiny::fluidPage(
                 input = "file_ext_GO", label = "File Type:",
                 choices = c(".png", ".tiff", ".pdf"), selected = ".png"
               )
-            )
+            ),
+            textAreaInput(inputId="NotesGO", label="Notes:", placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+            helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
           ),
           tabPanel("GO_Enrichment_table", DT::dataTableOutput("EnrichmentResults_GO")),
           tabPanel(
@@ -620,7 +632,9 @@ ui <- shiny::fluidPage(
                 input = "file_ext_REACTOME", label = "File Type:",
                 choices = c(".png", ".tiff", ".pdf"), selected = ".png"
               )
-            )
+            ),
+            textAreaInput(inputId="NotesREACTOME", label="Notes:", placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+            helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
           ),
           tabPanel("REACTOME_Enrichment_table", DT::dataTableOutput("EnrichmentResults_REACTOME"))
         )

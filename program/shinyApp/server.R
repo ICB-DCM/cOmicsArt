@@ -1164,8 +1164,13 @@ print("Data Upload")
             fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
             
             fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
-            fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "markdown")))
-            
+            fun_LogIt(message = head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),tableSaved=T)
+            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "markdown")))
+            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "latex")))
+            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "pipe")))
+            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "html")))
+            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "simple")))
+            # fun_LogIt(message = paste0("**VOLCANO** - \n",print(knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "html"))))
           })
         }
         
@@ -1232,8 +1237,13 @@ print("Data Upload")
     fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
     
     fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(global_Vars$Volcano_table[order(global_Vars$Volcano_table$p_adj,decreasing = T),],10),format = "markdown")))
+    fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(global_Vars$Volcano_table[order(global_Vars$Volcano_table$p_adj,decreasing = T),],10),format = "html")))
+    #fun_LogIt(message = head(global_Vars$Volcano_table[order(global_Vars$Volcano_table$p_adj,decreasing = T),],10),tableSaved=T)
     
+    if(isTruthy(input$NotesVolcano) & !(isEmpty(input$NotesVolcano))){
+      fun_LogIt("### Personal Notes:")
+      fun_LogIt(message = input$NotesVolcano)
+    }
     
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
@@ -1785,6 +1795,11 @@ print("Data Upload")
     
     fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
     
+    if(isTruthy(input$NotesHeatmap) & !(isEmpty(input$NotesHeatmap))){
+      fun_LogIt("### Personal Notes:")
+      fun_LogIt(message = input$NotesHeatmap)
+    }
+    
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
   })
@@ -2027,16 +2042,17 @@ print("Data Upload")
     
     fun_LogIt(message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")"))
     
+    if(isTruthy(input$NotesSingleEntities) & !(isEmpty(input$NotesSingleEntities))){
+      fun_LogIt("### Personal Notes:")
+      fun_LogIt(message = input$NotesSingleEntities)
+    }
     
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
   })
 
-  
-  ################################################################################################
-  # KEGG enrichment
-  ################################################################################################
-  #Ui section
+  # KEGG enrichment ----
+  ## Ui section ----
   output$OrganismChoice_ui=renderUI({
     selectInput("OrganismChoice","Specificy your current organism",choices=c("hsa","mmu"),selected="mmu")
   })
@@ -2155,6 +2171,7 @@ print("Data Upload")
     }
     })
   
+  ## Do enrichment ----
   geneSetChoice=reactive({
     output$KEGG_Enrichment<-renderPlot({ggplot()})
     if(isTruthy(input$GeneSet2Enrich)){
@@ -2412,7 +2429,7 @@ print("Data Upload")
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(resultData)))
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = F),],5),format = "markdown")))
+              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = F),],5),format = "html")))
               
             })
           }
@@ -2483,7 +2500,7 @@ print("Data Upload")
             fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,])))
             fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
             fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-            fun_LogIt(message = knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),],5),format = "markdown"))
+            fun_LogIt(message = knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),],5),format = "html"))
             
           })
         }
@@ -2547,7 +2564,7 @@ print("Data Upload")
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_RACTOME@result[EnrichmentRes_RACTOME@result$p.adjust<0.05,])))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - ![REACTOME ENRICHMENT](",tmp_filename,")"))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-            fun_LogIt(message = knitr::kable(head(EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),],5),format = "markdown"))
+            fun_LogIt(message = knitr::kable(head(EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),],5),format = "html"))
             
           })
           
@@ -2590,7 +2607,12 @@ print("Data Upload")
     fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$KEGG_resultData)))
     fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
     fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = knitr::kable(head(global_Vars$KEGG_EnrichmentRes_Kegg_terms,5),format = "markdown"))
+    fun_LogIt(message = knitr::kable(head(global_Vars$KEGG_EnrichmentRes_Kegg_terms,5),format = "html"))
+    
+    if(isTruthy(input$NotesKEGG) & !(isEmpty(input$NotesKEGG))){
+      fun_LogIt("### Personal Notes:")
+      fun_LogIt(message = input$NotesKEGG)
+    }
     
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
@@ -2608,9 +2630,12 @@ print("Data Upload")
     fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$GO_EnrichmentRes_GO@result[global_Vars$GO_EnrichmentRes_GO@result$p.adjust<0.05,])))
     fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
     fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = knitr::kable(head(global_Vars$GO_EnrichmentRes_GO@result[order(global_Vars$GO_EnrichmentRes_GO@result$p.adjust,decreasing = T),],5),format = "markdown"))
+    fun_LogIt(message = knitr::kable(head(global_Vars$GO_EnrichmentRes_GO@result[order(global_Vars$GO_EnrichmentRes_GO@result$p.adjust,decreasing = T),],5),format = "html"))
     
-    
+    if(isTruthy(input$NotesGO) & !(isEmpty(input$NotesGO))){
+      fun_LogIt("### Personal Notes:")
+      fun_LogIt(message = input$NotesGO)
+    }
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
   })
@@ -2628,7 +2653,12 @@ print("Data Upload")
     fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$Reactome_REACTOME_Enrichment_result[global_Vars$Reactome_REACTOME_Enrichment_result$p.adjust<0.05,])))
     fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - ![REACTOME ENRICHMENT](",tmp_filename,")"))
     fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = knitr::kable(head(global_Vars$Reactome_REACTOME_Enrichment_result[order(global_Vars$Reactome_REACTOME_Enrichment_result$p.adjust,decreasing = T),],5),format = "markdown"))
+    fun_LogIt(message = knitr::kable(head(global_Vars$Reactome_REACTOME_Enrichment_result[order(global_Vars$Reactome_REACTOME_Enrichment_result$p.adjust,decreasing = T),],5),format = "html"))
+    
+    if(isTruthy(input$NotesREACTOME) & !(isEmpty(input$NotesREACTOME))){
+      fun_LogIt("### Personal Notes:")
+      fun_LogIt(message = input$NotesREACTOME)
+    }
     
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
