@@ -2231,9 +2231,10 @@ print("Data Upload")
 
     geneSetChoice_tmp
   })
-
+  output$KEGG_Enrichment<-renderPlot({ggplot()})
   observeEvent(input$enrichmentGO,{
     print("Start Enrichment2")
+   
     fun_LogIt("## ENRICHMENT")
     req(geneSetChoice())
     # Separate in GSEA or ORA
@@ -2333,9 +2334,13 @@ print("Data Upload")
       print(paste0("Enrichment of ",length(geneSetChoice_tranlsated)," genes"))
       
       
-      if(input$UniverseOfGene=="default"){
+      if(!isTruthy(input$UniverseOfGene)){
         universeSelected_tranlsated=NULL
-      }
+      }else{
+        if(input$UniverseOfGene=="default"){
+          universeSelected_tranlsated=NULL
+        }
+
       if(input$UniverseOfGene=="allPresentGenes_after_pre_process"){
         req(selectedData_processed())
         universeSelected=rownames(selectedData_processed()[[input$omicType]]$Matrix)
@@ -2358,22 +2363,23 @@ print("Data Upload")
                                             toType="ENTREZID",
                                             OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
         print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
-        EnrichmentRes_Kegg <<- clusterProfiler::enrichKEGG(gene    = geneSetChoice_tranlsated,
+      }
+      }
+      
+      EnrichmentRes_Kegg <<- clusterProfiler::enrichKEGG(gene    = geneSetChoice_tranlsated,
                                                            organism     = input$OrganismChoice,
                                                            pvalueCutoff = 0.05,
                                                            universe = universeSelected_tranlsated)
-        
-        EnrichmentRes_GO <<- clusterProfiler::enrichGO(gene         = geneSetChoice_tranlsated,
+      EnrichmentRes_GO <<- clusterProfiler::enrichGO(gene         = geneSetChoice_tranlsated,
                                                        ont ="ALL", 
                                                        pvalueCutoff = 0.05, 
                                                        OrgDb = ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))
-        
-        EnrichmentRes_RACTOME <-ReactomePA::enrichPathway(gene=geneSetChoice_tranlsated,
+      EnrichmentRes_RACTOME <-ReactomePA::enrichPathway(gene=geneSetChoice_tranlsated,
                                                           pvalueCutoff=0.05,
                                                           organism = ifelse(input$OrganismChoice=="hsa","human","mouse"),
                                                           universe = universeSelected_tranlsated, 
                                                           readable=T)
-      }
+      
 
     }
 
@@ -2719,10 +2725,11 @@ print("Data Upload")
     
     real_PathwayID=gsub(":.*$","",input$KeggPathwayID)
     print(real_PathwayID)
+    browser()
     ## reduce dataset to selected genes
     Data2PlotOnTop=selectedData_processed()[[input$omicType]]$Matrix[geneSetChoice(),,drop=F]
     #print(geneSetChoice())
-    ##
+
     if(input$plotOnTopOption=="LFC"){
       ctrl_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCRTL)
       comparison_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCOMP)
