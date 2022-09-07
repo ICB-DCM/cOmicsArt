@@ -2720,17 +2720,16 @@ print("Data Upload")
   
   observeEvent(input$OverlayOnPathway,{
     req(input$KeggPathwayID)
+    req(selectedData_processed())
     print("Overlay On Kegg")
     print(input$KeggPathwayID)
     
     real_PathwayID=gsub(":.*$","",input$KeggPathwayID)
     print(real_PathwayID)
-    browser()
     ## reduce dataset to selected genes
-    Data2PlotOnTop=selectedData_processed()[[input$omicType]]$Matrix[geneSetChoice(),,drop=F]
-    #print(geneSetChoice())
 
     if(input$plotOnTopOption=="LFC"){
+      Data2PlotOnTop=selectedData_processed()[[input$omicType]]$Matrix[geneSetChoice(),,drop=F]
       ctrl_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCRTL)
       comparison_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCOMP)
       if(length(comparison_samples_idx)<=1 | length(ctrl_samples_idx)<=1){
