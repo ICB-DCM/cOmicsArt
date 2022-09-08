@@ -30,6 +30,7 @@ library(tinytex)
 library(testthat)
 library(shinytest)
 library(biomaRt)
+library(zip)
 # library(svglite)
 
 options(repos = BiocManager::repositories())
@@ -279,6 +280,11 @@ ui <- shiny::fluidPage(
               style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
               NULL,
               actionButton(inputId = "only2Report_pca", label = "Send only to Report")
+            ),
+            splitLayout(
+              style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+              NULL,
+              downloadButton( "getR_Code_PCA", label = "Get underlying R code and data",icon = icon("code"))
             ),
             splitLayout(
               style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),

@@ -1,5 +1,15 @@
 
 getPlotCode <- function(numberOfScenario) {
+  initalString= "# ShinyOmics R Code Download
+# Load necassary packages (if errors please install respective packages)
+library(ggplot2)
+library(ggpubr)
+
+# Load the dataObject (RDS-object) (expected to be in the same folder and to be the only rds object!)
+envList=readRDS('Data.rds')
+list2env(envList,envir = globalenv())
+
+# Happy Adjusting! :)"
   if (numberOfScenario == 1) {
     stringtosave = 'pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
                                   y = pcaData[,input$y_axis_selection],
@@ -162,5 +172,5 @@ getPlotCode <- function(numberOfScenario) {
   if (numberOfScenario == 11) {
     stringtosave = 'P_boxplots=ggplot() + theme_void()'
   }
-  return(stringtosave)
+  return(paste0(initalString,"\n",stringtosave))
 }

@@ -909,10 +909,12 @@ print("Data Upload")
       if(scenario==3){
         scenario=6
       }
+      
      
     }
     
     #Some identify the current active tab and then specifcy the correct plot to it
+    PCA_scenario=scenario
 
     output[["PCA_plot"]] <- renderPlotly({ggplotly(pca_plot_final,
                                                    tooltip = ifelse(is.null(input$PCA_anno_tooltip),"all","chosenAnno"),legendgroup="color")})
@@ -922,6 +924,32 @@ print("Data Upload")
     global_Vars$PCA_customTitle=customTitle
     global_Vars$PCA_coloring=input$coloring_options
     global_Vars$PCA_noLoadings=ifelse(input$Show_loadings=="Yes",length(TopK),0)
+    
+    
+    output$getR_Code_PCA <- downloadHandler(
+      filename = function(){
+        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+      },
+      content = function(file){
+        envList=list(pcaData=pcaData,
+                     input=reactiveValuesToList(input),
+                     global_ID=pcaData$global_ID,
+                     chosenAnno=pcaData$chosenAnno,
+                     percentVar=percentVar,
+                     customTitle=customTitle)
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+        write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
+        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+      },
+      contentType = "application/zip"
+      )
+    
     
     output$SavePlot_pos1=downloadHandler(
       filename = function() { paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="") },
@@ -2294,7 +2322,7 @@ print("Data Upload")
   output$KEGG_Enrichment<-renderPlot({ggplot()})
   observeEvent(input$enrichmentGO,{
     print("Start Enrichment2")
-   
+    output$KEGG_Enrichment<-renderPlot({ggplot()})
     fun_LogIt("## ENRICHMENT")
     req(geneSetChoice())
     # Separate in GSEA or ORA
