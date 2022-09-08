@@ -148,7 +148,10 @@ ui <- shiny::fluidPage(
         uiOutput("sample_selection_ui")
       ),
       mainPanel(
-        h3("Upload section"),
+        tabsetPanel(
+          type = "pills",
+          tabPanel(
+        title="Upload section",
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("85%", "10%", "5%"),
           NULL,
@@ -171,7 +174,29 @@ ui <- shiny::fluidPage(
         downloadButton("SaveInputAsList", label = "Save file input to upload later") %>% helper(type = "markdown", content = "compilation_help"),
         htmlOutput("debug", container = pre),
         HTML("<br>"),
-        HTML("<br>"),
+        HTML("<br>")),
+        tabPanel(
+          title="Upload visual inspection",
+          helpText("If you have uploaded your data, you might want to visually check the tables to confirm the correct data format. If you notice irregualarities you will need to correct the input data - this cannot be done in ShinyOmics, See the help on how your data is expected."),
+          actionButton(inputId = "DoVisualDataInspection", label = "Upload data for visual inspection"),
+          splitLayout(
+            style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+            DT::dataTableOutput("DataMatrix_VI"),
+            htmlOutput("DataMatrix_VI_Info", container = pre)
+          ),
+          splitLayout(
+            style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+            DT::dataTableOutput("SampleMatrix_VI"),
+            htmlOutput("SampleMatrix_VI_Info", container = pre)
+          ),
+          splitLayout(
+            style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+            DT::dataTableOutput("EntitieMatrix_VI"),
+            htmlOutput("EntitieMatrix_VI_Info", container = pre)
+          ),
+          htmlOutput("OverallChecks", container = pre)
+        )
+        ),
         uiOutput("NextPanel_ui")
       )
     ),
@@ -542,6 +567,8 @@ ui <- shiny::fluidPage(
         uiOutput("UploadedGeneSet_ui"),
         uiOutput("UniverseOfGene_ui"),
         actionButton("enrichmentGO", label = "Do enrichment analysis"),
+        radioButtons(inputId = "ontologyForGO", label = "Choose ontology for GO enrichment",choices = c("BP","MF","CC","ALL"),selected = "BP"),
+        helpText("Note: ALL sometime fails due to cryptic reasons. You will get notified. If this happens to you please try out the indiviudal ontologies to check whether enriched term are found. "),
         hr(style = "border-top: 1px solid #858585;"),
         uiOutput("KeggPathwayID_ui")
       ),

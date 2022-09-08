@@ -159,6 +159,66 @@ print("Data Upload")
 
   })
   
+## Upload visual inspection ----
+  
+  observeEvent(input$DoVisualDataInspection,{
+    if(isTruthy(input$data_preDone)){
+      output$DataMatrix_VI_Info=renderText({"Visual Inspection only for primary data, not for precompiled set possible!"})
+      req(F)
+    }
+    if(!(isTruthy(input$data_matrix1) & isTruthy(input$data_sample_anno1) & isTruthy(input$data_row_anno1))){
+      output$DataMatrix_VI_Info=renderText("The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!")
+    }else{
+     Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F)
+     output$DataMatrix_VI=DT::renderDataTable({DT::datatable(Matrix)})
+     output$DataMatrix_VI_INFO=renderText({"Matrix:"})
+     sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1,check.names = F)
+     output$SampleMatrix_VI=DT::renderDataTable({DT::datatable(sample_table)})
+     output$SampleMatrix_VI_INFO=renderText({"Sample table:"})
+     
+     annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F)
+     output$EntitieMatrix_VI=DT::renderDataTable({DT::datatable(annotation_rows)})
+     output$EntitieMatrix_VI_INFO=renderText({"Entitie table:"})
+     
+     ## Do some checking
+     snippetYes="<font color=\"#00851d\"><b>Yes</b></font>"
+     snippetNo= "<font color=\"#ab020a\"><b>No</b></font>"
+     output$OverallChecks=renderText({"Some overall Checks are running run...\n
+       Rownames of Matrix are the same as rownames of entitie table ...\n
+       Colnames of Matrix are same as rownames of sample table ... \n
+       Matrix has no na ...\n
+       Sample table no na ...\n
+       Entitie table no na ...\n
+       "
+       })
+
+     check1=ifelse(all(rownames(Matrix)==rownames(annotation_rows)),snippetYes,snippetNo)
+     check2=ifelse(all(colnames(Matrix)==rownames(sample_table)),snippetYes,snippetNo)
+     check3=ifelse(any(is.na(Matrix)==T),snippetNo,snippetYes)
+     check4=ifelse(any(is.na(sample_table)==T),snippetNo,snippetYes)
+     check5=ifelse(any(is.na(annotation_rows)==T),snippetNo,snippetYes)
+     if(check5==snippetNo){
+       # Indicate columns with NA
+       colsWithNa=numeric()
+       for(i in 1:ncol(annotation_rows)){
+         if(any(is.na(annotation_rows[,i])==T)){
+           colsWithNa=c(colsWithNa,i)
+         }
+       }
+       check5=paste0(snippetNo," Following columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
+     }
+     
+     output$OverallChecks=renderText({paste0("Some overall Checks are running run ...\n
+       Rownames of Matrix are the same as rownames of entitie table ",check1,"\n
+       Colnames of Matrix are same as rownames of sample table ",check2," \n
+       Matrix has no na ",check3,"\n
+       Sample table no na ",check4,"\n
+       Entitie table no na ",check5,"\n
+       ")
+     })
+    }
+  })
+  
 ## Do Upload ----
   
   data_input<-list()
@@ -2327,6 +2387,7 @@ print("Data Upload")
         output$EnrichmentInfo=renderText("Enrichment Failed - Make sure you provid the genelist with entries of type SYMBOL, GENENAME or ENSEMBL. (If you send genes from within the App, double check your annotation and re-send; for gene list from outside the App-World check and translate: https://david.ncifcrf.gov/conversion.jsp")
         req(FALSE)
       }
+
       geneSetChoice_tranlsated <- bitr(geneSetChoice(),
                                        fromType=providedDataType,
                                        toType="ENTREZID",
@@ -2370,10 +2431,30 @@ print("Data Upload")
                                                            organism     = input$OrganismChoice,
                                                            pvalueCutoff = 0.05,
                                                            universe = universeSelected_tranlsated)
-      EnrichmentRes_GO <<- clusterProfiler::enrichGO(gene         = geneSetChoice_tranlsated,
-                                                       ont ="ALL", 
+      if(input$ontologyForGO=="ALL"){
+        tryCatch({
+          EnrichmentRes_GO <<- clusterProfiler::enrichGO(gene         = geneSetChoice_tranlsated,
+                                                         ont =input$ontologyForGO, 
+                                                         pvalueCutoff = 0.05, 
+                                                         OrgDb = ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))
+        },
+        error=function(e){
+          EnrichmentRes_GO <<- NULL
+          showModal(modalDialog(
+            tags$h4('GO enrichment threw an error. Please try out the subontologies on after the other to search for enriched terms within all of them.'),
+            footer=tagList(
+              modalButton('OK')
+            )
+          ))
+        })
+      }else{
+        EnrichmentRes_GO <<- clusterProfiler::enrichGO(gene         = geneSetChoice_tranlsated,
+                                                       ont =input$ontologyForGO, 
                                                        pvalueCutoff = 0.05, 
                                                        OrgDb = ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))
+      }
+     
+      
       EnrichmentRes_RACTOME <-ReactomePA::enrichPathway(gene=geneSetChoice_tranlsated,
                                                           pvalueCutoff=0.05,
                                                           organism = ifelse(input$OrganismChoice=="hsa","human","mouse"),
