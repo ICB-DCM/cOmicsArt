@@ -8,11 +8,12 @@ library(rstudioapi)
 # if not run in RStudio  you need to specify the directory fo the file yourself!
 
 direcoty_of_files=dirname(rstudioapi::getSourceEditorContext()$path)
-envList=readRDS(paste0(direcoty_of_files,"/",'Data.rds'))  
+envList=readRDS(paste0(direcoty_of_files,'/','Data.rds'))  
 
 list2env(envList,envir = globalenv())
 
 # Happy Adjusting! :)"
+  
   if (numberOfScenario == 1) {
     stringtosave = 'pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
                                   y = pcaData[,input$y_axis_selection],

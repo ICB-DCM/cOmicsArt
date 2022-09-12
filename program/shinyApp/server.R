@@ -1071,7 +1071,7 @@ print("Data Upload")
     global_Vars$Loadings_topSlider=input$topSlider
     global_Vars$Loadings_file_ext_Loadings=input$file_ext_Loadings
     global_Vars$Loadings_plotOut=plotOut
-    
+
     output$getR_Code_Loadings <- downloadHandler(
       filename = function(){
         paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
@@ -2983,7 +2983,6 @@ print("Data Upload")
   
   observeEvent(input$only2Report_REACTOME,{
     notificationID<-showNotification("Saving...",duration = 0)
-    browser()
     tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.time(),".png",sep="") )
     ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$Reactome_REACTOME_Enrichment),device = "png")
     fun_LogIt("### REACTOME ENRICHMENT")
