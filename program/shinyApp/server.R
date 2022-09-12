@@ -128,7 +128,7 @@ print("Data Upload")
   })
   output$SaveInputAsList=downloadHandler(
    filename = function() {
-      paste(input$omicType,"_only_precompiled", " ",Sys.Date(),".RDS",sep="") },
+      paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep="") },
     content = function(file){
       saveRDS(data_input_shiny(),file)
     }
@@ -157,6 +157,66 @@ print("Data Upload")
       output$AddGeneSymbols_organism_ui=NULL
     }
 
+  })
+  
+## Upload visual inspection ----
+  
+  observeEvent(input$DoVisualDataInspection,{
+    if(isTruthy(input$data_preDone)){
+      output$DataMatrix_VI_Info=renderText({"Visual Inspection only for primary data, not for precompiled set possible!"})
+      req(F)
+    }
+    if(!(isTruthy(input$data_matrix1) & isTruthy(input$data_sample_anno1) & isTruthy(input$data_row_anno1))){
+      output$DataMatrix_VI_Info=renderText("The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!")
+    }else{
+     Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F)
+     output$DataMatrix_VI=DT::renderDataTable({DT::datatable(Matrix)})
+     output$DataMatrix_VI_INFO=renderText({"Matrix:"})
+     sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1,check.names = F)
+     output$SampleMatrix_VI=DT::renderDataTable({DT::datatable(sample_table)})
+     output$SampleMatrix_VI_INFO=renderText({"Sample table:"})
+     
+     annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F)
+     output$EntitieMatrix_VI=DT::renderDataTable({DT::datatable(annotation_rows)})
+     output$EntitieMatrix_VI_INFO=renderText({"Entitie table:"})
+     
+     ## Do some checking
+     snippetYes="<font color=\"#00851d\"><b>Yes</b></font>"
+     snippetNo= "<font color=\"#ab020a\"><b>No</b></font>"
+     output$OverallChecks=renderText({"Some overall Checks are running run...\n
+       Rownames of Matrix are the same as rownames of entitie table ...\n
+       Colnames of Matrix are same as rownames of sample table ... \n
+       Matrix has no na ...\n
+       Sample table no na ...\n
+       Entitie table no na ...\n
+       "
+       })
+
+     check1=ifelse(all(rownames(Matrix)==rownames(annotation_rows)),snippetYes,snippetNo)
+     check2=ifelse(all(colnames(Matrix)==rownames(sample_table)),snippetYes,snippetNo)
+     check3=ifelse(any(is.na(Matrix)==T),snippetNo,snippetYes)
+     check4=ifelse(any(is.na(sample_table)==T),snippetNo,snippetYes)
+     check5=ifelse(any(is.na(annotation_rows)==T),snippetNo,snippetYes)
+     if(check5==snippetNo){
+       # Indicate columns with NA
+       colsWithNa=numeric()
+       for(i in 1:ncol(annotation_rows)){
+         if(any(is.na(annotation_rows[,i])==T)){
+           colsWithNa=c(colsWithNa,i)
+         }
+       }
+       check5=paste0(snippetNo," Following columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
+     }
+     
+     output$OverallChecks=renderText({paste0("Some overall Checks are running run ...\n
+       Rownames of Matrix are the same as rownames of entitie table ",check1,"\n
+       Colnames of Matrix are same as rownames of sample table ",check2," \n
+       Matrix has no na ",check3,"\n
+       Sample table no na ",check4,"\n
+       Entitie table no na ",check5,"\n
+       ")
+     })
+    }
   })
   
 ## Do Upload ----
@@ -204,6 +264,13 @@ print("Data Upload")
                                            sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1,check.names = F),
                                            annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F))
         
+        # check if only 1 col in anno row, add dummy col to ensure R does not turn it into a vector
+        
+        if(ncol(data_input[[input$omicType]]$annotation_rows)<2){
+          print("Added dummy column to annotation row")
+          data_input[[input$omicType]]$annotation_rows$origRownames=rownames(data_input[[input$omicType]]$annotation_rows)
+        }
+        
       }else if(isTruthy(input$metadataInput)){
        
         tmp_sampleTable=fun_readInSampleTable(input$metadataInput$datapath)
@@ -215,6 +282,8 @@ print("Data Upload")
                                                Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F)[,rownames(my_data_tmp)],
                                                sample_table=tmp_sampleTable,
                                                annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F))
+
+            
             return(data_input)
           },
           error=function(cond){
@@ -229,6 +298,9 @@ print("Data Upload")
       
       
       ## Include here possible Data Checks
+      
+      
+      
     }else{
       # Precompiled list
       data_input[[input$omicType]]<-readRDS(input$data_preDone$datapath)[[input$omicType]]
@@ -247,11 +319,12 @@ print("Data Upload")
         ensembl <- readRDS("data/ENSEMBL_Mouse_05_07_22")
       }
       
-      out <- getBM(attributes=c("ensembl_gene_id", "gene_biotype"), values=rownames(data_input[[input$omicType]]$annotation_rows), mart=ensembl)
+      out <- getBM(attributes=c("ensembl_gene_id", "gene_biotype","external_gene_name"), values=rownames(data_input[[input$omicType]]$annotation_rows), mart=ensembl)
     
       out <- out[base::match(rownames(data_input[[input$omicType]]$annotation_rows), out$ensembl_gene_id),] 
       
       data_input[[input$omicType]]$annotation_rows$gene_type=out$gene_biotype
+      data_input[[input$omicType]]$annotation_rows$GeneName=out$external_gene_name
       
       # data_matrix$gene_type=out$gene_biotype
       
@@ -313,7 +386,13 @@ print("Data Upload")
       req(data_input_shiny())
       req(input$providedRowAnnotationTypes)
       if(is.numeric(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes])){
-        helpText("Your input category is numeric, selection is currently only supported for categorical data")
+        selectInput(
+          inputId = "row_selection",
+          label = "Which entities to use? (Your input category is numeric, selection is currently only supported for categorical data!)",
+          choices = c("all"),
+          selected="all",
+          multiple = T
+        )
       }else{
         selectInput(
           inputId = "row_selection",
@@ -536,7 +615,6 @@ print("Data Upload")
         
       }
       if(input$PreProcessing_Procedure=="Scaling_0_1"){
-        
         processedData=as.data.frame(t(apply(processedData_all[[input$omicType]]$Matrix,1,function(x){(x-min(x))/(max(x)-min(x))})))
         #head(processedData)
         processedData_all[[input$omicType]]$Matrix=processedData
@@ -742,7 +820,7 @@ print("Data Upload")
       pcaData$chosenAnno=pcaData$global_ID
     }
 
-     if(length(levels(pcaData[,input$coloring_options]))>8){
+    if(length(levels(pcaData[,input$coloring_options]))>8){
        if(continiousColors){
          colorTheme=viridis::viridis(10)
          pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
@@ -753,6 +831,7 @@ print("Data Upload")
                                          chosenAnno=chosenAnno)) +
            geom_point(size =3)+
            scale_color_manual(name = input$coloring_options,values=colorTheme)
+         scenario=1
        }else{
          pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
                                          y = pcaData[,input$y_axis_selection],
@@ -762,6 +841,7 @@ print("Data Upload")
                                          chosenAnno=chosenAnno)) +
            geom_point(size =3)+
            scale_color_discrete(name = input$coloring_options)
+         scenario=2
        }
      
     }else{
@@ -776,6 +856,7 @@ print("Data Upload")
         geom_point(size =3)+
         scale_color_manual(values=colorTheme,
                            name = input$coloring_options)
+      scenario=3
     }
     
     pca_plot_final <- pca_plot+
@@ -806,34 +887,77 @@ print("Data Upload")
       )
       
       df_out_r$global_ID=rownames(df_out_r)
+      df_out_r$chosenAnno=rownames(df_out_r)
+      if(!is.null(input$EntitieAnno_Loadings)){
+        req(data_input_shiny()[[input$omicType]])
+        df_out_r$chosenAnno=factor(make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])),levels = make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])))
+        #LoadingsDF$entitie=make.unique(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])
+      }
       
       pca_plot_final <- pca_plot_final + geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
-                                                      aes(x=0, y=0, xend=v1, yend=v2),
+                                                      aes(x=0, y=0, xend=v1, yend=v2,chosenAnno=chosenAnno),
                                                       arrow=arrow(type="closed",unit(0.01, "inches"),ends = "both"),
                                                       #linetype="solid",
                                                       #alpha=0.5,
                                                       color="#ab0521")
+      if(scenario==1){
+        scenario=4
+      }
+      if(scenario==2){
+        scenario=5
+      }
+      if(scenario==3){
+        scenario=6
+      }
       
+     
     }
     
     #Some identify the current active tab and then specifcy the correct plot to it
+    PCA_scenario=scenario
 
     output[["PCA_plot"]] <- renderPlotly({ggplotly(pca_plot_final,
                                                    tooltip = ifelse(is.null(input$PCA_anno_tooltip),"all","chosenAnno"),legendgroup="color")})
     
     print(input$only2Report_pca)
-    global_Vars$PCA_plot=pca_plot_final
+    global_Vars$PCA_plot<-pca_plot_final # somehow does not update ? or just return the latest?
     global_Vars$PCA_customTitle=customTitle
     global_Vars$PCA_coloring=input$coloring_options
     global_Vars$PCA_noLoadings=ifelse(input$Show_loadings=="Yes",length(TopK),0)
     
+    
+    output$getR_Code_PCA <- downloadHandler(
+      filename = function(){
+        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+      },
+      content = function(file){
+        envList=list(pcaData=pcaData,
+                     input=reactiveValuesToList(input),
+                     global_ID=pcaData$global_ID,
+                     chosenAnno=pcaData$chosenAnno,
+                     percentVar=percentVar,
+                     customTitle=customTitle)
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+        write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
+        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+      },
+      contentType = "application/zip"
+      )
+    
+    
     output$SavePlot_pos1=downloadHandler(
-      filename = function() { paste(customTitle, " ",Sys.Date(),input$file_ext_plot1,sep="") },
+      filename = function() { paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="") },
       # cannot get the final destination as this is a download on server side
       content = function(file){
         ggsave(file,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
         on.exit({
-          TEST=paste0(getwd(),"/www/",paste(customTitle, " ",Sys.Date(),input$file_ext_plot1,sep=""))
+          TEST=paste0(getwd(),"/www/",paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep=""))
           ggsave(TEST,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
           
           # Add Log Messages
@@ -857,7 +981,7 @@ print("Data Upload")
       ylab("Variance explained")+
       theme_bw()+
       ggtitle("Scree-Plot for shown PCA")
-    
+    scenario=7
     output[["Scree_Plot"]] <- renderPlotly({ggplotly(scree_plot,
                                                      tooltip = "Var",legendgroup="color")})
     
@@ -866,13 +990,13 @@ print("Data Upload")
     
     
     output$SavePlot_Scree=downloadHandler(
-      filename = function() { paste(customTitle, " ",Sys.Date(),input$file_ext_Scree,sep="") },
+      filename = function() { paste(customTitle, " ",Sys.time(),input$file_ext_Scree,sep="") },
       
       content = function(file){
         ggsave(file,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
         
         on.exit({
-          tmp_filename=paste0(getwd(),"/www/",paste("Scree",customTitle, " ",Sys.Date(),input$file_ext_Scree,sep=""))
+          tmp_filename=paste0(getwd(),"/www/",paste("Scree",customTitle, " ",Sys.time(),input$file_ext_Scree,sep=""))
           ggsave(tmp_filename,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
           
           # Add Log Messages
@@ -900,12 +1024,13 @@ print("Data Upload")
     
     plotOut=ggplot(LoadingsDF,aes(x=Loading,y=entitie))+
       geom_col(aes(fill=Loading))+
-      scale_y_discrete(breaks=LoadingsDF$entitie,labels=gsub("\\.[0-9].*$","",LoadingsDF$entitie))+
+      scale_y_discrete(breaks=LoadingsDF$entitie,labels=stringr::str_wrap(gsub("\\.[0-9].*$","",LoadingsDF$entitie),20))+
       scale_fill_gradient2(low="#277d6a",mid="white",high="orange")+
       ylab(ifelse(is.null(input$EntitieAnno_Loadings),"",input$EntitieAnno_Loadings))+
       xlab(paste0("Loadings: ",input$x_axis_selection))+
-      theme_bw(base_size = 20)
-    
+      theme_bw(base_size = 15)
+
+    scenario = 8
     output[["PCA_Loadings_plot"]]<- renderPlot({plotOut})
     
     global_Vars$Loadings_x_axis=input$x_axis_selection
@@ -914,14 +1039,14 @@ print("Data Upload")
     global_Vars$Loadings_file_ext_Loadings=input$file_ext_Loadings
     global_Vars$Loadings_plotOut=plotOut
     output$SavePlot_Loadings=downloadHandler(
-      filename = function() { paste("LOADINGS_PCA_",Sys.Date(),input$file_ext_Loadings,sep="") },
+      filename = function() { paste("LOADINGS_PCA_",Sys.time(),input$file_ext_Loadings,sep="") },
       
       content = function(file){
-        ggsave(file,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings))
+        ggsave(file,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings), dpi = "print")
         
         on.exit({
-          tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.Date(),input$file_ext_Loadings,sep=""))
-          ggsave(tmp_filename,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings))
+          tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.time(),input$file_ext_Loadings,sep=""))
+          ggsave(tmp_filename,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings), dpi = "print")
           
           # Add Log Messages
           fun_LogIt("### PCA Loadings")
@@ -938,7 +1063,7 @@ print("Data Upload")
   observeEvent(input$only2Report_pca,{
       # needs global var ?! do we want that?
       notificationID<-showNotification("Saving...",duration = 0)
-      TEST=paste0(getwd(),"/www/",paste(global_Vars$PCA_customTitle, " ",Sys.Date(),".png",sep=""))
+      TEST=paste0(getwd(),"/www/",paste(global_Vars$PCA_customTitle, "__",Sys.time(),".png",sep=""))
       ggsave(TEST,plot=global_Vars$PCA_plot,device = "png")
 
       # Add Log Messages
@@ -946,6 +1071,12 @@ print("Data Upload")
       fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
       ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
       fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
+      if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
+        fun_LogIt("### Personal Notes:")
+        fun_LogIt(message = input$NotesPCA)
+      }
+     
+      
       removeNotification(notificationID)
       showNotification("Saved!",type = "message", duration = 1)
 
@@ -953,7 +1084,7 @@ print("Data Upload")
   
   observeEvent(input$only2Report_Scree_Plot,{
     notificationID<-showNotification("Saving...",duration = 0)
-    tmp_filename=paste0(getwd(),"/www/",paste("Scree",global_Vars$Scree_customTitle, " ",Sys.Date(),".png",sep=""))
+    tmp_filename=paste0(getwd(),"/www/",paste("Scree",global_Vars$Scree_customTitle, " ",Sys.time(),".png",sep=""))
     ggsave(tmp_filename,plot=global_Vars$Scree_plot,device = "png")
     
     # Add Log Messages
@@ -967,7 +1098,7 @@ print("Data Upload")
   
   observeEvent(input$only2Report_Loadings,{
     notificationID<-showNotification("Saving...",duration = 0)
-    tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.Date(),".png",sep=""))
+    tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.time(),".png",sep=""))
     ggsave(tmp_filename,plot=global_Vars$Loadings_plotOut,device = "png")
     
     # Add Log Messages
@@ -1094,7 +1225,7 @@ print("Data Upload")
       # not nice coding here as LFC now needs to be calculated twice ! Change for performance enhancement
       LFCTable=getLFC(data2Volcano,ctrl_samples_idx,comparison_samples_idx,input$get_entire_table)
       # add annotation to Table
-      LFCTable=merge(LFCTable,selectedData_processed()[[input$omicType]]$annotation_rows,by=0, all=TRUE)
+      LFCTable=merge(LFCTable,selectedData_processed()[[input$omicType]]$annotation_rows,by=0, all.x=TRUE,all.y=F)
       rownames(LFCTable)=LFCTable$Row.names
       global_Vars$Volcano_plot=VolcanoPlot
       global_Vars$Volcano_sampleAnnoTypes_cmp=input$sample_annotation_types_cmp
@@ -1105,14 +1236,14 @@ print("Data Upload")
       
       
       output$SavePlot_Volcano=downloadHandler(
-        filename = function() { paste("VOLCANO_",Sys.Date(),input$file_ext_Volcano,sep="") },
+        filename = function() { paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="") },
         
         content = function(file){
           ggsave(file,plot=VolcanoPlot,device = gsub("\\.","",input$file_ext_Volcano))
           
           on.exit({
             
-            tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.Date(),input$file_ext_Volcano,sep="")))
+            tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="")))
             ggsave(tmp_filename,plot=VolcanoPlot,device = gsub("\\.","",input$file_ext_Volcano))
             
             # Add Log Messages
@@ -1121,8 +1252,13 @@ print("Data Upload")
             fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
             
             fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
-            fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "markdown")))
-            
+            fun_LogIt(message = head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),tableSaved=T)
+            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "markdown")))
+            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "latex")))
+            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "pipe")))
+            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "html")))
+            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "simple")))
+            # fun_LogIt(message = paste0("**VOLCANO** - \n",print(knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "html"))))
           })
         }
         
@@ -1152,7 +1288,7 @@ print("Data Upload")
       
       DE_total<<-rbind(DE_UP,DE_Down)
       output$SaveDE_List=downloadHandler(
-        filename = function() { paste("DE_Genes ",input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat," vs. ",input$Groups2Compare_ref,"_",Sys.Date(),".csv",sep="") },
+        filename = function() { paste("DE_Genes ",input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat," vs. ",input$Groups2Compare_ref,"_",Sys.time(),".csv",sep="") },
         content = function(file){
           write.csv(DE_total,file = file)
         }
@@ -1180,7 +1316,7 @@ print("Data Upload")
   observeEvent(input$only2Report_Volcano,{
     notificationID<-showNotification("Saving...",duration = 0)
     
-    tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.Date(),".png",sep="")))
+    tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),".png",sep="")))
     ggsave(tmp_filename,plot=global_Vars$Volcano_plot,device = "png")
     
     # Add Log Messages
@@ -1189,8 +1325,13 @@ print("Data Upload")
     fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
     
     fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(global_Vars$Volcano_table[order(global_Vars$Volcano_table$p_adj,decreasing = T),],10),format = "markdown")))
+    fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(global_Vars$Volcano_table[order(global_Vars$Volcano_table$p_adj,decreasing = T),],10),format = "html")))
+    #fun_LogIt(message = head(global_Vars$Volcano_table[order(global_Vars$Volcano_table$p_adj,decreasing = T),],10),tableSaved=T)
     
+    if(isTruthy(input$NotesVolcano) & !(isEmpty(input$NotesVolcano))){
+      fun_LogIt("### Personal Notes:")
+      fun_LogIt(message = input$NotesVolcano)
+    }
     
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
@@ -1370,7 +1511,7 @@ print("Data Upload")
           label = "Choose the variable to select the rows after (Multiples are not possible)",
           choices = c(colnames(selectedData_processed()[[input$omicType]]$annotation_rows)),
           selected=colnames(selectedData_processed()[[input$omicType]]$annotation_rows)[1],
-          multiple = T # would be cool if true, to be able to merge vars ?!,
+          multiple = F # would be cool if true, to be able to merge vars ?!,
         )
       })
       output$row_anno_options_heatmap_ui=renderUI({
@@ -1380,7 +1521,7 @@ print("Data Upload")
           label = "Which entities to use?",
           choices = c("all",unique(selectedData_processed()[[input$omicType]]$annotation_rows[,input$anno_options_heatmap])),
           selected="all",
-          multiple = F
+          multiple = T
         )
       })
     }else{
@@ -1434,7 +1575,7 @@ print("Data Upload")
     # selection based on row Annotation:
     if(!(any(input$row_selection_options=="all"))){
       if(any(input$row_selection_options=="rowAnno_based")){
-        if(input$row_anno_options_heatmap=="SELECT_AN_OPTION"){ #old
+        if(any(input$row_anno_options_heatmap=="SELECT_AN_OPTION")){ #old
           output$Options_selected_out_3=renderText({"If you go with rowAnno_based you must select a varaible to select the rows after! (See Section Further row selection). Now it is defaulting to show all to omit an error"})
           additionalInput_row_anno="all"
           additionalInput_row_anno_factor=NA
@@ -1450,7 +1591,7 @@ print("Data Upload")
         }
       }else{
         additionalInput_row_anno<-ifelse(any(input$row_selection_options=="rowAnno_based"),input$anno_options_heatmap,NA)
-        additionalInput_row_anno_factor<-ifelse(any(input$row_selection_options=="rowAnno_based"),input$row_anno_options_heatmap,NA)
+        additionalInput_row_anno_factor<-ifelse(any(input$row_selection_options=="rowAnno_based"),c(input$row_anno_options_heatmap),NA)
       }
     }else{
       additionalInput_row_anno<-"all"
@@ -1611,14 +1752,14 @@ print("Data Upload")
     global_Vars$Heatmap_Groups2Compare_ctrl_heatmap=input$Groups2Compare_ctrl_heatmap
     
     output$SavePlot_Heatmap=downloadHandler(
-      filename = function() { paste(customTitleHeatmap, " ",Sys.Date(),input$file_ext_Heatmap,sep="") },
+      filename = function() { paste(customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="") },
       
       content = function(file){
         save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
         
         on.exit({
           
-          tmp_filename=paste0(getwd(),"/www/",paste(paste(customTitleHeatmap, " ",Sys.Date(),input$file_ext_Heatmap,sep="")))
+          tmp_filename=paste0(getwd(),"/www/",paste(paste(customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="")))
           save_pheatmap(heatmap_plot,filename=tmp_filename,type=gsub("\\.","",input$file_ext_Heatmap))
           
           # Add Log Messages
@@ -1655,7 +1796,7 @@ print("Data Upload")
     
     
     output$SaveGeneList_Heatmap=downloadHandler(
-      filename = function() { paste("GeneList_",customTitleHeatmap, " ",Sys.Date(),".csv",sep="") },
+      filename = function() { paste("GeneList_",customTitleHeatmap, " ",Sys.time(),".csv",sep="") },
       
       content = function(file){
         write.csv(heatmap_genelist(), file)
@@ -1680,7 +1821,8 @@ print("Data Upload")
       NA
     }else{
       selectedData_processed()[[input$omicType]]$annotation_rows[rownames(data2HandOver),input$row_label_options]
-      mergedData=merge(data2HandOver,selectedData_processed()[[input$omicType]]$annotation_rows,by=0, all=T)
+      mergedData=merge(data2HandOver,selectedData_processed()[[input$omicType]]$annotation_rows,by=0, all.x=T,all.y=F,sort = F)
+      
       # maybe insert save to avoid download of unmeaningfull annotation?
       if(length(unique( mergedData[,input$row_label_options]))<nrow(mergedData) ){
         FLAG_nonUnique_Heatmap<<-T
@@ -1700,6 +1842,7 @@ print("Data Upload")
                       selected = "Enrichment Analysis")
     tmp_selection<<-"heatmap_genes"
   })
+  
   observeEvent(input$Do_Heatmap,{
     output$Options_selected_out_3=renderText({paste0("The number of selected entities: ",length((heatmap_genelist())))})
     
@@ -1709,7 +1852,7 @@ print("Data Upload")
   observeEvent(input$only2Report_Heatmap,{
     notificationID<-showNotification("Saving...",duration = 0)
     
-    tmp_filename=paste0(getwd(),"/www/",paste(paste(global_Vars$Heatmap_customTitleHeatmap, " ",Sys.Date(),".png",sep="")))
+    tmp_filename=paste0(getwd(),"/www/",paste(paste(global_Vars$Heatmap_customTitleHeatmap, " ",Sys.time(),".png",sep="")))
     save_pheatmap(global_Vars$Heatmap_heatmap_plot,filename=tmp_filename,type="png")
     
     # Add Log Messages
@@ -1739,6 +1882,11 @@ print("Data Upload")
     }
     
     fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
+    
+    if(isTruthy(input$NotesHeatmap) & !(isEmpty(input$NotesHeatmap))){
+      fun_LogIt("### Personal Notes:")
+      fun_LogIt(message = input$NotesHeatmap)
+    }
     
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
@@ -1938,13 +2086,13 @@ print("Data Upload")
 
     
     output$SavePlot_singleGene=downloadHandler(
-      filename = function() { paste(customTitle_boxplot, " ",Sys.Date(),input$file_ext_singleGene,sep="") },
+      filename = function() { paste(customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep="") },
       
       content = function(file){
         ggsave(file,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
         
         on.exit({
-          tmp_filename=paste0(getwd(),"/www/",paste(customTitle_boxplot, " ",Sys.Date(),input$file_ext_singleGene,sep=""))
+          tmp_filename=paste0(getwd(),"/www/",paste(customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep=""))
           ggsave(filename = tmp_filename,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
           fun_LogIt("## Single Entitie")
           fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",input$Select_Gene))
@@ -1967,7 +2115,7 @@ print("Data Upload")
   ## download only to report
   observeEvent(input$only2Report_SingleEntities,{
     notificationID<-showNotification("Saving...",duration = 0)
-    tmp_filename=paste0(getwd(),"/www/",paste(global_Vars$SingleEnt_customTitle_boxplot, " ",Sys.Date(),".png",sep=""))
+    tmp_filename=paste0(getwd(),"/www/",paste(global_Vars$SingleEnt_customTitle_boxplot, " ",Sys.time(),".png",sep=""))
     ggsave(filename = tmp_filename,plot=global_Vars$SingleEnt_P_boxplots,device = "png")
     fun_LogIt("## Single Entitie")
     fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",global_Vars$SingleEnt_Select_Gene))
@@ -1982,117 +2130,369 @@ print("Data Upload")
     
     fun_LogIt(message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")"))
     
+    if(isTruthy(input$NotesSingleEntities) & !(isEmpty(input$NotesSingleEntities))){
+      fun_LogIt("### Personal Notes:")
+      fun_LogIt(message = input$NotesSingleEntities)
+    }
     
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
   })
 
-  
-  ################################################################################################
-  # KEGG enrichment
-  ################################################################################################
-  #Ui section
+  # KEGG enrichment ----
+  ## Ui section ----
   output$OrganismChoice_ui=renderUI({
     selectInput("OrganismChoice","Specificy your current organism",choices=c("hsa","mmu"),selected="mmu")
   })
-  tmp_selection<<-"DE_Genes"
+ 
+  #tmp_selection<<-"DE_Genes"
   # output$GeneSet2Enrich_ui=renderUI({
   #   selectInput(inputId = "GeneSet2Enrich",
   #               label = "Choose a gene set to hand over to enrich",
   #               choices=c("DE_Genes","ProvidedGeneSet","heatmap_genes"),
   #               selected = tmp_selection)
   # })
+  output$ORA_or_GSE_ui=renderUI({
+    radioButtons(inputId = "ORA_or_GSE",
+                 label = "Choose type of Analysis",
+                 choices = c("GeneSetEnrichment","OverRepresentation_Analysis"),
+                 selected="GeneSetEnrichment")
+  })
   
   observe({
-    if(input$GeneSet2Enrich=="DE_Genes"){
-      output$UploadedGeneSet_ui<-renderUI({NULL})
-      # atm this is not done
-      # geneSetChoice<-DE_GenesGlobal_4comp
-      print("not done atm")
-      # print(paste("Gene Set provided to check for enrichment: ",length(geneSetChoice)))
-    }
-    if(input$GeneSet2Enrich=="ProvidedGeneSet"){
-      output$UploadedGeneSet_ui<-renderUI({shiny::fileInput(inputId = "UploadedGeneSet",
-                                                            label = "Select a file (.csv, 1 column, ENSEMBL, e.g. ENSMUSG....)")
+    req(input$ORA_or_GSE)
+    output$EnrichmentInfo=renderText("Click Do Enrichment to Start")
+    
+    if(input$ORA_or_GSE=="GeneSetEnrichment"){
+      output$ValueToAttach_ui=renderUI({
+        selectInput("ValueToAttach",
+                    "Select the metric to sort the genes after",
+                    choices = c("LFC"),
+                    selected = "LFC")
       })
+      req(input$ValueToAttach)
+      if(input$ValueToAttach=="LFC"){
+        output$sample_annotation_types_cmp_GSEA_ui=renderUI({
+          req(data_input_shiny())
+          selectInput(
+            inputId = "sample_annotation_types_cmp_GSEA",
+            label = "Choose type for LFC-based ordering",
+            choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
+            multiple = F,
+            selected = c(colnames(data_input_shiny()[[input$omicType]]$sample_table))[1]
+          )
+        })
+        output$Groups2Compare_ref_GSEA_ui=renderUI({
+          req(data_input_shiny())
+          selectInput(
+            inputId = "Groups2Compare_ref_GSEA",
+            label = "Choose reference of log2 FoldChange",
+            choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_GSEA]),
+            multiple = F ,
+            selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_GSEA])[1]
+          )
+        })
+        output$Groups2Compare_treat_GSEA_ui=renderUI({
+          req(data_input_shiny())
+          selectInput(
+            inputId = "Groups2Compare_treat_GSEA",
+            label = "Choose treatment group of log2 FoldChange",
+            choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_GSEA]),
+            multiple = F ,
+            selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_GSEA])[2]
+          )
+        })
+        output$psig_threhsold_GSEA_ui=renderUI({
+          req(data_input_shiny())
+          numericInput(inputId ="psig_threhsold_GSEA" ,
+                       label = "adj. p-value threshold",
+                       min=0, max=0.1, step=0.01,
+                       value = 0.05)
+        })
+      }else{
+        hide(id = "sample_annotation_types_cmp_GSEA",anim=T)
+        hide(id = "Groups2Compare_ref_GSEA",anim=T)
+        hide(id = "Groups2Compare_treat_GSEA",anim=T)
+        hide(id = "psig_threhsold_GSEA",anim=T)
+      }
+      
+    }else{
+      hide(id="ValueToAttach",anim=T)
+      hide(id = "sample_annotation_types_cmp_GSEA",anim=T)
+      hide(id = "Groups2Compare_ref_GSEA",anim=T)
+      hide(id = "Groups2Compare_treat_GSEA",anim=T)
+      hide(id = "psig_threhsold_GSEA",anim=T)
+    }
+    
+    if(input$ORA_or_GSE=="OverRepresentation_Analysis"){
+
+      output$GeneSet2Enrich_ui=renderUI({
+        selectInput(inputId = "GeneSet2Enrich",
+                    label = "Choose a gene set to hand over to enrich",
+                    choices=c("DE_Genes","ProvidedGeneSet","heatmap_genes"),
+                    selected = "DE_Genes")
+      })
+      output$UniverseOfGene_ui=renderUI({
+        selectInput("UniverseOfGene",
+                    "Select an Universe for enrichment (default is clusterProfilers default",
+                    choices = c("default","allPresentGenes_after_pre_process","allPresentGenes_before_pre_process"),
+                    selected = "default")
+        #req(input$GeneSet2Enrich)
+        if(input$GeneSet2Enrich=="DE_Genes"){
+          output$UploadedGeneSet_ui<-renderUI({NULL})
+          # atm this is not done
+          # geneSetChoice<-DE_GenesGlobal_4comp
+          print("not done atm")
+          # print(paste("Gene Set provided to check for enrichment: ",length(geneSetChoice)))
+        }
+        
+        if(input$GeneSet2Enrich=="ProvidedGeneSet"){
+          output$UploadedGeneSet_ui<-renderUI({shiny::fileInput(inputId = "UploadedGeneSet",
+                                                                label = "Select a file (.csv, 1 column, ENSEMBL, e.g. ENSMUSG....)")
+          })
+        }
+      })
+    }else{
+      hide(id="GeneSet2Enrich",anim=T)
+      hide(id="UniverseOfGene",anim=T)
+      hide(id="UploadedGeneSet",anim=T)
     }
     })
   
+  ## Do enrichment ----
   geneSetChoice=reactive({
-    if(input$GeneSet2Enrich=="DE_Genes"){
-      # atm this is not done
-      geneSetChoice_tmp=isolate(DE_genelist())
-    }
-    if(input$GeneSet2Enrich=="ProvidedGeneSet"){
-      if(!is.null(input$UploadedGeneSet)){
-        Tmp<-read.csv(input$UploadedGeneSet$datapath,header = F)
-        # check take first column as acharacter vector
-        geneSetChoice_tmp<-Tmp$V1
-        ## Here somehow if value next to gene provieded needs to be considered further down
-        # print(head(geneSetChoice_tmp))
-        # Check if they start with "ENS.."
-        if(!length(which(grepl("ENS.*",geneSetChoice_tmp)==TRUE))==length(geneSetChoice_tmp)){
-          print("wrong data!")
-          output$EnrichmentInfo=renderText("Check your input format, should be only gene names ENSMBL-IDs")
-          geneSetChoice_tmp=NULL
+    output$KEGG_Enrichment<-renderPlot({ggplot()})
+    if(isTruthy(input$GeneSet2Enrich)){
+      if(input$GeneSet2Enrich=="DE_Genes"){
+        # atm this is not done
+        geneSetChoice_tmp=DE_genelist()
+      }
+      if(input$GeneSet2Enrich=="ProvidedGeneSet"){
+        if(!is.null(input$UploadedGeneSet)){
+          Tmp<-read.csv(input$UploadedGeneSet$datapath,header = F)
+          # check take first column as acharacter vector
+          geneSetChoice_tmp<-Tmp$V1
+          ## Here somehow if value next to gene provieded needs to be considered further down
+          # print(head(geneSetChoice_tmp))
+          # Check if they start with "ENS.."
+          if(!length(which(grepl("ENS.*",geneSetChoice_tmp)==TRUE))==length(geneSetChoice_tmp)){
+            print("wrong data!")
+            output$EnrichmentInfo=renderText("Check your input format, should be only gene names ENSMBL-IDs")
+            geneSetChoice_tmp=NULL
+          }else{
+            geneSetChoice_tmp=geneSetChoice_tmp
+          }
+          
         }else{
-          geneSetChoice_tmp=geneSetChoice_tmp
+          print("No File!!")
+          req(FALSE)
         }
+      }
+      if(input$GeneSet2Enrich=="heatmap_genes"){
+        geneSetChoice_tmp=heatmap_genelist()
+      }
+      if(input$GeneSet2Enrich=="heatmap_genes"){
+        geneSetChoice_tmp=heatmap_genelist()
+      }
+    }else{
+      if(input$ValueToAttach=="LFC"){
+        #takes all genes after preprocessing
+        #get LFC
+        req(selectedData_processed())
+        universeSelected=rownames(selectedData_processed()[[input$omicType]]$Matrix)
+        print(paste0("Universe genes untranslated: ",length(universeSelected)))
+        universeSelected_tranlsated <- bitr(universeSelected,
+                                            fromType="ENSEMBL",
+                                            toType="ENTREZID",
+                                            OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+        #get LFC
+        ctrl_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_GSEA]%in%input$Groups2Compare_ref_GSEA)
+        comparison_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_GSEA]%in%input$Groups2Compare_treat_GSEA)
         
-      }else{
-        print("No File!!")
-        req(FALSE)
+        Data2Plot<-getLFC(selectedData_processed()[[input$omicType]]$Matrix,
+                          ctrl_samples_idx,
+                          comparison_samples_idx)
+        geneSetChoice_tmp=Data2Plot$LFC
+        names(geneSetChoice_tmp)=Data2Plot$probename
       }
     }
-    if(input$GeneSet2Enrich=="heatmap_genes"){
-      geneSetChoice_tmp=isolate(heatmap_genelist())
-    }
+
     geneSetChoice_tmp
   })
-
-  
+  output$KEGG_Enrichment<-renderPlot({ggplot()})
   observeEvent(input$enrichmentGO,{
     print("Start Enrichment2")
+    output$KEGG_Enrichment<-renderPlot({ggplot()})
     fun_LogIt("## ENRICHMENT")
     req(geneSetChoice())
-    print("Translation needed?") # Build in check if EntrezIDs provided?!
-    print(geneSetChoice())
-    geneSetChoice_tranlsated <- bitr(geneSetChoice(),
-                                     fromType="ENSEMBL",
-                                     toType="ENTREZID",
-                                     OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-    print("Enrichment")
-    if(input$UniverseOfGene=="default"){
-      universeSelected_tranlsated=NULL
+    # Separate in GSEA or ORA
+    if(input$ORA_or_GSE=="GeneSetEnrichment"){
+      #sort List=
+      
+      geneSetChoice_tranlsated=sort(geneSetChoice(),decreasing = T)
+      geneSetChoice_tranlsated_for_KEGG=bitr(names(geneSetChoice_tranlsated),
+           fromType="ENSEMBL",
+           toType="ENTREZID",
+           OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))
+      
+      geneSetChoice_tranlsated=geneSetChoice_tranlsated[geneSetChoice_tranlsated_for_KEGG$ENSEMBL]
+      names(geneSetChoice_tranlsated)=geneSetChoice_tranlsated_for_KEGG$ENTREZID
+      # remove duplicate entries (keep the one highest in list)
+      geneSetChoice_tranlsated=geneSetChoice_tranlsated[!duplicated(names(geneSetChoice_tranlsated))]
+      
+      EnrichmentRes_Kegg <- clusterProfiler::gseKEGG(geneList    = geneSetChoice_tranlsated,
+                                                     keyType = "ncbi-geneid", 
+                                                     organism     = ifelse(input$OrganismChoice=="hsa","hsa","mmu"),
+                                                     minGSSize = 3, 
+                                                     maxGSSize = 800, 
+                                                     pvalueCutoff = 0.05, 
+                                                     verbose = TRUE,
+                                                     pAdjustMethod = "BH"
+                                                     )
+      EnrichmentRes_GO <- clusterProfiler::gseGO(gene         = geneSetChoice_tranlsated,
+                                                  ont ="ALL", 
+                                                  keyType = "ENTREZID",
+                                                  minGSSize = 3, 
+                                                  maxGSSize = 800, 
+                                                  pvalueCutoff = 0.05, 
+                                                  verbose = TRUE, 
+                                                  OrgDb = ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"), 
+                                                  pAdjustMethod = "none")
+      EnrichmentRes_RACTOME<-NULL
+      
+    }else{
+      print("Translation needed?") 
+      # Build in check if EntrezIDs or gene Names provided, if nothing of the two return message to user
+      providedDataType="None"
+      tryCatch(
+        expr = {
+          bitr(geneSetChoice()[1],
+               fromType="SYMBOL",
+               toType="ENTREZID",
+               OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+          providedDataType="SYMBOL"
+        },
+        error = function(e){ 
+          # Not a Symbol!
+          print("Not a Gene Symbol")
+        }
+      )
+      if(providedDataType=="None"){
+        tryCatch(
+          expr = {
+            bitr(geneSetChoice()[1],
+                 fromType="GENENAME",
+                 toType="ENTREZID",
+                 OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+            providedDataType="SYMBOL"
+          },
+          error = function(e){ 
+            # Not a Symbol!
+            print("Not a Genename")
+          }
+        )
+      }
+      if(providedDataType=="None"){
+        tryCatch(
+          expr = {
+            bitr(geneSetChoice()[1],
+                 fromType="ENSEMBL",
+                 toType="ENTREZID",
+                 OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+            providedDataType="ENSEMBL"
+          },
+          error = function(e){ 
+            # Not a Symbol!
+            print("Not a ENSEMBL")
+          }
+        )
+      }
+      
+      
+      print(providedDataType)
+      
+      if(providedDataType=="None"){
+        output$EnrichmentInfo=renderText("Enrichment Failed - Make sure you provid the genelist with entries of type SYMBOL, GENENAME or ENSEMBL. (If you send genes from within the App, double check your annotation and re-send; for gene list from outside the App-World check and translate: https://david.ncifcrf.gov/conversion.jsp")
+        req(FALSE)
+      }
+
+      geneSetChoice_tranlsated <- bitr(geneSetChoice(),
+                                       fromType=providedDataType,
+                                       toType="ENTREZID",
+                                       OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+      print(paste0("Enrichment of ",length(geneSetChoice_tranlsated)," genes"))
+      
+      
+      if(!isTruthy(input$UniverseOfGene)){
+        universeSelected_tranlsated=NULL
+      }else{
+        if(input$UniverseOfGene=="default"){
+          universeSelected_tranlsated=NULL
+        }
+
+      if(input$UniverseOfGene=="allPresentGenes_after_pre_process"){
+        req(selectedData_processed())
+        universeSelected=rownames(selectedData_processed()[[input$omicType]]$Matrix)
+        print(paste0("Universe genes untranslated: ",length(universeSelected)))
+        universeSelected_tranlsated <- bitr(universeSelected,
+                                            fromType="ENSEMBL",
+                                            toType="ENTREZID",
+                                            OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+        print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
+      }
+      
+      if(input$UniverseOfGene=="allPresentGenes_before_pre_process"){
+        req(data_input_shiny())
+        universeSelected=rownames(data_input_shiny()[[input$omicType]]$Matrix)
+        # Note if transcripts are used this will be ignored for enrichment analysis
+        universeSelected=unique(gsub("\\..*$","",universeSelected))
+        print(paste0("Universe genes untranslated: ",length(universeSelected)))
+        universeSelected_tranlsated <- bitr(universeSelected,
+                                            fromType="ENSEMBL",
+                                            toType="ENTREZID",
+                                            OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+        print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
+      }
+      }
+      
+      EnrichmentRes_Kegg <<- clusterProfiler::enrichKEGG(gene    = geneSetChoice_tranlsated,
+                                                           organism     = input$OrganismChoice,
+                                                           pvalueCutoff = 0.05,
+                                                           universe = universeSelected_tranlsated)
+      if(input$ontologyForGO=="ALL"){
+        tryCatch({
+          EnrichmentRes_GO <<- clusterProfiler::enrichGO(gene         = geneSetChoice_tranlsated,
+                                                         ont =input$ontologyForGO, 
+                                                         pvalueCutoff = 0.05, 
+                                                         OrgDb = ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))
+        },
+        error=function(e){
+          EnrichmentRes_GO <<- NULL
+          showModal(modalDialog(
+            tags$h4('GO enrichment threw an error. Please try out the subontologies on after the other to search for enriched terms within all of them.'),
+            footer=tagList(
+              modalButton('OK')
+            )
+          ))
+        })
+      }else{
+        EnrichmentRes_GO <<- clusterProfiler::enrichGO(gene         = geneSetChoice_tranlsated,
+                                                       ont =input$ontologyForGO, 
+                                                       pvalueCutoff = 0.05, 
+                                                       OrgDb = ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))
+      }
+     
+      
+      EnrichmentRes_RACTOME <-ReactomePA::enrichPathway(gene=geneSetChoice_tranlsated,
+                                                          pvalueCutoff=0.05,
+                                                          organism = ifelse(input$OrganismChoice=="hsa","human","mouse"),
+                                                          universe = universeSelected_tranlsated, 
+                                                          readable=T)
+      
+
     }
-    if(input$UniverseOfGene=="allPresentGenes_after_pre_process"){
-      req(selectedData_processed())
-      universeSelected=rownames(selectedData_processed()[[input$omicType]]$Matrix)
-      print(paste0("Universe genes untranslated: ",length(universeSelected)))
-      universeSelected_tranlsated <- bitr(universeSelected,
-                                          fromType="ENSEMBL",
-                                          toType="ENTREZID",
-                                          OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-      print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
-    }
+
     
-    if(input$UniverseOfGene=="allPresentGenes_before_pre_process"){
-      req(data_input_shiny())
-      universeSelected=rownames(data_input_shiny()[[input$omicType]]$Matrix)
-      # Note if transcripts are used this will be ignored for enrichment analysis
-      universeSelected=unique(gsub("\\..*$","",universeSelected))
-      print(paste0("Universe genes untranslated: ",length(universeSelected)))
-      universeSelected_tranlsated <- bitr(universeSelected,
-                                          fromType="ENSEMBL",
-                                          toType="ENTREZID",
-                                          OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-      print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
-    }
-    
-    EnrichmentRes_Kegg <<- clusterProfiler::enrichKEGG(gene    = geneSetChoice_tranlsated,
-                                                       organism     = input$OrganismChoice,
-                                                       pvalueCutoff = 0.05,
-                                                       universe = universeSelected_tranlsated)
     if(is.null(EnrichmentRes_Kegg)){
       output$EnrichmentInfo=renderText("Enrichment Failed - check Console, most likley due to no KEGG annotated Terms found")
       
@@ -2102,27 +2502,40 @@ print("Data Upload")
       # Only include p.adj significant terms
       resultData=resultData[resultData$p.adjust<0.05,]
       if(nrow(resultData)==0){
+        print("No of enriched terms found")
         output$EnrichmentInfo=renderText("No of enriched terms found")
       }else{
-        output$KEGG_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_Kegg)})
+        #dotplot(EnrichmentRes_Kegg, split=".sign") + facet_grid(.~.sign)
+        if(input$ORA_or_GSE=="GeneSetEnrichment"){
+          output$KEGG_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_Kegg,split=".sign") + facet_grid(.~.sign)})
+        }else{
+          output$KEGG_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_Kegg)})
+        }
+        #output$KEGG_Enrichment<-renderPlot({ifelse(input$ORA_or_GSE=="GeneSetEnrichment",clusterProfiler::dotplot(EnrichmentRes_Kegg),clusterProfiler::dotplot(EnrichmentRes_Kegg,split=".sign") + facet_grid(.~.sign))})
         global_Vars$KEGG_EnrichmentRes_Kegg=EnrichmentRes_Kegg
         global_Vars$KEGG_geneSetChoice_tranlsated=geneSetChoice_tranlsated
         global_Vars$KEGG_geneSetChoice=geneSetChoice()
         global_Vars$KEGG_OrganismChoice=input$OrganismChoice
-        global_Vars$KEGG_UniverseOfGene=input$UniverseOfGene
-        global_Vars$KEGG_universeSelected_tranlsated=universeSelected_tranlsated
+        # This only relevant for ORA
+        if(input$ORA_or_GSE!="GeneSetEnrichment"){
+          global_Vars$KEGG_UniverseOfGene=input$UniverseOfGene
+          global_Vars$KEGG_universeSelected_tranlsated=universeSelected_tranlsated
+        }
+        
         global_Vars$KEGG_resultData=resultData
         global_Vars$KEGG_EnrichmentRes_Kegg_terms=EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = F),]
         
         output$SavePlot_KEGG=downloadHandler(
-          filename = function() { paste("KEGG_",Sys.Date(),input$file_ext_KEGG,sep="") },
+          filename = function() { paste("KEGG_",Sys.time(),input$file_ext_KEGG,sep="") },
           
           content = function(file){
             ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = gsub("\\.","",input$file_ext_KEGG))
             
             on.exit({
-              tmp_filename=paste0("www/",paste("KEGG_",Sys.Date(),input$file_ext_KEGG,sep=""))
+              tmp_filename=paste0("www/",paste("KEGG_",Sys.time(),input$file_ext_KEGG,sep=""))
               ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = gsub("\\.","",input$file_ext_KEGG))
+              # missing to separated between GSEA and ORA
+              # if(input$ORA_or_GSE=="GeneSetEnrichment"){}
               fun_LogIt("### KEGG ENRICHMENT")
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - KEGG Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
@@ -2131,7 +2544,7 @@ print("Data Upload")
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(resultData)))
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
               fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = F),],5),format = "markdown")))
+              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = F),],5),format = "html")))
               
             })
           }
@@ -2163,12 +2576,9 @@ print("Data Upload")
 
     }
     
-    EnrichmentRes_GO <<- clusterProfiler::enrichGO(gene         = geneSetChoice_tranlsated,
-                                                   OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"),
-                                                   pvalueCutoff = 0.05,
-                                                   universe = universeSelected_tranlsated)
+    
     if(is.null(EnrichmentRes_GO)){
-      output$EnrichmentInfo=renderText("Enrichment Failed - check Console, most likley due to no GO annotated Terms found")
+      output$EnrichmentInfo=renderText("GO Enrichment Failed - check Console, most likley due to no GO annotated Terms found")
     }else{
       print("GO Enrichment Done")
       output$GO_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_GO)})
@@ -2177,22 +2587,27 @@ print("Data Upload")
       global_Vars$GO_geneSetChoice_tranlsated=geneSetChoice_tranlsated
       global_Vars$GO_geneSetChoice=geneSetChoice()
       global_Vars$GO_OrganismChoice=input$OrganismChoice
-      global_Vars$GO_UniverseOfGene=input$UniverseOfGene
-      global_Vars$GO_universeSelected_tranlsated=universeSelected_tranlsated
+      # This only relevant for ORA
+      if(input$ORA_or_GSE!="GeneSetEnrichment"){
+        global_Vars$GO_UniverseOfGene=input$UniverseOfGene
+        global_Vars$GO_universeSelected_tranlsated=universeSelected_tranlsated
+      }
       global_Vars$GO_EnrichmentRes_GO_nrow=EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,]
       global_Vars$GO_EnrichmentRes_GO_result=EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),]
       
       
       output$SavePlot_GO=downloadHandler(
-        filename = function() { paste("GO_",Sys.Date(),input$file_ext_GO,sep="") },
+        filename = function() { paste("GO_",Sys.time(),input$file_ext_GO,sep="") },
         
         content = function(file){
           ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
           
           on.exit({
-            tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.Date(),input$file_ext_GO,sep="") )
+            tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.time(),input$file_ext_GO,sep="") )
             ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
             fun_LogIt("### GO ENRICHMENT")
+            # missing to separated between GSEA and ORA
+            # if(input$ORA_or_GSE=="GeneSetEnrichment"){}
             fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
             fun_LogIt(message = paste0("**GO ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
             fun_LogIt(message = paste0("**GO ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
@@ -2200,7 +2615,7 @@ print("Data Upload")
             fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,])))
             fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
             fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-            fun_LogIt(message = knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),],5),format = "markdown"))
+            fun_LogIt(message = knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),],5),format = "html"))
             
           })
         }
@@ -2224,14 +2639,10 @@ print("Data Upload")
       )})
 
     }
-    EnrichmentRes_RACTOME <-ReactomePA::enrichPathway(gene=geneSetChoice_tranlsated,
-                                                       pvalueCutoff=0.05,
-                                                       organism = ifelse(input$OrganismChoice=="hsa","human","mouse"),
-                                                       universe = universeSelected_tranlsated, 
-                                                       readable=T)
+   
     
     if(is.null(EnrichmentRes_RACTOME)){
-      output$EnrichmentInfo=renderText("Enrichment Failed - check Console, most likley due to no reactome annotated Terms found")
+      output$EnrichmentInfo=renderText("REACTOME Enrichment Failed - check Console, most likley due to no reactome annotated Terms found")
     }else{
       print("reactome Enrichment Done")
       output$REACTOME_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_RACTOME)})
@@ -2240,22 +2651,27 @@ print("Data Upload")
       global_Vars$Reactome_REACTOME_Enrichment=EnrichmentRes_RACTOME
       global_Vars$Reactome_geneSetChoice_tranlsated=geneSetChoice_tranlsated
       global_Vars$Reactome_geneSetChoice=geneSetChoice()
-      global_Vars$Reactome_OrganismChoice=input$OrganismChoice
-      global_Vars$Reactome_UniverseOfGene=input$UniverseOfGene
+      # This only relevant for ORA
+      if(input$ORA_or_GSE!="GeneSetEnrichment"){
+        global_Vars$Reactome_OrganismChoice=input$UniverseOfGene
+        global_Vars$Reactome_UniverseOfGene=universeSelected_tranlsated
+      }
       global_Vars$Reactome_universeSelected_tranlsated=universeSelected_tranlsated
       global_Vars$Reactome_REACTOME_Enrichment_result=EnrichmentRes_RACTOME@result
       global_Vars$Reactome_Enrichment_padj=EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),]
       
       output$SavePlot_REACTOME=downloadHandler(
-        filename = function() { paste("REACTOME_",Sys.Date(),input$file_ext_REACTOME,sep="") },
+        filename = function() { paste("REACTOME_",Sys.time(),input$file_ext_REACTOME,sep="") },
         
         content = function(file){
           ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME),device = gsub("\\.","",input$file_ext_REACTOME))
           
           on.exit({
-            tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.Date(),input$file_ext_REACTOME,sep="") )
+            tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.time(),input$file_ext_REACTOME,sep="") )
             ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME),device = gsub("\\.","",input$file_ext_REACTOME))
             fun_LogIt("### REACTOME ENRICHMENT")
+            # missing to separated between GSEA and ORA
+            # if(input$ORA_or_GSE=="GeneSetEnrichment"){}
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - REACTOME Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
@@ -2263,7 +2679,7 @@ print("Data Upload")
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_RACTOME@result[EnrichmentRes_RACTOME@result$p.adjust<0.05,])))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - ![REACTOME ENRICHMENT](",tmp_filename,")"))
             fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-            fun_LogIt(message = knitr::kable(head(EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),],5),format = "markdown"))
+            fun_LogIt(message = knitr::kable(head(EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),],5),format = "html"))
             
           })
           
@@ -2289,12 +2705,14 @@ print("Data Upload")
     
     
   })
+  
+  
   ####### Section about download only to report
   observeEvent(input$only2Report_KEGG,{
 
     notificationID<-showNotification("Saving...",duration = 0)
     
-    tmp_filename=paste0(getwd(),"/www/",paste("KEGG_",Sys.Date(),".png",sep=""))
+    tmp_filename=paste0(getwd(),"/www/",paste("KEGG_",Sys.time(),".png",sep=""))
     ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$KEGG_EnrichmentRes_Kegg),device = "png")
     fun_LogIt("### KEGG ENRICHMENT")
     fun_LogIt(message = paste0("**KEGG ENRICHMENT** - KEGG Enrichment was performed with a gene set of interest of size: ",length(global_Vars$KEGG_geneSetChoice_tranlsated)))
@@ -2304,7 +2722,12 @@ print("Data Upload")
     fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$KEGG_resultData)))
     fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
     fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = knitr::kable(head(global_Vars$KEGG_EnrichmentRes_Kegg_terms,5),format = "markdown"))
+    fun_LogIt(message = knitr::kable(head(global_Vars$KEGG_EnrichmentRes_Kegg_terms,5),format = "html"))
+    
+    if(isTruthy(input$NotesKEGG) & !(isEmpty(input$NotesKEGG))){
+      fun_LogIt("### Personal Notes:")
+      fun_LogIt(message = input$NotesKEGG)
+    }
     
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
@@ -2312,7 +2735,7 @@ print("Data Upload")
   
   observeEvent(input$only2Report_GO,{
     notificationID<-showNotification("Saving...",duration = 0)
-    tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.Date(),".png",sep="") )
+    tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.time(),".png",sep="") )
     ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$GO_EnrichmentRes_GO),device = "png")
     fun_LogIt("### GO ENRICHMENT")
     fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(global_Vars$GO_geneSetChoice_tranlsated)))
@@ -2322,9 +2745,12 @@ print("Data Upload")
     fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$GO_EnrichmentRes_GO@result[global_Vars$GO_EnrichmentRes_GO@result$p.adjust<0.05,])))
     fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
     fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = knitr::kable(head(global_Vars$GO_EnrichmentRes_GO@result[order(global_Vars$GO_EnrichmentRes_GO@result$p.adjust,decreasing = T),],5),format = "markdown"))
+    fun_LogIt(message = knitr::kable(head(global_Vars$GO_EnrichmentRes_GO@result[order(global_Vars$GO_EnrichmentRes_GO@result$p.adjust,decreasing = T),],5),format = "html"))
     
-    
+    if(isTruthy(input$NotesGO) & !(isEmpty(input$NotesGO))){
+      fun_LogIt("### Personal Notes:")
+      fun_LogIt(message = input$NotesGO)
+    }
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
   })
@@ -2332,7 +2758,7 @@ print("Data Upload")
   observeEvent(input$only2Report_REACTOME,{
     notificationID<-showNotification("Saving...",duration = 0)
     browser()
-    tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.Date(),".png",sep="") )
+    tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.time(),".png",sep="") )
     ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$Reactome_REACTOME_Enrichment),device = "png")
     fun_LogIt("### REACTOME ENRICHMENT")
     fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - REACTOME Enrichment was performed with a gene set of interest of size: ",length(global_Vars$Reactome_geneSetChoice_tranlsated)))
@@ -2342,7 +2768,12 @@ print("Data Upload")
     fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$Reactome_REACTOME_Enrichment_result[global_Vars$Reactome_REACTOME_Enrichment_result$p.adjust<0.05,])))
     fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - ![REACTOME ENRICHMENT](",tmp_filename,")"))
     fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = knitr::kable(head(global_Vars$Reactome_REACTOME_Enrichment_result[order(global_Vars$Reactome_REACTOME_Enrichment_result$p.adjust,decreasing = T),],5),format = "markdown"))
+    fun_LogIt(message = knitr::kable(head(global_Vars$Reactome_REACTOME_Enrichment_result[order(global_Vars$Reactome_REACTOME_Enrichment_result$p.adjust,decreasing = T),],5),format = "html"))
+    
+    if(isTruthy(input$NotesREACTOME) & !(isEmpty(input$NotesREACTOME))){
+      fun_LogIt("### Personal Notes:")
+      fun_LogIt(message = input$NotesREACTOME)
+    }
     
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
@@ -2398,15 +2829,16 @@ print("Data Upload")
   
   observeEvent(input$OverlayOnPathway,{
     req(input$KeggPathwayID)
+    req(selectedData_processed())
     print("Overlay On Kegg")
     print(input$KeggPathwayID)
+    
     real_PathwayID=gsub(":.*$","",input$KeggPathwayID)
     print(real_PathwayID)
     ## reduce dataset to selected genes
-    Data2PlotOnTop=selectedData_processed()[[input$omicType]]$Matrix[geneSetChoice(),,drop=F]
-    #print(geneSetChoice())
-    ##
+
     if(input$plotOnTopOption=="LFC"){
+      Data2PlotOnTop=selectedData_processed()[[input$omicType]]$Matrix[geneSetChoice(),,drop=F]
       ctrl_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCRTL)
       comparison_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCOMP)
       if(length(comparison_samples_idx)<=1 | length(ctrl_samples_idx)<=1){

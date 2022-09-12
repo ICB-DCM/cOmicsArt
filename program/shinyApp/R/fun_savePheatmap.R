@@ -7,7 +7,7 @@ save_pheatmap<- function(x, filename,type="pdf") {
     grid::grid.draw(x$gtable)
     dev.off()
   }else if(type=="png"){
-    png(filename)
+    png(filename,width=800, height=400)
     grid::grid.newpage()
     grid::grid.draw(x$gtable)
     dev.off()

@@ -2904,6 +2904,14 @@
       "Hash": "922e11dcf40bb5dfcf3fe5e714d0dc35",
       "Requirements": []
     },
+    "zip": {
+      "Package": "zip",
+      "Version": "2.2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a7e91189fa51d9029a30eba3831ce53f",
+      "Requirements": []
+    },
     "zlibbioc": {
       "Package": "zlibbioc",
       "Version": "1.42.0",
