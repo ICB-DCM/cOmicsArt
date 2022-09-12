@@ -1,6 +1,6 @@
 ## Server 2.0
 
-## eigentlich getestet auf 4.1.2
+# eigentlich getestet auf 4.1.2
 # setwd("program")
 # if(!(renv::status()$synchronized)){
 #  renv::restore(lockfile = "renv.lock")
