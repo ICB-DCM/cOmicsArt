@@ -8,7 +8,8 @@ server <- function(input,output,session){
   source("R/fun_savePheatmap.R",local = T)
   source("R/fun_LogIt.R",local = T)
   source("R/fun_readInSampleTable.R",local=T)
-  
+  source("R/fun_ggplot.R",local=T)
+  source("R/Guide.R",local=T)
   global_Vars<-reactiveValues()
   
 # Security section ---- 
