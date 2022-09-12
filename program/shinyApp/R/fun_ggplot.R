@@ -232,5 +232,6 @@ list2env(envList,envir = globalenv())
   if(numberOfScenario==17){
     stringtosave='REACTOME_Plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME)'
   }
+  
   return(paste0(initalString,"\n",stringtosave))
 }
