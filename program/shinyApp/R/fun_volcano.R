@@ -73,13 +73,15 @@ Volcano_Plot=function(data,
   # add annotation data based on user Input (ergo annotation_add)
   results$annotation_add=annoData[rownames(results),annotation_add]
   
-  plot=ggplot(results,aes(label=probename,tooltip=annotation_add)) +
-    geom_point(aes(x = LFC, y = -log10(p_adj), colour = threshold,alpha=threshold_fc))+
-    geom_hline(yintercept=-log10(p_sig_threshold),color="lightgrey")+
-    geom_vline(xintercept = c(-LFC_threshold,LFC_threshold),color="lightgrey")+ 
-    scale_color_manual(values=colorScheme, name="")+
-    scale_alpha_manual(values=alphaScheme, name="")+
-    xlab("Log FoldChange")+
-    theme_bw()
-  plot
+  # plot=ggplot(results,aes(label=probename,tooltip=annotation_add)) +
+  #   geom_point(aes(x = LFC, y = -log10(p_adj), colour = threshold,alpha=threshold_fc))+
+  #   geom_hline(yintercept=-log10(p_sig_threshold),color="lightgrey")+
+  #   geom_vline(xintercept = c(-LFC_threshold,LFC_threshold),color="lightgrey")+ 
+  #   scale_color_manual(values=colorScheme, name="")+
+  #   scale_alpha_manual(values=alphaScheme, name="")+
+  #   xlab("Log FoldChange")+
+  #   theme_bw()
+  # plot
+  
+  return(results)
 }

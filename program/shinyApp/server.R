@@ -8,7 +8,8 @@ server <- function(input,output,session){
   source("R/fun_savePheatmap.R",local = T)
   source("R/fun_LogIt.R",local = T)
   source("R/fun_readInSampleTable.R",local=T)
-  
+  source("R/fun_ggplot.R",local=T)
+  source("R/Guide.R",local=T)
   global_Vars<-reactiveValues()
   
 # Security section ---- 
@@ -982,11 +983,34 @@ print("Data Upload")
       theme_bw()+
       ggtitle("Scree-Plot for shown PCA")
     scenario=7
+    Scree_scenario=scenario
     output[["Scree_Plot"]] <- renderPlotly({ggplotly(scree_plot,
                                                      tooltip = "Var",legendgroup="color")})
     
     global_Vars$Scree_plot=scree_plot
     global_Vars$Scree_customTitle=customTitle
+    
+    output$getR_Code_Scree_Plot <- downloadHandler(
+      filename = function(){
+        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+      },
+      content = function(file){
+        envList=list(var_explained_df=var_explained_df)
+        
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+        
+        write(getPlotCode(Scree_scenario), file.path(temp_directory, "Code.R"))
+        
+        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+      },
+      contentType = "application/zip"
+    )
     
     
     output$SavePlot_Scree=downloadHandler(
@@ -1031,6 +1055,7 @@ print("Data Upload")
       theme_bw(base_size = 15)
 
     scenario = 8
+    Loading_scenario=scenario
     output[["PCA_Loadings_plot"]]<- renderPlot({plotOut})
     
     global_Vars$Loadings_x_axis=input$x_axis_selection
@@ -1038,6 +1063,30 @@ print("Data Upload")
     global_Vars$Loadings_topSlider=input$topSlider
     global_Vars$Loadings_file_ext_Loadings=input$file_ext_Loadings
     global_Vars$Loadings_plotOut=plotOut
+    
+    output$getR_Code_Loadings <- downloadHandler(
+      filename = function(){
+        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+      },
+      content = function(file){
+        envList=list(LoadingsDF=LoadingsDF,
+                     input=reactiveValuesToList(input))
+        
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+        
+        write(getPlotCode(Loading_scenario), file.path(temp_directory, "Code.R"))
+        
+        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+      },
+      contentType = "application/zip"
+    )
+    
     output$SavePlot_Loadings=downloadHandler(
       filename = function() { paste("LOADINGS_PCA_",Sys.time(),input$file_ext_Loadings,sep="") },
       
@@ -1208,14 +1257,31 @@ print("Data Upload")
       }
       print(dim(data2Volcano))
       report<-data2Volcano
-      VolcanoPlot<-Volcano_Plot(data2Volcano,
+      VolcanoPlot_df<-Volcano_Plot(data2Volcano,
                                 ctrl_samples_idx,
                                 comparison_samples_idx,
                                 p_sig_threshold=input$psig_threhsold,
                                 LFC_threshold=input$lfc_threshold,
                                 annotation_add=input$VOLCANO_anno_tooltip,
                                 annoData=selectedData_processed()[[input$omicType]]$annotation_rows)
+      colorScheme=c("#cf0e5b","#939596")
+      names(colorScheme)=c("significant","non-significant")
+      alphaScheme=c(0.8,0.1)
+      names(alphaScheme)=c("change","steady")
+      
+      VolcanoPlot=ggplot(VolcanoPlot_df,aes(label=probename,tooltip=annotation_add)) +
+        geom_point(aes(x = LFC, y = -log10(p_adj), colour = threshold,alpha=threshold_fc))+
+        geom_hline(yintercept=-log10(input$psig_threhsold),color="lightgrey")+
+        geom_vline(xintercept = c(-input$lfc_threshold,input$lfc_threshold),color="lightgrey")+
+        scale_color_manual(values=colorScheme, name="")+
+        scale_alpha_manual(values=alphaScheme, name="")+
+        xlab("Log FoldChange")+
+        theme_bw()
+      
+      
       plotPosition="Volcano_Plot_final"
+      scenario=9
+      scenario_Volcano=scenario
       
       output[[plotPosition]] <- renderPlotly({ggplotly(VolcanoPlot,
                                                        tooltip=ifelse(!is.null(input$VOLCANO_anno_tooltip),"tooltip","all"),
@@ -1233,6 +1299,31 @@ print("Data Upload")
       global_Vars$Volcano_groupTreat=input$Groups2Compare_treat
       global_Vars$Volcano_file_ext_Volcano=input$file_ext_Volcano
       global_Vars$Volcano_table=LFCTable[order(LFCTable$p_adj,decreasing = T),]
+      
+      output$getR_Code_Volcano <- downloadHandler(
+        filename = function(){
+          paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+        },
+        content = function(file){
+          envList=list(VolcanoPlot_df=VolcanoPlot_df,
+                       input=reactiveValuesToList(input),
+                       colorScheme=colorScheme,
+                       alphaScheme=alphaScheme)
+          
+          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+          dir.create(temp_directory)
+          
+          write(getPlotCode(scenario_Volcano), file.path(temp_directory, "Code.R"))
+          
+          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+          zip::zip(
+            zipfile = file,
+            files = dir(temp_directory),
+            root = temp_directory
+          )
+        },
+        contentType = "application/zip"
+      )
       
       
       output$SavePlot_Volcano=downloadHandler(
@@ -1675,6 +1766,8 @@ print("Data Upload")
         myBreaks <- c(seq(min(Data2Plot$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
                       seq(max(Data2Plot$LFC)/paletteLength, max(Data2Plot$LFC), length.out=floor(paletteLength/2)))
         
+        scenario=10
+        annotation_col = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F]
         heatmap_plot<-pheatmap((t(Data2Plot[,"LFC",drop=F])),
                                main=gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
                                show_rownames=ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
@@ -1684,7 +1777,7 @@ print("Data Upload")
                                scale=ifelse(input$rowWiseScaled,"row","none"),
                                # cutree_cols = 4,
                                #fontsize = font.size,
-                               annotation_col = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F],
+                               annotation_col = annotation_col,
                                #annotation_row = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F],
                                #annotation_colors = mycolors,
                                silent = F,
@@ -1708,10 +1801,12 @@ print("Data Upload")
       print(input$anno_options)
       print(input$row_label_options)
       #row_label_options
+      scenario=11
+      selectedData_processed_df=selectedData_processed()
       heatmap_plot<-pheatmap(as.matrix(data2HandOver),
                              main=customTitleHeatmap,
                              show_rownames=ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
-                             labels_row = selectedData_processed()[[input$omicType]]$annotation_rows[rownames(data2HandOver),input$row_label_options],
+                             labels_row = selectedData_processed_df[[input$omicType]]$annotation_rows[rownames(data2HandOver),input$row_label_options],
                              show_colnames=TRUE,
                              cluster_cols = input$cluster_cols,
                              cluster_rows = clusterRowspossible,
@@ -1731,8 +1826,8 @@ print("Data Upload")
     }
     
     
-    
-    #
+
+    heatmap_scenario=scenario
     
     output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
     
@@ -1750,6 +1845,41 @@ print("Data Upload")
     global_Vars$Heatmap_sample_annotation_types_cmp_heatmap=input$sample_annotation_types_cmp_heatmap
     global_Vars$Heatmap_Groups2Compare_ref_heatmap=input$Groups2Compare_ref_heatmap
     global_Vars$Heatmap_Groups2Compare_ctrl_heatmap=input$Groups2Compare_ctrl_heatmap
+    
+    output$getR_Code_Heatmap <- downloadHandler(
+      filename = function(){
+        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+      },
+      content = function(file){
+        envList=list(Data2Plot=ifelse(exists("Data2Plot"),Data2Plot,NA),
+                     data2HandOver=ifelse(exists("data2HandOver"),data2HandOver,NA),
+                     selectedData_processed_df=ifelse(exists("selectedData_processed_df"),selectedData_processed_df,NA),
+                     clusterRowspossible=ifelse(exists("clusterRowspossible"),clusterRowspossible,NA),
+                     annotation_col=annotation_col,
+                     annotation_row=ifelse(exists("annotation_row"),annotation_row,NA),
+                     mycolors=ifelse(exists("mycolors"),mycolors,NA),
+                     customTitleHeatmap=customTitleHeatmap,
+                     input=reactiveValuesToList(input),
+                     myBreaks=ifelse(exists("myBreaks"),myBreaks,NA),
+                     myColor_fill=ifelse(exists("myColor_fill"),myColor_fill,NA))
+        
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+        
+        write(getPlotCode(heatmap_scenario), file.path(temp_directory, "Code.R"))
+        
+        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+      },
+      contentType = "application/zip"
+    )
+    
+    
+    
     
     output$SavePlot_Heatmap=downloadHandler(
       filename = function() { paste(customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="") },
@@ -2027,7 +2157,7 @@ print("Data Upload")
         ylab(input$type_of_data_gene)+
         theme_bw()
       testMethod="t.test"
-      
+      scenario=13
       if(input$type_of_visualitsation=="boxplots_withTesting"){
         
         if(isTruthy(input$chooseComparisons)){
@@ -2036,6 +2166,7 @@ print("Data Upload")
           for (i in 1:length(newList)) {
             xy.list[[i]] <- unlist(strsplit(x = newList[i],split = ":"))
           }
+          scenario=12
           P_boxplots=P_boxplots+
             geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
             #stat_compare_means(method = "anova")+        # Add global annova p-value
@@ -2047,21 +2178,8 @@ print("Data Upload")
           xy.list=NULL
         }
         
-        # if(length(levels(GeneData$anno))==2){ # not neede
-        #   #t.test (option for Kruskal Wallas as non-paramettric?)
-        #   my_comparisons=list(c(levels(GeneData$anno)[1],levels(GeneData$anno)[2]))
-        #   
-        #   #testMethod="t.test"
-        #   P_boxplots=P_boxplots+
-        #     stat_compare_means(comparisons=my_comparisons,method = testMethod,label = "p.signif")
-        # }else if(length(levels(GeneData$anno))>2){
-        #   
-          #+
-          #stat_compare_means(label = "p.signif", method = testMethod,
-          #                   ref.group = ".all.", hide.ns = TRUE)    
-        #}
       }
-      
+      boxplot_scenario=scenario
       # add points +geom_point(alpha=0.4,pch=4)
       output$SingleGenePlot=renderPlot(P_boxplots)
 
@@ -2083,7 +2201,35 @@ print("Data Upload")
     }
    
     #print(customTitle_boxplot)
-
+    
+    
+    output$getR_Code_SingleEntities <- downloadHandler(
+      filename = function(){
+        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+      },
+      content = function(file){
+        envList=list(GeneData=GeneData,
+                     xy.list=ifelse(exists("xy.list"),xy.list,NA),
+                     testMethod=ifelse(exists("testMethod"),testMethod,NA),
+                     input=reactiveValuesToList(input),
+                     myBreaks=ifelse(exists("myBreaks"),myBreaks,NA),
+                     myColor_fill=ifelse(exists("myColor_fill"),myColor_fill,NA))
+        
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+        
+        write(getPlotCode(boxplot_scenario), file.path(temp_directory, "Code.R"))
+        
+        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+      },
+      contentType = "application/zip"
+    )
+    
     
     output$SavePlot_singleGene=downloadHandler(
       filename = function() { paste(customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep="") },
@@ -2507,10 +2653,13 @@ print("Data Upload")
       }else{
         #dotplot(EnrichmentRes_Kegg, split=".sign") + facet_grid(.~.sign)
         if(input$ORA_or_GSE=="GeneSetEnrichment"){
+          scenario = 14
           output$KEGG_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_Kegg,split=".sign") + facet_grid(.~.sign)})
         }else{
+          scenario = 15
           output$KEGG_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_Kegg)})
         }
+        KEGG_scenario=scenario
         #output$KEGG_Enrichment<-renderPlot({ifelse(input$ORA_or_GSE=="GeneSetEnrichment",clusterProfiler::dotplot(EnrichmentRes_Kegg),clusterProfiler::dotplot(EnrichmentRes_Kegg,split=".sign") + facet_grid(.~.sign))})
         global_Vars$KEGG_EnrichmentRes_Kegg=EnrichmentRes_Kegg
         global_Vars$KEGG_geneSetChoice_tranlsated=geneSetChoice_tranlsated
@@ -2524,6 +2673,29 @@ print("Data Upload")
         
         global_Vars$KEGG_resultData=resultData
         global_Vars$KEGG_EnrichmentRes_Kegg_terms=EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = F),]
+        
+        output$getR_Code_KEGG <- downloadHandler(
+          filename = function(){
+            paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+          },
+          content = function(file){
+            envList=list(EnrichmentRes_Kegg=EnrichmentRes_Kegg)
+            
+            temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+            dir.create(temp_directory)
+            
+            write(getPlotCode(KEGG_scenario), file.path(temp_directory, "Code.R"))
+            
+            saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+            zip::zip(
+              zipfile = file,
+              files = dir(temp_directory),
+              root = temp_directory
+            )
+          },
+          contentType = "application/zip"
+        )
+        
         
         output$SavePlot_KEGG=downloadHandler(
           filename = function() { paste("KEGG_",Sys.time(),input$file_ext_KEGG,sep="") },
@@ -2581,6 +2753,7 @@ print("Data Upload")
       output$EnrichmentInfo=renderText("GO Enrichment Failed - check Console, most likley due to no GO annotated Terms found")
     }else{
       print("GO Enrichment Done")
+      GO_scenario=scenario
       output$GO_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_GO)})
      
       global_Vars$GO_EnrichmentRes_GO=EnrichmentRes_GO
@@ -2595,6 +2768,27 @@ print("Data Upload")
       global_Vars$GO_EnrichmentRes_GO_nrow=EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,]
       global_Vars$GO_EnrichmentRes_GO_result=EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),]
       
+      output$getR_Code_GO <- downloadHandler(
+        filename = function(){
+          paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+        },
+        content = function(file){
+          envList=list(EnrichmentRes_GO=EnrichmentRes_GO)
+          
+          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+          dir.create(temp_directory)
+          
+          write(getPlotCode(GO_scenario), file.path(temp_directory, "Code.R"))
+          
+          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+          zip::zip(
+            zipfile = file,
+            files = dir(temp_directory),
+            root = temp_directory
+          )
+        },
+        contentType = "application/zip"
+      )
       
       output$SavePlot_GO=downloadHandler(
         filename = function() { paste("GO_",Sys.time(),input$file_ext_GO,sep="") },
@@ -2645,6 +2839,8 @@ print("Data Upload")
       output$EnrichmentInfo=renderText("REACTOME Enrichment Failed - check Console, most likley due to no reactome annotated Terms found")
     }else{
       print("reactome Enrichment Done")
+      scenario=17
+      Reactome_scenario=scenario
       output$REACTOME_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_RACTOME)})
       
       
@@ -2659,6 +2855,28 @@ print("Data Upload")
       global_Vars$Reactome_universeSelected_tranlsated=universeSelected_tranlsated
       global_Vars$Reactome_REACTOME_Enrichment_result=EnrichmentRes_RACTOME@result
       global_Vars$Reactome_Enrichment_padj=EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),]
+      
+      output$getR_Code_Reactome <- downloadHandler(
+        filename = function(){
+          paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+        },
+        content = function(file){
+          envList=list(EnrichmentRes_RACTOME=EnrichmentRes_RACTOME)
+          
+          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+          dir.create(temp_directory)
+          
+          write(getPlotCode(Reactome_scenario), file.path(temp_directory, "Code.R"))
+          
+          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+          zip::zip(
+            zipfile = file,
+            files = dir(temp_directory),
+            root = temp_directory
+          )
+        },
+        contentType = "application/zip"
+      )
       
       output$SavePlot_REACTOME=downloadHandler(
         filename = function() { paste("REACTOME_",Sys.time(),input$file_ext_REACTOME,sep="") },

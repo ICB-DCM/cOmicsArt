@@ -4,9 +4,12 @@ getPlotCode <- function(numberOfScenario) {
 # Load necassary packages (if errors please install respective packages)
 library(ggplot2)
 library(ggpubr)
+library(rstudioapi)
+# if not run in RStudio  you need to specify the directory fo the file yourself!
 
-# Load the dataObject (RDS-object) (expected to be in the same folder and to be the only rds object!)
-envList=readRDS('Data.rds')
+direcoty_of_files=dirname(rstudioapi::getSourceEditorContext()$path)
+envList=readRDS(paste0(direcoty_of_files,"/",'Data.rds'))  
+
 list2env(envList,envir = globalenv())
 
 # Happy Adjusting! :)"
@@ -130,11 +133,11 @@ list2env(envList,envir = globalenv())
   
   if (numberOfScenario == 7) {
     stringtosave = 'scree_plot=ggplot(var_explained_df,aes(x=PC,y=var_explained, group=1))+
-      geom_point(size=4,aes(label=Var))+
-      geom_line()+
-      ylab("Variance explained")+
-      theme_bw()+
-      ggtitle("Scree-Plot for shown PCA")'
+                                  geom_point(size=4,aes(label=Var))+
+                                  geom_line()+
+                                  ylab("Variance explained")+
+                                  theme_bw()+
+                                  ggtitle("Scree-Plot for shown PCA")'
   }
   if (numberOfScenario == 8) {
     stringtosave = 'plotOut=ggplot(LoadingsDF,aes(x=Loading,y=entitie))+
@@ -145,8 +148,55 @@ list2env(envList,envir = globalenv())
       xlab(paste0("Loadings: ",input$x_axis_selection))+
       theme_bw(base_size = 20)'
   }
-  
+  # Volcano Missing
   if (numberOfScenario == 9) {
+    stringtosave='VolcanoPlot=ggplot(VolcanoPlot_df,aes(label=probename)) +
+                                geom_point(aes(x = LFC, y = -log10(p_adj), colour = threshold,alpha=threshold_fc))+
+                                geom_hline(yintercept=-log10(input$psig_threhsold),color="lightgrey")+
+                                geom_vline(xintercept = c(-input$lfc_threshold,input$lfc_threshold),color="lightgrey")+
+                                scale_color_manual(values=colorScheme, name="")+
+                                scale_alpha_manual(values=alphaScheme, name="")+
+                                xlab("Log FoldChange")+
+                                theme_bw()'
+  }
+  
+  ## 2 heatmaps
+  if(numberOfScenario==10){
+    stringtosave='heatmap_plot<-pheatmap((t(Data2Plot[,"LFC",drop=F])),
+                           main=gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
+                           show_rownames=ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
+                           show_colnames=TRUE,
+                           cluster_cols = input$cluster_cols,
+                           cluster_rows = FALSE, # input$cluster_rows,
+                           scale=ifelse(input$rowWiseScaled,"row","none"),
+                           # cutree_cols = 4,
+                           #fontsize = font.size,
+                           annotation_col = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F],
+                           #annotation_row = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F],
+                           #annotation_colors = mycolors,
+                           silent = F,
+                           breaks = myBreaks,
+                           color = myColor_fill)'
+  }
+  if(numberOfScenario==11){
+    stringtosave='heatmap_plot<-pheatmap(as.matrix(data2HandOver),
+                           main=customTitleHeatmap,
+                           show_rownames=ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
+                           labels_row = selectedData_processed_df[[input$omicType]]$annotation_rows[rownames(data2HandOver),input$row_label_options],
+                           show_colnames=TRUE,
+                           cluster_cols = input$cluster_cols,
+                           cluster_rows = clusterRowspossible,
+                           scale=ifelse(input$rowWiseScaled,"row","none"),
+                           # cutree_cols = 4,
+                           #fontsize = font.size,
+                           annotation_col = annotation_col,
+                           annotation_row =annotation_row,
+                           annotation_colors = mycolors,
+                           silent = F)'
+  }
+  #11
+  
+  if (numberOfScenario == 12) {
     stringtosave = 'P_boxplots=ggplot(GeneData, aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],x=anno,fill=anno))+
     geom_boxplot()+
     scale_fill_brewer(palette="RdBu")+
@@ -161,7 +211,7 @@ list2env(envList,envir = globalenv())
                  label = "p.signif",
                            hide.ns = TRUE)'
   }
-  if (numberOfScenario == 10) {
+  if (numberOfScenario == 13) {
     stringtosave = 'P_boxplots=ggplot(GeneData, aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],x=anno,fill=anno))+
     geom_boxplot()+
     scale_fill_brewer(palette="RdBu")+
@@ -169,8 +219,19 @@ list2env(envList,envir = globalenv())
     ylab(input$type_of_data_gene)+
     theme_bw()'
   }
-  if (numberOfScenario == 11) {
-    stringtosave = 'P_boxplots=ggplot() + theme_void()'
+  if(numberOfScenario==14){
+    stringtosave = 'KEGG_Plot_GSE=clusterProfiler::dotplot(EnrichmentRes_Kegg,split=".sign") +
+                      facet_grid(.~.sign)'
   }
+  if(numberOfScenario==15){
+    stringtosave = 'KEGG_Plot_ORA=clusterProfiler::dotplot(EnrichmentRes_Kegg)'
+  }
+  if(numberOfScenario==16){
+    stringtosave='GO_Plot=clusterProfiler::dotplot(EnrichmentRes_GO)'
+  }
+  if(numberOfScenario==17){
+    stringtosave='REACTOME_Plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME)'
+  }
+  
   return(paste0(initalString,"\n",stringtosave))
 }

@@ -1,6 +1,6 @@
 ## Server 2.0
 
-## eigentlich getestet auf 4.1.2
+# eigentlich getestet auf 4.1.2
 # setwd("program")
 # if(!(renv::status()$synchronized)){
 #  renv::restore(lockfile = "renv.lock")
@@ -316,6 +316,11 @@ ui <- shiny::fluidPage(
               style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
               NULL,
               actionButton(inputId = "only2Report_Loadings", label = "Send only to Report", class = "btn-info"),
+            ), 
+            splitLayout(
+              style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+              NULL,
+              downloadButton("getR_Code_Loadings", label = "Get underlying R code and data",icon = icon("code"))
             ),
             splitLayout(
               style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -342,6 +347,11 @@ ui <- shiny::fluidPage(
               style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
               NULL,
               actionButton(inputId = "only2Report_Scree_Plot", label = "Send only to Report", class = "btn-info"),
+            ),
+            splitLayout(
+              style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+              NULL,
+              downloadButton("getR_Code_Scree_Plot", label = "Get underlying R code and data",icon = icon("code"))
             ),
             splitLayout(
               style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -394,6 +404,11 @@ ui <- shiny::fluidPage(
               style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
               NULL,
               actionButton(inputId = "only2Report_Volcano", label = "Send only to Report", class = "btn-info"),
+            ),
+            splitLayout(
+              style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+              NULL,
+              downloadButton("getR_Code_Volcano", label = "Get underlying R code and data",icon = icon("code"))
             ),
             splitLayout(
               style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -494,6 +509,11 @@ ui <- shiny::fluidPage(
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
           NULL,
+          downloadButton("getR_Code_Heatmap", label = "Get underlying R code and data",icon = icon("code"))
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+          NULL,
           downloadButton("SavePlot_Heatmap", label = "Save plot", class = "btn-info")
         ),
         splitLayout(
@@ -535,6 +555,11 @@ ui <- shiny::fluidPage(
           style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
           NULL,
           actionButton(inputId = "only2Report_SingleEntities", label = "Send only to Report", class = "btn-info"),
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+          NULL,
+          downloadButton("getR_Code_SingleEntities", label = "Get underlying R code and data",icon = icon("code"))
         ),
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -593,6 +618,11 @@ ui <- shiny::fluidPage(
             splitLayout(
               style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
               NULL,
+              downloadButton("getR_Code_KEGG", label = "Get underlying R code and data",icon = icon("code"))
+            ),
+            splitLayout(
+              style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+              NULL,
               downloadButton("SavePlot_KEGG", label = "Save plot", class = "btn-info")
             ),
             splitLayout(
@@ -633,6 +663,11 @@ ui <- shiny::fluidPage(
             splitLayout(
               style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
               NULL,
+              downloadButton("getR_Code_GO", label = "Get underlying R code and data",icon = icon("code"))
+            ),
+            splitLayout(
+              style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+              NULL,
               downloadButton("SavePlot_GO", label = "Save plot", class = "btn-info")
             ),
             splitLayout(
@@ -653,6 +688,11 @@ ui <- shiny::fluidPage(
               style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
               NULL,
               actionButton(inputId = "only2Report_REACTOME", label = "Send only to Report", class = "btn-info"),
+            ),
+            splitLayout(
+              style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+              NULL,
+              downloadButton("getR_Code_Reactome", label = "Get underlying R code and data",icon = icon("code"))
             ),
             splitLayout(
               style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
