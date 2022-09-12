@@ -873,6 +873,18 @@
         "tibble"
       ]
     },
+    "cicerone": {
+      "Package": "cicerone",
+      "Version": "1.0.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b8f2ca302978e3e16a68d3ec8ab0c44d",
+      "Requirements": [
+        "R6",
+        "assertthat",
+        "shiny"
+      ]
+    },
     "cli": {
       "Package": "cli",
       "Version": "3.3.0",
