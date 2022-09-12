@@ -34,6 +34,14 @@ server <- function(input,output,session){
   }
   
   observe_helpers()
+# Guide ----
+  #guide$init()$start()
+  
+  observeEvent(input$guide, {
+    print("Jip")
+    guide$init()$start()
+  })
+  
   
 # Download Report pdf ----
 
