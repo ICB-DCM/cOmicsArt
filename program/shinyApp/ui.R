@@ -128,6 +128,7 @@ ui <- shiny::fluidPage(
     # Tab Selection w Upload
     ################################################################################
     tabPanel("Data selection",
+      id= "Data_selection",     
       fluid = T,
       h4("Data Selection"),
 
@@ -136,13 +137,14 @@ ui <- shiny::fluidPage(
       ################################################################################
       sidebarPanel(
         id = "sidebar1",
-        selectInput(
-          inputId = "omicType", # RNAorLIPID
-          label = "Omic Type that is uploaded",
-          choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
-          selected = ""
-        ),
-        uiOutput("AddGeneSymbols_ui"),
+        div(class = "omicType",
+            selectInput(
+              inputId = "omicType", # RNAorLIPID
+              label = "Omic Type that is uploaded",
+              choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
+              selected = ""
+        )),
+        div(class = "AddGeneSymbols_ui",uiOutput("AddGeneSymbols_ui")),
         uiOutput("AddGeneSymbols_organism_ui"),
         actionButton(inputId = "refresh1", label = "Do"),
         hr(style = "border-top: 1px solid #000000;"),
