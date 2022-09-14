@@ -1649,11 +1649,11 @@ print("Data Upload")
     req(input$omicType,input$row_selection_options,input$anno_options)
     req(selectedData_processed())
     print("Heatmap on selected Data")
-
+   
     ### atm raw data plotted
     data2Plot<-selectedData_processed()
     colorTheme=c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
-    customTitleHeatmap=paste0("Heatmap - ",input$omicType,"-",paste0("entities:",input$row_selection,collapse = "_"),"-samples",ifelse(input$sample_selection!="all",paste0(" (with: ",paste(input$sample_selection,collapse = ", "),")"),""),"-preprocessing: ",input$PreProcessing_Procedure)
+    customTitleHeatmap=paste0("Heatmap - ",input$omicType,"-",paste0("entities:",input$row_selection,collapse = "_"),"-samples",ifelse(any(input$sample_selection!="all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),""),"-preprocessing: ",input$PreProcessing_Procedure)
     #data2Plot_Matrix=as.numeric(data2Plot[[input$omicType]]$Matrix)
     print(customTitleHeatmap)
     mycolors <- list()
