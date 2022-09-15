@@ -28,7 +28,7 @@ server <- function(input,output,session){
   if(dir.exists("www")){
     setwd("www")
     print(list.files())
-    file.remove(list.files())
+    file.remove(setdiff(setdiff(list.files(path="."),list.files(path=".",pattern = ".csv")),list.files(path=".",pattern = ".RDS")))
     print("Removed old Report files for fresh start")
     setwd("..")
   }
@@ -63,6 +63,8 @@ server <- function(input,output,session){
           output$debug=renderText({"<font color=\"#FF0000\"><b>No Report File yet! Do something first</b></font>"})
         }
   })
+  
+
   
   #session$allowReconnect(TRUE) # To allow Reconnection wiht lost Session, potential
   # security issue + more than one user issues potentially ?! Thats why further security
@@ -113,25 +115,25 @@ print("Data Upload")
   
   output$data_matrix1_ui=renderUI({
     shiny::fileInput(inputId = "data_matrix1",
-                     label = HTML("Upload data Matrix <br/> (rows entities, cols samples)"),
+                     label = HTML('Upload data Matrix <br/> (rows entities, cols samples) <br/> <a href="airway-read-counts-LS.csv"> Download example data (Transcriptomics, human) </a>'),
                      accept = c(".csv"),
                      width = "80%")
   })
   output$data_sample_anno1_ui=renderUI({
     shiny::fileInput("data_sample_anno1",
-                     HTML("Upload sample Annotation <br/> (rows must be samples)"),
+                     HTML('Upload sample Annotation <br/> (rows must be samples)<br/> <a href="airway-sample-sheet-LS.csv"> Download example data </a>'),
                      accept = c(".csv"),
                      width = "80%")
   })
   output$data_row_anno1_ui=renderUI({
     shiny::fileInput("data_row_anno1",
-                     HTML("Upload entities Annotation Matrix <br/> (rows must be entities)"),
+                     HTML('Upload entities Annotation Matrix <br/> (rows must be entities)<br/> <a href="airway-entitie_description-LS.csv"> Download example data </a>'),
                      accept = c(".csv"),
                      width = "80%")
   })
   output$data_preDone_ui=renderUI({
     shiny::fileInput("data_preDone",
-                     HTML("Load precompiled data <br/> (saved in this procedure or type SummarizedExperiment)"),
+                     HTML('Load precompiled data <br/> (saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data </a>'),
                      accept = ".RDS",
                      width = "80%")
   })
@@ -945,7 +947,8 @@ print("Data Upload")
                      global_ID=pcaData$global_ID,
                      chosenAnno=pcaData$chosenAnno,
                      percentVar=percentVar,
-                     customTitle=customTitle)
+                     customTitle=customTitle,
+                     colorTheme=colorTheme)
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
         write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
