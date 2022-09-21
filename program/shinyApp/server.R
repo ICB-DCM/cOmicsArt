@@ -15,7 +15,15 @@ server <- function(input,output,session){
 # Security section ---- 
   options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
 
-  
+  observeEvent(input$guide_cicerone_next,{
+    # triggers but guide is deteached
+    if(input$guide_cicerone_next$highlighted=="mainPanel_DataSelection"){
+      print("Here will be now automatically data uploaded ")
+    }else{
+      print("Mööp")
+    }
+    
+  })
   
 # Load external Data ----
   jokesDF <- read.csv("joke-db.csv")
@@ -1256,12 +1264,21 @@ print("Data Upload")
       output$debug=renderText("Choose variable with at least two samples per condition!")
       req(FALSE)
     }
-    if(input$PreProcessing_Procedure=="simpleCenterScaling"|any(selectedData_processed()[[input$omicType]]$Matrix<0)){
+    if(input$PreProcessing_Procedure=="simpleCenterScaling"){ #|any(selectedData_processed()[[input$omicType]]$Matrix<0)
       print("Remember do not use normal center + scaling (negative Values!)")
       output$debug=renderText("Choose another preprocessing, as there are negative values!")
       req(FALSE)
     }else{
-      data2Volcano= selectedData_processed()[[input$omicType]]$Matrix
+      if(input$PreProcessing_Procedure=="ln" |input$PreProcessing_Procedure=="log10" ){
+          print("Data was logged already => delog, take FC and log ?!")
+          if(input$PreProcessing_Procedure=="ln"){
+            data2Volcano=as.data.frame(exp(selectedData_processed()[[input$omicType]]$Matrix))
+          }else{
+            data2Volcano=as.data.frame(10^(selectedData_processed()[[input$omicType]]$Matrix))
+          }
+      }else{
+          data2Volcano= selectedData_processed()[[input$omicType]]$Matrix
+      }
       if(any(data2Volcano==0)){
         #macht es mehr sinn nur die nullen + eps zu machen oder lieber alle daten punkte + eps?
         #data2Volcano=data2Volcano+10^-15  => Log(data +1)
@@ -1269,12 +1286,12 @@ print("Data Upload")
       print(dim(data2Volcano))
       report<-data2Volcano
       VolcanoPlot_df<-Volcano_Plot(data2Volcano,
-                                ctrl_samples_idx,
-                                comparison_samples_idx,
-                                p_sig_threshold=input$psig_threhsold,
-                                LFC_threshold=input$lfc_threshold,
-                                annotation_add=input$VOLCANO_anno_tooltip,
-                                annoData=selectedData_processed()[[input$omicType]]$annotation_rows)
+                                  ctrl_samples_idx,
+                                  comparison_samples_idx,
+                                  p_sig_threshold=input$psig_threhsold,
+                                  LFC_threshold=input$lfc_threshold,
+                                  annotation_add=input$VOLCANO_anno_tooltip,
+                                  annoData=selectedData_processed()[[input$omicType]]$annotation_rows)
       colorScheme=c("#cf0e5b","#939596")
       names(colorScheme)=c("significant","non-significant")
       alphaScheme=c(0.8,0.1)
@@ -2659,8 +2676,9 @@ print("Data Upload")
       # Only include p.adj significant terms
       resultData=resultData[resultData$p.adjust<0.05,]
       if(nrow(resultData)==0){
-        print("No of enriched terms found")
+        print("No enriched terms found")
         output$EnrichmentInfo=renderText("No of enriched terms found")
+        scenario=0
       }else{
         #dotplot(EnrichmentRes_Kegg, split=".sign") + facet_grid(.~.sign)
         if(input$ORA_or_GSE=="GeneSetEnrichment"){

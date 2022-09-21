@@ -63,7 +63,7 @@ credentials <- data.frame(
 ui <- shiny::fluidPage(
   tags$head(
     ##########
-    # Styling Setting & Loading Gif
+    # Styling Setting
     ##########
     # Note the wrapping of the string in HTML()
     tags$style(HTML("
@@ -144,20 +144,24 @@ ui <- shiny::fluidPage(
               choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
               selected = ""
         )),
-        div(class = "AddGeneSymbols_ui",uiOutput("AddGeneSymbols_ui")),
-        uiOutput("AddGeneSymbols_organism_ui"),
+        div(class = "AddGeneSymbols_ui",uiOutput("AddGeneSymbols_ui"),uiOutput("AddGeneSymbols_organism_ui")),
+        #uiOutput("AddGeneSymbols_organism_ui"),
         actionButton(inputId = "refresh1", label = "Do"),
-        hr(style = "border-top: 1px solid #000000;"),
-        h4("Row selection -  biochemical entities"),
-        uiOutput("providedRowAnnotationTypes_ui"),
-        uiOutput("row_selection_ui"),
-        uiOutput("propensityChoiceUser_ui"),
-        # Outlier Selection -> for fixed removal pre-processing needs to be redone!
-        h4("Sample selection"),
-        uiOutput("providedSampleAnnotationTypes_ui"),
-        uiOutput("sample_selection_ui")
+        div(class="LineToDistinguish",hr(style = "border-top: 1px solid #000000;")),
+        div(class="DataSelection",
+            h4("Row selection -  biochemical entities"),
+            uiOutput("providedRowAnnotationTypes_ui"),
+            uiOutput("row_selection_ui"),
+            uiOutput("propensityChoiceUser_ui")),
+            # Outlier Selection -> for fixed removal pre-processing needs to be redone!
+        div(class="SampleSelection",
+            h4("Sample selection"),
+            uiOutput("providedSampleAnnotationTypes_ui"),
+            uiOutput("sample_selection_ui")),
+          uiOutput("NextPanel_ui")
       ),
       mainPanel(
+        id="mainPanel_DataSelection",
         tabsetPanel(
           type = "pills",
           tabPanel(
@@ -206,8 +210,7 @@ ui <- shiny::fluidPage(
           ),
           htmlOutput("OverallChecks", container = pre)
         )
-        ),
-        uiOutput("NextPanel_ui")
+        )
       )
     ),
     tabPanel("Pre-processing",
