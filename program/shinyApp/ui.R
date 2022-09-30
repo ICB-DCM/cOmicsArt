@@ -727,7 +727,19 @@ ui <- shiny::fluidPage(
       )
     )
   ),
-  absolutePanel("Brought to you by Lea Seep", bottom = 0, left = 10, fixed = TRUE)
+  
+  
+  
+  hidden(selectInput("element_02", label = "LeasBirthday", choices = c(0, 1), selected = ifelse(format(as.POSIXct(Sys.time()), "%d-%m") == "30-09", 1, 0))),
+  conditionalPanel(
+    condition = "input.element_02 == 0",
+    div(id="foot_normal",absolutePanel("Brought to you by Lea Seep", bottom = 0, left = 10, fixed = TRUE))
+  ),
+  conditionalPanel(
+    condition = "input.element_02 == 1",
+    div(id="foot_birthday",absolutePanel("Brought to you by Lea Seep - it is her birthday today :)", bottom = 0, left = 10, fixed = TRUE,style = "background-color: #a9d96a;"))
+  )
+  
 )
 
 # Wrap your UI with secure_app
