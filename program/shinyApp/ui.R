@@ -32,6 +32,7 @@ library(shinytest)
 library(biomaRt)
 library(zip)
 library(cicerone)
+library(shinyalert)
 # library(svglite)
 
 options(repos = BiocManager::repositories())
@@ -96,6 +97,7 @@ ui <- shiny::fluidPage(
   ),
   ##########
   use_cicerone(),
+  useShinyalert(),
   ##########
 
   div(style = "display:inline-block; float:right", actionButton(inputId = "Quit_App", label = "Quit App", class = "btn-secondary")),
@@ -115,10 +117,11 @@ ui <- shiny::fluidPage(
   ),
   splitLayout(
     cellWidths = c("75%", "10%", "15%"),
-    actionLink(inputId = "DownloadReport", label = "Download Report (as html)"),
+    DownloadReport_ui("DownloadTestModule"),
     helpText("Metabolon Help", align = "center") %>% helper(type = "markdown", content = "Metabolon_help", size = "l", colour = "blue", style = "position: relative;top: -18px;left: 15px;; zoom: 200%;"),
     NULL
   ),
+  
   shinyjs::useShinyjs(),
   tabsetPanel(
     id = "tabsetPanel1",

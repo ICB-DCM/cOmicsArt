@@ -52,28 +52,8 @@ server <- function(input,output,session){
   
   
 # Download Report pdf ----
-
-  observeEvent(input$DownloadReport,{
-    if(file.exists("./www/Report.md")){
-      show_toast("Generating Report....please wait",
-                 type = "info",
-                 position = "top",
-                 timerProgressBar = TRUE,
-                 width = "30%")
-          rmarkdown::render("./www/Report.md",html_document(toc = TRUE, toc_float = T ,fig_caption = T))
-          showModal(modalDialog(
-            tags$h4(a(href="Report.html", "Download report", download=NA, target="_blank")),
-            footer=tagList(
-          modalButton('Return')
-        )))
-        }else{
-           warning("No Report File yet! Do something first")
-          output$debug=renderText({"<font color=\"#FF0000\"><b>No Report File yet! Do something first</b></font>"})
-        }
-  })
-  
-
-  
+  DownloadReport_server("DownloadTestModule")
+ 
   #session$allowReconnect(TRUE) # To allow Reconnection wiht lost Session, potential
   # security issue + more than one user issues potentially ?! Thats why further security
   # what if complete new start (should have button for this ?!)
