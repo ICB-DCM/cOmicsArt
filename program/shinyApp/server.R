@@ -815,7 +815,7 @@ print("Data Upload")
     # Define data for plotting
     pcaData <- data.frame(pca$x,selectedData_processed()[[input$omicType]]$sample_table)
     continiousColors=F
-    if(is.double(pcaData[,input$coloring_options])){
+    if(is.double(pcaData[,input$coloring_options]) & length(levels(as.factor(pcaData[,"month_DOE"])))>8){
       print("color Option is numeric! automatically binned into 10 bins") 
       pcaData[,input$coloring_options]=(cut_interval(pcaData[,input$coloring_options],n=10))
       continiousColors=T
@@ -841,7 +841,7 @@ print("Data Upload")
 
     if(length(levels(pcaData[,input$coloring_options]))>8){
        if(continiousColors){
-         colorTheme=viridis::viridis(10)
+         colorTheme=viridis::viridis(nrow(pcaData[,input$coloring_options]))
          pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
                                          y = pcaData[,input$y_axis_selection],
                                          color=pcaData[,input$coloring_options],
