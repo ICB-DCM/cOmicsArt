@@ -98,6 +98,7 @@ ui <- shiny::fluidPage(
   ##########
   use_cicerone(),
   useShinyalert(),
+  shinyjs::useShinyjs(),
   ##########
 
   div(style = "display:inline-block; float:right", actionButton(inputId = "Quit_App", label = "Quit App", class = "btn-secondary")),
@@ -122,7 +123,6 @@ ui <- shiny::fluidPage(
     NULL
   ),
   
-  shinyjs::useShinyjs(),
   tabsetPanel(
     id = "tabsetPanel1",
     # textOutput('debug', container = pre),
