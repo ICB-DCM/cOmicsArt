@@ -2318,6 +2318,7 @@ print("Data Upload")
     output$EnrichmentInfo=renderText("Click Do Enrichment to Start")
     
     if(input$ORA_or_GSE=="GeneSetEnrichment"){
+      browser()
       output$ValueToAttach_ui=renderUI({
         selectInput("ValueToAttach",
                     "Select the metric to sort the genes after",
@@ -2338,6 +2339,7 @@ print("Data Upload")
         })
         output$Groups2Compare_ref_GSEA_ui=renderUI({
           req(data_input_shiny())
+          req(input$sample_annotation_types_cmp_GSEA)
           selectInput(
             inputId = "Groups2Compare_ref_GSEA",
             label = "Choose reference of log2 FoldChange",
@@ -2348,6 +2350,7 @@ print("Data Upload")
         })
         output$Groups2Compare_treat_GSEA_ui=renderUI({
           req(data_input_shiny())
+          req(input$sample_annotation_types_cmp_GSEA)
           selectInput(
             inputId = "Groups2Compare_treat_GSEA",
             label = "Choose treatment group of log2 FoldChange",
@@ -2466,8 +2469,20 @@ print("Data Upload")
         Data2Plot<-getLFC(selectedData_processed()[[input$omicType]]$Matrix,
                           ctrl_samples_idx,
                           comparison_samples_idx)
-        geneSetChoice_tmp=Data2Plot$LFC
-        names(geneSetChoice_tmp)=Data2Plot$probename
+        
+        # get thresholds to cut the set
+        Data2Plot_tmp=Data2Plot[Data2Plot$p_adj<=input$psig_threhsold_GSEA,]
+        geneSetChoice_tmp=Data2Plot_tmp$LFC
+        if(length(geneSetChoice_tmp)<1){
+          print("Nothing significant!")
+          geneSetChoice_tmp=NULL
+        }else{
+          names(geneSetChoice_tmp)=Data2Plot_tmp$probename
+          geneSetChoice_tmp=sort(geneSetChoice_tmp)
+        }
+        
+
+        
       }
     }
 
@@ -2504,7 +2519,7 @@ print("Data Upload")
                                                      pAdjustMethod = "BH"
                                                      )
       EnrichmentRes_GO <- clusterProfiler::gseGO(gene         = geneSetChoice_tranlsated,
-                                                  ont ="ALL", 
+                                                  ont =input$ontologyForGO, 
                                                   keyType = "ENTREZID",
                                                   minGSSize = 3, 
                                                   maxGSSize = 800, 
