@@ -13,6 +13,20 @@ getLFC=function(data,
     results$p.value
   }
   
+  #remove constant rows
+  removedAsConst_1=which(apply(df[,ctrl_samples_idx],1,sd)<1e-6)
+  df[removedAsConst_1,ctrl_samples_idx]=df[removedAsConst_1,ctrl_samples_idx]+t(apply(df[removedAsConst_1,ctrl_samples_idx],1,function(x){
+    rnorm(n = length(x),
+          mean = 0,
+          sd=0.0000001)}))
+  
+  removedAsConst_2=which(apply(df[,comparison_samples_idx],1,sd)<1e-6)
+  df[removedAsConst_2,comparison_samples_idx]=df[removedAsConst_2,comparison_samples_idx]+t(apply(df[removedAsConst_2,comparison_samples_idx],1,function(x){
+    rnorm(n = length(x),
+          mean = 0,
+          sd=0.0000001)}))
+  
+  
   rawpvalue = apply(df, 1, ttest_raw, 
                     grp1 = ctrl_samples_idx, 
                     grp2 = comparison_samples_idx)

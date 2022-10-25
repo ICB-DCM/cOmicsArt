@@ -3,7 +3,10 @@ Volcano_Plot=function(data,
                       ctrl_samples_idx,
                       comparison_samples_idx,
                       p_sig_threshold,
-                      LFC_threshold){
+                      LFC_threshold,
+                      annotation_add=NULL,
+                      annoData=NULL,
+                      alreadyLogged=F){
   df=as.data.frame(data)
   ttest_raw <- function(df, grp1, grp2) {
     x = df[grp1]
@@ -13,6 +16,20 @@ Volcano_Plot=function(data,
     results = t.test(x, y)
     results$p.value
   }
+  
+  
+  #remove constant rows
+  removedAsConst_1=which(apply(df[,ctrl_samples_idx],1,sd)<1e-6)
+  df[removedAsConst_1,ctrl_samples_idx]=df[removedAsConst_1,ctrl_samples_idx]+t(apply(df[removedAsConst_1,ctrl_samples_idx],1,function(x){
+    rnorm(n = length(x),
+          mean = 0,
+          sd=0.0000001)}))
+  
+  removedAsConst_2=which(apply(df[,comparison_samples_idx],1,sd)<1e-6)
+  df[removedAsConst_2,comparison_samples_idx]=df[removedAsConst_2,comparison_samples_idx]+t(apply(df[removedAsConst_2,comparison_samples_idx],1,function(x){
+    rnorm(n = length(x),
+          mean = 0,
+          sd=0.0000001)}))
   
   rawpvalue = apply(df, 1, ttest_raw, 
                     grp1 = ctrl_samples_idx, 
@@ -39,7 +56,13 @@ Volcano_Plot=function(data,
   
   FC=Cmp_mean/Ctrl_mean
   
-  LFC=log2(FC)
+  
+  if(alreadyLogged){
+    LFC=FC
+  }else{
+    LFC=log2(FC)
+  }
+  
   
   
   # Data 2 Plot
@@ -54,14 +77,18 @@ Volcano_Plot=function(data,
   alphaScheme=c(0.8,0.1)
   names(alphaScheme)=c("change","steady")
   
+  # add annotation data based on user Input (ergo annotation_add)
+  results$annotation_add=annoData[rownames(results),annotation_add]
   
-  plot=ggplot(results,aes(label=probename)) +
-    geom_point(aes(x = LFC, y = -log10(p_adj), colour = threshold,alpha=threshold_fc))+
-    geom_hline(yintercept=-log10(p_sig_threshold),color="lightgrey")+
-    geom_vline(xintercept = c(-LFC_threshold,LFC_threshold),color="lightgrey")+ 
-    scale_color_manual(values=colorScheme, name="")+
-    scale_alpha_manual(values=alphaScheme, name="")+
-    xlab("Log FoldChange")+
-    theme_bw()
-  plot
+  # plot=ggplot(results,aes(label=probename,tooltip=annotation_add)) +
+  #   geom_point(aes(x = LFC, y = -log10(p_adj), colour = threshold,alpha=threshold_fc))+
+  #   geom_hline(yintercept=-log10(p_sig_threshold),color="lightgrey")+
+  #   geom_vline(xintercept = c(-LFC_threshold,LFC_threshold),color="lightgrey")+ 
+  #   scale_color_manual(values=colorScheme, name="")+
+  #   scale_alpha_manual(values=alphaScheme, name="")+
+  #   xlab("Log FoldChange")+
+  #   theme_bw()
+  # plot
+  
+  return(results)
 }
