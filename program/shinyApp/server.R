@@ -821,7 +821,7 @@ print("Data Upload")
 
     if(length(levels(pcaData[,input$coloring_options]))>8){
        if(continiousColors){
-         colorTheme=viridis::viridis(nrow(pcaData[,input$coloring_options]))
+         colorTheme=viridis::viridis(nrow(pcaData[,input$coloring_options,drop=F]))
          pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
                                          y = pcaData[,input$y_axis_selection],
                                          color=pcaData[,input$coloring_options],
