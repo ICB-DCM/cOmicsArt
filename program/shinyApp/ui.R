@@ -31,6 +31,7 @@ library(testthat)
 library(shinytest)
 library(biomaRt)
 library(zip)
+library(cicerone)
 # library(svglite)
 
 options(repos = BiocManager::repositories())
@@ -62,7 +63,7 @@ credentials <- data.frame(
 ui <- shiny::fluidPage(
   tags$head(
     ##########
-    # Styling Setting & Loading Gif
+    # Styling Setting
     ##########
     # Note the wrapping of the string in HTML()
     tags$style(HTML("
@@ -94,17 +95,23 @@ ui <- shiny::fluidPage(
   "))
   ),
   ##########
+  use_cicerone(),
+  ##########
 
   div(style = "display:inline-block; float:right", actionButton(inputId = "Quit_App", label = "Quit App", class = "btn-secondary")),
+  div(style = "display:inline-block; float:right", actionButton(inputId = "guide", label = "Guide me!", class = "btn-secondary")),
   div(style = "display:inline-block; float:right", helpText(" ", align = "right") %>% helper(type = "markdown", content = "Inital_help", size = "l", colour = "red", style = "zoom: 600%;")),
   hidden(selectInput("element", label = "PrideMonth?", choices = c(0, 1), selected = ifelse(format(as.POSIXct(Sys.time()), "%m") == "06", 1, 0))),
   conditionalPanel(
     condition = "input.element == 0",
-    titlePanel("ShinyOmics"),
+    div(id="TitleID_normal",titlePanel("ShinyOmics")),
   ),
   conditionalPanel(
     condition = "input.element == 1",
-    h2(HTML('<span style="color:#E75A5A">S</span><span style="color:#E7AF5A">h</span><span style="color:#CBE75A">i</span><span style="color:#76E75A">n</span><span style="color:#5AE792">y</span><span style="color:#5AE7E7">O</span><span style="color:#5A92E7">m</span><span style="color:#765AE7">i</span><span style="color:#CB5AE7">c</span><span style="color:#E75AAF">s</span>')),
+    div(
+      id="TitleID_pride",
+      h2(HTML('<span style="color:#E75A5A">S</span><span style="color:#E7AF5A">h</span><span style="color:#CBE75A">i</span><span style="color:#76E75A">n</span><span style="color:#5AE792">y</span><span style="color:#5AE7E7">O</span><span style="color:#5A92E7">m</span><span style="color:#765AE7">i</span><span style="color:#CB5AE7">c</span><span style="color:#E75AAF">s</span>'))
+      ),
   ),
   splitLayout(
     cellWidths = c("75%", "10%", "15%"),
@@ -121,6 +128,7 @@ ui <- shiny::fluidPage(
     # Tab Selection w Upload
     ################################################################################
     tabPanel("Data selection",
+      id= "Data_selection",     
       fluid = T,
       h4("Data Selection"),
 
@@ -129,26 +137,31 @@ ui <- shiny::fluidPage(
       ################################################################################
       sidebarPanel(
         id = "sidebar1",
-        selectInput(
-          inputId = "omicType", # RNAorLIPID
-          label = "Omic Type that is uploaded",
-          choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
-          selected = ""
-        ),
-        uiOutput("AddGeneSymbols_ui"),
-        uiOutput("AddGeneSymbols_organism_ui"),
+        div(class = "omicType",
+            selectInput(
+              inputId = "omicType", # RNAorLIPID
+              label = "Omic Type that is uploaded",
+              choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
+              selected = ""
+        )),
+        div(class = "AddGeneSymbols_ui",uiOutput("AddGeneSymbols_ui"),uiOutput("AddGeneSymbols_organism_ui")),
+        #uiOutput("AddGeneSymbols_organism_ui"),
         actionButton(inputId = "refresh1", label = "Do"),
-        hr(style = "border-top: 1px solid #000000;"),
-        h4("Row selection -  biochemical entities"),
-        uiOutput("providedRowAnnotationTypes_ui"),
-        uiOutput("row_selection_ui"),
-        uiOutput("propensityChoiceUser_ui"),
-        # Outlier Selection -> for fixed removal pre-processing needs to be redone!
-        h4("Sample selection"),
-        uiOutput("providedSampleAnnotationTypes_ui"),
-        uiOutput("sample_selection_ui")
+        div(class="LineToDistinguish",hr(style = "border-top: 1px solid #000000;")),
+        div(class="DataSelection",
+            h4("Row selection -  biochemical entities"),
+            uiOutput("providedRowAnnotationTypes_ui"),
+            uiOutput("row_selection_ui"),
+            uiOutput("propensityChoiceUser_ui")),
+            # Outlier Selection -> for fixed removal pre-processing needs to be redone!
+        div(class="SampleSelection",
+            h4("Sample selection"),
+            uiOutput("providedSampleAnnotationTypes_ui"),
+            uiOutput("sample_selection_ui")),
+          uiOutput("NextPanel_ui")
       ),
       mainPanel(
+        id="mainPanel_DataSelection",
         tabsetPanel(
           type = "pills",
           tabPanel(
@@ -197,8 +210,7 @@ ui <- shiny::fluidPage(
           ),
           htmlOutput("OverallChecks", container = pre)
         )
-        ),
-        uiOutput("NextPanel_ui")
+        )
       )
     ),
     tabPanel("Pre-processing",
@@ -715,7 +727,19 @@ ui <- shiny::fluidPage(
       )
     )
   ),
-  absolutePanel("Brought to you by Lea Seep", bottom = 0, left = 10, fixed = TRUE)
+  
+  
+  
+  hidden(selectInput("element_02", label = "LeasBirthday", choices = c(0, 1), selected = ifelse(format(as.POSIXct(Sys.time()), "%d-%m") == "30-09", 1, 0))),
+  conditionalPanel(
+    condition = "input.element_02 == 0",
+    div(id="foot_normal",absolutePanel("Brought to you by Lea Seep", bottom = 0, left = 10, fixed = TRUE))
+  ),
+  conditionalPanel(
+    condition = "input.element_02 == 1",
+    div(id="foot_birthday",absolutePanel("Brought to you by Lea Seep - it is her birthday today :)", bottom = 0, left = 10, fixed = TRUE,style = "background-color: #a9d96a;"))
+  )
+  
 )
 
 # Wrap your UI with secure_app

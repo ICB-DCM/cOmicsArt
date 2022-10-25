@@ -5,7 +5,8 @@ Volcano_Plot=function(data,
                       p_sig_threshold,
                       LFC_threshold,
                       annotation_add=NULL,
-                      annoData=NULL){
+                      annoData=NULL,
+                      alreadyLogged=F){
   df=as.data.frame(data)
   ttest_raw <- function(df, grp1, grp2) {
     x = df[grp1]
@@ -55,7 +56,13 @@ Volcano_Plot=function(data,
   
   FC=Cmp_mean/Ctrl_mean
   
-  LFC=log2(FC)
+  
+  if(alreadyLogged){
+    LFC=FC
+  }else{
+    LFC=log2(FC)
+  }
+  
   
   
   # Data 2 Plot

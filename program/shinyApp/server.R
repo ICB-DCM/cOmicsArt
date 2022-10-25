@@ -15,7 +15,15 @@ server <- function(input,output,session){
 # Security section ---- 
   options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
 
-  
+  observeEvent(input$guide_cicerone_next,{
+    # triggers but guide is deteached
+    if(input$guide_cicerone_next$highlighted=="mainPanel_DataSelection"){
+      print("Here will be now automatically data uploaded ")
+    }else{
+      print("Mööp")
+    }
+    
+  })
   
 # Load external Data ----
   jokesDF <- read.csv("joke-db.csv")
@@ -28,12 +36,20 @@ server <- function(input,output,session){
   if(dir.exists("www")){
     setwd("www")
     print(list.files())
-    file.remove(list.files())
+    file.remove(setdiff(setdiff(list.files(path="."),list.files(path=".",pattern = ".csv")),list.files(path=".",pattern = ".RDS")))
     print("Removed old Report files for fresh start")
     setwd("..")
   }
   
   observe_helpers()
+# Guide ----
+  #guide$init()$start()
+  
+  observeEvent(input$guide, {
+    print("Jip")
+    guide$init()$start()
+  })
+  
   
 # Download Report pdf ----
 
@@ -55,6 +71,8 @@ server <- function(input,output,session){
           output$debug=renderText({"<font color=\"#FF0000\"><b>No Report File yet! Do something first</b></font>"})
         }
   })
+  
+
   
   #session$allowReconnect(TRUE) # To allow Reconnection wiht lost Session, potential
   # security issue + more than one user issues potentially ?! Thats why further security
@@ -105,25 +123,25 @@ print("Data Upload")
   
   output$data_matrix1_ui=renderUI({
     shiny::fileInput(inputId = "data_matrix1",
-                     label = HTML("Upload data Matrix <br/> (rows entities, cols samples)"),
+                     label = HTML('Upload data Matrix <br/> (rows entities, cols samples) <br/> <a href="airway-read-counts-LS.csv"> Download example data (Transcriptomics, human) </a>'),
                      accept = c(".csv"),
                      width = "80%")
   })
   output$data_sample_anno1_ui=renderUI({
     shiny::fileInput("data_sample_anno1",
-                     HTML("Upload sample Annotation <br/> (rows must be samples)"),
+                     HTML('Upload sample Annotation <br/> (rows must be samples)<br/> <a href="airway-sample-sheet-LS.csv"> Download example data </a>'),
                      accept = c(".csv"),
                      width = "80%")
   })
   output$data_row_anno1_ui=renderUI({
     shiny::fileInput("data_row_anno1",
-                     HTML("Upload entities Annotation Matrix <br/> (rows must be entities)"),
+                     HTML('Upload entities Annotation Matrix <br/> (rows must be entities)<br/> <a href="airway-entitie_description-LS.csv"> Download example data </a>'),
                      accept = c(".csv"),
                      width = "80%")
   })
   output$data_preDone_ui=renderUI({
     shiny::fileInput("data_preDone",
-                     HTML("Load precompiled data <br/> (saved in this procedure or type SummarizedExperiment)"),
+                     HTML('Load precompiled data <br/> (saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data </a>'),
                      accept = ".RDS",
                      width = "80%")
   })
@@ -797,7 +815,7 @@ print("Data Upload")
     # Define data for plotting
     pcaData <- data.frame(pca$x,selectedData_processed()[[input$omicType]]$sample_table)
     continiousColors=F
-    if(is.double(pcaData[,input$coloring_options])){
+    if(is.double(pcaData[,input$coloring_options]) & length(levels(as.factor(pcaData[,"month_DOE"])))>8){
       print("color Option is numeric! automatically binned into 10 bins") 
       pcaData[,input$coloring_options]=(cut_interval(pcaData[,input$coloring_options],n=10))
       continiousColors=T
@@ -823,7 +841,7 @@ print("Data Upload")
 
     if(length(levels(pcaData[,input$coloring_options]))>8){
        if(continiousColors){
-         colorTheme=viridis::viridis(10)
+         colorTheme=viridis::viridis(nrow(pcaData[,input$coloring_options]))
          pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
                                          y = pcaData[,input$y_axis_selection],
                                          color=pcaData[,input$coloring_options],
@@ -937,7 +955,8 @@ print("Data Upload")
                      global_ID=pcaData$global_ID,
                      chosenAnno=pcaData$chosenAnno,
                      percentVar=percentVar,
-                     customTitle=customTitle)
+                     customTitle=customTitle,
+                     colorTheme=colorTheme)
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
         write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
@@ -1063,7 +1082,7 @@ print("Data Upload")
     global_Vars$Loadings_topSlider=input$topSlider
     global_Vars$Loadings_file_ext_Loadings=input$file_ext_Loadings
     global_Vars$Loadings_plotOut=plotOut
-    
+
     output$getR_Code_Loadings <- downloadHandler(
       filename = function(){
         paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
@@ -1245,12 +1264,21 @@ print("Data Upload")
       output$debug=renderText("Choose variable with at least two samples per condition!")
       req(FALSE)
     }
-    if(input$PreProcessing_Procedure=="simpleCenterScaling"|any(selectedData_processed()[[input$omicType]]$Matrix<0)){
+    if(input$PreProcessing_Procedure=="simpleCenterScaling"){ #|any(selectedData_processed()[[input$omicType]]$Matrix<0)
       print("Remember do not use normal center + scaling (negative Values!)")
       output$debug=renderText("Choose another preprocessing, as there are negative values!")
       req(FALSE)
     }else{
-      data2Volcano= selectedData_processed()[[input$omicType]]$Matrix
+      if(input$PreProcessing_Procedure=="ln" |input$PreProcessing_Procedure=="log10" ){
+          print("Data was logged already => delog, take FC and log ?!")
+          if(input$PreProcessing_Procedure=="ln"){
+            data2Volcano=as.data.frame(exp(selectedData_processed()[[input$omicType]]$Matrix))
+          }else{
+            data2Volcano=as.data.frame(10^(selectedData_processed()[[input$omicType]]$Matrix))
+          }
+      }else{
+          data2Volcano= selectedData_processed()[[input$omicType]]$Matrix
+      }
       if(any(data2Volcano==0)){
         #macht es mehr sinn nur die nullen + eps zu machen oder lieber alle daten punkte + eps?
         #data2Volcano=data2Volcano+10^-15  => Log(data +1)
@@ -1258,12 +1286,12 @@ print("Data Upload")
       print(dim(data2Volcano))
       report<-data2Volcano
       VolcanoPlot_df<-Volcano_Plot(data2Volcano,
-                                ctrl_samples_idx,
-                                comparison_samples_idx,
-                                p_sig_threshold=input$psig_threhsold,
-                                LFC_threshold=input$lfc_threshold,
-                                annotation_add=input$VOLCANO_anno_tooltip,
-                                annoData=selectedData_processed()[[input$omicType]]$annotation_rows)
+                                  ctrl_samples_idx,
+                                  comparison_samples_idx,
+                                  p_sig_threshold=input$psig_threhsold,
+                                  LFC_threshold=input$lfc_threshold,
+                                  annotation_add=input$VOLCANO_anno_tooltip,
+                                  annoData=selectedData_processed()[[input$omicType]]$annotation_rows)
       colorScheme=c("#cf0e5b","#939596")
       names(colorScheme)=c("significant","non-significant")
       alphaScheme=c(0.8,0.1)
@@ -1641,11 +1669,11 @@ print("Data Upload")
     req(input$omicType,input$row_selection_options,input$anno_options)
     req(selectedData_processed())
     print("Heatmap on selected Data")
-
+   
     ### atm raw data plotted
     data2Plot<-selectedData_processed()
     colorTheme=c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
-    customTitleHeatmap=paste0("Heatmap - ",input$omicType,"-",paste0("entities:",input$row_selection,collapse = "_"),"-samples",ifelse(input$sample_selection!="all",paste0(" (with: ",paste(input$sample_selection,collapse = ", "),")"),""),"-preprocessing: ",input$PreProcessing_Procedure)
+    customTitleHeatmap=paste0("Heatmap - ",input$omicType,"-",paste0("entities:",input$row_selection,collapse = "_"),"-samples",ifelse(any(input$sample_selection!="all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),""),"-preprocessing: ",input$PreProcessing_Procedure)
     #data2Plot_Matrix=as.numeric(data2Plot[[input$omicType]]$Matrix)
     print(customTitleHeatmap)
     mycolors <- list()
@@ -2648,8 +2676,9 @@ print("Data Upload")
       # Only include p.adj significant terms
       resultData=resultData[resultData$p.adjust<0.05,]
       if(nrow(resultData)==0){
-        print("No of enriched terms found")
+        print("No enriched terms found")
         output$EnrichmentInfo=renderText("No of enriched terms found")
+        scenario=0
       }else{
         #dotplot(EnrichmentRes_Kegg, split=".sign") + facet_grid(.~.sign)
         if(input$ORA_or_GSE=="GeneSetEnrichment"){
@@ -2975,7 +3004,6 @@ print("Data Upload")
   
   observeEvent(input$only2Report_REACTOME,{
     notificationID<-showNotification("Saving...",duration = 0)
-    browser()
     tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.time(),".png",sep="") )
     ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$Reactome_REACTOME_Enrichment),device = "png")
     fun_LogIt("### REACTOME ENRICHMENT")
