@@ -35,6 +35,8 @@ library(cicerone)
 library(shinyalert)
 # library(svglite)
 
+source("R/module_DownloadReport.R",local=T)
+
 options(repos = BiocManager::repositories())
 options(spinner.color = "#1c8a3b", spinner.color.background = "#ffffff", spinner.size = 2)
 ########
