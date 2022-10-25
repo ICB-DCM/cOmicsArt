@@ -52,28 +52,8 @@ server <- function(input,output,session){
   
   
 # Download Report pdf ----
-
-  observeEvent(input$DownloadReport,{
-    if(file.exists("./www/Report.md")){
-      show_toast("Generating Report....please wait",
-                 type = "info",
-                 position = "top",
-                 timerProgressBar = TRUE,
-                 width = "30%")
-          rmarkdown::render("./www/Report.md",html_document(toc = TRUE, toc_float = T ,fig_caption = T))
-          showModal(modalDialog(
-            tags$h4(a(href="Report.html", "Download report", download=NA, target="_blank")),
-            footer=tagList(
-          modalButton('Return')
-        )))
-        }else{
-           warning("No Report File yet! Do something first")
-          output$debug=renderText({"<font color=\"#FF0000\"><b>No Report File yet! Do something first</b></font>"})
-        }
-  })
-  
-
-  
+  DownloadReport_server("DownloadTestModule")
+ 
   #session$allowReconnect(TRUE) # To allow Reconnection wiht lost Session, potential
   # security issue + more than one user issues potentially ?! Thats why further security
   # what if complete new start (should have button for this ?!)
@@ -815,7 +795,7 @@ print("Data Upload")
     # Define data for plotting
     pcaData <- data.frame(pca$x,selectedData_processed()[[input$omicType]]$sample_table)
     continiousColors=F
-    if(is.double(pcaData[,input$coloring_options]) & length(levels(as.factor(pcaData[,"month_DOE"])))>8){
+    if(is.double(pcaData[,input$coloring_options]) & length(levels(as.factor(pcaData[,input$coloring_options])))>8){
       print("color Option is numeric! automatically binned into 10 bins") 
       pcaData[,input$coloring_options]=(cut_interval(pcaData[,input$coloring_options],n=10))
       continiousColors=T
@@ -841,7 +821,7 @@ print("Data Upload")
 
     if(length(levels(pcaData[,input$coloring_options]))>8){
        if(continiousColors){
-         colorTheme=viridis::viridis(nrow(pcaData[,input$coloring_options]))
+         colorTheme=viridis::viridis(10)
          pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
                                          y = pcaData[,input$y_axis_selection],
                                          color=pcaData[,input$coloring_options],
@@ -2338,6 +2318,7 @@ print("Data Upload")
     output$EnrichmentInfo=renderText("Click Do Enrichment to Start")
     
     if(input$ORA_or_GSE=="GeneSetEnrichment"){
+      browser()
       output$ValueToAttach_ui=renderUI({
         selectInput("ValueToAttach",
                     "Select the metric to sort the genes after",
@@ -2358,6 +2339,7 @@ print("Data Upload")
         })
         output$Groups2Compare_ref_GSEA_ui=renderUI({
           req(data_input_shiny())
+          req(input$sample_annotation_types_cmp_GSEA)
           selectInput(
             inputId = "Groups2Compare_ref_GSEA",
             label = "Choose reference of log2 FoldChange",
@@ -2368,6 +2350,7 @@ print("Data Upload")
         })
         output$Groups2Compare_treat_GSEA_ui=renderUI({
           req(data_input_shiny())
+          req(input$sample_annotation_types_cmp_GSEA)
           selectInput(
             inputId = "Groups2Compare_treat_GSEA",
             label = "Choose treatment group of log2 FoldChange",
@@ -2486,8 +2469,20 @@ print("Data Upload")
         Data2Plot<-getLFC(selectedData_processed()[[input$omicType]]$Matrix,
                           ctrl_samples_idx,
                           comparison_samples_idx)
-        geneSetChoice_tmp=Data2Plot$LFC
-        names(geneSetChoice_tmp)=Data2Plot$probename
+        
+        # get thresholds to cut the set
+        Data2Plot_tmp=Data2Plot[Data2Plot$p_adj<=input$psig_threhsold_GSEA,]
+        geneSetChoice_tmp=Data2Plot_tmp$LFC
+        if(length(geneSetChoice_tmp)<1){
+          print("Nothing significant!")
+          geneSetChoice_tmp=NULL
+        }else{
+          names(geneSetChoice_tmp)=Data2Plot_tmp$probename
+          geneSetChoice_tmp=sort(geneSetChoice_tmp)
+        }
+        
+
+        
       }
     }
 
@@ -2524,7 +2519,7 @@ print("Data Upload")
                                                      pAdjustMethod = "BH"
                                                      )
       EnrichmentRes_GO <- clusterProfiler::gseGO(gene         = geneSetChoice_tranlsated,
-                                                  ont ="ALL", 
+                                                  ont =input$ontologyForGO, 
                                                   keyType = "ENTREZID",
                                                   minGSSize = 3, 
                                                   maxGSSize = 800, 
