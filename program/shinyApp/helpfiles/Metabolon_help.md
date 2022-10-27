@@ -24,7 +24,7 @@ For this little tutorial we will do the PCA-plots for the log-transformed data a
 
 ### PCA
 
-Input: ln-processed data Click `Go to PCA` or click on the tab at the top named `Projection to lower Dimensions`
+Input: ln-processed data Click `Go to PCA` or click on the tab at the top named `PCA`
 The options for `Choose the variable to color the samples after` are directly taken from the Metabolon Sample Metadata Sheet.
 You are most likely interested in `GROUP_NAME`, `OFFSPRING_DIET` and `MOTHER_DIET`.
 Note:
