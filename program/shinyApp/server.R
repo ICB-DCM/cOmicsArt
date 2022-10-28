@@ -63,10 +63,11 @@ server <- function(input,output,session){
   
 # Layout upon Start ----
   hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
-  hideTab(inputId = "tabsetPanel1", target = "Projection to lower Dimensions")
+  hideTab(inputId = "tabsetPanel1", target = "PCA")
   hideTab(inputId = "tabsetPanel1", target = "Volcano Plot")
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
+  hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
   
 ## Quit App Button ----
   observeEvent(input$Quit_App,{
@@ -556,7 +557,7 @@ print("Data Upload")
   
   observeEvent(input$NextPanel2,{
     updateTabsetPanel(session, "tabsetPanel1",
-                      selected = "Projection to lower Dimensions")
+                      selected = "PCA")
   })
   observeEvent(input$NextPanel3,{
     updateTabsetPanel(session, "tabsetPanel1",
@@ -662,7 +663,7 @@ print("Data Upload")
     processedData_all[[input$omicType]]$sample_table=processedData_all[[input$omicType]]$sample_table[colnames(processedData_all[[input$omicType]]$Matrix),]
     processedData_all[[input$omicType]]$annotation_rows=processedData_all[[input$omicType]]$annotation_rows[rownames(processedData_all[[input$omicType]]$Matrix),]
     
-    showTab(inputId = "tabsetPanel1", target = "Projection to lower Dimensions")
+    showTab(inputId = "tabsetPanel1", target = "PCA")
     showTab(inputId = "tabsetPanel1", target = "Volcano Plot")
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")

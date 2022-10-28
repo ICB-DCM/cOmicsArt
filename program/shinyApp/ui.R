@@ -259,9 +259,9 @@ ui <- shiny::fluidPage(
         )
       )
     ),
-    tabPanel("Projection to lower Dimensions",
+    tabPanel("PCA",  # can be renamed after UMAP is added
       fluid = T,
-      h4("Projection to lower Dimensions"),
+      h4("PCA"),
       sidebarPanel(
         id = "sidebar3",
         #########################################
