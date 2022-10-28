@@ -11,7 +11,7 @@ server <- function(input,output,session){
   source("R/fun_ggplot.R",local=T)
   source("R/Guide.R",local=T)
   source("R/module_DownloadReport.R",local=T)
-  source("R/enrichment_analysis.R",local=T)
+  source("R/enrichment_analysis/enrichment_analysis.R", local=T)
   global_Vars<-reactiveValues()
   
 # Security section ---- 
@@ -667,6 +667,7 @@ print("Data Upload")
     showTab(inputId = "tabsetPanel1", target = "Volcano Plot")
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
+    showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
     processedData_all
     
 
@@ -2321,7 +2322,6 @@ print("Data Upload")
     output$EnrichmentInfo=renderText("Click Do Enrichment to Start")
     
     if(input$ORA_or_GSE=="GeneSetEnrichment"){
-      browser()
       output$ValueToAttach_ui=renderUI({
         selectInput("ValueToAttach",
                     "Select the metric to sort the genes after",
