@@ -11,6 +11,7 @@ server <- function(input,output,session){
   source("R/fun_ggplot.R",local=T)
   source("R/Guide.R",local=T)
   source("R/module_DownloadReport.R",local=T)
+  source("R/enrichment_analysis.R",local=T)
   global_Vars<-reactiveValues()
   
 # Security section ---- 
@@ -2364,7 +2365,7 @@ print("Data Upload")
           req(data_input_shiny())
           numericInput(inputId ="psig_threhsold_GSEA" ,
                        label = "adj. p-value threshold",
-                       min=0, max=0.1, step=0.01,
+                       min=0, max=1, step=0.01,
                        value = 0.05)
         })
       }else{
@@ -2449,20 +2450,9 @@ print("Data Upload")
       if(input$GeneSet2Enrich=="heatmap_genes"){
         geneSetChoice_tmp=heatmap_genelist()
       }
-      if(input$GeneSet2Enrich=="heatmap_genes"){
-        geneSetChoice_tmp=heatmap_genelist()
-      }
     }else{
       if(input$ValueToAttach=="LFC"){
         #takes all genes after preprocessing
-        #get LFC
-        req(selectedData_processed())
-        universeSelected=rownames(selectedData_processed()[[input$omicType]]$Matrix)
-        print(paste0("Universe genes untranslated: ",length(universeSelected)))
-        universeSelected_tranlsated <- bitr(universeSelected,
-                                            fromType="ENSEMBL",
-                                            toType="ENTREZID",
-                                            OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
         #get LFC
         ctrl_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_GSEA]%in%input$Groups2Compare_ref_GSEA)
         comparison_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_GSEA]%in%input$Groups2Compare_treat_GSEA)
@@ -2497,40 +2487,16 @@ print("Data Upload")
     req(geneSetChoice())
     # Separate in GSEA or ORA
     if(input$ORA_or_GSE=="GeneSetEnrichment"){
-      #sort List=
-      
-      geneSetChoice_tranlsated=sort(geneSetChoice(),decreasing = T)
-      geneSetChoice_tranlsated_for_KEGG=bitr(names(geneSetChoice_tranlsated),
-           fromType="ENSEMBL",
-           toType="ENTREZID",
-           OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))
-      
-      geneSetChoice_tranlsated=geneSetChoice_tranlsated[geneSetChoice_tranlsated_for_KEGG$ENSEMBL]
-      names(geneSetChoice_tranlsated)=geneSetChoice_tranlsated_for_KEGG$ENTREZID
-      # remove duplicate entries (keep the one highest in list)
-      geneSetChoice_tranlsated=geneSetChoice_tranlsated[!duplicated(names(geneSetChoice_tranlsated))]
-      
-      EnrichmentRes_Kegg <- clusterProfiler::gseKEGG(geneList    = geneSetChoice_tranlsated,
-                                                     keyType = "ncbi-geneid", 
-                                                     organism     = ifelse(input$OrganismChoice=="hsa","hsa","mmu"),
-                                                     minGSSize = 3, 
-                                                     maxGSSize = 800, 
-                                                     pvalueCutoff = 0.05, 
-                                                     verbose = TRUE,
-                                                     pAdjustMethod = "BH"
-                                                     )
-      EnrichmentRes_GO <- clusterProfiler::gseGO(gene         = geneSetChoice_tranlsated,
-                                                  ont =input$ontologyForGO, 
-                                                  keyType = "ENTREZID",
-                                                  minGSSize = 3, 
-                                                  maxGSSize = 800, 
-                                                  pvalueCutoff = 0.05, 
-                                                  verbose = TRUE, 
-                                                  OrgDb = ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"), 
-                                                  pAdjustMethod = "none")
-      EnrichmentRes_RACTOME<-NULL
-      
-    }else{
+      tmp_genes <- geneSetChoice()
+      results <- gene_set_enrichment(input, output, tmp_genes)
+      EnrichmentRes_Kegg <- results$EnrichmentRes_Kegg
+      EnrichmentRes_GO <- results$EnrichmentRes_GO
+      EnrichmentRes_RACTOME <- results$EnrichmentRes_REACTOME
+      geneSetChoice_tranlsated <- results$geneSetChoice_tranlsated
+      print("Kegg res: ")
+      print(EnrichmentRes_Kegg)
+    }
+    else{
       print("Translation needed?") 
       # Build in check if EntrezIDs or gene Names provided, if nothing of the two return message to user
       providedDataType="None"
@@ -2778,7 +2744,8 @@ print("Data Upload")
       output$EnrichmentInfo=renderText("GO Enrichment Failed - check Console, most likley due to no GO annotated Terms found")
     }else{
       print("GO Enrichment Done")
-      GO_scenario=scenario
+      GO_scenario=0
+      # GO_scenario=scenario  # TODO: hiermit ist die Go analyse auf die Kegg analyse angewiesen
       output$GO_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_GO)})
      
       global_Vars$GO_EnrichmentRes_GO=EnrichmentRes_GO
