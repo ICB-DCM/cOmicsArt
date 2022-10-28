@@ -90,20 +90,26 @@ ui <- shiny::fluidPage(
          background-color: #d5d4d6;
          color: #3b3b3b
       }
-      #sidebar1 {
+      #sidebar_data_selection {
         background-color: #cbedca;
       }
-      #sidebar2 {
+      #sidebar_pre_processing {
         background-color: #edceec;
       }
-      #sidebar3 {
+      #sidebar_pca {
         background-color: #cecef2;
       }
-      #sidebar4 {
+      #sidebar_volcano_plot {
         background-color: #f2e6c2;
       }
-      #sidebar5 {
+      #sidebar_heatmap {
         background-color: #d4c2f2;
+      }
+      #sidebar_single_gene_visualisation {
+          background-color: #c2f2e6;
+      }
+      #sidebar_enrichment_analysis {
+          background-color: #f2c2c2;
       }
   "))
   ),
