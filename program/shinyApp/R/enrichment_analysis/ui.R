@@ -1,3 +1,6 @@
+source("../C.R", local = T)
+
+
 enrichment_analysis_sidebar_panel <- sidebarPanel(
     uiOutput("OrganismChoice_ui"),
     uiOutput("ORA_or_GSE_ui"),
@@ -13,7 +16,12 @@ enrichment_analysis_sidebar_panel <- sidebarPanel(
       "enrichmentGO",
       label = "Do enrichment analysis"
     ),
-    radioButtons(inputId = "ontologyForGO", label = "Choose ontology for GO enrichment",choices = c("BP","MF","CC","ALL"),selected = "BP"),
+    radioButtons(
+      inputId = "ontologyForGO",
+      label = "Choose ontology for GO enrichment",
+      choices = c("BP","MF","CC","ALL"),
+      selected = "BP"
+    ),
     helpText("Note: ALL sometime fails due to cryptic reasons. You will get notified. If this happens to you please try out the indiviudal ontologies to check whether enriched term are found. "),
     hr(style = "border-top: 1px solid #858585;"),
     uiOutput("KeggPathwayID_ui")
@@ -25,7 +33,6 @@ enrichment_analysis_main_panel <- mainPanel(
   tabsetPanel(
     tabPanel(
       "KEGG_Enrichment",
-      # hidden(div(id = 'Spinner_KEGG_Enrichment', plotOutput("KEGG_Enrichment")%>% withSpinner(type=8))),
       plotOutput("KEGG_Enrichment") %>% withSpinner(type = 8),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -50,24 +57,37 @@ enrichment_analysis_main_panel <- mainPanel(
           choices = c(".png", ".tiff", ".pdf"), selected = ".png"
         )
       ),
-      textAreaInput(inputId="NotesKEGG", label="Notes:", placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-      helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+      textAreaInput(
+        inputId="NotesKEGG",
+        label="Notes:",
+        placeholder=NOTES_PLACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+      helpText(NOTES_HELP)
     ),
     tabPanel("KEGG_Enrichment_table", DT::dataTableOutput("EnrichmentResults_KEGG")),
     tabPanel(
       "KeggPathwayOutput",
       helpText("Specificy on the left which pathway (all sig. enriched) to display in picture-format"),
       actionButton("OverlayOnPathway", label = "Show overlay on Pathway"),
-      selectInput("plotOnTopOption", "Specifiy the what the colored overlay should indicate", choices = c("LFC", "presence"), selected = "presence"),
+      selectInput(
+        "plotOnTopOption",
+        label = "Specifiy the what the colored overlay should indicate",
+        choices = c("LFC", "presence"),
+        selected = "presence"
+      ),
       uiOutput("sample_anno_types_KEGG_ui"),
       uiOutput("ComparisonOptionsCRTL_ui"),
       uiOutput("ComparisonOptionsCOMP_ui"),
       uiOutput("psig_KEGG_ui"),
-      sliderInput("imageWidth", label = "Adjust Width", min = 400, max = 1500, step = 20, value = 1000),
-      sliderInput("imageHeight", label = "Adjust Height", min = 400, max = 1500, step = 20, value = 640),
-      # downloadButton("SavePlot_KeggPathwayOutput",label="Save plot"),
-      # selectInput(input="file_ext_SavePlot_KeggPathwayOutput",label = "File Type:",
-      #             choices = c(".png",".tiff",".pdf"),selected = ".png"),
+      sliderInput(
+        "imageWidth",
+        label = "Adjust Width",
+        min = 400, max = 1500, step = 20, value = 1000
+      ),
+      sliderInput(
+        "imageHeight",
+        label = "Adjust Height",
+        min = 400, max = 1500, step = 20, value = 640
+      ),
       imageOutput("KeggPathwayOutput_img") %>% withSpinner(type = 8)
     ),
     tabPanel(
@@ -75,12 +95,20 @@ enrichment_analysis_main_panel <- mainPanel(
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        actionButton(inputId = "only2Report_GO", label = "Send only to Report", class = "btn-info"),
+        actionButton(
+          inputId = "only2Report_GO",
+          label = "Send only to Report",
+          class = "btn-info"
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton("getR_Code_GO", label = "Get underlying R code and data",icon = icon("code"))
+        downloadButton(
+          "getR_Code_GO",
+          label = "Get underlying R code and data",
+          icon = icon("code")
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -95,8 +123,11 @@ enrichment_analysis_main_panel <- mainPanel(
           choices = c(".png", ".tiff", ".pdf"), selected = ".png"
         )
       ),
-      textAreaInput(inputId="NotesGO", label="Notes:", placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-      helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+      textAreaInput(
+        inputId="NotesGO",
+        label="Notes:",
+        placeholder=NOTES_PLACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+      helpText(NOTES_HELP)
     ),
     tabPanel("GO_Enrichment_table", DT::dataTableOutput("EnrichmentResults_GO")),
     tabPanel(
@@ -104,12 +135,20 @@ enrichment_analysis_main_panel <- mainPanel(
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        actionButton(inputId = "only2Report_REACTOME", label = "Send only to Report", class = "btn-info"),
+        actionButton(
+          inputId = "only2Report_REACTOME",
+          label = "Send only to Report",
+          class = "btn-info"
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton("getR_Code_Reactome", label = "Get underlying R code and data",icon = icon("code"))
+        downloadButton(
+          "getR_Code_Reactome",
+          label = "Get underlying R code and data",
+          icon = icon("code")
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -124,10 +163,15 @@ enrichment_analysis_main_panel <- mainPanel(
           choices = c(".png", ".tiff", ".pdf"), selected = ".png"
         )
       ),
-      textAreaInput(inputId="NotesREACTOME", label="Notes:", placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-      helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+      textAreaInput(
+        inputId="NotesREACTOME",
+        label="Notes:",
+        placeholder=NOTES_PLACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+      helpText(NOTES_HELP)
     ),
-    tabPanel("REACTOME_Enrichment_table", DT::dataTableOutput("EnrichmentResults_REACTOME"))
+    tabPanel(
+      "REACTOME_Enrichment_table", DT::dataTableOutput("EnrichmentResults_REACTOME")
+    )
   )
 )
 

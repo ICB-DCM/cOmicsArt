@@ -6,8 +6,13 @@ data_selection_sidebar_panel <- sidebarPanel(
         label = "Omic Type that is uploaded",
         choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
         selected = ""
-  )),
-  div(class = "AddGeneSymbols_ui",uiOutput("AddGeneSymbols_ui"),uiOutput("AddGeneSymbols_organism_ui")),
+      )
+  ),
+  div(
+    class = "AddGeneSymbols_ui",
+    uiOutput("AddGeneSymbols_ui"),
+    uiOutput("AddGeneSymbols_organism_ui")
+  ),
   #uiOutput("AddGeneSymbols_organism_ui"),
   actionButton(inputId = "refresh1", label = "Do"),
   div(class="LineToDistinguish",hr(style = "border-top: 1px solid #000000;")),
@@ -50,14 +55,19 @@ data_selection_main_panel <- mainPanel(
   hr(style = "border-top: 2px solid #cbedca;"),
   uiOutput("metadataInput_ui"),
   hr(style = "border-top: 2px solid #cbedca;"),
-  downloadButton("SaveInputAsList", label = "Save file input to upload later") %>% helper(type = "markdown", content = "compilation_help"),
+  downloadButton(
+    "SaveInputAsList",
+    label = "Save file input to upload later") %>% helper(type = "markdown", content = "compilation_help"),
   htmlOutput("debug", container = pre),
   HTML("<br>"),
   HTML("<br>")),
   tabPanel(
     title="Upload visual inspection",
     helpText("If you have uploaded your data, you might want to visually check the tables to confirm the correct data format. If you notice irregualarities you will need to correct the input data - this cannot be done in ShinyOmics, See the help on how your data is expected."),
-    actionButton(inputId = "DoVisualDataInspection", label = "Upload data for visual inspection"),
+    actionButton(
+      inputId = "DoVisualDataInspection",
+      label = "Upload data for visual inspection"
+    ),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
       DT::dataTableOutput("DataMatrix_VI"),

@@ -1,3 +1,6 @@
+source("../C.R", local = T)
+
+
 pca_sidebar_panel <- sidebarPanel(
   id = "sidebar_pca",
   #########################################
@@ -52,8 +55,11 @@ pca_main_panel <- mainPanel(
           choices = c(".png", ".tiff", ".pdf"), selected = ".png"
         )
       ),
-      textAreaInput(inputId="NotesPCA", label="Notes:", placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-      helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+      textAreaInput(
+        inputId="NotesPCA",
+        label="Notes:",
+        placeholder=NOTES_PLACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+      helpText(NOTES_HELP)
     ),
     tabPanel(
       "PCA_Loadings",
@@ -63,17 +69,33 @@ pca_main_panel <- mainPanel(
         textOutput("Loadings_plot_Options_selected_out", container = pre)
       ),
       uiOutput("EntitieAnno_Loadings_ui"),
-      sliderInput(inputId = "topSlider", label = "Top k positive Loadings", min = 1, max = 25, value = 10, step = 1),
-      sliderInput(inputId = "bottomSlider", label = "Top k negative Loadings", min = 1, max = 25, value = 10, step = 1),
-      splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-        NULL,
-        actionButton(inputId = "only2Report_Loadings", label = "Send only to Report", class = "btn-info"),
+      sliderInput(
+        inputId = "topSlider",
+        label = "Top k positive Loadings",
+        min = 1, max = 25, value = 10, step = 1
+      ),
+      sliderInput(
+        inputId = "bottomSlider",
+        label = "Top k negative Loadings",
+        min = 1, max = 25, value = 10, step = 1
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton("getR_Code_Loadings", label = "Get underlying R code and data",icon = icon("code"))
+        actionButton(
+          inputId = "only2Report_Loadings",
+          label = "Send only to Report",
+          class = "btn-info"
+        )
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        NULL,
+        downloadButton(
+          "getR_Code_Loadings",
+          label = "Get underlying R code and data",
+          icon = icon("code")
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -99,12 +121,20 @@ pca_main_panel <- mainPanel(
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        actionButton(inputId = "only2Report_Scree_Plot", label = "Send only to Report", class = "btn-info"),
+        actionButton(
+          inputId = "only2Report_Scree_Plot",
+          label = "Send only to Report",
+          class = "btn-info"
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton("getR_Code_Scree_Plot", label = "Get underlying R code and data",icon = icon("code"))
+        downloadButton(
+          "getR_Code_Scree_Plot",
+          label = "Get underlying R code and data",
+          icon = icon("code")
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),

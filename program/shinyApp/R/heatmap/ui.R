@@ -1,3 +1,6 @@
+source("../C.R", local = T)
+
+
 heatmap_sidebar <- sidebarPanel(
   id = "sidebar_heatmap",
   #########################################
@@ -60,18 +63,35 @@ heatmap_main <- mainPanel(
     # %>% withSpinner(type=8,color = getOption("spinner.color", default = "#b8cee0"))
   ),
   textOutput("Options_selected_out_3", container = pre) %>% withSpinner(type = 8),
-  uiOutput("row_label_options_ui"), numericInput(inputId = "row_label_no", min = 0, step = 1, label = "Threshold upon which explicit labels are shown", value = 25),
+  uiOutput("row_label_options_ui"),
+  numericInput(
+    inputId = "row_label_no",
+    label = "Threshold upon which explicit labels are shown",
+    min = 0, step = 1, value = 25
+  ),
   downloadButton("SaveGeneList_Heatmap", label = "Save genes shown in Heatmap as list"),
-  actionButton(inputId = "SendHeatmap2Enrichment", label = "Send genes shown to enrichment analysis", block = F),
-  splitLayout(
-    style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-    NULL,
-    actionButton(inputId = "only2Report_Heatmap", label = "Send only to Report", class = "btn-info"),
+  actionButton(
+    inputId = "SendHeatmap2Enrichment",
+    label = "Send genes shown to enrichment analysis",
+    block = F
   ),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
-    downloadButton("getR_Code_Heatmap", label = "Get underlying R code and data",icon = icon("code"))
+    actionButton(
+      inputId = "only2Report_Heatmap",
+      label = "Send only to Report",
+      class = "btn-info"
+    ),
+  ),
+  splitLayout(
+    style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+    NULL,
+    downloadButton(
+      "getR_Code_Heatmap",
+      label = "Get underlying R code and data",
+      icon = icon("code")
+    )
   ),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -86,8 +106,11 @@ heatmap_main <- mainPanel(
       choices = c(".png", ".tiff", ".pdf"), selected = ".png"
     )
   ),
-  textAreaInput(inputId="NotesHeatmap", label="Notes:", placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-  helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+  textAreaInput(
+    inputId="NotesHeatmap",
+    label="Notes:",
+    placeholder=NOTES_PLACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+  helpText(NOTES_HELP)
 )
 
 

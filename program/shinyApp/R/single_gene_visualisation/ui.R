@@ -1,3 +1,6 @@
+source("../C.R", local = T)
+
+
 single_gene_visualisation_sidebar <- sidebarPanel(
   id = "sidebar_single_gene_visualisation",
   uiOutput("type_of_data_gene_ui"),
@@ -13,7 +16,6 @@ single_gene_visualisation_sidebar <- sidebarPanel(
 
 single_gene_visualisation_main <- mainPanel(
   id = "main_single_gene_visualisation",
-  # hidden(div(id = 'Spinner_SingleGene', plotOutput("SingleGenePlot")%>% withSpinner(type=8))),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
     plotOutput("SingleGenePlot"), NULL
@@ -22,12 +24,20 @@ single_gene_visualisation_main <- mainPanel(
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
-    actionButton(inputId = "only2Report_SingleEntities", label = "Send only to Report", class = "btn-info"),
+    actionButton(
+      inputId = "only2Report_SingleEntities",
+      label = "Send only to Report",
+      class = "btn-info"
+    ),
   ),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
-    downloadButton("getR_Code_SingleEntities", label = "Get underlying R code and data",icon = icon("code"))
+    downloadButton(
+      "getR_Code_SingleEntities",
+      label = "Get underlying R code and data",
+      icon = icon("code")
+    )
   ),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -42,8 +52,11 @@ single_gene_visualisation_main <- mainPanel(
       choices = c(".png", ".tiff", ".pdf"), selected = ".png"
     )
   ),
-  textAreaInput(inputId="NotesSingleEntities", label="Notes:", placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-  helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+  textAreaInput(
+    inputId="NotesSingleEntities",
+    label="Notes:",
+    placeholder=NOTES_PLACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+  helpText(NOTES_HELP)
 
 )
 

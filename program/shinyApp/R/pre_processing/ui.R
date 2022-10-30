@@ -3,7 +3,7 @@ pre_processing_sidebar_panel <- sidebarPanel(
   #########################################
   # Do Center & scaling + potential other pre-processing stuff
   #########################################
-  h5("Pre-Processing Procedures"), # this could be enhanced with personalized procedures
+  h5("Pre-Processing Procedures"),  # this could be enhanced with personalized procedures
   radioButtons(
     inputId = "PreProcessing_Procedure",
     label = "Pre-Processing Procedures",
