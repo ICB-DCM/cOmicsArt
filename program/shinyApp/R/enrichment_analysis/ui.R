@@ -1,6 +1,3 @@
-source("../C.R", local = T)
-
-
 enrichment_analysis_sidebar_panel <- sidebarPanel(
     uiOutput("OrganismChoice_ui"),
     uiOutput("ORA_or_GSE_ui"),
@@ -60,8 +57,8 @@ enrichment_analysis_main_panel <- mainPanel(
       textAreaInput(
         inputId="NotesKEGG",
         label="Notes:",
-        placeholder=NOTES_PLACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-      helpText(NOTES_HELP)
+        placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+      helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
     ),
     tabPanel("KEGG_Enrichment_table", DT::dataTableOutput("EnrichmentResults_KEGG")),
     tabPanel(
@@ -126,8 +123,8 @@ enrichment_analysis_main_panel <- mainPanel(
       textAreaInput(
         inputId="NotesGO",
         label="Notes:",
-        placeholder=NOTES_PLACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-      helpText(NOTES_HELP)
+        placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+      helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
     ),
     tabPanel("GO_Enrichment_table", DT::dataTableOutput("EnrichmentResults_GO")),
     tabPanel(
@@ -166,8 +163,8 @@ enrichment_analysis_main_panel <- mainPanel(
       textAreaInput(
         inputId="NotesREACTOME",
         label="Notes:",
-        placeholder=NOTES_PLACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-      helpText(NOTES_HELP)
+        placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+      helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
     ),
     tabPanel(
       "REACTOME_Enrichment_table", DT::dataTableOutput("EnrichmentResults_REACTOME")

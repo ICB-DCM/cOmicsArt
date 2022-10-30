@@ -1,6 +1,3 @@
-source("../C.R", local = T)
-
-
 single_gene_visualisation_sidebar <- sidebarPanel(
   id = "sidebar_single_gene_visualisation",
   uiOutput("type_of_data_gene_ui"),
@@ -55,8 +52,8 @@ single_gene_visualisation_main <- mainPanel(
   textAreaInput(
     inputId="NotesSingleEntities",
     label="Notes:",
-    placeholder=NOTES_PLACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-  helpText(NOTES_HELP)
+    placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+  helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
 
 )
 

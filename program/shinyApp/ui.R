@@ -38,13 +38,13 @@ library(shinyalert)
 source("R/module_DownloadReport.R",local=T)
 
 # source the uis for each panel here
-source("R/data_selection/ui.R",local=T)
-source("R/pre_processing/ui.R",local=T)
-source("R/pca/ui.R",local=T)
-source("R/volcano_plot/ui.R",local=T)
-source("R/heatmap/ui.R",local=T)
-source("R/single_gene_visualisation/ui.R",local=T)
-source("R/enrichment_analysis/ui.R",local=T)
+source("R/data_selection/ui.R",local=T, chdir = T)
+source("R/pre_processing/ui.R",local=T, chdir = T)
+source("R/pca/ui.R",local=T, chdir = T)
+source("R/volcano_plot/ui.R",local=T, chdir = T)
+source("R/heatmap/ui.R",local=T, chdir = T)
+source("R/single_gene_visualisation/ui.R",local=T, chdir = T)
+source("R/enrichment_analysis/ui.R",local=T, chdir = T)
 
 
 options(repos = BiocManager::repositories())
