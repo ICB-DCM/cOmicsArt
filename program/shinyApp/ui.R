@@ -61,16 +61,6 @@ credentials <- data.frame(
   comment = "Log In to Run secret Shiny",
   stringsAsFactors = FALSE
 )
-# source("fun_filterRNA.R",local = T)
-# source("fun_plotPCA.R")
-# source("fun_LFC.R")
-# source("fun_volcano.R")
-# source("fun_popupModal.R")
-# source("fun_entitieSelection.R")
-
-# source("server_dev.R")
-# source("ui.R")
-
 
 
 ui <- shiny::fluidPage(
@@ -118,11 +108,29 @@ ui <- shiny::fluidPage(
   useShinyalert(),
   shinyjs::useShinyjs(),
   ##########
-
-  div(style = "display:inline-block; float:right", actionButton(inputId = "Quit_App", label = "Quit App", class = "btn-secondary")),
-  div(style = "display:inline-block; float:right", actionButton(inputId = "guide", label = "Guide me!", class = "btn-secondary")),
-  div(style = "display:inline-block; float:right", helpText(" ", align = "right") %>% helper(type = "markdown", content = "Inital_help", size = "l", colour = "red", style = "zoom: 600%;")),
-  hidden(selectInput("element", label = "PrideMonth?", choices = c(0, 1), selected = ifelse(format(as.POSIXct(Sys.time()), "%m") == "06", 1, 0))),
+  div(
+    style = "display:inline-block; float:right",
+    actionButton(inputId = "Quit_App", label = "Quit App", class = "btn-secondary")
+  ),
+  div(
+    style = "display:inline-block; float:right",
+    actionButton(inputId = "guide", label = "Guide me!", class = "btn-secondary")
+  ),
+  div(
+    style = "display:inline-block; float:right",
+    helpText(" ", align = "right") %>% helper(
+      type = "markdown",
+      content = "Inital_help",
+      size = "l",
+      colour = "red",
+      style = "zoom: 600%;")
+  ),
+  hidden(selectInput(
+    "element",
+    label = "PrideMonth?",
+    choices = c(0, 1),
+    selected = ifelse(format(as.POSIXct(Sys.time()), "%m") == "06", 1, 0)
+  )),
   conditionalPanel(
     condition = "input.element == 0",
     div(id="TitleID_normal",titlePanel("ShinyOmics")),
@@ -140,11 +148,8 @@ ui <- shiny::fluidPage(
     helpText("Metabolon Help", align = "center") %>% helper(type = "markdown", content = "Metabolon_help", size = "l", colour = "blue", style = "position: relative;top: -18px;left: 15px;; zoom: 200%;"),
     NULL
   ),
-  
   tabsetPanel(
     id = "tabsetPanel1",
-    # textOutput('debug', container = pre),
-
     ################################################################################
     # Tab Selection w Upload
     ################################################################################
@@ -156,19 +161,28 @@ ui <- shiny::fluidPage(
     single_gene_visualisation_panel,
     enrichment_analysis_tab_panel,
   ),
-  
-  
-  
-  hidden(selectInput("element_02", label = "LeasBirthday", choices = c(0, 1), selected = ifelse(format(as.POSIXct(Sys.time()), "%d-%m") == "30-09", 1, 0))),
+  hidden(selectInput(
+    "element_02",
+    label = "LeasBirthday",
+    choices = c(0, 1),
+    selected = ifelse(format(as.POSIXct(Sys.time()), "%d-%m") == "30-09", 1, 0))),
   conditionalPanel(
     condition = "input.element_02 == 0",
-    div(id="foot_normal",absolutePanel("Brought to you by Lea Seep", bottom = 0, left = 10, fixed = TRUE))
+    div(
+      id="foot_normal",
+      absolutePanel("Brought to you by Lea Seep", bottom = 0, left = 10, fixed = TRUE)
+    )
   ),
   conditionalPanel(
     condition = "input.element_02 == 1",
-    div(id="foot_birthday",absolutePanel("Brought to you by Lea Seep - it is her birthday today :)", bottom = 0, left = 10, fixed = TRUE,style = "background-color: #a9d96a;"))
+    div(
+      id="foot_birthday",
+      absolutePanel(
+        "Brought to you by Lea Seep - it is her birthday today :)",
+        bottom = 0, left = 10, fixed = TRUE,style = "background-color: #a9d96a;"
+      )
+    )
   )
-  
 )
 
 # Wrap your UI with secure_app
