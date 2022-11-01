@@ -186,7 +186,7 @@ ui <- shiny::fluidPage(
     div(
       id="foot_birthday",
       absolutePanel(
-        "Brought to you by Lea Seep - it is her birthday today :)",
+        "It is Lea's birthday today :)",
         bottom = 0, left = 10, fixed = TRUE,style = "background-color: #a9d96a;"
       )
     )
