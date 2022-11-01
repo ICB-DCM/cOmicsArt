@@ -63,8 +63,10 @@ pca_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         radioGroupButtons(
-          input = "file_ext_plot1", label = "File Type:",
-          choices = c(".png", ".tiff", ".pdf"), selected = ".png"
+          inputId = "file_ext_plot1",
+          label = "File Type:",
+          choices = c(".png", ".tiff", ".pdf"),
+          selected = ".png"
         )
       ),
       textAreaInput(
@@ -128,8 +130,10 @@ pca_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         radioGroupButtons(
-          input = "file_ext_Loadings", label = "File Type:",
-          choices = c(".png", ".tiff", ".pdf"), selected = ".png"
+          inputId = "file_ext_Loadings", 
+          label = "File Type:",
+          choices = c(".png", ".tiff", ".pdf"), 
+          selected = ".png"
         )
       )
     ),
@@ -171,8 +175,10 @@ pca_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         radioGroupButtons(
-          input = "file_ext_Scree", label = "File Type:",
-          choices = c(".png", ".tiff", ".pdf"), selected = ".png"
+          inputId = "file_ext_Scree", 
+          label = "File Type:",
+          choices = c(".png", ".tiff", ".pdf"),
+          selected = ".png"
         )
       )
     )

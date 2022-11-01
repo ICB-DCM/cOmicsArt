@@ -54,8 +54,10 @@ enrichment_analysis_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         radioGroupButtons(
-          input = "file_ext_KEGG", label = "File Type:",
-          choices = c(".png", ".tiff", ".pdf"), selected = ".png"
+          input = "file_ext_KEGG",
+          label = "File Type:",
+          choices = c(".png", ".tiff", ".pdf"), 
+          selected = ".png"
         )
       ),
       textAreaInput(
@@ -133,8 +135,10 @@ enrichment_analysis_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         radioGroupButtons(
-          input = "file_ext_GO", label = "File Type:",
-          choices = c(".png", ".tiff", ".pdf"), selected = ".png"
+          inputId = "file_ext_GO",
+          label = "File Type:",
+          choices = c(".png", ".tiff", ".pdf"), 
+          selected = ".png"
         )
       ),
       textAreaInput(
@@ -177,8 +181,10 @@ enrichment_analysis_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         radioGroupButtons(
-          input = "file_ext_REACTOME", label = "File Type:",
-          choices = c(".png", ".tiff", ".pdf"), selected = ".png"
+          inputId = "file_ext_REACTOME",
+          label = "File Type:",
+          choices = c(".png", ".tiff", ".pdf"),
+          selected = ".png"
         )
       ),
       textAreaInput(

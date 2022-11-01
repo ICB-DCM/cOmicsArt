@@ -107,8 +107,10 @@ heatmap_main <- mainPanel(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
     radioGroupButtons(
-      input = "file_ext_Heatmap", label = "File Type:",
-      choices = c(".png", ".tiff", ".pdf"), selected = ".png"
+      inputId = "file_ext_Heatmap", 
+      label = "File Type:",
+      choices = c(".png", ".tiff", ".pdf"), 
+      selected = ".png"
     )
   ),
   textAreaInput(
