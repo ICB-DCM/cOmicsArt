@@ -5,7 +5,11 @@ pca_sidebar_panel <- sidebarPanel(
   # PCA
   #########################################
   h4("Explorative Analysis"),
-  actionButton(inputId = "Do_PCA", label = "Perform PCA", icon("fas fa-laptop-code")),
+  actionButton(
+  inputId = "Do_PCA", 
+  label = "Perform PCA", 
+  icon("fas fa-laptop-code")
+  ),
   hr(style = "border-top: 1px solid #000000;"),
   uiOutput("coloring_options_ui"),
   uiOutput("x_axis_selection_ui"),
@@ -32,17 +36,28 @@ pca_main_panel <- mainPanel(
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        actionButton(inputId = "only2Report_pca", label = "Send only to Report")
+        actionButton(
+        inputId = "only2Report_pca",
+         label = "Send only to Report"
+         )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton( "getR_Code_PCA", label = "Get underlying R code and data",icon = icon("code"))
+        downloadButton( 
+        inputId = "getR_Code_PCA", 
+        label = "Get underlying R code and data",
+        icon = icon("code")
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton("SavePlot_pos1", label = "Save plot", class = "btn-info")
+        downloadButton(
+        inputId = "SavePlot_pos1", 
+        label = "Save plot",
+        class = "btn-info"
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -69,12 +84,18 @@ pca_main_panel <- mainPanel(
       sliderInput(
         inputId = "topSlider",
         label = "Top k positive Loadings",
-        min = 1, max = 25, value = 10, step = 1
+        min = 1, 
+        max = 25, 
+        value = 10, 
+        step = 1
       ),
       sliderInput(
         inputId = "bottomSlider",
         label = "Top k negative Loadings",
-        min = 1, max = 25, value = 10, step = 1
+        min = 1, 
+        max = 25,
+        value = 10, 
+        step = 1
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -89,7 +110,7 @@ pca_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-          "getR_Code_Loadings",
+          inputId = "getR_Code_Loadings",
           label = "Get underlying R code and data",
           icon = icon("code")
         )
@@ -97,7 +118,11 @@ pca_main_panel <- mainPanel(
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton("SavePlot_Loadings", label = "Save plot", class = "btn-info")
+        downloadButton(
+        inputId = "SavePlot_Loadings", 
+        label = "Save plot",
+        class = "btn-info"
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -128,7 +153,7 @@ pca_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-          "getR_Code_Scree_Plot",
+          inputId = "getR_Code_Scree_Plot",
           label = "Get underlying R code and data",
           icon = icon("code")
         )
@@ -136,7 +161,11 @@ pca_main_panel <- mainPanel(
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton("SavePlot_Scree", label = "Save plot", class = "btn-info")
+        downloadButton(
+        inputId = "SavePlot_Scree", 
+        label = "Save plot", 
+        class = "btn-info"
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),

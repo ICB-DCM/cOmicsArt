@@ -27,7 +27,8 @@ heatmap_sidebar <- sidebarPanel(
   switchInput(
     inputId = "Aesthetics_show",
     label = "show options",
-    size = "mini", value = T
+    size = "mini", 
+    value = T
   ),
   uiOutput("anno_options_ui"),
   uiOutput("row_anno_options_ui"),
@@ -66,7 +67,10 @@ heatmap_main <- mainPanel(
     label = "Threshold upon which explicit labels are shown",
     min = 0, step = 1, value = 25
   ),
-  downloadButton("SaveGeneList_Heatmap", label = "Save genes shown in Heatmap as list"),
+  downloadButton(
+  inputId = "SaveGeneList_Heatmap", 
+  label = "Save genes shown in Heatmap as list"
+  ),
   actionButton(
     inputId = "SendHeatmap2Enrichment",
     label = "Send genes shown to enrichment analysis",
@@ -85,7 +89,7 @@ heatmap_main <- mainPanel(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
     downloadButton(
-      "getR_Code_Heatmap",
+      inputId = "getR_Code_Heatmap",
       label = "Get underlying R code and data",
       icon = icon("code")
     )
@@ -93,7 +97,11 @@ heatmap_main <- mainPanel(
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
-    downloadButton("SavePlot_Heatmap", label = "Save plot", class = "btn-info")
+    downloadButton(
+    inputId = "SavePlot_Heatmap", 
+    label = "Save plot", 
+    class = "btn-info"
+    )
   ),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),

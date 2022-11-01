@@ -110,11 +110,19 @@ ui <- shiny::fluidPage(
   ##########
   div(
     style = "display:inline-block; float:right",
-    actionButton(inputId = "Quit_App", label = "Quit App", class = "btn-secondary")
+    actionButton(
+    inputId = "Quit_App",
+    label = "Quit App",
+    class = "btn-secondary"
+    )
   ),
   div(
     style = "display:inline-block; float:right",
-    actionButton(inputId = "guide", label = "Guide me!", class = "btn-secondary")
+    actionButton(
+    inputId = "guide",
+    label = "Guide me!",
+    class = "btn-secondary"
+    )
   ),
   div(
     style = "display:inline-block; float:right",

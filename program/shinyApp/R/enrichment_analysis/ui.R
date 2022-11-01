@@ -34,7 +34,11 @@ enrichment_analysis_main_panel <- mainPanel(
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        actionButton(inputId = "only2Report_KEGG", label = "Send only to Report", class = "btn-info"),
+        actionButton(
+        inputId = "only2Report_KEGG", 
+        label = "Send only to Report", 
+        class = "btn-info"
+        ),
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -64,7 +68,10 @@ enrichment_analysis_main_panel <- mainPanel(
     tabPanel(
       "KeggPathwayOutput",
       helpText("Specificy on the left which pathway (all sig. enriched) to display in picture-format"),
-      actionButton("OverlayOnPathway", label = "Show overlay on Pathway"),
+      actionButton(
+      inputId = "OverlayOnPathway",
+      label = "Show overlay on Pathway"
+      ),
       selectInput(
         "plotOnTopOption",
         label = "Specifiy the what the colored overlay should indicate",
@@ -76,14 +83,20 @@ enrichment_analysis_main_panel <- mainPanel(
       uiOutput("ComparisonOptionsCOMP_ui"),
       uiOutput("psig_KEGG_ui"),
       sliderInput(
-        "imageWidth",
+        inputId = "imageWidth",
         label = "Adjust Width",
-        min = 400, max = 1500, step = 20, value = 1000
+        min = 400, 
+        max = 1500, 
+        step = 20, 
+        value = 1000
       ),
       sliderInput(
-        "imageHeight",
+        inputId = "imageHeight",
         label = "Adjust Height",
-        min = 400, max = 1500, step = 20, value = 640
+        min = 400, 
+        max = 1500, 
+        step = 20, 
+        value = 640
       ),
       imageOutput("KeggPathwayOutput_img") %>% withSpinner(type = 8)
     ),
@@ -102,7 +115,7 @@ enrichment_analysis_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-          "getR_Code_GO",
+          inputId = "getR_Code_GO",
           label = "Get underlying R code and data",
           icon = icon("code")
         )
@@ -110,7 +123,11 @@ enrichment_analysis_main_panel <- mainPanel(
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton("SavePlot_GO", label = "Save plot", class = "btn-info")
+        downloadButton(
+        inputId = "SavePlot_GO", 
+        label = "Save plot",
+        class = "btn-info"
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -142,7 +159,7 @@ enrichment_analysis_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-          "getR_Code_Reactome",
+          inputId = "getR_Code_Reactome",
           label = "Get underlying R code and data",
           icon = icon("code")
         )
@@ -150,7 +167,11 @@ enrichment_analysis_main_panel <- mainPanel(
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton("SavePlot_REACTOME", label = "Save plot", class = "btn-info")
+        downloadButton(
+        inputId = "SavePlot_REACTOME", 
+        label = "Save plot", 
+        class = "btn-info"
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),

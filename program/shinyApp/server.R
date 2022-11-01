@@ -2366,8 +2366,11 @@ print("Data Upload")
           req(data_input_shiny())
           numericInput(inputId ="psig_threhsold_GSEA" ,
                        label = "adj. p-value threshold",
-                       min=0, max=1, step=0.01,
-                       value = 0.05)
+                       min=0, 
+                       max=1, 
+                       step=0.01,
+                       value = 0.05
+                       )
         })
       }else{
         hide(id = "sample_annotation_types_cmp_GSEA",anim=T)

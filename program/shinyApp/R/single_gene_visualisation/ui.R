@@ -31,7 +31,7 @@ single_gene_visualisation_main <- mainPanel(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
     downloadButton(
-      "getR_Code_SingleEntities",
+      inputId = "getR_Code_SingleEntities",
       label = "Get underlying R code and data",
       icon = icon("code")
     )
