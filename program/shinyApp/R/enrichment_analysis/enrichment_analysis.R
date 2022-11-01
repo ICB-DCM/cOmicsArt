@@ -40,5 +40,4 @@ gene_set_enrichment <- function(
     "EnrichmentRes_REACTOME"=EnrichmentRes_REACTOME,
     "geneSetChoice_tranlsated"=geneSetChoice_tranlsated
   ))
-
 }

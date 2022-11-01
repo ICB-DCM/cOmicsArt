@@ -12,7 +12,9 @@ server <- function(input,output,session){
   source("R/Guide.R",local=T)
   source("R/module_DownloadReport.R",local=T)
   source("R/enrichment_analysis/enrichment_analysis.R", local=T)
-  global_Vars<-reactiveValues()
+  source("R/enrichment_analysis/check_annotation.R", local=T)
+  source("R/enrichment_analysis/translation.R", local=T)
+  global_Vars <<- reactiveValues()
   
 # Security section ---- 
   options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
@@ -74,7 +76,7 @@ server <- function(input,output,session){
     showModal(modalDialog(
       tags$h4('You can download the complete report by clicking on the link'),
       footer=tagList(
-        a(href="Report.html", "Downlaod report", download=NA, target="_blank"),
+        a(href="Report.html", "Download report", download=NA, target="_blank"),
         actionButton(inputId = "Done",label = "Done"),
         modalButton('Cancel')
       )
@@ -572,7 +574,7 @@ print("Data Upload")
   selectedData_processed=eventReactive(input$Do_preprocessing,{
     #show('Spinner_Statisitcs_Data')
     #toggle(id = 'Spinner_Statisitcs_Data', condition = TRUE)
-    processedData_all=selectedData()
+    processedData_all <<- selectedData()
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
     processedData_all[[input$omicType]]$Matrix=processedData_all[[input$omicType]]$Matrix[which(apply(processedData_all[[input$omicType]]$Matrix,1,sd)!=0),]
@@ -2472,212 +2474,335 @@ print("Data Upload")
           names(geneSetChoice_tmp)=Data2Plot_tmp$probename
           geneSetChoice_tmp=sort(geneSetChoice_tmp)
         }
-        
-
-        
       }
     }
-
     geneSetChoice_tmp
   })
   output$KEGG_Enrichment<-renderPlot({ggplot()})
   observeEvent(input$enrichmentGO,{
-    print("Start Enrichment2")
+    tmp_genes <- geneSetChoice()
+    print("Start Enrichment")
     output$KEGG_Enrichment<-renderPlot({ggplot()})
     fun_LogIt("## ENRICHMENT")
     req(geneSetChoice())
-    # Separate in GSEA or ORA
-    if(input$ORA_or_GSE=="GeneSetEnrichment"){
-      tmp_genes <- geneSetChoice()
-      results <- gene_set_enrichment(input, output, tmp_genes)
-      EnrichmentRes_Kegg <- results$EnrichmentRes_Kegg
-      EnrichmentRes_GO <- results$EnrichmentRes_GO
-      EnrichmentRes_RACTOME <- results$EnrichmentRes_REACTOME
-      geneSetChoice_tranlsated <- results$geneSetChoice_tranlsated
-      print("Kegg res: ")
-      print(EnrichmentRes_Kegg)
+    # Check whether the necessary annotation is available
+    anno_results <- check_annotation_enrichment_analysis()
+    if(anno_results$no_ann){
+      showModal(modalDialog(
+        title = "No annotation type detected",
+        p("No valid annotation type was detected in your row annotation. Please indicate the type of annotation with which you uploaded your genes."),
+        selectInput(
+          inputId = "AnnotationSelection",
+          label = "Which annotation are you using?",
+          choices = c("ENSEMBL", "ENTREZID", "SYMBOL"),
+          selected="ENSEMBL",
+          multiple = F
+        ),
+        p("The enrichment analysis needs multiple gene annotations. If you do not want this dialog to appear again, please check the box below."),
+        checkboxInput(
+          inputId="updateAnnotation",
+          label="Do you want the annotation to be updated in your file?",
+          value = FALSE,
+        ),
+        actionButton(inputId = "AMC", "Proceed"),
+      ))
     }
-    else{
-      print("Translation needed?") 
-      # Build in check if EntrezIDs or gene Names provided, if nothing of the two return message to user
-      providedDataType="None"
-      tryCatch(
-        expr = {
-          bitr(geneSetChoice()[1],
-               fromType="SYMBOL",
-               toType="ENTREZID",
-               OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-          providedDataType="SYMBOL"
-        },
-        error = function(e){ 
-          # Not a Symbol!
-          print("Not a Gene Symbol")
-        }
+    # close modal on button click
+    observeEvent(input$AMC, {
+      removeModal()
+      translate_genes(
+        annotation_results = anno_results,
+        input = input,
+        geneSetChoice = tmp_genes
       )
-      if(providedDataType=="None"){
+
+      if(input$ORA_or_GSE=="GeneSetEnrichment"){
+        results <- gene_set_enrichment(input, output, tmp_genes)
+        EnrichmentRes_Kegg <- results$EnrichmentRes_Kegg
+        EnrichmentRes_GO <- results$EnrichmentRes_GO
+        EnrichmentRes_RACTOME <- results$EnrichmentRes_REACTOME
+        geneSetChoice_tranlsated <- results$geneSetChoice_tranlsated
+        print("Kegg res: ")
+        print(EnrichmentRes_Kegg)
+      }
+      else{
+        print("Translation needed?")
+        # Build in check if EntrezIDs or gene Names provided, if nothing of the two return message to user
+        providedDataType="None"
         tryCatch(
           expr = {
             bitr(geneSetChoice()[1],
-                 fromType="GENENAME",
+                 fromType="SYMBOL",
                  toType="ENTREZID",
                  OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
             providedDataType="SYMBOL"
           },
-          error = function(e){ 
+          error = function(e){
             # Not a Symbol!
-            print("Not a Genename")
+            print("Not a Gene Symbol")
           }
         )
-      }
-      if(providedDataType=="None"){
-        tryCatch(
-          expr = {
-            bitr(geneSetChoice()[1],
-                 fromType="ENSEMBL",
-                 toType="ENTREZID",
-                 OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-            providedDataType="ENSEMBL"
-          },
-          error = function(e){ 
-            # Not a Symbol!
-            print("Not a ENSEMBL")
-          }
-        )
-      }
-      
-      
-      print(providedDataType)
-      
-      if(providedDataType=="None"){
-        output$EnrichmentInfo=renderText("Enrichment Failed - Make sure you provid the genelist with entries of type SYMBOL, GENENAME or ENSEMBL. (If you send genes from within the App, double check your annotation and re-send; for gene list from outside the App-World check and translate: https://david.ncifcrf.gov/conversion.jsp")
-        req(FALSE)
-      }
+        if(providedDataType=="None"){
+          tryCatch(
+            expr = {
+              bitr(geneSetChoice()[1],
+                   fromType="GENENAME",
+                   toType="ENTREZID",
+                   OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+              providedDataType="SYMBOL"
+            },
+            error = function(e){
+              # Not a Symbol!
+              print("Not a Genename")
+            }
+          )
+        }
+        if(providedDataType=="None"){
+          tryCatch(
+            expr = {
+              bitr(geneSetChoice()[1],
+                   fromType="ENSEMBL",
+                   toType="ENTREZID",
+                   OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+              providedDataType="ENSEMBL"
+            },
+            error = function(e){
+              # Not a Symbol!
+              print("Not a ENSEMBL")
+            }
+          )
+        }
 
-      geneSetChoice_tranlsated <- bitr(geneSetChoice(),
-                                       fromType=providedDataType,
-                                       toType="ENTREZID",
-                                       OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-      print(paste0("Enrichment of ",length(geneSetChoice_tranlsated)," genes"))
-      
-      
-      if(!isTruthy(input$UniverseOfGene)){
-        universeSelected_tranlsated=NULL
-      }else{
-        if(input$UniverseOfGene=="default"){
+
+        print(providedDataType)
+
+        if(providedDataType=="None"){
+          output$EnrichmentInfo=renderText("Enrichment Failed - Make sure you provid the genelist with entries of type SYMBOL, GENENAME or ENSEMBL. (If you send genes from within the App, double check your annotation and re-send; for gene list from outside the App-World check and translate: https://david.ncifcrf.gov/conversion.jsp")
+          req(FALSE)
+        }
+
+        geneSetChoice_tranlsated <- bitr(geneSetChoice(),
+                                         fromType=providedDataType,
+                                         toType="ENTREZID",
+                                         OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+        print(paste0("Enrichment of ",length(geneSetChoice_tranlsated)," genes"))
+
+
+        if(!isTruthy(input$UniverseOfGene)){
           universeSelected_tranlsated=NULL
-        }
-
-      if(input$UniverseOfGene=="allPresentGenes_after_pre_process"){
-        req(selectedData_processed())
-        universeSelected=rownames(selectedData_processed()[[input$omicType]]$Matrix)
-        print(paste0("Universe genes untranslated: ",length(universeSelected)))
-        universeSelected_tranlsated <- bitr(universeSelected,
-                                            fromType="ENSEMBL",
-                                            toType="ENTREZID",
-                                            OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-        print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
-      }
-      
-      if(input$UniverseOfGene=="allPresentGenes_before_pre_process"){
-        req(data_input_shiny())
-        universeSelected=rownames(data_input_shiny()[[input$omicType]]$Matrix)
-        # Note if transcripts are used this will be ignored for enrichment analysis
-        universeSelected=unique(gsub("\\..*$","",universeSelected))
-        print(paste0("Universe genes untranslated: ",length(universeSelected)))
-        universeSelected_tranlsated <- bitr(universeSelected,
-                                            fromType="ENSEMBL",
-                                            toType="ENTREZID",
-                                            OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-        print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
-      }
-      }
-      
-      EnrichmentRes_Kegg <<- clusterProfiler::enrichKEGG(gene    = geneSetChoice_tranlsated,
-                                                           organism     = input$OrganismChoice,
-                                                           pvalueCutoff = 0.05,
-                                                           universe = universeSelected_tranlsated)
-      if(input$ontologyForGO=="ALL"){
-        tryCatch({
-          EnrichmentRes_GO <<- clusterProfiler::enrichGO(gene         = geneSetChoice_tranlsated,
-                                                         ont =input$ontologyForGO, 
-                                                         pvalueCutoff = 0.05, 
-                                                         OrgDb = ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))
-        },
-        error=function(e){
-          EnrichmentRes_GO <<- NULL
-          showModal(modalDialog(
-            tags$h4('GO enrichment threw an error. Please try out the subontologies on after the other to search for enriched terms within all of them.'),
-            footer=tagList(
-              modalButton('OK')
-            )
-          ))
-        })
-      }else{
-        EnrichmentRes_GO <<- clusterProfiler::enrichGO(gene         = geneSetChoice_tranlsated,
-                                                       ont =input$ontologyForGO, 
-                                                       pvalueCutoff = 0.05, 
-                                                       OrgDb = ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))
-      }
-     
-      
-      EnrichmentRes_RACTOME <-ReactomePA::enrichPathway(gene=geneSetChoice_tranlsated,
-                                                          pvalueCutoff=0.05,
-                                                          organism = ifelse(input$OrganismChoice=="hsa","human","mouse"),
-                                                          universe = universeSelected_tranlsated, 
-                                                          readable=T)
-      
-
-    }
-
-    
-    if(is.null(EnrichmentRes_Kegg)){
-      output$EnrichmentInfo=renderText("Enrichment Failed - check Console, most likley due to no KEGG annotated Terms found")
-      
-    }else{
-      print("KEGG Enrichment Done")
-      resultData=EnrichmentRes_Kegg@result
-      # Only include p.adj significant terms
-      resultData=resultData[resultData$p.adjust<0.05,]
-      if(nrow(resultData)==0){
-        print("No enriched terms found")
-        output$EnrichmentInfo=renderText("No of enriched terms found")
-        scenario=0
-      }else{
-        #dotplot(EnrichmentRes_Kegg, split=".sign") + facet_grid(.~.sign)
-        if(input$ORA_or_GSE=="GeneSetEnrichment"){
-          scenario = 14
-          output$KEGG_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_Kegg,split=".sign") + facet_grid(.~.sign)})
         }else{
-          scenario = 15
-          output$KEGG_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_Kegg)})
+          if(input$UniverseOfGene=="default"){
+            universeSelected_tranlsated=NULL
+          }
+
+        if(input$UniverseOfGene=="allPresentGenes_after_pre_process"){
+          req(selectedData_processed())
+          universeSelected=rownames(selectedData_processed()[[input$omicType]]$Matrix)
+          print(paste0("Universe genes untranslated: ",length(universeSelected)))
+          universeSelected_tranlsated <- bitr(universeSelected,
+                                              fromType="ENSEMBL",
+                                              toType="ENTREZID",
+                                              OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+          print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
         }
-        KEGG_scenario=scenario
-        #output$KEGG_Enrichment<-renderPlot({ifelse(input$ORA_or_GSE=="GeneSetEnrichment",clusterProfiler::dotplot(EnrichmentRes_Kegg),clusterProfiler::dotplot(EnrichmentRes_Kegg,split=".sign") + facet_grid(.~.sign))})
-        global_Vars$KEGG_EnrichmentRes_Kegg=EnrichmentRes_Kegg
-        global_Vars$KEGG_geneSetChoice_tranlsated=geneSetChoice_tranlsated
-        global_Vars$KEGG_geneSetChoice=geneSetChoice()
-        global_Vars$KEGG_OrganismChoice=input$OrganismChoice
+
+        if(input$UniverseOfGene=="allPresentGenes_before_pre_process"){
+          req(data_input_shiny())
+          universeSelected=rownames(data_input_shiny()[[input$omicType]]$Matrix)
+          # Note if transcripts are used this will be ignored for enrichment analysis
+          universeSelected=unique(gsub("\\..*$","",universeSelected))
+          print(paste0("Universe genes untranslated: ",length(universeSelected)))
+          universeSelected_tranlsated <- bitr(universeSelected,
+                                              fromType="ENSEMBL",
+                                              toType="ENTREZID",
+                                              OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+          print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
+        }
+        }
+
+        browser()
+
+        EnrichmentRes_Kegg <<- clusterProfiler::enrichKEGG(gene    = geneSetChoice_tranlsated,
+                                                             organism     = input$OrganismChoice,
+                                                             pvalueCutoff = 0.05,
+                                                             universe = universeSelected_tranlsated)
+        if(input$ontologyForGO=="ALL"){
+          tryCatch({
+            EnrichmentRes_GO <<- clusterProfiler::enrichGO(gene         = geneSetChoice_tranlsated,
+                                                           ont =input$ontologyForGO,
+                                                           pvalueCutoff = 0.05,
+                                                           OrgDb = ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))
+          },
+          error=function(e){
+            EnrichmentRes_GO <<- NULL
+            showModal(modalDialog(
+              tags$h4('GO enrichment threw an error. Please try out the subontologies on after the other to search for enriched terms within all of them.'),
+              footer=tagList(
+                modalButton('OK')
+              )
+            ))
+          })
+        }else{
+          EnrichmentRes_GO <<- clusterProfiler::enrichGO(gene         = geneSetChoice_tranlsated,
+                                                         ont =input$ontologyForGO,
+                                                         pvalueCutoff = 0.05,
+                                                         OrgDb = ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))
+        }
+
+
+        EnrichmentRes_RACTOME <-ReactomePA::enrichPathway(gene=geneSetChoice_tranlsated,
+                                                            pvalueCutoff=0.05,
+                                                            organism = ifelse(input$OrganismChoice=="hsa","human","mouse"),
+                                                            universe = universeSelected_tranlsated,
+                                                            readable=T)
+
+
+      }
+
+
+      if(is.null(EnrichmentRes_Kegg)){
+        output$EnrichmentInfo=renderText("Enrichment Failed - check Console, most likley due to no KEGG annotated Terms found")
+
+      }else{
+        print("KEGG Enrichment Done")
+        resultData=EnrichmentRes_Kegg@result
+        # Only include p.adj significant terms
+        resultData=resultData[resultData$p.adjust<0.05,]
+        if(nrow(resultData)==0){
+          print("No enriched terms found")
+          output$EnrichmentInfo=renderText("No of enriched terms found")
+          scenario=0
+        }else{
+          #dotplot(EnrichmentRes_Kegg, split=".sign") + facet_grid(.~.sign)
+          if(input$ORA_or_GSE=="GeneSetEnrichment"){
+            scenario = 14
+            output$KEGG_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_Kegg,split=".sign") + facet_grid(.~.sign)})
+          }else{
+            scenario = 15
+            output$KEGG_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_Kegg)})
+          }
+          KEGG_scenario=scenario
+          #output$KEGG_Enrichment<-renderPlot({ifelse(input$ORA_or_GSE=="GeneSetEnrichment",clusterProfiler::dotplot(EnrichmentRes_Kegg),clusterProfiler::dotplot(EnrichmentRes_Kegg,split=".sign") + facet_grid(.~.sign))})
+          global_Vars$KEGG_EnrichmentRes_Kegg=EnrichmentRes_Kegg
+          global_Vars$KEGG_geneSetChoice_tranlsated=geneSetChoice_tranlsated
+          global_Vars$KEGG_geneSetChoice=geneSetChoice()
+          global_Vars$KEGG_OrganismChoice=input$OrganismChoice
+          # This only relevant for ORA
+          if(input$ORA_or_GSE!="GeneSetEnrichment"){
+            global_Vars$KEGG_UniverseOfGene=input$UniverseOfGene
+            global_Vars$KEGG_universeSelected_tranlsated=universeSelected_tranlsated
+          }
+
+          global_Vars$KEGG_resultData=resultData
+          global_Vars$KEGG_EnrichmentRes_Kegg_terms=EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = F),]
+
+          output$getR_Code_KEGG <- downloadHandler(
+            filename = function(){
+              paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+            },
+            content = function(file){
+              envList=list(EnrichmentRes_Kegg=EnrichmentRes_Kegg)
+
+              temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+              dir.create(temp_directory)
+
+              write(getPlotCode(KEGG_scenario), file.path(temp_directory, "Code.R"))
+
+              saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+              zip::zip(
+                zipfile = file,
+                files = dir(temp_directory),
+                root = temp_directory
+              )
+            },
+            contentType = "application/zip"
+          )
+
+
+          output$SavePlot_KEGG=downloadHandler(
+            filename = function() { paste("KEGG_",Sys.time(),input$file_ext_KEGG,sep="") },
+
+            content = function(file){
+              ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = gsub("\\.","",input$file_ext_KEGG))
+
+              on.exit({
+                tmp_filename=paste0("www/",paste("KEGG_",Sys.time(),input$file_ext_KEGG,sep=""))
+                ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = gsub("\\.","",input$file_ext_KEGG))
+                # missing to separated between GSEA and ORA
+                # if(input$ORA_or_GSE=="GeneSetEnrichment"){}
+                fun_LogIt("### KEGG ENRICHMENT")
+                fun_LogIt(message = paste0("**KEGG ENRICHMENT** - KEGG Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
+                fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
+                fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
+                fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
+                fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(resultData)))
+                fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
+                fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+                fun_LogIt(message = paste0("**KEGG ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = F),],5),format = "html")))
+
+              })
+            }
+
+          )
+          choicesOfPathways=paste0(resultData$ID,":",resultData$Description)
+          #order pased on adjP
+          resultData=resultData[order(resultData$p.adjust,decreasing=F),]
+          output$KeggPathwayID_ui<-renderUI({
+            selectInput(inputId = "KeggPathwayID",
+                        label="Choose a pathway ID (all possible choices are sig. enriched)",
+                        choices = c(choicesOfPathways),selected=c(choicesOfPathways[1]))
+          })
+        }
+        output$EnrichmentResults_KEGG=DT::renderDataTable({DT::datatable(
+          {EnrichmentRes_Kegg@result},
+          extensions = 'Buttons',
+          options = list(
+            paging = TRUE,
+            searching = TRUE,
+            fixedColumns = TRUE,
+            autoWidth = TRUE,
+            ordering = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'excel')
+          ),
+          class = "display"
+        )})
+
+      }
+
+
+      if(is.null(EnrichmentRes_GO)){
+        output$EnrichmentInfo=renderText("GO Enrichment Failed - check Console, most likley due to no GO annotated Terms found")
+      }else{
+        print("GO Enrichment Done")
+        GO_scenario=0
+        # GO_scenario=scenario  # TODO: hiermit ist die Go analyse auf die Kegg analyse angewiesen
+        output$GO_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_GO)})
+
+        global_Vars$GO_EnrichmentRes_GO=EnrichmentRes_GO
+        global_Vars$GO_geneSetChoice_tranlsated=geneSetChoice_tranlsated
+        global_Vars$GO_geneSetChoice=geneSetChoice()
+        global_Vars$GO_OrganismChoice=input$OrganismChoice
         # This only relevant for ORA
         if(input$ORA_or_GSE!="GeneSetEnrichment"){
-          global_Vars$KEGG_UniverseOfGene=input$UniverseOfGene
-          global_Vars$KEGG_universeSelected_tranlsated=universeSelected_tranlsated
+          global_Vars$GO_UniverseOfGene=input$UniverseOfGene
+          global_Vars$GO_universeSelected_tranlsated=universeSelected_tranlsated
         }
-        
-        global_Vars$KEGG_resultData=resultData
-        global_Vars$KEGG_EnrichmentRes_Kegg_terms=EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = F),]
-        
-        output$getR_Code_KEGG <- downloadHandler(
+        global_Vars$GO_EnrichmentRes_GO_nrow=EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,]
+        global_Vars$GO_EnrichmentRes_GO_result=EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),]
+
+        output$getR_Code_GO <- downloadHandler(
           filename = function(){
             paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
           },
           content = function(file){
-            envList=list(EnrichmentRes_Kegg=EnrichmentRes_Kegg)
-            
+            envList=list(EnrichmentRes_GO=EnrichmentRes_GO)
+
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
-            
-            write(getPlotCode(KEGG_scenario), file.path(temp_directory, "Code.R"))
-            
+
+            write(getPlotCode(GO_scenario), file.path(temp_directory, "Code.R"))
+
             saveRDS(envList, file.path(temp_directory, "Data.RDS"))
             zip::zip(
               zipfile = file,
@@ -2687,234 +2812,138 @@ print("Data Upload")
           },
           contentType = "application/zip"
         )
-        
-        
-        output$SavePlot_KEGG=downloadHandler(
-          filename = function() { paste("KEGG_",Sys.time(),input$file_ext_KEGG,sep="") },
-          
+
+        output$SavePlot_GO=downloadHandler(
+          filename = function() { paste("GO_",Sys.time(),input$file_ext_GO,sep="") },
+
           content = function(file){
-            ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = gsub("\\.","",input$file_ext_KEGG))
-            
+            ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
+
             on.exit({
-              tmp_filename=paste0("www/",paste("KEGG_",Sys.time(),input$file_ext_KEGG,sep=""))
-              ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_Kegg),device = gsub("\\.","",input$file_ext_KEGG))
+              tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.time(),input$file_ext_GO,sep="") )
+              ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
+              fun_LogIt("### GO ENRICHMENT")
               # missing to separated between GSEA and ORA
               # if(input$ORA_or_GSE=="GeneSetEnrichment"){}
-              fun_LogIt("### KEGG ENRICHMENT")
-              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - KEGG Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
-              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
-              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
-              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
-              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(resultData)))
-              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
-              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-              fun_LogIt(message = paste0("**KEGG ENRICHMENT** - \n",knitr::kable(head(EnrichmentRes_Kegg@result[order(EnrichmentRes_Kegg@result$p.adjust,decreasing = F),],5),format = "html")))
-              
+              fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
+              fun_LogIt(message = paste0("**GO ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
+              fun_LogIt(message = paste0("**GO ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
+              fun_LogIt(message = paste0("**GO ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
+              fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,])))
+              fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
+              fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+              fun_LogIt(message = knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),],5),format = "html"))
+
             })
           }
-          
+
+
+
         )
-        choicesOfPathways=paste0(resultData$ID,":",resultData$Description)
-        #order pased on adjP
-        resultData=resultData[order(resultData$p.adjust,decreasing=F),]
-        output$KeggPathwayID_ui<-renderUI({
-          selectInput(inputId = "KeggPathwayID",
-                      label="Choose a pathway ID (all possible choices are sig. enriched)",
-                      choices = c(choicesOfPathways),selected=c(choicesOfPathways[1]))
-        })
-      }
-      output$EnrichmentResults_KEGG=DT::renderDataTable({DT::datatable(
-        {EnrichmentRes_Kegg@result},
-        extensions = 'Buttons',
-        options = list(
-          paging = TRUE,
-          searching = TRUE,
-          fixedColumns = TRUE,
-          autoWidth = TRUE,
-          ordering = TRUE,
-          dom = 'Bfrtip',
-          buttons = c('copy', 'csv', 'excel')
-        ),
-        class = "display"
-      )})
+        output$EnrichmentResults_GO=DT::renderDataTable({DT::datatable(
+          {EnrichmentRes_GO@result},
+          extensions = 'Buttons',
+          options = list(
+            paging = TRUE,
+            searching = TRUE,
+            fixedColumns = TRUE,
+            autoWidth = TRUE,
+            ordering = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'excel')
+          ),
+          class = "display"
+        )})
 
-    }
-    
-    
-    if(is.null(EnrichmentRes_GO)){
-      output$EnrichmentInfo=renderText("GO Enrichment Failed - check Console, most likley due to no GO annotated Terms found")
-    }else{
-      print("GO Enrichment Done")
-      GO_scenario=0
-      # GO_scenario=scenario  # TODO: hiermit ist die Go analyse auf die Kegg analyse angewiesen
-      output$GO_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_GO)})
-     
-      global_Vars$GO_EnrichmentRes_GO=EnrichmentRes_GO
-      global_Vars$GO_geneSetChoice_tranlsated=geneSetChoice_tranlsated
-      global_Vars$GO_geneSetChoice=geneSetChoice()
-      global_Vars$GO_OrganismChoice=input$OrganismChoice
-      # This only relevant for ORA
-      if(input$ORA_or_GSE!="GeneSetEnrichment"){
-        global_Vars$GO_UniverseOfGene=input$UniverseOfGene
-        global_Vars$GO_universeSelected_tranlsated=universeSelected_tranlsated
       }
-      global_Vars$GO_EnrichmentRes_GO_nrow=EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,]
-      global_Vars$GO_EnrichmentRes_GO_result=EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),]
-      
-      output$getR_Code_GO <- downloadHandler(
-        filename = function(){
-          paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
-        },
-        content = function(file){
-          envList=list(EnrichmentRes_GO=EnrichmentRes_GO)
-          
-          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-          dir.create(temp_directory)
-          
-          write(getPlotCode(GO_scenario), file.path(temp_directory, "Code.R"))
-          
-          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-          zip::zip(
-            zipfile = file,
-            files = dir(temp_directory),
-            root = temp_directory
-          )
-        },
-        contentType = "application/zip"
-      )
-      
-      output$SavePlot_GO=downloadHandler(
-        filename = function() { paste("GO_",Sys.time(),input$file_ext_GO,sep="") },
-        
-        content = function(file){
-          ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
-          
-          on.exit({
-            tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.time(),input$file_ext_GO,sep="") )
-            ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
-            fun_LogIt("### GO ENRICHMENT")
-            # missing to separated between GSEA and ORA
-            # if(input$ORA_or_GSE=="GeneSetEnrichment"){}
-            fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
-            fun_LogIt(message = paste0("**GO ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
-            fun_LogIt(message = paste0("**GO ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
-            fun_LogIt(message = paste0("**GO ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
-            fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,])))
-            fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
-            fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-            fun_LogIt(message = knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),],5),format = "html"))
-            
-          })
-        }
-        
-        
-        
-      )
-      output$EnrichmentResults_GO=DT::renderDataTable({DT::datatable(
-        {EnrichmentRes_GO@result},
-        extensions = 'Buttons',
-        options = list(
-          paging = TRUE,
-          searching = TRUE,
-          fixedColumns = TRUE,
-          autoWidth = TRUE,
-          ordering = TRUE,
-          dom = 'Bfrtip',
-          buttons = c('copy', 'csv', 'excel')
-        ),
-        class = "display"
-      )})
 
-    }
-   
-    
-    if(is.null(EnrichmentRes_RACTOME)){
-      output$EnrichmentInfo=renderText("REACTOME Enrichment Failed - check Console, most likley due to no reactome annotated Terms found")
-    }else{
-      print("reactome Enrichment Done")
-      scenario=17
-      Reactome_scenario=scenario
-      output$REACTOME_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_RACTOME)})
-      
-      
-      global_Vars$Reactome_REACTOME_Enrichment=EnrichmentRes_RACTOME
-      global_Vars$Reactome_geneSetChoice_tranlsated=geneSetChoice_tranlsated
-      global_Vars$Reactome_geneSetChoice=geneSetChoice()
-      # This only relevant for ORA
-      if(input$ORA_or_GSE!="GeneSetEnrichment"){
-        global_Vars$Reactome_OrganismChoice=input$UniverseOfGene
-        global_Vars$Reactome_UniverseOfGene=universeSelected_tranlsated
-      }
-      global_Vars$Reactome_universeSelected_tranlsated=universeSelected_tranlsated
-      global_Vars$Reactome_REACTOME_Enrichment_result=EnrichmentRes_RACTOME@result
-      global_Vars$Reactome_Enrichment_padj=EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),]
-      
-      output$getR_Code_Reactome <- downloadHandler(
-        filename = function(){
-          paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
-        },
-        content = function(file){
-          envList=list(EnrichmentRes_RACTOME=EnrichmentRes_RACTOME)
-          
-          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-          dir.create(temp_directory)
-          
-          write(getPlotCode(Reactome_scenario), file.path(temp_directory, "Code.R"))
-          
-          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-          zip::zip(
-            zipfile = file,
-            files = dir(temp_directory),
-            root = temp_directory
-          )
-        },
-        contentType = "application/zip"
-      )
-      
-      output$SavePlot_REACTOME=downloadHandler(
-        filename = function() { paste("REACTOME_",Sys.time(),input$file_ext_REACTOME,sep="") },
-        
-        content = function(file){
-          ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME),device = gsub("\\.","",input$file_ext_REACTOME))
-          
-          on.exit({
-            tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.time(),input$file_ext_REACTOME,sep="") )
-            ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME),device = gsub("\\.","",input$file_ext_REACTOME))
-            fun_LogIt("### REACTOME ENRICHMENT")
-            # missing to separated between GSEA and ORA
-            # if(input$ORA_or_GSE=="GeneSetEnrichment"){}
-            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - REACTOME Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
-            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
-            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
-            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
-            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_RACTOME@result[EnrichmentRes_RACTOME@result$p.adjust<0.05,])))
-            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - ![REACTOME ENRICHMENT](",tmp_filename,")"))
-            fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-            fun_LogIt(message = knitr::kable(head(EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),],5),format = "html"))
-            
-          })
-          
+
+      if(is.null(EnrichmentRes_RACTOME)){
+        output$EnrichmentInfo=renderText("REACTOME Enrichment Failed - check Console, most likley due to no reactome annotated Terms found")
+      }else{
+        print("reactome Enrichment Done")
+        scenario=17
+        Reactome_scenario=scenario
+        output$REACTOME_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_RACTOME)})
+
+
+        global_Vars$Reactome_REACTOME_Enrichment=EnrichmentRes_RACTOME
+        global_Vars$Reactome_geneSetChoice_tranlsated=geneSetChoice_tranlsated
+        global_Vars$Reactome_geneSetChoice=geneSetChoice()
+        # This only relevant for ORA
+        if(input$ORA_or_GSE!="GeneSetEnrichment"){
+          global_Vars$Reactome_OrganismChoice=input$UniverseOfGene
+          global_Vars$Reactome_UniverseOfGene=universeSelected_tranlsated
         }
-        
-      )
-      output$EnrichmentResults_REACTOME=DT::renderDataTable({DT::datatable(
-        {EnrichmentRes_RACTOME@result},
-        extensions = 'Buttons',
-        options = list(
-          paging = TRUE,
-          searching = TRUE,
-          fixedColumns = TRUE,
-          autoWidth = TRUE,
-          ordering = TRUE,
-          dom = 'Bfrtip',
-          buttons = c('copy', 'csv', 'excel')
-        ),
-        class = "display"
-      )})
-      
-    }
-    
-    
+        global_Vars$Reactome_universeSelected_tranlsated=universeSelected_tranlsated
+        global_Vars$Reactome_REACTOME_Enrichment_result=EnrichmentRes_RACTOME@result
+        global_Vars$Reactome_Enrichment_padj=EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),]
+
+        output$getR_Code_Reactome <- downloadHandler(
+          filename = function(){
+            paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+          },
+          content = function(file){
+            envList=list(EnrichmentRes_RACTOME=EnrichmentRes_RACTOME)
+
+            temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+            dir.create(temp_directory)
+
+            write(getPlotCode(Reactome_scenario), file.path(temp_directory, "Code.R"))
+
+            saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+            zip::zip(
+              zipfile = file,
+              files = dir(temp_directory),
+              root = temp_directory
+            )
+          },
+          contentType = "application/zip"
+        )
+
+        output$SavePlot_REACTOME=downloadHandler(
+          filename = function() { paste("REACTOME_",Sys.time(),input$file_ext_REACTOME,sep="") },
+
+          content = function(file){
+            ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME),device = gsub("\\.","",input$file_ext_REACTOME))
+
+            on.exit({
+              tmp_filename=paste0(getwd(),"/www/",paste("REACTOME_",Sys.time(),input$file_ext_REACTOME,sep="") )
+              ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME),device = gsub("\\.","",input$file_ext_REACTOME))
+              fun_LogIt("### REACTOME ENRICHMENT")
+              # missing to separated between GSEA and ORA
+              # if(input$ORA_or_GSE=="GeneSetEnrichment"){}
+              fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - REACTOME Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
+              fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
+              fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
+              fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
+              fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_RACTOME@result[EnrichmentRes_RACTOME@result$p.adjust<0.05,])))
+              fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - ![REACTOME ENRICHMENT](",tmp_filename,")"))
+              fun_LogIt(message = paste0("**REACTOME ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+              fun_LogIt(message = knitr::kable(head(EnrichmentRes_RACTOME@result[order(EnrichmentRes_RACTOME@result$p.adjust,decreasing = F),],5),format = "html"))
+
+            })
+
+          }
+
+        )
+        output$EnrichmentResults_REACTOME=DT::renderDataTable({DT::datatable(
+          {EnrichmentRes_RACTOME@result},
+          extensions = 'Buttons',
+          options = list(
+            paging = TRUE,
+            searching = TRUE,
+            fixedColumns = TRUE,
+            autoWidth = TRUE,
+            ordering = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'excel')
+          ),
+          class = "display"
+        )})
+
+      }
+    })
   })
   
   

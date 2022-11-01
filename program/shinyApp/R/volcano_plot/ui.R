@@ -1,6 +1,3 @@
-source("../C.R", local = T, chdir = T)
-
-
 volcano_plot_sidebar <- sidebarPanel(
   id = "sidebar_volcano_plot",
   #########################################
