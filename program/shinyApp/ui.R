@@ -178,7 +178,7 @@ ui <- shiny::fluidPage(
     condition = "input.element_02 == 0",
     div(
       id="foot_normal",
-      absolutePanel("Brought to you by Lea Seep", bottom = 0, left = 10, fixed = TRUE)
+      absolutePanel("Brought to you by Lea Seep & Paul Jonas Jost (it is his birthday today!)", bottom = 0, left = 10, fixed = TRUE)
     )
   ),
   conditionalPanel(
