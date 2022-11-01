@@ -65,7 +65,9 @@ heatmap_main <- mainPanel(
   numericInput(
     inputId = "row_label_no",
     label = "Threshold upon which explicit labels are shown",
-    min = 0, step = 1, value = 25
+    min = 0, 
+    step = 1, 
+    value = 25
   ),
   downloadButton(
   inputId = "SaveGeneList_Heatmap", 
