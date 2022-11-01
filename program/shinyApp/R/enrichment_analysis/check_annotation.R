@@ -25,6 +25,7 @@ check_annotation_enrichment_analysis <- function(){
     no_ann <- FALSE
     base_annotation <- "SYMBOL"
   }
+  no_ann <- TRUE
   # if no annotation is found, add popup asking for annotation
   return(list(
     "no_ann" = no_ann,
