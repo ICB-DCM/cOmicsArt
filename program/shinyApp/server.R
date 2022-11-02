@@ -571,10 +571,8 @@ print("Data Upload")
   })
 
 ## Do preprocessing ----  
-  selectedData_processed=eventReactive(input$Do_preprocessing,{
-    #show('Spinner_Statisitcs_Data')
-    #toggle(id = 'Spinner_Statisitcs_Data', condition = TRUE)
-    processedData_all <<- selectedData()
+  selectedData_processed <- eventReactive(input$Do_preprocessing,{
+    processedData_all <- selectedData()
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
     processedData_all[[input$omicType]]$Matrix=processedData_all[[input$omicType]]$Matrix[which(apply(processedData_all[[input$omicType]]$Matrix,1,sd)!=0),]
@@ -657,7 +655,6 @@ print("Data Upload")
     if(any(is.na(processedData_all[[input$omicType]]$Matrix))){
       processedData_all[[input$omicType]]$Matrix=processedData_all[[input$omicType]]$Matrix[complete.cases(processedData_all[[input$omicType]]$Matrix),]
     }
-    TEST<<-processedData_all
     #### Potentially some entities removed hence update the annotation table
     print("What are the colnamaes here? X at the beginning??")
     print(colnames(processedData_all[[input$omicType]]$Matrix))
@@ -670,9 +667,9 @@ print("Data Upload")
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
     showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+    # TODO: change eventReactive -> observeEvent+reactiveValue (needs discussion)
+    processedData_all <<- processedData_all
     processedData_all
-    
-
   })
   
   output$Statisitcs_Data=renderText({paste0("The data has the dimensions of: ",paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", "),
@@ -2465,14 +2462,15 @@ print("Data Upload")
                           comparison_samples_idx)
         
         # get thresholds to cut the set
-        Data2Plot_tmp=Data2Plot[Data2Plot$p_adj<=input$psig_threhsold_GSEA,]
+        # TODO: currently not working with cutoff value
+        Data2Plot_tmp <- Data2Plot
+        # Data2Plot_tmp=Data2Plot[Data2Plot$p_adj<=input$psig_threhsold_GSEA,]
         geneSetChoice_tmp=Data2Plot_tmp$LFC
         if(length(geneSetChoice_tmp)<1){
           print("Nothing significant!")
           geneSetChoice_tmp=NULL
         }else{
           names(geneSetChoice_tmp)=Data2Plot_tmp$probename
-          geneSetChoice_tmp=sort(geneSetChoice_tmp)
         }
       }
     }
@@ -2481,6 +2479,7 @@ print("Data Upload")
   output$KEGG_Enrichment<-renderPlot({ggplot()})
   observeEvent(input$enrichmentGO,{
     tmp_genes <- geneSetChoice()
+    output$EnrichmentInfo <- "Enrichment is running..."
     print("Start Enrichment")
     output$KEGG_Enrichment<-renderPlot({ggplot()})
     fun_LogIt("## ENRICHMENT")
@@ -2490,12 +2489,13 @@ print("Data Upload")
     if(anno_results$no_ann){
       showModal(modalDialog(
         title = "No annotation type detected",
+        footer = NULL,
         p("No valid annotation type was detected in your row annotation. Please indicate the type of annotation with which you uploaded your genes."),
         selectInput(
           inputId = "AnnotationSelection",
           label = "Which annotation are you using?",
           choices = c("ENSEMBL", "ENTREZID", "SYMBOL"),
-          selected="ENSEMBL",
+          selected="ENTREZID",
           multiple = F
         ),
         p("The enrichment analysis needs multiple gene annotations. If you do not want this dialog to appear again, please check the box below."),
@@ -2619,8 +2619,6 @@ print("Data Upload")
           print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
         }
         }
-
-        browser()
 
         EnrichmentRes_Kegg <<- clusterProfiler::enrichKEGG(gene    = geneSetChoice_tranlsated,
                                                              organism     = input$OrganismChoice,
