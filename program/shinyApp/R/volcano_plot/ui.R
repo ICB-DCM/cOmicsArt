@@ -41,7 +41,7 @@ volcano_plot_main <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-          inputId = "getR_Code_Volcano",
+          outputId = "getR_Code_Volcano",
           label = "Get underlying R code and data",
           icon = icon("code")
         )
@@ -50,7 +50,7 @@ volcano_plot_main <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-        inputId = "SavePlot_Volcano",
+        outputId = "SavePlot_Volcano",
         label = "Save plot",
         class = "btn-info"
         )
@@ -68,7 +68,7 @@ volcano_plot_main <- mainPanel(
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
         downloadButton(
-        inputId = "SaveDE_List",
+        outputId = "SaveDE_List",
         label = "Save interesting entities (all red points)"
         ),
         actionButton(
