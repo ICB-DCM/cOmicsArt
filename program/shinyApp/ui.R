@@ -35,6 +35,8 @@ library(cicerone)
 library(shinyalert)
 # library(svglite)
 
+source("R/C.R")
+
 source("R/module_DownloadReport.R",local=T)
 
 # source the uis for each panel here
@@ -173,7 +175,7 @@ ui <- shiny::fluidPage(
     "element_02",
     label = "LeasBirthday",
     choices = c(0, 1),
-    selected = ifelse(format(as.POSIXct(Sys.time()), "%d-%m") == "30-09", 1, 0))),
+    selected = ifelse(format(as.POSIXct(Sys.time()), "%d-%m") == "22-11", 1, 0))),
   conditionalPanel(
     condition = "input.element_02 == 0",
     div(
