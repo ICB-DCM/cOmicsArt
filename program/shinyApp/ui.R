@@ -38,13 +38,13 @@ library(shinyalert)
 source("R/module_DownloadReport.R",local=T)
 
 # source the uis for each panel here
-source("R/data_selection/ui.R",local=T, chdir = T)
-source("R/pre_processing/ui.R",local=T, chdir = T)
-source("R/pca/ui.R",local=T, chdir = T)
-source("R/volcano_plot/ui.R",local=T, chdir = T)
-source("R/heatmap/ui.R",local=T, chdir = T)
-source("R/single_gene_visualisation/ui.R",local=T, chdir = T)
-source("R/enrichment_analysis/ui.R",local=T, chdir = T)
+source("R/data_selection/ui.R",local=T)
+source("R/pre_processing/ui.R",local=T)
+source("R/pca/ui.R",local=T)
+source("R/volcano_plot/ui.R",local=T)
+source("R/heatmap/ui.R",local=T)
+source("R/single_gene_visualisation/ui.R",local=T)
+source("R/enrichment_analysis/ui.R",local=T)
 
 
 options(repos = BiocManager::repositories())
@@ -110,11 +110,19 @@ ui <- shiny::fluidPage(
   ##########
   div(
     style = "display:inline-block; float:right",
-    actionButton(inputId = "Quit_App", label = "Quit App", class = "btn-secondary")
+    actionButton(
+    inputId = "Quit_App",
+    label = "Quit App",
+    class = "btn-secondary"
+    )
   ),
   div(
     style = "display:inline-block; float:right",
-    actionButton(inputId = "guide", label = "Guide me!", class = "btn-secondary")
+    actionButton(
+    inputId = "guide",
+    label = "Guide me!",
+    class = "btn-secondary"
+    )
   ),
   div(
     style = "display:inline-block; float:right",
@@ -170,7 +178,7 @@ ui <- shiny::fluidPage(
     condition = "input.element_02 == 0",
     div(
       id="foot_normal",
-      absolutePanel("Brought to you by Lea Seep", bottom = 0, left = 10, fixed = TRUE)
+      absolutePanel("Brought to you by Lea Seep & Paul Jonas Jost (it is his birthday today!)", bottom = 0, left = 10, fixed = TRUE)
     )
   ),
   conditionalPanel(
@@ -178,7 +186,7 @@ ui <- shiny::fluidPage(
     div(
       id="foot_birthday",
       absolutePanel(
-        "Brought to you by Lea Seep - it is her birthday today :)",
+        "It is Lea's birthday today :)",
         bottom = 0, left = 10, fixed = TRUE,style = "background-color: #a9d96a;"
       )
     )
