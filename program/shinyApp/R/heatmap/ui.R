@@ -70,7 +70,7 @@ heatmap_main <- mainPanel(
     value = 25
   ),
   downloadButton(
-  "SaveGeneList_Heatmap", 
+  outputId = "SaveGeneList_Heatmap", 
   label = "Save genes shown in Heatmap as list"
   ),
   actionButton(
@@ -91,7 +91,7 @@ heatmap_main <- mainPanel(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
     downloadButton(
-       "getR_Code_Heatmap",
+      outputId = "getR_Code_Heatmap",
       label = "Get underlying R code and data",
       icon = icon("code")
     )
@@ -100,7 +100,7 @@ heatmap_main <- mainPanel(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
     downloadButton(
-    "SavePlot_Heatmap", 
+    outputId = "SavePlot_Heatmap", 
     label = "Save plot", 
     class = "btn-info"
     )

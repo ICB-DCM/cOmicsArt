@@ -44,7 +44,7 @@ pca_main_panel <- mainPanel(
       splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-        "getR_Code_PCA", 
+       outputId = "getR_Code_PCA", 
         label = "Get underlying R code and data",
         icon = icon("code")
         )
@@ -53,7 +53,7 @@ pca_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-          "SavePlot_pos1",
+          outputId = "SavePlot_pos1",
           label = "Save plot",
           class = "btn-info"
         )
@@ -111,7 +111,7 @@ pca_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-          "getR_Code_Loadings",
+          outputId = "getR_Code_Loadings",
           label = "Get underlying R code and data",
           icon = icon("code")
         )
@@ -120,7 +120,7 @@ pca_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-        "SavePlot_Loadings", 
+        outputId = "SavePlot_Loadings", 
         label = "Save plot",
         class = "btn-info"
         )
@@ -156,7 +156,7 @@ pca_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-          "getR_Code_Scree_Plot",
+          outputId = "getR_Code_Scree_Plot",
           label = "Get underlying R code and data",
           icon = icon("code")
         )
@@ -165,7 +165,7 @@ pca_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-        "SavePlot_Scree", 
+        outputId = "SavePlot_Scree", 
         label = "Save plot", 
         class = "btn-info"
         )

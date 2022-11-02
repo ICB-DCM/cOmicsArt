@@ -117,7 +117,7 @@ enrichment_analysis_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-          "getR_Code_GO",
+          outputId = "getR_Code_GO",
           label = "Get underlying R code and data",
           icon = icon("code")
         )
@@ -126,7 +126,7 @@ enrichment_analysis_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-        "SavePlot_GO", 
+       outputId = "SavePlot_GO", 
         label = "Save plot",
         class = "btn-info"
         )
@@ -163,7 +163,7 @@ enrichment_analysis_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-          "getR_Code_Reactome",
+         outputId = "getR_Code_Reactome",
           label = "Get underlying R code and data",
           icon = icon("code")
         )
@@ -172,7 +172,7 @@ enrichment_analysis_main_panel <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-        "SavePlot_REACTOME", 
+        outputId = "SavePlot_REACTOME", 
         label = "Save plot", 
         class = "btn-info"
         )
