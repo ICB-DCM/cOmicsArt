@@ -14,13 +14,4 @@ translate_genes <- function(annotation_results, input, geneSetChoice){
       keytype=annotation_results$base_annotation
       )
   }
-  if(!(annotation_results$ensembl_ann)){
-    # translate to ensembl id
-    processedData_all$Transcriptomics$annotation_rows$ENSEMBL <<- mapIds(
-      org.Mm.eg.db,  # ToDO make choice dependent on input$OrganismChoice
-      keys = processedData_all$Transcriptomics$annotation_rows[[annotation_results$base_annotation]],
-      column="ENTREZID",
-      keytype=annotation_results$base_annotation
-    )
-  }
 }

@@ -2479,7 +2479,7 @@ print("Data Upload")
   output$KEGG_Enrichment<-renderPlot({ggplot()})
   observeEvent(input$enrichmentGO,{
     tmp_genes <- geneSetChoice()
-    output$EnrichmentInfo <- "Enrichment is running..."
+    output$EnrichmentInfo <- renderText("Enrichment is running...")
     print("Start Enrichment")
     output$KEGG_Enrichment<-renderPlot({ggplot()})
     fun_LogIt("## ENRICHMENT")
@@ -2518,6 +2518,7 @@ print("Data Upload")
 
       if(input$ORA_or_GSE=="GeneSetEnrichment"){
         results <- gene_set_enrichment(input, output, tmp_genes)
+        browser()
         EnrichmentRes_Kegg <- results$EnrichmentRes_Kegg
         EnrichmentRes_GO <- results$EnrichmentRes_GO
         EnrichmentRes_RACTOME <- results$EnrichmentRes_REACTOME

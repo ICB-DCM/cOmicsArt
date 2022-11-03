@@ -1,3 +1,69 @@
+geneset_panel_UI <- function(
+  id
+){
+  ns <- NS(id)
+
+  tabsetPanel(
+    tabPanel(
+      title=paste(id, "Enrichment"),
+      plotOutput(outputId = ns("Enrichment")),
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        actionButton(
+          inputId = ns("only2Report"),
+          label = "Send only to Report",
+          class = "btn-info"
+        )
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        downloadButton(
+           outputId = ns("getR_Code"),
+           label = "Get underlying R code and data",
+           icon = icon("code")
+        )
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        downloadButton(
+          outputId = ns("SavePlot"),
+          label = "Save plot",
+          class = "btn-info"
+        )
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        radioGroupButtons(
+          input = ns("file_ext"),
+          label = "File Type:",
+          choices = c(".png", ".tiff", ".pdf"),
+          selected = ".pdf"
+        )
+      ),
+      textAreaInput(
+        inputId=ns("Notes"),
+        label="Notes:",
+        placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ",
+        width = "1000px"
+      )%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+      helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+    ),
+    tabPanel(
+      title = paste(id, "Enrichment Table"),
+      DT::dataTableOutput(paste("EnrichmentResults",id, sep="_"))
+    )
+  )
+}
+
+
 ea_sidebar_UI <- function(id){
   ns <- NS(id)
 

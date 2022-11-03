@@ -3,25 +3,28 @@ gene_set_enrichment <- function(
   output,
   geneSetChoice
 ){
+  geneSetChoice_tranlsated_2=sort(geneSetChoice,decreasing = T)
   # assign the correct names to geneSetChoice
-  geneSetChoice_tranlsated <- geneSetChoice
-  names(geneSetChoice_tranlsated) <- processedData_all$Transcriptomics$annotation_rows$ENTREZID
-  geneSetChoice_tranlsated=sort(geneSetChoice_tranlsated,decreasing = T)
+  # For now this is a global variable, as EntrezId is the only annotation type needed.
+  geneSetChoice_tranlsated <<- geneSetChoice
+  names(geneSetChoice_tranlsated) <<- processedData_all$Transcriptomics$annotation_rows$ENTREZID
+  geneSetChoice_tranlsated <<- sort(geneSetChoice_tranlsated,decreasing = T)
   # remove duplicate entries (keep the one highest in list)
-  geneSetChoice_tranlsated=geneSetChoice_tranlsated[!duplicated(names(geneSetChoice_tranlsated))]
-
-  EnrichmentRes_Kegg <- clusterProfiler::gseKEGG(
-    geneList=geneSetChoice_tranlsated,
-    keyType="ncbi-geneid",  # equal to ENTREZID
-    organism=ifelse(input$OrganismChoice=="hsa","hsa","mmu"),
-    minGSSize=3,
-    maxGSSize=800,
-    pvalueCutoff=0.05,
-    verbose=TRUE,
-    pAdjustMethod="BH"
-  )
+  geneSetChoice_tranlsated <<- geneSetChoice_tranlsated[!duplicated(names(geneSetChoice_tranlsated))]
+  
+  # EnrichmentRes_Kegg <- clusterProfiler::gseKEGG(
+  #   geneList=geneSetChoice_tranlsated,
+  #   keyType="ncbi-geneid",  # equal to ENTREZID
+  #   organism=ifelse(input$OrganismChoice=="hsa","hsa","mmu"),
+  #   minGSSize=3,
+  #   maxGSSize=800,
+  #   pvalueCutoff=0.05,
+  #   verbose=TRUE,
+  #   pAdjustMethod="BH"
+  # )
+  browser()
   EnrichmentRes_GO <- clusterProfiler::gseGO(
-    gene=geneSetChoice_tranlsated,
+    gene=geneSetChoice_tranlsated_2,
     ont=input$ontologyForGO,
     keyType="ENTREZID",
     minGSSize=3,
@@ -35,6 +38,7 @@ gene_set_enrichment <- function(
 
   # TODO: add correct buttons and Tabs with Visualisation for all Pathways
   # TODO: discuss: GSEA seems to accept EntrezIDs annotation
+  browser()
   # Hallmarks
   Hallmarkset <- msigdbr(
     species="Mus musculus",
@@ -48,6 +52,7 @@ gene_set_enrichment <- function(
     pAdjustMethod = 'bonferroni',
     pvalueCutoff = 1
   )
+  browser()
   # C1
   C1set <- msigdbr(
       species="Mus musculus",
