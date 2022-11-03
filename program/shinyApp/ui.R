@@ -33,6 +33,7 @@ library(biomaRt)
 library(zip)
 library(cicerone)
 library(shinyalert)
+library(msigdbr)
 # library(svglite)
 
 source("R/C.R")
