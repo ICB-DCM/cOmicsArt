@@ -1,3 +1,5 @@
+library(msigdbr)
+
 gene_set_enrichment <- function(
   input,
   output,
@@ -12,19 +14,19 @@ gene_set_enrichment <- function(
   # remove duplicate entries (keep the one highest in list)
   geneSetChoice_tranlsated <<- geneSetChoice_tranlsated[!duplicated(names(geneSetChoice_tranlsated))]
   
-  # EnrichmentRes_Kegg <- clusterProfiler::gseKEGG(
-  #   geneList=geneSetChoice_tranlsated,
-  #   keyType="ncbi-geneid",  # equal to ENTREZID
-  #   organism=ifelse(input$OrganismChoice=="hsa","hsa","mmu"),
-  #   minGSSize=3,
-  #   maxGSSize=800,
-  #   pvalueCutoff=0.05,
-  #   verbose=TRUE,
-  #   pAdjustMethod="BH"
-  # )
+  EnrichmentRes_Kegg <- clusterProfiler::gseKEGG(
+    geneList=geneSetChoice_tranlsated,
+    keyType="ncbi-geneid",  # equal to ENTREZID
+    organism=ifelse(input$OrganismChoice=="hsa","hsa","mmu"),
+    minGSSize=3,
+    maxGSSize=800,
+    pvalueCutoff=0.05,
+    verbose=TRUE,
+    pAdjustMethod="BH"
+  )
   browser()
   EnrichmentRes_GO <- clusterProfiler::gseGO(
-    gene=geneSetChoice_tranlsated_2,
+    gene=geneSetChoice_tranlsated,
     ont=input$ontologyForGO,
     keyType="ENTREZID",
     minGSSize=3,
