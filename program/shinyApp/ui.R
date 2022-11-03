@@ -159,7 +159,7 @@ ui <- shiny::fluidPage(
     volcano_plot_panel,
     heatmap_panel,
     single_gene_visualisation_panel,
-    enrichment_analysis_tab_panel <- ea_tabPanel_UI("enrichment_analysis_tab_panel")
+    enrichment_analysis_tab_panel <- ea_tabPanel_UI("EnrichmentAnalysis")
   ),
   hidden(selectInput(
     "element_02",

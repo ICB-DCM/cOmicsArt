@@ -1,4 +1,5 @@
 server <- function(input,output,session){
+  # TODO source from extra file (potentially C.R?)
   source("R/fun_filterRNA.R",local = T)
   source("R/fun_plotPCA.R",local = T)
   source("R/fun_LFC.R",local = T)
@@ -14,6 +15,7 @@ server <- function(input,output,session){
   source("R/enrichment_analysis/enrichment_analysis.R", local=T)
   source("R/enrichment_analysis/check_annotation.R", local=T)
   source("R/enrichment_analysis/translation.R", local=T)
+  source("R/enrichment_analysis/server.R", local=T)
   global_Vars <<- reactiveValues()
   
 # Security section ---- 
@@ -2776,84 +2778,85 @@ print("Data Upload")
         print("GO Enrichment Done")
         GO_scenario=0
         # GO_scenario=scenario  # TODO: hiermit ist die Go analyse auf die Kegg analyse angewiesen
-        output$GO_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_GO)})
-
-        global_Vars$GO_EnrichmentRes_GO=EnrichmentRes_GO
-        global_Vars$GO_geneSetChoice_tranlsated=geneSetChoice_tranlsated
-        global_Vars$GO_geneSetChoice=geneSetChoice()
-        global_Vars$GO_OrganismChoice=input$OrganismChoice
-        # This only relevant for ORA
-        if(input$ORA_or_GSE!="GeneSetEnrichment"){
-          global_Vars$GO_UniverseOfGene=input$UniverseOfGene
-          global_Vars$GO_universeSelected_tranlsated=universeSelected_tranlsated
-        }
-        global_Vars$GO_EnrichmentRes_GO_nrow=EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,]
-        global_Vars$GO_EnrichmentRes_GO_result=EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),]
-
-        output$getR_Code_GO <- downloadHandler(
-          filename = function(){
-            paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
-          },
-          content = function(file){
-            envList=list(EnrichmentRes_GO=EnrichmentRes_GO)
-
-            temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-            dir.create(temp_directory)
-
-            write(getPlotCode(GO_scenario), file.path(temp_directory, "Code.R"))
-
-            saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-            zip::zip(
-              zipfile = file,
-              files = dir(temp_directory),
-              root = temp_directory
-            )
-          },
-          contentType = "application/zip"
-        )
-
-        output$SavePlot_GO=downloadHandler(
-          filename = function() { paste("GO_",Sys.time(),input$file_ext_GO,sep="") },
-
-          content = function(file){
-            ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
-
-            on.exit({
-              tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.time(),input$file_ext_GO,sep="") )
-              ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
-              fun_LogIt("### GO ENRICHMENT")
-              # missing to separated between GSEA and ORA
-              # if(input$ORA_or_GSE=="GeneSetEnrichment"){}
-              fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
-              fun_LogIt(message = paste0("**GO ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
-              fun_LogIt(message = paste0("**GO ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
-              fun_LogIt(message = paste0("**GO ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
-              fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,])))
-              fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
-              fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-              fun_LogIt(message = knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),],5),format = "html"))
-
-            })
-          }
-
-
-
-        )
-        output$EnrichmentResults_GO=DT::renderDataTable({DT::datatable(
-          {EnrichmentRes_GO@result},
-          extensions = 'Buttons',
-          options = list(
-            paging = TRUE,
-            searching = TRUE,
-            fixedColumns = TRUE,
-            autoWidth = TRUE,
-            ordering = TRUE,
-            dom = 'Bfrtip',
-            buttons = c('copy', 'csv', 'excel')
-          ),
-          class = "display"
-        )})
-
+        enrichment_analysis_geneset_server("GO", EnrichmentRes_GO, 0)
+      #   output$GO_Enrichment<-renderPlot({clusterProfiler::dotplot(EnrichmentRes_GO)})
+      #
+      #   global_Vars$GO_EnrichmentRes_GO=EnrichmentRes_GO
+      #   global_Vars$GO_geneSetChoice_tranlsated=geneSetChoice_tranlsated
+      #   global_Vars$GO_geneSetChoice=geneSetChoice()
+      #   global_Vars$GO_OrganismChoice=input$OrganismChoice
+      #   # This only relevant for ORA
+      #   if(input$ORA_or_GSE!="GeneSetEnrichment"){
+      #     global_Vars$GO_UniverseOfGene=input$UniverseOfGene
+      #     global_Vars$GO_universeSelected_tranlsated=universeSelected_tranlsated
+      #   }
+      #   global_Vars$GO_EnrichmentRes_GO_nrow=EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,]
+      #   global_Vars$GO_EnrichmentRes_GO_result=EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),]
+      #
+      #   output$getR_Code_GO <- downloadHandler(
+      #     filename = function(){
+      #       paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+      #     },
+      #     content = function(file){
+      #       envList=list(EnrichmentRes_GO=EnrichmentRes_GO)
+      #
+      #       temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+      #       dir.create(temp_directory)
+      #
+      #       write(getPlotCode(GO_scenario), file.path(temp_directory, "Code.R"))
+      #
+      #       saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+      #       zip::zip(
+      #         zipfile = file,
+      #         files = dir(temp_directory),
+      #         root = temp_directory
+      #       )
+      #     },
+      #     contentType = "application/zip"
+      #   )
+      #
+      #   output$SavePlot_GO=downloadHandler(
+      #     filename = function() { paste("GO_",Sys.time(),input$file_ext_GO,sep="") },
+      #
+      #     content = function(file){
+      #       ggsave(file,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
+      #
+      #       on.exit({
+      #         tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.time(),input$file_ext_GO,sep="") )
+      #         ggsave(tmp_filename,plot=clusterProfiler::dotplot(EnrichmentRes_GO),device = gsub("\\.","",input$file_ext_GO))
+      #         fun_LogIt("### GO ENRICHMENT")
+      #         # missing to separated between GSEA and ORA
+      #         # if(input$ORA_or_GSE=="GeneSetEnrichment"){}
+      #         fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
+      #         fun_LogIt(message = paste0("**GO ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
+      #         fun_LogIt(message = paste0("**GO ENRICHMENT** - Chosen Organism (needed for translation): ",input$OrganismChoice))
+      #         fun_LogIt(message = paste0("**GO ENRICHMENT** - The universe of genes was selected to be: ",input$UniverseOfGene, " (",length(universeSelected_tranlsated)," genes)"))
+      #         fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(EnrichmentRes_GO@result[EnrichmentRes_GO@result$p.adjust<0.05,])))
+      #         fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
+      #         fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+      #         fun_LogIt(message = knitr::kable(head(EnrichmentRes_GO@result[order(EnrichmentRes_GO@result$p.adjust,decreasing = F),],5),format = "html"))
+      #
+      #       })
+      #     }
+      #
+      #
+      #
+      #   )
+      #   output$EnrichmentResults_GO=DT::renderDataTable({DT::datatable(
+      #     {EnrichmentRes_GO@result},
+      #     extensions = 'Buttons',
+      #     options = list(
+      #       paging = TRUE,
+      #       searching = TRUE,
+      #       fixedColumns = TRUE,
+      #       autoWidth = TRUE,
+      #       ordering = TRUE,
+      #       dom = 'Bfrtip',
+      #       buttons = c('copy', 'csv', 'excel')
+      #     ),
+      #     class = "display"
+      #   )})
+      #
       }
 
 
@@ -2972,27 +2975,27 @@ print("Data Upload")
     showNotification("Saved!",type = "message", duration = 1)
   })
   
-  observeEvent(input$only2Report_GO,{
-    notificationID<-showNotification("Saving...",duration = 0)
-    tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.time(),".png",sep="") )
-    ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$GO_EnrichmentRes_GO),device = "png")
-    fun_LogIt("### GO ENRICHMENT")
-    fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(global_Vars$GO_geneSetChoice_tranlsated)))
-    fun_LogIt(message = paste0("**GO ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(global_Vars$GO_geneSetChoice)))
-    fun_LogIt(message = paste0("**GO ENRICHMENT** - Chosen Organism (needed for translation): ",global_Vars$GO_OrganismChoice))
-    fun_LogIt(message = paste0("**GO ENRICHMENT** - The universe of genes was selected to be: ",global_Vars$GO_UniverseOfGene, " (",length(global_Vars$GO_universeSelected_tranlsated)," genes)"))
-    fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$GO_EnrichmentRes_GO@result[global_Vars$GO_EnrichmentRes_GO@result$p.adjust<0.05,])))
-    fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
-    fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = knitr::kable(head(global_Vars$GO_EnrichmentRes_GO@result[order(global_Vars$GO_EnrichmentRes_GO@result$p.adjust,decreasing = T),],5),format = "html"))
-    
-    if(isTruthy(input$NotesGO) & !(isEmpty(input$NotesGO))){
-      fun_LogIt("### Personal Notes:")
-      fun_LogIt(message = input$NotesGO)
-    }
-    removeNotification(notificationID)
-    showNotification("Saved!",type = "message", duration = 1)
-  })
+  # observeEvent(input$only2Report_GO,{
+  #   notificationID<-showNotification("Saving...",duration = 0)
+  #   tmp_filename=paste0(getwd(),"/www/",paste("GO_",Sys.time(),".png",sep="") )
+  #   ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$GO_EnrichmentRes_GO),device = "png")
+  #   fun_LogIt("### GO ENRICHMENT")
+  #   fun_LogIt(message = paste0("**GO ENRICHMENT** - GO Enrichment was performed with a gene set of interest of size: ",length(global_Vars$GO_geneSetChoice_tranlsated)))
+  #   fun_LogIt(message = paste0("**GO ENRICHMENT** - Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(global_Vars$GO_geneSetChoice)))
+  #   fun_LogIt(message = paste0("**GO ENRICHMENT** - Chosen Organism (needed for translation): ",global_Vars$GO_OrganismChoice))
+  #   fun_LogIt(message = paste0("**GO ENRICHMENT** - The universe of genes was selected to be: ",global_Vars$GO_UniverseOfGene, " (",length(global_Vars$GO_universeSelected_tranlsated)," genes)"))
+  #   fun_LogIt(message = paste0("**GO ENRICHMENT** - The number of found enriched terms (p.adj <0.05): ",nrow(global_Vars$GO_EnrichmentRes_GO@result[global_Vars$GO_EnrichmentRes_GO@result$p.adjust<0.05,])))
+  #   fun_LogIt(message = paste0("**GO ENRICHMENT** - ![GO ENRICHMENT](",tmp_filename,")"))
+  #   fun_LogIt(message = paste0("**GO ENRICHMENT** - The top 5 terms are the following (sorted by adj. p.val)"))
+  #   fun_LogIt(message = knitr::kable(head(global_Vars$GO_EnrichmentRes_GO@result[order(global_Vars$GO_EnrichmentRes_GO@result$p.adjust,decreasing = T),],5),format = "html"))
+  #
+  #   if(isTruthy(input$NotesGO) & !(isEmpty(input$NotesGO))){
+  #     fun_LogIt("### Personal Notes:")
+  #     fun_LogIt(message = input$NotesGO)
+  #   }
+  #   removeNotification(notificationID)
+  #   showNotification("Saved!",type = "message", duration = 1)
+  # })
   
   observeEvent(input$only2Report_REACTOME,{
     notificationID<-showNotification("Saving...",duration = 0)
