@@ -548,15 +548,15 @@ print("Data Upload")
     }
     
   })
-  output$NextPanel2_ui=renderUI({
-    actionButton(inputId = "NextPanel2",label = "Go to PCA",icon = icon("fas fa-hat-wizard"))
-  })
-  output$NextPanel3_ui=renderUI({
-    actionButton(inputId = "NextPanel3",label = "Go to Volcano",icon = icon("fas fa-mountain"))
-  })
-  output$NextPanel4_ui=renderUI({
-    actionButton(inputId = "NextPanel4",label = "Go to Heatmap",icon = icon("fas fa-thermometer-full"))
-  })
+  # output$NextPanel2_ui=renderUI({
+  #   actionButton(inputId = "NextPanel2",label = "Go to PCA",icon = icon("fas fa-hat-wizard"))
+  # })
+  # output$NextPanel3_ui=renderUI({
+  #   actionButton(inputId = "NextPanel3",label = "Go to Volcano",icon = icon("fas fa-mountain"))
+  # })
+  # output$NextPanel4_ui=renderUI({
+  #   actionButton(inputId = "NextPanel4",label = "Go to Heatmap",icon = icon("fas fa-thermometer-full"))
+  # })
   
   observeEvent(input$NextPanel2,{
     updateTabsetPanel(session, "tabsetPanel1",
