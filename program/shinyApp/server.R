@@ -2367,8 +2367,11 @@ print("Data Upload")
           req(data_input_shiny())
           numericInput(inputId ="psig_threhsold_GSEA" ,
                        label = "adj. p-value threshold",
-                       min=0, max=1, step=0.01,
-                       value = 0.05)
+                       min=0, 
+                       max=1, 
+                       step=0.01,
+                       value = 0.05
+                       )
         })
       }else{
         hide(id = "sample_annotation_types_cmp_GSEA",anim=T)
@@ -2590,16 +2593,6 @@ print("Data Upload")
           if(input$UniverseOfGene=="default"){
             universeSelected_tranlsated=NULL
           }
-
-        if(input$UniverseOfGene=="allPresentGenes_after_pre_process"){
-          req(selectedData_processed())
-          universeSelected=rownames(selectedData_processed()[[input$omicType]]$Matrix)
-          print(paste0("Universe genes untranslated: ",length(universeSelected)))
-          universeSelected_tranlsated <- bitr(universeSelected,
-                                              fromType="ENSEMBL",
-                                              toType="ENTREZID",
-                                              OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-          print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
         }
 
         if(input$UniverseOfGene=="allPresentGenes_before_pre_process"){

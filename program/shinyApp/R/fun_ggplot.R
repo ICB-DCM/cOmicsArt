@@ -1,19 +1,5 @@
 
 getPlotCode <- function(numberOfScenario) {
-  initalString= "# ShinyOmics R Code Download
-# Load necassary packages (if errors please install respective packages)
-library(ggplot2)
-library(ggpubr)
-library(rstudioapi)
-# if not run in RStudio  you need to specify the directory fo the file yourself!
-
-direcoty_of_files=dirname(rstudioapi::getSourceEditorContext()$path)
-envList=readRDS(paste0(direcoty_of_files,'/','Data.rds'))  
-
-list2env(envList,envir = globalenv())
-
-# Happy Adjusting! :)"
-  
   if (numberOfScenario == 1) {
     stringtosave = 'pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
                                   y = pcaData[,input$y_axis_selection],
@@ -220,6 +206,7 @@ list2env(envList,envir = globalenv())
     ylab(input$type_of_data_gene)+
     theme_bw()'
   }
+  ## TODO ensure this remains working with new output from Enrichment, needs a potential update!
   if(numberOfScenario==14){
     stringtosave = 'KEGG_Plot_GSE=clusterProfiler::dotplot(EnrichmentRes_Kegg,split=".sign") +
                       facet_grid(.~.sign)'
@@ -234,5 +221,5 @@ list2env(envList,envir = globalenv())
     stringtosave='REACTOME_Plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME)'
   }
   
-  return(paste0(initalString,"\n",stringtosave))
+  return(paste0(CODE_DOWNLOAD_PREFACE,"\n",stringtosave))
 }

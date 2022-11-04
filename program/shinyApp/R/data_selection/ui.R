@@ -14,7 +14,10 @@ data_selection_sidebar_panel <- sidebarPanel(
     uiOutput("AddGeneSymbols_organism_ui")
   ),
   #uiOutput("AddGeneSymbols_organism_ui"),
-  actionButton(inputId = "refresh1", label = "Do"),
+  actionButton(
+  inputId = "refresh1",
+  label = "Do"
+  ),
   div(class="LineToDistinguish",hr(style = "border-top: 1px solid #000000;")),
   div(class="DataSelection",
       h4("Row selection -  biochemical entities"),
@@ -39,7 +42,10 @@ data_selection_main_panel <- mainPanel(
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("85%", "10%", "5%"),
     NULL,
-    actionButton(inputId = "Reset", label = "Reset"),
+    actionButton(
+    inputId = "Reset", 
+    label = "Reset"
+    ),
     NULL
   ),
   splitLayout(
