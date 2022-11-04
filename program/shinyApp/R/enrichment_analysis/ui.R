@@ -9,7 +9,7 @@ geneset_panel_UI <- function(
     # textOutput("Info", container = pre),
     tabsetPanel(
       tabPanel(
-        title=paste(id_wo_ns, "Enrichment"),
+        title=paste(id_wo_ns, " Enrichment"),
         plotOutput(outputId = ns("EnrichmentPlot")),
         splitLayout(
           style = "border: 1px solid silver:",
@@ -46,7 +46,7 @@ geneset_panel_UI <- function(
           cellWidths = c("70%", "30%"),
           NULL,
           radioGroupButtons(
-            input = ns("file_ext"),
+            inputId = ns("file_ext"),
             label = "File Type:",
             choices = c(".png", ".tiff", ".pdf"),
             selected = ".pdf"
