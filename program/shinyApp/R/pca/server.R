@@ -1,4 +1,4 @@
-pca_Server <- function(id, omicType, row_selection){
+pca_Server <- function(id, omic_type, row_select){
 
   moduleServer(
     id,
@@ -38,7 +38,7 @@ pca_Server <- function(id, omicType, row_selection){
         selectInput(
           inputId = ns("coloring_options"),
           label = "Choose the variable to color the samples after",
-          choices = c(colnames(data_input_shiny()[[omicType]]$sample_table)),
+          choices = c(colnames(data_input_shiny()[[omic_type]]$sample_table)),
           multiple = F # would be cool if true, to be able to merge vars ?!
         )
       })
@@ -47,7 +47,7 @@ pca_Server <- function(id, omicType, row_selection){
         selectInput(
           inputId = ns("PCA_anno_tooltip"),
           label = "Select the anno to be shown at tooltip",
-          choices = c(colnames(data_input_shiny()[[omicType]]$sample_table)),
+          choices = c(colnames(data_input_shiny()[[omic_type]]$sample_table)),
           multiple = F
         )
       })
@@ -56,7 +56,7 @@ pca_Server <- function(id, omicType, row_selection){
         selectInput(
           inputId = ns("EntitieAnno_Loadings"),
           label = "Select the annotype shown at y-axis",
-          choices = c(colnames(data_input_shiny()[[omicType]]$annotation_rows)),
+          choices = c(colnames(data_input_shiny()[[omic_type]]$annotation_rows)),
           multiple = F
         )
       })
@@ -75,7 +75,7 @@ pca_Server <- function(id, omicType, row_selection){
       })
       observeEvent(toListen2PCA(),{
         req(
-          omicType,
+          omic_type,
           input$x_axis_selection,
           input$y_axis_selection,
           input$coloring_options
@@ -83,18 +83,18 @@ pca_Server <- function(id, omicType, row_selection){
 
         print("PCA analysis on pre-selected data")
         customTitle <- paste0(
-          "PCA - ",omicType,"-",
-          paste0("entities:",input$row_selection,collapse = "_"),
+          "PCA - ", omic_type, "-",
+          paste0("entities:",row_select,collapse = "_"),
           "-samples",
           ifelse(any(input$sample_selection!="all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),"")
-          ,"-preprocessing: ",
+          , "-preprocessing: ",
           input$PreProcessing_Procedure
         )
         print(customTitle)
 
         # PCA
         pca <- prcomp(
-          as.data.frame(t(selectedData_processed()[[omicType]]$Matrix)),
+          as.data.frame(t(selectedData_processed()[[omic_type]]$Matrix)),
           center = T,
           scale. = FALSE
         )
@@ -105,7 +105,7 @@ pca_Server <- function(id, omicType, row_selection){
         percentVar <- round(100 * explVar, digits=1)
 
         # Define data for plotting
-        pcaData <- data.frame(pca$x,selectedData_processed()[[omicType]]$sample_table)
+        pcaData <- data.frame(pca$x,selectedData_processed()[[omic_type]]$sample_table)
 
         # Coloring Options
         print(input$coloring_options)
@@ -240,10 +240,10 @@ pca_Server <- function(id, omicType, row_selection){
           df_out_r$global_ID <- rownames(df_out_r)
           df_out_r$chosenAnno <- rownames(df_out_r)
           if(!is.null(input$EntitieAnno_Loadings)){
-            req(data_input_shiny()[[omicType]])
+            req(data_input_shiny()[[omic_type]])
             df_out_r$chosenAnno <- factor(
-              make.unique(as.character(data_input_shiny()[[omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])),
-              levels = make.unique(as.character(data_input_shiny()[[omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings]))
+              make.unique(as.character(data_input_shiny()[[omic_type]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])),
+              levels = make.unique(as.character(data_input_shiny()[[omic_type]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings]))
               )
           }
 
@@ -417,10 +417,10 @@ pca_Server <- function(id, omicType, row_selection){
           )
         LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
         if(!is.null(input$EntitieAnno_Loadings)){
-          req(data_input_shiny()[[omicType]])
+          req(data_input_shiny()[[omic_type]])
           LoadingsDF$entitie=factor(
-            make.unique(as.character(data_input_shiny()[[omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
-            levels = make.unique(as.character(data_input_shiny()[[omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+            make.unique(as.character(data_input_shiny()[[omic_type]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
+            levels = make.unique(as.character(data_input_shiny()[[omic_type]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
             )
         }
 
