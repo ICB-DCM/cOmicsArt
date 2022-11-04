@@ -26,13 +26,13 @@ pca_main_panel <- mainPanel(
   tabsetPanel(
     type = "pills",
     tabPanel(
-      "PCA",
+      title = "PCA",
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         plotlyOutput("PCA_plot") %>% withSpinner(type = 8),
-        textOutput("PCA_plot_Options_selected", container = pre)
+        textOutput(outputId = "PCA_plot_Options_selected", container = pre)
       ),
-      uiOutput("PCA_anno_tooltip_ui"),
+      uiOutput(outputId = "PCA_anno_tooltip_ui"),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
@@ -44,13 +44,14 @@ pca_main_panel <- mainPanel(
       splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-       outputId = "getR_Code_PCA", 
-        label = "Get underlying R code and data",
-        icon = icon("code")
+          outputId = "getR_Code_PCA",
+          label = "Get underlying R code and data",
+          icon = icon("code")
         )
       ),
       splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
           outputId = "SavePlot_pos1",
@@ -71,17 +72,19 @@ pca_main_panel <- mainPanel(
       textAreaInput(
         inputId="NotesPCA",
         label="Notes:",
-        placeholder=NOTES_PlACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+        placeholder=NOTES_PlACEHOLDER,
+        width = "1000px"
+      )%>% helper(type = "markdown", content = "TakingNotesMD_help"),
       helpText(NOTES_HELP)
     ),
     tabPanel(
-      "PCA_Loadings",
+      title = "PCA_Loadings",
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-        plotOutput("PCA_Loadings_plot") %>% withSpinner(type = 8),
-        textOutput("Loadings_plot_Options_selected_out", container = pre)
+        plotOutput(outputId = "PCA_Loadings_plot") %>% withSpinner(type = 8),
+        textOutput(outputId = "Loadings_plot_Options_selected_out", container = pre)
       ),
-      uiOutput("EntitieAnno_Loadings_ui"),
+      uiOutput(outputId = "EntitieAnno_Loadings_ui"),
       sliderInput(
         inputId = "topSlider",
         label = "Top k positive Loadings",
@@ -99,7 +102,8 @@ pca_main_panel <- mainPanel(
         step = 1
       ),
       splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
         NULL,
         actionButton(
           inputId = "only2Report_Loadings",
@@ -108,7 +112,8 @@ pca_main_panel <- mainPanel(
         )
       ),
       splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
           outputId = "getR_Code_Loadings",
@@ -117,7 +122,8 @@ pca_main_panel <- mainPanel(
         )
       ),
       splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
         outputId = "SavePlot_Loadings", 
@@ -126,7 +132,8 @@ pca_main_panel <- mainPanel(
         )
       ),
       splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
         NULL,
         radioGroupButtons(
           inputId = "file_ext_Loadings", 
@@ -137,14 +144,16 @@ pca_main_panel <- mainPanel(
       )
     ),
     tabPanel(
-      "Scree_Plot",
+      title = "Scree_Plot",
       splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
         plotlyOutput("Scree_Plot"),
-        textOutput("Scree_Plot_Options_selected_out", container = pre)
+        textOutput(outputId = "Scree_Plot_Options_selected_out", container = pre)
       ),
       splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
         NULL,
         actionButton(
           inputId = "only2Report_Scree_Plot",
@@ -153,25 +162,28 @@ pca_main_panel <- mainPanel(
         )
       ),
       splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
           outputId = "getR_Code_Scree_Plot",
           label = "Get underlying R code and data",
-          icon = icon("code")
+          icon = icon(name = "code")
         )
       ),
       splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-        outputId = "SavePlot_Scree", 
-        label = "Save plot", 
-        class = "btn-info"
+          outputId = "SavePlot_Scree",
+          label = "Save plot",
+          class = "btn-info"
         )
       ),
       splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
         NULL,
         radioGroupButtons(
           inputId = "file_ext_Scree", 
@@ -186,7 +198,7 @@ pca_main_panel <- mainPanel(
 
 
 pca_panel <- tabPanel(
-  "PCA",  # can be renamed after UMAP is added
+  title = "PCA",  # can be renamed after UMAP is added
   id = "pca",
   fluid = T,
   h4("PCA"),

@@ -13,11 +13,11 @@ pre_processing_sidebar_panel <- sidebarPanel(
     ),
     selected = "none"
   ),
-  uiOutput("DESeq_formula_ui"),
+  uiOutput(outputId = "DESeq_formula_ui"),
   actionButton(
     inputId = "Do_preprocessing",
     label = "Pre-Process",
-    icon("fas fa-laptop-code")
+    icon(name = "fas fa-laptop-code")
   ),
   hr(style = "border-top: 1px solid #000000;")
 )
@@ -28,20 +28,20 @@ pre_processing_main_panel <- mainPanel(
   # Statistics to the data
   helpText("general statistics to the input data, stuff like dimensions"),
   # hidden(div(id = 'Spinner_Statisitcs_Data', plotOutput("Statisitcs_Data")%>% withSpinner(type=8))),
-  htmlOutput("Statisitcs_Data") %>% withSpinner(type = 8),
-  HTML("<br>"),
-  HTML("<br>"),
+  htmlOutput(outputId = "Statisitcs_Data") %>% withSpinner(type = 8),
+  HTML(text = "<br>"),
+  HTML(text = "<br>"),
   splitLayout(
     cellWidths = c("25%", "25%", "25%"),
-    uiOutput("NextPanel2_ui"),
-    uiOutput("NextPanel3_ui"),
-    uiOutput("NextPanel4_ui")
+    uiOutput(outputId = "NextPanel2_ui"),
+    uiOutput(outputId = "NextPanel3_ui"),
+    uiOutput(outputId = "NextPanel4_ui")
   )
 )
 
 
 pre_processing_panel <- tabPanel(
-  "Pre-processing",
+  title = "Pre-processing",
   id = "pre_processing_panel",
   fluid = T,
   h4("Data Pre-processing") %>% helper(type = "markdown", content = "PreProcessing_help"),

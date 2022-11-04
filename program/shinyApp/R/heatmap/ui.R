@@ -3,24 +3,24 @@ heatmap_sidebar <- sidebarPanel(
   #########################################
   # Heatmap
   #########################################
-  uiOutput("row_selection_options_ui"),
-  uiOutput("LFC_toHeatmap_ui"),
+  uiOutput(outputId = "row_selection_options_ui"),
+  uiOutput(outputId = "LFC_toHeatmap_ui"),
   h5("Further row selection (LFC based)"),
-  uiOutput("TopK_ui"),
+  uiOutput(outputId = "TopK_ui"),
   switchInput(
     inputId = "Selection_show_LFC",
     label = "show options (LFC-related)",
     inline = T,
     size = "mini"
   ),
-  uiOutput("sample_annotation_types_cmp_heatmap_ui"),
-  uiOutput("Groups2Compare_ref_heatmap_ui"),
-  uiOutput("Groups2Compare_treat_heatmap_ui"),
-  uiOutput("psig_threhsold_heatmap_ui"),
+  uiOutput(outputId = "sample_annotation_types_cmp_heatmap_ui"),
+  uiOutput(outputId = "Groups2Compare_ref_heatmap_ui"),
+  uiOutput(outputId = "Groups2Compare_treat_heatmap_ui"),
+  uiOutput(outputId = "psig_threhsold_heatmap_ui"),
   actionButton(
     inputId = "Do_Heatmap",
     label = "Do Heatmap to display",
-    icon("fas fa-laptop-code")
+    icon(name = "fas fa-laptop-code")
   ),
   hr(style = "border-top: 1px solid #000000;"),
   h5("Aesthetics"),
@@ -30,11 +30,11 @@ heatmap_sidebar <- sidebarPanel(
     size = "mini", 
     value = T
   ),
-  uiOutput("anno_options_ui"),
-  uiOutput("row_anno_options_ui"),
-  uiOutput("rowWiseScaled_ui"),
-  uiOutput("cluster_cols_ui"),
-  uiOutput("cluster_rows_ui"),
+  uiOutput(outputId = "anno_options_ui"),
+  uiOutput(outputId = "row_anno_options_ui"),
+  uiOutput(outputId = "rowWiseScaled_ui"),
+  uiOutput(outputId = "cluster_cols_ui"),
+  uiOutput(outputId = "cluster_rows_ui"),
   hr(style = "border-top: 1px solid #858585;"),
   h5("Further row selection (annotation based)"),
   switchInput(
@@ -44,11 +44,10 @@ heatmap_sidebar <- sidebarPanel(
     size = "mini",
     value = F
   ),
-  uiOutput("rowAnno_based_ui"),
-  uiOutput("row_anno_factor_ui"),
-  uiOutput("anno_options_heatmap_ui"),
-  uiOutput("row_anno_options_heatmap_ui")
-  # hr(style = "border-top: 1px solid #858585;")
+  uiOutput(outputId = "rowAnno_based_ui"),
+  uiOutput(outputId = "row_anno_factor_ui"),
+  uiOutput(outputId = "anno_options_heatmap_ui"),
+  uiOutput(outputId = "row_anno_options_heatmap_ui")
 )
 
 
@@ -56,12 +55,12 @@ heatmap_main <- mainPanel(
   id = "main_heatmap",
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("100%"),
-    # plotOutput("PCA_final_gg"),
-    plotOutput("HeatmapPlot")
-    # %>% withSpinner(type=8,color = getOption("spinner.color", default = "#b8cee0"))
+    plotOutput(
+      outputId = "HeatmapPlot"
+    ) %>% withSpinner(type=8,color = getOption("spinner.color", default = "#b8cee0"))
   ),
-  textOutput("Options_selected_out_3", container = pre) %>% withSpinner(type = 8),
-  uiOutput("row_label_options_ui"),
+  textOutput(outputId = "Options_selected_out_3", container = pre) %>% withSpinner(type = 8),
+  uiOutput(outputId = "row_label_options_ui"),
   numericInput(
     inputId = "row_label_no",
     label = "Threshold upon which explicit labels are shown",
@@ -70,8 +69,8 @@ heatmap_main <- mainPanel(
     value = 25
   ),
   downloadButton(
-  outputId = "SaveGeneList_Heatmap", 
-  label = "Save genes shown in Heatmap as list"
+    outputId = "SaveGeneList_Heatmap",
+    label = "Save genes shown in Heatmap as list"
   ),
   actionButton(
     inputId = "SendHeatmap2Enrichment",
@@ -93,16 +92,16 @@ heatmap_main <- mainPanel(
     downloadButton(
       outputId = "getR_Code_Heatmap",
       label = "Get underlying R code and data",
-      icon = icon("code")
+      icon = icon(name = "code")
     )
   ),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
     downloadButton(
-    outputId = "SavePlot_Heatmap", 
-    label = "Save plot", 
-    class = "btn-info"
+      outputId = "SavePlot_Heatmap",
+      label = "Save plot",
+      class = "btn-info"
     )
   ),
   splitLayout(
@@ -125,7 +124,7 @@ heatmap_main <- mainPanel(
 
 
 heatmap_panel <- tabPanel(
-  "Heatmap",
+  title = "Heatmap",
   id = "heatmap",
   fluid = T,
   h4("Heatmap"),

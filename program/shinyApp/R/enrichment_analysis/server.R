@@ -19,7 +19,7 @@ enrichment_analysis_geneset_server <- function(id, result, scenario){
             envList=list(EnrichmentRes=result)
             # assign unique name to result for saving later
             result_name <- paste("EnrichmentRes", id, sep="_")
-            names(envList) = result_name
+            names(envList) <- result_name
 
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
@@ -38,11 +38,12 @@ enrichment_analysis_geneset_server <- function(id, result, scenario){
 
         # Saving Plot
         output$SavePlot=downloadHandler(
-          filename = function() { paste(id,Sys.time(),input$file_ext,sep=" ") },
-
+          filename = function() {
+            paste(id,Sys.time(),input$file_ext,sep=" ")
+          },
           content = function(file){
             ggsave(
-              file,
+              filename = file,
               plot=clusterProfiler::dotplot(result),
               device = gsub("\\.","",input$file_ext)
             )
@@ -52,7 +53,7 @@ enrichment_analysis_geneset_server <- function(id, result, scenario){
 
         # result table
         output$EnrichmentTable=DT::renderDataTable({DT::datatable(
-          {result@result},
+          data = {result@result},
           extensions = 'Buttons',
           options = list(
             paging = TRUE,
@@ -68,9 +69,12 @@ enrichment_analysis_geneset_server <- function(id, result, scenario){
 
         # download section
         observeEvent(input$only2Report,{
-          notificationID<-showNotification("Saving...",duration = 0)
-          tmp_filename=paste0(getwd(),"/www/",paste(id,Sys.time(),".png",sep="_"))
-          ggsave(tmp_filename,plot=clusterProfiler::dotplot(result),device = "png")
+          notificationID <- showNotification(ui = "Saving...",duration = 0)
+          tmp_filename <- paste0(getwd(),"/www/", paste(id,Sys.time(),".png",sep="_"))
+          ggsave(
+            filename = tmp_filename,
+            plot = clusterProfiler::dotplot(result),device = "png"
+          )
           fun_LogIt(message = paste("###", id, "ENRICHMENT", sep=" "))
           fun_LogIt(message = paste("-", id, "Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
           fun_LogIt(message = paste("- Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
@@ -86,11 +90,11 @@ enrichment_analysis_geneset_server <- function(id, result, scenario){
             format = "html"
           ))
           if(isTruthy(input$Notes) & !(isEmpty(input$Notes))){
-            fun_LogIt("### Personal Notes:")
+            fun_LogIt(message = "### Personal Notes:")
             fun_LogIt(message = input$Notes)
           }
           removeNotification(notificationID)
-          showNotification("Saved!",type = "message", duration = 1)
+          showNotification(ui = "Saved!",type = "message", duration = 1)
         })
         # browser()
       }

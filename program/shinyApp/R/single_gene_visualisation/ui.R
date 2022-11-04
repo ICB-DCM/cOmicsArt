@@ -1,12 +1,12 @@
 single_gene_visualisation_sidebar <- sidebarPanel(
   id = "sidebar_single_gene_visualisation",
-  uiOutput("type_of_data_gene_ui"),
-  uiOutput("type_of_visualitsation_ui"),
-  uiOutput("Select_GeneAnno_ui"),
-  uiOutput("Select_Gene_ui"),
+  uiOutput(outputId = "type_of_data_gene_ui"),
+  uiOutput(outputId = "type_of_visualitsation_ui"),
+  uiOutput(outputId = "Select_GeneAnno_ui"),
+  uiOutput(outputId = "Select_Gene_ui"),
   helpText("Note: if you choose a group rather than a single entitie, the values will be summarized by taking the median"),
-  uiOutput("accross_condition_ui"),
-  actionButton("singleGeneGo", label = "Get single gene visualisation"),
+  uiOutput(outputId = "accross_condition_ui"),
+  actionButton(inputId = "singleGeneGo", label = "Get single gene visualisation"),
   hr(style = "border-top: 1px solid #858585;")
 )
 
@@ -14,12 +14,15 @@ single_gene_visualisation_sidebar <- sidebarPanel(
 single_gene_visualisation_main <- mainPanel(
   id = "main_single_gene_visualisation",
   splitLayout(
-    style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-    plotOutput("SingleGenePlot"), NULL
+    style = "border: 1px solid silver:",
+    cellWidths = c("50%", "50%"),
+    plotOutput(outputId = "SingleGenePlot"),
+    NULL
   ),
-  uiOutput("chooseComparisons_ui"),
+  uiOutput(outputId = "chooseComparisons_ui"),
   splitLayout(
-    style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+    style = "border: 1px solid silver:",
+    cellWidths = c("70%", "30%"),
     NULL,
     actionButton(
       inputId = "only2Report_SingleEntities",
@@ -28,18 +31,24 @@ single_gene_visualisation_main <- mainPanel(
     ),
   ),
   splitLayout(
-    style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+    style = "border: 1px solid silver:",
+    cellWidths = c("70%", "30%"),
     NULL,
     downloadButton(
-      "getR_Code_SingleEntities",
+      outputId = "getR_Code_SingleEntities",
       label = "Get underlying R code and data",
       icon = icon("code")
     )
   ),
   splitLayout(
-    style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+    style = "border: 1px solid silver:",
+    cellWidths = c("70%", "30%"),
     NULL,
-    downloadButton("SavePlot_singleGene", label = "Save plot", class = "btn-info")
+    downloadButton(
+      outputId = "SavePlot_singleGene",
+      label = "Save plot",
+      class = "btn-info"
+    )
   ),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -54,14 +63,16 @@ single_gene_visualisation_main <- mainPanel(
   textAreaInput(
     inputId="NotesSingleEntities",
     label="Notes:",
-    placeholder=NOTES_PlACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+    placeholder=NOTES_PlACEHOLDER,
+    width = "1000px"
+  )%>% helper(type = "markdown", content = "TakingNotesMD_help"),
   helpText(NOTES_HELP)
 
 )
 
 
 single_gene_visualisation_panel <- tabPanel(
-  "Single Gene Visualisations",
+  title = "Single Gene Visualisations",
   id = "single_gene_visualisation",
   fluid = TRUE,
   h4("Single Gene Visualisations"),
