@@ -12,37 +12,37 @@ gene_set_enrichment <- function(
   geneSetChoice_tranlsated <<- geneSetChoice_tranlsated[!duplicated(names(geneSetChoice_tranlsated))]
   
   EnrichmentRes_Kegg <- clusterProfiler::gseKEGG(
-    geneList=geneSetChoice_tranlsated,
-    keyType="ncbi-geneid",  # equal to ENTREZID
-    organism=ifelse(input$OrganismChoice=="hsa","hsa","mmu"),
-    minGSSize=3,
-    maxGSSize=800,
-    pvalueCutoff=0.05,
-    verbose=TRUE,
-    pAdjustMethod="BH"
+    geneList = geneSetChoice_tranlsated,
+    keyType = "ncbi-geneid",  # equal to ENTREZID
+    organism = ifelse(input$OrganismChoice=="hsa","hsa","mmu"),
+    minGSSize = 3,
+    maxGSSize = 800,
+    pvalueCutoff = 0.05,
+    verbose = TRUE,
+    pAdjustMethod = "BH"
   )
   EnrichmentRes_GO <- clusterProfiler::gseGO(
-    gene=geneSetChoice_tranlsated,
-    ont=input$ontologyForGO,
-    keyType="ENTREZID",
-    minGSSize=3,
-    maxGSSize=800,
-    pvalueCutoff=0.05,
-    verbose=TRUE,
-    OrgDb=ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"),
-    pAdjustMethod="none"  # TODO: discuss
+    gene = geneSetChoice_tranlsated,
+    ont = input$ontologyForGO,
+    keyType = "ENTREZID",
+    minGSSize = 3,
+    maxGSSize = 800,
+    pvalueCutoff = 0.05,
+    verbose = TRUE,
+    OrgDb = ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"),
+    pAdjustMethod = "none"  # TODO: discuss
   )
   EnrichmentRes_REACTOME <- NULL
 
   # TODO: add correct buttons and Tabs with Visualisation for all Pathways
   # Hallmarks
   Hallmarkset <- msigdbr(
-    species="Mus musculus",
-    category="H",
+    species = "Mus musculus",
+    category = "H",
   )%>% dplyr::select(gs_name, entrez_gene)
   EnrichmentRes_Hallmarks <- GSEA(
     geneSetChoice_tranlsated,
-    TERM2GENE = Hallmarkset,
+    TERM2GENE  =  Hallmarkset,
     verbose = FALSE,
     eps = 0,
     pAdjustMethod = 'bonferroni',
@@ -50,8 +50,8 @@ gene_set_enrichment <- function(
   )
   # C1
   C1set <- msigdbr(
-      species="Mus musculus",
-      category="C1",
+      species = "Mus musculus",
+      category = "C1",
   )%>% dplyr::select(gs_name, entrez_gene)
   EnrichmentRes_C1 <- GSEA(
       geneSetChoice_tranlsated,
@@ -63,8 +63,8 @@ gene_set_enrichment <- function(
     )
   # C2
   C2set <- msigdbr(
-      species="Mus musculus",
-      category="C2",
+      species = "Mus musculus",
+      category = "C2",
   )%>% dplyr::select(gs_name, entrez_gene)
   EnrichmentRes_C2 <- GSEA(
       geneSetChoice_tranlsated,
@@ -76,8 +76,8 @@ gene_set_enrichment <- function(
   )
   # C3
   C3set <- msigdbr(
-      species="Mus musculus",
-      category="C3",
+      species = "Mus musculus",
+      category = "C3",
   )%>% dplyr::select(gs_name, entrez_gene)
   EnrichmentRes_C3 <- GSEA(
       geneSetChoice_tranlsated,
@@ -89,8 +89,8 @@ gene_set_enrichment <- function(
   )
   # C4
   C4set <- msigdbr(
-      species="Mus musculus",
-      category="C4",
+      species = "Mus musculus",
+      category = "C4",
   )%>% dplyr::select(gs_name, entrez_gene)
   EnrichmentRes_C4 <- GSEA(
       geneSetChoice_tranlsated,
@@ -102,8 +102,8 @@ gene_set_enrichment <- function(
   )
   # C5
   C5set <- msigdbr(
-      species="Mus musculus",
-      category="C5",
+      species = "Mus musculus",
+      category = "C5",
   )%>% dplyr::select(gs_name, entrez_gene)
   EnrichmentRes_C5 <- GSEA(
       geneSetChoice_tranlsated,
@@ -115,8 +115,8 @@ gene_set_enrichment <- function(
   )
   # C6
   C6set <- msigdbr(
-      species="Mus musculus",
-      category="C6",
+      species = "Mus musculus",
+      category = "C6",
   )%>% dplyr::select(gs_name, entrez_gene)
   EnrichmentRes_C6 <- GSEA(
       geneSetChoice_tranlsated,
@@ -128,8 +128,8 @@ gene_set_enrichment <- function(
   )
   # C7 ImmuneSigDB subset
   C7set <- msigdbr(
-    species="Mus musculus",
-    category="C7",
+    species = "Mus musculus",
+    category = "C7",
     subcategory = "IMMUNESIGDB"
   )%>% dplyr::select(gs_name, entrez_gene)
   EnrichmentRes_C7 <- GSEA(
@@ -142,8 +142,8 @@ gene_set_enrichment <- function(
   )
   # C8
   C8set <- msigdbr(
-      species="Mus musculus",
-      category="C8",
+      species = "Mus musculus",
+      category = "C8",
   )%>% dplyr::select(gs_name, entrez_gene)
   EnrichmentRes_C8 <- GSEA(
       geneSetChoice_tranlsated,
@@ -156,18 +156,18 @@ gene_set_enrichment <- function(
 
 
   return(list(
-    "EnrichmentRes_KEGG"=EnrichmentRes_Kegg,
-    "EnrichmentRes_GO"=EnrichmentRes_GO,
-    "EnrichmentRes_REACTOME"=EnrichmentRes_REACTOME,
-    "EnrichmentRes_Hallmarks"=EnrichmentRes_Hallmarks,
-    "EnrichmentRes_C1"=EnrichmentRes_C1,
-    "EnrichmentRes_C2"=EnrichmentRes_C2,
-    "EnrichmentRes_C3"=EnrichmentRes_C3,
-    "EnrichmentRes_C4"=EnrichmentRes_C4,
-    "EnrichmentRes_C5"=EnrichmentRes_C5,
-    "EnrichmentRes_C6"=EnrichmentRes_C6,
-    "EnrichmentRes_C7"=EnrichmentRes_C7,
-    "EnrichmentRes_C8"=EnrichmentRes_C8,
-    "geneSetChoice_tranlsated"=geneSetChoice_tranlsated
+    "EnrichmentRes_KEGG" = EnrichmentRes_Kegg,
+    "EnrichmentRes_GO" = EnrichmentRes_GO,
+    "EnrichmentRes_REACTOME" = EnrichmentRes_REACTOME,
+    "EnrichmentRes_Hallmarks" = EnrichmentRes_Hallmarks,
+    "EnrichmentRes_C1" = EnrichmentRes_C1,
+    "EnrichmentRes_C2" = EnrichmentRes_C2,
+    "EnrichmentRes_C3" = EnrichmentRes_C3,
+    "EnrichmentRes_C4" = EnrichmentRes_C4,
+    "EnrichmentRes_C5" = EnrichmentRes_C5,
+    "EnrichmentRes_C6" = EnrichmentRes_C6,
+    "EnrichmentRes_C7" = EnrichmentRes_C7,
+    "EnrichmentRes_C8" = EnrichmentRes_C8,
+    "geneSetChoice_tranlsated" = geneSetChoice_tranlsated
   ))
 }
