@@ -1,5 +1,5 @@
 server <- function(input,output,session){
-  # TODO source from extra file (potentially C.R?)
+  # TODO source from extra file 
   source("R/fun_filterRNA.R",local = T)
   source("R/fun_plotPCA.R",local = T)
   source("R/fun_LFC.R",local = T)
@@ -28,7 +28,6 @@ server <- function(input,output,session){
     }else{
       print("Mööp")
     }
-    
   })
   
 # Load external Data ----
@@ -37,19 +36,20 @@ server <- function(input,output,session){
   print("Hello Shiny")
   
   #### Clean Up
-  # list.files(pattern = "mmu.*.png")
+
   # create www folder if not present
   if(dir.exists("www")){
     setwd("www")
     print(list.files())
-    file.remove(setdiff(setdiff(list.files(path="."),list.files(path=".",pattern = ".csv")),list.files(path=".",pattern = ".RDS")))
+    file.remove(setdiff(setdiff(list.files(path="."),
+                                list.files(path=".",pattern = ".csv")),
+                        list.files(path=".",pattern = ".RDS")))
     print("Removed old Report files for fresh start")
     setwd("..")
   }
   
   observe_helpers()
 # Guide ----
-  #guide$init()$start()
   
   observeEvent(input$guide, {
     print("Jip")
@@ -59,11 +59,12 @@ server <- function(input,output,session){
   
 # Download Report pdf ----
   DownloadReport_server("DownloadTestModule")
- 
-  #session$allowReconnect(TRUE) # To allow Reconnection wiht lost Session, potential
-  # security issue + more than one user issues potentially ?! Thats why further security
+  # To allow Reconnection wiht lost Session, potential
+  # security issue + more than one user issues potentially ?!
+  # Thats why further security
+  # session$allowReconnect(TRUE) 
   # what if complete new start (should have button for this ?!)
-  #session$allowReconnect("force") # To test locally
+  # session$allowReconnect("force") # To test locally
   
 # Layout upon Start ----
   hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
@@ -75,28 +76,40 @@ server <- function(input,output,session){
   
 ## Quit App Button ----
   observeEvent(input$Quit_App,{
-    showModal(modalDialog(
-      tags$h4('You can download the complete report by clicking on the link'),
-      footer=tagList(
-        a(href="Report.html", "Download report", download=NA, target="_blank"),
-        actionButton(inputId = "Done",label = "Done"),
-        modalButton('Cancel')
+    showModal(
+      modalDialog(
+        tags$h4('You can download the complete report by clicking on the link'),
+        footer=tagList(
+          a(
+            href="Report.html", 
+            "Download report", 
+            download=NA, 
+            target="_blank"
+            ),
+          actionButton(
+            inputId = "Done",
+            label = "Done"
+            ),
+          modalButton('Cancel')
+        )
+        )
       )
-    ))
   })
   
   observeEvent(input$Done,{
     removeModal()
-    show_toast("Good Bye!",
-               type = "success",
-               position = "top",
-               timerProgressBar = FALSE,
-               width = "100%")
+    show_toast(
+      title = "Good Bye!",
+      type = "success",
+      position = "top",
+      timerProgressBar = FALSE,
+      width = "100%"
+      )
     shiny::stopApp()
   })
   
 # Data Upload + checks ----
-print("Data Upload")
+  print("Data Upload")
 ## Ui Section ----
   
   observeEvent(input$Reset,{
@@ -109,81 +122,124 @@ print("Data Upload")
   })
   
   output$data_matrix1_ui=renderUI({
-    shiny::fileInput(inputId = "data_matrix1",
-                     label = HTML('Upload data Matrix <br/> (rows entities, cols samples) <br/> <a href="airway-read-counts-LS.csv"> Download example data (Transcriptomics, human) </a>'),
-                     accept = c(".csv"),
-                     width = "80%")
+    shiny::fileInput(
+      inputId = "data_matrix1",
+      label = HTML('Upload data Matrix <br/>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a>'),
+      accept = c(".csv"),
+      width = "80%")
   })
   output$data_sample_anno1_ui=renderUI({
-    shiny::fileInput("data_sample_anno1",
-                     HTML('Upload sample Annotation <br/> (rows must be samples)<br/> <a href="airway-sample-sheet-LS.csv"> Download example data </a>'),
-                     accept = c(".csv"),
-                     width = "80%")
+    shiny::fileInput(
+      inputId = "data_sample_anno1",
+      label = HTML('Upload sample Annotation <br/>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv">Download example data</a>'),
+      accept = c(".csv"),
+      width = "80%")
   })
   output$data_row_anno1_ui=renderUI({
-    shiny::fileInput("data_row_anno1",
-                     HTML('Upload entities Annotation Matrix <br/> (rows must be entities)<br/> <a href="airway-entitie_description-LS.csv"> Download example data </a>'),
-                     accept = c(".csv"),
-                     width = "80%")
+    shiny::fileInput(
+      inputId = "data_row_anno1",
+      label = HTML('Upload entities Annotation Matrix <br/>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a>'),
+      accept = c(".csv"),
+      width = "80%")
   })
   output$data_preDone_ui=renderUI({
-    shiny::fileInput("data_preDone",
-                     HTML('Load precompiled data <br/> (saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data </a>'),
-                     accept = ".RDS",
-                     width = "80%")
+    shiny::fileInput(
+      inputId = "data_preDone",
+      label = HTML('Load precompiled data <br/>(saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data</a>'),
+      accept = ".RDS",
+      width = "80%"
+      )
   })
   output$SaveInputAsList=downloadHandler(
    filename = function() {
-      paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep="") },
+      paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep="")},
     content = function(file){
-      saveRDS(data_input_shiny(),file)
+      saveRDS(
+        object = data_input_shiny(),
+        file = file
+        )
     }
   )
   output$metadataInput_ui=renderUI({
-    shiny::fileInput("metadataInput",
-                     "Upload your Meta Data Sheet (currently replaces sample annotation",
-                     accept = c(".xlsx"),buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),width = "100%")
+    shiny::fileInput(
+      inputId = "metadataInput",
+      label = "Upload your Meta Data Sheet (currently replaces sample annotation",
+      accept = c(".xlsx"),
+      buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),
+      width = "100%"
+      )
   })
   
   observeEvent(input$omicType,{
     if(input$omicType=="Transcriptomics"){
       output$AddGeneSymbols_ui=renderUI({
-        checkboxInput(inputId = "AddGeneSymbols", label="Adding gene Annotation?",value=F)
+        checkboxInput(
+          inputId = "AddGeneSymbols",
+          label="Adding gene Annotation?",
+          value=F
+          )
         
       })
       output$AddGeneSymbols_organism_ui=renderUI({
-        selectInput(inputId = "AddGeneSymbols_organism", 
-                    label="Which Organisms?",
-                    choices=c("hsapiens","mus_musculus"),
-                    selected = "hsapiens")
-        
+        selectInput(
+          inputId = "AddGeneSymbols_organism",
+          label="Which Organisms?",
+          choices=c("hsapiens","mus_musculus"),
+          selected = "hsapiens"
+          )
       })
     }else{
       output$AddGeneSymbols_ui=NULL
       output$AddGeneSymbols_organism_ui=NULL
     }
-
   })
   
 ## Upload visual inspection ----
   
   observeEvent(input$DoVisualDataInspection,{
     if(isTruthy(input$data_preDone)){
-      output$DataMatrix_VI_Info=renderText({"Visual Inspection only for primary data, not for precompiled set possible!"})
+      output$DataMatrix_VI_Info=renderText({
+        "Visual Inspection only for primary data, not for precompiled set possible!"
+        })
       req(F)
     }
-    if(!(isTruthy(input$data_matrix1) & isTruthy(input$data_sample_anno1) & isTruthy(input$data_row_anno1))){
-      output$DataMatrix_VI_Info=renderText("The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!")
+    if(!(isTruthy(input$data_matrix1) & 
+         isTruthy(input$data_sample_anno1) & 
+         isTruthy(input$data_row_anno1))){
+      output$DataMatrix_VI_Info=renderText(
+        "The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!"
+        )
     }else{
-     Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F)
-     output$DataMatrix_VI=DT::renderDataTable({DT::datatable(Matrix)})
+     Matrix=read.csv(
+       file = input$data_matrix1$datapath,
+       header = T,
+       row.names = 1,
+       check.names = F
+       )
+     output$DataMatrix_VI=DT::renderDataTable({
+       DT::datatable(data = Matrix)
+       })
      output$DataMatrix_VI_INFO=renderText({"Matrix:"})
-     sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1,check.names = F)
-     output$SampleMatrix_VI=DT::renderDataTable({DT::datatable(sample_table)})
+     sample_table=read.csv(
+       file = input$data_sample_anno1$datapath,
+       header = T,
+       row.names = 1,
+       check.names = F
+       )
+     output$SampleMatrix_VI=DT::renderDataTable({
+       DT::datatable(data = sample_table)
+       })
      output$SampleMatrix_VI_INFO=renderText({"Sample table:"})
      
-     annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F)
-     output$EntitieMatrix_VI=DT::renderDataTable({DT::datatable(annotation_rows)})
+     annotation_rows=read.csv(
+       file = input$data_row_anno1$datapath,
+       header = T,
+       row.names = 1,
+       check.names = F
+       )
+     output$EntitieMatrix_VI=DT::renderDataTable({
+       DT::datatable(data = annotation_rows)
+       })
      output$EntitieMatrix_VI_INFO=renderText({"Entitie table:"})
      
      ## Do some checking
