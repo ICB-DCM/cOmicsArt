@@ -245,7 +245,8 @@ server <- function(input,output,session){
      ## Do some checking
      snippetYes="<font color=\"#00851d\"><b>Yes</b></font>"
      snippetNo= "<font color=\"#ab020a\"><b>No</b></font>"
-     output$OverallChecks=renderText({"Some overall Checks are running run...\n
+     output$OverallChecks=renderText({
+       "Some overall Checks are running run...\n
        Rownames of Matrix are the same as rownames of entitie table ...\n
        Colnames of Matrix are same as rownames of sample table ... \n
        Matrix has no na ...\n
@@ -259,6 +260,7 @@ server <- function(input,output,session){
      check3=ifelse(any(is.na(Matrix)==T),snippetNo,snippetYes)
      check4=ifelse(any(is.na(sample_table)==T),snippetNo,snippetYes)
      check5=ifelse(any(is.na(annotation_rows)==T),snippetNo,snippetYes)
+     
      if(check5==snippetNo){
        # Indicate columns with NA
        colsWithNa=numeric()
@@ -270,7 +272,8 @@ server <- function(input,output,session){
        check5=paste0(snippetNo," Following columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
      }
      
-     output$OverallChecks=renderText({paste0("Some overall Checks are running run ...\n
+     output$OverallChecks=renderText({
+       paste0("Some overall Checks are running run ...\n
        Rownames of Matrix are the same as rownames of entitie table ",check1,"\n
        Colnames of Matrix are same as rownames of sample table ",check2," \n
        Matrix has no na ",check3,"\n
@@ -286,28 +289,46 @@ server <- function(input,output,session){
   data_input<-list()
   data_output<-list()
   observeEvent(input$refresh1,{
-    omicType_selected=input$omicType
-    fun_LogIt("## Data Input")
-    fun_LogIt(paste0("**DataInput** - Uploaded Omic Type: ",input$omicType))
+    omicType_selected = input$omicType
+    fun_LogIt(message= "## Data Input")
+    fun_LogIt(
+      message = paste0("**DataInput** - Uploaded Omic Type: ",input$omicType)
+      )
     
-    if(!(isTruthy(input$data_preDone) |(isTruthy(input$data_matrix1)&isTruthy(input$data_sample_anno1)&isTruthy(input$data_row_anno1)))){
+    if(!(isTruthy(input$data_preDone) | 
+         (isTruthy(input$data_matrix1) & 
+          isTruthy(input$data_sample_anno1) & 
+          isTruthy(input$data_row_anno1)))){
       output$debug=renderText("The Upload has failed, or you haven't uploaded anything yet")
     }else{
-      if(any(names(data_input_shiny())==omicType_selected)){
-        show_toast(title = paste0(input$omicType,"Data Upload"),text = paste0(input$omicType,"-data upload was successful"),position = "top",timer = 1500,timerProgressBar = T)
-        output$debug=renderText({"<font color=\"#00851d\"><b>Upload successful</b></font>"})
+      if(any(names(data_input_shiny()) == omicType_selected)){
+        show_toast(
+          title = paste0(input$omicType,"Data Upload"),
+          text = paste0(input$omicType,"-data upload was successful"),
+          position = "top",
+          timer = 1500,
+          timerProgressBar = T
+          )
+        output$debug=renderText({
+          "<font color=\"#00851d\"><b>Upload successful</b></font>"
+          })
         if(isTruthy(input$data_preDone)){
           # precomplied set used
-          fun_LogIt(paste0("**DataInput** - The used data was precompiled. Filename: \n\t",input$data_preDone$name))
+          fun_LogIt(
+            message = paste0("**DataInput** - The used data was precompiled. Filename: \n\t",input$data_preDone$name)
+            )
         }else{
-          # 3 sets uploaded # bit harder to get to actual data path... TO DO
-          fun_LogIt(paste0("The following data was used: \n\t",input$data_matrix1$name,"\n\t",input$data_sample_anno1$name,"\n\t",input$data_row_anno1$name))
+          fun_LogIt(
+            message = paste0("The following data was used: \n\t",input$data_matrix1$name,"\n\t",input$data_sample_anno1$name,"\n\t",input$data_row_anno1$name)
+            )
         }
        
         showTab(inputId = "tabsetPanel1", target = "Pre-processing")
       }else{
         print("The precompiled lists types, does not match the input type!")
-        output$debug=renderText({"<font color=\"#FF0000\"><b>The precompiled lists type, does not match the input type! Thats why the errors! Load the 3 original dataframe instead</b></font>"})
+        output$debug=renderText({
+          "<font color=\"#FF0000\"><b>The precompiled lists type, does not match the input type! Thats why the errors! Load the 3 original dataframe instead</b></font>"
+          })
       }
     }
   })
