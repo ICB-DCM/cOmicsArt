@@ -16,6 +16,7 @@ server <- function(input,output,session){
   source("R/enrichment_analysis/translation.R", local=T)
   source("R/enrichment_analysis/server.R", local=T)
   source("R/heatmap/server.R",local = T)
+  source("R/pca/server.R", local=T)
   global_Vars <<- reactiveValues()
   
 # Security section ---- 
@@ -498,6 +499,7 @@ server <- function(input,output,session){
         multiple = F
       )
     })
+
     output$row_selection_ui=renderUI({
       req(data_input_shiny())
       req(input$providedRowAnnotationTypes)
@@ -687,7 +689,6 @@ server <- function(input,output,session){
     }else{
       NULL
     }
-    
   })
   # output$NextPanel2_ui <- renderUI({
   #   actionButton(
@@ -891,567 +892,514 @@ server <- function(input,output,session){
   })
   
   output$debug <- renderText(dim(selectedData_processed()[[input$omicType]]$Matrix))
-# Explorative Analysis - PCA ---- 
-  
-## UI Section ----
-  output$x_axis_selection_ui <- renderUI({
-    radioGroupButtons(
-      inputId = "x_axis_selection",
-      label = "PC for x-Axis",
-      choices = c("PC1","PC2", "PC3", "PC4"),
-      direction = "vertical",
-      selected = "PC1"
-    )
-  })
-  output$y_axis_selection_ui <- renderUI({
-    radioGroupButtons(
-      inputId = "y_axis_selection",
-      label = "PC for y-Axis",
-      choices = c("PC1","PC2", "PC3", "PC4"),
-      direction = "vertical",
-      selected = "PC2"
-    )
-  })
-  output$Show_loadings_ui <- renderUI({
-    radioGroupButtons(
-      inputId = "Show_loadings",
-      label = "Plot Loadings on top? (currently top 5)",
-      choices = c("Yes","No"),
-      direction = "horizontal",
-      selected = "No"
-    )
-  })
-  output$coloring_options_ui <- renderUI({
-    req(data_input_shiny())
-    selectInput(
-      inputId = "coloring_options",
-      label = "Choose the variable to color the samples after",
-      choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
-      multiple = F # would be cool if true, to be able to merge vars ?!
-    )
-  })
-  
-  output$PCA_anno_tooltip_ui <- renderUI({
-    selectInput(
-      inputId = "PCA_anno_tooltip",
-      label = "Select the anno to be shown at tooltip",
-      choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
-      multiple = F
-    )
-  })
-  
-  output$EntitieAnno_Loadings_ui <- renderUI({
-    selectInput(
-      inputId = "EntitieAnno_Loadings",
-      label = "Select the annotype shown at y-axis",
-      choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
-      multiple = F
-    )
-  })
+  # PCA module
+  pca_Server(id="PCA", omicType = input$omicType, row_selection = input$row_selection)
 
-## Do PCA & Co ----
-  toListen2PCA <- reactive({
-    list(
-      input$Do_PCA,
-      input$omicType,
-      input$row_selection,
-      input$x_axis_selection,
-      input$y_axis_selection,
-      input$coloring_options,
-      input$bottomSlider,
-      input$topSlider,
-      input$Show_loadings,
-      input$PCA_anno_tooltip,
-      input$EntitieAnno_Loadings
-      )
-  })
 
-  observeEvent(toListen2PCA(),{
-    req(
-      input$omicType,
-      input$row_selection,
-      input$x_axis_selection,
-      input$y_axis_selection,
-      input$coloring_options
-      )
-    
-    print("PCA analysis on pre-selected data")
-    customTitle <- paste0("PCA - ",input$omicType,"-",
-                       paste0("entities:",input$row_selection,collapse = "_"),
-                       "-samples",ifelse(any(input$sample_selection!="all"),
-                                         paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),"")
-                       ,"-preprocessing: ",input$PreProcessing_Procedure)
-    print(customTitle)
-    plotPosition <- "PCA_plot"
-    
-    pca <- prcomp(as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix)),
-                  center = T,
-                  scale. = FALSE)
-    explVar <- pca$sdev^2/sum(pca$sdev^2)
-    names(explVar) <- colnames(pca$x)
-    print(input$coloring_options)
-    # transform variance to percent
-    percentVar <- round(100 * explVar, digits=1)
-    # Define data for plotting
-    pcaData <- data.frame(pca$x,selectedData_processed()[[input$omicType]]$sample_table)
-    continiousColors <- F
-    if(is.double(pcaData[,input$coloring_options]) & 
-       length(levels(as.factor(pcaData[,input$coloring_options])))>8){
-      print("color Option is numeric! automatically binned into 10 bins") 
-      pcaData[,input$coloring_options] <- cut_interval(
-        x = pcaData[,input$coloring_options],
-        n = 10
-        )
-      continiousColors <- T
-    }else{
-      pcaData[,input$coloring_options] <- as.factor(pcaData[,input$coloring_options])
-      print(levels(pcaData[,input$coloring_options]))
-    }
 
-    if(!any(colnames(pcaData) == "global_ID")){
-      pcaData$global_ID <- rownames(pcaData)
-    }
-    if(!is.null(input$PCA_anno_tooltip)){
-      req(input$PCA_anno_tooltip)
-      adj2colname <- gsub(" ",".",input$PCA_anno_tooltip)
-      pcaData$chosenAnno <- pcaData[,adj2colname]
-    }else{
-      pcaData$chosenAnno <- pcaData$global_ID
-    }
-
-    if(length(levels(pcaData[,input$coloring_options]))>8){
-       if(continiousColors){
-         colorTheme <- viridis::viridis(n = 10)
-         pca_plot <- ggplot(
-           pcaData,
-           aes(
-             x = pcaData[,input$x_axis_selection],
-             y = pcaData[,input$y_axis_selection],
-             color=pcaData[,input$coloring_options],
-             label=global_ID,
-             global_ID=global_ID,
-             chosenAnno=chosenAnno)) +
-           geom_point(size = 3) +
-           scale_color_manual(
-             name = input$coloring_options,
-             values=colorTheme
-             )
-         scenario=1
-       }else{
-         pca_plot <- ggplot(
-           pcaData,
-           aes(
-             x = pcaData[,input$x_axis_selection],
-             y = pcaData[,input$y_axis_selection],
-             color=pcaData[,input$coloring_options],
-             label=global_ID,
-             global_ID=global_ID,
-             chosenAnno=chosenAnno)) +
-           geom_point(size = 3)+
-           scale_color_discrete(name = input$coloring_options)
-         scenario=2
-       }
-    }else{
-      colorTheme <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
-                      "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
-      
-      pca_plot <- ggplot(
-        pcaData,
-        aes(
-          x = pcaData[,input$x_axis_selection],
-          y = pcaData[,input$y_axis_selection],
-          color=pcaData[,input$coloring_options],
-          label=global_ID,
-          global_ID=global_ID,
-          chosenAnno=chosenAnno)) +
-        geom_point(size =3)+
-        scale_color_manual(values = colorTheme,
-                           name = input$coloring_options)
-      scenario=3
-    }
-    
-    pca_plot_final <- pca_plot+
-      xlab(paste0(names(percentVar[input$x_axis_selection]),
-                  ": ",
-                  percentVar[input$x_axis_selection],
-                  "% variance")) +
-      ylab(paste0(names(percentVar[input$y_axis_selection]),
-                  ": ",
-                  percentVar[input$y_axis_selection],
-                  "% variance")) +
-      coord_fixed()+
-      theme_classic()+
-      theme(aspect.ratio = 1)+
-      ggtitle(customTitle)
-    print(input$Show_loadings)
-    ## Add Loadings if wanted
-    if(input$Show_loadings == "Yes"){
-      print("Do we Trigger this??")
-      df_out <- pca$x
-      df_out_r <- as.data.frame(pca$rotation)
-      df_out_r$feature <- row.names(df_out_r)
-      
-      TopK <- rownames(df_out_r)[
-        order(
-          sqrt(
-            (df_out_r[,input$x_axis_selection])^2+(df_out_r[,input$y_axis_selection])^2
-            ),
-          decreasing = T
-          )[1:5]
-        ]
-      df_out_r$feature[!df_out_r$feature%in%TopK] <- ""
-      
-      mult <- min(
-        (max(df_out[,input$y_axis_selection]) - min(df_out[,input$y_axis_selection])/(max(df_out_r[,input$y_axis_selection])-min(df_out_r[,input$y_axis_selection]))),
-        (max(df_out[,input$x_axis_selection]) - min(df_out[,input$x_axis_selection])/(max(df_out_r[,input$x_axis_selection])-min(df_out_r[,input$x_axis_selection])))
-      )
-      
-      df_out_r <- transform(df_out_r,
-                            v1 = 1.2 * mult * (get(input$x_axis_selection)),
-                            v2 = 1.2 * mult * (get(input$y_axis_selection))
-      )
-      
-      df_out_r$global_ID <- rownames(df_out_r)
-      df_out_r$chosenAnno <- rownames(df_out_r)
-      if(!is.null(input$EntitieAnno_Loadings)){
-        req(data_input_shiny()[[input$omicType]])
-        df_out_r$chosenAnno <- factor(
-          make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])),
-          levels = make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings]))
-          )
-      }
-      
-      pca_plot_final <- pca_plot_final + 
-        geom_segment(
-          data = df_out_r[which(df_out_r$feature!=""),],
-          aes(
-            x=0,
-            y=0,
-            xend=v1,
-            yend=v2,
-            chosenAnno=chosenAnno
-            ),
-          arrow = arrow(type = "closed",unit(0.01, "inches"),ends = "both"),
-          color = "#ab0521")
-      if(scenario == 1){
-        scenario = 4
-      }
-      if(scenario == 2){
-        scenario = 5
-      }
-      if(scenario == 3){
-        scenario = 6
-      }
-
-    }
-
-    PCA_scenario=scenario
-    output[["PCA_plot"]] <- renderPlotly({
-      ggplotly(pca_plot_final,
-               tooltip = ifelse(is.null(input$PCA_anno_tooltip),"all","chosenAnno"),
-               legendgroup="color")
-      })
-    
-    print(input$only2Report_pca)
-    global_Vars$PCA_plot <- pca_plot_final # somehow does not update ? or just return the latest?
-    global_Vars$PCA_customTitle <- customTitle
-    global_Vars$PCA_coloring <- input$coloring_options
-    global_Vars$PCA_noLoadings <- ifelse(input$Show_loadings=="Yes",length(TopK),0)
-    
-    output$getR_Code_PCA <- downloadHandler(
-      filename = function(){
-        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
-      },
-      content = function(file){
-        envList<-list(
-          pcaData = pcaData,
-          input = reactiveValuesToList(input),
-          global_ID = pcaData$global_ID,
-          chosenAnno = pcaData$chosenAnno,
-          percentVar = percentVar,
-          customTitle = customTitle,
-          colorTheme = colorTheme
-          )
-        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-        dir.create(temp_directory)
-        write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
-        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-        zip::zip(
-          zipfile = file,
-          files = dir(temp_directory),
-          root = temp_directory
-        )
-      },
-      contentType = "application/zip"
-      )
-    
-    output$SavePlot_pos1 <- downloadHandler(
-      filename = function() {
-        paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="")
-        },
-      # cannot get the final destination as this is a download on server side
-      content = function(file){
-        ggsave(
-          filename = file,
-          plot = pca_plot_final,
-          device = gsub("\\.","",input$file_ext_plot1)
-          )
-        on.exit({
-          TEST = paste0(getwd(),
-                        "/www/",
-                        paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="")
-                        )
-          ggsave(
-            filename = TEST,
-            plot = pca_plot_final,
-            device = gsub("\\.","",input$file_ext_plot1)
-            )
-          
-          # Add Log Messages
-          fun_LogIt(message = "## PCA")
-          fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
-          ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print("Args!"))
-          fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
-        })
-      }
-    )
-    
-### Do Scree plot ----
-    
-    var_explained_df <- data.frame(PC= paste0("PC",1:ncol(pca$x)),
-                                   var_explained=(pca$sdev)^2/sum((pca$sdev)^2))
-    var_explained_df$Var <- paste0(round(var_explained_df$var_explained,4)*100,"%")
-    var_explained_df$PC <- factor(var_explained_df$PC,levels = paste0("PC",1:ncol(pca$x)))
-    scree_plot <- 
-      ggplot(var_explained_df,
-             aes(x=PC,y=var_explained, group=1))+
-      geom_point(size=4,aes(label=Var))+
-      geom_line()+
-      ylab("Variance explained")+
-      theme_bw()+
-      ggtitle("Scree-Plot for shown PCA")
-    scenario <- 7
-    Scree_scenario <- scenario
-    output[["Scree_Plot"]] <- renderPlotly({
-      ggplotly(scree_plot,tooltip = "Var",legendgroup="color")
-      })
-    
-    global_Vars$Scree_plot <- scree_plot
-    global_Vars$Scree_customTitle <- customTitle
-    
-    output$getR_Code_Scree_Plot <- downloadHandler(
-      filename = function(){
-        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
-      },
-      content = function(file){
-        envList=list(var_explained_df=var_explained_df)
-        
-        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-        dir.create(temp_directory)
-        
-        write(getPlotCode(Scree_scenario), file.path(temp_directory, "Code.R"))
-        
-        saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
-        zip::zip(
-          zipfile = file,
-          files = dir(temp_directory),
-          root = temp_directory
-        )
-      },
-      contentType = "application/zip"
-    )
-    
-    output$SavePlot_Scree <- downloadHandler(
-      filename = function() {
-        paste(customTitle, " ",Sys.time(),input$file_ext_Scree,sep="")
-        },
-      
-      content = function(file){
-        ggsave(file,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
-        on.exit({
-          tmp_filename=paste0(
-            getwd(),
-            "/www/",
-            paste("Scree",customTitle, " ",Sys.time(),input$file_ext_Scree,sep="")
-            )
-          ggsave(tmp_filename,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
-          
-          # Add Log Messages
-          fun_LogIt(message = "### PCA ScreePlot")
-          fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
-          fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
-        })
-      }
-    )
-    
-### Do Loadings Plot ----
-    print("Do LoadingsPlot an issue?")
-    LoadingsDF <- data.frame(
-      entitie=rownames(pca$rotation),
-      Loading=pca$rotation[,input$x_axis_selection]
-      )
-    #LoadingsDF$Loading=scale(LoadingsDF$Loading)
-    LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
-    LoadingsDF <- rbind(
-      LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF)-input$bottomSlider),],
-      LoadingsDF[input$topSlider:1,]
-      )
-    LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
-    if(!is.null(input$EntitieAnno_Loadings)){
-      req(data_input_shiny()[[input$omicType]])
-      LoadingsDF$entitie=factor(
-        make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
-        levels = make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
-        )
-    }
-
-    plotOut <- ggplot(LoadingsDF,aes(x = Loading,y = entitie)) +
-      geom_col(aes(fill=Loading)) +
-      scale_y_discrete(
-        breaks = LoadingsDF$entitie,
-        labels = stringr::str_wrap(gsub("\\.[0-9].*$","",LoadingsDF$entitie),20)) +
-      scale_fill_gradient2(low = "#277d6a",mid = "white",high = "orange")+
-      ylab(ifelse(is.null(input$EntitieAnno_Loadings),"",input$EntitieAnno_Loadings)) +
-      xlab(paste0("Loadings: ",input$x_axis_selection))+
-      theme_bw(base_size = 15)
-
-    scenario <- 8
-    Loading_scenario <- scenario
-    output[["PCA_Loadings_plot"]] <- renderPlot({plotOut})
-    
-    global_Vars$Loadings_x_axis <- input$x_axis_selection
-    global_Vars$Loadings_bottomSlider <- input$bottomSlider
-    global_Vars$Loadings_topSlider <- input$topSlider
-    global_Vars$Loadings_file_ext_Loadings <- input$file_ext_Loadings
-    global_Vars$Loadings_plotOut <- plotOut
-
-    output$getR_Code_Loadings <- downloadHandler(
-      filename = function(){
-        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
-      },
-      content = function(file){
-        envList=list(LoadingsDF=LoadingsDF,
-                     input=reactiveValuesToList(input))
-        
-        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-        dir.create(temp_directory)
-        
-        write(getPlotCode(Loading_scenario), file.path(temp_directory, "Code.R"))
-        
-        saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
-        zip::zip(
-          zipfile = file,
-          files = dir(temp_directory),
-          root = temp_directory
-        )
-      },
-      contentType = "application/zip"
-    )
-    
-    output$SavePlot_Loadings <- downloadHandler(
-      filename = function() {paste(
-        "LOADINGS_PCA_",
-        Sys.time(),
-        input$file_ext_Loadings,
-        sep="")},
-      
-      content = function(file){
-        ggsave(file,
-               plot = plotOut,
-               device = gsub("\\.","",input$file_ext_Loadings),
-               dpi = "print"
-               )
-        
-        on.exit({
-          tmp_filename=paste0(
-            getwd(),
-            "/www/",
-            paste("LOADINGS_PCA_",Sys.time(),input$file_ext_Loadings,sep="")
-            )
-          ggsave(
-            tmp_filename,
-            plot = plotOut,
-            device = gsub("\\.","",input$file_ext_Loadings),
-            dpi = "print"
-            )
-          # Add Log Messages
-          fun_LogIt(message = "### PCA Loadings")
-          fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",input$x_axis_selection))
-          fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
-          fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
-        })
-      }
-    )
-  })
-## Log it ----
-  observeEvent(input$only2Report_pca,{
-      # needs global var ?! do we want that?
-      notificationID <- showNotification("Saving...",duration = 0)
-      TEST <- paste0(getwd(),"/www/",paste(global_Vars$PCA_customTitle, "__",Sys.time(),".png",sep=""))
-      ggsave(
-        TEST,
-        plot = global_Vars$PCA_plot,
-        device = "png"
-        )
-      # Add Log Messages
-      fun_LogIt(message = "## PCA")
-      fun_LogIt(
-        message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options)
-        )
-      ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
-      fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
-      if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
-        fun_LogIt(message = "### Personal Notes:")
-        fun_LogIt(message = input$NotesPCA)
-      }
-      removeNotification(notificationID)
-      showNotification("Saved!",type = "message", duration = 1)
-  })
-  
-  observeEvent(input$only2Report_Scree_Plot,{
-    notificationID <- showNotification("Saving...",duration = 0)
-    tmp_filename <- paste0(
-      getwd(),
-      "/www/",
-      paste("Scree",global_Vars$Scree_customTitle, " ",Sys.time(),".png",sep="")
-      )
-    ggsave(
-      tmp_filename,
-      plot=global_Vars$Scree_plot,
-      device = "png"
-      )
-    
-    # Add Log Messages
-    fun_LogIt(message = "### PCA ScreePlot")
-    fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
-    fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
-    
-    removeNotification(notificationID)
-    showNotification("Saved!",type = "message", duration = 1)
-  })
-  
-  observeEvent(input$only2Report_Loadings,{
-    notificationID <- showNotification("Saving...",duration = 0)
-    tmp_filename <- paste0(
-      getwd(),
-      "/www/",
-      paste("LOADINGS_PCA_",Sys.time(),".png",sep="")
-      )
-    ggsave(
-      tmp_filename,
-      plot = global_Vars$Loadings_plotOut,
-      device = "png"
-      )
-    
-    # Add Log Messages
-    fun_LogIt(message = "### PCA Loadings")
-    fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",global_Vars$Loadings_x_axis))
-    fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",global_Vars$Loadings_topSlider," and the lowest ",global_Vars$Loadings_bottomSlider," Loadings"))
-    fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
-    
-    removeNotification(notificationID)
-    showNotification("Saved!",type = "message", duration = 1)
-  })
+# ## Do PCA & Co ----
+#   toListen2PCA <- reactive({
+#     list(
+#       input$Do_PCA,
+#       input$omicType,
+#       input$row_selection,
+#       input$x_axis_selection,
+#       input$y_axis_selection,
+#       input$coloring_options,
+#       input$bottomSlider,
+#       input$topSlider,
+#       input$Show_loadings,
+#       input$PCA_anno_tooltip,
+#       input$EntitieAnno_Loadings
+#       )
+#   })
+#
+#   observeEvent(toListen2PCA(),{
+#     req(
+#       input$omicType,
+#       input$row_selection,
+#       input$x_axis_selection,
+#       input$y_axis_selection,
+#       input$coloring_options
+#       )
+#
+#     print("PCA analysis on pre-selected data")
+#     customTitle <- paste0("PCA - ",input$omicType,"-",
+#                        paste0("entities:",input$row_selection,collapse = "_"),
+#                        "-samples",ifelse(any(input$sample_selection!="all"),
+#                                          paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),"")
+#                        ,"-preprocessing: ",input$PreProcessing_Procedure)
+#     print(customTitle)
+#     plotPosition <- "PCA_plot"
+#
+#     pca <- prcomp(as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix)),
+#                   center = T,
+#                   scale. = FALSE)
+#     explVar <- pca$sdev^2/sum(pca$sdev^2)
+#     names(explVar) <- colnames(pca$x)
+#     print(input$coloring_options)
+#     # transform variance to percent
+#     percentVar <- round(100 * explVar, digits=1)
+#     # Define data for plotting
+#     pcaData <- data.frame(pca$x,selectedData_processed()[[input$omicType]]$sample_table)
+#     continiousColors <- F
+#     if(is.double(pcaData[,input$coloring_options]) &
+#        length(levels(as.factor(pcaData[,input$coloring_options])))>8){
+#       print("color Option is numeric! automatically binned into 10 bins")
+#       pcaData[,input$coloring_options] <- cut_interval(
+#         x = pcaData[,input$coloring_options],
+#         n = 10
+#         )
+#       continiousColors <- T
+#     }else{
+#       pcaData[,input$coloring_options] <- as.factor(pcaData[,input$coloring_options])
+#       print(levels(pcaData[,input$coloring_options]))
+#     }
+#
+#     if(!any(colnames(pcaData) == "global_ID")){
+#       pcaData$global_ID <- rownames(pcaData)
+#     }
+#     if(!is.null(input$PCA_anno_tooltip)){
+#       req(input$PCA_anno_tooltip)
+#       adj2colname <- gsub(" ",".",input$PCA_anno_tooltip)
+#       pcaData$chosenAnno <- pcaData[,adj2colname]
+#     }else{
+#       pcaData$chosenAnno <- pcaData$global_ID
+#     }
+#
+#     if(length(levels(pcaData[,input$coloring_options]))>8){
+#        if(continiousColors){
+#          colorTheme <- viridis::viridis(n = 10)
+#          pca_plot <- ggplot(
+#            pcaData,
+#            aes(
+#              x = pcaData[,input$x_axis_selection],
+#              y = pcaData[,input$y_axis_selection],
+#              color=pcaData[,input$coloring_options],
+#              label=global_ID,
+#              global_ID=global_ID,
+#              chosenAnno=chosenAnno)) +
+#            geom_point(size = 3) +
+#            scale_color_manual(
+#              name = input$coloring_options,
+#              values=colorTheme
+#              )
+#          scenario=1
+#        }else{
+#          pca_plot <- ggplot(
+#            pcaData,
+#            aes(
+#              x = pcaData[,input$x_axis_selection],
+#              y = pcaData[,input$y_axis_selection],
+#              color=pcaData[,input$coloring_options],
+#              label=global_ID,
+#              global_ID=global_ID,
+#              chosenAnno=chosenAnno)) +
+#            geom_point(size = 3)+
+#            scale_color_discrete(name = input$coloring_options)
+#          scenario=2
+#        }
+#     }else{
+#       colorTheme <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
+#                       "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
+#
+#       pca_plot <- ggplot(
+#         pcaData,
+#         aes(
+#           x = pcaData[,input$x_axis_selection],
+#           y = pcaData[,input$y_axis_selection],
+#           color=pcaData[,input$coloring_options],
+#           label=global_ID,
+#           global_ID=global_ID,
+#           chosenAnno=chosenAnno)) +
+#         geom_point(size =3)+
+#         scale_color_manual(values = colorTheme,
+#                            name = input$coloring_options)
+#       scenario=3
+#     }
+#
+#     pca_plot_final <- pca_plot+
+#       xlab(paste0(names(percentVar[input$x_axis_selection]),
+#                   ": ",
+#                   percentVar[input$x_axis_selection],
+#                   "% variance")) +
+#       ylab(paste0(names(percentVar[input$y_axis_selection]),
+#                   ": ",
+#                   percentVar[input$y_axis_selection],
+#                   "% variance")) +
+#       coord_fixed()+
+#       theme_classic()+
+#       theme(aspect.ratio = 1)+
+#       ggtitle(customTitle)
+#     print(input$Show_loadings)
+#     ## Add Loadings if wanted
+#     if(input$Show_loadings == "Yes"){
+#       print("Do we Trigger this??")
+#       df_out <- pca$x
+#       df_out_r <- as.data.frame(pca$rotation)
+#       df_out_r$feature <- row.names(df_out_r)
+#
+#       TopK <- rownames(df_out_r)[
+#         order(
+#           sqrt(
+#             (df_out_r[,input$x_axis_selection])^2+(df_out_r[,input$y_axis_selection])^2
+#             ),
+#           decreasing = T
+#           )[1:5]
+#         ]
+#       df_out_r$feature[!df_out_r$feature%in%TopK] <- ""
+#
+#       mult <- min(
+#         (max(df_out[,input$y_axis_selection]) - min(df_out[,input$y_axis_selection])/(max(df_out_r[,input$y_axis_selection])-min(df_out_r[,input$y_axis_selection]))),
+#         (max(df_out[,input$x_axis_selection]) - min(df_out[,input$x_axis_selection])/(max(df_out_r[,input$x_axis_selection])-min(df_out_r[,input$x_axis_selection])))
+#       )
+#
+#       df_out_r <- transform(df_out_r,
+#                             v1 = 1.2 * mult * (get(input$x_axis_selection)),
+#                             v2 = 1.2 * mult * (get(input$y_axis_selection))
+#       )
+#
+#       df_out_r$global_ID <- rownames(df_out_r)
+#       df_out_r$chosenAnno <- rownames(df_out_r)
+#       if(!is.null(input$EntitieAnno_Loadings)){
+#         req(data_input_shiny()[[input$omicType]])
+#         df_out_r$chosenAnno <- factor(
+#           make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])),
+#           levels = make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings]))
+#           )
+#       }
+#
+#       pca_plot_final <- pca_plot_final +
+#         geom_segment(
+#           data = df_out_r[which(df_out_r$feature!=""),],
+#           aes(
+#             x=0,
+#             y=0,
+#             xend=v1,
+#             yend=v2,
+#             chosenAnno=chosenAnno
+#             ),
+#           arrow = arrow(type = "closed",unit(0.01, "inches"),ends = "both"),
+#           color = "#ab0521")
+#       if(scenario == 1){
+#         scenario = 4
+#       }
+#       if(scenario == 2){
+#         scenario = 5
+#       }
+#       if(scenario == 3){
+#         scenario = 6
+#       }
+#
+#     }
+#
+#     PCA_scenario=scenario
+#     output[["PCA_plot"]] <- renderPlotly({
+#       ggplotly(pca_plot_final,
+#                tooltip = ifelse(is.null(input$PCA_anno_tooltip),"all","chosenAnno"),
+#                legendgroup="color")
+#       })
+#
+#     print(input$only2Report_pca)
+#     global_Vars$PCA_plot <- pca_plot_final # somehow does not update ? or just return the latest?
+#     global_Vars$PCA_customTitle <- customTitle
+#     global_Vars$PCA_coloring <- input$coloring_options
+#     global_Vars$PCA_noLoadings <- ifelse(input$Show_loadings=="Yes",length(TopK),0)
+#
+#     output$getR_Code_PCA <- downloadHandler(
+#       filename = function(){
+#         paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+#       },
+#       content = function(file){
+#         envList<-list(
+#           pcaData = pcaData,
+#           input = reactiveValuesToList(input),
+#           global_ID = pcaData$global_ID,
+#           chosenAnno = pcaData$chosenAnno,
+#           percentVar = percentVar,
+#           customTitle = customTitle,
+#           colorTheme = colorTheme
+#           )
+#         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+#         dir.create(temp_directory)
+#         write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
+#         saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+#         zip::zip(
+#           zipfile = file,
+#           files = dir(temp_directory),
+#           root = temp_directory
+#         )
+#       },
+#       contentType = "application/zip"
+#       )
+#
+#     output$SavePlot_pos1 <- downloadHandler(
+#       filename = function() {
+#         paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="")
+#         },
+#       # cannot get the final destination as this is a download on server side
+#       content = function(file){
+#         ggsave(
+#           filename = file,
+#           plot = pca_plot_final,
+#           device = gsub("\\.","",input$file_ext_plot1)
+#           )
+#         on.exit({
+#           TEST = paste0(getwd(),
+#                         "/www/",
+#                         paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="")
+#                         )
+#           ggsave(
+#             filename = TEST,
+#             plot = pca_plot_final,
+#             device = gsub("\\.","",input$file_ext_plot1)
+#             )
+#
+#           # Add Log Messages
+#           fun_LogIt(message = "## PCA")
+#           fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
+#           ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print("Args!"))
+#           fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
+#         })
+#       }
+#     )
+#
+# ### Do Scree plot ----
+#
+#     var_explained_df <- data.frame(PC= paste0("PC",1:ncol(pca$x)),
+#                                    var_explained=(pca$sdev)^2/sum((pca$sdev)^2))
+#     var_explained_df$Var <- paste0(round(var_explained_df$var_explained,4)*100,"%")
+#     var_explained_df$PC <- factor(var_explained_df$PC,levels = paste0("PC",1:ncol(pca$x)))
+#     scree_plot <-
+#       ggplot(var_explained_df,
+#              aes(x=PC,y=var_explained, group=1))+
+#       geom_point(size=4,aes(label=Var))+
+#       geom_line()+
+#       ylab("Variance explained")+
+#       theme_bw()+
+#       ggtitle("Scree-Plot for shown PCA")
+#     scenario <- 7
+#     Scree_scenario <- scenario
+#     output[["Scree_Plot"]] <- renderPlotly({
+#       ggplotly(scree_plot,tooltip = "Var",legendgroup="color")
+#       })
+#
+#     global_Vars$Scree_plot <- scree_plot
+#     global_Vars$Scree_customTitle <- customTitle
+#
+#     output$getR_Code_Scree_Plot <- downloadHandler(
+#       filename = function(){
+#         paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+#       },
+#       content = function(file){
+#         envList=list(var_explained_df=var_explained_df)
+#
+#         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+#         dir.create(temp_directory)
+#
+#         write(getPlotCode(Scree_scenario), file.path(temp_directory, "Code.R"))
+#
+#         saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
+#         zip::zip(
+#           zipfile = file,
+#           files = dir(temp_directory),
+#           root = temp_directory
+#         )
+#       },
+#       contentType = "application/zip"
+#     )
+#
+#     output$SavePlot_Scree <- downloadHandler(
+#       filename = function() {
+#         paste(customTitle, " ",Sys.time(),input$file_ext_Scree,sep="")
+#         },
+#
+#       content = function(file){
+#         ggsave(file,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
+#         on.exit({
+#           tmp_filename=paste0(
+#             getwd(),
+#             "/www/",
+#             paste("Scree",customTitle, " ",Sys.time(),input$file_ext_Scree,sep="")
+#             )
+#           ggsave(tmp_filename,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
+#
+#           # Add Log Messages
+#           fun_LogIt(message = "### PCA ScreePlot")
+#           fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
+#           fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
+#         })
+#       }
+#     )
+#
+# ### Do Loadings Plot ----
+#     print("Do LoadingsPlot an issue?")
+#     LoadingsDF <- data.frame(
+#       entitie=rownames(pca$rotation),
+#       Loading=pca$rotation[,input$x_axis_selection]
+#       )
+#     #LoadingsDF$Loading=scale(LoadingsDF$Loading)
+#     LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
+#     LoadingsDF <- rbind(
+#       LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF)-input$bottomSlider),],
+#       LoadingsDF[input$topSlider:1,]
+#       )
+#     LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
+#     if(!is.null(input$EntitieAnno_Loadings)){
+#       req(data_input_shiny()[[input$omicType]])
+#       LoadingsDF$entitie=factor(
+#         make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
+#         levels = make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+#         )
+#     }
+#
+#     plotOut <- ggplot(LoadingsDF,aes(x = Loading,y = entitie)) +
+#       geom_col(aes(fill=Loading)) +
+#       scale_y_discrete(
+#         breaks = LoadingsDF$entitie,
+#         labels = stringr::str_wrap(gsub("\\.[0-9].*$","",LoadingsDF$entitie),20)) +
+#       scale_fill_gradient2(low = "#277d6a",mid = "white",high = "orange")+
+#       ylab(ifelse(is.null(input$EntitieAnno_Loadings),"",input$EntitieAnno_Loadings)) +
+#       xlab(paste0("Loadings: ",input$x_axis_selection))+
+#       theme_bw(base_size = 15)
+#
+#     scenario <- 8
+#     Loading_scenario <- scenario
+#     output[["PCA_Loadings_plot"]] <- renderPlot({plotOut})
+#
+#     global_Vars$Loadings_x_axis <- input$x_axis_selection
+#     global_Vars$Loadings_bottomSlider <- input$bottomSlider
+#     global_Vars$Loadings_topSlider <- input$topSlider
+#     global_Vars$Loadings_file_ext_Loadings <- input$file_ext_Loadings
+#     global_Vars$Loadings_plotOut <- plotOut
+#
+#     output$getR_Code_Loadings <- downloadHandler(
+#       filename = function(){
+#         paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+#       },
+#       content = function(file){
+#         envList=list(LoadingsDF=LoadingsDF,
+#                      input=reactiveValuesToList(input))
+#
+#         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+#         dir.create(temp_directory)
+#
+#         write(getPlotCode(Loading_scenario), file.path(temp_directory, "Code.R"))
+#
+#         saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
+#         zip::zip(
+#           zipfile = file,
+#           files = dir(temp_directory),
+#           root = temp_directory
+#         )
+#       },
+#       contentType = "application/zip"
+#     )
+#
+#     output$SavePlot_Loadings <- downloadHandler(
+#       filename = function() {paste(
+#         "LOADINGS_PCA_",
+#         Sys.time(),
+#         input$file_ext_Loadings,
+#         sep="")},
+#
+#       content = function(file){
+#         ggsave(file,
+#                plot = plotOut,
+#                device = gsub("\\.","",input$file_ext_Loadings),
+#                dpi = "print"
+#                )
+#
+#         on.exit({
+#           tmp_filename=paste0(
+#             getwd(),
+#             "/www/",
+#             paste("LOADINGS_PCA_",Sys.time(),input$file_ext_Loadings,sep="")
+#             )
+#           ggsave(
+#             tmp_filename,
+#             plot = plotOut,
+#             device = gsub("\\.","",input$file_ext_Loadings),
+#             dpi = "print"
+#             )
+#           # Add Log Messages
+#           fun_LogIt(message = "### PCA Loadings")
+#           fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",input$x_axis_selection))
+#           fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
+#           fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
+#         })
+#       }
+#     )
+#   })
+# ## Log it ----
+#   observeEvent(input$only2Report_pca,{
+#       # needs global var ?! do we want that?
+#       notificationID <- showNotification("Saving...",duration = 0)
+#       TEST <- paste0(getwd(),"/www/",paste(global_Vars$PCA_customTitle, "__",Sys.time(),".png",sep=""))
+#       ggsave(
+#         TEST,
+#         plot = global_Vars$PCA_plot,
+#         device = "png"
+#         )
+#       # Add Log Messages
+#       fun_LogIt(message = "## PCA")
+#       fun_LogIt(
+#         message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options)
+#         )
+#       ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
+#       fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
+#       if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
+#         fun_LogIt(message = "### Personal Notes:")
+#         fun_LogIt(message = input$NotesPCA)
+#       }
+#       removeNotification(notificationID)
+#       showNotification("Saved!",type = "message", duration = 1)
+#   })
+#
+#   observeEvent(input$only2Report_Scree_Plot,{
+#     notificationID <- showNotification("Saving...",duration = 0)
+#     tmp_filename <- paste0(
+#       getwd(),
+#       "/www/",
+#       paste("Scree",global_Vars$Scree_customTitle, " ",Sys.time(),".png",sep="")
+#       )
+#     ggsave(
+#       tmp_filename,
+#       plot=global_Vars$Scree_plot,
+#       device = "png"
+#       )
+#
+#     # Add Log Messages
+#     fun_LogIt(message = "### PCA ScreePlot")
+#     fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
+#     fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
+#
+#     removeNotification(notificationID)
+#     showNotification("Saved!",type = "message", duration = 1)
+#   })
+#
+#   observeEvent(input$only2Report_Loadings,{
+#     notificationID <- showNotification("Saving...",duration = 0)
+#     tmp_filename <- paste0(
+#       getwd(),
+#       "/www/",
+#       paste("LOADINGS_PCA_",Sys.time(),".png",sep="")
+#       )
+#     ggsave(
+#       tmp_filename,
+#       plot = global_Vars$Loadings_plotOut,
+#       device = "png"
+#       )
+#
+#     # Add Log Messages
+#     fun_LogIt(message = "### PCA Loadings")
+#     fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",global_Vars$Loadings_x_axis))
+#     fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",global_Vars$Loadings_topSlider," and the lowest ",global_Vars$Loadings_bottomSlider," Loadings"))
+#     fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
+#
+#     removeNotification(notificationID)
+#     showNotification("Saved!",type = "message", duration = 1)
+#   })
   
 # Volcano Plot----
 ## UI Section----
@@ -1848,8 +1796,8 @@ server <- function(input,output,session){
 #       hide(id = "cluster_rows", anim = T )
 #     }
 #   })
-#   
-#   
+#
+#
 #   output$LFC_toHeatmap_ui=renderUI({
 #     req(data_input_shiny())
 #     checkboxInput(inputId ="LFC_toHeatmap",
@@ -1867,14 +1815,14 @@ server <- function(input,output,session){
 #       selected="all"
 #     )
 #   })
-#   
+#
 #   output$rowWiseScaled_ui=renderUI({
 #     req(data_input_shiny())
 #     checkboxInput(inputId = "rowWiseScaled",
 #                   label = "row-wise scaling?",
 #                   value = FALSE)
 #   })
-#   
+#
 #   observe({
 #     if(input$Selection_show_LFC){
 #       output$sample_annotation_types_cmp_heatmap_ui=renderUI({
@@ -1921,7 +1869,7 @@ server <- function(input,output,session){
 #       hide(id = "psig_threhsold_heatmap",anim=T)
 #     }
 #   })
-#   
+#
 #   observe({
 #     if(any(input$row_selection_options=="TopK")){
 #       output$TopK_ui=renderUI({numericInput(inputId = "TopK",
@@ -1933,8 +1881,8 @@ server <- function(input,output,session){
 #       hide(id = "TopK",anim=T)
 #     }
 #   }) #TopK
-#   
-#   
+#
+#
 #   observe({
 #     if(input$Selection_show_annoBased & any(input$row_selection_options=="rowAnno_based")){
 #       # output$rowAnno_based_ui=renderUI({
@@ -1984,7 +1932,7 @@ server <- function(input,output,session){
 #       hide(id = "row_anno_options_heatmap",anim = T)
 #     }
 #   })
-# 
+#
 # ## Do Heatmap
 #   toListen2Heatmap <- reactive({
 #     list(input$Do_Heatmap,
@@ -1998,12 +1946,12 @@ server <- function(input,output,session){
 #          #input$row_selection_options
 #          )
 #   })
-#   
+#
 #   heatmap_genelist <- eventReactive(toListen2Heatmap(),{
 #     req(input$omicType,input$row_selection_options,input$anno_options)
 #     req(selectedData_processed())
 #     print("Heatmap on selected Data")
-#    
+#
 #     ### atm raw data plotted
 #     data2Plot<-selectedData_processed()
 #     colorTheme=c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
@@ -2021,7 +1969,7 @@ server <- function(input,output,session){
 #     # colors to fill in the tiles
 #     paletteLength <- 25
 #     myColor_fill <- colorRampPalette(c("blue", "white", "firebrick"))(paletteLength)
-#     
+#
 #     ##### Do PreSelection of input to Heatmap to show
 #     #
 #     print(input$row_selection_options)
@@ -2050,9 +1998,9 @@ server <- function(input,output,session){
 #       additionalInput_row_anno<-"all"
 #       additionalInput_row_anno_factor<-NA
 #     }
-#     
+#
 #     print(additionalInput_row_anno_factor)
-#     
+#
 #     #Selection and/or ordering based on LFC
 #     additionalInput_sample_annotation_types<-ifelse(isTruthy(input$sample_annotation_types_cmp_heatmap),input$sample_annotation_types_cmp_heatmap,NA)
 #     additionalInput_ctrl_idx<-ifelse(isTruthy(input$Groups2Compare_ref_heatmap),input$Groups2Compare_ref_heatmap,NA)
@@ -2060,10 +2008,10 @@ server <- function(input,output,session){
 #     psig_threhsold<-ifelse(isTruthy(input$psig_threhsold_heatmap),input$psig_threhsold_heatmap,NA)
 #     print(paste0("This should not be NA if LFC Settings: ",additionalInput_sample_annotation_types))
 #     print(paste0("This should not be NA if LFC Settings: ",input$Groups2Compare_ref_heatmap,input$Groups2Compare_treat_heatmap))
-#     
+#
 #     # select TopK (if there is an ordering)
 #     TopK2Show<-ifelse(any(input$row_selection_options=="TopK"),input$TopK,NA)
-# 
+#
 #     #print(input$row_selection_options)
 #     # data_test<-selectedData_processed()[[input$omicType]]
 #     # # to cover: c("TopK","significant_LFC","DE_genes","rowAnno_based")
@@ -2082,10 +2030,10 @@ server <- function(input,output,session){
 #                                       psig_threhsold=psig_threhsold,
 #                                       TopK2Show=TopK2Show
 #       )
-#       
+#
 #       print(dim(data2HandOver))
 #     }
-#     
+#
 #     doThis_flag=T
 #     if(is.null(data2HandOver)){
 #       output$Options_selected_out_3=renderText({"Nothing is left,e.g. no significant Terms or TopK is used but no inherent order of the data"})
@@ -2093,7 +2041,7 @@ server <- function(input,output,session){
 #       doThis_flag=F
 #       #req(FALSE)
 #     }
-#     
+#
 #     print(paste0("plot LFC's?",input$LFC_toHeatmap))
 #     # Dependent to plot raw data or LFCs
 #     if(input$LFC_toHeatmap){
@@ -2120,14 +2068,14 @@ server <- function(input,output,session){
 #         keep_treat=apply(data2Plot[[input$omicType]]$sample_table[comparison_samples_idx,],2,function (x) length(unique(x))==1)
 #         # keep  only if both TRUE
 #         keep_final=names(data2Plot[[input$omicType]]$sample_table)[keep_ctrl & keep_treat]
-#         
+#
 #         ## do pheatmap
 #         #remove anything non sig
 #         Data2Plot=Data2Plot[Data2Plot$p_adj<0.05,]
 #         # use floor and ceiling to deal with even/odd length pallettelengths
 #         myBreaks <- c(seq(min(Data2Plot$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
 #                       seq(max(Data2Plot$LFC)/paletteLength, max(Data2Plot$LFC), length.out=floor(paletteLength/2)))
-#         
+#
 #         scenario=10
 #         annotation_col = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F]
 #         heatmap_plot<-pheatmap((t(Data2Plot[,"LFC",drop=F])),
@@ -2146,13 +2094,13 @@ server <- function(input,output,session){
 #                                breaks = myBreaks,
 #                                color = myColor_fill
 #         )
-#         
+#
 #       }
 #     }else if(doThis_flag){
 #       if(any(is.na(data2HandOver))){
 #         idx_of_nas=which(apply(data2HandOver,1,is.na)) # why do we produce Nas?
 #         print(idx_of_nas)
-#         data2HandOver=data2HandOver[-idx_of_nas,] 
+#         data2HandOver=data2HandOver[-idx_of_nas,]
 #         annotation_col = selectedData_processed()[[input$omicType]]$sample_table[-idx_of_nas,input$anno_options,drop=F]
 #         annotation_row = selectedData_processed()[[input$omicType]]$annotation_rows[-idx_of_nas,input$row_anno_options,drop=F]
 #       }else{
@@ -2186,13 +2134,13 @@ server <- function(input,output,session){
 #                              #color = scaleColors(data = as.matrix(data2Plot[[input$omicType]]$Matrix), maxvalue = max.value)[["color"]]
 #       )
 #     }
-#     
-#     
-# 
+#
+#
+#
 #     heatmap_scenario=scenario
-#     
+#
 #     output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
-#     
+#
 #     global_Vars$Heatmap_customTitleHeatmap=customTitleHeatmap
 #     global_Vars$Heatmap_heatmap_plot=heatmap_plot
 #     global_Vars$Heatmap_row_selection_options=input$row_selection_options
@@ -2207,7 +2155,7 @@ server <- function(input,output,session){
 #     global_Vars$Heatmap_sample_annotation_types_cmp_heatmap=input$sample_annotation_types_cmp_heatmap
 #     global_Vars$Heatmap_Groups2Compare_ref_heatmap=input$Groups2Compare_ref_heatmap
 #     global_Vars$Heatmap_Groups2Compare_ctrl_heatmap=input$Groups2Compare_ctrl_heatmap
-#     
+#
 #     output$getR_Code_Heatmap <- downloadHandler(
 #       filename = function(){
 #         paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
@@ -2224,12 +2172,12 @@ server <- function(input,output,session){
 #                      input=reactiveValuesToList(input),
 #                      myBreaks=ifelse(exists("myBreaks"),myBreaks,NA),
 #                      myColor_fill=ifelse(exists("myColor_fill"),myColor_fill,NA))
-#         
+#
 #         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
 #         dir.create(temp_directory)
-#         
+#
 #         write(getPlotCode(heatmap_scenario), file.path(temp_directory, "Code.R"))
-#         
+#
 #         saveRDS(envList, file.path(temp_directory, "Data.RDS"))
 #         zip::zip(
 #           zipfile = file,
@@ -2239,23 +2187,23 @@ server <- function(input,output,session){
 #       },
 #       contentType = "application/zip"
 #     )
-#     
-#     
-#     
-#     
+#
+#
+#
+#
 #     output$SavePlot_Heatmap=downloadHandler(
 #       filename = function() { paste(customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="") },
-#       
+#
 #       content = function(file){
 #         save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
-#         
+#
 #         on.exit({
-#           
+#
 #           tmp_filename=paste0(getwd(),"/www/",paste(paste(customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="")))
 #           save_pheatmap(heatmap_plot,filename=tmp_filename,type=gsub("\\.","",input$file_ext_Heatmap))
-#           
+#
 #           # Add Log Messages
-# 
+#
 #           fun_LogIt("## HEATMAP")
 #           fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",input$row_selection_options))
 #           if(any(input$row_selection_options=="rowAnno_based")){
@@ -2274,22 +2222,22 @@ server <- function(input,output,session){
 #           if(input$cluster_rows==TRUE){
 #             fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
 #           }
-#           
+#
 #           if(input$LFC_toHeatmap==TRUE){
 #             fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
 #             fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",input$sample_annotation_types_cmp_heatmap,": ",input$Groups2Compare_ref_heatmap," vs ",input$Groups2Compare_ctrl_heatmap))
 #           }
-#           
+#
 #           fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
 #         })
-#         
+#
 #       }
 #     )
-#     
-#     
+#
+#
 #     output$SaveGeneList_Heatmap=downloadHandler(
 #       filename = function() { paste("GeneList_",customTitleHeatmap, " ",Sys.time(),".csv",sep="") },
-#       
+#
 #       content = function(file){
 #         write.csv(heatmap_genelist(), file)
 #         on.exit({
@@ -2304,9 +2252,9 @@ server <- function(input,output,session){
 #           fun_LogIt(message = paste0("**HEATMAP** - Number of entities: ",length(heatmap_genelist())))
 #         })
 #       }
-#       
+#
 #     )
-#     
+#
 #     ## adjust the returned names depending on chosen label of rows
 #     if(is.null(data2HandOver)){
 #       FLAG_nonUnique_Heatmap<<-F
@@ -2314,11 +2262,11 @@ server <- function(input,output,session){
 #     }else{
 #       selectedData_processed()[[input$omicType]]$annotation_rows[rownames(data2HandOver),input$row_label_options]
 #       mergedData=merge(data2HandOver,selectedData_processed()[[input$omicType]]$annotation_rows,by=0, all.x=T,all.y=F,sort = F)
-#       
+#
 #       # maybe insert save to avoid download of unmeaningfull annotation?
 #       if(length(unique( mergedData[,input$row_label_options]))<nrow(mergedData) ){
 #         FLAG_nonUnique_Heatmap<<-T
-#         
+#
 #         mergedData[,input$row_label_options]
 #       }else{
 #         FLAG_nonUnique_Heatmap<<-F
@@ -2326,29 +2274,29 @@ server <- function(input,output,session){
 #       }
 #     }
 #   })
-#   
-#   
+#
+#
 #   observeEvent(input$SendHeatmap2Enrichment,{
 #     #GeneSet2Enrich
 #     updateTabsetPanel(session, "tabsetPanel1",
 #                       selected = "Enrichment Analysis")
 #     tmp_selection<<-"heatmap_genes"
 #   })
-#   
+#
 #   observeEvent(input$Do_Heatmap,{
 #     output$Options_selected_out_3=renderText({paste0("The number of selected entities: ",length((heatmap_genelist())))})
-#     
+#
 #   })
-#   
+#
 #   # send only to report
 #   observeEvent(input$only2Report_Heatmap,{
 #     notificationID<-showNotification("Saving...",duration = 0)
-#     
+#
 #     tmp_filename=paste0(getwd(),"/www/",paste(paste(global_Vars$Heatmap_customTitleHeatmap, " ",Sys.time(),".png",sep="")))
 #     save_pheatmap(global_Vars$Heatmap_heatmap_plot,filename=tmp_filename,type="png")
-#     
+#
 #     # Add Log Messages
-#     
+#
 #     fun_LogIt("## HEATMAP")
 #     fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",global_Vars$Heatmap_row_selection_options))
 #     if(any(global_Vars$Heatmap_row_selection_options=="rowAnno_based")){
@@ -2367,19 +2315,19 @@ server <- function(input,output,session){
 #     if(global_Vars$Heatmap_cluster_rows==TRUE){
 #       fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
 #     }
-#     
+#
 #     if(global_Vars$Heatmap_LFC_toHeatmap==TRUE){
 #       fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
 #       fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",global_Vars$Heatmap_sample_annotation_types_cmp_heatmap,": ",global_Vars$Heatmap_Groups2Compare_ref_heatmap," vs ",global_Vars$Heatmap_Groups2Compare_ctrl_heatmap))
 #     }
-#     
+#
 #     fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
-#     
+#
 #     if(isTruthy(input$NotesHeatmap) & !(isEmpty(input$NotesHeatmap))){
 #       fun_LogIt("### Personal Notes:")
 #       fun_LogIt(message = input$NotesHeatmap)
 #     }
-#     
+#
 #     removeNotification(notificationID)
 #     showNotification("Saved!",type = "message", duration = 1)
 #   })
