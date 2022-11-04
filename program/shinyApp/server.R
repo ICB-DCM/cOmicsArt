@@ -1,7 +1,6 @@
 server <- function(input,output,session){
   # TODO source from extra file (potentially C.R?)
   source("R/fun_filterRNA.R",local = T)
-  source("R/fun_plotPCA.R",local = T)
   source("R/fun_LFC.R",local = T)
   source("R/fun_volcano.R",local = T)
   source("R/fun_popupModal.R",local = T)
