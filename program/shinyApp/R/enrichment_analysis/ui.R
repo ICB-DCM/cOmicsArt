@@ -60,7 +60,7 @@ geneset_panel_UI <- function(
       ),
       tabPanel(
         title = paste(id, "Enrichment Table"),
-        DT::dataTableOutput("ResultTable")
+        DT::dataTableOutput(ns("EnrichmentTable"))
       )
     )
   )

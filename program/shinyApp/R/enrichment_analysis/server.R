@@ -45,7 +45,7 @@ enrichment_analysis_geneset_server <- function(id, result, scenario){
       )
 
       # result table
-      output$ResultTable=DT::renderDataTable({DT::datatable(
+      output$EnrichmentTable=DT::renderDataTable({DT::datatable(
         {result@result},
         extensions = 'Buttons',
         options = list(

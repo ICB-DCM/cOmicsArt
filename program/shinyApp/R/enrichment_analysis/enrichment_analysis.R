@@ -24,7 +24,6 @@ gene_set_enrichment <- function(
     verbose=TRUE,
     pAdjustMethod="BH"
   )
-  browser()
   EnrichmentRes_GO <- clusterProfiler::gseGO(
     gene=geneSetChoice_tranlsated,
     ont=input$ontologyForGO,
