@@ -1,5 +1,5 @@
 server <- function(input,output,session){
-  # TODO source from extra file (potentially C.R?)
+  # TODO source from extra file 
   source("R/fun_filterRNA.R",local = T)
   source("R/fun_LFC.R",local = T)
   source("R/fun_volcano.R",local = T)
@@ -27,7 +27,6 @@ server <- function(input,output,session){
     }else{
       print("Mööp")
     }
-    
   })
   
 # Load external Data ----
@@ -36,19 +35,20 @@ server <- function(input,output,session){
   print("Hello Shiny")
   
   #### Clean Up
-  # list.files(pattern = "mmu.*.png")
+
   # create www folder if not present
   if(dir.exists("www")){
     setwd("www")
     print(list.files())
-    file.remove(setdiff(setdiff(list.files(path="."),list.files(path=".",pattern = ".csv")),list.files(path=".",pattern = ".RDS")))
+    file.remove(setdiff(setdiff(list.files(path="."),
+                                list.files(path=".",pattern = ".csv")),
+                        list.files(path=".",pattern = ".RDS")))
     print("Removed old Report files for fresh start")
     setwd("..")
   }
   
   observe_helpers()
 # Guide ----
-  #guide$init()$start()
   
   observeEvent(input$guide, {
     print("Jip")
@@ -58,11 +58,12 @@ server <- function(input,output,session){
   
 # Download Report pdf ----
   DownloadReport_server("DownloadTestModule")
- 
-  #session$allowReconnect(TRUE) # To allow Reconnection wiht lost Session, potential
-  # security issue + more than one user issues potentially ?! Thats why further security
+  # To allow Reconnection wiht lost Session, potential
+  # security issue + more than one user issues potentially ?!
+  # Thats why further security
+  # session$allowReconnect(TRUE) 
   # what if complete new start (should have button for this ?!)
-  #session$allowReconnect("force") # To test locally
+  # session$allowReconnect("force") # To test locally
   
 # Layout upon Start ----
   hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
@@ -74,28 +75,40 @@ server <- function(input,output,session){
   
 ## Quit App Button ----
   observeEvent(input$Quit_App,{
-    showModal(modalDialog(
-      tags$h4('You can download the complete report by clicking on the link'),
-      footer=tagList(
-        a(href="Report.html", "Download report", download=NA, target="_blank"),
-        actionButton(inputId = "Done",label = "Done"),
-        modalButton('Cancel')
+    showModal(
+      modalDialog(
+        tags$h4('You can download the complete report by clicking on the link'),
+        footer=tagList(
+          a(
+            href="Report.html", 
+            "Download report", 
+            download=NA, 
+            target="_blank"
+            ),
+          actionButton(
+            inputId = "Done",
+            label = "Done"
+            ),
+          modalButton('Cancel')
+        )
+        )
       )
-    ))
   })
   
   observeEvent(input$Done,{
     removeModal()
-    show_toast("Good Bye!",
-               type = "success",
-               position = "top",
-               timerProgressBar = FALSE,
-               width = "100%")
+    show_toast(
+      title = "Good Bye!",
+      type = "success",
+      position = "top",
+      timerProgressBar = FALSE,
+      width = "100%"
+      )
     shiny::stopApp()
   })
   
 # Data Upload + checks ----
-print("Data Upload")
+  print("Data Upload")
 ## Ui Section ----
   
   observeEvent(input$Reset,{
@@ -107,88 +120,132 @@ print("Data Upload")
     shinyjs::reset(id="metadataInput")
   })
   
-  output$data_matrix1_ui=renderUI({
-    shiny::fileInput(inputId = "data_matrix1",
-                     label = HTML('Upload data Matrix <br/> (rows entities, cols samples) <br/> <a href="airway-read-counts-LS.csv"> Download example data (Transcriptomics, human) </a>'),
-                     accept = c(".csv"),
-                     width = "80%")
+  output$data_matrix1_ui <- renderUI({
+    shiny::fileInput(
+      inputId = "data_matrix1",
+      label = HTML('Upload data Matrix <br/>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a>'),
+      accept = c(".csv"),
+      width = "80%")
   })
-  output$data_sample_anno1_ui=renderUI({
-    shiny::fileInput("data_sample_anno1",
-                     HTML('Upload sample Annotation <br/> (rows must be samples)<br/> <a href="airway-sample-sheet-LS.csv"> Download example data </a>'),
-                     accept = c(".csv"),
-                     width = "80%")
+  output$data_sample_anno1_ui <- renderUI({
+    shiny::fileInput(
+      inputId = "data_sample_anno1",
+      label = HTML('Upload sample Annotation <br/>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv">Download example data</a>'),
+      accept = c(".csv"),
+      width = "80%")
   })
-  output$data_row_anno1_ui=renderUI({
-    shiny::fileInput("data_row_anno1",
-                     HTML('Upload entities Annotation Matrix <br/> (rows must be entities)<br/> <a href="airway-entitie_description-LS.csv"> Download example data </a>'),
-                     accept = c(".csv"),
-                     width = "80%")
+  output$data_row_anno1_ui <- renderUI({
+    shiny::fileInput(
+      inputId = "data_row_anno1",
+      label = HTML('Upload entities Annotation Matrix <br/>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a>'),
+      accept = c(".csv"),
+      width = "80%")
   })
-  output$data_preDone_ui=renderUI({
-    shiny::fileInput("data_preDone",
-                     HTML('Load precompiled data <br/> (saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data </a>'),
-                     accept = ".RDS",
-                     width = "80%")
+  output$data_preDone_ui <- renderUI({
+    shiny::fileInput(
+      inputId = "data_preDone",
+      label = HTML('Load precompiled data <br/>(saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data</a>'),
+      accept = ".RDS",
+      width = "80%"
+      )
   })
-  output$SaveInputAsList=downloadHandler(
+  output$SaveInputAsList <- downloadHandler(
    filename = function() {
-      paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep="") },
+      paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep="")},
     content = function(file){
-      saveRDS(data_input_shiny(),file)
+      saveRDS(
+        object = data_input_shiny(),
+        file = file
+        )
     }
   )
-  output$metadataInput_ui=renderUI({
-    shiny::fileInput("metadataInput",
-                     "Upload your Meta Data Sheet (currently replaces sample annotation",
-                     accept = c(".xlsx"),buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),width = "100%")
+  output$metadataInput_ui <- renderUI({
+    shiny::fileInput(
+      inputId = "metadataInput",
+      label = "Upload your Meta Data Sheet (currently replaces sample annotation",
+      accept = c(".xlsx"),
+      buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),
+      width = "100%"
+      )
   })
   
   observeEvent(input$omicType,{
     if(input$omicType=="Transcriptomics"){
       output$AddGeneSymbols_ui=renderUI({
-        checkboxInput(inputId = "AddGeneSymbols", label="Adding gene Annotation?",value=F)
+        checkboxInput(
+          inputId = "AddGeneSymbols",
+          label="Adding gene Annotation?",
+          value=F
+          )
         
       })
       output$AddGeneSymbols_organism_ui=renderUI({
-        selectInput(inputId = "AddGeneSymbols_organism", 
-                    label="Which Organisms?",
-                    choices=c("hsapiens","mus_musculus"),
-                    selected = "hsapiens")
-        
+        selectInput(
+          inputId = "AddGeneSymbols_organism",
+          label="Which Organisms?",
+          choices=c("hsapiens","mus_musculus"),
+          selected = "hsapiens"
+          )
       })
     }else{
       output$AddGeneSymbols_ui=NULL
       output$AddGeneSymbols_organism_ui=NULL
     }
-
   })
   
 ## Upload visual inspection ----
   
   observeEvent(input$DoVisualDataInspection,{
     if(isTruthy(input$data_preDone)){
-      output$DataMatrix_VI_Info=renderText({"Visual Inspection only for primary data, not for precompiled set possible!"})
+      output$DataMatrix_VI_Info=renderText({
+        "Visual Inspection only for primary data, not for precompiled set possible!"
+        })
       req(F)
     }
-    if(!(isTruthy(input$data_matrix1) & isTruthy(input$data_sample_anno1) & isTruthy(input$data_row_anno1))){
-      output$DataMatrix_VI_Info=renderText("The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!")
+    if(!(isTruthy(input$data_matrix1) & 
+         isTruthy(input$data_sample_anno1) & 
+         isTruthy(input$data_row_anno1))){
+      output$DataMatrix_VI_Info=renderText(
+        "The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!"
+        )
     }else{
-     Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F)
-     output$DataMatrix_VI=DT::renderDataTable({DT::datatable(Matrix)})
-     output$DataMatrix_VI_INFO=renderText({"Matrix:"})
-     sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1,check.names = F)
-     output$SampleMatrix_VI=DT::renderDataTable({DT::datatable(sample_table)})
-     output$SampleMatrix_VI_INFO=renderText({"Sample table:"})
+     Matrix <- read.csv(
+       file = input$data_matrix1$datapath,
+       header = T,
+       row.names = 1,
+       check.names = F
+       )
+     output$DataMatrix_VI <- DT::renderDataTable({
+       DT::datatable(data = Matrix)
+       })
+     output$DataMatrix_VI_INFO <- renderText({"Matrix:"})
+     sample_table <- read.csv(
+       file = input$data_sample_anno1$datapath,
+       header = T,
+       row.names = 1,
+       check.names = F
+       )
+     output$SampleMatrix_VI <- DT::renderDataTable({
+       DT::datatable(data = sample_table)
+       })
+     output$SampleMatrix_VI_INFO <- renderText({"Sample table:"})
      
-     annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F)
-     output$EntitieMatrix_VI=DT::renderDataTable({DT::datatable(annotation_rows)})
-     output$EntitieMatrix_VI_INFO=renderText({"Entitie table:"})
+     annotation_rows <- read.csv(
+       file = input$data_row_anno1$datapath,
+       header = T,
+       row.names = 1,
+       check.names = F
+       )
+     output$EntitieMatrix_VI <- DT::renderDataTable({
+       DT::datatable(data = annotation_rows)
+       })
+     output$EntitieMatrix_VI_INFO <- renderText({"Entitie table:"})
      
      ## Do some checking
-     snippetYes="<font color=\"#00851d\"><b>Yes</b></font>"
-     snippetNo= "<font color=\"#ab020a\"><b>No</b></font>"
-     output$OverallChecks=renderText({"Some overall Checks are running run...\n
+     snippetYes <- "<font color=\"#00851d\"><b>Yes</b></font>"
+     snippetNo <-  "<font color=\"#ab020a\"><b>No</b></font>"
+     output$OverallChecks <- renderText({
+       "Some overall Checks are running run...\n
        Rownames of Matrix are the same as rownames of entitie table ...\n
        Colnames of Matrix are same as rownames of sample table ... \n
        Matrix has no na ...\n
@@ -197,23 +254,25 @@ print("Data Upload")
        "
        })
 
-     check1=ifelse(all(rownames(Matrix)==rownames(annotation_rows)),snippetYes,snippetNo)
-     check2=ifelse(all(colnames(Matrix)==rownames(sample_table)),snippetYes,snippetNo)
-     check3=ifelse(any(is.na(Matrix)==T),snippetNo,snippetYes)
-     check4=ifelse(any(is.na(sample_table)==T),snippetNo,snippetYes)
-     check5=ifelse(any(is.na(annotation_rows)==T),snippetNo,snippetYes)
-     if(check5==snippetNo){
+     check1 <- ifelse(all(rownames(Matrix)==rownames(annotation_rows)),snippetYes,snippetNo)
+     check2 <- ifelse(all(colnames(Matrix)==rownames(sample_table)),snippetYes,snippetNo)
+     check3 <- ifelse(any(is.na(Matrix)==T),snippetNo,snippetYes)
+     check4 <- ifelse(any(is.na(sample_table)==T),snippetNo,snippetYes)
+     check5 <- ifelse(any(is.na(annotation_rows)==T),snippetNo,snippetYes)
+     
+     if(check5 == snippetNo){
        # Indicate columns with NA
-       colsWithNa=numeric()
+       colsWithNa <- numeric()
        for(i in 1:ncol(annotation_rows)){
-         if(any(is.na(annotation_rows[,i])==T)){
-           colsWithNa=c(colsWithNa,i)
+         if(any(is.na(annotation_rows[,i]) == T)){
+           colsWithNa <- c(colsWithNa,i)
          }
        }
-       check5=paste0(snippetNo," Following columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
+       check5 <- paste0(snippetNo," Following columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
      }
      
-     output$OverallChecks=renderText({paste0("Some overall Checks are running run ...\n
+     output$OverallChecks <- renderText({
+       paste0("Some overall Checks are running run ...\n
        Rownames of Matrix are the same as rownames of entitie table ",check1,"\n
        Colnames of Matrix are same as rownames of sample table ",check2," \n
        Matrix has no na ",check3,"\n
@@ -226,126 +285,178 @@ print("Data Upload")
   
 ## Do Upload ----
   
-  data_input<-list()
-  data_output<-list()
+  data_input <- list()
+  data_output <- list()
   observeEvent(input$refresh1,{
-    omicType_selected=input$omicType
-    fun_LogIt("## Data Input")
-    fun_LogIt(paste0("**DataInput** - Uploaded Omic Type: ",input$omicType))
+    omicType_selected = input$omicType
+    fun_LogIt(message = "## Data Input")
+    fun_LogIt(
+      message = paste0("**DataInput** - Uploaded Omic Type: ",input$omicType)
+      )
     
-    if(!(isTruthy(input$data_preDone) |(isTruthy(input$data_matrix1)&isTruthy(input$data_sample_anno1)&isTruthy(input$data_row_anno1)))){
-      output$debug=renderText("The Upload has failed, or you haven't uploaded anything yet")
+    if(!(isTruthy(input$data_preDone) | 
+         (isTruthy(input$data_matrix1) & 
+          isTruthy(input$data_sample_anno1) & 
+          isTruthy(input$data_row_anno1)))){
+      output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
     }else{
-      if(any(names(data_input_shiny())==omicType_selected)){
-        show_toast(title = paste0(input$omicType,"Data Upload"),text = paste0(input$omicType,"-data upload was successful"),position = "top",timer = 1500,timerProgressBar = T)
-        output$debug=renderText({"<font color=\"#00851d\"><b>Upload successful</b></font>"})
+      if(any(names(data_input_shiny()) == omicType_selected)){
+        show_toast(
+          title = paste0(input$omicType,"Data Upload"),
+          text = paste0(input$omicType,"-data upload was successful"),
+          position = "top",
+          timer = 1500,
+          timerProgressBar = T
+          )
+        output$debug <- renderText({
+          "<font color=\"#00851d\"><b>Upload successful</b></font>"
+          })
         if(isTruthy(input$data_preDone)){
           # precomplied set used
-          fun_LogIt(paste0("**DataInput** - The used data was precompiled. Filename: \n\t",input$data_preDone$name))
+          fun_LogIt(
+            message = paste0("**DataInput** - The used data was precompiled. Filename: \n\t",input$data_preDone$name)
+            )
         }else{
-          # 3 sets uploaded # bit harder to get to actual data path... TO DO
-          fun_LogIt(paste0("The following data was used: \n\t",input$data_matrix1$name,"\n\t",input$data_sample_anno1$name,"\n\t",input$data_row_anno1$name))
+          fun_LogIt(
+            message = paste0("The following data was used: \n\t",input$data_matrix1$name,"\n\t",input$data_sample_anno1$name,"\n\t",input$data_row_anno1$name)
+            )
         }
        
         showTab(inputId = "tabsetPanel1", target = "Pre-processing")
       }else{
         print("The precompiled lists types, does not match the input type!")
-        output$debug=renderText({"<font color=\"#FF0000\"><b>The precompiled lists type, does not match the input type! Thats why the errors! Load the 3 original dataframe instead</b></font>"})
+        output$debug=renderText({
+          "<font color=\"#FF0000\"><b>The precompiled lists type, does not match the input type! Thats why the errors! Load the 3 original dataframe instead</b></font>"
+          })
       }
     }
   })
 
 ## create data object ----
-  data_input_shiny=eventReactive(input$refresh1,{
+  data_input_shiny <- eventReactive(input$refresh1,{
     # What Input is required? (raw data)
     if(!isTruthy(input$data_preDone)){
-      # Include here, that the sample anno can be replaced by metadatashett
+      # Include here, that the sample anno can be replaced by metadatasheet
       # potentially this will be extended to all of the fields
       shiny::req(input$data_matrix1,input$data_row_anno1)
       
       if(isTruthy(input$data_sample_anno1)){
-        data_input[[input$omicType]]<-list(type=as.character(input$omicType),
-                                           Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F),
-                                           sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1,check.names = F),
-                                           annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F))
+        data_input[[input$omicType]] <- list(
+          type=as.character(input$omicType),
+          Matrix=read.csv(
+            file = input$data_matrix1$datapath,
+            header = T,
+            row.names = 1,
+            check.names = F
+            ),
+          sample_table <- read.csv(
+            file = input$data_sample_anno1$datapath,
+            header = T,
+            row.names = 1,
+            check.names = F
+            ),
+          annotation_rows <- read.csv(
+            file = input$data_row_anno1$datapath,
+            header = T,
+            row.names = 1,
+            check.names = F
+            )
+          )
         
-        # check if only 1 col in anno row, add dummy col to ensure R does not turn it into a vector
+        # check if only 1 col in anno row, 
+        # add dummy col to ensure R does not turn it into a vector
         
-        if(ncol(data_input[[input$omicType]]$annotation_rows)<2){
+        if(ncol(data_input[[input$omicType]]$annotation_rows) < 2){
           print("Added dummy column to annotation row")
-          data_input[[input$omicType]]$annotation_rows$origRownames=rownames(data_input[[input$omicType]]$annotation_rows)
+          data_input[[input$omicType]]$annotation_rows$origRownames <- rownames(data_input[[input$omicType]]$annotation_rows)
         }
         
       }else if(isTruthy(input$metadataInput)){
        
-        tmp_sampleTable=fun_readInSampleTable(input$metadataInput$datapath)
-        # ensure the correct order (done in Matrix odering the cols) 
-        # props gives an error if wrongly
+        tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
+        #TODO ensure explicit the correct order (done in Matrix ordering the cols) 
+
         tryCatch(
           {
-            data_input[[input$omicType]]<-list(type=as.character(input$omicType),
-                                               Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F)[,rownames(my_data_tmp)],
-                                               sample_table=tmp_sampleTable,
-                                               annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F))
-
-            
+            data_input[[input$omicType]] <- list(
+              type = as.character(input$omicType),
+              Matrix = read.csv(
+                file = input$data_matrix1$datapath,
+                header = T,
+                row.names = 1,
+                check.names = F
+                )[,rownames(my_data_tmp)],
+              sample_table = tmp_sampleTable,
+              annotation_rows = read.csv(
+                file = input$data_row_anno1$datapath,
+                header = T,
+                row.names = 1,
+                check.names = F)
+              )
             return(data_input)
           },
           error=function(cond){
             print("Error! Names From SampleTable and Matrix do not fit")
-            output$debug=renderText({"<font color=\"#FF0000\"><b>Your Sample Names from the Metadata Sheet and from your Matrix do not match!! Data cannot be loaded</b></font>"})
+            output$debug=renderText({
+              "<font color=\"#FF0000\"><b>Your Sample Names from the Metadata Sheet and from your Matrix do not match!! Data cannot be loaded</b></font>"
+              })
             reset('metadataInput')
             return(NULL)
           }
         )
-
-         }
+      }
       
-      
-      ## Include here possible Data Checks
-      
-      
-      
+      ## TODO Include here possible Data Checks
     }else{
       # Precompiled list
-      data_input[[input$omicType]]<-readRDS(input$data_preDone$datapath)[[input$omicType]]
+      data_input[[input$omicType]] <- readRDS(
+        file = input$data_preDone$datapath
+        )[[input$omicType]]
       ## Include here possible Data Checks
-      #ENSURE DATA SAMPLE TABLE AND IN MATRIX AS WELL AS ROW ANNO ARE IN THE SAME ORDER!!!
+      ## TODO Include here possible Data Checks
     }
 
     ### Added here gene annotation if asked for 
-    if(input$AddGeneSymbols & input$omicType=="Transcriptomics"){
-      fun_LogIt(message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added")
-      fun_LogIt(message = paste0("**DataInput** - chosen Organism: ",input$AddGeneSymbols_organism))
+    if(input$AddGeneSymbols & 
+       input$omicType == "Transcriptomics"){
+      fun_LogIt(
+        message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added"
+        )
+      fun_LogIt(
+        message = paste0("**DataInput** - chosen Organism: ",input$AddGeneSymbols_organism)
+        )
       print("Add gene annotation")
-      if(input$AddGeneSymbols_organism=="hsapiens"){
+      
+      if(input$AddGeneSymbols_organism == "hsapiens"){
         ensembl<- readRDS("data/ENSEMBL_Human_05_07_22")
       }else{
         ensembl <- readRDS("data/ENSEMBL_Mouse_05_07_22")
       }
       
-      out <- getBM(attributes=c("ensembl_gene_id", "gene_biotype","external_gene_name"), values=rownames(data_input[[input$omicType]]$annotation_rows), mart=ensembl)
-    
+      out <- getBM(
+        attributes = c("ensembl_gene_id", "gene_biotype","external_gene_name"),
+        values = rownames(data_input[[input$omicType]]$annotation_rows),
+        mart = ensembl
+        )
       out <- out[base::match(rownames(data_input[[input$omicType]]$annotation_rows), out$ensembl_gene_id),] 
       
-      data_input[[input$omicType]]$annotation_rows$gene_type=out$gene_biotype
-      data_input[[input$omicType]]$annotation_rows$GeneName=out$external_gene_name
-      
-      # data_matrix$gene_type=out$gene_biotype
-      
+      data_input[[input$omicType]]$annotation_rows$gene_type <- out$gene_biotype
+      data_input[[input$omicType]]$annotation_rows$GeneName <- out$external_gene_name
     }
     
-    
-    if(!any(class(data_input[[input$omicType]])=="SummarizedExperiment")){
+    if(!any(class(data_input[[input$omicType]]) == "SummarizedExperiment")){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
-      data_input[[paste0(input$omicType,"_SumExp")]]=SummarizedExperiment(assays  = data_input[[input$omicType]]$Matrix,
-                                                        rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
-                                                        colData = data_input[[input$omicType]]$sample_table)
+      data_input[[paste0(input$omicType,"_SumExp")]]=
+        SummarizedExperiment(assays  = data_input[[input$omicType]]$Matrix,
+                             rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
+                             colData = data_input[[input$omicType]]$sample_table
+                             )
 
     }
     
+    # TODO:
     # For Loading summarizedExperiemnt make sure to to more extensive check 
-    # Option1 comcing from complete outside
+    # Option1 coming from complete outside
     # Option2 coming from inside here
     
     # # Due to Object change a  lot needs to be changed Downstream! For the moment revert back to "original" obj
@@ -354,19 +465,18 @@ print("Data Upload")
     #                                   sample_table=as.data.frame(colData(tmp)),
     #                                   annotation_rows=as.data.frame(rowData(tmp)))
 
-    
     for(dataFrameToClean in names(data_input[[input$omicType]])){
-      if(!(dataFrameToClean%in%c("type","Matrix"))){
+      if(!(dataFrameToClean %in% c("type","Matrix"))){
         print(paste0("(before) No. anno options ",dataFrameToClean, ": ",ncol(data_input[[input$omicType]][[dataFrameToClean]])))
-        data_input[[input$omicType]][[dataFrameToClean]]=data_input[[input$omicType]][[dataFrameToClean]] %>% purrr::keep(~length(unique(.x)) != 1)
+        data_input[[input$omicType]][[dataFrameToClean]]=data_input[[input$omicType]][[dataFrameToClean]] %>% 
+          purrr::keep(~length(unique(.x)) != 1)
         print(paste0("(after) No. anno options ",dataFrameToClean, ": ",ncol(data_input[[input$omicType]][[dataFrameToClean]])))
       }
     }
-    
-    # Here we will exclude all constant annotation for entities and rows as there carry no information gain!
-    data_input
-    
-    fun_LogIt(message = paste0("**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!"))
+
+    fun_LogIt(
+      message = paste0("**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!")
+      )
     data_input
   })
   
@@ -407,13 +517,12 @@ print("Data Upload")
           multiple = T
         )
       }
-      
     })
     observeEvent(input$row_selection,{
       req(data_input_shiny())
-      if(any(input$row_selection=="High Values+IQR")){
+      if(any(input$row_selection == "High Values+IQR")){
         output$propensityChoiceUser_ui=renderUI({
-          numericInput("propensityChoiceUser",
+          numericInput(inputId = "propensityChoiceUser",
                        label = "Specifcy the propensity for variablity & Expr",
                        value = 0.85,
                        min=0,
@@ -421,13 +530,13 @@ print("Data Upload")
           )
         })
       }else{
-        output$propensityChoiceUser_ui=renderUI({
+        output$propensityChoiceUser_ui <- renderUI({
           NULL
         })
       }
     })
     # Column /Sample
-    output$providedSampleAnnotationTypes_ui=renderUI({
+    output$providedSampleAnnotationTypes_ui <-renderUI({
       req(data_input_shiny())
       selectInput(
         inputId = "providedSampleAnnotationTypes",
@@ -437,105 +546,136 @@ print("Data Upload")
         multiple = F
       )
     })
-    output$sample_selection_ui=renderUI({
+    output$sample_selection_ui <- renderUI({
       req(data_input_shiny(),isTruthy(input$providedSampleAnnotationTypes))
       selectInput(
         inputId = "sample_selection",
         label = "Which entities to use? (Will be the union if multiple selected)",
-        choices = c("all",unique(data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes])),
+        choices = c("all",
+                    unique(data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes])
+                    ),
         selected="all",
         multiple = T
       )
     })
-    #output$debug=renderText(dim(data_input_shiny()[[input$omicType]]$Matrix))
-    output$NextPanel_ui=renderUI({
-      actionButton(inputId = "NextPanel",label = "Start the Journey",width = "100%",icon = icon("fas fa-angle-double-right"))
+
+    output$NextPanel_ui <- renderUI({
+      actionButton(
+        inputId = "NextPanel",
+        label = "Start the Journey",
+        width = "100%",
+        icon = icon("fas fa-angle-double-right")
+        )
     })
-    fun_LogIt(message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input_shiny()[[input$omicType]]$Matrix),collapse = ", ")))
-    
+    fun_LogIt(
+      message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input_shiny()[[input$omicType]]$Matrix),collapse = ", "))
+      )
   })
+  
 ## Log Selection ----
   observeEvent(input$NextPanel,{
     # add row and col selection options
-    # input$propensityChoiceUser (conditional!)
-    # input$providedSampleAnnotationTypes
-    # input$sample_selection
     fun_LogIt("## Data Selection")
-    fun_LogIt(message = "**DataSelection** - The following selection was conducted:")
+    fun_LogIt(
+      message = "**DataSelection** - The following selection was conducted:"
+      )
     print(length(input$sample_selection))
-    fun_LogIt(message = paste0("**DataSelection** - Samples:\n\t DataSelection - based on: ",input$providedSampleAnnotationTypes,": ",paste(input$sample_selection,collapse = ", ")))
-    fun_LogIt(message = paste0("**DataSelection** - Entities:\n\t DataSelection - based on: ",input$providedRowAnnotationTypes,": ",paste(input$row_selection,collapse = ", ")))
+    fun_LogIt(
+      message = paste0("**DataSelection** - Samples:\n\t DataSelection - based on: ",
+                       input$providedSampleAnnotationTypes,": ",
+                       paste(input$sample_selection,collapse = ", "))
+      )
+    fun_LogIt(
+      message = paste0("**DataSelection** - Entities:\n\t DataSelection - based on: ",
+                       input$providedRowAnnotationTypes,
+                       ": ",paste(input$row_selection,collapse = ", "))
+      )
     if(!is.null(input$propensityChoiceUser) & length(input$row_selection)>1){
       # also record IQR if this + other selection was selected
-      fun_LogIt(message = paste0("**DataSelection** - IQR treshold: ", input$propensityChoiceUser))
+      fun_LogIt(
+        message = paste0("**DataSelection** - IQR treshold: ",
+                         input$propensityChoiceUser)
+        )
       
     }
-    # fun_LogIt(paste0(input$row_selection,))
-    
-    updateTabsetPanel(session, "tabsetPanel1",
-                      selected = "Pre-processing")
+
+    updateTabsetPanel(
+      session = session,
+      inputId = "tabsetPanel1",
+      selected = "Pre-processing"
+      )
   })
   
   ## Do Selection ----  
   selectedData=reactive({
-    
-    # Row Selection
-
-    #print(paste0("Do we come here?",input$row_selection))
     shiny::req(input$row_selection,input$sample_selection)
     print("Alright do Row selection")
-    selected=c()
-    #print(input$row_selection)
-    #print(input$providedRowAnnotationTypes)
-    if(any(input$row_selection=="all")){
-      selected=rownames(data_input_shiny()[[input$omicType]]$annotation_rows)
+    selected <- c()
+
+    if(any(input$row_selection == "all")){
+      selected <- rownames(data_input_shiny()[[input$omicType]]$annotation_rows)
     }else if(!(length(input$row_selection)==1 & any(input$row_selection=="High Values+IQR"))){
-      selected=unique(c(selected,rownames(data_input_shiny()[[input$omicType]]$annotation_rows)[which(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes]%in%input$row_selection)]))
+      selected=unique(
+        c(selected,
+          rownames(data_input_shiny()[[input$omicType]]$annotation_rows)
+          [which(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes]%in%input$row_selection)]
+          )
+        )
     }
-    if(any(input$row_selection=="High Values+IQR")){
-      #To Do take user chosen propensity into account
-      # if this is chosen make sure that this should reduce the data set, hence no union but intersection!
-      # if only High Values + IQR then for all
-      if(length(input$row_selection)==1){
-        filteredIQR_Expr <- data_input_shiny()[[input$omicType]]$Matrix[filter_rna(data_input_shiny()[[input$omicType]]$Matrix,prop=input$propensityChoiceUser),]
-        selected=rownames(filteredIQR_Expr)
+    if(any(input$row_selection == "High Values+IQR")){
+      if(length(input$row_selection) == 1){
+        filteredIQR_Expr <- data_input_shiny()[[input$omicType]]$Matrix[filter_rna(
+          rna = data_input_shiny()[[input$omicType]]$Matrix,
+          prop = input$propensityChoiceUser
+          ),]
+        selected <- rownames(filteredIQR_Expr)
       }else{
-        filteredIQR_Expr <- data_input_shiny()[[input$omicType]]$Matrix[filter_rna(data_input_shiny()[[input$omicType]]$Matrix[selected,],prop=input$propensityChoiceUser),]
-        selected=intersect(selected,rownames(filteredIQR_Expr))
+        filteredIQR_Expr <- data_input_shiny()[[input$omicType]]$Matrix[filter_rna(
+          rna = data_input_shiny()[[input$omicType]]$Matrix[selected,],
+          prop = input$propensityChoiceUser
+          ),]
+        selected <- intersect(
+          selected,
+          rownames(filteredIQR_Expr)
+          )
       }
       remove(filteredIQR_Expr)
     }
 
     # Column Selection
-
-    samples_selected=c()
-    if(any(input$sample_selection=="all")){
-      samples_selected=colnames(data_input_shiny()[[input$omicType]]$Matrix)
+    samples_selected <- c()
+    if(any(input$sample_selection == "all")){
+      samples_selected <- colnames(data_input_shiny()[[input$omicType]]$Matrix)
     }else{
-      samples_selected=c(samples_selected,rownames(data_input_shiny()[[input$omicType]]$sample_table)[which(data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes]%in%input$sample_selection)])
+      samples_selected <-c(
+        samples_selected,
+        rownames(data_input_shiny()[[input$omicType]]$sample_table)[which(
+          data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes]%in%input$sample_selection
+          )]
+        )
     }
 
     # Data set selection
 
-    data_output[[input$omicType]]<-list(type=input$omicType,
-                                        Matrix=data_input_shiny()[[input$omicType]]$Matrix[selected,samples_selected],
-                                        sample_table=data_input_shiny()[[input$omicType]]$sample_table[samples_selected,],
-                                        annotation_rows=data_input_shiny()[[input$omicType]]$annotation_rows[selected,])
+    data_output[[input$omicType]] <- list(
+      type=input$omicType,
+      Matrix=data_input_shiny()[[input$omicType]]$Matrix[selected,samples_selected],
+      sample_table=data_input_shiny()[[input$omicType]]$sample_table[samples_selected,],
+      annotation_rows=data_input_shiny()[[input$omicType]]$annotation_rows[selected,]
+      )
     #req(input$Sample_selection,isTruthy(data_input_shiny()),input$providedSampleAnnotationTypes)
     print("Alright do Column selection")
     print(length(selected))
     print(length(samples_selected))
-    
 
-    
-    data_output
+    return(data_output)
   })
   
 # Preprocessing after Selection ----
 ## UI section ----
-  output$DESeq_formula_ui=renderUI({
+  output$DESeq_formula_ui <- renderUI({
     req(data_input_shiny())
-    if(input$PreProcessing_Procedure=="vst_DESeq"){
+    if(input$PreProcessing_Procedure == "vst_DESeq"){
       selectInput(
         inputId = "DESeq_formula",
         label = "Choose factors for desing formula in DESeq pipeline (currently only one factor allowed + App might crash if your factor as only 1 sample per level)",
@@ -548,27 +688,47 @@ print("Data Upload")
     }
     
   })
-  output$NextPanel2_ui=renderUI({
-    actionButton(inputId = "NextPanel2",label = "Go to PCA",icon = icon("fas fa-hat-wizard"))
+  output$NextPanel2_ui <- renderUI({
+    actionButton(
+      inputId = "NextPanel2",
+      label = "Go to PCA",
+      icon = icon("fas fa-hat-wizard")
+      )
   })
-  output$NextPanel3_ui=renderUI({
-    actionButton(inputId = "NextPanel3",label = "Go to Volcano",icon = icon("fas fa-mountain"))
+  output$NextPanel3_ui <- renderUI({
+    actionButton(
+      inputId = "NextPanel3",
+      label = "Go to Volcano",
+      icon = icon("fas fa-mountain")
+      )
   })
-  output$NextPanel4_ui=renderUI({
-    actionButton(inputId = "NextPanel4",label = "Go to Heatmap",icon = icon("fas fa-thermometer-full"))
+  output$NextPanel4_ui <- renderUI({
+    actionButton(
+      inputId = "NextPanel4",
+      label = "Go to Heatmap",
+      icon = icon("fas fa-thermometer-full")
+      )
   })
   
   observeEvent(input$NextPanel2,{
-    updateTabsetPanel(session, "tabsetPanel1",
-                      selected = "PCA")
+    updateTabsetPanel(
+      session = session,
+      inputId = "tabsetPanel1",
+      selected = "PCA")
   })
   observeEvent(input$NextPanel3,{
-    updateTabsetPanel(session, "tabsetPanel1",
-                      selected = "Volcano Plot")
+    updateTabsetPanel(
+      session = session,
+      inputId = "tabsetPanel1",
+      selected = "Volcano Plot"
+      )
   })
   observeEvent(input$NextPanel4,{
-    updateTabsetPanel(session, "tabsetPanel1",
-                      selected = "Heatmap")
+    updateTabsetPanel(
+      session = session,
+      inputId = "tabsetPanel1",
+      selected = "Heatmap"
+      )
   })
 
 ## Do preprocessing ----  
@@ -576,134 +736,164 @@ print("Data Upload")
     processedData_all <- selectedData()
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
-    processedData_all[[input$omicType]]$Matrix=processedData_all[[input$omicType]]$Matrix[which(apply(processedData_all[[input$omicType]]$Matrix,1,sd)!=0),]
+    processedData_all[[input$omicType]]$Matrix <- processedData_all[[input$omicType]]$Matrix[which(apply(processedData_all[[input$omicType]]$Matrix,1,sd)!=0),]
     
-    if(input$omicType=="Transcriptomics"){
+    if(input$omicType == "Transcriptomics"){
       print("Also remove anything of rowCount <=10")
       print(dim(processedData_all[[input$omicType]]$Matrix))
-      processedData_all[[input$omicType]]$Matrix=processedData_all[[input$omicType]]$Matrix[which(rowSums(processedData_all[[input$omicType]]$Matrix)>10),]
+      processedData_all[[input$omicType]]$Matrix <- processedData_all[[input$omicType]]$Matrix[which(rowSums(processedData_all[[input$omicType]]$Matrix)>10),]
     }
-    if(input$omicType=="Metabolomics"){
+    
+    if(input$omicType == "Metabolomics"){
       print("Remove anything which has a row median of 0")
       print(dim(processedData_all[[input$omicType]]$Matrix))
-      processedData_all[[input$omicType]]$Matrix=processedData_all[[input$omicType]]$Matrix[which(apply(processedData_all[[input$omicType]]$Matrix,1,median)!=0),]
+      processedData_all[[input$omicType]]$Matrix <-processedData_all[[input$omicType]]$Matrix[which(apply(processedData_all[[input$omicType]]$Matrix,1,median)!=0),]
     }
-    #print("Also remove anything of rowCount <=10")
-    #print(dim(processedData_all[[input$omicType]]$Matrix))
-    #processedData_all[[input$omicType]]$Matrix=processedData_all[[input$omicType]]$Matrix[which(rowSums(processedData_all[[input$omicType]]$Matrix)>10),]
+    
     print(dim(processedData_all[[input$omicType]]$Matrix))
     
-    if(input$PreProcessing_Procedure!="none"){
+    if(input$PreProcessing_Procedure != "none"){
       print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
-      if(input$PreProcessing_Procedure=="simpleCenterScaling"){
-        processedData<-as.data.frame(t(scale(as.data.frame(t(processedData_all[[input$omicType]]$Matrix)),scale = T,center = T)))
+      if(input$PreProcessing_Procedure == "simpleCenterScaling"){
+        processedData<-as.data.frame(t(
+          scale(
+          x = as.data.frame(t(processedData_all[[input$omicType]]$Matrix)),
+          scale = T,
+          center = T
+          )
+          )
+          )
         processedData_all[[input$omicType]]$Matrix=processedData
       }
-      if(input$PreProcessing_Procedure=="vst_DESeq"){
-        if(input$omicType=="Transcriptomics"){
-          processedData<-processedData_all[[input$omicType]]$Matrix
+      if(input$PreProcessing_Procedure == "vst_DESeq"){
+        if(input$omicType == "Transcriptomics"){
+          processedData <- processedData_all[[input$omicType]]$Matrix
           print(input$DESeq_formula)
-          processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"]=as.factor(processedData_all[[input$omicType]]$sample_table[,input$DESeq_formula])
+          processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"] <- as.factor(
+            processedData_all[[input$omicType]]$sample_table[,input$DESeq_formula]
+            )
           
           print(processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"])
-          dds <- DESeqDataSetFromMatrix(countData = processedData,
-                                        colData = processedData_all[[input$omicType]]$sample_table,
-                                        design = ~DE_SeqFactor) #input$DESeq_formula
-          de_seq_result <- DESeq(dds) # Do this global incase we need later on
-          dds_vst <- vst(de_seq_result, blind = TRUE) # not biased to design
+          # TODO take more complicated formulas into consideration
+          dds <- DESeqDataSetFromMatrix(
+            countData = processedData,
+            colData = processedData_all[[input$omicType]]$sample_table,
+            design = ~DE_SeqFactor
+            ) 
+          
+          de_seq_result <- DESeq(dds)
+          dds_vst <- vst(
+            object = de_seq_result,
+            blind = TRUE
+            )
           processedData_all[[input$omicType]]$Matrix=assay(dds_vst)
         }else{
-          output$Statisitcs_Data=renderText({"<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"})
+          output$Statisitcs_Data=renderText({
+            "<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"
+            })
         }
-        
       }
-      if(input$PreProcessing_Procedure=="Scaling_0_1"){
-        processedData=as.data.frame(t(apply(processedData_all[[input$omicType]]$Matrix,1,function(x){(x-min(x))/(max(x)-min(x))})))
-        #head(processedData)
+      if(input$PreProcessing_Procedure == "Scaling_0_1"){
+        processedData=as.data.frame(t(
+          apply(processedData_all[[input$omicType]]$Matrix,1,function(x){
+            (x-min(x))/(max(x)-min(x))
+            })
+          ))
         processedData_all[[input$omicType]]$Matrix=processedData
       }
-      if(input$PreProcessing_Procedure=="ln"){
-        
-        processedData=as.data.frame(log(processedData_all[[input$omicType]]$Matrix))
-        #head(processedData)
-        processedData_all[[input$omicType]]$Matrix=processedData
+      if(input$PreProcessing_Procedure == "ln"){
+        processedData <- as.data.frame(log(
+          processedData_all[[input$omicType]]$Matrix
+          ))
+        processedData_all[[input$omicType]]$Matrix <- processedData
       }
-      if(input$PreProcessing_Procedure=="log10"){
-        # add small eps to 0 + check if strictly positive
+      if(input$PreProcessing_Procedure == "log10"){
         if(any(processedData_all[[input$omicType]]$Matrix<0)){
-          output$Statisitcs_Data=renderText({"Negative entries, cannot take log10!!"})
-          
+          output$Statisitcs_Data=renderText({
+            "Negative entries, cannot take log10!!"
+            })
           req(FALSE)
         }
         if(any(processedData_all[[input$omicType]]$Matrix==0)){
-          
-          processedData=as.data.frame(log10((processedData_all[[input$omicType]]$Matrix)+1))
+          processedData=as.data.frame(log10(
+            (processedData_all[[input$omicType]]$Matrix)+1)
+            )
         }
-        processedData=as.data.frame(log10(processedData_all[[input$omicType]]$Matrix+1))
-        #head(processedData)
-        processedData_all[[input$omicType]]$Matrix=processedData
+        processedData <- as.data.frame(log10(
+          processedData_all[[input$omicType]]$Matrix+1)
+          )
+        processedData_all[[input$omicType]]$Matrix <- processedData
       }
-      if(input$PreProcessing_Procedure=="pareto_scaling"){
-        centered <- as.data.frame(t(apply(processedData_all[[input$omicType]]$Matrix, 1, function(x) x - mean(x))))
-        pareto.matrix <- as.data.frame(t(apply(centered, 1, function(x) x/sqrt(sd(x)))))
-        
-        #processedData=as.data.frame(t(apply(processedData_all[[input$omicType]]$Matrix,1,function(x){(x-min(x))/(max(x)-min(x))})))
-        #head(processedData)
-        processedData_all[[input$omicType]]$Matrix=pareto.matrix
+      if(input$PreProcessing_Procedure == "pareto_scaling"){
+        centered <- as.data.frame(t(
+          apply(processedData_all[[input$omicType]]$Matrix, 1, function(x){x - mean(x)})
+          ))
+        pareto.matrix <- as.data.frame(t(
+          apply(centered, 1, function(x){x/sqrt(sd(x))})
+          ))
+
+        processedData_all[[input$omicType]]$Matrix <- pareto.matrix
       }
     }
     
     if(any(is.na(processedData_all[[input$omicType]]$Matrix))){
-      processedData_all[[input$omicType]]$Matrix=processedData_all[[input$omicType]]$Matrix[complete.cases(processedData_all[[input$omicType]]$Matrix),]
+      processedData_all[[input$omicType]]$Matrix <- processedData_all[[input$omicType]]$Matrix[complete.cases(processedData_all[[input$omicType]]$Matrix),]
     }
     #### Potentially some entities removed hence update the annotation table
     print("What are the colnamaes here? X at the beginning??")
     print(colnames(processedData_all[[input$omicType]]$Matrix))
     
-    processedData_all[[input$omicType]]$sample_table=processedData_all[[input$omicType]]$sample_table[colnames(processedData_all[[input$omicType]]$Matrix),]
-    processedData_all[[input$omicType]]$annotation_rows=processedData_all[[input$omicType]]$annotation_rows[rownames(processedData_all[[input$omicType]]$Matrix),]
+    processedData_all[[input$omicType]]$sample_table <- processedData_all[[input$omicType]]$sample_table[colnames(processedData_all[[input$omicType]]$Matrix),]
+    processedData_all[[input$omicType]]$annotation_rows <- processedData_all[[input$omicType]]$annotation_rows[rownames(processedData_all[[input$omicType]]$Matrix),]
     
     showTab(inputId = "tabsetPanel1", target = "PCA")
     showTab(inputId = "tabsetPanel1", target = "Volcano Plot")
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
     showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
-    # TODO: change eventReactive -> observeEvent+reactiveValue (needs discussion)
+
     processedData_all <<- processedData_all
     processedData_all
   })
   
-  output$Statisitcs_Data=renderText({paste0("The data has the dimensions of: ",paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", "),
-                                            "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
-                                            "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
-                                            "<br","See help for details",
-                                            "<br>",ifelse(any(selectedData_processed()[[input$omicType]]$Matrix<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))})
+  output$Statisitcs_Data=renderText({
+    paste0("The data has the dimensions of: ",
+           paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", "),
+           "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
+           "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
+           "<br","See help for details",
+           "<br>",ifelse(any(selectedData_processed()[[input$omicType]]$Matrix<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
+    })
   
 ## Log preprocessing ----
   observeEvent(input$Do_preprocessing,{
-    if(input$omicType=="Transcriptomics"){
-      tmp_logMessage = "Remove anything which row Count <= 10"
-    }else if(input$omicType=="Metabolomics"){
-      tmp_logMessage ="Remove anything which has a row median of 0"
+    if(input$omicType == "Transcriptomics"){
+      tmp_logMessage <- "Remove anything which row Count <= 10"
+    }else if(input$omicType == "Metabolomics"){
+      tmp_logMessage <- "Remove anything which has a row median of 0"
     }else{
-      tmp_logMessage = "none"
+      tmp_logMessage <- "none"
     }
     fun_LogIt("## Pre Processing")
-    fun_LogIt(message = "**PreProcessing** - As general remove all entities which are constant over all samples (automatically)")
-    fun_LogIt(message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage))
-    fun_LogIt(message = paste0("**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula),input$PreProcessing_Procedure)))
-    
-    fun_LogIt(message = paste0("**PreProcessing** - The resulting dimensions are: ",paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", ")))
-    # Dimenesions
+    fun_LogIt(
+      message = "**PreProcessing** - As general remove all entities which are constant over all samples (automatically)"
+      )
+    fun_LogIt(
+      message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage)
+      )
+    fun_LogIt(
+      message = paste0("**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula),input$PreProcessing_Procedure))
+      )
+    fun_LogIt(
+      message = paste0("**PreProcessing** - The resulting dimensions are: ",paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", "))
+      )
   })
   
-  
-  
-  output$debug=renderText(dim(selectedData_processed()[[input$omicType]]$Matrix))
+  output$debug <- renderText(dim(selectedData_processed()[[input$omicType]]$Matrix))
 # Explorative Analysis - PCA ---- 
   
 ## UI Section ----
-  output$x_axis_selection_ui=renderUI({
+  output$x_axis_selection_ui <- renderUI({
     radioGroupButtons(
       inputId = "x_axis_selection",
       label = "PC for x-Axis",
@@ -712,7 +902,7 @@ print("Data Upload")
       selected = "PC1"
     )
   })
-  output$y_axis_selection_ui=renderUI({
+  output$y_axis_selection_ui <- renderUI({
     radioGroupButtons(
       inputId = "y_axis_selection",
       label = "PC for y-Axis",
@@ -721,7 +911,7 @@ print("Data Upload")
       selected = "PC2"
     )
   })
-  output$Show_loadings_ui=renderUI({
+  output$Show_loadings_ui <- renderUI({
     radioGroupButtons(
       inputId = "Show_loadings",
       label = "Plot Loadings on top? (currently top 5)",
@@ -730,7 +920,7 @@ print("Data Upload")
       selected = "No"
     )
   })
-  output$coloring_options_ui=renderUI({
+  output$coloring_options_ui <- renderUI({
     req(data_input_shiny())
     selectInput(
       inputId = "coloring_options",
@@ -740,7 +930,7 @@ print("Data Upload")
     )
   })
   
-  output$PCA_anno_tooltip_ui=renderUI({
+  output$PCA_anno_tooltip_ui <- renderUI({
     selectInput(
       inputId = "PCA_anno_tooltip",
       label = "Select the anno to be shown at tooltip",
@@ -749,7 +939,7 @@ print("Data Upload")
     )
   })
   
-  output$EntitieAnno_Loadings_ui=renderUI({
+  output$EntitieAnno_Loadings_ui <- renderUI({
     selectInput(
       inputId = "EntitieAnno_Loadings",
       label = "Select the annotype shown at y-axis",
@@ -760,187 +950,227 @@ print("Data Upload")
 
 ## Do PCA & Co ----
   toListen2PCA <- reactive({
-    list(input$Do_PCA,
-         input$omicType,
-         input$row_selection,
-         input$x_axis_selection,
-         input$y_axis_selection,
-         input$coloring_options,
-         input$bottomSlider,
-         input$topSlider,
-         input$Show_loadings,
-         input$PCA_anno_tooltip,
-         input$EntitieAnno_Loadings)
+    list(
+      input$Do_PCA,
+      input$omicType,
+      input$row_selection,
+      input$x_axis_selection,
+      input$y_axis_selection,
+      input$coloring_options,
+      input$bottomSlider,
+      input$topSlider,
+      input$Show_loadings,
+      input$PCA_anno_tooltip,
+      input$EntitieAnno_Loadings
+      )
   })
 
   observeEvent(toListen2PCA(),{
-    req(input$omicType,input$row_selection,input$x_axis_selection,input$y_axis_selection,input$coloring_options)
+    req(
+      input$omicType,
+      input$row_selection,
+      input$x_axis_selection,
+      input$y_axis_selection,
+      input$coloring_options
+      )
     
     print("PCA analysis on pre-selected data")
-    # here insert your analysis code which gets the selectedData as input
-    # output should be a plot, other reactive input$... vars can be added
-    # do custom title depedning on analysis and the selected data!
-    # somehow smart way with Plot positions ? (props radio button)+ checking if in certain plots are plots before over writing (?)
-    customTitle=paste0("PCA - ",input$omicType,"-",
+    customTitle <- paste0("PCA - ",input$omicType,"-",
                        paste0("entities:",input$row_selection,collapse = "_"),
                        "-samples",ifelse(any(input$sample_selection!="all"),
                                          paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),"")
                        ,"-preprocessing: ",input$PreProcessing_Procedure)
     print(customTitle)
-    plotPosition="PCA_plot"
+    plotPosition <- "PCA_plot"
     
-    pca<-prcomp(as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix)),center = T, scale. = FALSE)
-    #calculate explained variance per PC
+    pca <- prcomp(as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix)),
+                  center = T,
+                  scale. = FALSE)
     explVar <- pca$sdev^2/sum(pca$sdev^2)
-    names(explVar)=colnames(pca$x)
+    names(explVar) <- colnames(pca$x)
     print(input$coloring_options)
     # transform variance to percent
     percentVar <- round(100 * explVar, digits=1)
     # Define data for plotting
     pcaData <- data.frame(pca$x,selectedData_processed()[[input$omicType]]$sample_table)
-    continiousColors=F
-    if(is.double(pcaData[,input$coloring_options]) & length(levels(as.factor(pcaData[,input$coloring_options])))>8){
+    continiousColors <- F
+    if(is.double(pcaData[,input$coloring_options]) & 
+       length(levels(as.factor(pcaData[,input$coloring_options])))>8){
       print("color Option is numeric! automatically binned into 10 bins") 
-      pcaData[,input$coloring_options]=(cut_interval(pcaData[,input$coloring_options],n=10))
-      continiousColors=T
+      pcaData[,input$coloring_options] <- cut_interval(
+        x = pcaData[,input$coloring_options],
+        n = 10
+        )
+      continiousColors <- T
     }else{
-      pcaData[,input$coloring_options]=as.factor(pcaData[,input$coloring_options])
-      
+      pcaData[,input$coloring_options] <- as.factor(pcaData[,input$coloring_options])
       print(levels(pcaData[,input$coloring_options]))
-      
     }
-    
-    # check if global_ID is there, if not add
 
-    if(!any(colnames(pcaData)=="global_ID")){
-      pcaData$global_ID=rownames(pcaData)
+    if(!any(colnames(pcaData) == "global_ID")){
+      pcaData$global_ID <- rownames(pcaData)
     }
     if(!is.null(input$PCA_anno_tooltip)){
       req(input$PCA_anno_tooltip)
-      adj2colname=gsub(" ",".",input$PCA_anno_tooltip)
-      pcaData$chosenAnno=pcaData[,adj2colname]
+      adj2colname <- gsub(" ",".",input$PCA_anno_tooltip)
+      pcaData$chosenAnno <- pcaData[,adj2colname]
     }else{
-      pcaData$chosenAnno=pcaData$global_ID
+      pcaData$chosenAnno <- pcaData$global_ID
     }
 
     if(length(levels(pcaData[,input$coloring_options]))>8){
        if(continiousColors){
-         colorTheme=viridis::viridis(10)
-         pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
-                                         y = pcaData[,input$y_axis_selection],
-                                         color=pcaData[,input$coloring_options],
-                                         label=global_ID,
-                                         global_ID=global_ID,
-                                         chosenAnno=chosenAnno)) +
-           geom_point(size =3)+
-           scale_color_manual(name = input$coloring_options,values=colorTheme)
+         colorTheme <- viridis::viridis(n = 10)
+         pca_plot <- ggplot(
+           pcaData,
+           aes(
+             x = pcaData[,input$x_axis_selection],
+             y = pcaData[,input$y_axis_selection],
+             color=pcaData[,input$coloring_options],
+             label=global_ID,
+             global_ID=global_ID,
+             chosenAnno=chosenAnno)) +
+           geom_point(size = 3) +
+           scale_color_manual(
+             name = input$coloring_options,
+             values=colorTheme
+             )
          scenario=1
        }else{
-         pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
-                                         y = pcaData[,input$y_axis_selection],
-                                         color=pcaData[,input$coloring_options],
-                                         label=global_ID,
-                                         global_ID=global_ID,
-                                         chosenAnno=chosenAnno)) +
-           geom_point(size =3)+
+         pca_plot <- ggplot(
+           pcaData,
+           aes(
+             x = pcaData[,input$x_axis_selection],
+             y = pcaData[,input$y_axis_selection],
+             color=pcaData[,input$coloring_options],
+             label=global_ID,
+             global_ID=global_ID,
+             chosenAnno=chosenAnno)) +
+           geom_point(size = 3)+
            scale_color_discrete(name = input$coloring_options)
          scenario=2
        }
-     
     }else{
-      colorTheme=c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
+      colorTheme <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
+                      "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
       
-      pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
-                                      y = pcaData[,input$y_axis_selection],
-                                      color=pcaData[,input$coloring_options],
-                                      label=global_ID,
-                                      global_ID=global_ID,
-                                      chosenAnno=chosenAnno)) +
+      pca_plot <- ggplot(
+        pcaData,
+        aes(
+          x = pcaData[,input$x_axis_selection],
+          y = pcaData[,input$y_axis_selection],
+          color=pcaData[,input$coloring_options],
+          label=global_ID,
+          global_ID=global_ID,
+          chosenAnno=chosenAnno)) +
         geom_point(size =3)+
-        scale_color_manual(values=colorTheme,
+        scale_color_manual(values = colorTheme,
                            name = input$coloring_options)
       scenario=3
     }
     
     pca_plot_final <- pca_plot+
-      xlab(paste0(names(percentVar[input$x_axis_selection]),": ",percentVar[input$x_axis_selection], "% variance")) +
-      ylab(paste0(names(percentVar[input$y_axis_selection]),": ", percentVar[input$y_axis_selection], "% variance")) +
+      xlab(paste0(names(percentVar[input$x_axis_selection]),
+                  ": ",
+                  percentVar[input$x_axis_selection],
+                  "% variance")) +
+      ylab(paste0(names(percentVar[input$y_axis_selection]),
+                  ": ",
+                  percentVar[input$y_axis_selection],
+                  "% variance")) +
       coord_fixed()+
       theme_classic()+
       theme(aspect.ratio = 1)+
       ggtitle(customTitle)
     print(input$Show_loadings)
     ## Add Loadings if wanted
-    if(input$Show_loadings=="Yes"){
+    if(input$Show_loadings == "Yes"){
       print("Do we Trigger this??")
-      df_out<-pca$x
+      df_out <- pca$x
       df_out_r <- as.data.frame(pca$rotation)
       df_out_r$feature <- row.names(df_out_r)
       
-      TopK=rownames(df_out_r)[order(sqrt((df_out_r[,input$x_axis_selection])^2+(df_out_r[,input$y_axis_selection])^2),decreasing = T)[1:5]]
-      df_out_r$feature[!df_out_r$feature%in%TopK]=""
+      TopK <- rownames(df_out_r)[
+        order(
+          sqrt(
+            (df_out_r[,input$x_axis_selection])^2+(df_out_r[,input$y_axis_selection])^2
+            ),
+          decreasing = T
+          )[1:5]
+        ]
+      df_out_r$feature[!df_out_r$feature%in%TopK] <- ""
       
       mult <- min(
         (max(df_out[,input$y_axis_selection]) - min(df_out[,input$y_axis_selection])/(max(df_out_r[,input$y_axis_selection])-min(df_out_r[,input$y_axis_selection]))),
         (max(df_out[,input$x_axis_selection]) - min(df_out[,input$x_axis_selection])/(max(df_out_r[,input$x_axis_selection])-min(df_out_r[,input$x_axis_selection])))
       )
+      
       df_out_r <- transform(df_out_r,
                             v1 = 1.2 * mult * (get(input$x_axis_selection)),
                             v2 = 1.2 * mult * (get(input$y_axis_selection))
       )
       
-      df_out_r$global_ID=rownames(df_out_r)
-      df_out_r$chosenAnno=rownames(df_out_r)
+      df_out_r$global_ID <- rownames(df_out_r)
+      df_out_r$chosenAnno <- rownames(df_out_r)
       if(!is.null(input$EntitieAnno_Loadings)){
         req(data_input_shiny()[[input$omicType]])
-        df_out_r$chosenAnno=factor(make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])),levels = make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])))
-        #LoadingsDF$entitie=make.unique(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])
+        df_out_r$chosenAnno <- factor(
+          make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])),
+          levels = make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings]))
+          )
       }
       
-      pca_plot_final <- pca_plot_final + geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
-                                                      aes(x=0, y=0, xend=v1, yend=v2,chosenAnno=chosenAnno),
-                                                      arrow=arrow(type="closed",unit(0.01, "inches"),ends = "both"),
-                                                      #linetype="solid",
-                                                      #alpha=0.5,
-                                                      color="#ab0521")
-      if(scenario==1){
-        scenario=4
+      pca_plot_final <- pca_plot_final + 
+        geom_segment(
+          data = df_out_r[which(df_out_r$feature!=""),],
+          aes(
+            x=0,
+            y=0,
+            xend=v1,
+            yend=v2,
+            chosenAnno=chosenAnno
+            ),
+          arrow = arrow(type = "closed",unit(0.01, "inches"),ends = "both"),
+          color = "#ab0521")
+      if(scenario == 1){
+        scenario = 4
       }
-      if(scenario==2){
-        scenario=5
+      if(scenario == 2){
+        scenario = 5
       }
-      if(scenario==3){
-        scenario=6
+      if(scenario == 3){
+        scenario = 6
       }
-      
-     
-    }
-    
-    #Some identify the current active tab and then specifcy the correct plot to it
-    PCA_scenario=scenario
 
-    output[["PCA_plot"]] <- renderPlotly({ggplotly(pca_plot_final,
-                                                   tooltip = ifelse(is.null(input$PCA_anno_tooltip),"all","chosenAnno"),legendgroup="color")})
+    }
+
+    PCA_scenario=scenario
+    output[["PCA_plot"]] <- renderPlotly({
+      ggplotly(pca_plot_final,
+               tooltip = ifelse(is.null(input$PCA_anno_tooltip),"all","chosenAnno"),
+               legendgroup="color")
+      })
     
     print(input$only2Report_pca)
-    global_Vars$PCA_plot<-pca_plot_final # somehow does not update ? or just return the latest?
-    global_Vars$PCA_customTitle=customTitle
-    global_Vars$PCA_coloring=input$coloring_options
-    global_Vars$PCA_noLoadings=ifelse(input$Show_loadings=="Yes",length(TopK),0)
-    
+    global_Vars$PCA_plot <- pca_plot_final # somehow does not update ? or just return the latest?
+    global_Vars$PCA_customTitle <- customTitle
+    global_Vars$PCA_coloring <- input$coloring_options
+    global_Vars$PCA_noLoadings <- ifelse(input$Show_loadings=="Yes",length(TopK),0)
     
     output$getR_Code_PCA <- downloadHandler(
       filename = function(){
         paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
       },
       content = function(file){
-        envList=list(pcaData=pcaData,
-                     input=reactiveValuesToList(input),
-                     global_ID=pcaData$global_ID,
-                     chosenAnno=pcaData$chosenAnno,
-                     percentVar=percentVar,
-                     customTitle=customTitle,
-                     colorTheme=colorTheme)
+        envList<-list(
+          pcaData = pcaData,
+          input = reactiveValuesToList(input),
+          global_ID = pcaData$global_ID,
+          chosenAnno = pcaData$chosenAnno,
+          percentVar = percentVar,
+          customTitle = customTitle,
+          colorTheme = colorTheme
+          )
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
         write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
@@ -954,18 +1184,30 @@ print("Data Upload")
       contentType = "application/zip"
       )
     
-    
-    output$SavePlot_pos1=downloadHandler(
-      filename = function() { paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="") },
+    output$SavePlot_pos1 <- downloadHandler(
+      filename = function() {
+        paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="")
+        },
       # cannot get the final destination as this is a download on server side
       content = function(file){
-        ggsave(file,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
+        ggsave(
+          filename = file,
+          plot = pca_plot_final,
+          device = gsub("\\.","",input$file_ext_plot1)
+          )
         on.exit({
-          TEST=paste0(getwd(),"/www/",paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep=""))
-          ggsave(TEST,plot=pca_plot_final,device = gsub("\\.","",input$file_ext_plot1))
+          TEST = paste0(getwd(),
+                        "/www/",
+                        paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="")
+                        )
+          ggsave(
+            filename = TEST,
+            plot = pca_plot_final,
+            device = gsub("\\.","",input$file_ext_plot1)
+            )
           
           # Add Log Messages
-          fun_LogIt("## PCA")
+          fun_LogIt(message = "## PCA")
           fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
           ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print("Args!"))
           fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
@@ -977,21 +1219,24 @@ print("Data Upload")
     
     var_explained_df <- data.frame(PC= paste0("PC",1:ncol(pca$x)),
                                    var_explained=(pca$sdev)^2/sum((pca$sdev)^2))
-    var_explained_df$Var=paste0(round(var_explained_df$var_explained,4)*100,"%")
-    var_explained_df$PC=factor(var_explained_df$PC,levels = paste0("PC",1:ncol(pca$x)))
-    scree_plot=ggplot(var_explained_df,aes(x=PC,y=var_explained, group=1))+
+    var_explained_df$Var <- paste0(round(var_explained_df$var_explained,4)*100,"%")
+    var_explained_df$PC <- factor(var_explained_df$PC,levels = paste0("PC",1:ncol(pca$x)))
+    scree_plot <- 
+      ggplot(var_explained_df,
+             aes(x=PC,y=var_explained, group=1))+
       geom_point(size=4,aes(label=Var))+
       geom_line()+
       ylab("Variance explained")+
       theme_bw()+
       ggtitle("Scree-Plot for shown PCA")
-    scenario=7
-    Scree_scenario=scenario
-    output[["Scree_Plot"]] <- renderPlotly({ggplotly(scree_plot,
-                                                     tooltip = "Var",legendgroup="color")})
+    scenario <- 7
+    Scree_scenario <- scenario
+    output[["Scree_Plot"]] <- renderPlotly({
+      ggplotly(scree_plot,tooltip = "Var",legendgroup="color")
+      })
     
-    global_Vars$Scree_plot=scree_plot
-    global_Vars$Scree_customTitle=customTitle
+    global_Vars$Scree_plot <- scree_plot
+    global_Vars$Scree_customTitle <- customTitle
     
     output$getR_Code_Scree_Plot <- downloadHandler(
       filename = function(){
@@ -1005,7 +1250,7 @@ print("Data Upload")
         
         write(getPlotCode(Scree_scenario), file.path(temp_directory, "Code.R"))
         
-        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+        saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
         zip::zip(
           zipfile = file,
           files = dir(temp_directory),
@@ -1015,57 +1260,69 @@ print("Data Upload")
       contentType = "application/zip"
     )
     
-    
-    output$SavePlot_Scree=downloadHandler(
-      filename = function() { paste(customTitle, " ",Sys.time(),input$file_ext_Scree,sep="") },
+    output$SavePlot_Scree <- downloadHandler(
+      filename = function() {
+        paste(customTitle, " ",Sys.time(),input$file_ext_Scree,sep="")
+        },
       
       content = function(file){
         ggsave(file,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
-        
         on.exit({
-          tmp_filename=paste0(getwd(),"/www/",paste("Scree",customTitle, " ",Sys.time(),input$file_ext_Scree,sep=""))
+          tmp_filename=paste0(
+            getwd(),
+            "/www/",
+            paste("Scree",customTitle, " ",Sys.time(),input$file_ext_Scree,sep="")
+            )
           ggsave(tmp_filename,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
           
           # Add Log Messages
-          fun_LogIt("### PCA ScreePlot")
+          fun_LogIt(message = "### PCA ScreePlot")
           fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
           fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
         })
       }
-      
     )
     
 ### Do Loadings Plot ----
     print("Do LoadingsPlot an issue?")
-    LoadingsDF=data.frame(entitie=rownames(pca$rotation),Loading=pca$rotation[,input$x_axis_selection])
+    LoadingsDF <- data.frame(
+      entitie=rownames(pca$rotation),
+      Loading=pca$rotation[,input$x_axis_selection]
+      )
     #LoadingsDF$Loading=scale(LoadingsDF$Loading)
-    LoadingsDF=LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
-    LoadingsDF=rbind(LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF)-input$bottomSlider),],LoadingsDF[input$topSlider:1,])
-    LoadingsDF$entitie=factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
+    LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
+    LoadingsDF <- rbind(
+      LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF)-input$bottomSlider),],
+      LoadingsDF[input$topSlider:1,]
+      )
+    LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
     if(!is.null(input$EntitieAnno_Loadings)){
       req(data_input_shiny()[[input$omicType]])
-      LoadingsDF$entitie=factor(make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])),levels = make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])))
-      #LoadingsDF$entitie=make.unique(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])
+      LoadingsDF$entitie=factor(
+        make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
+        levels = make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+        )
     }
 
-    
-    plotOut=ggplot(LoadingsDF,aes(x=Loading,y=entitie))+
-      geom_col(aes(fill=Loading))+
-      scale_y_discrete(breaks=LoadingsDF$entitie,labels=stringr::str_wrap(gsub("\\.[0-9].*$","",LoadingsDF$entitie),20))+
-      scale_fill_gradient2(low="#277d6a",mid="white",high="orange")+
-      ylab(ifelse(is.null(input$EntitieAnno_Loadings),"",input$EntitieAnno_Loadings))+
+    plotOut <- ggplot(LoadingsDF,aes(x = Loading,y = entitie)) +
+      geom_col(aes(fill=Loading)) +
+      scale_y_discrete(
+        breaks = LoadingsDF$entitie,
+        labels = stringr::str_wrap(gsub("\\.[0-9].*$","",LoadingsDF$entitie),20)) +
+      scale_fill_gradient2(low = "#277d6a",mid = "white",high = "orange")+
+      ylab(ifelse(is.null(input$EntitieAnno_Loadings),"",input$EntitieAnno_Loadings)) +
       xlab(paste0("Loadings: ",input$x_axis_selection))+
       theme_bw(base_size = 15)
 
-    scenario = 8
-    Loading_scenario=scenario
-    output[["PCA_Loadings_plot"]]<- renderPlot({plotOut})
+    scenario <- 8
+    Loading_scenario <- scenario
+    output[["PCA_Loadings_plot"]] <- renderPlot({plotOut})
     
-    global_Vars$Loadings_x_axis=input$x_axis_selection
-    global_Vars$Loadings_bottomSlider=input$bottomSlider
-    global_Vars$Loadings_topSlider=input$topSlider
-    global_Vars$Loadings_file_ext_Loadings=input$file_ext_Loadings
-    global_Vars$Loadings_plotOut=plotOut
+    global_Vars$Loadings_x_axis <- input$x_axis_selection
+    global_Vars$Loadings_bottomSlider <- input$bottomSlider
+    global_Vars$Loadings_topSlider <- input$topSlider
+    global_Vars$Loadings_file_ext_Loadings <- input$file_ext_Loadings
+    global_Vars$Loadings_plotOut <- plotOut
 
     output$getR_Code_Loadings <- downloadHandler(
       filename = function(){
@@ -1080,7 +1337,7 @@ print("Data Upload")
         
         write(getPlotCode(Loading_scenario), file.path(temp_directory, "Code.R"))
         
-        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+        saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
         zip::zip(
           zipfile = file,
           files = dir(temp_directory),
@@ -1090,57 +1347,81 @@ print("Data Upload")
       contentType = "application/zip"
     )
     
-    output$SavePlot_Loadings=downloadHandler(
-      filename = function() { paste("LOADINGS_PCA_",Sys.time(),input$file_ext_Loadings,sep="") },
+    output$SavePlot_Loadings <- downloadHandler(
+      filename = function() {paste(
+        "LOADINGS_PCA_",
+        Sys.time(),
+        input$file_ext_Loadings,
+        sep="")},
       
       content = function(file){
-        ggsave(file,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings), dpi = "print")
+        ggsave(file,
+               plot = plotOut,
+               device = gsub("\\.","",input$file_ext_Loadings),
+               dpi = "print"
+               )
         
         on.exit({
-          tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.time(),input$file_ext_Loadings,sep=""))
-          ggsave(tmp_filename,plot=plotOut,device = gsub("\\.","",input$file_ext_Loadings), dpi = "print")
-          
+          tmp_filename=paste0(
+            getwd(),
+            "/www/",
+            paste("LOADINGS_PCA_",Sys.time(),input$file_ext_Loadings,sep="")
+            )
+          ggsave(
+            tmp_filename,
+            plot = plotOut,
+            device = gsub("\\.","",input$file_ext_Loadings),
+            dpi = "print"
+            )
           # Add Log Messages
-          fun_LogIt("### PCA Loadings")
+          fun_LogIt(message = "### PCA Loadings")
           fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",input$x_axis_selection))
           fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
           fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
         })
       }
-      
     )
-    
   })
 ## Log it ----
   observeEvent(input$only2Report_pca,{
       # needs global var ?! do we want that?
-      notificationID<-showNotification("Saving...",duration = 0)
-      TEST=paste0(getwd(),"/www/",paste(global_Vars$PCA_customTitle, "__",Sys.time(),".png",sep=""))
-      ggsave(TEST,plot=global_Vars$PCA_plot,device = "png")
-
+      notificationID <- showNotification("Saving...",duration = 0)
+      TEST <- paste0(getwd(),"/www/",paste(global_Vars$PCA_customTitle, "__",Sys.time(),".png",sep=""))
+      ggsave(
+        TEST,
+        plot = global_Vars$PCA_plot,
+        device = "png"
+        )
       # Add Log Messages
-      fun_LogIt("## PCA")
-      fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
+      fun_LogIt(message = "## PCA")
+      fun_LogIt(
+        message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options)
+        )
       ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
       fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
       if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
-        fun_LogIt("### Personal Notes:")
+        fun_LogIt(message = "### Personal Notes:")
         fun_LogIt(message = input$NotesPCA)
       }
-     
-      
       removeNotification(notificationID)
       showNotification("Saved!",type = "message", duration = 1)
-
   })
   
   observeEvent(input$only2Report_Scree_Plot,{
-    notificationID<-showNotification("Saving...",duration = 0)
-    tmp_filename=paste0(getwd(),"/www/",paste("Scree",global_Vars$Scree_customTitle, " ",Sys.time(),".png",sep=""))
-    ggsave(tmp_filename,plot=global_Vars$Scree_plot,device = "png")
+    notificationID <- showNotification("Saving...",duration = 0)
+    tmp_filename <- paste0(
+      getwd(),
+      "/www/",
+      paste("Scree",global_Vars$Scree_customTitle, " ",Sys.time(),".png",sep="")
+      )
+    ggsave(
+      tmp_filename,
+      plot=global_Vars$Scree_plot,
+      device = "png"
+      )
     
     # Add Log Messages
-    fun_LogIt("### PCA ScreePlot")
+    fun_LogIt(message = "### PCA ScreePlot")
     fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
     fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
     
@@ -1149,12 +1430,20 @@ print("Data Upload")
   })
   
   observeEvent(input$only2Report_Loadings,{
-    notificationID<-showNotification("Saving...",duration = 0)
-    tmp_filename=paste0(getwd(),"/www/",paste("LOADINGS_PCA_",Sys.time(),".png",sep=""))
-    ggsave(tmp_filename,plot=global_Vars$Loadings_plotOut,device = "png")
+    notificationID <- showNotification("Saving...",duration = 0)
+    tmp_filename <- paste0(
+      getwd(),
+      "/www/",
+      paste("LOADINGS_PCA_",Sys.time(),".png",sep="")
+      )
+    ggsave(
+      tmp_filename,
+      plot = global_Vars$Loadings_plotOut,
+      device = "png"
+      )
     
     # Add Log Messages
-    fun_LogIt("### PCA Loadings")
+    fun_LogIt(message = "### PCA Loadings")
     fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",global_Vars$Loadings_x_axis))
     fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",global_Vars$Loadings_topSlider," and the lowest ",global_Vars$Loadings_bottomSlider," Loadings"))
     fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
@@ -1163,18 +1452,9 @@ print("Data Upload")
     showNotification("Saved!",type = "message", duration = 1)
   })
   
-# UMAP (to come) ----
-  toListen2UMAP <- reactive({
-    list(input$Do_UMAP) # if either of those changes!!!
-  })
-  observeEvent(toListen2UMAP(),{
-    req(input$omicType,input$row_selection,isTruthy(selectedData_processed()))
-    print("UMAP analysis on pre-selected data")
-    output$debug=renderText("Not yet implemented on Back-End")
-  })
 # Volcano Plot----
 ## UI Section----
-  output$sample_annotation_types_cmp_ui=renderUI({
+  output$sample_annotation_types_cmp_ui <- renderUI({
     req(data_input_shiny())
     selectInput(
       inputId = "sample_annotation_types_cmp",
@@ -1184,7 +1464,7 @@ print("Data Upload")
       selected = NULL
     )
   })
-  output$Groups2Compare_ref_ui=renderUI({
+  output$Groups2Compare_ref_ui <- renderUI({
     req(data_input_shiny())
     selectInput(
       inputId = "Groups2Compare_ref",
@@ -1194,7 +1474,7 @@ print("Data Upload")
       selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp])[1]
     )
   })
-  output$Groups2Compare_treat_ui=renderUI({
+  output$Groups2Compare_treat_ui <- renderUI({
     req(data_input_shiny())
     selectInput(
       inputId = "Groups2Compare_treat",
@@ -1204,20 +1484,28 @@ print("Data Upload")
       selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp])[2]
     )
   })
-  output$psig_threhsold_ui=renderUI({
+  output$psig_threhsold_ui <- renderUI({
     req(data_input_shiny())
-    numericInput(inputId ="psig_threhsold" ,
-                 label = "adj. p-value threshold",
-                 min=0, max=0.1, step=0.01,
-                 value = 0.05)
+    numericInput(
+      inputId ="psig_threhsold" ,
+      label = "adj. p-value threshold",
+      min=0, 
+      max=0.1, 
+      step=0.01,
+      value = 0.05
+      )
   })
-  output$lfc_threshold_ui=renderUI({
-    numericInput(inputId ="lfc_threshold" ,
-                 label = "Log FC threshold (both sides!)",
-                 min=0, max=10, step=0.1,
-                 value = 1.0)
+  output$lfc_threshold_ui <- renderUI({
+    numericInput(
+      inputId ="lfc_threshold",
+      label = "Log FC threshold (both sides!)",
+      min=0,
+      max=10,
+      step=0.1,
+      value = 1.0
+      )
   })
-  output$VOLCANO_anno_tooltip_ui=renderUI({
+  output$VOLCANO_anno_tooltip_ui <- renderUI({
     req(data_input_shiny())
     selectInput(
       inputId = "VOLCANO_anno_tooltip",
@@ -1228,106 +1516,148 @@ print("Data Upload")
   })
   
   toListen2Volcano <- reactive({
-    list(input$Do_Volcano,
-         input$psig_threhsold,
-         input$lfc_threshold,
-         input$get_entire_table,
-         input$VOLCANO_anno_tooltip)
+    list(
+      input$Do_Volcano,
+      input$psig_threhsold,
+      input$lfc_threshold,
+      input$get_entire_table,
+      input$VOLCANO_anno_tooltip
+      )
   })
   ## Do Volcano----
   observeEvent(toListen2Volcano(),{
-    req(input$omicType,input$row_selection,isTruthy(selectedData_processed()),input$psig_threhsold,input$lfc_threshold)
+    req(
+      input$omicType,
+      input$row_selection,
+      isTruthy(selectedData_processed()),
+      input$psig_threhsold,
+      input$lfc_threshold
+      )
     print("Volcano analysis on pre-selected data")
-    # no responsive elements here hence selected data can be passed to function
-    # only selective is which groups to compare
-    # input$Groups2Compare_ref, input$Groups2Compare_treat
     print(input$sample_annotation_types_cmp)
-    ctrl_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_ref)
-    comparison_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_treat)
-    if(length(comparison_samples_idx)<=1 | length(ctrl_samples_idx)<=1){
+    ctrl_samples_idx <- which(
+      selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_ref
+      )
+    comparison_samples_idx <- which(
+      selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_treat
+      )
+    
+    if(length(comparison_samples_idx) <= 1 |
+       length(ctrl_samples_idx)<=1){
       output$debug=renderText("Choose variable with at least two samples per condition!")
       req(FALSE)
     }
-    if(input$PreProcessing_Procedure=="simpleCenterScaling"){ #|any(selectedData_processed()[[input$omicType]]$Matrix<0)
+    if(input$PreProcessing_Procedure=="simpleCenterScaling"){ 
       print("Remember do not use normal center + scaling (negative Values!)")
-      output$debug=renderText("Choose another preprocessing, as there are negative values!")
+      output$debug=renderText(
+        "Choose another preprocessing, as there are negative values!"
+        )
       req(FALSE)
     }else{
-      if(input$PreProcessing_Procedure=="ln" |input$PreProcessing_Procedure=="log10" ){
+      if(input$PreProcessing_Procedure == "ln" |
+         input$PreProcessing_Procedure == "log10" ){
           print("Data was logged already => delog, take FC and log ?!")
-          if(input$PreProcessing_Procedure=="ln"){
-            data2Volcano=as.data.frame(exp(selectedData_processed()[[input$omicType]]$Matrix))
+          if(input$PreProcessing_Procedure == "ln"){
+            data2Volcano <- as.data.frame(exp(
+              selectedData_processed()[[input$omicType]]$Matrix
+              ))
           }else{
-            data2Volcano=as.data.frame(10^(selectedData_processed()[[input$omicType]]$Matrix))
+            data2Volcano <- as.data.frame(10^(
+              selectedData_processed()[[input$omicType]]$Matrix
+              ))
           }
       }else{
-          data2Volcano= selectedData_processed()[[input$omicType]]$Matrix
+          data2Volcano <- selectedData_processed()[[input$omicType]]$Matrix
       }
-      if(any(data2Volcano==0)){
+      if(any(data2Volcano == 0)){
         #macht es mehr sinn nur die nullen + eps zu machen oder lieber alle daten punkte + eps?
         #data2Volcano=data2Volcano+10^-15  => Log(data +1)
       }
       print(dim(data2Volcano))
-      report<-data2Volcano
-      VolcanoPlot_df<-Volcano_Plot(data2Volcano,
-                                  ctrl_samples_idx,
-                                  comparison_samples_idx,
-                                  p_sig_threshold=input$psig_threhsold,
-                                  LFC_threshold=input$lfc_threshold,
-                                  annotation_add=input$VOLCANO_anno_tooltip,
-                                  annoData=selectedData_processed()[[input$omicType]]$annotation_rows)
-      colorScheme=c("#cf0e5b","#939596")
-      names(colorScheme)=c("significant","non-significant")
-      alphaScheme=c(0.8,0.1)
-      names(alphaScheme)=c("change","steady")
+      report <- data2Volcano
+      VolcanoPlot_df <- Volcano_Plot(
+        data = data2Volcano,
+        ctrl_samples_idx = ctrl_samples_idx,
+        comparison_samples_idx = comparison_samples_idx,
+        p_sig_threshold = input$psig_threhsold,
+        LFC_threshold = input$lfc_threshold,
+        annotation_add = input$VOLCANO_anno_tooltip,
+        annoData = selectedData_processed()[[input$omicType]]$annotation_rows
+        )
+      colorScheme <- c("#cf0e5b","#939596")
+      names(colorScheme) <- c("significant","non-significant")
+      alphaScheme <- c(0.8,0.1)
+      names(alphaScheme) <- c("change","steady")
       
-      VolcanoPlot=ggplot(VolcanoPlot_df,aes(label=probename,tooltip=annotation_add)) +
-        geom_point(aes(x = LFC, y = -log10(p_adj), colour = threshold,alpha=threshold_fc))+
-        geom_hline(yintercept=-log10(input$psig_threhsold),color="lightgrey")+
-        geom_vline(xintercept = c(-input$lfc_threshold,input$lfc_threshold),color="lightgrey")+
+      VolcanoPlot <- ggplot(
+        VolcanoPlot_df,
+        aes(label=probename,tooltip=annotation_add)
+        ) +
+        geom_point(aes(
+          x = LFC, 
+          y = -log10(p_adj), 
+          colour = threshold,
+          alpha = threshold_fc)) +
+        geom_hline(
+          yintercept = -log10(input$psig_threhsold),
+          color="lightgrey"
+          ) +
+        geom_vline(
+          xintercept = c(-input$lfc_threshold,input$lfc_threshold),
+          color="lightgrey"
+          ) +
         scale_color_manual(values=colorScheme, name="")+
         scale_alpha_manual(values=alphaScheme, name="")+
         xlab("Log FoldChange")+
         theme_bw()
       
+      plotPosition <- "Volcano_Plot_final"
+      scenario <- 9
+      scenario_Volcano <- scenario
       
-      plotPosition="Volcano_Plot_final"
-      scenario=9
-      scenario_Volcano=scenario
+      output[[plotPosition]] <- renderPlotly({
+        ggplotly(VolcanoPlot,
+                 tooltip = ifelse(!is.null(input$VOLCANO_anno_tooltip),"tooltip","all"),
+                 legendgroup="color")
+        })
       
-      output[[plotPosition]] <- renderPlotly({ggplotly(VolcanoPlot,
-                                                       tooltip=ifelse(!is.null(input$VOLCANO_anno_tooltip),"tooltip","all"),
-                                                       legendgroup="color")})
-      
-      
-      # not nice coding here as LFC now needs to be calculated twice ! Change for performance enhancement
-      LFCTable=getLFC(data2Volcano,ctrl_samples_idx,comparison_samples_idx,input$get_entire_table)
+      LFCTable <- getLFC(
+        data2Volcano,
+        ctrl_samples_idx,
+        comparison_samples_idx,
+        input$get_entire_table
+        )
       # add annotation to Table
-      LFCTable=merge(LFCTable,selectedData_processed()[[input$omicType]]$annotation_rows,by=0, all.x=TRUE,all.y=F)
-      rownames(LFCTable)=LFCTable$Row.names
-      global_Vars$Volcano_plot=VolcanoPlot
-      global_Vars$Volcano_sampleAnnoTypes_cmp=input$sample_annotation_types_cmp
-      global_Vars$Volcano_groupRef=input$Groups2Compare_ref
-      global_Vars$Volcano_groupTreat=input$Groups2Compare_treat
-      global_Vars$Volcano_file_ext_Volcano=input$file_ext_Volcano
-      global_Vars$Volcano_table=LFCTable[order(LFCTable$p_adj,decreasing = T),]
+      LFCTable <- merge(
+        LFCTable,
+        selectedData_processed()[[input$omicType]]$annotation_rows,
+        by=0, 
+        all.x=TRUE,
+        all.y=F)
+      rownames(LFCTable) <- LFCTable$Row.names
+      global_Vars$Volcano_plot <- VolcanoPlot
+      global_Vars$Volcano_sampleAnnoTypes_cmp <- input$sample_annotation_types_cmp
+      global_Vars$Volcano_groupRef <- input$Groups2Compare_ref
+      global_Vars$Volcano_groupTreat <- input$Groups2Compare_treat
+      global_Vars$Volcano_file_ext_Volcano <- input$file_ext_Volcano
+      global_Vars$Volcano_table <- LFCTable[order(LFCTable$p_adj,decreasing = T),]
       
       output$getR_Code_Volcano <- downloadHandler(
         filename = function(){
           paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
         },
         content = function(file){
-          envList=list(VolcanoPlot_df=VolcanoPlot_df,
-                       input=reactiveValuesToList(input),
-                       colorScheme=colorScheme,
-                       alphaScheme=alphaScheme)
+          envList=list(
+            VolcanoPlot_df = VolcanoPlot_df,
+            input = reactiveValuesToList(input),
+            colorScheme = colorScheme,
+            alphaScheme = alphaScheme
+            )
           
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
-          
           write(getPlotCode(scenario_Volcano), file.path(temp_directory, "Code.R"))
-          
-          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+          saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
           zip::zip(
             zipfile = file,
             files = dir(temp_directory),
@@ -1337,37 +1667,35 @@ print("Data Upload")
         contentType = "application/zip"
       )
       
-      
-      output$SavePlot_Volcano=downloadHandler(
+      output$SavePlot_Volcano <- downloadHandler(
         filename = function() { paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="") },
-        
         content = function(file){
-          ggsave(file,plot=VolcanoPlot,device = gsub("\\.","",input$file_ext_Volcano))
-          
+          ggsave(
+            filename = file,
+            plot = VolcanoPlot,
+            device = gsub("\\.","",input$file_ext_Volcano)
+            )
           on.exit({
-            
-            tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="")))
-            ggsave(tmp_filename,plot=VolcanoPlot,device = gsub("\\.","",input$file_ext_Volcano))
+            tmp_filename <- paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="")))
+            ggsave(
+              filename = tmp_filename,
+              plot = VolcanoPlot,
+              device = gsub("\\.","",input$file_ext_Volcano)
+              )
             
             # Add Log Messages
-            fun_LogIt("## VOLCANO")
+            fun_LogIt(message = "## VOLCANO")
             fun_LogIt(message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat))
             fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
             
             fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
             fun_LogIt(message = head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),tableSaved=T)
-            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "markdown")))
-            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "latex")))
-            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "pipe")))
-            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "html")))
-            # fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "simple")))
-            # fun_LogIt(message = paste0("**VOLCANO** - \n",print(knitr::kable(head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),format = "html"))))
           })
         }
         
       )
 
-      output[["Volcano_table_final"]]=DT::renderDataTable({DT::datatable(
+      output[["Volcano_table_final"]] <-DT::renderDataTable({DT::datatable(
         {LFCTable},
         extensions = 'Buttons',
         options = list(
@@ -1381,27 +1709,40 @@ print("Data Upload")
         ),
         class = "display"
       )})
-      DE_UP=subset(LFCTable,subset= (p_adj<input$psig_threhsold & LFC>=input$lfc_threshold))
-      DE_DOWN=subset(LFCTable,subset= p_adj<input$psig_threhsold & LFC<=input$lfc_threshold )
+      DE_UP <- subset(
+        LFCTable,
+        subset = (p_adj<input$psig_threhsold & LFC>=input$lfc_threshold)
+        )
+      DE_DOWN <- subset(
+        LFCTable,
+        subset = p_adj<input$psig_threhsold & LFC<=input$lfc_threshold
+        )
       
-      DE_UP=data.frame(Entities=(DE_UP[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),status= rep("up",nrow(DE_UP)))
-      DE_Down=data.frame(Entities=(DE_DOWN[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),status= rep("down",nrow(DE_DOWN)))
+      DE_UP <- data.frame(
+        Entities = (DE_UP[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),
+        status= rep("up",nrow(DE_UP))
+        )
+      DE_Down <- data.frame(
+        Entities = (DE_DOWN[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),
+        status= rep("down",nrow(DE_DOWN))
+        )
       
-      #Use annotation selected in plot also for the outputof the names
+      #Use annotation selected in plot also for the output of the names
       
-      DE_total<<-rbind(DE_UP,DE_Down)
+      DE_total <<- rbind(DE_UP,DE_Down)
       output$SaveDE_List=downloadHandler(
-        filename = function() { paste("DE_Genes ",input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat," vs. ",input$Groups2Compare_ref,"_",Sys.time(),".csv",sep="") },
+        filename = function() { 
+          paste("DE_Genes ",
+                input$sample_annotation_types_cmp,
+                ": ",input$Groups2Compare_treat,
+                " vs. ",input$Groups2Compare_ref,
+                "_",Sys.time(),".csv",sep="") 
+          },
         content = function(file){
           write.csv(DE_total,file = file)
         }
       )
-      
-      #SendDE_Genes2Enrichment
-      
-      
     }
-    
   })
   
 ## Create gene list----
@@ -1410,36 +1751,43 @@ print("Data Upload")
     DE_total$Entities
   })
   observeEvent(input$SendDE_Genes2Enrichment,{
-    updateTabsetPanel(session, "tabsetPanel1",
-                      selected = "Volcano Plot")
+    updateTabsetPanel(
+      session = session,
+      inputId = "tabsetPanel1",
+      selected = "Volcano Plot"
+      )
     print(DE_genelist())
   })
   
   ## download only to report
   observeEvent(input$only2Report_Volcano,{
-    notificationID<-showNotification("Saving...",duration = 0)
+    notificationID <- showNotification("Saving...",duration = 0)
     
-    tmp_filename=paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),".png",sep="")))
+    tmp_filename <- paste0(
+      getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),".png",sep=""))
+      )
+    
     ggsave(tmp_filename,plot=global_Vars$Volcano_plot,device = "png")
     
     # Add Log Messages
-    fun_LogIt("## VOLCANO")
-    fun_LogIt(message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", global_Vars$Volcano_sampleAnnoTypes_cmp,": ",global_Vars$Volcano_groupRef," vs ", global_Vars$Volcano_sampleAnnoTypes_cmp,": ",global_Vars$Volcano_groupTreat))
+    fun_LogIt(message = "## VOLCANO")
+    fun_LogIt(
+      message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", global_Vars$Volcano_sampleAnnoTypes_cmp,": ",global_Vars$Volcano_groupRef," vs ", global_Vars$Volcano_sampleAnnoTypes_cmp,": ",global_Vars$Volcano_groupTreat)
+      )
     fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
     
     fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
     fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(global_Vars$Volcano_table[order(global_Vars$Volcano_table$p_adj,decreasing = T),],10),format = "html")))
-    #fun_LogIt(message = head(global_Vars$Volcano_table[order(global_Vars$Volcano_table$p_adj,decreasing = T),],10),tableSaved=T)
-    
-    if(isTruthy(input$NotesVolcano) & !(isEmpty(input$NotesVolcano))){
-      fun_LogIt("### Personal Notes:")
+      
+    if(isTruthy(input$NotesVolcano) & 
+       !(isEmpty(input$NotesVolcano))){
+      fun_LogIt(message = "### Personal Notes:")
       fun_LogIt(message = input$NotesVolcano)
     }
     
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
   })
-  
 
 # Heatmap ----
 ## UI Section ----
