@@ -167,7 +167,7 @@ ui <- shiny::fluidPage(
     data_selection_panel,
     pre_processing_panel,
     pca_panel <- pca_UI("PCA"),
-    volcano_plot_panel,
+    volcano_plot_panel <- volcano_UI("Volcano"),
     heatmap_panel <- heatmap_UI("Heatmap"),
     single_gene_visualisation_panel,
     enrichment_analysis_tab_panel <- enrichment_analysis_UI("EnrichmentAnalysis")
