@@ -3,7 +3,6 @@ gene_set_enrichment <- function(
   output,
   geneSetChoice
 ){
-  geneSetChoice_tranlsated_2=sort(geneSetChoice,decreasing = T)
   # assign the correct names to geneSetChoice
   # For now this is a global variable, as EntrezId is the only annotation type needed.
   geneSetChoice_tranlsated <<- geneSetChoice
