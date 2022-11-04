@@ -197,11 +197,15 @@ pca_main_panel <- mainPanel(
 )
 
 
-pca_panel <- tabPanel(
-  title = "PCA",  # can be renamed after UMAP is added
-  id = "pca",
-  fluid = T,
-  h4("PCA"),
-  pca_sidebar_panel,
-  pca_main_panel
-)
+pca_UI <- function(id){
+  ns <- NS(id)
+
+  tabPanel(
+    title = "PCA",  # can be renamed after UMAP is added
+    id = "pca",
+    fluid = T,
+    h4("PCA"),
+    pca_sidebar_panel,
+    pca_main_panel
+  )
+}
