@@ -121,28 +121,28 @@ server <- function(input,output,session){
     shinyjs::reset(id="metadataInput")
   })
   
-  output$data_matrix1_ui=renderUI({
+  output$data_matrix1_ui <- renderUI({
     shiny::fileInput(
       inputId = "data_matrix1",
       label = HTML('Upload data Matrix <br/>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a>'),
       accept = c(".csv"),
       width = "80%")
   })
-  output$data_sample_anno1_ui=renderUI({
+  output$data_sample_anno1_ui <- renderUI({
     shiny::fileInput(
       inputId = "data_sample_anno1",
       label = HTML('Upload sample Annotation <br/>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv">Download example data</a>'),
       accept = c(".csv"),
       width = "80%")
   })
-  output$data_row_anno1_ui=renderUI({
+  output$data_row_anno1_ui <- renderUI({
     shiny::fileInput(
       inputId = "data_row_anno1",
       label = HTML('Upload entities Annotation Matrix <br/>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a>'),
       accept = c(".csv"),
       width = "80%")
   })
-  output$data_preDone_ui=renderUI({
+  output$data_preDone_ui <- renderUI({
     shiny::fileInput(
       inputId = "data_preDone",
       label = HTML('Load precompiled data <br/>(saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data</a>'),
@@ -150,7 +150,7 @@ server <- function(input,output,session){
       width = "80%"
       )
   })
-  output$SaveInputAsList=downloadHandler(
+  output$SaveInputAsList <- downloadHandler(
    filename = function() {
       paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep="")},
     content = function(file){
@@ -160,7 +160,7 @@ server <- function(input,output,session){
         )
     }
   )
-  output$metadataInput_ui=renderUI({
+  output$metadataInput_ui <- renderUI({
     shiny::fileInput(
       inputId = "metadataInput",
       label = "Upload your Meta Data Sheet (currently replaces sample annotation",
@@ -210,42 +210,42 @@ server <- function(input,output,session){
         "The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!"
         )
     }else{
-     Matrix=read.csv(
+     Matrix <- read.csv(
        file = input$data_matrix1$datapath,
        header = T,
        row.names = 1,
        check.names = F
        )
-     output$DataMatrix_VI=DT::renderDataTable({
+     output$DataMatrix_VI <- DT::renderDataTable({
        DT::datatable(data = Matrix)
        })
-     output$DataMatrix_VI_INFO=renderText({"Matrix:"})
-     sample_table=read.csv(
+     output$DataMatrix_VI_INFO <- renderText({"Matrix:"})
+     sample_table <- read.csv(
        file = input$data_sample_anno1$datapath,
        header = T,
        row.names = 1,
        check.names = F
        )
-     output$SampleMatrix_VI=DT::renderDataTable({
+     output$SampleMatrix_VI <- DT::renderDataTable({
        DT::datatable(data = sample_table)
        })
-     output$SampleMatrix_VI_INFO=renderText({"Sample table:"})
+     output$SampleMatrix_VI_INFO <- renderText({"Sample table:"})
      
-     annotation_rows=read.csv(
+     annotation_rows <- read.csv(
        file = input$data_row_anno1$datapath,
        header = T,
        row.names = 1,
        check.names = F
        )
-     output$EntitieMatrix_VI=DT::renderDataTable({
+     output$EntitieMatrix_VI <- DT::renderDataTable({
        DT::datatable(data = annotation_rows)
        })
-     output$EntitieMatrix_VI_INFO=renderText({"Entitie table:"})
+     output$EntitieMatrix_VI_INFO <- renderText({"Entitie table:"})
      
      ## Do some checking
-     snippetYes="<font color=\"#00851d\"><b>Yes</b></font>"
-     snippetNo= "<font color=\"#ab020a\"><b>No</b></font>"
-     output$OverallChecks=renderText({
+     snippetYes <- "<font color=\"#00851d\"><b>Yes</b></font>"
+     snippetNo <-  "<font color=\"#ab020a\"><b>No</b></font>"
+     output$OverallChecks <- renderText({
        "Some overall Checks are running run...\n
        Rownames of Matrix are the same as rownames of entitie table ...\n
        Colnames of Matrix are same as rownames of sample table ... \n
@@ -255,24 +255,24 @@ server <- function(input,output,session){
        "
        })
 
-     check1=ifelse(all(rownames(Matrix)==rownames(annotation_rows)),snippetYes,snippetNo)
-     check2=ifelse(all(colnames(Matrix)==rownames(sample_table)),snippetYes,snippetNo)
-     check3=ifelse(any(is.na(Matrix)==T),snippetNo,snippetYes)
-     check4=ifelse(any(is.na(sample_table)==T),snippetNo,snippetYes)
-     check5=ifelse(any(is.na(annotation_rows)==T),snippetNo,snippetYes)
+     check1 <- ifelse(all(rownames(Matrix)==rownames(annotation_rows)),snippetYes,snippetNo)
+     check2 <- ifelse(all(colnames(Matrix)==rownames(sample_table)),snippetYes,snippetNo)
+     check3 <- ifelse(any(is.na(Matrix)==T),snippetNo,snippetYes)
+     check4 <- ifelse(any(is.na(sample_table)==T),snippetNo,snippetYes)
+     check5 <- ifelse(any(is.na(annotation_rows)==T),snippetNo,snippetYes)
      
-     if(check5==snippetNo){
+     if(check5 == snippetNo){
        # Indicate columns with NA
-       colsWithNa=numeric()
+       colsWithNa <- numeric()
        for(i in 1:ncol(annotation_rows)){
-         if(any(is.na(annotation_rows[,i])==T)){
-           colsWithNa=c(colsWithNa,i)
+         if(any(is.na(annotation_rows[,i]) == T)){
+           colsWithNa <- c(colsWithNa,i)
          }
        }
-       check5=paste0(snippetNo," Following columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
+       check5 <- paste0(snippetNo," Following columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
      }
      
-     output$OverallChecks=renderText({
+     output$OverallChecks <- renderText({
        paste0("Some overall Checks are running run ...\n
        Rownames of Matrix are the same as rownames of entitie table ",check1,"\n
        Colnames of Matrix are same as rownames of sample table ",check2," \n
@@ -286,11 +286,11 @@ server <- function(input,output,session){
   
 ## Do Upload ----
   
-  data_input<-list()
-  data_output<-list()
+  data_input <- list()
+  data_output <- list()
   observeEvent(input$refresh1,{
     omicType_selected = input$omicType
-    fun_LogIt(message= "## Data Input")
+    fun_LogIt(message = "## Data Input")
     fun_LogIt(
       message = paste0("**DataInput** - Uploaded Omic Type: ",input$omicType)
       )
@@ -299,7 +299,7 @@ server <- function(input,output,session){
          (isTruthy(input$data_matrix1) & 
           isTruthy(input$data_sample_anno1) & 
           isTruthy(input$data_row_anno1)))){
-      output$debug=renderText("The Upload has failed, or you haven't uploaded anything yet")
+      output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
     }else{
       if(any(names(data_input_shiny()) == omicType_selected)){
         show_toast(
@@ -309,7 +309,7 @@ server <- function(input,output,session){
           timer = 1500,
           timerProgressBar = T
           )
-        output$debug=renderText({
+        output$debug <- renderText({
           "<font color=\"#00851d\"><b>Upload successful</b></font>"
           })
         if(isTruthy(input$data_preDone)){
@@ -334,96 +334,130 @@ server <- function(input,output,session){
   })
 
 ## create data object ----
-  data_input_shiny=eventReactive(input$refresh1,{
+  data_input_shiny <- eventReactive(input$refresh1,{
     # What Input is required? (raw data)
     if(!isTruthy(input$data_preDone)){
-      # Include here, that the sample anno can be replaced by metadatashett
+      # Include here, that the sample anno can be replaced by metadatasheet
       # potentially this will be extended to all of the fields
       shiny::req(input$data_matrix1,input$data_row_anno1)
       
       if(isTruthy(input$data_sample_anno1)){
-        data_input[[input$omicType]]<-list(type=as.character(input$omicType),
-                                           Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F),
-                                           sample_table=read.csv(input$data_sample_anno1$datapath,header = T, row.names = 1,check.names = F),
-                                           annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F))
+        data_input[[input$omicType]] <- list(
+          type=as.character(input$omicType),
+          Matrix=read.csv(
+            file = input$data_matrix1$datapath,
+            header = T,
+            row.names = 1,
+            check.names = F
+            ),
+          sample_table <- read.csv(
+            file = input$data_sample_anno1$datapath,
+            header = T,
+            row.names = 1,
+            check.names = F
+            ),
+          annotation_rows <- read.csv(
+            file = input$data_row_anno1$datapath,
+            header = T,
+            row.names = 1,
+            check.names = F
+            )
+          )
         
-        # check if only 1 col in anno row, add dummy col to ensure R does not turn it into a vector
+        # check if only 1 col in anno row, 
+        # add dummy col to ensure R does not turn it into a vector
         
-        if(ncol(data_input[[input$omicType]]$annotation_rows)<2){
+        if(ncol(data_input[[input$omicType]]$annotation_rows) < 2){
           print("Added dummy column to annotation row")
-          data_input[[input$omicType]]$annotation_rows$origRownames=rownames(data_input[[input$omicType]]$annotation_rows)
+          data_input[[input$omicType]]$annotation_rows$origRownames <- rownames(data_input[[input$omicType]]$annotation_rows)
         }
         
       }else if(isTruthy(input$metadataInput)){
        
-        tmp_sampleTable=fun_readInSampleTable(input$metadataInput$datapath)
-        # ensure the correct order (done in Matrix odering the cols) 
-        # props gives an error if wrongly
+        tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
+        #TODO ensure explicit the correct order (done in Matrix ordering the cols) 
+
         tryCatch(
           {
-            data_input[[input$omicType]]<-list(type=as.character(input$omicType),
-                                               Matrix=read.csv(input$data_matrix1$datapath,header = T, row.names = 1,check.names = F)[,rownames(my_data_tmp)],
-                                               sample_table=tmp_sampleTable,
-                                               annotation_rows=read.csv(input$data_row_anno1$datapath,header = T, row.names = 1,check.names = F))
-
-            
+            data_input[[input$omicType]] <- list(
+              type = as.character(input$omicType),
+              Matrix = read.csv(
+                file = input$data_matrix1$datapath,
+                header = T,
+                row.names = 1,
+                check.names = F
+                )[,rownames(my_data_tmp)],
+              sample_table = tmp_sampleTable,
+              annotation_rows = read.csv(
+                file = input$data_row_anno1$datapath,
+                header = T,
+                row.names = 1,
+                check.names = F)
+              )
             return(data_input)
           },
           error=function(cond){
             print("Error! Names From SampleTable and Matrix do not fit")
-            output$debug=renderText({"<font color=\"#FF0000\"><b>Your Sample Names from the Metadata Sheet and from your Matrix do not match!! Data cannot be loaded</b></font>"})
+            output$debug=renderText({
+              "<font color=\"#FF0000\"><b>Your Sample Names from the Metadata Sheet and from your Matrix do not match!! Data cannot be loaded</b></font>"
+              })
             reset('metadataInput')
             return(NULL)
           }
         )
-
-         }
+      }
       
-      
-      ## Include here possible Data Checks
-      
-      
-      
+      ## TODO Include here possible Data Checks
     }else{
       # Precompiled list
-      data_input[[input$omicType]]<-readRDS(input$data_preDone$datapath)[[input$omicType]]
+      data_input[[input$omicType]] <- readRDS(
+        file = input$data_preDone$datapath
+        )[[input$omicType]]
       ## Include here possible Data Checks
-      #ENSURE DATA SAMPLE TABLE AND IN MATRIX AS WELL AS ROW ANNO ARE IN THE SAME ORDER!!!
+      ## TODO Include here possible Data Checks
     }
 
     ### Added here gene annotation if asked for 
-    if(input$AddGeneSymbols & input$omicType=="Transcriptomics"){
-      fun_LogIt(message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added")
-      fun_LogIt(message = paste0("**DataInput** - chosen Organism: ",input$AddGeneSymbols_organism))
+    if(input$AddGeneSymbols & 
+       input$omicType == "Transcriptomics"){
+      fun_LogIt(
+        message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added"
+        )
+      fun_LogIt(
+        message = paste0("**DataInput** - chosen Organism: ",input$AddGeneSymbols_organism)
+        )
       print("Add gene annotation")
-      if(input$AddGeneSymbols_organism=="hsapiens"){
+      
+      if(input$AddGeneSymbols_organism == "hsapiens"){
         ensembl<- readRDS("data/ENSEMBL_Human_05_07_22")
       }else{
         ensembl <- readRDS("data/ENSEMBL_Mouse_05_07_22")
       }
       
-      out <- getBM(attributes=c("ensembl_gene_id", "gene_biotype","external_gene_name"), values=rownames(data_input[[input$omicType]]$annotation_rows), mart=ensembl)
-    
+      out <- getBM(
+        attributes = c("ensembl_gene_id", "gene_biotype","external_gene_name"),
+        values = rownames(data_input[[input$omicType]]$annotation_rows),
+        mart = ensembl
+        )
       out <- out[base::match(rownames(data_input[[input$omicType]]$annotation_rows), out$ensembl_gene_id),] 
       
-      data_input[[input$omicType]]$annotation_rows$gene_type=out$gene_biotype
-      data_input[[input$omicType]]$annotation_rows$GeneName=out$external_gene_name
-      
-      # data_matrix$gene_type=out$gene_biotype
-      
+      data_input[[input$omicType]]$annotation_rows$gene_type <- out$gene_biotype
+      data_input[[input$omicType]]$annotation_rows$GeneName <- out$external_gene_name
     }
     
-    
-    if(!any(class(data_input[[input$omicType]])=="SummarizedExperiment")){
+    if(!any(class(data_input[[input$omicType]]) == "SummarizedExperiment")){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
-      data_input[[paste0(input$omicType,"_SumExp")]]=SummarizedExperiment(assays  = data_input[[input$omicType]]$Matrix,
-                                                        rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
-                                                        colData = data_input[[input$omicType]]$sample_table)
+      data_input[[paste0(input$omicType,"_SumExp")]]=
+        SummarizedExperiment(assays  = data_input[[input$omicType]]$Matrix,
+                             rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
+                             colData = data_input[[input$omicType]]$sample_table
+                             )
 
     }
     
+    # TODO:
     # For Loading summarizedExperiemnt make sure to to more extensive check 
-    # Option1 comcing from complete outside
+    # Option1 coming from complete outside
     # Option2 coming from inside here
     
     # # Due to Object change a  lot needs to be changed Downstream! For the moment revert back to "original" obj
@@ -432,19 +466,18 @@ server <- function(input,output,session){
     #                                   sample_table=as.data.frame(colData(tmp)),
     #                                   annotation_rows=as.data.frame(rowData(tmp)))
 
-    
     for(dataFrameToClean in names(data_input[[input$omicType]])){
-      if(!(dataFrameToClean%in%c("type","Matrix"))){
+      if(!(dataFrameToClean %in% c("type","Matrix"))){
         print(paste0("(before) No. anno options ",dataFrameToClean, ": ",ncol(data_input[[input$omicType]][[dataFrameToClean]])))
-        data_input[[input$omicType]][[dataFrameToClean]]=data_input[[input$omicType]][[dataFrameToClean]] %>% purrr::keep(~length(unique(.x)) != 1)
+        data_input[[input$omicType]][[dataFrameToClean]]=data_input[[input$omicType]][[dataFrameToClean]] %>% 
+          purrr::keep(~length(unique(.x)) != 1)
         print(paste0("(after) No. anno options ",dataFrameToClean, ": ",ncol(data_input[[input$omicType]][[dataFrameToClean]])))
       }
     }
-    
-    # Here we will exclude all constant annotation for entities and rows as there carry no information gain!
-    data_input
-    
-    fun_LogIt(message = paste0("**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!"))
+
+    fun_LogIt(
+      message = paste0("**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!")
+      )
     data_input
   })
   
