@@ -1,5 +1,4 @@
 translate_genes <- function(annotation_results, input, geneSetChoice){
-  print('hey')
   if(annotation_results$no_ann){
     # copy rownames with corresponding annotation as columnname
     processedData_all$Transcriptomics$annotation_rows[input$AnnotationSelection] <<- rownames(processedData_all$Transcriptomics$annotation_rows)
@@ -12,6 +11,6 @@ translate_genes <- function(annotation_results, input, geneSetChoice){
       keys = processedData_all$Transcriptomics$annotation_rows[[annotation_results$base_annotation]],
       column="ENTREZID",
       keytype=annotation_results$base_annotation
-      )
+    )
   }
 }

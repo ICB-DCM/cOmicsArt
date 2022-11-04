@@ -62,7 +62,7 @@ geneset_panel_UI <- function(
       ),
       tabPanel(
         title = paste(id_wo_ns, "Enrichment Table"),
-        DT::dataTableOutput(ns("EnrichmentTable"))
+        DT::dataTableOutput(outputId = ns("EnrichmentTable"))
       )
     )
   )
@@ -71,18 +71,18 @@ geneset_panel_UI <- function(
 
 ea_sidebar <- function(){
   sidebarPanel(
-    uiOutput("OrganismChoice_ui"),
-    uiOutput("ORA_or_GSE_ui"),
-    uiOutput("ValueToAttach_ui"),
-    uiOutput("sample_annotation_types_cmp_GSEA_ui"),
-    uiOutput("Groups2Compare_ref_GSEA_ui"),
-    uiOutput("Groups2Compare_treat_GSEA_ui"),
-    uiOutput("psig_threhsold_GSEA_ui"),
-    uiOutput("GeneSet2Enrich_ui"),
-    uiOutput("UploadedGeneSet_ui"),
-    uiOutput("UniverseOfGene_ui"),
+    uiOutput(outputId = "OrganismChoice_ui"),
+    uiOutput(outputId = "ORA_or_GSE_ui"),
+    uiOutput(outputId = "ValueToAttach_ui"),
+    uiOutput(outputId = "sample_annotation_types_cmp_GSEA_ui"),
+    uiOutput(outputId = "Groups2Compare_ref_GSEA_ui"),
+    uiOutput(outputId = "Groups2Compare_treat_GSEA_ui"),
+    uiOutput(outputId = "psig_threhsold_GSEA_ui"),
+    uiOutput(outputId = "GeneSet2Enrich_ui"),
+    uiOutput(outputId = "UploadedGeneSet_ui"),
+    uiOutput(outputId = "UniverseOfGene_ui"),
     actionButton(
-      "enrichmentGO",
+      inputId = "enrichmentGO",
       label = "Do enrichment analysis"
     ),
     radioButtons(
@@ -93,42 +93,45 @@ ea_sidebar <- function(){
     ),
     helpText("Note: ALL sometime fails due to cryptic reasons. You will get notified. If this happens to you please try out the indiviudal ontologies to check whether enriched term are found. "),
     hr(style = "border-top: 1px solid #858585;"),
-    uiOutput("KeggPathwayID_ui")
+    uiOutput(outputId = "KeggPathwayID_ui")
   )
 }
 
 ea_main <- function(ns){
   mainPanel(
-    textOutput("EnrichmentInfo", container = pre),
+    textOutput(outputId = "EnrichmentInfo", container = pre),
     tabsetPanel(
       geneset_panel_UI(ns("KEGG")),
       geneset_panel_UI(ns("GO")),
       geneset_panel_UI(ns("REACTOME")),
       tabPanel(
-        "KeggPathwayOutput",
+        title = "KeggPathwayOutput",
         helpText("Specificy on the left which pathway (all sig. enriched) to display in picture-format"),
-        actionButton("OverlayOnPathway", label = "Show overlay on Pathway"),
+        actionButton(
+          inputId = "OverlayOnPathway",
+          label = "Show overlay on Pathway"
+        ),
         selectInput(
-          "plotOnTopOption",
+          inputId = "plotOnTopOption",
           label = "Specifiy the what the colored overlay should indicate",
           choices = c("LFC", "presence"),
           selected = "presence"
         ),
-        uiOutput("sample_anno_types_KEGG_ui"),
-        uiOutput("ComparisonOptionsCRTL_ui"),
-        uiOutput("ComparisonOptionsCOMP_ui"),
-        uiOutput("psig_KEGG_ui"),
+        uiOutput(outputId = "sample_anno_types_KEGG_ui"),
+        uiOutput(outputId = "ComparisonOptionsCRTL_ui"),
+        uiOutput(outputId = "ComparisonOptionsCOMP_ui"),
+        uiOutput(outputId = "psig_KEGG_ui"),
         sliderInput(
-          "imageWidth",
+          inputId = "imageWidth",
           label = "Adjust Width",
           min = 400, max = 1500, step = 20, value = 1000
         ),
         sliderInput(
-          "imageHeight",
+          inputId = "imageHeight",
           label = "Adjust Height",
           min = 400, max = 1500, step = 20, value = 640
         ),
-        imageOutput("KeggPathwayOutput_img") %>% withSpinner(type = 8)
+        imageOutput(outputId = "KeggPathwayOutput_img") %>% withSpinner(type = 8)
       )
     )
   )
@@ -138,7 +141,7 @@ enrichment_analysis_UI <- function(id){
   ns <- NS(id)
 
   tabPanel(
-    "Enrichment Analysis",
+    title = "Enrichment Analysis",
     fluid = TRUE,
     h4("Enrichment Analysis"),
     #########################################
