@@ -162,10 +162,9 @@ gene_set_enrichment <- function(
 
 
   return(list(
-    "EnrichmentRes_Kegg"=EnrichmentRes_Kegg,
+    "EnrichmentRes_KEGG"=EnrichmentRes_Kegg,
     "EnrichmentRes_GO"=EnrichmentRes_GO,
     "EnrichmentRes_REACTOME"=EnrichmentRes_REACTOME,
-    "geneSetChoice_tranlsated"=geneSetChoice_tranlsated
     # "EnrichmentRes_Hallmarks"=EnrichmentRes_Hallmarks,
     # "EnrichmentRes_C1"=EnrichmentRes_C1,
     # "EnrichmentRes_C2"=EnrichmentRes_C2,
@@ -175,5 +174,6 @@ gene_set_enrichment <- function(
     # "EnrichmentRes_C6"=EnrichmentRes_C6,
     # "EnrichmentRes_C7"=EnrichmentRes_C7,
     # "EnrichmentRes_C8"=EnrichmentRes_C8
+    "geneSetChoice_tranlsated"=geneSetChoice_tranlsated
   ))
 }

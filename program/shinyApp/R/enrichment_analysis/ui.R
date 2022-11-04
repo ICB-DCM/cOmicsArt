@@ -2,12 +2,14 @@ geneset_panel_UI <- function(
   id
 ){
   ns <- NS(id)
+  id_wo_ns <- gsub(".*-", "", id)
 
   tabPanel(
-    title = id,
+    title = id_wo_ns,
+    # textOutput("Info", container = pre),
     tabsetPanel(
       tabPanel(
-        title=paste(id, "Enrichment"),
+        title=paste(id_wo_ns, "Enrichment"),
         plotOutput(outputId = ns("EnrichmentPlot")),
         splitLayout(
           style = "border: 1px solid silver:",
@@ -59,7 +61,7 @@ geneset_panel_UI <- function(
         helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
       ),
       tabPanel(
-        title = paste(id, "Enrichment Table"),
+        title = paste(id_wo_ns, "Enrichment Table"),
         DT::dataTableOutput(ns("EnrichmentTable"))
       )
     )
@@ -67,9 +69,7 @@ geneset_panel_UI <- function(
 }
 
 
-ea_sidebar_UI <- function(id){
-  ns <- NS(id)
-
+ea_sidebar <- function(){
   sidebarPanel(
     uiOutput("OrganismChoice_ui"),
     uiOutput("ORA_or_GSE_ui"),
@@ -97,45 +97,13 @@ ea_sidebar_UI <- function(id){
   )
 }
 
-ea_main_UI <- function(id){
-  ns <- NS(id)
-
+ea_main <- function(ns){
   mainPanel(
     textOutput("EnrichmentInfo", container = pre),
     tabsetPanel(
-      tabPanel(
-        "KEGG_Enrichment",
-        plotOutput("KEGG_Enrichment") %>% withSpinner(type = 8),
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          NULL,
-          actionButton(inputId = "only2Report_KEGG", label = "Send only to Report", class = "btn-info"),
-        ),
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          NULL,
-          downloadButton("getR_Code_KEGG", label = "Get underlying R code and data",icon = icon("code"))
-        ),
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          NULL,
-          downloadButton("SavePlot_KEGG", label = "Save plot", class = "btn-info")
-        ),
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          NULL,
-          radioGroupButtons(
-            input = "file_ext_KEGG", label = "File Type:",
-            choices = c(".png", ".tiff", ".pdf"), selected = ".png"
-          )
-        ),
-        textAreaInput(
-          inputId="NotesKEGG",
-          label="Notes:",
-          placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-        helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
-      ),
-      tabPanel("KEGG_Enrichment_table", DT::dataTableOutput("EnrichmentResults_KEGG")),
+      geneset_panel_UI(ns("KEGG")),
+      geneset_panel_UI(ns("GO")),
+      geneset_panel_UI(ns("REACTOME")),
       tabPanel(
         "KeggPathwayOutput",
         helpText("Specificy on the left which pathway (all sig. enriched) to display in picture-format"),
@@ -161,55 +129,12 @@ ea_main_UI <- function(id){
           min = 400, max = 1500, step = 20, value = 640
         ),
         imageOutput("KeggPathwayOutput_img") %>% withSpinner(type = 8)
-      ),
-      geneset_panel_UI("GO"),
-      tabPanel(
-        "REACTOME_Enrichment", plotOutput("REACTOME_Enrichment"),
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          NULL,
-          actionButton(
-            inputId = "only2Report_REACTOME",
-            label = "Send only to Report",
-            class = "btn-info"
-          )
-        ),
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          NULL,
-          downloadButton(
-            "getR_Code_Reactome",
-            label = "Get underlying R code and data",
-            icon = icon("code")
-          )
-        ),
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          NULL,
-          downloadButton("SavePlot_REACTOME", label = "Save plot", class = "btn-info")
-        ),
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          NULL,
-          radioGroupButtons(
-            input = "file_ext_REACTOME", label = "File Type:",
-            choices = c(".png", ".tiff", ".pdf"), selected = ".png"
-          )
-        ),
-        textAreaInput(
-          inputId="NotesREACTOME",
-          label="Notes:",
-          placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-        helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
-      ),
-      tabPanel(
-        "REACTOME_Enrichment_table", DT::dataTableOutput("EnrichmentResults_REACTOME")
       )
     )
   )
 }
 
-ea_tabPanel_UI <- function(id){
+enrichment_analysis_UI <- function(id){
   ns <- NS(id)
 
   tabPanel(
@@ -220,7 +145,7 @@ ea_tabPanel_UI <- function(id){
     # Enrichment
     #########################################
     h4("NOTE THAT THIS ONLY MAKES SENSE FOR TRANSCRIPTOMICS DATA AT THE MOMENT!"),
-    enrichment_analysis_sidebar <- ea_sidebar_UI(id),
-    enrichment_analysis_main <- ea_main_UI(id),
+    enrichment_analysis_sidebar <- ea_sidebar(),
+    enrichment_analysis_main <- ea_main(ns),
   )
 }
