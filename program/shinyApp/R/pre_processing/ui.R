@@ -33,9 +33,9 @@ pre_processing_main_panel <- mainPanel(
   HTML(text = "<br>"),
   splitLayout(
     cellWidths = c("25%", "25%", "25%"),
-    uiOutput(outputId = "NextPanel2_ui"),
-    uiOutput(outputId = "NextPanel3_ui"),
-    uiOutput(outputId = "NextPanel4_ui")
+    # uiOutput(outputId = "NextPanel2_ui"),
+    # uiOutput(outputId = "NextPanel3_ui"),
+    # uiOutput(outputId = "NextPanel4_ui")
   )
 )
 

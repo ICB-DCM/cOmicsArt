@@ -4,7 +4,7 @@ server <- function(input,output,session){
   source("R/fun_LFC.R",local = T)
   source("R/fun_volcano.R",local = T)
   source("R/fun_popupModal.R",local = T)
-  source("R/fun_entitieSelection.R",local = T)
+  source("R/heatmap/fun_entitieSelection.R",local = T)
   source("R/fun_savePheatmap.R",local = T)
   source("R/fun_LogIt.R",local = T)
   source("R/fun_readInSampleTable.R",local=T)
@@ -15,6 +15,10 @@ server <- function(input,output,session){
   source("R/enrichment_analysis/check_annotation.R", local=T)
   source("R/enrichment_analysis/translation.R", local=T)
   source("R/enrichment_analysis/server.R", local=T)
+  source("R/heatmap/server.R",local = T)
+  source("R/pca/server.R", local=T)
+  source("R/volcano_plot/server.R", local=T)
+  source("R/single_gene_visualisation/server.R",local = T)
   global_Vars <<- reactiveValues()
   
 # Security section ---- 
@@ -497,6 +501,7 @@ server <- function(input,output,session){
         multiple = F
       )
     })
+
     output$row_selection_ui=renderUI({
       req(data_input_shiny())
       req(input$providedRowAnnotationTypes)
@@ -673,6 +678,10 @@ server <- function(input,output,session){
   
 # Preprocessing after Selection ----
 ## UI section ----
+  # set pre processing as golbal variable
+  observeEvent(input$PreProcessing_Procedure, {
+    pre_processing_procedure <<- input$PreProcessing_Procedure
+  })
   output$DESeq_formula_ui <- renderUI({
     req(data_input_shiny())
     if(input$PreProcessing_Procedure == "vst_DESeq"){
@@ -686,29 +695,28 @@ server <- function(input,output,session){
     }else{
       NULL
     }
-    
   })
-  output$NextPanel2_ui <- renderUI({
-    actionButton(
-      inputId = "NextPanel2",
-      label = "Go to PCA",
-      icon = icon("fas fa-hat-wizard")
-      )
-  })
-  output$NextPanel3_ui <- renderUI({
-    actionButton(
-      inputId = "NextPanel3",
-      label = "Go to Volcano",
-      icon = icon("fas fa-mountain")
-      )
-  })
-  output$NextPanel4_ui <- renderUI({
-    actionButton(
-      inputId = "NextPanel4",
-      label = "Go to Heatmap",
-      icon = icon("fas fa-thermometer-full")
-      )
-  })
+  # output$NextPanel2_ui <- renderUI({
+  #   actionButton(
+  #     inputId = "NextPanel2",
+  #     label = "Go to PCA",
+  #     icon = icon("fas fa-hat-wizard")
+  #     )
+  # })
+  # output$NextPanel3_ui <- renderUI({
+  #   actionButton(
+  #     inputId = "NextPanel3",
+  #     label = "Go to Volcano",
+  #     icon = icon("fas fa-mountain")
+  #     )
+  # })
+  # output$NextPanel4_ui <- renderUI({
+  #   actionButton(
+  #     inputId = "NextPanel4",
+  #     label = "Go to Heatmap",
+  #     icon = icon("fas fa-thermometer-full")
+  #     )
+  # })
   
   observeEvent(input$NextPanel2,{
     updateTabsetPanel(
@@ -890,1760 +898,615 @@ server <- function(input,output,session){
   })
   
   output$debug <- renderText(dim(selectedData_processed()[[input$omicType]]$Matrix))
-# Explorative Analysis - PCA ---- 
-  
-## UI Section ----
-  output$x_axis_selection_ui <- renderUI({
-    radioGroupButtons(
-      inputId = "x_axis_selection",
-      label = "PC for x-Axis",
-      choices = c("PC1","PC2", "PC3", "PC4"),
-      direction = "vertical",
-      selected = "PC1"
-    )
-  })
-  output$y_axis_selection_ui <- renderUI({
-    radioGroupButtons(
-      inputId = "y_axis_selection",
-      label = "PC for y-Axis",
-      choices = c("PC1","PC2", "PC3", "PC4"),
-      direction = "vertical",
-      selected = "PC2"
-    )
-  })
-  output$Show_loadings_ui <- renderUI({
-    radioGroupButtons(
-      inputId = "Show_loadings",
-      label = "Plot Loadings on top? (currently top 5)",
-      choices = c("Yes","No"),
-      direction = "horizontal",
-      selected = "No"
-    )
-  })
-  output$coloring_options_ui <- renderUI({
-    req(data_input_shiny())
-    selectInput(
-      inputId = "coloring_options",
-      label = "Choose the variable to color the samples after",
-      choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
-      multiple = F # would be cool if true, to be able to merge vars ?!
-    )
-  })
-  
-  output$PCA_anno_tooltip_ui <- renderUI({
-    selectInput(
-      inputId = "PCA_anno_tooltip",
-      label = "Select the anno to be shown at tooltip",
-      choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
-      multiple = F
-    )
-  })
-  
-  output$EntitieAnno_Loadings_ui <- renderUI({
-    selectInput(
-      inputId = "EntitieAnno_Loadings",
-      label = "Select the annotype shown at y-axis",
-      choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
-      multiple = F
-    )
-  })
+  # PCA module
+  pca_Server(id="PCA", omic_type = input$omicType, row_select = input$row_selection)
+  volcano_Server(id="Volcano", omic_type = input$omicType)
 
-## Do PCA & Co ----
-  toListen2PCA <- reactive({
-    list(
-      input$Do_PCA,
-      input$omicType,
-      input$row_selection,
-      input$x_axis_selection,
-      input$y_axis_selection,
-      input$coloring_options,
-      input$bottomSlider,
-      input$topSlider,
-      input$Show_loadings,
-      input$PCA_anno_tooltip,
-      input$EntitieAnno_Loadings
-      )
-  })
+#   # Volcano Plot----
+# ## UI Section----
+#   output$sample_annotation_types_cmp_ui <- renderUI({
+#     req(data_input_shiny())
+#     selectInput(
+#       inputId = "sample_annotation_types_cmp",
+#       label = "Choose type for LFC comparison",
+#       choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
+#       multiple = F ,
+#       selected = NULL
+#     )
+#   })
+#   output$Groups2Compare_ref_ui <- renderUI({
+#     req(data_input_shiny())
+#     selectInput(
+#       inputId = "Groups2Compare_ref",
+#       label = "Choose reference of log2 FoldChange",
+#       choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]),
+#       multiple = F ,
+#       selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp])[1]
+#     )
+#   })
+#   output$Groups2Compare_treat_ui <- renderUI({
+#     req(data_input_shiny())
+#     selectInput(
+#       inputId = "Groups2Compare_treat",
+#       label = "Choose treatment group of log2 FoldChange",
+#       choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]),
+#       multiple = F ,
+#       selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp])[2]
+#     )
+#   })
+#   output$psig_threhsold_ui <- renderUI({
+#     req(data_input_shiny())
+#     numericInput(
+#       inputId ="psig_threhsold" ,
+#       label = "adj. p-value threshold",
+#       min=0,
+#       max=0.1,
+#       step=0.01,
+#       value = 0.05
+#       )
+#   })
+#   output$lfc_threshold_ui <- renderUI({
+#     numericInput(
+#       inputId ="lfc_threshold",
+#       label = "Log FC threshold (both sides!)",
+#       min=0,
+#       max=10,
+#       step=0.1,
+#       value = 1.0
+#       )
+#   })
+#   output$VOLCANO_anno_tooltip_ui <- renderUI({
+#     req(data_input_shiny())
+#     selectInput(
+#       inputId = "VOLCANO_anno_tooltip",
+#       label = "Select the anno to be shown at tooltip",
+#       choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
+#       multiple = F
+#     )
+#   })
+#
+#   toListen2Volcano <- reactive({
+#     list(
+#       input$Do_Volcano,
+#       input$psig_threhsold,
+#       input$lfc_threshold,
+#       input$get_entire_table,
+#       input$VOLCANO_anno_tooltip
+#       )
+#   })
+#   ## Do Volcano----
+#   observeEvent(toListen2Volcano(),{
+#     req(
+#       input$omicType,
+#       input$row_selection,
+#       isTruthy(selectedData_processed()),
+#       input$psig_threhsold,
+#       input$lfc_threshold
+#       )
+#     print("Volcano analysis on pre-selected data")
+#     print(input$sample_annotation_types_cmp)
+#     ctrl_samples_idx <- which(
+#       selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_ref
+#       )
+#     comparison_samples_idx <- which(
+#       selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_treat
+#       )
+#
+#     if(length(comparison_samples_idx) <= 1 |
+#        length(ctrl_samples_idx)<=1){
+#       output$debug=renderText("Choose variable with at least two samples per condition!")
+#       req(FALSE)
+#     }
+#     if(input$PreProcessing_Procedure=="simpleCenterScaling"){
+#       print("Remember do not use normal center + scaling (negative Values!)")
+#       output$debug=renderText(
+#         "Choose another preprocessing, as there are negative values!"
+#         )
+#       req(FALSE)
+#     }else{
+#       if(input$PreProcessing_Procedure == "ln" |
+#          input$PreProcessing_Procedure == "log10" ){
+#           print("Data was logged already => delog, take FC and log ?!")
+#           if(input$PreProcessing_Procedure == "ln"){
+#             data2Volcano <- as.data.frame(exp(
+#               selectedData_processed()[[input$omicType]]$Matrix
+#               ))
+#           }else{
+#             data2Volcano <- as.data.frame(10^(
+#               selectedData_processed()[[input$omicType]]$Matrix
+#               ))
+#           }
+#       }else{
+#           data2Volcano <- selectedData_processed()[[input$omicType]]$Matrix
+#       }
+#       if(any(data2Volcano == 0)){
+#         #macht es mehr sinn nur die nullen + eps zu machen oder lieber alle daten punkte + eps?
+#         #data2Volcano=data2Volcano+10^-15  => Log(data +1)
+#       }
+#       print(dim(data2Volcano))
+#       report <- data2Volcano
+#       VolcanoPlot_df <- Volcano_Plot(
+#         data = data2Volcano,
+#         ctrl_samples_idx = ctrl_samples_idx,
+#         comparison_samples_idx = comparison_samples_idx,
+#         p_sig_threshold = input$psig_threhsold,
+#         LFC_threshold = input$lfc_threshold,
+#         annotation_add = input$VOLCANO_anno_tooltip,
+#         annoData = selectedData_processed()[[input$omicType]]$annotation_rows
+#         )
+#       colorScheme <- c("#cf0e5b","#939596")
+#       names(colorScheme) <- c("significant","non-significant")
+#       alphaScheme <- c(0.8,0.1)
+#       names(alphaScheme) <- c("change","steady")
+#
+#       VolcanoPlot <- ggplot(
+#         VolcanoPlot_df,
+#         aes(label=probename,tooltip=annotation_add)
+#         ) +
+#         geom_point(aes(
+#           x = LFC,
+#           y = -log10(p_adj),
+#           colour = threshold,
+#           alpha = threshold_fc)) +
+#         geom_hline(
+#           yintercept = -log10(input$psig_threhsold),
+#           color="lightgrey"
+#           ) +
+#         geom_vline(
+#           xintercept = c(-input$lfc_threshold,input$lfc_threshold),
+#           color="lightgrey"
+#           ) +
+#         scale_color_manual(values=colorScheme, name="")+
+#         scale_alpha_manual(values=alphaScheme, name="")+
+#         xlab("Log FoldChange")+
+#         theme_bw()
+#
+#       plotPosition <- "Volcano_Plot_final"
+#       scenario <- 9
+#       scenario_Volcano <- scenario
+#
+#       output[[plotPosition]] <- renderPlotly({
+#         ggplotly(VolcanoPlot,
+#                  tooltip = ifelse(!is.null(input$VOLCANO_anno_tooltip),"tooltip","all"),
+#                  legendgroup="color")
+#         })
+#
+#       LFCTable <- getLFC(
+#         data2Volcano,
+#         ctrl_samples_idx,
+#         comparison_samples_idx,
+#         input$get_entire_table
+#         )
+#       # add annotation to Table
+#       LFCTable <- merge(
+#         LFCTable,
+#         selectedData_processed()[[input$omicType]]$annotation_rows,
+#         by=0,
+#         all.x=TRUE,
+#         all.y=F)
+#       rownames(LFCTable) <- LFCTable$Row.names
+#       global_Vars$Volcano_plot <- VolcanoPlot
+#       global_Vars$Volcano_sampleAnnoTypes_cmp <- input$sample_annotation_types_cmp
+#       global_Vars$Volcano_groupRef <- input$Groups2Compare_ref
+#       global_Vars$Volcano_groupTreat <- input$Groups2Compare_treat
+#       global_Vars$Volcano_file_ext_Volcano <- input$file_ext_Volcano
+#       global_Vars$Volcano_table <- LFCTable[order(LFCTable$p_adj,decreasing = T),]
+#
+#       output$getR_Code_Volcano <- downloadHandler(
+#         filename = function(){
+#           paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+#         },
+#         content = function(file){
+#           envList=list(
+#             VolcanoPlot_df = VolcanoPlot_df,
+#             input = reactiveValuesToList(input),
+#             colorScheme = colorScheme,
+#             alphaScheme = alphaScheme
+#             )
+#
+#           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+#           dir.create(temp_directory)
+#           write(getPlotCode(scenario_Volcano), file.path(temp_directory, "Code.R"))
+#           saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
+#           zip::zip(
+#             zipfile = file,
+#             files = dir(temp_directory),
+#             root = temp_directory
+#           )
+#         },
+#         contentType = "application/zip"
+#       )
+#
+#       output$SavePlot_Volcano <- downloadHandler(
+#         filename = function() { paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="") },
+#         content = function(file){
+#           ggsave(
+#             filename = file,
+#             plot = VolcanoPlot,
+#             device = gsub("\\.","",input$file_ext_Volcano)
+#             )
+#           on.exit({
+#             tmp_filename <- paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="")))
+#             ggsave(
+#               filename = tmp_filename,
+#               plot = VolcanoPlot,
+#               device = gsub("\\.","",input$file_ext_Volcano)
+#               )
+#
+#             # Add Log Messages
+#             fun_LogIt(message = "## VOLCANO")
+#             fun_LogIt(message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat))
+#             fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
+#
+#             fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
+#             fun_LogIt(message = head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),tableSaved=T)
+#           })
+#         }
+#
+#       )
+#
+#       output[["Volcano_table_final"]] <-DT::renderDataTable({DT::datatable(
+#         {LFCTable},
+#         extensions = 'Buttons',
+#         options = list(
+#           paging = TRUE,
+#           searching = TRUE,
+#           fixedColumns = TRUE,
+#           autoWidth = TRUE,
+#           ordering = TRUE,
+#           dom = 'Bfrtip',
+#           buttons = c('copy', 'csv', 'excel')
+#         ),
+#         class = "display"
+#       )})
+#       DE_UP <- subset(
+#         LFCTable,
+#         subset = (p_adj<input$psig_threhsold & LFC>=input$lfc_threshold)
+#         )
+#       DE_DOWN <- subset(
+#         LFCTable,
+#         subset = p_adj<input$psig_threhsold & LFC<=input$lfc_threshold
+#         )
+#
+#       DE_UP <- data.frame(
+#         Entities = (DE_UP[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),
+#         status= rep("up",nrow(DE_UP))
+#         )
+#       DE_Down <- data.frame(
+#         Entities = (DE_DOWN[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),
+#         status= rep("down",nrow(DE_DOWN))
+#         )
+#
+#       #Use annotation selected in plot also for the output of the names
+#
+#       DE_total <<- rbind(DE_UP,DE_Down)
+#       output$SaveDE_List=downloadHandler(
+#         filename = function() {
+#           paste("DE_Genes ",
+#                 input$sample_annotation_types_cmp,
+#                 ": ",input$Groups2Compare_treat,
+#                 " vs. ",input$Groups2Compare_ref,
+#                 "_",Sys.time(),".csv",sep="")
+#           },
+#         content = function(file){
+#           write.csv(DE_total,file = file)
+#         }
+#       )
+#     }
+#   })
+#
+# ## Create gene list----
+#   DE_genelist <- eventReactive(input$SendDE_Genes2Enrichment,{
+#     print("Send DE Genes to Enrichment")
+#     DE_total$Entities
+#   })
+#   observeEvent(input$SendDE_Genes2Enrichment,{
+#     updateTabsetPanel(
+#       session = session,
+#       inputId = "tabsetPanel1",
+#       selected = "Volcano Plot"
+#       )
+#     print(DE_genelist())
+#   })
+#
+#   ## download only to report
+#   observeEvent(input$only2Report_Volcano,{
+#     notificationID <- showNotification("Saving...",duration = 0)
+#
+#     tmp_filename <- paste0(
+#       getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),".png",sep=""))
+#       )
+#
+#     ggsave(tmp_filename,plot=global_Vars$Volcano_plot,device = "png")
+#
+#     # Add Log Messages
+#     fun_LogIt(message = "## VOLCANO")
+#     fun_LogIt(
+#       message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", global_Vars$Volcano_sampleAnnoTypes_cmp,": ",global_Vars$Volcano_groupRef," vs ", global_Vars$Volcano_sampleAnnoTypes_cmp,": ",global_Vars$Volcano_groupTreat)
+#       )
+#     fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
+#
+#     fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
+#     fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(global_Vars$Volcano_table[order(global_Vars$Volcano_table$p_adj,decreasing = T),],10),format = "html")))
+#
+#     if(isTruthy(input$NotesVolcano) &
+#        !(isEmpty(input$NotesVolcano))){
+#       fun_LogIt(message = "### Personal Notes:")
+#       fun_LogIt(message = input$NotesVolcano)
+#     }
+#
+#     removeNotification(notificationID)
+#     showNotification("Saved!",type = "message", duration = 1)
+#   })
 
-  observeEvent(toListen2PCA(),{
-    req(
-      input$omicType,
-      input$row_selection,
-      input$x_axis_selection,
-      input$y_axis_selection,
-      input$coloring_options
-      )
-    
-    print("PCA analysis on pre-selected data")
-    customTitle <- paste0("PCA - ",input$omicType,"-",
-                       paste0("entities:",input$row_selection,collapse = "_"),
-                       "-samples",ifelse(any(input$sample_selection!="all"),
-                                         paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),"")
-                       ,"-preprocessing: ",input$PreProcessing_Procedure)
-    print(customTitle)
-    plotPosition <- "PCA_plot"
-    
-    pca <- prcomp(as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix)),
-                  center = T,
-                  scale. = FALSE)
-    explVar <- pca$sdev^2/sum(pca$sdev^2)
-    names(explVar) <- colnames(pca$x)
-    print(input$coloring_options)
-    # transform variance to percent
-    percentVar <- round(100 * explVar, digits=1)
-    # Define data for plotting
-    pcaData <- data.frame(pca$x,selectedData_processed()[[input$omicType]]$sample_table)
-    continiousColors <- F
-    if(is.double(pcaData[,input$coloring_options]) & 
-       length(levels(as.factor(pcaData[,input$coloring_options])))>8){
-      print("color Option is numeric! automatically binned into 10 bins") 
-      pcaData[,input$coloring_options] <- cut_interval(
-        x = pcaData[,input$coloring_options],
-        n = 10
-        )
-      continiousColors <- T
-    }else{
-      pcaData[,input$coloring_options] <- as.factor(pcaData[,input$coloring_options])
-      print(levels(pcaData[,input$coloring_options]))
-    }
-
-    if(!any(colnames(pcaData) == "global_ID")){
-      pcaData$global_ID <- rownames(pcaData)
-    }
-    if(!is.null(input$PCA_anno_tooltip)){
-      req(input$PCA_anno_tooltip)
-      adj2colname <- gsub(" ",".",input$PCA_anno_tooltip)
-      pcaData$chosenAnno <- pcaData[,adj2colname]
-    }else{
-      pcaData$chosenAnno <- pcaData$global_ID
-    }
-
-    if(length(levels(pcaData[,input$coloring_options]))>8){
-       if(continiousColors){
-         colorTheme <- viridis::viridis(n = 10)
-         pca_plot <- ggplot(
-           pcaData,
-           aes(
-             x = pcaData[,input$x_axis_selection],
-             y = pcaData[,input$y_axis_selection],
-             color=pcaData[,input$coloring_options],
-             label=global_ID,
-             global_ID=global_ID,
-             chosenAnno=chosenAnno)) +
-           geom_point(size = 3) +
-           scale_color_manual(
-             name = input$coloring_options,
-             values=colorTheme
-             )
-         scenario=1
-       }else{
-         pca_plot <- ggplot(
-           pcaData,
-           aes(
-             x = pcaData[,input$x_axis_selection],
-             y = pcaData[,input$y_axis_selection],
-             color=pcaData[,input$coloring_options],
-             label=global_ID,
-             global_ID=global_ID,
-             chosenAnno=chosenAnno)) +
-           geom_point(size = 3)+
-           scale_color_discrete(name = input$coloring_options)
-         scenario=2
-       }
-    }else{
-      colorTheme <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
-                      "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
-      
-      pca_plot <- ggplot(
-        pcaData,
-        aes(
-          x = pcaData[,input$x_axis_selection],
-          y = pcaData[,input$y_axis_selection],
-          color=pcaData[,input$coloring_options],
-          label=global_ID,
-          global_ID=global_ID,
-          chosenAnno=chosenAnno)) +
-        geom_point(size =3)+
-        scale_color_manual(values = colorTheme,
-                           name = input$coloring_options)
-      scenario=3
-    }
-    
-    pca_plot_final <- pca_plot+
-      xlab(paste0(names(percentVar[input$x_axis_selection]),
-                  ": ",
-                  percentVar[input$x_axis_selection],
-                  "% variance")) +
-      ylab(paste0(names(percentVar[input$y_axis_selection]),
-                  ": ",
-                  percentVar[input$y_axis_selection],
-                  "% variance")) +
-      coord_fixed()+
-      theme_classic()+
-      theme(aspect.ratio = 1)+
-      ggtitle(customTitle)
-    print(input$Show_loadings)
-    ## Add Loadings if wanted
-    if(input$Show_loadings == "Yes"){
-      print("Do we Trigger this??")
-      df_out <- pca$x
-      df_out_r <- as.data.frame(pca$rotation)
-      df_out_r$feature <- row.names(df_out_r)
-      
-      TopK <- rownames(df_out_r)[
-        order(
-          sqrt(
-            (df_out_r[,input$x_axis_selection])^2+(df_out_r[,input$y_axis_selection])^2
-            ),
-          decreasing = T
-          )[1:5]
-        ]
-      df_out_r$feature[!df_out_r$feature%in%TopK] <- ""
-      
-      mult <- min(
-        (max(df_out[,input$y_axis_selection]) - min(df_out[,input$y_axis_selection])/(max(df_out_r[,input$y_axis_selection])-min(df_out_r[,input$y_axis_selection]))),
-        (max(df_out[,input$x_axis_selection]) - min(df_out[,input$x_axis_selection])/(max(df_out_r[,input$x_axis_selection])-min(df_out_r[,input$x_axis_selection])))
-      )
-      
-      df_out_r <- transform(df_out_r,
-                            v1 = 1.2 * mult * (get(input$x_axis_selection)),
-                            v2 = 1.2 * mult * (get(input$y_axis_selection))
-      )
-      
-      df_out_r$global_ID <- rownames(df_out_r)
-      df_out_r$chosenAnno <- rownames(df_out_r)
-      if(!is.null(input$EntitieAnno_Loadings)){
-        req(data_input_shiny()[[input$omicType]])
-        df_out_r$chosenAnno <- factor(
-          make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])),
-          levels = make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings]))
-          )
-      }
-      
-      pca_plot_final <- pca_plot_final + 
-        geom_segment(
-          data = df_out_r[which(df_out_r$feature!=""),],
-          aes(
-            x=0,
-            y=0,
-            xend=v1,
-            yend=v2,
-            chosenAnno=chosenAnno
-            ),
-          arrow = arrow(type = "closed",unit(0.01, "inches"),ends = "both"),
-          color = "#ab0521")
-      if(scenario == 1){
-        scenario = 4
-      }
-      if(scenario == 2){
-        scenario = 5
-      }
-      if(scenario == 3){
-        scenario = 6
-      }
-
-    }
-
-    PCA_scenario=scenario
-    output[["PCA_plot"]] <- renderPlotly({
-      ggplotly(pca_plot_final,
-               tooltip = ifelse(is.null(input$PCA_anno_tooltip),"all","chosenAnno"),
-               legendgroup="color")
-      })
-    
-    print(input$only2Report_pca)
-    global_Vars$PCA_plot <- pca_plot_final # somehow does not update ? or just return the latest?
-    global_Vars$PCA_customTitle <- customTitle
-    global_Vars$PCA_coloring <- input$coloring_options
-    global_Vars$PCA_noLoadings <- ifelse(input$Show_loadings=="Yes",length(TopK),0)
-    
-    output$getR_Code_PCA <- downloadHandler(
-      filename = function(){
-        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
-      },
-      content = function(file){
-        envList<-list(
-          pcaData = pcaData,
-          input = reactiveValuesToList(input),
-          global_ID = pcaData$global_ID,
-          chosenAnno = pcaData$chosenAnno,
-          percentVar = percentVar,
-          customTitle = customTitle,
-          colorTheme = colorTheme
-          )
-        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-        dir.create(temp_directory)
-        write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
-        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-        zip::zip(
-          zipfile = file,
-          files = dir(temp_directory),
-          root = temp_directory
-        )
-      },
-      contentType = "application/zip"
-      )
-    
-    output$SavePlot_pos1 <- downloadHandler(
-      filename = function() {
-        paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="")
-        },
-      # cannot get the final destination as this is a download on server side
-      content = function(file){
-        ggsave(
-          filename = file,
-          plot = pca_plot_final,
-          device = gsub("\\.","",input$file_ext_plot1)
-          )
-        on.exit({
-          TEST = paste0(getwd(),
-                        "/www/",
-                        paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="")
-                        )
-          ggsave(
-            filename = TEST,
-            plot = pca_plot_final,
-            device = gsub("\\.","",input$file_ext_plot1)
-            )
-          
-          # Add Log Messages
-          fun_LogIt(message = "## PCA")
-          fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
-          ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print("Args!"))
-          fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
-        })
-      }
-    )
-    
-### Do Scree plot ----
-    
-    var_explained_df <- data.frame(PC= paste0("PC",1:ncol(pca$x)),
-                                   var_explained=(pca$sdev)^2/sum((pca$sdev)^2))
-    var_explained_df$Var <- paste0(round(var_explained_df$var_explained,4)*100,"%")
-    var_explained_df$PC <- factor(var_explained_df$PC,levels = paste0("PC",1:ncol(pca$x)))
-    scree_plot <- 
-      ggplot(var_explained_df,
-             aes(x=PC,y=var_explained, group=1))+
-      geom_point(size=4,aes(label=Var))+
-      geom_line()+
-      ylab("Variance explained")+
-      theme_bw()+
-      ggtitle("Scree-Plot for shown PCA")
-    scenario <- 7
-    Scree_scenario <- scenario
-    output[["Scree_Plot"]] <- renderPlotly({
-      ggplotly(scree_plot,tooltip = "Var",legendgroup="color")
-      })
-    
-    global_Vars$Scree_plot <- scree_plot
-    global_Vars$Scree_customTitle <- customTitle
-    
-    output$getR_Code_Scree_Plot <- downloadHandler(
-      filename = function(){
-        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
-      },
-      content = function(file){
-        envList=list(var_explained_df=var_explained_df)
-        
-        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-        dir.create(temp_directory)
-        
-        write(getPlotCode(Scree_scenario), file.path(temp_directory, "Code.R"))
-        
-        saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
-        zip::zip(
-          zipfile = file,
-          files = dir(temp_directory),
-          root = temp_directory
-        )
-      },
-      contentType = "application/zip"
-    )
-    
-    output$SavePlot_Scree <- downloadHandler(
-      filename = function() {
-        paste(customTitle, " ",Sys.time(),input$file_ext_Scree,sep="")
-        },
-      
-      content = function(file){
-        ggsave(file,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
-        on.exit({
-          tmp_filename=paste0(
-            getwd(),
-            "/www/",
-            paste("Scree",customTitle, " ",Sys.time(),input$file_ext_Scree,sep="")
-            )
-          ggsave(tmp_filename,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
-          
-          # Add Log Messages
-          fun_LogIt(message = "### PCA ScreePlot")
-          fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
-          fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
-        })
-      }
-    )
-    
-### Do Loadings Plot ----
-    print("Do LoadingsPlot an issue?")
-    LoadingsDF <- data.frame(
-      entitie=rownames(pca$rotation),
-      Loading=pca$rotation[,input$x_axis_selection]
-      )
-    #LoadingsDF$Loading=scale(LoadingsDF$Loading)
-    LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
-    LoadingsDF <- rbind(
-      LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF)-input$bottomSlider),],
-      LoadingsDF[input$topSlider:1,]
-      )
-    LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
-    if(!is.null(input$EntitieAnno_Loadings)){
-      req(data_input_shiny()[[input$omicType]])
-      LoadingsDF$entitie=factor(
-        make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
-        levels = make.unique(as.character(data_input_shiny()[[input$omicType]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
-        )
-    }
-
-    plotOut <- ggplot(LoadingsDF,aes(x = Loading,y = entitie)) +
-      geom_col(aes(fill=Loading)) +
-      scale_y_discrete(
-        breaks = LoadingsDF$entitie,
-        labels = stringr::str_wrap(gsub("\\.[0-9].*$","",LoadingsDF$entitie),20)) +
-      scale_fill_gradient2(low = "#277d6a",mid = "white",high = "orange")+
-      ylab(ifelse(is.null(input$EntitieAnno_Loadings),"",input$EntitieAnno_Loadings)) +
-      xlab(paste0("Loadings: ",input$x_axis_selection))+
-      theme_bw(base_size = 15)
-
-    scenario <- 8
-    Loading_scenario <- scenario
-    output[["PCA_Loadings_plot"]] <- renderPlot({plotOut})
-    
-    global_Vars$Loadings_x_axis <- input$x_axis_selection
-    global_Vars$Loadings_bottomSlider <- input$bottomSlider
-    global_Vars$Loadings_topSlider <- input$topSlider
-    global_Vars$Loadings_file_ext_Loadings <- input$file_ext_Loadings
-    global_Vars$Loadings_plotOut <- plotOut
-
-    output$getR_Code_Loadings <- downloadHandler(
-      filename = function(){
-        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
-      },
-      content = function(file){
-        envList=list(LoadingsDF=LoadingsDF,
-                     input=reactiveValuesToList(input))
-        
-        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-        dir.create(temp_directory)
-        
-        write(getPlotCode(Loading_scenario), file.path(temp_directory, "Code.R"))
-        
-        saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
-        zip::zip(
-          zipfile = file,
-          files = dir(temp_directory),
-          root = temp_directory
-        )
-      },
-      contentType = "application/zip"
-    )
-    
-    output$SavePlot_Loadings <- downloadHandler(
-      filename = function() {paste(
-        "LOADINGS_PCA_",
-        Sys.time(),
-        input$file_ext_Loadings,
-        sep="")},
-      
-      content = function(file){
-        ggsave(file,
-               plot = plotOut,
-               device = gsub("\\.","",input$file_ext_Loadings),
-               dpi = "print"
-               )
-        
-        on.exit({
-          tmp_filename=paste0(
-            getwd(),
-            "/www/",
-            paste("LOADINGS_PCA_",Sys.time(),input$file_ext_Loadings,sep="")
-            )
-          ggsave(
-            tmp_filename,
-            plot = plotOut,
-            device = gsub("\\.","",input$file_ext_Loadings),
-            dpi = "print"
-            )
-          # Add Log Messages
-          fun_LogIt(message = "### PCA Loadings")
-          fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",input$x_axis_selection))
-          fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
-          fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
-        })
-      }
-    )
-  })
-## Log it ----
-  observeEvent(input$only2Report_pca,{
-      # needs global var ?! do we want that?
-      notificationID <- showNotification("Saving...",duration = 0)
-      TEST <- paste0(getwd(),"/www/",paste(global_Vars$PCA_customTitle, "__",Sys.time(),".png",sep=""))
-      ggsave(
-        TEST,
-        plot = global_Vars$PCA_plot,
-        device = "png"
-        )
-      # Add Log Messages
-      fun_LogIt(message = "## PCA")
-      fun_LogIt(
-        message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options)
-        )
-      ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
-      fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
-      if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
-        fun_LogIt(message = "### Personal Notes:")
-        fun_LogIt(message = input$NotesPCA)
-      }
-      removeNotification(notificationID)
-      showNotification("Saved!",type = "message", duration = 1)
-  })
-  
-  observeEvent(input$only2Report_Scree_Plot,{
-    notificationID <- showNotification("Saving...",duration = 0)
-    tmp_filename <- paste0(
-      getwd(),
-      "/www/",
-      paste("Scree",global_Vars$Scree_customTitle, " ",Sys.time(),".png",sep="")
-      )
-    ggsave(
-      tmp_filename,
-      plot=global_Vars$Scree_plot,
-      device = "png"
-      )
-    
-    # Add Log Messages
-    fun_LogIt(message = "### PCA ScreePlot")
-    fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
-    fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
-    
-    removeNotification(notificationID)
-    showNotification("Saved!",type = "message", duration = 1)
-  })
-  
-  observeEvent(input$only2Report_Loadings,{
-    notificationID <- showNotification("Saving...",duration = 0)
-    tmp_filename <- paste0(
-      getwd(),
-      "/www/",
-      paste("LOADINGS_PCA_",Sys.time(),".png",sep="")
-      )
-    ggsave(
-      tmp_filename,
-      plot = global_Vars$Loadings_plotOut,
-      device = "png"
-      )
-    
-    # Add Log Messages
-    fun_LogIt(message = "### PCA Loadings")
-    fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",global_Vars$Loadings_x_axis))
-    fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",global_Vars$Loadings_topSlider," and the lowest ",global_Vars$Loadings_bottomSlider," Loadings"))
-    fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
-    
-    removeNotification(notificationID)
-    showNotification("Saved!",type = "message", duration = 1)
-  })
-  
-# Volcano Plot----
-## UI Section----
-  output$sample_annotation_types_cmp_ui <- renderUI({
-    req(data_input_shiny())
-    selectInput(
-      inputId = "sample_annotation_types_cmp",
-      label = "Choose type for LFC comparison",
-      choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
-      multiple = F ,
-      selected = NULL
-    )
-  })
-  output$Groups2Compare_ref_ui <- renderUI({
-    req(data_input_shiny())
-    selectInput(
-      inputId = "Groups2Compare_ref",
-      label = "Choose reference of log2 FoldChange",
-      choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]),
-      multiple = F ,
-      selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp])[1]
-    )
-  })
-  output$Groups2Compare_treat_ui <- renderUI({
-    req(data_input_shiny())
-    selectInput(
-      inputId = "Groups2Compare_treat",
-      label = "Choose treatment group of log2 FoldChange",
-      choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]),
-      multiple = F ,
-      selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp])[2]
-    )
-  })
-  output$psig_threhsold_ui <- renderUI({
-    req(data_input_shiny())
-    numericInput(
-      inputId ="psig_threhsold" ,
-      label = "adj. p-value threshold",
-      min=0, 
-      max=0.1, 
-      step=0.01,
-      value = 0.05
-      )
-  })
-  output$lfc_threshold_ui <- renderUI({
-    numericInput(
-      inputId ="lfc_threshold",
-      label = "Log FC threshold (both sides!)",
-      min=0,
-      max=10,
-      step=0.1,
-      value = 1.0
-      )
-  })
-  output$VOLCANO_anno_tooltip_ui <- renderUI({
-    req(data_input_shiny())
-    selectInput(
-      inputId = "VOLCANO_anno_tooltip",
-      label = "Select the anno to be shown at tooltip",
-      choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
-      multiple = F
-    )
-  })
-  
-  toListen2Volcano <- reactive({
-    list(
-      input$Do_Volcano,
-      input$psig_threhsold,
-      input$lfc_threshold,
-      input$get_entire_table,
-      input$VOLCANO_anno_tooltip
-      )
-  })
-  ## Do Volcano----
-  observeEvent(toListen2Volcano(),{
-    req(
-      input$omicType,
-      input$row_selection,
-      isTruthy(selectedData_processed()),
-      input$psig_threhsold,
-      input$lfc_threshold
-      )
-    print("Volcano analysis on pre-selected data")
-    print(input$sample_annotation_types_cmp)
-    ctrl_samples_idx <- which(
-      selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_ref
-      )
-    comparison_samples_idx <- which(
-      selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp]%in%input$Groups2Compare_treat
-      )
-    
-    if(length(comparison_samples_idx) <= 1 |
-       length(ctrl_samples_idx)<=1){
-      output$debug=renderText("Choose variable with at least two samples per condition!")
-      req(FALSE)
-    }
-    if(input$PreProcessing_Procedure=="simpleCenterScaling"){ 
-      print("Remember do not use normal center + scaling (negative Values!)")
-      output$debug=renderText(
-        "Choose another preprocessing, as there are negative values!"
-        )
-      req(FALSE)
-    }else{
-      if(input$PreProcessing_Procedure == "ln" |
-         input$PreProcessing_Procedure == "log10" ){
-          print("Data was logged already => delog, take FC and log ?!")
-          if(input$PreProcessing_Procedure == "ln"){
-            data2Volcano <- as.data.frame(exp(
-              selectedData_processed()[[input$omicType]]$Matrix
-              ))
-          }else{
-            data2Volcano <- as.data.frame(10^(
-              selectedData_processed()[[input$omicType]]$Matrix
-              ))
-          }
-      }else{
-          data2Volcano <- selectedData_processed()[[input$omicType]]$Matrix
-      }
-      if(any(data2Volcano == 0)){
-        #macht es mehr sinn nur die nullen + eps zu machen oder lieber alle daten punkte + eps?
-        #data2Volcano=data2Volcano+10^-15  => Log(data +1)
-      }
-      print(dim(data2Volcano))
-      report <- data2Volcano
-      VolcanoPlot_df <- Volcano_Plot(
-        data = data2Volcano,
-        ctrl_samples_idx = ctrl_samples_idx,
-        comparison_samples_idx = comparison_samples_idx,
-        p_sig_threshold = input$psig_threhsold,
-        LFC_threshold = input$lfc_threshold,
-        annotation_add = input$VOLCANO_anno_tooltip,
-        annoData = selectedData_processed()[[input$omicType]]$annotation_rows
-        )
-      colorScheme <- c("#cf0e5b","#939596")
-      names(colorScheme) <- c("significant","non-significant")
-      alphaScheme <- c(0.8,0.1)
-      names(alphaScheme) <- c("change","steady")
-      
-      VolcanoPlot <- ggplot(
-        VolcanoPlot_df,
-        aes(label=probename,tooltip=annotation_add)
-        ) +
-        geom_point(aes(
-          x = LFC, 
-          y = -log10(p_adj), 
-          colour = threshold,
-          alpha = threshold_fc)) +
-        geom_hline(
-          yintercept = -log10(input$psig_threhsold),
-          color="lightgrey"
-          ) +
-        geom_vline(
-          xintercept = c(-input$lfc_threshold,input$lfc_threshold),
-          color="lightgrey"
-          ) +
-        scale_color_manual(values=colorScheme, name="")+
-        scale_alpha_manual(values=alphaScheme, name="")+
-        xlab("Log FoldChange")+
-        theme_bw()
-      
-      plotPosition <- "Volcano_Plot_final"
-      scenario <- 9
-      scenario_Volcano <- scenario
-      
-      output[[plotPosition]] <- renderPlotly({
-        ggplotly(VolcanoPlot,
-                 tooltip = ifelse(!is.null(input$VOLCANO_anno_tooltip),"tooltip","all"),
-                 legendgroup="color")
-        })
-      
-      LFCTable <- getLFC(
-        data2Volcano,
-        ctrl_samples_idx,
-        comparison_samples_idx,
-        input$get_entire_table
-        )
-      # add annotation to Table
-      LFCTable <- merge(
-        LFCTable,
-        selectedData_processed()[[input$omicType]]$annotation_rows,
-        by=0, 
-        all.x=TRUE,
-        all.y=F)
-      rownames(LFCTable) <- LFCTable$Row.names
-      global_Vars$Volcano_plot <- VolcanoPlot
-      global_Vars$Volcano_sampleAnnoTypes_cmp <- input$sample_annotation_types_cmp
-      global_Vars$Volcano_groupRef <- input$Groups2Compare_ref
-      global_Vars$Volcano_groupTreat <- input$Groups2Compare_treat
-      global_Vars$Volcano_file_ext_Volcano <- input$file_ext_Volcano
-      global_Vars$Volcano_table <- LFCTable[order(LFCTable$p_adj,decreasing = T),]
-      
-      output$getR_Code_Volcano <- downloadHandler(
-        filename = function(){
-          paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
-        },
-        content = function(file){
-          envList=list(
-            VolcanoPlot_df = VolcanoPlot_df,
-            input = reactiveValuesToList(input),
-            colorScheme = colorScheme,
-            alphaScheme = alphaScheme
-            )
-          
-          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-          dir.create(temp_directory)
-          write(getPlotCode(scenario_Volcano), file.path(temp_directory, "Code.R"))
-          saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
-          zip::zip(
-            zipfile = file,
-            files = dir(temp_directory),
-            root = temp_directory
-          )
-        },
-        contentType = "application/zip"
-      )
-      
-      output$SavePlot_Volcano <- downloadHandler(
-        filename = function() { paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="") },
-        content = function(file){
-          ggsave(
-            filename = file,
-            plot = VolcanoPlot,
-            device = gsub("\\.","",input$file_ext_Volcano)
-            )
-          on.exit({
-            tmp_filename <- paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="")))
-            ggsave(
-              filename = tmp_filename,
-              plot = VolcanoPlot,
-              device = gsub("\\.","",input$file_ext_Volcano)
-              )
-            
-            # Add Log Messages
-            fun_LogIt(message = "## VOLCANO")
-            fun_LogIt(message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat))
-            fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
-            
-            fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
-            fun_LogIt(message = head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),tableSaved=T)
-          })
-        }
-        
-      )
-
-      output[["Volcano_table_final"]] <-DT::renderDataTable({DT::datatable(
-        {LFCTable},
-        extensions = 'Buttons',
-        options = list(
-          paging = TRUE,
-          searching = TRUE,
-          fixedColumns = TRUE,
-          autoWidth = TRUE,
-          ordering = TRUE,
-          dom = 'Bfrtip',
-          buttons = c('copy', 'csv', 'excel')
-        ),
-        class = "display"
-      )})
-      DE_UP <- subset(
-        LFCTable,
-        subset = (p_adj<input$psig_threhsold & LFC>=input$lfc_threshold)
-        )
-      DE_DOWN <- subset(
-        LFCTable,
-        subset = p_adj<input$psig_threhsold & LFC<=input$lfc_threshold
-        )
-      
-      DE_UP <- data.frame(
-        Entities = (DE_UP[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),
-        status= rep("up",nrow(DE_UP))
-        )
-      DE_Down <- data.frame(
-        Entities = (DE_DOWN[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),
-        status= rep("down",nrow(DE_DOWN))
-        )
-      
-      #Use annotation selected in plot also for the output of the names
-      
-      DE_total <<- rbind(DE_UP,DE_Down)
-      output$SaveDE_List=downloadHandler(
-        filename = function() { 
-          paste("DE_Genes ",
-                input$sample_annotation_types_cmp,
-                ": ",input$Groups2Compare_treat,
-                " vs. ",input$Groups2Compare_ref,
-                "_",Sys.time(),".csv",sep="") 
-          },
-        content = function(file){
-          write.csv(DE_total,file = file)
-        }
-      )
-    }
-  })
-  
-## Create gene list----
-  DE_genelist <- eventReactive(input$SendDE_Genes2Enrichment,{
-    print("Send DE Genes to Enrichment")
-    DE_total$Entities
-  })
-  observeEvent(input$SendDE_Genes2Enrichment,{
-    updateTabsetPanel(
-      session = session,
-      inputId = "tabsetPanel1",
-      selected = "Volcano Plot"
-      )
-    print(DE_genelist())
-  })
-  
-  ## download only to report
-  observeEvent(input$only2Report_Volcano,{
-    notificationID <- showNotification("Saving...",duration = 0)
-    
-    tmp_filename <- paste0(
-      getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),".png",sep=""))
-      )
-    
-    ggsave(tmp_filename,plot=global_Vars$Volcano_plot,device = "png")
-    
-    # Add Log Messages
-    fun_LogIt(message = "## VOLCANO")
-    fun_LogIt(
-      message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", global_Vars$Volcano_sampleAnnoTypes_cmp,": ",global_Vars$Volcano_groupRef," vs ", global_Vars$Volcano_sampleAnnoTypes_cmp,": ",global_Vars$Volcano_groupTreat)
-      )
-    fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
-    
-    fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
-    fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(global_Vars$Volcano_table[order(global_Vars$Volcano_table$p_adj,decreasing = T),],10),format = "html")))
-      
-    if(isTruthy(input$NotesVolcano) & 
-       !(isEmpty(input$NotesVolcano))){
-      fun_LogIt(message = "### Personal Notes:")
-      fun_LogIt(message = input$NotesVolcano)
-    }
-    
-    removeNotification(notificationID)
-    showNotification("Saved!",type = "message", duration = 1)
-  })
-
-# Heatmap ----
-## UI Section ----
-  observe({
-    #print(colnames(data_input_shiny()[[input$omicType]]$sample_table))
-    if(input$Aesthetics_show){
-      output$anno_options_ui=renderUI({
-        req(data_input_shiny())
-        selectInput(
-          inputId = "anno_options",
-          label = "Choose the variable to color the samples after (Multiples are possible)",
-          choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
-          multiple = T , # would be cool if true, to be able to merge vars ?!,
-          selected= c(colnames(data_input_shiny()[[input$omicType]]$sample_table))[1]
-        )
-      })
-      output$row_anno_options_ui=renderUI({
-        req(data_input_shiny())
-        selectInput(
-          inputId = "row_anno_options",
-          label = "Choose the variable to color the rows after (Multiples are possible)",
-          choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
-          multiple = T, # would be cool if true, to be able to merge vars ?!,
-          selected=c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows))[length(c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)))]
-        )
-      })
-      output$row_label_options_ui=renderUI({
-        req(data_input_shiny())
-        req(input$row_anno_options)
-        selectInput(
-          inputId = "row_label_options",
-          label = "Choose the label of rows",
-          choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
-          multiple = F, # would be cool if true, to be able to merge vars ?!,
-          selected=input$row_anno_options
-        )
-      })
-      output$cluster_cols_ui=renderUI({
-        req(data_input_shiny())
-        checkboxInput(inputId ="cluster_cols",
-                      label="Column Clustering?",
-                      value = TRUE,
-                      width = "20%")
-      })
-      output$cluster_rows_ui=renderUI({
-        req(data_input_shiny())
-        checkboxInput(inputId ="cluster_rows",
-                      label="Row Clustering?",
-                      value = TRUE,
-                      width = "20%")
-      })
-    }else{
-      hide(id = "anno_options",anim = T)
-      hide(id = "row_anno_options",anim = T)
-      hide(id = "cluster_cols", anim = T)
-      hide(id = "cluster_rows", anim = T )
-    }
-  })
-  
-  
-  output$LFC_toHeatmap_ui=renderUI({
-    req(data_input_shiny())
-    checkboxInput(inputId ="LFC_toHeatmap",
-                  label="Show log Fold Changes?",
-                  value = FALSE,
-                  width = "20%")
-  })
-  output$row_selection_options_ui=renderUI({
-    req(data_input_shiny())
-    selectInput(
-      inputId = "row_selection_options",
-      label = "Row selection",
-      choices = c("all","TopK","significant_LFC","LFC_onlySig","rowAnno_based"),
-      multiple = T, #
-      selected="all"
-    )
-  })
-  
-  output$rowWiseScaled_ui=renderUI({
-    req(data_input_shiny())
-    checkboxInput(inputId = "rowWiseScaled",
-                  label = "row-wise scaling?",
-                  value = FALSE)
-  })
-  
-  observe({
-    if(input$Selection_show_LFC){
-      output$sample_annotation_types_cmp_heatmap_ui=renderUI({
-        req(data_input_shiny())
-        selectInput(
-          inputId = "sample_annotation_types_cmp_heatmap",
-          label = "Choose type for LFC-based ordering",
-          choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
-          multiple = F,
-          selected = c(colnames(data_input_shiny()[[input$omicType]]$sample_table))[1]
-        )
-      })
-      output$Groups2Compare_ref_heatmap_ui=renderUI({
-        req(data_input_shiny())
-        selectInput(
-          inputId = "Groups2Compare_ref_heatmap",
-          label = "Choose reference of log2 FoldChange",
-          choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap]),
-          multiple = F ,
-          selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap])[1]
-        )
-      })
-      output$Groups2Compare_treat_heatmap_ui=renderUI({
-        req(data_input_shiny())
-        selectInput(
-          inputId = "Groups2Compare_treat_heatmap",
-          label = "Choose treatment group of log2 FoldChange",
-          choices = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap]),
-          multiple = F ,
-          selected = unique(data_input_shiny()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap])[2]
-        )
-      })
-      output$psig_threhsold_heatmap_ui=renderUI({
-        req(data_input_shiny())
-        numericInput(inputId ="psig_threhsold_heatmap" ,
-                     label = "adj. p-value threshold",
-                     min=0, max=0.1, step=0.01,
-                     value = 0.05)
-      })
-    }else{
-      hide(id = "sample_annotation_types_cmp_heatmap",anim=T)
-      hide(id = "Groups2Compare_ref_heatmap",anim=T)
-      hide(id = "Groups2Compare_treat_heatmap",anim=T)
-      hide(id = "psig_threhsold_heatmap",anim=T)
-    }
-  })
-  
-  observe({
-    if(any(input$row_selection_options=="TopK")){
-      output$TopK_ui=renderUI({numericInput(inputId = "TopK",
-                                            label = "Choose number of top entities to show (order based on p-val (LFC) or rowCount)",
-                                            min = 1,
-                                            step = 1,
-                                            value = 20)})
-    }else{
-      hide(id = "TopK",anim=T)
-    }
-  }) #TopK
-  
-  
-  observe({
-    if(input$Selection_show_annoBased & any(input$row_selection_options=="rowAnno_based")){
-      # output$rowAnno_based_ui=renderUI({
-      #   req(selectedData_processed())
-      #   selectInput(
-      #     inputId = "rowAnno_based",
-      #     label = "Choose the variable to solely show in Heatmap",
-      #     choices = c(colnames(selectedData_processed()[[input$omicType]]$annotation_rows)),
-      #     selected = c(colnames(selectedData_processed()[[input$omicType]]$annotation_rows))[1],
-      #     multiple = F # would be cool if true, to be able to merge vars ?!,
-      #   )
-      # })
-      # output$row_anno_factor_ui=renderUI({
-      #   req(selectedData_processed())
-      #   selectInput(
-      #     inputId = "row_anno_factor",
-      #     label = "Which entities to use? (Will be the union if multiple selected)",
-      #     choices = c("all",unique(selectedData_processed()[[input$omicType]]$annotation_rows[,input$rowAnno_based])),
-      #     selected="all",
-      #     multiple = T
-      #   )
-      # })
-      output$anno_options_heatmap_ui=renderUI({
-        req(selectedData_processed())
-        selectInput(
-          inputId = "anno_options_heatmap",
-          label = "Choose the variable to select the rows after (Multiples are not possible)",
-          choices = c(colnames(selectedData_processed()[[input$omicType]]$annotation_rows)),
-          selected=colnames(selectedData_processed()[[input$omicType]]$annotation_rows)[1],
-          multiple = F # would be cool if true, to be able to merge vars ?!,
-        )
-      })
-      output$row_anno_options_heatmap_ui=renderUI({
-        req(selectedData_processed())
-        selectInput(
-          inputId = "row_anno_options_heatmap",
-          label = "Which entities to use?",
-          choices = c("all",unique(selectedData_processed()[[input$omicType]]$annotation_rows[,input$anno_options_heatmap])),
-          selected="all",
-          multiple = T
-        )
-      })
-    }else{
-      #hide(id = "rowAnno_based",anim = T)
-      #hide(id = "row_anno_factor",anim = T)
-      hide(id = "anno_options_heatmap",anim = T)
-      hide(id = "row_anno_options_heatmap",anim = T)
-    }
-  })
-
-## Do Heatmap
-  toListen2Heatmap <- reactive({
-    list(input$Do_Heatmap,
-         input$cluster_cols,
-         input$cluster_rows,
-         input$row_anno_options,
-         input$anno_options,
-         input$rowWiseScaled,
-         input$row_label_options,
-         input$row_label_no
-         #input$row_selection_options
-         )
-  })
-  
-  heatmap_genelist <- eventReactive(toListen2Heatmap(),{
-    req(input$omicType,input$row_selection_options,input$anno_options)
-    req(selectedData_processed())
-    print("Heatmap on selected Data")
-   
-    ### atm raw data plotted
-    data2Plot<-selectedData_processed()
-    colorTheme=c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
-    customTitleHeatmap=paste0("Heatmap - ",input$omicType,"-",paste0("entities:",input$row_selection,collapse = "_"),"-samples",ifelse(any(input$sample_selection!="all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),""),"-preprocessing: ",input$PreProcessing_Procedure)
-    #data2Plot_Matrix=as.numeric(data2Plot[[input$omicType]]$Matrix)
-    print(customTitleHeatmap)
-    mycolors <- list()
-    if(length(input$anno_options)==1){
-      if(length(unique(data2Plot[[input$omicType]]$sample_table[,input$anno_options]))<=8){
-        names(colorTheme)=unique(data2Plot[[input$omicType]]$sample_table[,input$anno_options])
-        colorTheme=colorTheme[!is.na(names(colorTheme))]
-        mycolors[[input$anno_options]]=colorTheme
-      }
-    }
-    # colors to fill in the tiles
-    paletteLength <- 25
-    myColor_fill <- colorRampPalette(c("blue", "white", "firebrick"))(paletteLength)
-    
-    ##### Do PreSelection of input to Heatmap to show
-    #
-    print(input$row_selection_options)
-    # selection based on row Annotation:
-    if(!(any(input$row_selection_options=="all"))){
-      if(any(input$row_selection_options=="rowAnno_based")){
-        if(any(input$row_anno_options_heatmap=="SELECT_AN_OPTION")){ #old
-          output$Options_selected_out_3=renderText({"If you go with rowAnno_based you must select a varaible to select the rows after! (See Section Further row selection). Now it is defaulting to show all to omit an error"})
-          additionalInput_row_anno="all"
-          additionalInput_row_anno_factor=NA
-        }else{
-          print("We should be here")
-          print(input$row_anno_options_heatmap)
-          additionalInput_row_anno<-ifelse(any(input$row_selection_options=="rowAnno_based"),"yip",NA)
-          if(!is.na(additionalInput_row_anno)){
-            additionalInput_row_anno=input$anno_options_heatmap
-            print(additionalInput_row_anno)
-          }
-          additionalInput_row_anno_factor<-input$row_anno_options_heatmap
-        }
-      }else{
-        additionalInput_row_anno<-ifelse(any(input$row_selection_options=="rowAnno_based"),input$anno_options_heatmap,NA)
-        additionalInput_row_anno_factor<-ifelse(any(input$row_selection_options=="rowAnno_based"),c(input$row_anno_options_heatmap),NA)
-      }
-    }else{
-      additionalInput_row_anno<-"all"
-      additionalInput_row_anno_factor<-NA
-    }
-    
-    print(additionalInput_row_anno_factor)
-    
-    #Selection and/or ordering based on LFC
-    additionalInput_sample_annotation_types<-ifelse(isTruthy(input$sample_annotation_types_cmp_heatmap),input$sample_annotation_types_cmp_heatmap,NA)
-    additionalInput_ctrl_idx<-ifelse(isTruthy(input$Groups2Compare_ref_heatmap),input$Groups2Compare_ref_heatmap,NA)
-    additionalInput_cmp_idx<-ifelse(isTruthy(input$Groups2Compare_treat_heatmap),input$Groups2Compare_treat_heatmap,NA)
-    psig_threhsold<-ifelse(isTruthy(input$psig_threhsold_heatmap),input$psig_threhsold_heatmap,NA)
-    print(paste0("This should not be NA if LFC Settings: ",additionalInput_sample_annotation_types))
-    print(paste0("This should not be NA if LFC Settings: ",input$Groups2Compare_ref_heatmap,input$Groups2Compare_treat_heatmap))
-    
-    # select TopK (if there is an ordering)
-    TopK2Show<-ifelse(any(input$row_selection_options=="TopK"),input$TopK,NA)
-
-    #print(input$row_selection_options)
-    # data_test<-selectedData_processed()[[input$omicType]]
-    # # to cover: c("TopK","significant_LFC","DE_genes","rowAnno_based")
-    if(any(input$row_selection_options=="all")){
-      data2HandOver=selectedData_processed()[[input$omicType]]$Matrix
-    }else{
-      #data2Plot
-      print(input$row_selection_options)
-      data2HandOver<-entitieSelection(selectedData_processed()[[input$omicType]],
-                                      type=input$row_selection_options,
-                                      additionalInput_row_anno=additionalInput_row_anno,
-                                      additionalInput_row_anno_factor=additionalInput_row_anno_factor,
-                                      additionalInput_sample_annotation_types=additionalInput_sample_annotation_types,
-                                      additionalInput_ctrl_idx=additionalInput_ctrl_idx,
-                                      additionalInput_cmp_idx=additionalInput_cmp_idx,
-                                      psig_threhsold=psig_threhsold,
-                                      TopK2Show=TopK2Show
-      )
-      
-      print(dim(data2HandOver))
-    }
-    
-    doThis_flag=T
-    if(is.null(data2HandOver)){
-      output$Options_selected_out_3=renderText({"Nothing is left,e.g. no significant Terms or TopK is used but no inherent order of the data"})
-      heatmap_plot=NULL
-      doThis_flag=F
-      #req(FALSE)
-    }
-    
-    print(paste0("plot LFC's?",input$LFC_toHeatmap))
-    # Dependent to plot raw data or LFCs
-    if(input$LFC_toHeatmap){
-      ctrl_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap]%in%input$Groups2Compare_ref_heatmap)
-      comparison_samples_idx<-which(selectedData_processed()[[input$omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap]%in%input$Groups2Compare_treat_heatmap)
-      if(length(comparison_samples_idx)<=1 | length(ctrl_samples_idx)<=1){
-        output$Options_selected_out_3=renderText("Choose variable with at least two samples per condition!")
-        #req(FALSE)
-        doThis_flag=F
-      }
-      if(input$PreProcessing_Procedure=="simpleCenterScaling"|any(selectedData_processed()[[input$omicType]]$Matrix<0)){
-        print("Remember do not use normal center + scaling (negative Values!)")
-        output$Options_selected_out_3=renderText("Choose another preprocessing, as there are negative values!")
-        #}else if(input$PreProcessing_Procedure=="DE_Seq_alike"){
-        #  DE_Seq_alike
-      }else if(doThis_flag){
-        print(dim(selectedData_processed()[[input$omicType]]$Matrix))
-        Data2Plot<-getLFC(data2Plot[[input$omicType]]$Matrix,
-                          ctrl_samples_idx,
-                          comparison_samples_idx)
-        # adjust sample annotation
-        # if the value is accross all group-members the same keep 1 col otherwise remove
-        keep_ctrl=apply(data2Plot[[input$omicType]]$sample_table[ctrl_samples_idx,],2,function (x) length(unique(x))==1)
-        keep_treat=apply(data2Plot[[input$omicType]]$sample_table[comparison_samples_idx,],2,function (x) length(unique(x))==1)
-        # keep  only if both TRUE
-        keep_final=names(data2Plot[[input$omicType]]$sample_table)[keep_ctrl & keep_treat]
-        
-        ## do pheatmap
-        #remove anything non sig
-        Data2Plot=Data2Plot[Data2Plot$p_adj<0.05,]
-        # use floor and ceiling to deal with even/odd length pallettelengths
-        myBreaks <- c(seq(min(Data2Plot$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
-                      seq(max(Data2Plot$LFC)/paletteLength, max(Data2Plot$LFC), length.out=floor(paletteLength/2)))
-        
-        scenario=10
-        annotation_col = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F]
-        heatmap_plot<-pheatmap((t(Data2Plot[,"LFC",drop=F])),
-                               main=gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
-                               show_rownames=ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
-                               show_colnames=TRUE,
-                               cluster_cols = input$cluster_cols,
-                               cluster_rows = FALSE, # input$cluster_rows,
-                               scale=ifelse(input$rowWiseScaled,"row","none"),
-                               # cutree_cols = 4,
-                               #fontsize = font.size,
-                               annotation_col = annotation_col,
-                               #annotation_row = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F],
-                               #annotation_colors = mycolors,
-                               silent = F,
-                               breaks = myBreaks,
-                               color = myColor_fill
-        )
-        
-      }
-    }else if(doThis_flag){
-      if(any(is.na(data2HandOver))){
-        idx_of_nas=which(apply(data2HandOver,1,is.na)) # why do we produce Nas?
-        print(idx_of_nas)
-        data2HandOver=data2HandOver[-idx_of_nas,] 
-        annotation_col = selectedData_processed()[[input$omicType]]$sample_table[-idx_of_nas,input$anno_options,drop=F]
-        annotation_row = selectedData_processed()[[input$omicType]]$annotation_rows[-idx_of_nas,input$row_anno_options,drop=F]
-      }else{
-        annotation_col = selectedData_processed()[[input$omicType]]$sample_table[,input$anno_options,drop=F]
-        annotation_row = selectedData_processed()[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F]
-      }
-      clusterRowspossible=ifelse(nrow(as.matrix(data2HandOver))>1,input$cluster_rows,F)
-      print(input$anno_options)
-      print(input$row_label_options)
-      #row_label_options
-      scenario=11
-      selectedData_processed_df=selectedData_processed()
-      heatmap_plot<-pheatmap(as.matrix(data2HandOver),
-                             main=customTitleHeatmap,
-                             show_rownames=ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
-                             labels_row = selectedData_processed_df[[input$omicType]]$annotation_rows[rownames(data2HandOver),input$row_label_options],
-                             show_colnames=TRUE,
-                             cluster_cols = input$cluster_cols,
-                             cluster_rows = clusterRowspossible,
-                             scale=ifelse(input$rowWiseScaled,"row","none"),
-                             # cutree_cols = 4,
-                             #fontsize = font.size,
-                             annotation_col = annotation_col,
-                             annotation_row =annotation_row,
-                             annotation_colors = mycolors,
-                             silent = F
-                             #breaks = c(seq(min(data2Plot[[input$omicType]]$Matrix), 0, length.out=ceiling(paletteLength/2) + 1),
-                             #            seq(max(data2Plot[[input$omicType]]$Matrix)/paletteLength, max(data2Plot[[input$omicType]]$Matrix), length.out=floor(paletteLength/2))),
-                             #color = myColor_fill
-                             #breaks = scaleColors(data = as.matrix(data2Plot[[input$omicType]]$Matrix), maxvalue = max.value)[["breaks"]],
-                             #color = scaleColors(data = as.matrix(data2Plot[[input$omicType]]$Matrix), maxvalue = max.value)[["color"]]
-      )
-    }
-    
-    
-
-    heatmap_scenario=scenario
-    
-    output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
-    
-    global_Vars$Heatmap_customTitleHeatmap=customTitleHeatmap
-    global_Vars$Heatmap_heatmap_plot=heatmap_plot
-    global_Vars$Heatmap_row_selection_options=input$row_selection_options
-    global_Vars$Heatmap_row_anno_options_heatmap=input$row_anno_options_heatmap
-    global_Vars$Heatmap_TopK=input$TopK
-    global_Vars$Heatmap_row_selection_options=input$row_selection_options
-    global_Vars$Heatmap_anno_options=input$anno_options
-    global_Vars$Heatmap_row_anno_options=input$row_anno_options
-    global_Vars$Heatmap_cluster_cols=input$cluster_cols
-    global_Vars$Heatmap_cluster_rows=input$cluster_rows
-    global_Vars$Heatmap_LFC_toHeatmap=input$LFC_toHeatmap
-    global_Vars$Heatmap_sample_annotation_types_cmp_heatmap=input$sample_annotation_types_cmp_heatmap
-    global_Vars$Heatmap_Groups2Compare_ref_heatmap=input$Groups2Compare_ref_heatmap
-    global_Vars$Heatmap_Groups2Compare_ctrl_heatmap=input$Groups2Compare_ctrl_heatmap
-    
-    output$getR_Code_Heatmap <- downloadHandler(
-      filename = function(){
-        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
-      },
-      content = function(file){
-        envList=list(Data2Plot=ifelse(exists("Data2Plot"),Data2Plot,NA),
-                     data2HandOver=ifelse(exists("data2HandOver"),data2HandOver,NA),
-                     selectedData_processed_df=ifelse(exists("selectedData_processed_df"),selectedData_processed_df,NA),
-                     clusterRowspossible=ifelse(exists("clusterRowspossible"),clusterRowspossible,NA),
-                     annotation_col=annotation_col,
-                     annotation_row=ifelse(exists("annotation_row"),annotation_row,NA),
-                     mycolors=ifelse(exists("mycolors"),mycolors,NA),
-                     customTitleHeatmap=customTitleHeatmap,
-                     input=reactiveValuesToList(input),
-                     myBreaks=ifelse(exists("myBreaks"),myBreaks,NA),
-                     myColor_fill=ifelse(exists("myColor_fill"),myColor_fill,NA))
-        
-        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-        dir.create(temp_directory)
-        
-        write(getPlotCode(heatmap_scenario), file.path(temp_directory, "Code.R"))
-        
-        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-        zip::zip(
-          zipfile = file,
-          files = dir(temp_directory),
-          root = temp_directory
-        )
-      },
-      contentType = "application/zip"
-    )
-    
-    
-    
-    
-    output$SavePlot_Heatmap=downloadHandler(
-      filename = function() { paste(customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="") },
-      
-      content = function(file){
-        save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
-        
-        on.exit({
-          
-          tmp_filename=paste0(getwd(),"/www/",paste(paste(customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="")))
-          save_pheatmap(heatmap_plot,filename=tmp_filename,type=gsub("\\.","",input$file_ext_Heatmap))
-          
-          # Add Log Messages
-
-          fun_LogIt("## HEATMAP")
-          fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",input$row_selection_options))
-          if(any(input$row_selection_options=="rowAnno_based")){
-            fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",input$anno_options_heatmap," :",input$row_anno_options_heatmap))
-          }
-          if(!is.null(input$TopK)){
-            fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",input$TopK))
-            fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",input$row_selection_options))
-            # either based on LFC or on pVal
-          }
-          fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",input$anno_options))
-          fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",input$row_anno_options))
-          if(input$cluster_cols==TRUE){
-            fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
-          }
-          if(input$cluster_rows==TRUE){
-            fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
-          }
-          
-          if(input$LFC_toHeatmap==TRUE){
-            fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
-            fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",input$sample_annotation_types_cmp_heatmap,": ",input$Groups2Compare_ref_heatmap," vs ",input$Groups2Compare_ctrl_heatmap))
-          }
-          
-          fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
-        })
-        
-      }
-    )
-    
-    
-    output$SaveGeneList_Heatmap=downloadHandler(
-      filename = function() { paste("GeneList_",customTitleHeatmap, " ",Sys.time(),".csv",sep="") },
-      
-      content = function(file){
-        write.csv(heatmap_genelist(), file)
-        on.exit({
-          if(FLAG_nonUnique_Heatmap){
-            showModal(modalDialog(
-              title = "Warning!",
-              "The download includes non-unique entries, hence you will not be able to distinguish the entities uniquely. You might want to change the entry in 'choose the label of rows' for the next download",
-              easyClose = TRUE
-            ))
-          }
-          fun_LogIt(message = paste0("**HEATMAP** - The corresponding entitie list was saved by the user"))
-          fun_LogIt(message = paste0("**HEATMAP** - Number of entities: ",length(heatmap_genelist())))
-        })
-      }
-      
-    )
-    
-    ## adjust the returned names depending on chosen label of rows
-    if(is.null(data2HandOver)){
-      FLAG_nonUnique_Heatmap<<-F
-      NA
-    }else{
-      selectedData_processed()[[input$omicType]]$annotation_rows[rownames(data2HandOver),input$row_label_options]
-      mergedData=merge(data2HandOver,selectedData_processed()[[input$omicType]]$annotation_rows,by=0, all.x=T,all.y=F,sort = F)
-      
-      # maybe insert save to avoid download of unmeaningfull annotation?
-      if(length(unique( mergedData[,input$row_label_options]))<nrow(mergedData) ){
-        FLAG_nonUnique_Heatmap<<-T
-        
-        mergedData[,input$row_label_options]
-      }else{
-        FLAG_nonUnique_Heatmap<<-F
-        mergedData[,input$row_label_options]
-      }
-    }
-  })
-  
-  
-  observeEvent(input$SendHeatmap2Enrichment,{
-    #GeneSet2Enrich
-    updateTabsetPanel(session, "tabsetPanel1",
-                      selected = "Enrichment Analysis")
-    tmp_selection<<-"heatmap_genes"
-  })
-  
-  observeEvent(input$Do_Heatmap,{
-    output$Options_selected_out_3=renderText({paste0("The number of selected entities: ",length((heatmap_genelist())))})
-    
-  })
-  
-  # send only to report
-  observeEvent(input$only2Report_Heatmap,{
-    notificationID<-showNotification("Saving...",duration = 0)
-    
-    tmp_filename=paste0(getwd(),"/www/",paste(paste(global_Vars$Heatmap_customTitleHeatmap, " ",Sys.time(),".png",sep="")))
-    save_pheatmap(global_Vars$Heatmap_heatmap_plot,filename=tmp_filename,type="png")
-    
-    # Add Log Messages
-    
-    fun_LogIt("## HEATMAP")
-    fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",global_Vars$Heatmap_row_selection_options))
-    if(any(global_Vars$Heatmap_row_selection_options=="rowAnno_based")){
-      fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ", global_Vars$Heatmap_row_anno_options," :",global_Vars$Heatmap_row_anno_options_heatmap))
-    }
-    if(!is.null(global_Vars$Heatmap_TopK)){
-      fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",global_Vars$Heatmap_TopK))
-      fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",global_Vars$Heatmap_row_selection_options))
-      # either based on LFC or on pVal
-    }
-    fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",global_Vars$Heatmap_anno_options))
-    fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",global_Vars$Heatmap_row_anno_options))
-    if(input$cluster_cols==TRUE){
-      fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
-    }
-    if(global_Vars$Heatmap_cluster_rows==TRUE){
-      fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
-    }
-    
-    if(global_Vars$Heatmap_LFC_toHeatmap==TRUE){
-      fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
-      fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",global_Vars$Heatmap_sample_annotation_types_cmp_heatmap,": ",global_Vars$Heatmap_Groups2Compare_ref_heatmap," vs ",global_Vars$Heatmap_Groups2Compare_ctrl_heatmap))
-    }
-    
-    fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
-    
-    if(isTruthy(input$NotesHeatmap) & !(isEmpty(input$NotesHeatmap))){
-      fun_LogIt("### Personal Notes:")
-      fun_LogIt(message = input$NotesHeatmap)
-    }
-    
-    removeNotification(notificationID)
-    showNotification("Saved!",type = "message", duration = 1)
-  })
+# # Heatmap ----
+  heatmap_server(id = 'Heatmap',omicType = input$omicType)
   
 
 # Single Gene Visualisations ----
-
-## Ui section ----
-  output$type_of_data_gene_ui=renderUI({
-    req(data_input_shiny())
-    selectInput(
-      inputId = "type_of_data_gene",
-      label = "Choose Data to use (in case of DESeq- vst normalized counts are used)",
-      choices = c("raw","preprocessed"),
-      multiple = F ,
-      selected = "preprocessed"
+  single_gene_visualisation_server(
+    id = "single_gene_visualisation",
+    omicType = input$omicType
     )
-  })
-  output$accross_condition_ui=renderUI({
-    req(data_input_shiny())
-    selectInput(
-      inputId = "accross_condition",
-      label = "Choose the groups to show the data for",
-      choices = unique(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
-      multiple = F
-    )
-  })
-  output$type_of_visualitsation_ui=renderUI({
-    req(data_input_shiny())
-    selectInput(
-      inputId = "type_of_visualitsation",
-      label = "Choose the style of visualisation",
-      choices = c("boxplots","boxplots_withTesting"),
-      multiple = F ,
-      selected = "boxplots_withTesting"
-    )
-  })
-  output$Select_GeneAnno_ui=renderUI({
-    req(data_input_shiny())
-    selectInput(
-      inputId = "Select_GeneAnno",
-      label = "Select Annotation you want to select an entitie from",
-      choices = colnames(data_input_shiny()[[input$omicType]]$annotation_rows), # for TESTING restricting to top 10
-      multiple = F 
-    )
-  })
-  output$Select_Gene_ui=renderUI({
-    req(data_input_shiny())
-    req(input$Select_GeneAnno)
-    selectInput(
-      inputId = "Select_Gene",
-      label = "Select the Gene from the list",
-      choices = unique(data_input_shiny()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno]),
-      multiple = F 
-    )
-  })
-  
-  output$chooseComparisons_ui=renderUI({
-    req(selectedData_processed())
-    req(input$Select_GeneAnno)
-    req(input$type_of_data_gene)
-    if(input$type_of_data_gene=="raw"){
-      annoToSelect=c(data_input_shiny()[[input$omicType]]$sample_table[,input$accross_condition])
-    }else{
-      annoToSelect=c(selectedData_processed()[[input$omicType]]$sample_table[,input$accross_condition])
-    }
-
-    if(length(annoToSelect)==length(unique(annoToSelect))){
-      # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
-      helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
-    }else{
-      my_comparisons=t(combn(unique(annoToSelect),2))
-      xy.list <- vector("list", nrow(my_comparisons))
-      for (i in 1:nrow(my_comparisons)) {
-        xy.list[[i]] <- c(as.character(my_comparisons[i,1]),as.character(my_comparisons[i,2]))
-      }
-      selectInput(
-        inputId = "chooseComparisons",
-        label = "Select your desired comparisons",
-        choices = sapply(xy.list, paste, collapse=":"),
-        multiple = T,
-        selected = sapply(xy.list, paste, collapse=":")[1]
-      )
-    }
-    
-  })
-  
-
-  observeEvent(input$singleGeneGo,{
-    print(input$Select_Gene)
-    GeneDataFlag=F
-    # Select data for the gene based on gene Selection & group Selection
-    if(input$type_of_data_gene=="preprocessed"){
-      #Test<<-selectedData_processed()[[input$omicType]]
-      if(input$Select_Gene %in% selectedData_processed()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno]){
-        #get IDX to data
-        idx_selected=which(input$Select_Gene == selectedData_processed()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno])
-        GeneData=as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix[idx_selected,,drop=F]))
-        print(input$accross_condition)
-        GeneData$anno=selectedData_processed()[[input$omicType]]$sample_table[,input$accross_condition]
-
-        GeneDataFlag=T
-      }else{
-        print("different Gene")
-        GeneDataFlag=F
-      }
-      
-      
-    }else if(input$type_of_data_gene=="raw" ){
-      if(input$Select_Gene %in% data_input_shiny()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno]){
-        #get IDX to data
-        idx_selected=which(input$Select_Gene == data_input_shiny()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno])
-        
-        GeneData=as.data.frame(t(data_input_shiny()[[input$omicType]]$Matrix[idx_selected,,drop=F]))
-        GeneData$anno=data_input_shiny()[[input$omicType]]$sample_table[,input$accross_condition]
-        print(dim(data_input_shiny()[[input$omicType]]$Matrix))
-        GeneDataFlag=T
-      }else{
-        GeneDataFlag=F
-      }
-    }
-    
-    # Make graphics
-    if(GeneDataFlag){
-      if(length(idx_selected)>1){
-        # summarise the data
-        GeneData_medians=rowMedians(as.matrix(GeneData[,-ncol(GeneData)]))
-        GeneData=GeneData[,ncol(GeneData),drop=F]
-        GeneData$rowMedian=GeneData_medians
-        GeneData=GeneData[,c("rowMedian","anno")]
-      }
-      GeneData$anno=as.factor(GeneData$anno)
-      P_boxplots=ggplot(GeneData, aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],x=anno,fill=anno))+
-        geom_boxplot()+
-        scale_fill_brewer(palette="RdBu")+
-        xlab(input$Select_Gene)+
-        ylab(input$type_of_data_gene)+
-        theme_bw()
-      testMethod="t.test"
-      scenario=13
-      if(input$type_of_visualitsation=="boxplots_withTesting"){
-        
-        if(isTruthy(input$chooseComparisons)){
-          newList=input$chooseComparisons
-          xy.list <- vector("list", length(newList))
-          for (i in 1:length(newList)) {
-            xy.list[[i]] <- unlist(strsplit(x = newList[i],split = ":"))
-          }
-          scenario=12
-          P_boxplots=P_boxplots+
-            geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
-            #stat_compare_means(method = "anova")+        # Add global annova p-value
-            stat_compare_means(comparisons = xy.list,
-                               method = testMethod,
-                               label = "p.signif",
-                               hide.ns = TRUE)
-        }else{
-          xy.list=NULL
-        }
-        
-      }
-      boxplot_scenario=scenario
-      # add points +geom_point(alpha=0.4,pch=4)
-      output$SingleGenePlot=renderPlot(P_boxplots)
-
-    }else{
-      output$SingleGenePlot=renderPlot(ggplot() + theme_void())
-    }
-
-    if(GeneDataFlag){
-      customTitle_boxplot=paste0("Boxplot_",input$type_of_data_gene,"_data_",colnames(GeneData)[-ncol(GeneData)])
-      global_Vars$SingleEnt_customTitle_boxplot=customTitle_boxplot
-      global_Vars$SingleEnt_P_boxplots=P_boxplots
-      global_Vars$SingleEnt_Select_Gene=input$Select_Gene
-      global_Vars$SingleEnt_type_of_data_gene=input$type_of_data_gene
-      global_Vars$SingleEnt_accross_condition=input$accross_condition
-      global_Vars$SingleEnt_testMethod=testMethod
-      global_Vars$SingleEnt_GeneData_anno=GeneData$anno
-    }else{
-      customTitle_boxplot="NoBoxplot"
-    }
-   
-    #print(customTitle_boxplot)
-    
-    
-    output$getR_Code_SingleEntities <- downloadHandler(
-      filename = function(){
-        paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
-      },
-      content = function(file){
-        envList=list(GeneData=GeneData,
-                     xy.list=ifelse(exists("xy.list"),xy.list,NA),
-                     testMethod=ifelse(exists("testMethod"),testMethod,NA),
-                     input=reactiveValuesToList(input),
-                     myBreaks=ifelse(exists("myBreaks"),myBreaks,NA),
-                     myColor_fill=ifelse(exists("myColor_fill"),myColor_fill,NA))
-        
-        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-        dir.create(temp_directory)
-        
-        write(getPlotCode(boxplot_scenario), file.path(temp_directory, "Code.R"))
-        
-        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-        zip::zip(
-          zipfile = file,
-          files = dir(temp_directory),
-          root = temp_directory
-        )
-      },
-      contentType = "application/zip"
-    )
-    
-    
-    output$SavePlot_singleGene=downloadHandler(
-      filename = function() { paste(customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep="") },
-      
-      content = function(file){
-        ggsave(file,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
-        
-        on.exit({
-          tmp_filename=paste0(getwd(),"/www/",paste(customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep=""))
-          ggsave(filename = tmp_filename,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
-          fun_LogIt("## Single Entitie")
-          fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",input$Select_Gene))
-          fun_LogIt(message = paste0("**Single Entitie** - Values shown are: ",input$type_of_data_gene, " data input"))
-          fun_LogIt(message = paste0("**Single Entitie** - Values are grouped for all levels within: ",input$accross_condition, " (",paste0(levels(GeneData$anno),collapse = ";"),")"))
-          fun_LogIt(message = paste0("**Single Entitie** - Test for differences: ",testMethod))
-          
-          if(length(levels(GeneData$anno))>2){
-            fun_LogIt(message = paste0("**Single Entitie** - ANOVA performed, reference group is the overall mean"))
-          }else{
-            fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
-          }
-          fun_LogIt(message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")"))
-        })
-      }
-    )
-    
-  })
-  
-  ## download only to report
-  observeEvent(input$only2Report_SingleEntities,{
-    notificationID<-showNotification("Saving...",duration = 0)
-    tmp_filename=paste0(getwd(),"/www/",paste(global_Vars$SingleEnt_customTitle_boxplot, " ",Sys.time(),".png",sep=""))
-    ggsave(filename = tmp_filename,plot=global_Vars$SingleEnt_P_boxplots,device = "png")
-    fun_LogIt("## Single Entitie")
-    fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",global_Vars$SingleEnt_Select_Gene))
-    fun_LogIt(message = paste0("**Single Entitie** - Values shown are: ",global_Vars$SingleEnt_type_of_data_gene, " data input"))
-    fun_LogIt(message = paste0("**Single Entitie** - Values are grouped for all levels within: ",global_Vars$SingleEnt_accross_condition, " (",paste0(levels(global_Vars$SingleEnt_GeneData_anno),collapse = ";"),")"))
-    fun_LogIt(message = paste0("**Single Entitie** - Test for differences: ",global_Vars$SingleEnt_testMethod))
-    if(length(levels(global_Vars$SingleEnt_GeneData_anno))>2){
-      fun_LogIt(message = paste0("**Single Entitie** - ANOVA performed, reference group is the overall mean"))
-    }else{
-      fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
-    }
-    
-    fun_LogIt(message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")"))
-    
-    if(isTruthy(input$NotesSingleEntities) & !(isEmpty(input$NotesSingleEntities))){
-      fun_LogIt("### Personal Notes:")
-      fun_LogIt(message = input$NotesSingleEntities)
-    }
-    
-    removeNotification(notificationID)
-    showNotification("Saved!",type = "message", duration = 1)
-  })
+# ## Ui section ----
+#   output$type_of_data_gene_ui=renderUI({
+#     req(data_input_shiny())
+#     selectInput(
+#       inputId = "type_of_data_gene",
+#       label = "Choose Data to use (in case of DESeq- vst normalized counts are used)",
+#       choices = c("raw","preprocessed"),
+#       multiple = F ,
+#       selected = "preprocessed"
+#     )
+#   })
+#   output$accross_condition_ui=renderUI({
+#     req(data_input_shiny())
+#     selectInput(
+#       inputId = "accross_condition",
+#       label = "Choose the groups to show the data for",
+#       choices = unique(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
+#       multiple = F
+#     )
+#   })
+#   output$type_of_visualitsation_ui=renderUI({
+#     req(data_input_shiny())
+#     selectInput(
+#       inputId = "type_of_visualitsation",
+#       label = "Choose the style of visualisation",
+#       choices = c("boxplots","boxplots_withTesting"),
+#       multiple = F ,
+#       selected = "boxplots_withTesting"
+#     )
+#   })
+#   output$Select_GeneAnno_ui=renderUI({
+#     req(data_input_shiny())
+#     selectInput(
+#       inputId = "Select_GeneAnno",
+#       label = "Select Annotation you want to select an entitie from",
+#       choices = colnames(data_input_shiny()[[input$omicType]]$annotation_rows), # for TESTING restricting to top 10
+#       multiple = F
+#     )
+#   })
+#   output$Select_Gene_ui=renderUI({
+#     req(data_input_shiny())
+#     req(input$Select_GeneAnno)
+#     selectInput(
+#       inputId = "Select_Gene",
+#       label = "Select the Gene from the list",
+#       choices = unique(data_input_shiny()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno]),
+#       multiple = F
+#     )
+#   })
+#
+#   output$chooseComparisons_ui=renderUI({
+#     req(selectedData_processed())
+#     req(input$Select_GeneAnno)
+#     req(input$type_of_data_gene)
+#     if(input$type_of_data_gene=="raw"){
+#       annoToSelect=c(data_input_shiny()[[input$omicType]]$sample_table[,input$accross_condition])
+#     }else{
+#       annoToSelect=c(selectedData_processed()[[input$omicType]]$sample_table[,input$accross_condition])
+#     }
+#
+#     if(length(annoToSelect)==length(unique(annoToSelect))){
+#       # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
+#       helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
+#     }else{
+#       my_comparisons=t(combn(unique(annoToSelect),2))
+#       xy.list <- vector("list", nrow(my_comparisons))
+#       for (i in 1:nrow(my_comparisons)) {
+#         xy.list[[i]] <- c(as.character(my_comparisons[i,1]),as.character(my_comparisons[i,2]))
+#       }
+#       selectInput(
+#         inputId = "chooseComparisons",
+#         label = "Select your desired comparisons",
+#         choices = sapply(xy.list, paste, collapse=":"),
+#         multiple = T,
+#         selected = sapply(xy.list, paste, collapse=":")[1]
+#       )
+#     }
+#
+#   })
+#
+#
+#   observeEvent(input$singleGeneGo,{
+#     print(input$Select_Gene)
+#     GeneDataFlag=F
+#     # Select data for the gene based on gene Selection & group Selection
+#     if(input$type_of_data_gene=="preprocessed"){
+#       #Test<<-selectedData_processed()[[input$omicType]]
+#       if(input$Select_Gene %in% selectedData_processed()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno]){
+#         #get IDX to data
+#         idx_selected=which(input$Select_Gene == selectedData_processed()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno])
+#         GeneData=as.data.frame(t(selectedData_processed()[[input$omicType]]$Matrix[idx_selected,,drop=F]))
+#         print(input$accross_condition)
+#         GeneData$anno=selectedData_processed()[[input$omicType]]$sample_table[,input$accross_condition]
+#
+#         GeneDataFlag=T
+#       }else{
+#         print("different Gene")
+#         GeneDataFlag=F
+#       }
+#
+#
+#     }else if(input$type_of_data_gene=="raw" ){
+#       if(input$Select_Gene %in% data_input_shiny()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno]){
+#         #get IDX to data
+#         idx_selected=which(input$Select_Gene == data_input_shiny()[[input$omicType]]$annotation_rows[,input$Select_GeneAnno])
+#
+#         GeneData=as.data.frame(t(data_input_shiny()[[input$omicType]]$Matrix[idx_selected,,drop=F]))
+#         GeneData$anno=data_input_shiny()[[input$omicType]]$sample_table[,input$accross_condition]
+#         print(dim(data_input_shiny()[[input$omicType]]$Matrix))
+#         GeneDataFlag=T
+#       }else{
+#         GeneDataFlag=F
+#       }
+#     }
+#
+#     # Make graphics
+#     if(GeneDataFlag){
+#       if(length(idx_selected)>1){
+#         # summarise the data
+#         GeneData_medians=rowMedians(as.matrix(GeneData[,-ncol(GeneData)]))
+#         GeneData=GeneData[,ncol(GeneData),drop=F]
+#         GeneData$rowMedian=GeneData_medians
+#         GeneData=GeneData[,c("rowMedian","anno")]
+#       }
+#       GeneData$anno=as.factor(GeneData$anno)
+#       P_boxplots=ggplot(GeneData, aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],x=anno,fill=anno))+
+#         geom_boxplot()+
+#         scale_fill_brewer(palette="RdBu")+
+#         xlab(input$Select_Gene)+
+#         ylab(input$type_of_data_gene)+
+#         theme_bw()
+#       testMethod="t.test"
+#       scenario=13
+#       if(input$type_of_visualitsation=="boxplots_withTesting"){
+#
+#         if(isTruthy(input$chooseComparisons)){
+#           newList=input$chooseComparisons
+#           xy.list <- vector("list", length(newList))
+#           for (i in 1:length(newList)) {
+#             xy.list[[i]] <- unlist(strsplit(x = newList[i],split = ":"))
+#           }
+#           scenario=12
+#           P_boxplots=P_boxplots+
+#             geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
+#             #stat_compare_means(method = "anova")+        # Add global annova p-value
+#             stat_compare_means(comparisons = xy.list,
+#                                method = testMethod,
+#                                label = "p.signif",
+#                                hide.ns = TRUE)
+#         }else{
+#           xy.list=NULL
+#         }
+#
+#       }
+#       boxplot_scenario=scenario
+#       # add points +geom_point(alpha=0.4,pch=4)
+#       output$SingleGenePlot=renderPlot(P_boxplots)
+#
+#     }else{
+#       output$SingleGenePlot=renderPlot(ggplot() + theme_void())
+#     }
+#
+#     if(GeneDataFlag){
+#       customTitle_boxplot=paste0("Boxplot_",input$type_of_data_gene,"_data_",colnames(GeneData)[-ncol(GeneData)])
+#       global_Vars$SingleEnt_customTitle_boxplot=customTitle_boxplot
+#       global_Vars$SingleEnt_P_boxplots=P_boxplots
+#       global_Vars$SingleEnt_Select_Gene=input$Select_Gene
+#       global_Vars$SingleEnt_type_of_data_gene=input$type_of_data_gene
+#       global_Vars$SingleEnt_accross_condition=input$accross_condition
+#       global_Vars$SingleEnt_testMethod=testMethod
+#       global_Vars$SingleEnt_GeneData_anno=GeneData$anno
+#     }else{
+#       customTitle_boxplot="NoBoxplot"
+#     }
+#
+#     #print(customTitle_boxplot)
+#
+#
+#     output$getR_Code_SingleEntities <- downloadHandler(
+#       filename = function(){
+#         paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+#       },
+#       content = function(file){
+#         envList=list(GeneData=GeneData,
+#                      xy.list=ifelse(exists("xy.list"),xy.list,NA),
+#                      testMethod=ifelse(exists("testMethod"),testMethod,NA),
+#                      input=reactiveValuesToList(input),
+#                      myBreaks=ifelse(exists("myBreaks"),myBreaks,NA),
+#                      myColor_fill=ifelse(exists("myColor_fill"),myColor_fill,NA))
+#
+#         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+#         dir.create(temp_directory)
+#
+#         write(getPlotCode(boxplot_scenario), file.path(temp_directory, "Code.R"))
+#
+#         saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+#         zip::zip(
+#           zipfile = file,
+#           files = dir(temp_directory),
+#           root = temp_directory
+#         )
+#       },
+#       contentType = "application/zip"
+#     )
+#
+#
+#     output$SavePlot_singleGene=downloadHandler(
+#       filename = function() { paste(customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep="") },
+#
+#       content = function(file){
+#         ggsave(file,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
+#
+#         on.exit({
+#           tmp_filename=paste0(getwd(),"/www/",paste(customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep=""))
+#           ggsave(filename = tmp_filename,plot=P_boxplots,device = gsub("\\.","",input$file_ext_singleGene))
+#           fun_LogIt("## Single Entitie")
+#           fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",input$Select_Gene))
+#           fun_LogIt(message = paste0("**Single Entitie** - Values shown are: ",input$type_of_data_gene, " data input"))
+#           fun_LogIt(message = paste0("**Single Entitie** - Values are grouped for all levels within: ",input$accross_condition, " (",paste0(levels(GeneData$anno),collapse = ";"),")"))
+#           fun_LogIt(message = paste0("**Single Entitie** - Test for differences: ",testMethod))
+#
+#           if(length(levels(GeneData$anno))>2){
+#             fun_LogIt(message = paste0("**Single Entitie** - ANOVA performed, reference group is the overall mean"))
+#           }else{
+#             fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
+#           }
+#           fun_LogIt(message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")"))
+#         })
+#       }
+#     )
+#
+#   })
+#
+#   ## download only to report
+#   observeEvent(input$only2Report_SingleEntities,{
+#     notificationID<-showNotification("Saving...",duration = 0)
+#     tmp_filename=paste0(getwd(),"/www/",paste(global_Vars$SingleEnt_customTitle_boxplot, " ",Sys.time(),".png",sep=""))
+#     ggsave(filename = tmp_filename,plot=global_Vars$SingleEnt_P_boxplots,device = "png")
+#     fun_LogIt("## Single Entitie")
+#     fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",global_Vars$SingleEnt_Select_Gene))
+#     fun_LogIt(message = paste0("**Single Entitie** - Values shown are: ",global_Vars$SingleEnt_type_of_data_gene, " data input"))
+#     fun_LogIt(message = paste0("**Single Entitie** - Values are grouped for all levels within: ",global_Vars$SingleEnt_accross_condition, " (",paste0(levels(global_Vars$SingleEnt_GeneData_anno),collapse = ";"),")"))
+#     fun_LogIt(message = paste0("**Single Entitie** - Test for differences: ",global_Vars$SingleEnt_testMethod))
+#     if(length(levels(global_Vars$SingleEnt_GeneData_anno))>2){
+#       fun_LogIt(message = paste0("**Single Entitie** - ANOVA performed, reference group is the overall mean"))
+#     }else{
+#       fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
+#     }
+#
+#     fun_LogIt(message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")"))
+#
+#     if(isTruthy(input$NotesSingleEntities) & !(isEmpty(input$NotesSingleEntities))){
+#       fun_LogIt("### Personal Notes:")
+#       fun_LogIt(message = input$NotesSingleEntities)
+#     }
+#
+#     removeNotification(notificationID)
+#     showNotification("Saved!",type = "message", duration = 1)
+#   })
 
   # KEGG enrichment ----
   ## Ui section ----
