@@ -4,16 +4,16 @@ enrichment_analysis_geneset_server <- function(id, result, scenario){
     function(input,output,session){
       if(is.null(result)){
         # TODO: correctly toggle this only here, otherwise hide. Needs to be created un ui.R
-        output$Info=renderText(paste(id,"Enrichment Failed - check Console"))
+        output$Info <- renderText(paste(id,"Enrichment Failed - check Console"))
       }else{
         print(paste(id, "Enrichment Done"))
         print(result)
         # Enrichment Result Plot
-        output$EnrichmentPlot<-renderPlot({clusterProfiler::dotplot(result)})
+        output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result)})
         # download R Code for further plotting
         output$getR_Code <- downloadHandler(
           filename = function(){
-            paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+            paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
             envList=list(EnrichmentRes=result)
@@ -120,6 +120,52 @@ enrichment_analysis_Server <- function(id, results, scenario){
       enrichment_analysis_geneset_server(
         id = 'REACTOME',
         result = results[[paste("EnrichmentRes", "REACTOME", sep = "_")]],
+        scenario = scenario
+      )
+      enrichment_analysis_geneset_server(
+        id = 'Hallmarks',
+        result = results[[paste("EnrichmentRes", "Hallmarks", sep = "_")]],
+        scenario = scenario
+      )
+      enrichment_analysis_geneset_server(
+        id = 'C1',
+        result = results[[paste("EnrichmentRes", "C1", sep = "_")]],
+        scenario = scenario
+      )
+      enrichment_analysis_geneset_server(
+        id = 'C2',
+        result = results[[paste("EnrichmentRes", "C2", sep = "_")]],
+        scenario = scenario
+      )
+      enrichment_analysis_geneset_server(
+        id = 'C3',
+        result = results[[paste("EnrichmentRes", "C3", sep = "_")]],
+        scenario = scenario
+      )
+      enrichment_analysis_geneset_server(
+        id = 'C4',
+        result = results[[paste("EnrichmentRes", "C4", sep = "_")]],
+        scenario = scenario
+      )
+      enrichment_analysis_geneset_server(
+        id = 'C5',
+        result = results[[paste("EnrichmentRes", "C5", sep = "_")]],
+        scenario = scenario
+      )
+      enrichment_analysis_geneset_server(
+        id = 'C6',
+        result = results[[paste("EnrichmentRes", "C6", sep = "_")]],
+        scenario = scenario
+      )
+      # Currently C7 subset Immunesigdb
+      enrichment_analysis_geneset_server(
+        id = 'C7',
+        result = results[[paste("EnrichmentRes", "C7", sep = "_")]],
+        scenario = scenario
+      )
+      enrichment_analysis_geneset_server(
+        id = 'C8',
+        result = results[[paste("EnrichmentRes", "C8", sep = "_")]],
         scenario = scenario
       )
     }
