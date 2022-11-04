@@ -2523,8 +2523,7 @@ print("Data Upload")
 
       if(input$ORA_or_GSE=="GeneSetEnrichment"){
         enrichment_results <<- gene_set_enrichment(input, output, tmp_genes)
-      }
-      else{
+      }else{
         print("Translation needed?")
         # Build in check if EntrezIDs or gene Names provided, if nothing of the two return message to user
         providedDataType="None"
@@ -2644,7 +2643,7 @@ print("Data Upload")
                                                             readable=T)
 
 
-      }
+      
       # TODO: deactivate ORA for now? or fix notation
       # TODO: fix scenario
       output$EnrichmentInfo=renderText("**Enrichment Analysis Done!**")
