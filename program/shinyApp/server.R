@@ -2641,9 +2641,6 @@ print("Data Upload")
                                                             organism = ifelse(input$OrganismChoice=="hsa","human","mouse"),
                                                             universe = universeSelected_tranlsated,
                                                             readable=T)
-
-
-      }
       # TODO: deactivate ORA for now? or fix notation
       # TODO: fix scenario
       output$EnrichmentInfo=renderText("**Enrichment Analysis Done!**")
