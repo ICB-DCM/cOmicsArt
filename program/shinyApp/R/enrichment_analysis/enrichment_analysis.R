@@ -1,5 +1,3 @@
-# library(msigdbr)
-
 gene_set_enrichment <- function(
   input,
   output,

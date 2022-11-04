@@ -27,7 +27,8 @@ heatmap_sidebar <- sidebarPanel(
   switchInput(
     inputId = "Aesthetics_show",
     label = "show options",
-    size = "mini", value = T
+    size = "mini", 
+    value = T
   ),
   uiOutput("anno_options_ui"),
   uiOutput("row_anno_options_ui"),
@@ -64,9 +65,14 @@ heatmap_main <- mainPanel(
   numericInput(
     inputId = "row_label_no",
     label = "Threshold upon which explicit labels are shown",
-    min = 0, step = 1, value = 25
+    min = 0, 
+    step = 1, 
+    value = 25
   ),
-  downloadButton("SaveGeneList_Heatmap", label = "Save genes shown in Heatmap as list"),
+  downloadButton(
+  outputId = "SaveGeneList_Heatmap", 
+  label = "Save genes shown in Heatmap as list"
+  ),
   actionButton(
     inputId = "SendHeatmap2Enrichment",
     label = "Send genes shown to enrichment analysis",
@@ -85,7 +91,7 @@ heatmap_main <- mainPanel(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
     downloadButton(
-      "getR_Code_Heatmap",
+      outputId = "getR_Code_Heatmap",
       label = "Get underlying R code and data",
       icon = icon("code")
     )
@@ -93,21 +99,28 @@ heatmap_main <- mainPanel(
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
-    downloadButton("SavePlot_Heatmap", label = "Save plot", class = "btn-info")
+    downloadButton(
+    outputId = "SavePlot_Heatmap", 
+    label = "Save plot", 
+    class = "btn-info"
+    )
   ),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
     radioGroupButtons(
-      input = "file_ext_Heatmap", label = "File Type:",
-      choices = c(".png", ".tiff", ".pdf"), selected = ".png"
+      inputId = "file_ext_Heatmap", 
+      label = "File Type:",
+      choices = c(".png", ".tiff", ".pdf"), 
+      selected = ".png"
     )
   ),
   textAreaInput(
     inputId="NotesHeatmap",
     label="Notes:",
-    placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-  helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+    placeholder=NOTES_PlACEHOLDER,
+    width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+  helpText(NOTES_HELP)
 )
 
 

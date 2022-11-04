@@ -41,7 +41,7 @@ volcano_plot_main <- mainPanel(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         downloadButton(
-          "getR_Code_Volcano",
+          outputId = "getR_Code_Volcano",
           label = "Get underlying R code and data",
           icon = icon("code")
         )
@@ -49,19 +49,28 @@ volcano_plot_main <- mainPanel(
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton("SavePlot_Volcano", label = "Save plot", class = "btn-info")
+        downloadButton(
+        outputId = "SavePlot_Volcano",
+        label = "Save plot",
+        class = "btn-info"
+        )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         radioGroupButtons(
-          input = "file_ext_Volcano", label = "File Type:",
-          choices = c(".png", ".tiff", ".pdf"), selected = ".png"
+          inputId = "file_ext_Volcano",
+          label = "File Type:",
+          choices = c(".png", ".tiff", ".pdf"), 
+          selected = ".png"
         )
       ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-        downloadButton("SaveDE_List", label = "Save intresting entities (all red points)"),
+        downloadButton(
+        outputId = "SaveDE_List",
+        label = "Save interesting entities (all red points)"
+        ),
         actionButton(
           inputId = "SendDE_Genes2Enrichment",
           label = "Send DE Genes to enrichment analysis",
@@ -75,9 +84,9 @@ volcano_plot_main <- mainPanel(
   textAreaInput(
     inputId="NotesVolcano",
     label="Notes:",
-    placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"
+    placeholder=NOTES_PlACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"
   ),
-  helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+  helpText(NOTES_HELP)
 )
 
 
