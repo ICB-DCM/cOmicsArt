@@ -71,8 +71,8 @@ pca_main_panel <- mainPanel(
       textAreaInput(
         inputId="NotesPCA",
         label="Notes:",
-        placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-      helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+        placeholder=NOTES_PlACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+      helpText(NOTES_HELP)
     ),
     tabPanel(
       "PCA_Loadings",

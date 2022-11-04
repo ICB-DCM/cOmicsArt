@@ -84,9 +84,9 @@ volcano_plot_main <- mainPanel(
   textAreaInput(
     inputId="NotesVolcano",
     label="Notes:",
-    placeholder="Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ", width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"
+    placeholder=NOTES_PlACEHOLDER, width = "1000px")%>% helper(type = "markdown", content = "TakingNotesMD_help"
   ),
-  helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+  helpText(NOTES_HELP)
 )
 
 
