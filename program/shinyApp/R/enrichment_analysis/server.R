@@ -37,8 +37,8 @@ enrichment_analysis_geneset_server <- function(id, result, scenario){
         )
 
         # Saving Plot
-        output$SavePlot_GO=downloadHandler(
-          filename = function() { paste("id",Sys.time(),input$file_ext,sep="_") },
+        output$SavePlot=downloadHandler(
+          filename = function() { paste("id",Sys.time(),input$file_ext,sep=" ") },
 
           content = function(file){
             ggsave(
@@ -70,7 +70,7 @@ enrichment_analysis_geneset_server <- function(id, result, scenario){
         observeEvent(input$only2Report,{
           notificationID<-showNotification("Saving...",duration = 0)
           tmp_filename=paste0(getwd(),"/www/",paste(id,Sys.time(),".png",sep="_"))
-          ggsave(tmp_filename,plot=clusterProfiler::dotplot(global_Vars$KEGG_EnrichmentRes_Kegg),device = "png")
+          ggsave(tmp_filename,plot=clusterProfiler::dotplot(result),device = "png")
           fun_LogIt(message = paste("###", id, "ENRICHMENT", sep=" "))
           fun_LogIt(message = paste("-", id, "Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
           fun_LogIt(message = paste("- Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(geneSetChoice())))
@@ -78,9 +78,8 @@ enrichment_analysis_geneset_server <- function(id, result, scenario){
           # fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",global_Vars$KEGG_UniverseOfGene, " (",length(global_Vars$KEGG_universeSelected_tranlsated)," genes)"))
           # TODO: discuss with Lea -> global_Vars$KEGG_UniverseOfGene is only defined in case of ORA. Wouldn't that throw an error?
           fun_LogIt(message = paste("- The number of found enriched terms (p.adj <0.05): ",nrow(result@result[result@result$p.adjust<0.05,])))
-          # TODO: discuss with Lea, what is that Log for?
           # TODO: discuss with LEA -> On exit logging the same as this one?
-          # fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
+          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
           fun_LogIt(message = paste("- The top 5 terms are the following (sorted by adj. p.val)"))
           fun_LogIt(message = knitr::kable(
             head(result@result[order(result@result$p.adjust,decreasing = T),], 5),
