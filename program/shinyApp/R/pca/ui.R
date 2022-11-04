@@ -1,4 +1,4 @@
-pca_sidebar_panel <- function(){
+pca_sidebar_panel <- function(ns){
   sidebarPanel(
     id = "sidebar_pca",
     #########################################
@@ -7,23 +7,22 @@ pca_sidebar_panel <- function(){
     #########################################
     h4("Explorative Analysis"),
     actionButton(
-    inputId = "Do_PCA",
-    label = "Perform PCA",
-    icon("fas fa-laptop-code")
+      inputId = ns("Do_PCA"),
+      label = "Perform PCA",
+      icon("fas fa-laptop-code")
     ),
     hr(style = "border-top: 1px solid #000000;"),
-    uiOutput(outputId = "coloring_options_ui"),
-    uiOutput(outputId ="x_axis_selection_ui"),
-    uiOutput(outputId ="y_axis_selection_ui"),
-    uiOutput(outputId ="Show_loadings_ui"),
+    uiOutput(outputId = ns("coloring_options_ui")),
+    uiOutput(outputId = ns("x_axis_selection_ui")),
+    uiOutput(outputId = ns("y_axis_selection_ui")),
+    uiOutput(outputId = ns("Show_loadings_ui")),
     helpText("Note: if you would like to change the annotation of the indicated loading vectors please select an option the the tab Loadings"),
     hr(style = "border-top: 1px dashed #000000;")
-
   )
 }
 
 
-pca_main_panel <- function(){
+pca_main_panel <- function(ns){
   mainPanel(
     id = "mainpanel_pca",
     tabsetPanel(
@@ -32,22 +31,25 @@ pca_main_panel <- function(){
         title = "PCA",
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          plotlyOutput("PCA_plot") %>% withSpinner(type = 8),
-          textOutput(outputId = "PCA_plot_Options_selected", container = pre)
+          plotlyOutput(outputId = ns("PCA_plot")) %>% withSpinner(type = 8),
+          textOutput(outputId = ns("PCA_plot_Options_selected"), container = pre)
         ),
-        uiOutput(outputId = "PCA_anno_tooltip_ui"),
+        uiOutput(outputId = ns("PCA_anno_tooltip_ui")),
         splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
           NULL,
           actionButton(
-          inputId = "only2Report_pca",
-          label = "Send only to Report"
-           )
+            inputId = ns("only2Report_pca"),
+            label = "Send only to Report"
+          )
         ),
-        splitLayout(style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
           NULL,
           downloadButton(
-            outputId = "getR_Code_PCA",
+            outputId = ns("getR_Code_PCA"),
             label = "Get underlying R code and data",
             icon = icon("code")
           )
@@ -57,25 +59,26 @@ pca_main_panel <- function(){
           cellWidths = c("70%", "30%"),
           NULL,
           downloadButton(
-            outputId = "SavePlot_pos1",
+            outputId = ns("SavePlot_pos1"),
             label = "Save plot",
             class = "btn-info"
           )
         ),
         splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
           NULL,
           radioGroupButtons(
-            inputId = "file_ext_plot1",
+            inputId = ns("file_ext_plot1"),
             label = "File Type:",
             choices = c(".png", ".tiff", ".pdf"),
             selected = ".png"
           )
         ),
         textAreaInput(
-          inputId="NotesPCA",
-          label="Notes:",
-          placeholder=NOTES_PlACEHOLDER,
+          inputId = ns("NotesPCA"),
+          label = "Notes:",
+          placeholder = NOTES_PlACEHOLDER,
           width = "1000px"
         )%>% helper(type = "markdown", content = "TakingNotesMD_help"),
         helpText(NOTES_HELP)
@@ -83,13 +86,14 @@ pca_main_panel <- function(){
       tabPanel(
         title = "PCA_Loadings",
         splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          plotOutput(outputId = "PCA_Loadings_plot") %>% withSpinner(type = 8),
-          textOutput(outputId = "Loadings_plot_Options_selected_out", container = pre)
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          plotOutput(outputId = ns("PCA_Loadings_plot")) %>% withSpinner(type = 8),
+          textOutput(outputId = ns("Loadings_plot_Options_selected_out"), container = pre)
         ),
-        uiOutput(outputId = "EntitieAnno_Loadings_ui"),
+        uiOutput(outputId = ns("EntitieAnno_Loadings_ui")),
         sliderInput(
-          inputId = "topSlider",
+          inputId = ns("topSlider"),
           label = "Top k positive Loadings",
           min = 1,
           max = 25,
@@ -97,7 +101,7 @@ pca_main_panel <- function(){
           step = 1
         ),
         sliderInput(
-          inputId = "bottomSlider",
+          inputId = ns("bottomSlider"),
           label = "Top k negative Loadings",
           min = 1,
           max = 25,
@@ -109,7 +113,7 @@ pca_main_panel <- function(){
           cellWidths = c("70%", "30%"),
           NULL,
           actionButton(
-            inputId = "only2Report_Loadings",
+            inputId = ns("only2Report_Loadings"),
             label = "Send only to Report",
             class = "btn-info"
           )
@@ -119,7 +123,7 @@ pca_main_panel <- function(){
           cellWidths = c("70%", "30%"),
           NULL,
           downloadButton(
-            outputId = "getR_Code_Loadings",
+            outputId = ns("getR_Code_Loadings"),
             label = "Get underlying R code and data",
             icon = icon("code")
           )
@@ -129,9 +133,9 @@ pca_main_panel <- function(){
           cellWidths = c("70%", "30%"),
           NULL,
           downloadButton(
-          outputId = "SavePlot_Loadings",
-          label = "Save plot",
-          class = "btn-info"
+            outputId = ns("SavePlot_Loadings"),
+            label = "Save plot",
+            class = "btn-info"
           )
         ),
         splitLayout(
@@ -139,7 +143,7 @@ pca_main_panel <- function(){
           cellWidths = c("70%", "30%"),
           NULL,
           radioGroupButtons(
-            inputId = "file_ext_Loadings",
+            inputId = ns("file_ext_Loadings"),
             label = "File Type:",
             choices = c(".png", ".tiff", ".pdf"),
             selected = ".png"
@@ -151,15 +155,15 @@ pca_main_panel <- function(){
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
-          plotlyOutput("Scree_Plot"),
-          textOutput(outputId = "Scree_Plot_Options_selected_out", container = pre)
+          plotlyOutput(outputId = ns("Scree_Plot")),
+          textOutput(outputId = ns("Scree_Plot_Options_selected_out"), container = pre)
         ),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
           NULL,
           actionButton(
-            inputId = "only2Report_Scree_Plot",
+            inputId = ns("only2Report_Scree_Plot"),
             label = "Send only to Report",
             class = "btn-info"
           )
@@ -169,7 +173,7 @@ pca_main_panel <- function(){
           cellWidths = c("70%", "30%"),
           NULL,
           downloadButton(
-            outputId = "getR_Code_Scree_Plot",
+            outputId = ns("getR_Code_Scree_Plot"),
             label = "Get underlying R code and data",
             icon = icon(name = "code")
           )
@@ -179,7 +183,7 @@ pca_main_panel <- function(){
           cellWidths = c("70%", "30%"),
           NULL,
           downloadButton(
-            outputId = "SavePlot_Scree",
+            outputId = ns("SavePlot_Scree"),
             label = "Save plot",
             class = "btn-info"
           )
@@ -189,7 +193,7 @@ pca_main_panel <- function(){
           cellWidths = c("70%", "30%"),
           NULL,
           radioGroupButtons(
-            inputId = "file_ext_Scree",
+            inputId = ns("file_ext_Scree"),
             label = "File Type:",
             choices = c(".png", ".tiff", ".pdf"),
             selected = ".png"
@@ -209,7 +213,7 @@ pca_UI <- function(id){
     id = "pca",
     fluid = T,
     h4("PCA"),
-    pca_sidebar <- pca_sidebar_panel(),
-    pca_main <- pca_main_panel()
+    pca_sidebar <- pca_sidebar_panel(ns),
+    pca_main <- pca_main_panel(ns),
   )
 }
