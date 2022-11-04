@@ -11,7 +11,7 @@ enrichment_analysis_geneset_server <- function(id, result, scenario){
         # Enrichment Result Plot
         output$EnrichmentPlot<-renderPlot({clusterProfiler::dotplot(result)})
         # download R Code for further plotting
-        output$getR_Code_GO <- downloadHandler(
+        output$getR_Code <- downloadHandler(
           filename = function(){
             paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
           },
@@ -38,7 +38,7 @@ enrichment_analysis_geneset_server <- function(id, result, scenario){
 
         # Saving Plot
         output$SavePlot=downloadHandler(
-          filename = function() { paste("id",Sys.time(),input$file_ext,sep=" ") },
+          filename = function() { paste(id,Sys.time(),input$file_ext,sep=" ") },
 
           content = function(file){
             ggsave(
