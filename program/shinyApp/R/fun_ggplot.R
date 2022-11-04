@@ -220,6 +220,9 @@ getPlotCode <- function(numberOfScenario) {
   if(numberOfScenario==17){
     stringtosave='REACTOME_Plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME)'
   }
+  if(numberOfScenario==0){
+    stringtosave='Not_code_yet'
+  }
   
   return(paste0(CODE_DOWNLOAD_PREFACE,"\n",stringtosave))
 }
