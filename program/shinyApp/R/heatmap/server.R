@@ -400,17 +400,10 @@ heatmap_server <- function(id,omicType){
             cluster_cols = input$cluster_cols,
             cluster_rows = clusterRowspossible,
             scale=ifelse(input$rowWiseScaled,"row","none"),
-            # cutree_cols = 4,
-            #fontsize = font.size,
             annotation_col = annotation_col,
             annotation_row = annotation_row,
             annotation_colors = mycolors,
             silent = F
-            #breaks = c(seq(min(data2Plot[[omicType]]$Matrix), 0, length.out=ceiling(paletteLength/2) + 1),
-            #            seq(max(data2Plot[[omicType]]$Matrix)/paletteLength, max(data2Plot[[omicType]]$Matrix), length.out=floor(paletteLength/2))),
-            #color = myColor_fill
-            #breaks = scaleColors(data = as.matrix(data2Plot[[omicType]]$Matrix), maxvalue = max.value)[["breaks"]],
-            #color = scaleColors(data = as.matrix(data2Plot[[omicType]]$Matrix), maxvalue = max.value)[["color"]]
           )
         }
  
@@ -470,7 +463,6 @@ heatmap_server <- function(id,omicType){
           filename = function() { 
             paste(customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="") 
             },
-          
           content = function(file){
             save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
             on.exit({
@@ -486,7 +478,6 @@ heatmap_server <- function(id,omicType){
                 )
               
               # Add Log Messages
-              
               fun_LogIt(message = "## HEATMAP")
               fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",input$row_selection_options))
               if(any(input$row_selection_options=="rowAnno_based")){
@@ -535,7 +526,6 @@ heatmap_server <- function(id,omicType){
               fun_LogIt(message = paste0("**HEATMAP** - Number of entities: ",length(heatmap_genelist)))
             })
           }
-          
         )
         
         ## adjust the returned names depending on chosen label of rows
