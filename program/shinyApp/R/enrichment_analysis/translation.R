@@ -6,10 +6,15 @@ translate_genes <- function(annotation_results, input, geneSetChoice){
   }
   if(!(annotation_results$entrezid_ann)){
     # translate to entrez id
+    if(input$OrganismChoice == "hsa"){
+      orgDb <- org.Hs.eg.db
+    }else{
+      orgDb <- org.Mm.eg.db
+    }
     processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- mapIds(
-      org.Mm.eg.db,  # ToDO make choice dependent on input$OrganismChoice
+      orgDb,
       keys = processedData_all$Transcriptomics$annotation_rows[[annotation_results$base_annotation]],
-      column="ENTREZID",
+      column = "ENTREZID",
       keytype=annotation_results$base_annotation
     )
   }
