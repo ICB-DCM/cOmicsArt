@@ -306,7 +306,7 @@ pca_Server <- function(id, omic_type, row_select){
 
         output$SavePlot_pos1 <- downloadHandler(
           filename = function() {
-            paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="")
+            paste(customTitle,Sys.time(),input$file_ext_plot1,sep="")
             },
           # cannot get the final destination as this is a download on server side
           content = function(file){
@@ -318,7 +318,7 @@ pca_Server <- function(id, omic_type, row_select){
             on.exit({
               TEST = paste0(getwd(),
                             "/www/",
-                            paste(customTitle, " ",Sys.time(),input$file_ext_plot1,sep="")
+                            paste(customTitle,Sys.time(),input$file_ext_plot1,sep="")
                             )
               ggsave(
                 filename = TEST,
@@ -382,7 +382,7 @@ pca_Server <- function(id, omic_type, row_select){
 
         output$SavePlot_Scree <- downloadHandler(
           filename = function() {
-            paste(customTitle, " ",Sys.time(),input$file_ext_Scree,sep="")
+            paste(customTitle,Sys.time(),input$file_ext_Scree,sep="")
             },
 
           content = function(file){
@@ -391,7 +391,7 @@ pca_Server <- function(id, omic_type, row_select){
               tmp_filename=paste0(
                 getwd(),
                 "/www/",
-                paste("Scree",customTitle, " ",Sys.time(),input$file_ext_Scree,sep="")
+                paste("Scree",customTitle,Sys.time(),input$file_ext_Scree,sep="")
                 )
               ggsave(tmp_filename,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
 
@@ -529,7 +529,7 @@ pca_Server <- function(id, omic_type, row_select){
         tmp_filename <- paste0(
           getwd(),
           "/www/",
-          paste("Scree",global_Vars$Scree_customTitle, " ",Sys.time(),".png",sep="")
+          paste("Scree",global_Vars$Scree_customTitle,Sys.time(),".png",sep="")
           )
         ggsave(
           tmp_filename,
