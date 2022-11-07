@@ -208,7 +208,8 @@ heatmap_server <- function(id,omicType){
         req(omicType,input$row_selection_options,input$anno_options,input$row_label_options)
         req(selectedData_processed())
         print("Heatmap on selected Data")
-        
+        # Value need to be setted in case there is nothing to plot to avoid crash
+        scenario <- 0
         ### atm raw data plotted
         data2Plot <- selectedData_processed()
         colorTheme <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", 
@@ -406,7 +407,7 @@ heatmap_server <- function(id,omicType){
             silent = F
           )
         }
- 
+        
         heatmap_scenario <- scenario
         output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
         

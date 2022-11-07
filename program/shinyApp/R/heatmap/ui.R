@@ -38,6 +38,7 @@ heatmap_sidebar<- function(ns){
     uiOutput(outputId = ns("cluster_rows_ui")),
     hr(style = "border-top: 1px solid #858585;"),
     h5("Further row selection (annotation based)"),
+    helpText("Note: This only shows options if 'rowAnno_based' is selected for 'Row selection' (top of the sidebar)"),
     switchInput(
       inputId = ns("Selection_show_annoBased"),
       label = "show options (annotation-related)",
