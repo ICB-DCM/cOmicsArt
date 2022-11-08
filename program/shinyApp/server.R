@@ -902,14 +902,14 @@ server <- function(input,output,session){
   
   output$debug <- renderText(dim(selectedData_processed()[[input$omicType]]$Matrix))
   # PCA module
-sampleCorrelation_panel
+
   sample_correlation_server(
     id = "sample_correlation",
     omic_type = reactive(input$omicType),
     row_select = reactive(input$row_selection)
     )
-  pca_Server(id = "PCA", omic_type = input$omicType, row_select = input$row_selection)
-  volcano_Server(id = "Volcano", omic_type = input$omicType)
+  pca_Server(id = "PCA", omic_type = reactive(input$omicType), row_select = reactive(input$row_selection))
+  volcano_Server(id = "Volcano", omic_type = reactive(input$omicType))
 
 
 #   # Volcano Plot----
