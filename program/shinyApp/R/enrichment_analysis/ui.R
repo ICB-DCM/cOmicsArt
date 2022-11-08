@@ -69,37 +69,37 @@ geneset_panel_UI <- function(
 }
 
 
-ea_sidebar <- function(){
+ea_sidebar <- function(ns){
   sidebarPanel(
-    uiOutput(outputId = "OrganismChoice_ui"),
-    uiOutput(outputId = "ORA_or_GSE_ui"),
-    uiOutput(outputId = "ValueToAttach_ui"),
-    uiOutput(outputId = "sample_annotation_types_cmp_GSEA_ui"),
-    uiOutput(outputId = "Groups2Compare_ref_GSEA_ui"),
-    uiOutput(outputId = "Groups2Compare_treat_GSEA_ui"),
-    uiOutput(outputId = "psig_threhsold_GSEA_ui"),
-    uiOutput(outputId = "GeneSet2Enrich_ui"),
-    uiOutput(outputId = "UploadedGeneSet_ui"),
-    uiOutput(outputId = "UniverseOfGene_ui"),
+    uiOutput(outputId = ns("OrganismChoice_ui")),
+    uiOutput(outputId = ns("ORA_or_GSE_ui")),
+    uiOutput(outputId = ns("ValueToAttach_ui")),
+    uiOutput(outputId = ns("sample_annotation_types_cmp_GSEA_ui")),
+    uiOutput(outputId = ns("Groups2Compare_ref_GSEA_ui")),
+    uiOutput(outputId = ns("Groups2Compare_treat_GSEA_ui")),
+    uiOutput(outputId = ns("psig_threhsold_GSEA_ui")),
+    uiOutput(outputId = ns("GeneSet2Enrich_ui")),
+    uiOutput(outputId = ns("UploadedGeneSet_ui")),
+    uiOutput(outputId = ns("UniverseOfGene_ui")),
     actionButton(
-      inputId = "enrichmentGO",
+      inputId = ns("enrichmentGO"),
       label = "Do enrichment analysis"
     ),
     radioButtons(
-      inputId = "ontologyForGO",
+      inputId = ns("ontologyForGO"),
       label = "Choose ontology for GO enrichment",
       choices = c("BP","MF","CC","ALL"),
       selected = "BP"
     ),
     helpText("Note: ALL sometime fails due to cryptic reasons. You will get notified. If this happens to you please try out the indiviudal ontologies to check whether enriched term are found. "),
     hr(style = "border-top: 1px solid #858585;"),
-    uiOutput(outputId = "KeggPathwayID_ui")
+    uiOutput(outputId = ns("KeggPathwayID_ui"))
   )
 }
 
 ea_main <- function(ns){
   mainPanel(
-    textOutput(outputId = "EnrichmentInfo", container = pre),
+    textOutput(outputId = ns("EnrichmentInfo"), container = pre),
     tabsetPanel(
       geneset_panel_UI(ns("KEGG")),
       geneset_panel_UI(ns("GO")),
@@ -117,30 +117,30 @@ ea_main <- function(ns){
         title = "KeggPathwayOutput",
         helpText("Specificy on the left which pathway (all sig. enriched) to display in picture-format"),
         actionButton(
-          inputId = "OverlayOnPathway",
+          inputId = ns("OverlayOnPathway"),
           label = "Show overlay on Pathway"
         ),
         selectInput(
-          inputId = "plotOnTopOption",
+          inputId = ns("plotOnTopOption"),
           label = "Specifiy the what the colored overlay should indicate",
           choices = c("LFC", "presence"),
           selected = "presence"
         ),
-        uiOutput(outputId = "sample_anno_types_KEGG_ui"),
-        uiOutput(outputId = "ComparisonOptionsCRTL_ui"),
-        uiOutput(outputId = "ComparisonOptionsCOMP_ui"),
-        uiOutput(outputId = "psig_KEGG_ui"),
+        uiOutput(outputId = ns("sample_anno_types_KEGG_ui")),
+        uiOutput(outputId = ns("ComparisonOptionsCRTL_ui")),
+        uiOutput(outputId = ns("ComparisonOptionsCOMP_ui")),
+        uiOutput(outputId = ns("psig_KEGG_ui")),
         sliderInput(
-          inputId = "imageWidth",
+          inputId = ns("imageWidth"),
           label = "Adjust Width",
           min = 400, max = 1500, step = 20, value = 1000
         ),
         sliderInput(
-          inputId = "imageHeight",
+          inputId = ns("imageHeight"),
           label = "Adjust Height",
           min = 400, max = 1500, step = 20, value = 640
         ),
-        imageOutput(outputId = "KeggPathwayOutput_img") %>% withSpinner(type = 8)
+        imageOutput(outputId = ns("KeggPathwayOutput_img")) %>% withSpinner(type = 8)
       )
     )
   )
@@ -157,7 +157,7 @@ enrichment_analysis_UI <- function(id){
     # Enrichment
     #########################################
     h4("NOTE THAT THIS ONLY MAKES SENSE FOR TRANSCRIPTOMICS DATA AT THE MOMENT!"),
-    enrichment_analysis_sidebar <- ea_sidebar(),
+    enrichment_analysis_sidebar <- ea_sidebar(ns),
     enrichment_analysis_main <- ea_main(ns),
   )
 }
