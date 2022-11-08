@@ -70,7 +70,7 @@ single_gene_visualisation_main_ui <- function(ns){
       label = "Notes:",
       placeholder = NOTES_PlACEHOLDER,
       width = "1000px"
-    )%>% helper(type = "markdown", content = "TakingNotesMD_help"),
+    ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
     helpText(NOTES_HELP)
   )
 }
