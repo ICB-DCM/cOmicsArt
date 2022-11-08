@@ -52,7 +52,11 @@ sample_correlation_server <- function(id, omic_type, row_select){
           if (i > 3) {
             break
           }
-          if (length(unique(annotationDF[,i])) <= 8) {
+          if (length(unique(annotationDF[,i])) == 2){
+            colors_tmp <- c("navy","orange")
+            names(colors_tmp) <- unique(annotationDF[,i])
+            anno_colors[[colnames(annotationDF)[i]]] <- colors_tmp
+          }else if (length(unique(annotationDF[,i])) <= 8) {
             colors_tmp <- RColorBrewer::brewer.pal(
               n = length(unique(annotationDF[,i])),
               name = palletteOrder[i]
