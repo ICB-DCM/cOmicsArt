@@ -7,18 +7,19 @@ server <- function(input,output,session){
   source("R/heatmap/fun_entitieSelection.R",local = T)
   source("R/fun_savePheatmap.R",local = T)
   source("R/fun_LogIt.R",local = T)
-  source("R/fun_readInSampleTable.R",local=T)
-  source("R/fun_ggplot.R",local=T)
-  source("R/Guide.R",local=T)
-  source("R/module_DownloadReport.R",local=T)
-  source("R/enrichment_analysis/enrichment_analysis.R", local=T)
-  source("R/enrichment_analysis/check_annotation.R", local=T)
-  source("R/enrichment_analysis/translation.R", local=T)
-  source("R/enrichment_analysis/server.R", local=T)
+  source("R/fun_readInSampleTable.R",local = T)
+  source("R/fun_ggplot.R",local = T)
+  source("R/Guide.R",local = T)
+  source("R/module_DownloadReport.R",local = T)
+  source("R/enrichment_analysis/enrichment_analysis.R", local = T)
+  source("R/enrichment_analysis/check_annotation.R", local = T)
+  source("R/enrichment_analysis/translation.R", local = T)
+  source("R/enrichment_analysis/server.R", local = T)
   source("R/heatmap/server.R",local = T)
-  source("R/pca/server.R", local=T)
-  source("R/volcano_plot/server.R", local=T)
+  source("R/pca/server.R", local = T)
+  source("R/volcano_plot/server.R", local = T)
   source("R/single_gene_visualisation/server.R",local = T)
+  source("R/sample_correlation/server.R", local = T)
   global_Vars <<- reactiveValues()
   
 # Security section ---- 
@@ -26,7 +27,7 @@ server <- function(input,output,session){
 
   observeEvent(input$guide_cicerone_next,{
     # triggers but guide is deteached
-    if(input$guide_cicerone_next$highlighted=="mainPanel_DataSelection"){
+    if(input$guide_cicerone_next$highlighted == "mainPanel_DataSelection"){
       print("Here will be now automatically data uploaded ")
     }else{
       print("Mööp")
@@ -71,6 +72,7 @@ server <- function(input,output,session){
   
 # Layout upon Start ----
   hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
+  hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
   hideTab(inputId = "tabsetPanel1", target = "PCA")
   hideTab(inputId = "tabsetPanel1", target = "Volcano Plot")
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
@@ -854,6 +856,7 @@ server <- function(input,output,session){
     processedData_all[[input$omicType]]$sample_table <- processedData_all[[input$omicType]]$sample_table[colnames(processedData_all[[input$omicType]]$Matrix),]
     processedData_all[[input$omicType]]$annotation_rows <- processedData_all[[input$omicType]]$annotation_rows[rownames(processedData_all[[input$omicType]]$Matrix),]
     
+    showTab(inputId = "tabsetPanel1", target = "Sample Correlation")
     showTab(inputId = "tabsetPanel1", target = "PCA")
     showTab(inputId = "tabsetPanel1", target = "Volcano Plot")
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
@@ -898,17 +901,23 @@ server <- function(input,output,session){
   })
   
   output$debug <- renderText(dim(selectedData_processed()[[input$omicType]]$Matrix))
+  # Sample Correlation
+  sample_correlation_server(
+    id = "sample_correlation",
+    omic_type = reactive(input$omicType),
+    row_select = reactive(input$row_selection)
+  )
   # PCA
-  pca_Server(id="PCA", omic_type = input$omicType, row_select = input$row_selection)
+  pca_Server(id="PCA", omic_type = reactive(input$omicType), reactive(input$row_selection))
   # Volcano plots
-  volcano_Server(id="Volcano", omic_type = input$omicType)
+  volcano_Server(id="Volcano", omic_type = reactive(input$omicType))
   # Heatmap
-  heatmap_server(id = 'Heatmap',omicType = input$omicType)
+  heatmap_server(id = 'Heatmap',omicType = reactive(input$omicType))
   # Single Gene Visualisations ----
   single_gene_visualisation_server(
     id = "single_gene_visualisation",
-    omicType = input$omicType
-    )
+    omicType = reactive(input$omicType)
+  )
   # KEGG enrichment ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',

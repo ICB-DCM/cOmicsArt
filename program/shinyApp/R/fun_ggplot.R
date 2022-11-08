@@ -220,6 +220,14 @@ getPlotCode <- function(numberOfScenario) {
   if(numberOfScenario==17){
     stringtosave='REACTOME_Plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME)'
   }
+  if(numberOfScenario==18){
+    stringtosave = 'SampleCorrelationPlot_final <- pheatmap(
+          mat = cormat, 
+          annotation_row = annotationDF,
+          main = customTitleSampleCorrelation,
+          annotation_colors = anno_colors
+          )'
+  }
   if(numberOfScenario==0){
     stringtosave='Not_code_yet'
   }

@@ -12,9 +12,9 @@ heatmap_server <- function(id,omicType){
             selectInput(
               inputId = ns("anno_options"),
               label = "Choose the variable to color the samples after (Multiples are possible)",
-              choices = c(colnames(data_input_shiny()[[omicType]]$sample_table)),
+              choices = c(colnames(data_input_shiny()[[omicType()]]$sample_table)),
               multiple = T , # would be cool if true, to be able to merge vars ?!,
-              selected= c(colnames(data_input_shiny()[[omicType]]$sample_table))[1]
+              selected= c(colnames(data_input_shiny()[[omicType()]]$sample_table))[1]
             )
           })
           output$row_anno_options_ui <- renderUI({
@@ -22,9 +22,9 @@ heatmap_server <- function(id,omicType){
             selectInput(
               inputId = ns("row_anno_options"),
               label = "Choose the variable to color the rows after (Multiples are possible)",
-              choices = c(colnames(data_input_shiny()[[omicType]]$annotation_rows)),
+              choices = c(colnames(data_input_shiny()[[omicType()]]$annotation_rows)),
               multiple = T, # would be cool if true, to be able to merge vars ?!,
-              selected = c(colnames(data_input_shiny()[[omicType]]$annotation_rows))[length(c(colnames(data_input_shiny()[[omicType]]$annotation_rows)))]
+              selected = c(colnames(data_input_shiny()[[omicType()]]$annotation_rows))[length(c(colnames(data_input_shiny()[[omicType()]]$annotation_rows)))]
             )
           })
           output$row_label_options_ui <- renderUI({
@@ -33,7 +33,7 @@ heatmap_server <- function(id,omicType){
             selectInput(
               inputId = ns("row_label_options"),
               label = "Choose the label of rows",
-              choices = c(colnames(data_input_shiny()[[omicType]]$annotation_rows)),
+              choices = c(colnames(data_input_shiny()[[omicType()]]$annotation_rows)),
               multiple = F, # would be cool if true, to be able to merge vars ?!,
               selected=input$row_anno_options
             )
@@ -101,9 +101,9 @@ heatmap_server <- function(id,omicType){
             selectInput(
               inputId = ns("sample_annotation_types_cmp_heatmap"),
               label = "Choose type for LFC-based ordering",
-              choices = c(colnames(data_input_shiny()[[omicType]]$sample_table)),
+              choices = c(colnames(data_input_shiny()[[omicType()]]$sample_table)),
               multiple = F,
-              selected = c(colnames(data_input_shiny()[[omicType]]$sample_table))[1]
+              selected = c(colnames(data_input_shiny()[[omicType()]]$sample_table))[1]
             )
           })
           output$Groups2Compare_ref_heatmap_ui <- renderUI({
@@ -111,9 +111,9 @@ heatmap_server <- function(id,omicType){
             selectInput(
               inputId = ns("Groups2Compare_ref_heatmap"),
               label = "Choose reference of log2 FoldChange",
-              choices = unique(data_input_shiny()[[omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap]),
+              choices = unique(data_input_shiny()[[omicType()]]$sample_table[,input$sample_annotation_types_cmp_heatmap]),
               multiple = F ,
-              selected = unique(data_input_shiny()[[omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap])[1]
+              selected = unique(data_input_shiny()[[omicType()]]$sample_table[,input$sample_annotation_types_cmp_heatmap])[1]
             )
           })
           output$Groups2Compare_treat_heatmap_ui <- renderUI({
@@ -121,9 +121,9 @@ heatmap_server <- function(id,omicType){
             selectInput(
               inputId = ns("Groups2Compare_treat_heatmap"),
               label = "Choose treatment group of log2 FoldChange",
-              choices = unique(data_input_shiny()[[omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap]),
+              choices = unique(data_input_shiny()[[omicType()]]$sample_table[,input$sample_annotation_types_cmp_heatmap]),
               multiple = F ,
-              selected = unique(data_input_shiny()[[omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap])[2]
+              selected = unique(data_input_shiny()[[omicType()]]$sample_table[,input$sample_annotation_types_cmp_heatmap])[2]
             )
           })
           output$psig_threhsold_heatmap_ui <- renderUI({
@@ -168,8 +168,8 @@ heatmap_server <- function(id,omicType){
             selectInput(
               inputId = ns("anno_options_heatmap"),
               label = "Choose the variable to select the rows after (Multiples are not possible)",
-              choices = c(colnames(selectedData_processed()[[omicType]]$annotation_rows)),
-              selected=colnames(selectedData_processed()[[omicType]]$annotation_rows)[1],
+              choices = c(colnames(selectedData_processed()[[omicType()]]$annotation_rows)),
+              selected=colnames(selectedData_processed()[[omicType()]]$annotation_rows)[1],
               multiple = F # would be cool if true, to be able to merge vars ?!,
             )
           })
@@ -178,7 +178,7 @@ heatmap_server <- function(id,omicType){
             selectInput(
               inputId = ns("row_anno_options_heatmap"),
               label = "Which entities to use?",
-              choices = c("all",unique(selectedData_processed()[[omicType]]$annotation_rows[,input$anno_options_heatmap])),
+              choices = c("all",unique(selectedData_processed()[[omicType()]]$annotation_rows[,input$anno_options_heatmap])),
               selected="all",
               multiple = T
             )
@@ -205,7 +205,7 @@ heatmap_server <- function(id,omicType){
 
       observeEvent(toListen2Heatmap(),{
         req(input$Do_Heatmap[1]>0)
-        req(omicType,input$row_selection_options,input$anno_options,input$row_label_options)
+        req(omicType(),input$row_selection_options,input$anno_options,input$row_label_options)
         req(selectedData_processed())
         print("Heatmap on selected Data")
         # Value need to be setted in case there is nothing to plot to avoid crash
@@ -216,7 +216,7 @@ heatmap_server <- function(id,omicType){
                         "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
         customTitleHeatmap <- paste0(
           "Heatmap - ",
-          omicType,"-",
+          omicType(),"-",
           paste0("entities:",input$row_selection,collapse = "_"),
           "-samples",
           ifelse(any(input$sample_selection!="all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),""),
@@ -227,8 +227,8 @@ heatmap_server <- function(id,omicType){
         print(customTitleHeatmap)
         mycolors <- list()
         if(length(input$anno_options)==1){
-          if(length(unique(data2Plot[[omicType]]$sample_table[,input$anno_options])) <= 8){
-            names(colorTheme) <- unique(data2Plot[[omicType]]$sample_table[,input$anno_options])
+          if(length(unique(data2Plot[[omicType()]]$sample_table[,input$anno_options])) <= 8){
+            names(colorTheme) <- unique(data2Plot[[omicType()]]$sample_table[,input$anno_options])
             colorTheme <- colorTheme[!is.na(names(colorTheme))]
             mycolors[[input$anno_options]] <- colorTheme
           }
@@ -285,11 +285,11 @@ heatmap_server <- function(id,omicType){
         TopK2Show <- ifelse(any(input$row_selection_options=="TopK"),input$TopK,NA)
         
         if(any(input$row_selection_options=="all")){
-          data2HandOver <- selectedData_processed()[[omicType]]$Matrix
+          data2HandOver <- selectedData_processed()[[omicType()]]$Matrix
         }else{
           print(input$row_selection_options)
           data2HandOver <- entitieSelection(
-            selectedData_processed()[[omicType]],
+            selectedData_processed()[[omicType()]],
             type = input$row_selection_options,
             additionalInput_row_anno = additionalInput_row_anno,
             additionalInput_row_anno_factor = additionalInput_row_anno_factor,
@@ -315,10 +315,10 @@ heatmap_server <- function(id,omicType){
         # Dependent to plot raw data or LFC
         if(input$LFC_toHeatmap){
           ctrl_samples_idx <- which(
-            selectedData_processed()[[omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap]%in%input$Groups2Compare_ref_heatmap
+            selectedData_processed()[[omicType()]]$sample_table[,input$sample_annotation_types_cmp_heatmap]%in%input$Groups2Compare_ref_heatmap
             )
           comparison_samples_idx <- which(
-            selectedData_processed()[[omicType]]$sample_table[,input$sample_annotation_types_cmp_heatmap]%in%input$Groups2Compare_treat_heatmap
+            selectedData_processed()[[omicType()]]$sample_table[,input$sample_annotation_types_cmp_heatmap]%in%input$Groups2Compare_treat_heatmap
             )
           if(length(comparison_samples_idx) <=1 | 
              length(ctrl_samples_idx)<=1){
@@ -326,24 +326,24 @@ heatmap_server <- function(id,omicType){
             doThis_flag <- F
           }
           if(input$PreProcessing_Procedure == "simpleCenterScaling"|
-             any(selectedData_processed()[[omicType]]$Matrix<0)){
+             any(selectedData_processed()[[omicType()]]$Matrix<0)){
             print("Remember do not use normal center + scaling (negative Values!)")
             output$Options_selected_out_3 <- renderText("Choose another preprocessing, as there are negative values!")
 
           }else if(doThis_flag){
-            print(dim(selectedData_processed()[[omicType]]$Matrix))
+            print(dim(selectedData_processed()[[omicType()]]$Matrix))
             Data2Plot <- getLFC(
-              data = data2Plot[[omicType]]$Matrix,
+              data = data2Plot[[omicType()]]$Matrix,
               ctrl_samples_idx = ctrl_samples_idx,
               comparison_samples_idx = comparison_samples_idx
               )
             # adjust sample annotation
             # if the value is accross all group-members the same keep 1 col otherwise remove
-            keep_ctrl <- apply(data2Plot[[omicType]]$sample_table[ctrl_samples_idx,],2,function (x) length(unique(x))==1)
-            keep_treat <- apply(data2Plot[[omicType]]$sample_table[comparison_samples_idx,],2,function (x) length(unique(x))==1)
+            keep_ctrl <- apply(data2Plot[[omicType()]]$sample_table[ctrl_samples_idx,],2,function (x) length(unique(x))==1)
+            keep_treat <- apply(data2Plot[[omicType()]]$sample_table[comparison_samples_idx,],2,function (x) length(unique(x))==1)
             
             # keep  only if both TRUE
-            keep_final <- names(data2Plot[[omicType]]$sample_table)[keep_ctrl & keep_treat]
+            keep_final <- names(data2Plot[[omicType()]]$sample_table)[keep_ctrl & keep_treat]
             
             ## do pheatmap
             #remove anything non sig
@@ -353,7 +353,7 @@ heatmap_server <- function(id,omicType){
                           seq(max(Data2Plot$LFC)/paletteLength, max(Data2Plot$LFC), length.out=floor(paletteLength/2)))
             
             scenario <- 10
-            annotation_col <- data2Plot[[omicType]]$annotation_rows[,input$row_anno_options,drop=F]
+            annotation_col <- data2Plot[[omicType()]]$annotation_rows[,input$row_anno_options,drop=F]
             heatmap_plot <- pheatmap(
               t(Data2Plot[,"LFC",drop=F]),
               main=gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
@@ -365,7 +365,7 @@ heatmap_server <- function(id,omicType){
               # cutree_cols = 4,
               #fontsize = font.size,
               annotation_col = annotation_col,
-              #annotation_row = data2Plot[[omicType]]$annotation_rows[,input$row_anno_options,drop=F],
+              #annotation_row = data2Plot[[omicType()]]$annotation_rows[,input$row_anno_options,drop=F],
               #annotation_colors = mycolors,
               silent = F,
               breaks = myBreaks,
@@ -380,11 +380,11 @@ heatmap_server <- function(id,omicType){
               data2HandOver <- data2HandOver[-idx_of_nas,] 
             }
 
-            annotation_col <- selectedData_processed()[[omicType]]$sample_table[-idx_of_nas,input$anno_options,drop=F]
-            annotation_row <- selectedData_processed()[[omicType]]$annotation_rows[-idx_of_nas,input$row_anno_options,drop=F]
+            annotation_col <- selectedData_processed()[[omicType()]]$sample_table[-idx_of_nas,input$anno_options,drop=F]
+            annotation_row <- selectedData_processed()[[omicType()]]$annotation_rows[-idx_of_nas,input$row_anno_options,drop=F]
           }else{
-            annotation_col <- selectedData_processed()[[omicType]]$sample_table[,input$anno_options,drop=F]
-            annotation_row <- selectedData_processed()[[omicType]]$annotation_rows[,input$row_anno_options,drop=F]
+            annotation_col <- selectedData_processed()[[omicType()]]$sample_table[,input$anno_options,drop=F]
+            annotation_row <- selectedData_processed()[[omicType()]]$annotation_rows[,input$row_anno_options,drop=F]
           }
           clusterRowspossible <- ifelse(nrow(as.matrix(data2HandOver))>1,input$cluster_rows,F)
           print(input$anno_options)
@@ -396,7 +396,7 @@ heatmap_server <- function(id,omicType){
             as.matrix(data2HandOver),
             main = customTitleHeatmap,
             show_rownames=ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
-            labels_row = selectedData_processed_df[[omicType]]$annotation_rows[rownames(data2HandOver),input$row_label_options],
+            labels_row = selectedData_processed_df[[omicType()]]$annotation_rows[rownames(data2HandOver),input$row_label_options],
             show_colnames=TRUE,
             cluster_cols = input$cluster_cols,
             cluster_rows = clusterRowspossible,
@@ -534,7 +534,7 @@ heatmap_server <- function(id,omicType){
           FLAG_nonUnique_Heatmap<<-F
           NA
         }else{
-          mergedData <- merge(data2HandOver,selectedData_processed()[[omicType]]$annotation_rows,
+          mergedData <- merge(data2HandOver,selectedData_processed()[[omicType()]]$annotation_rows,
                               by = 0, 
                               all.x = T,
                               all.y = F,

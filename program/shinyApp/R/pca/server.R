@@ -38,7 +38,7 @@ pca_Server <- function(id, omic_type, row_select){
         selectInput(
           inputId = ns("coloring_options"),
           label = "Choose the variable to color the samples after",
-          choices = c(colnames(data_input_shiny()[[omic_type]]$sample_table)),
+          choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
           multiple = F # would be cool if true, to be able to merge vars ?!
         )
       })
@@ -47,7 +47,7 @@ pca_Server <- function(id, omic_type, row_select){
         selectInput(
           inputId = ns("PCA_anno_tooltip"),
           label = "Select the anno to be shown at tooltip",
-          choices = c(colnames(data_input_shiny()[[omic_type]]$sample_table)),
+          choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
           multiple = F
         )
       })
@@ -56,7 +56,7 @@ pca_Server <- function(id, omic_type, row_select){
         selectInput(
           inputId = ns("EntitieAnno_Loadings"),
           label = "Select the annotype shown at y-axis",
-          choices = c(colnames(data_input_shiny()[[omic_type]]$annotation_rows)),
+          choices = c(colnames(data_input_shiny()[[omic_type()]]$annotation_rows)),
           multiple = F
         )
       })
@@ -75,7 +75,7 @@ pca_Server <- function(id, omic_type, row_select){
       })
       observeEvent(toListen2PCA(),{
         req(
-          omic_type,
+          omic_type(),
           input$x_axis_selection,
           input$y_axis_selection,
           input$coloring_options
@@ -83,10 +83,10 @@ pca_Server <- function(id, omic_type, row_select){
 
         print("PCA analysis on pre-selected data")
         customTitle <- paste0(
-          "PCA - ", omic_type, "-",
-          paste0("entities:",row_select,collapse = "_"),
+          "PCA - ", omic_type(), "-",
+          paste0("entities:",row_select(),collapse = "_"),
           "-samples",
-          ifelse(any(input$sample_selection!="all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),"")
+          ifelse(any(input$sample_selection != "all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),"")
           , "-preprocessing: ",
           input$PreProcessing_Procedure
         )
@@ -94,7 +94,7 @@ pca_Server <- function(id, omic_type, row_select){
 
         # PCA
         pca <- prcomp(
-          as.data.frame(t(selectedData_processed()[[omic_type]]$Matrix)),
+          as.data.frame(t(selectedData_processed()[[omic_type()]]$Matrix)),
           center = T,
           scale. = FALSE
         )
@@ -105,7 +105,7 @@ pca_Server <- function(id, omic_type, row_select){
         percentVar <- round(100 * explVar, digits=1)
 
         # Define data for plotting
-        pcaData <- data.frame(pca$x,selectedData_processed()[[omic_type]]$sample_table)
+        pcaData <- data.frame(pca$x,selectedData_processed()[[omic_type()]]$sample_table)
 
         # Coloring Options
         print(input$coloring_options)
@@ -186,7 +186,7 @@ pca_Server <- function(id, omic_type, row_select){
             geom_point(size =3)+
             scale_color_manual(values = colorTheme,
                                name = input$coloring_options)
-          scenario <-3
+          scenario <- 3
         }
 
         pca_plot_final <- pca_plot+
@@ -240,10 +240,10 @@ pca_Server <- function(id, omic_type, row_select){
           df_out_r$global_ID <- rownames(df_out_r)
           df_out_r$chosenAnno <- rownames(df_out_r)
           if(!is.null(input$EntitieAnno_Loadings)){
-            req(data_input_shiny()[[omic_type]])
+            req(data_input_shiny()[[omic_type()]])
             df_out_r$chosenAnno <- factor(
-              make.unique(as.character(data_input_shiny()[[omic_type]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])),
-              levels = make.unique(as.character(data_input_shiny()[[omic_type]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings]))
+              make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])),
+              levels = make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings]))
               )
           }
 
@@ -275,7 +275,7 @@ pca_Server <- function(id, omic_type, row_select){
         global_Vars$PCA_plot <- pca_plot_final # somehow does not update ? or just return the latest?
         global_Vars$PCA_customTitle <- customTitle
         global_Vars$PCA_coloring <- input$coloring_options
-        global_Vars$PCA_noLoadings <- ifelse(input$Show_loadings=="Yes",length(TopK),0)
+        global_Vars$PCA_noLoadings <- ifelse(input$Show_loadings == "Yes",length(TopK),0)
 
         output$getR_Code_PCA <- downloadHandler(
           filename = function(){
@@ -417,10 +417,10 @@ pca_Server <- function(id, omic_type, row_select){
           )
         LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
         if(!is.null(input$EntitieAnno_Loadings)){
-          req(data_input_shiny()[[omic_type]])
+          req(data_input_shiny()[[omic_type()]])
           LoadingsDF$entitie=factor(
-            make.unique(as.character(data_input_shiny()[[omic_type]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
-            levels = make.unique(as.character(data_input_shiny()[[omic_type]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+            make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
+            levels = make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
             )
         }
 
