@@ -904,8 +904,9 @@ server <- function(input,output,session){
   # PCA module
   sample_correlation_server(
     id = "sample_correlation",
-    omic_type = input$omicType,
-    row_select = input$row_selection)
+    omic_type = reactive(input$omicType),
+    row_select = reactive(input$row_selection)
+    )
   pca_Server(id = "PCA", omic_type = input$omicType, row_select = input$row_selection)
   volcano_Server(id = "Volcano", omic_type = input$omicType)
 
