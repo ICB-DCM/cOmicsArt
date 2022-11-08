@@ -9,7 +9,7 @@ geneset_panel_UI <- function(
     # textOutput("Info", container = pre),
     tabsetPanel(
       tabPanel(
-        title=paste(id_wo_ns, " Enrichment"),
+        title = paste(id_wo_ns, " Enrichment"),
         plotOutput(outputId = ns("EnrichmentPlot")),
         splitLayout(
           style = "border: 1px solid silver:",
