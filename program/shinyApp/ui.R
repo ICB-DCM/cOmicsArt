@@ -48,6 +48,7 @@ source("R/volcano_plot/ui.R",local=T)
 source("R/heatmap/ui.R",local=T)
 source("R/single_gene_visualisation/ui.R",local=T)
 source("R/enrichment_analysis/ui.R",local=T)
+source("R/sample_correlation/ui.R",local = T)
 
 
 options(repos = BiocManager::repositories())
@@ -144,12 +145,12 @@ ui <- shiny::fluidPage(
   )),
   conditionalPanel(
     condition = "input.element == 0",
-    div(id="TitleID_normal",titlePanel("ShinyOmics")),
+    div(id = "TitleID_normal",titlePanel("ShinyOmics")),
   ),
   conditionalPanel(
     condition = "input.element == 1",
     div(
-      id="TitleID_pride",
+      id = "TitleID_pride",
       h2(HTML('<span style="color:#E75A5A">S</span><span style="color:#E7AF5A">h</span><span style="color:#CBE75A">i</span><span style="color:#76E75A">n</span><span style="color:#5AE792">y</span><span style="color:#5AE7E7">O</span><span style="color:#5A92E7">m</span><span style="color:#765AE7">i</span><span style="color:#CB5AE7">c</span><span style="color:#E75AAF">s</span>'))
       ),
   ),
@@ -166,6 +167,7 @@ ui <- shiny::fluidPage(
     ################################################################################
     data_selection_panel,
     pre_processing_panel,
+    sample_correlation_panel <- sampleCorrelation_UI("sample_correlation"),
     pca_panel <- pca_UI("PCA"),
     volcano_plot_panel <- volcano_UI("Volcano"),
     heatmap_panel <- heatmap_UI("Heatmap"),
@@ -180,14 +182,14 @@ ui <- shiny::fluidPage(
   conditionalPanel(
     condition = "input.element_02 == 0",
     div(
-      id="foot_normal",
+      id = "foot_normal",
       absolutePanel("Brought to you by Lea Seep & Paul Jonas Jost (it is his birthday today!)", bottom = 0, left = 10, fixed = TRUE)
     )
   ),
   conditionalPanel(
     condition = "input.element_02 == 1",
     div(
-      id="foot_birthday",
+      id = "foot_birthday",
       absolutePanel(
         "It is Lea's birthday today :)",
         bottom = 0, left = 10, fixed = TRUE,style = "background-color: #a9d96a;"
