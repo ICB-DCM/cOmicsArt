@@ -46,7 +46,7 @@ enrichment_analysis_geneset_server <- function(
           content = function(file){
             ggsave(
               filename = file,
-              plot=clusterProfiler::dotplot(result, title = ""),
+              plot = clusterProfiler::dotplot(result, title = ""),
               device = gsub("\\.","",input$file_ext)
             )
             # TODO : on.exit({Logging_GSEA})
@@ -441,7 +441,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               tryCatch({
                 EnrichmentRes_GO <<- clusterProfiler::enrichGO(
                   gene = geneSetChoice_tranlsated,
-                  ont =input$ontologyForGO,
+                  ont = input$ontologyForGO,
                   pvalueCutoff = 0.05,
                   OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))
               },
