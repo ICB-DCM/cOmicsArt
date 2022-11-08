@@ -902,6 +902,7 @@ server <- function(input,output,session){
   
   output$debug <- renderText(dim(selectedData_processed()[[input$omicType]]$Matrix))
   # PCA module
+sampleCorrelation_panel
   sample_correlation_server(
     id = "sample_correlation",
     omic_type = reactive(input$omicType),
@@ -909,6 +910,7 @@ server <- function(input,output,session){
     )
   pca_Server(id = "PCA", omic_type = input$omicType, row_select = input$row_selection)
   volcano_Server(id = "Volcano", omic_type = input$omicType)
+
 
 #   # Volcano Plot----
 # ## UI Section----
@@ -1248,13 +1250,13 @@ server <- function(input,output,session){
 #   })
 
 # # Heatmap ----
-  heatmap_server(id = 'Heatmap',omicType = input$omicType)
+  heatmap_server(id = 'Heatmap',omicType = reactive(input$omicType))
   
 
 # Single Gene Visualisations ----
   single_gene_visualisation_server(
     id = "single_gene_visualisation",
-    omicType = input$omicType
+    omicType = reactive(input$omicType)
     )
 # ## Ui section ----
 #   output$type_of_data_gene_ui=renderUI({

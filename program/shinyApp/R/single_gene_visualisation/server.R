@@ -19,7 +19,7 @@ single_gene_visualisation_server <- function(id,omicType){
         selectInput(
           inputId = ns("accross_condition"),
           label = "Choose the groups to show the data for",
-          choices = unique(colnames(data_input_shiny()[[omicType]]$sample_table)),
+          choices = unique(colnames(data_input_shiny()[[omicType()]]$sample_table)),
           multiple = F
         )
       })
@@ -38,7 +38,7 @@ single_gene_visualisation_server <- function(id,omicType){
         selectInput(
           inputId = ns("Select_GeneAnno"),
           label = "Select Annotation you want to select an entitie from",
-          choices = colnames(data_input_shiny()[[omicType]]$annotation_rows), # for TESTING restricting to top 10
+          choices = colnames(data_input_shiny()[[omicType()]]$annotation_rows), # for TESTING restricting to top 10
           multiple = F 
         )
       })
@@ -48,7 +48,7 @@ single_gene_visualisation_server <- function(id,omicType){
         selectInput(
           inputId = ns("Select_Gene"),
           label = "Select the Gene from the list",
-          choices = unique(data_input_shiny()[[omicType]]$annotation_rows[,input$Select_GeneAnno]),
+          choices = unique(data_input_shiny()[[omicType()]]$annotation_rows[,input$Select_GeneAnno]),
           multiple = F 
         )
       })
@@ -58,9 +58,9 @@ single_gene_visualisation_server <- function(id,omicType){
         req(input$Select_GeneAnno)
         req(input$type_of_data_gene)
         if(input$type_of_data_gene == "raw"){
-          annoToSelect=c(data_input_shiny()[[omicType]]$sample_table[,input$accross_condition])
+          annoToSelect=c(data_input_shiny()[[omicType()]]$sample_table[,input$accross_condition])
         }else{
-          annoToSelect=c(selectedData_processed()[[omicType]]$sample_table[,input$accross_condition])
+          annoToSelect=c(selectedData_processed()[[omicType()]]$sample_table[,input$accross_condition])
         }
         
         if(length(annoToSelect) == length(unique(annoToSelect))){
@@ -95,12 +95,12 @@ single_gene_visualisation_server <- function(id,omicType){
         GeneDataFlag=F
         # Select data for the gene based on gene Selection & group Selection
         if(input$type_of_data_gene == "preprocessed"){
-          if(input$Select_Gene %in% selectedData_processed()[[omicType]]$annotation_rows[,input$Select_GeneAnno]){
+          if(input$Select_Gene %in% selectedData_processed()[[omicType()]]$annotation_rows[,input$Select_GeneAnno]){
             #get IDX to data
-            idx_selected <- which(input$Select_Gene == selectedData_processed()[[omicType]]$annotation_rows[,input$Select_GeneAnno])
-            GeneData <- as.data.frame(t(selectedData_processed()[[omicType]]$Matrix[idx_selected,,drop=F]))
+            idx_selected <- which(input$Select_Gene == selectedData_processed()[[omicType()]]$annotation_rows[,input$Select_GeneAnno])
+            GeneData <- as.data.frame(t(selectedData_processed()[[omicType()]]$Matrix[idx_selected,,drop=F]))
             print(input$accross_condition)
-            GeneData$anno <- selectedData_processed()[[omicType]]$sample_table[,input$accross_condition]
+            GeneData$anno <- selectedData_processed()[[omicType()]]$sample_table[,input$accross_condition]
             GeneDataFlag <- T
           }else{
             print("different Gene")
@@ -109,12 +109,12 @@ single_gene_visualisation_server <- function(id,omicType){
           
           
         }else if(input$type_of_data_gene == "raw" ){
-          if(input$Select_Gene %in% data_input_shiny()[[omicType]]$annotation_rows[,input$Select_GeneAnno]){
+          if(input$Select_Gene %in% data_input_shiny()[[omicType()]]$annotation_rows[,input$Select_GeneAnno]){
             #get IDX to data
-            idx_selected <- which(input$Select_Gene == data_input_shiny()[[omicType]]$annotation_rows[,input$Select_GeneAnno])
-            GeneData <- as.data.frame(t(data_input_shiny()[[omicType]]$Matrix[idx_selected,,drop=F]))
-            GeneData$anno <- data_input_shiny()[[omicType]]$sample_table[,input$accross_condition]
-            print(dim(data_input_shiny()[[omicType]]$Matrix))
+            idx_selected <- which(input$Select_Gene == data_input_shiny()[[omicType()]]$annotation_rows[,input$Select_GeneAnno])
+            GeneData <- as.data.frame(t(data_input_shiny()[[omicType()]]$Matrix[idx_selected,,drop=F]))
+            GeneData$anno <- data_input_shiny()[[omicType()]]$sample_table[,input$accross_condition]
+            print(dim(data_input_shiny()[[omicType()]]$Matrix))
             GeneDataFlag <- T
           }else{
             GeneDataFlag <- F
