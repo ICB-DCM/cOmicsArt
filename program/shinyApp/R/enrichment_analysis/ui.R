@@ -78,6 +78,7 @@ ea_sidebar <- function(ns){
     uiOutput(outputId = ns("Groups2Compare_ref_GSEA_ui")),
     uiOutput(outputId = ns("Groups2Compare_treat_GSEA_ui")),
     uiOutput(outputId = ns("psig_threhsold_GSEA_ui")),
+    uiOutput(outputId = ns("GeneSetChoice_ui")),
     uiOutput(outputId = ns("GeneSet2Enrich_ui")),
     uiOutput(outputId = ns("UploadedGeneSet_ui")),
     uiOutput(outputId = ns("UniverseOfGene_ui")),
@@ -101,6 +102,7 @@ ea_main <- function(ns){
   mainPanel(
     textOutput(outputId = ns("EnrichmentInfo"), container = pre),
     tabsetPanel(
+      id = ns("EnrichmentTabs"),
       geneset_panel_UI(ns("KEGG")),
       geneset_panel_UI(ns("GO")),
       geneset_panel_UI(ns("REACTOME")),

@@ -183,11 +183,26 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
                 value = 0.05
               )
             })
+            # Choose Sets to do gene set enrichment for
+            output$GeneSetChoice_ui <- renderUI({
+              selectInput(
+                inputId = ns("GeneSetChoice"),
+                label = "Choose sets to do enrichment for",
+                choices = c(
+                  "KEGG", "GO", "REACTOME", "Hallmarks", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8"
+                ),
+                multiple = T ,
+                selected = c(
+                  "KEGG", "GO", "REACTOME", "Hallmarks", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8"
+                )
+              )
+            })
           }else{
             hide(id = "sample_annotation_types_cmp_GSEA", anim = T)
             hide(id = "Groups2Compare_ref_GSEA", anim = T)
             hide(id = "Groups2Compare_treat_GSEA", anim = T)
             hide(id = "psig_threhsold_GSEA", anim = T)
+            hide(id = "GeneSetChoice", anim = T)
           }
         }else{
           hide(id = "ValueToAttach", anim = T)
@@ -195,6 +210,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
           hide(id = "Groups2Compare_ref_GSEA", anim = T)
           hide(id = "Groups2Compare_treat_GSEA", anim = T)
           hide(id = "psig_threhsold_GSEA", anim = T)
+          hide(id = "GeneSetChoice", anim = T)
         }
 
         if(input$ORA_or_GSE == "OverRepresentation_Analysis"){
@@ -241,6 +257,50 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
           hide(id = "UploadedGeneSet",anim=T)
         }
         })
+      # create List to track which enrichements are to do
+      global_Vars$enrichments2do <- list(
+        "KEGG" = F,
+        "GO" = F,
+        "REACTOME" = F,
+        "Hallmarks" = F,
+        "C1" = F,
+        "C2" = F,
+        "C3" = F,
+        "C4" = F,
+        "C5" = F,
+        "C6" = F,
+        "C7" = F,
+        "C8" = F
+      )
+      # change values in list to true if selected
+      observeEvent(input$GeneSetChoice, {
+        # reset list
+        global_Vars$enrichments2do <- list(
+          "KEGG" = F,
+          "GO" = F,
+          "REACTOME" = F,
+          "Hallmarks" = F,
+          "C1" = F,
+          "C2" = F,
+          "C3" = F,
+          "C4" = F,
+          "C5" = F,
+          "C6" = F,
+          "C7" = F,
+          "C8" = F
+        )
+        for(i in 1:length(input$GeneSetChoice)){
+          global_Vars$enrichments2do[[input$GeneSetChoice[i]]] <- T
+        }
+        # hide the unselected ones
+        for(name in names(which(global_Vars$enrichments2do == FALSE))){
+          hideTab(inputId = "EnrichmentTabs", target = name)
+        }
+        # show the selected ones
+        for(name in names(which(global_Vars$enrichments2do == TRUE))){
+          showTab(inputId = "EnrichmentTabs", target = name)
+        }
+      })
       ## Do enrichment ----
       geneSetChoice <- reactive({
         output$KEGG_Enrichment <- renderPlot({ggplot()})
