@@ -46,7 +46,7 @@ enrichment_analysis_geneset_server <- function(
           content = function(file){
             ggsave(
               filename = file,
-              plot=clusterProfiler::dotplot(result, title = ""),
+              plot = clusterProfiler::dotplot(result, title = ""),
               device = gsub("\\.","",input$file_ext)
             )
             # TODO : on.exit({Logging_GSEA})
@@ -80,7 +80,7 @@ enrichment_analysis_geneset_server <- function(
           fun_LogIt(message = paste("###", id, "ENRICHMENT", sep=" "))
           fun_LogIt(message = paste("-", id, "Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
           fun_LogIt(message = paste("- Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(gene_set_choice)))
-          fun_LogIt(message = paste("- Chosen Organism (needed for translation): ", organism_choice()))
+          fun_LogIt(message = paste("- Chosen Organism (needed for translation): ", organism_choice))
           # fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",global_Vars$KEGG_UniverseOfGene, " (",length(global_Vars$KEGG_universeSelected_tranlsated)," genes)"))
           # TODO: discuss with Lea -> global_Vars$KEGG_UniverseOfGene is only defined in case of ORA. Wouldn't that throw an error?
           fun_LogIt(message = paste("- The number of found enriched terms (p.adj <0.05): ",nrow(result@result[result@result$p.adjust<0.05,])))
@@ -537,86 +537,86 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
           enrichment_analysis_geneset_server(
             id = 'KEGG',
             result = enrichment_results[[paste("EnrichmentRes", "KEGG", sep = "_")]],
-            scenario = scenario, 
-            organism_choice = reactive(input$OrganismChoice),
+            scenario = scenario,
+            organism_choice = input$OrganismChoice,
             gene_set_choice = tmp_genes
           )
           enrichment_analysis_geneset_server(
             id = 'GO',
             result = enrichment_results[[paste("EnrichmentRes", "GO", sep = "_")]],
-            scenario = scenario, 
-            organism_choice = reactive(input$OrganismChoice),
+            scenario = scenario,
+            organism_choice = input$OrganismChoice,
             gene_set_choice = tmp_genes
           )
           enrichment_analysis_geneset_server(
             id = 'REACTOME',
             result = enrichment_results[[paste("EnrichmentRes", "REACTOME", sep = "_")]],
-            scenario = scenario, 
-            organism_choice = reactive(input$OrganismChoice),
+            scenario = scenario,
+            organism_choice = input$OrganismChoice,
             gene_set_choice = tmp_genes
           )
           enrichment_analysis_geneset_server(
             id = 'Hallmarks',
             result = enrichment_results[[paste("EnrichmentRes", "Hallmarks", sep = "_")]],
-            scenario = scenario, 
-            organism_choice = reactive(input$OrganismChoice),
+            scenario = scenario,
+            organism_choice = input$OrganismChoice,
             gene_set_choice = tmp_genes
           )
           enrichment_analysis_geneset_server(
             id = 'C1',
             result = enrichment_results[[paste("EnrichmentRes", "C1", sep = "_")]],
-            scenario = scenario, 
-            organism_choice = reactive(input$OrganismChoice),
+            scenario = scenario,
+            organism_choice = input$OrganismChoice,
             gene_set_choice = tmp_genes
           )
           enrichment_analysis_geneset_server(
             id = 'C2',
             result = enrichment_results[[paste("EnrichmentRes", "C2", sep = "_")]],
-            scenario = scenario, 
-            organism_choice = reactive(input$OrganismChoice),
+            scenario = scenario,
+            organism_choice = input$OrganismChoice,
             gene_set_choice = tmp_genes
           )
           enrichment_analysis_geneset_server(
             id = 'C3',
             result = enrichment_results[[paste("EnrichmentRes", "C3", sep = "_")]],
-            scenario = scenario, 
-            organism_choice = reactive(input$OrganismChoice),
+            scenario = scenario,
+            organism_choice = input$OrganismChoice,
             gene_set_choice = tmp_genes
           )
           enrichment_analysis_geneset_server(
             id = 'C4',
             result = enrichment_results[[paste("EnrichmentRes", "C4", sep = "_")]],
-            scenario = scenario, 
-            organism_choice = reactive(input$OrganismChoice),
+            scenario = scenario,
+            organism_choice = input$OrganismChoice,
             gene_set_choice = tmp_genes
           )
           enrichment_analysis_geneset_server(
             id = 'C5',
             result = enrichment_results[[paste("EnrichmentRes", "C5", sep = "_")]],
-            scenario = scenario, 
-            organism_choice = reactive(input$OrganismChoice),
+            scenario = scenario,
+            organism_choice = input$OrganismChoice,
             gene_set_choice = tmp_genes
           )
           enrichment_analysis_geneset_server(
             id = 'C6',
             result = enrichment_results[[paste("EnrichmentRes", "C6", sep = "_")]],
-            scenario = scenario, 
-            organism_choice = reactive(input$OrganismChoice),
+            scenario = scenario,
+            organism_choice = input$OrganismChoice,
             gene_set_choice = tmp_genes
           )
           # Currently C7 subset Immunesigdb
           enrichment_analysis_geneset_server(
             id = 'C7',
             result = enrichment_results[[paste("EnrichmentRes", "C7", sep = "_")]],
-            scenario = scenario, 
-            organism_choice = reactive(input$OrganismChoice),
+            scenario = scenario,
+            organism_choice = input$OrganismChoice,
             gene_set_choice = tmp_genes
           )
           enrichment_analysis_geneset_server(
             id = 'C8',
             result = enrichment_results[[paste("EnrichmentRes", "C8", sep = "_")]],
-            scenario = scenario, 
-            organism_choice = reactive(input$OrganismChoice),
+            scenario = scenario,
+            organism_choice = input$OrganismChoice,
             gene_set_choice = tmp_genes
           )
         })

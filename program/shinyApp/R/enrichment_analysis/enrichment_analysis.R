@@ -29,7 +29,7 @@ gene_set_enrichment <- function(
   EnrichmentRes_Kegg <- clusterProfiler::gseKEGG(
     geneList = geneSetChoice_tranlsated,
     keyType = "ncbi-geneid",  # equal to ENTREZID
-    organism = ifelse(input$OrganismChoice=="hsa","hsa","mmu"),
+    organism = ifelse(input$OrganismChoice == "hsa","hsa","mmu"),
     minGSSize = 3,
     maxGSSize = 800,
     pvalueCutoff = 0.05,

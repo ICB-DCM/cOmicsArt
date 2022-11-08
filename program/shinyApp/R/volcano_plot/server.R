@@ -12,7 +12,7 @@ volcano_Server <- function(id, omic_type){
         selectInput(
           inputId = ns("sample_annotation_types_cmp"),
           label = "Choose type for LFC comparison",
-          choices = c(colnames(data_input_shiny()[[omic_type]]$sample_table)),
+          choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
           multiple = F ,
           selected = NULL
         )
@@ -23,21 +23,21 @@ volcano_Server <- function(id, omic_type){
         selectInput(
           inputId = ns("Groups2Compare_ref"),
           label = "Choose reference of log2 FoldChange",
-          choices = unique(data_input_shiny()[[omic_type]]$sample_table[,input$sample_annotation_types_cmp]),
+          choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp]),
           multiple = F ,
-          selected = unique(data_input_shiny()[[omic_type]]$sample_table[,input$sample_annotation_types_cmp])[1]
+          selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp])[1]
         )
       })
       output$Groups2Compare_treat_ui <- renderUI({
         req(data_input_shiny())
         req(input$sample_annotation_types_cmp)
-        print(data_input_shiny()[[omic_type]]$sample_table[,input$sample_annotation_types_cmp])
+        print(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp])
         selectInput(
           inputId = ns("Groups2Compare_treat"),
           label = "Choose treatment group of log2 FoldChange",
-          choices = unique(data_input_shiny()[[omic_type]]$sample_table[,input$sample_annotation_types_cmp]),
+          choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp]),
           multiple = F ,
-          selected = unique(data_input_shiny()[[omic_type]]$sample_table[,input$sample_annotation_types_cmp])[2]
+          selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp])[2]
         )
       })
       output$psig_threhsold_ui <- renderUI({
@@ -66,7 +66,7 @@ volcano_Server <- function(id, omic_type){
         selectInput(
           inputId = ns("VOLCANO_anno_tooltip"),
           label = "Select the anno to be shown at tooltip",
-          choices = c(colnames(data_input_shiny()[[omic_type]]$annotation_rows)),
+          choices = c(colnames(data_input_shiny()[[omic_type()]]$annotation_rows)),
           multiple = F
         )
       })
@@ -83,7 +83,7 @@ volcano_Server <- function(id, omic_type){
       ## Do Volcano----
       observeEvent(toListen2Volcano(),{
         req(
-          omic_type,
+          omic_type(),
           isTruthy(selectedData_processed()),
           input$sample_annotation_types_cmp,
           input$psig_threhsold,
@@ -93,10 +93,10 @@ volcano_Server <- function(id, omic_type){
         print("Volcano analysis on pre-selected data")
         print(input$sample_annotation_types_cmp)
         ctrl_samples_idx <- which(
-          selectedData_processed()[[omic_type]]$sample_table[,input$sample_annotation_types_cmp] %in% input$Groups2Compare_ref
+          selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp] %in% input$Groups2Compare_ref
           )
         comparison_samples_idx <- which(
-          selectedData_processed()[[omic_type]]$sample_table[,input$sample_annotation_types_cmp] %in% input$Groups2Compare_treat
+          selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp] %in% input$Groups2Compare_treat
           )
 
         if(length(comparison_samples_idx) <= 1 |
@@ -116,15 +116,15 @@ volcano_Server <- function(id, omic_type){
               print("Data was logged already => delog, take FC and log ?!")
               if(pre_processing_procedure == "ln"){
                 data2Volcano <- as.data.frame(exp(
-                  selectedData_processed()[[omic_type]]$Matrix
+                  selectedData_processed()[[omic_type()]]$Matrix
                   ))
               }else{
                 data2Volcano <- as.data.frame(10^(
-                  selectedData_processed()[[omic_type]]$Matrix
+                  selectedData_processed()[[omic_type()]]$Matrix
                   ))
               }
           }else{
-              data2Volcano <- selectedData_processed()[[omic_type]]$Matrix
+              data2Volcano <- selectedData_processed()[[omic_type()]]$Matrix
           }
           if(any(data2Volcano == 0)){
             #macht es mehr sinn nur die nullen + eps zu machen oder lieber alle daten punkte + eps?
@@ -139,7 +139,7 @@ volcano_Server <- function(id, omic_type){
             p_sig_threshold = input$psig_threhsold,
             LFC_threshold = input$lfc_threshold,
             annotation_add = input$VOLCANO_anno_tooltip,
-            annoData = selectedData_processed()[[omic_type]]$annotation_rows
+            annoData = selectedData_processed()[[omic_type()]]$annotation_rows
             )
           colorScheme <- c("#cf0e5b","#939596")
           names(colorScheme) <- c("significant","non-significant")
@@ -187,7 +187,7 @@ volcano_Server <- function(id, omic_type){
           # add annotation to Table
           LFCTable <- merge(
             LFCTable,
-            selectedData_processed()[[omic_type]]$annotation_rows,
+            selectedData_processed()[[omic_type()]]$annotation_rows,
             by=0,
             all.x=TRUE,
             all.y=F)
