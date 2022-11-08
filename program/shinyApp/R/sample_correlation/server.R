@@ -68,11 +68,110 @@ sample_correlation_server <- function(id, omic_type, row_select){
           main = customTitleSampleCorrelation,
           annotation_colors = anno_colors
           )
+        
+        sampleCorrelation_scenario <- 18
         output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
-
+        
+        global_Vars$customTitleSampleCorrelation <- customTitleSampleCorrelation
+        global_Vars$SampleCorrelationPlot_final <- SampleCorrelationPlot_final
+        global_Vars$cormat <- cormat
+        global_Vars$annotationDF <- annotationDF
+        global_Vars$anno_colors <- anno_colors
+        global_Vars$sampleCorrelation_scenario <- sampleCorrelation_scenario
       })
 
       
-    }
-  )
+      # Download Section ----
+      output$getR_SampleCorrelation <- downloadHandler(
+        filename = function(){
+          paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+        },
+        content = function(file){
+          envList = list(
+            cormat = ifelse(exists("cormat"),global_Vars$cormat,NA),
+            annotationDF = ifelse(exists("annotationDF"),global_Vars$annotationDF,NA),
+            customTitleSampleCorrelation = ifelse(exists("customTitleSampleCorrelation"),global_Vars$customTitleSampleCorrelation,NA),
+            anno_colors = ifelse(exists("anno_colors"),global_Vars$anno_colors,NA)
+          )
+          
+          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+          dir.create(temp_directory)
+          
+          write(getPlotCode(global_Vars$sampleCorrelation_scenario), file.path(temp_directory, "Code.R"))
+          
+          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+          zip::zip(
+            zipfile = file,
+            files = dir(temp_directory),
+            root = temp_directory
+          )
+        },
+        contentType = "application/zip"
+      )
+      
+      output$SavePlot_SampleCorrelation <- downloadHandler(
+        filename = function() { 
+          paste(global_Vars$customTitleSampleCorrelation,Sys.time(),input$file_ext_Heatmap,sep = "") 
+        },
+        content = function(file){
+          save_pheatmap(global_Vars$SampleCorrelationPlot_final,filename = file,type=gsub("\\.","",input$file_ext_SampleCorrelation))
+          on.exit({
+            tmp_filename <- paste0(
+              getwd(),
+              "/www/",
+              paste(paste(global_Vars$customTitleSampleCorrelation,Sys.time(),input$file_ext_SampleCorrelation,sep = ""))
+            )
+            save_pheatmap(
+              global_Vars$SampleCorrelationPlot_final,
+              filename = tmp_filename,
+              type = gsub("\\.","",input$file_ext_SampleCorrelation)
+            )
+            
+            # Add Log Messages
+            fun_LogIt(message = "## SAMPLE CORRELATION")
+            fun_LogIt(message = paste0("**SAMPLE CORRELATION** - The correlation method used was: ",input$corrMethod))
+            fun_LogIt(message = paste0("**SAMPLE CORRELATION** - The heatmap samples were colored after ",paste(input$SampleAnnotationChoice)))
+            fun_LogIt(message = paste0("**SAMPLE CORRELATION** - ![SAMPLE_CORRELATION](",tmp_filename,")"))
+          })
+          
+        }
+      )
+      
+      # send only to report
+      observeEvent(input$only2Report_SampleCorrelation,{
+        notificationID <- showNotification("Saving...",duration = 0)
+        tmp_filename <- paste0(
+          getwd(),
+          "/www/",
+          paste(paste(global_Vars$customTitleSampleCorrelation,Sys.time(),".png",sep = ""))
+        )
+        
+        save_pheatmap(
+          global_Vars$SampleCorrelationPlot_final,
+          filename = tmp_filename,
+          type = "png"
+        )
+        
+        ## Add Log Messages
+        fun_LogIt(message = "## SAMPLE CORRELATION")
+        fun_LogIt(message = paste0("**SAMPLE CORRELATION** - The correlation method used was: ",input$corrMethod))
+        fun_LogIt(message = paste0("**SAMPLE CORRELATION** - The heatmap samples were colored after ",paste(input$SampleAnnotationChoice)))
+        fun_LogIt(message = paste0("**SAMPLE CORRELATION** - ![SAMPLE_CORRELATION](",tmp_filename,")"))
+        
+        if(isTruthy(input$NotesSampleCorrelation) & !(isEmpty(input$NotesSampleCorrelation))){
+          fun_LogIt(message = "### Personal Notes:")
+          fun_LogIt(message = input$NotesSampleCorrelation)
+        }
+        
+        removeNotification(notificationID)
+        showNotification("Saved!",type = "message", duration = 1)
+      })
+      
+
+      
+})
 }
+  
+
+  
+    
