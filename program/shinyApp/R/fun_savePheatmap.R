@@ -1,13 +1,6 @@
 save_pheatmap <- function(x, filename,type = "pdf") {
   stopifnot(!missing(x))
   stopifnot(!missing(filename))
-  if(nchar(filename)>=250){
-    tmp_filename <- paste0(
-      getwd(),
-      "/www/",
-      paste(paste("ShinyOmics",Sys.time(),".png",sep = ""))
-    )
-  }
   if(type == "pdf"){
     pdf(filename)
     grid::grid.newpage()

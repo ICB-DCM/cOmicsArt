@@ -274,6 +274,10 @@ pca_Server <- function(id, omic_type, row_select){
         print(input$only2Report_pca)
         global_Vars$PCA_plot <- pca_plot_final # somehow does not update ? or just return the latest?
         global_Vars$PCA_customTitle <- customTitle
+        # Longer names causes issues for saving 
+        if(nchar(global_Vars$PCA_customTitle) >= 250){
+          global_Vars$PCA_customTitle <- "PCA"
+        }
         global_Vars$PCA_coloring <- input$coloring_options
         global_Vars$PCA_noLoadings <- ifelse(input$Show_loadings == "Yes",length(TopK),0)
 
@@ -306,7 +310,7 @@ pca_Server <- function(id, omic_type, row_select){
 
         output$SavePlot_pos1 <- downloadHandler(
           filename = function() {
-            paste(customTitle,Sys.time(),input$file_ext_plot1,sep="")
+            paste(global_Vars$PCA_customTitle,Sys.time(),input$file_ext_plot1,sep="")
             },
           # cannot get the final destination as this is a download on server side
           content = function(file){
@@ -318,7 +322,7 @@ pca_Server <- function(id, omic_type, row_select){
             on.exit({
               TEST = paste0(getwd(),
                             "/www/",
-                            paste(customTitle,Sys.time(),input$file_ext_plot1,sep="")
+                            paste(global_Vars$PCA_customTitle,Sys.time(),input$file_ext_plot1,sep="")
                             )
               ggsave(
                 filename = TEST,
@@ -357,7 +361,11 @@ pca_Server <- function(id, omic_type, row_select){
 
         global_Vars$Scree_plot <- scree_plot
         global_Vars$Scree_customTitle <- customTitle
-
+        # Longer names causes issues for saving 
+        if(nchar(global_Vars$Scree_customTitle) >= 250){
+          global_Vars$Scree_customTitle <- "ScreePlot"
+        }
+        
         output$getR_Code_Scree_Plot <- downloadHandler(
           filename = function(){
             paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
@@ -382,7 +390,7 @@ pca_Server <- function(id, omic_type, row_select){
 
         output$SavePlot_Scree <- downloadHandler(
           filename = function() {
-            paste(customTitle,Sys.time(),input$file_ext_Scree,sep="")
+            paste(global_Vars$Scree_customTitle,Sys.time(),input$file_ext_Scree,sep="")
             },
 
           content = function(file){
@@ -391,7 +399,7 @@ pca_Server <- function(id, omic_type, row_select){
               tmp_filename=paste0(
                 getwd(),
                 "/www/",
-                paste("Scree",customTitle,Sys.time(),input$file_ext_Scree,sep="")
+                paste("Scree",global_Vars$Scree_customTitle,Sys.time(),input$file_ext_Scree,sep="")
                 )
               ggsave(tmp_filename,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
 
@@ -514,7 +522,7 @@ pca_Server <- function(id, omic_type, row_select){
           fun_LogIt(
             message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options)
             )
-          ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
+          ifelse(input$Show_loadings == "Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
           fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
           if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
             fun_LogIt(message = "### Personal Notes:")

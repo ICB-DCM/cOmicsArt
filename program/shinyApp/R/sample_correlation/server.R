@@ -77,6 +77,10 @@ sample_correlation_server <- function(id, omic_type, row_select){
         output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
         
         global_Vars$customTitleSampleCorrelation <- customTitleSampleCorrelation
+        # Longer names causes issues for saving 
+        if(nchar(global_Vars$customTitleSampleCorrelation) >= 250){
+          global_Vars$customTitleSampleCorrelation <- "SampleCorrelation"
+        }
         global_Vars$SampleCorrelationPlot_final <- SampleCorrelationPlot_final
         global_Vars$cormat <- cormat
         global_Vars$annotationDF <- annotationDF

@@ -412,6 +412,10 @@ heatmap_server <- function(id,omicType){
         output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
         
         global_Vars$Heatmap_customTitleHeatmap <- customTitleHeatmap
+        # Longer names causes issues for saving 
+        if(nchar(global_Vars$Heatmap_customTitleHeatmap) >= 250){
+          global_Vars$Heatmap_customTitleHeatmap <- "Heatmap"
+        }
         global_Vars$Heatmap_heatmap_plot <- heatmap_plot
         global_Vars$Heatmap_row_selection_options <- input$row_selection_options
         global_Vars$Heatmap_row_anno_options_heatmap <- input$row_anno_options_heatmap
@@ -462,7 +466,7 @@ heatmap_server <- function(id,omicType){
 
         output$SavePlot_Heatmap <- downloadHandler(
           filename = function() { 
-            paste(customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="") 
+            paste(global_Vars$Heatmap_customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="") 
             },
           content = function(file){
             save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
@@ -470,7 +474,7 @@ heatmap_server <- function(id,omicType){
               tmp_filename <- paste0(
                 getwd(),
                 "/www/",
-                paste(paste(customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep=""))
+                paste(paste(global_Vars$Heatmap_customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep=""))
                 )
               save_pheatmap(
                 heatmap_plot,
@@ -573,7 +577,7 @@ heatmap_server <- function(id,omicType){
         tmp_filename <- paste0(
           getwd(),
           "/www/",
-          paste(paste(global_Vars$Heatmap_customTitleHeatmap,Sys.time(),".png",sep="_"))
+          paste(paste(global_Vars$Heatmap_customTitleHeatmap,Sys.time(),".png",sep=""))
           )
 
         save_pheatmap(

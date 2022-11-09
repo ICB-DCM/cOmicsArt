@@ -185,7 +185,11 @@ single_gene_visualisation_server <- function(id,omicType){
             "_data_",colnames(GeneData)[-ncol(GeneData)]
             )
           global_Vars$SingleEnt_customTitle_boxplot <- customTitle_boxplot
-          global_Vars$SingleEnt_P_boxplots <-P_boxplots
+          # Longer names causes issues for saving 
+          if(nchar(global_Vars$SingleEnt_customTitle_boxplot) >= 250){
+            global_Vars$SingleEnt_customTitle_boxplot <- "SingleGeneVis"
+          }
+          global_Vars$SingleEnt_P_boxplots <- P_boxplots
           global_Vars$SingleEnt_Select_Gene <- input$Select_Gene
           global_Vars$SingleEnt_type_of_data_gene <- input$type_of_data_gene
           global_Vars$SingleEnt_accross_condition <- input$accross_condition
@@ -230,7 +234,7 @@ single_gene_visualisation_server <- function(id,omicType){
         
         output$SavePlot_singleGene <- downloadHandler(
           filename = function() { 
-            paste(customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep="") 
+            paste(global_Vars$SingleEnt_customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep="") 
             },
           
           content = function(file){
@@ -241,7 +245,7 @@ single_gene_visualisation_server <- function(id,omicType){
               )
             
             on.exit({
-              tmp_filename = paste0(getwd(),"/www/",paste(customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep=""))
+              tmp_filename = paste0(getwd(),"/www/",paste(global_Vars$SingleEnt_customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep=""))
               ggsave(
                 filename = tmp_filename,
                 plot=P_boxplots,
