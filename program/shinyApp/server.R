@@ -12,6 +12,7 @@ server <- function(input,output,session){
   source("R/Guide.R",local = T)
   source("R/module_DownloadReport.R",local = T)
   source("R/enrichment_analysis/enrichment_analysis.R", local = T)
+  source("R/enrichment_analysis/overrepresentation_analysis.R", local = T)
   source("R/enrichment_analysis/check_annotation.R", local = T)
   source("R/enrichment_analysis/translation.R", local = T)
   source("R/enrichment_analysis/server.R", local = T)

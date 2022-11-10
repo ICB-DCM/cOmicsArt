@@ -4,6 +4,14 @@ over_representation_analysis <- function(
   geneSetChoice
 ){
   # Overrepresentation analysis
+  
+  # assign the correct names to geneSetChoice
+  # For now this is a global variable, as EntrezId is the only annotation type needed.
+  geneSetChoice_tranlsated <<- geneSetChoice
+  names(geneSetChoice_tranlsated) <<- processedData_all$Transcriptomics$annotation_rows$ENTREZID
+  geneSetChoice_tranlsated <<- sort(geneSetChoice_tranlsated,decreasing = T)
+  # remove duplicate entries (keep the one highest in list)
+  geneSetChoice_tranlsated <<- geneSetChoice_tranlsated[!duplicated(names(geneSetChoice_tranlsated))]
 
   if(!isTruthy(input$UniverseOfGene)){
     universeSelected_tranlsated <- NULL
@@ -43,7 +51,7 @@ over_representation_analysis <- function(
   # KEGG
   if(global_Vars$enrichments2do$KEGG){
     EnrichmentRes_Kegg <- clusterProfiler::enrichKEGG(
-      gene = geneSetChoice_tranlsated,
+      gene = names(geneSetChoice_tranlsated),
       organism = input$OrganismChoice,
       pvalueCutoff = 0.05,
       universe = universeSelected_tranlsated
@@ -52,7 +60,7 @@ over_representation_analysis <- function(
   # GO
   if(global_Vars$enrichments2do$GO){
     EnrichmentRes_GO <- clusterProfiler::enrichGO(
-      gene = geneSetChoice_tranlsated,
+      gene = names(geneSetChoice_tranlsated),
       ont = input$ontologyForGO,
       pvalueCutoff = 0.05,
       OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db")
@@ -60,8 +68,8 @@ over_representation_analysis <- function(
   }
   # Reactome
   if(global_Vars$enrichments2do$REACTOME){
-    EnrichmentRes_RACTOME <<- ReactomePA::enrichPathway(
-      gene = geneSetChoice_tranlsated,
+    EnrichmentRes_REACTOME <- ReactomePA::enrichPathway(
+      gene = names(geneSetChoice_tranlsated),
       pvalueCutoff = 0.05,
       organism = ifelse(input$OrganismChoice == "hsa","human","mouse"),
       universe = universeSelected_tranlsated,
@@ -75,7 +83,7 @@ over_representation_analysis <- function(
       category = "H",
     ) %>% dplyr::select(gs_name, entrez_gene)
     EnrichmentRes_Hallmarks <- clusterProfiler::enricher(
-      gene = geneSetChoice_tranlsated,
+      gene = names(geneSetChoice_tranlsated),
       pvalueCutoff = 0.05,
       pAdjustMethod = "BH",
       universe = universeSelected_tranlsated,
@@ -89,7 +97,7 @@ over_representation_analysis <- function(
       category = "C1",
     ) %>% dplyr::select(gs_name, entrez_gene)
     EnrichmentRes_C1 <- clusterProfiler::enricher(
-      gene = geneSetChoice_tranlsated,
+      gene = names(geneSetChoice_tranlsated),
       pvalueCutoff = 0.05,
       pAdjustMethod = "BH",
       universe = universeSelected_tranlsated,
@@ -103,7 +111,7 @@ over_representation_analysis <- function(
       category = "C2",
     ) %>% dplyr::select(gs_name, entrez_gene)
     EnrichmentRes_C2 <- clusterProfiler::enricher(
-      gene = geneSetChoice_tranlsated,
+      gene = names(geneSetChoice_tranlsated),
       pvalueCutoff = 0.05,
       pAdjustMethod = "BH",
       universe = universeSelected_tranlsated,
@@ -117,7 +125,7 @@ over_representation_analysis <- function(
       category = "C3",
     ) %>% dplyr::select(gs_name, entrez_gene)
     EnrichmentRes_C3 <- clusterProfiler::enricher(
-      gene = geneSetChoice_tranlsated,
+      gene = names(geneSetChoice_tranlsated),
       pvalueCutoff = 0.05,
       pAdjustMethod = "BH",
       universe = universeSelected_tranlsated,
@@ -131,7 +139,7 @@ over_representation_analysis <- function(
       category = "C4",
     ) %>% dplyr::select(gs_name, entrez_gene)
     EnrichmentRes_C4 <- clusterProfiler::enricher(
-      gene = geneSetChoice_tranlsated,
+      gene = names(geneSetChoice_tranlsated),
       pvalueCutoff = 0.05,
       pAdjustMethod = "BH",
       universe = universeSelected_tranlsated,
@@ -145,7 +153,7 @@ over_representation_analysis <- function(
       category = "C5",
     ) %>% dplyr::select(gs_name, entrez_gene)
     EnrichmentRes_C5 <- clusterProfiler::enricher(
-      gene = geneSetChoice_tranlsated,
+      gene = names(geneSetChoice_tranlsated),
       pvalueCutoff = 0.05,
       pAdjustMethod = "BH",
       universe = universeSelected_tranlsated,
@@ -159,7 +167,7 @@ over_representation_analysis <- function(
       category = "C6",
     ) %>% dplyr::select(gs_name, entrez_gene)
     EnrichmentRes_C6 <- clusterProfiler::enricher(
-      gene = geneSetChoice_tranlsated,
+      gene = names(geneSetChoice_tranlsated),
       pvalueCutoff = 0.05,
       pAdjustMethod = "BH",
       universe = universeSelected_tranlsated,
@@ -174,7 +182,7 @@ over_representation_analysis <- function(
       subcategory = "IMMUNESIGDB"
     ) %>% dplyr::select(gs_name, entrez_gene)
     EnrichmentRes_C7 <- clusterProfiler::enricher(
-      gene = geneSetChoice_tranlsated,
+      gene = names(geneSetChoice_tranlsated),
       pvalueCutoff = 0.05,
       pAdjustMethod = "BH",
       universe = universeSelected_tranlsated,
@@ -188,7 +196,7 @@ over_representation_analysis <- function(
       category = "C8",
     ) %>% dplyr::select(gs_name, entrez_gene)
     EnrichmentRes_C8 <- clusterProfiler::enricher(
-      gene = geneSetChoice_tranlsated,
+      gene = names(geneSetChoice_tranlsated),
       pvalueCutoff = 0.05,
       pAdjustMethod = "BH",
       universe = universeSelected_tranlsated,

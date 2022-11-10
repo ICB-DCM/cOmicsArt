@@ -402,67 +402,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
             enrichment_results <<- gene_set_enrichment(input, output, tmp_genes)
           }else{
-            if(!isTruthy(input$UniverseOfGene)){
-              universeSelected_tranlsated <- NULL
-            }else{
-              if(input$UniverseOfGene == "default"){
-                universeSelected_tranlsated <- NULL
-              }
-            }
-            # TODO: workaround and is needed?
-            if(input$UniverseOfGene == "allPresentGenes_before_pre_process"){
-              req(data_input_shiny())
-              universeSelected <- rownames(data_input_shiny()[[omic_type()]]$Matrix)
-              # Note if transcripts are used this will be ignored for enrichment analysis
-              universeSelected <- unique(gsub("\\..*$","",universeSelected))
-              print(paste0("Universe genes untranslated: ",length(universeSelected)))
-              universeSelected_tranlsated <- bitr(
-                universeSelected,
-                fromType = "ENSEMBL",
-                toType = "ENTREZID",
-                OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-              print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
-            }
-
-            EnrichmentRes_Kegg <<- clusterProfiler::enrichKEGG(
-              gene = geneSetChoice_tranlsated,
-              organism = input$OrganismChoice,
-              pvalueCutoff = 0.05,
-              universe = universeSelected_tranlsated
-            )
-            if(input$ontologyForGO=="ALL"){
-              tryCatch({
-                EnrichmentRes_GO <<- clusterProfiler::enrichGO(
-                  gene = geneSetChoice_tranlsated,
-                  ont =input$ontologyForGO,
-                  pvalueCutoff = 0.05,
-                  OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))
-              },
-              error=function(e){
-                EnrichmentRes_GO <<- NULL
-                showModal(modalDialog(
-                  tags$h4('GO enrichment threw an error. Please try out the subontologies on after the other to search for enriched terms within all of them.'),
-                  footer = tagList(
-                    modalButton('OK')
-                  )
-                ))
-              })
-            }else{
-              EnrichmentRes_GO <<- clusterProfiler::enrichGO(
-                gene = geneSetChoice_tranlsated,
-                ont = input$ontologyForGO,
-                pvalueCutoff = 0.05,
-                OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))
-            }
-
-
-            EnrichmentRes_RACTOME <<- ReactomePA::enrichPathway(
-              gene = geneSetChoice_tranlsated,
-              pvalueCutoff = 0.05,
-              organism = ifelse(input$OrganismChoice == "hsa","human","mouse"),
-              universe = universeSelected_tranlsated,
-              readable = T
-            )
+            enrichment_results <<- over_representation_analysis(input, output, tmp_genes)
           }
           # TODO: deactivate ORA for now? or fix notation
           # TODO: fix scenario
