@@ -70,7 +70,9 @@ pca_Server <- function(id, omic_type, row_select){
         input$topSlider,
         input$Show_loadings,
         input$PCA_anno_tooltip,
-        input$EntitieAnno_Loadings
+        input$EntitieAnno_Loadings,
+        input$filterValue,
+        input$nPCAs_to_look_at
         )
       })
       observeEvent(toListen2PCA(),{
@@ -102,7 +104,7 @@ pca_Server <- function(id, omic_type, row_select){
         explVar <- pca$sdev^2/sum(pca$sdev^2)
         names(explVar) <- colnames(pca$x)
         # transform variance to percent
-        percentVar <- round(100 * explVar, digits=1)
+        percentVar <- round(100 * explVar, digits = 1)
 
         # Define data for plotting
         pcaData <- data.frame(pca$x,selectedData_processed()[[omic_type()]]$sample_table)
@@ -189,7 +191,7 @@ pca_Server <- function(id, omic_type, row_select){
           scenario <- 3
         }
 
-        pca_plot_final <- pca_plot+
+        pca_plot_final <- pca_plot +
           xlab(paste0(
             names(percentVar[input$x_axis_selection]),
             ": ",
@@ -420,7 +422,7 @@ pca_Server <- function(id, omic_type, row_select){
         #LoadingsDF$Loading=scale(LoadingsDF$Loading)
         LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
         LoadingsDF <- rbind(
-          LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF)-input$bottomSlider),],
+          LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - input$bottomSlider),],
           LoadingsDF[input$topSlider:1,]
           )
         LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
@@ -431,15 +433,14 @@ pca_Server <- function(id, omic_type, row_select){
             levels = make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
             )
         }
-
         plotOut <- ggplot(LoadingsDF,aes(x = Loading,y = entitie)) +
-          geom_col(aes(fill=Loading)) +
+          geom_col(aes(fill = Loading)) +
           scale_y_discrete(
             breaks = LoadingsDF$entitie,
             labels = stringr::str_wrap(gsub("\\.[0-9].*$","",LoadingsDF$entitie),20)) +
-          scale_fill_gradient2(low = "#277d6a",mid = "white",high = "orange")+
+          scale_fill_gradient2(low = "#277d6a",mid = "white",high = "orange") +
           ylab(ifelse(is.null(input$EntitieAnno_Loadings),"",input$EntitieAnno_Loadings)) +
-          xlab(paste0("Loadings: ",input$x_axis_selection))+
+          xlab(paste0("Loadings: ",input$x_axis_selection)) +
           theme_bw(base_size = 15)
 
         scenario <- 8
@@ -505,8 +506,103 @@ pca_Server <- function(id, omic_type, row_select){
             })
           }
         )
+        
+        ### Do Loadings Plot Matrix ----
+        df_loadings <- data.frame(
+          entity = row.names(pca$rotation), 
+          pca$rotation[, 1:input$nPCAs_to_look_at]
+          )
+        df_loadings_filtered <- as.matrix(df_loadings[,-1]) >= abs(input$filterValue)
+        entitiesToInclude <- apply(df_loadings_filtered, 1, any)
+        
+        df_loadings <- df_loadings[entitiesToInclude,] %>%
+          gather(key = "PC", value = "loading", -entity)
+        
+        global_max <- max(df_loadings$loading)
+        global_min <- -global_max
+        
+        LoadingsMatrix <- ggplot(
+          df_loadings,
+          aes(
+            x = PC,
+            y = entity,
+            fill = loading)
+          ) +
+          geom_raster() +
+          scale_fill_gradientn(
+            colors = c("#277d6a", "white", "orange"),
+            limits = c(global_min,global_max)
+          ) +
+          labs(x = "PCs", y = "entity", fill = "Loading") +
+          theme_bw(base_size = 15)
+        
+        scenario <- 19
+        #Loading_scenario <- scenario
+        output[["PCA_Loadings_matrix_plot"]] <- renderPlot({LoadingsMatrix})
+        
+        global_Vars$nPCAs_to_look_at <- input$nPCAs_to_look_at
+        global_Vars$filterValue <- input$filterValue
+        global_Vars$LoadingsMatrix_plot <- LoadingsMatrix
+        
+        output$getR_Code_Loadings_matrix <- downloadHandler(
+          filename = function(){
+            paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+          },
+          content = function(file){
+            envList = list(LoadingsDF = df_loadings,
+                         input = reactiveValuesToList(input))
+            
+            temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+            dir.create(temp_directory)
+            
+            write(getPlotCode(scenario), file.path(temp_directory, "Code.R"))
+            
+            saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
+            zip::zip(
+              zipfile = file,
+              files = dir(temp_directory),
+              root = temp_directory
+            )
+          },
+          contentType = "application/zip"
+        )
+        
+        output$SavePlot_Loadings_matrix <- downloadHandler(
+          filename = function() { paste0("LOADINGS_Matrix_PCA_", Sys.time(), input$file_ext_Loadings_matrix) },
+          
+          content = function(file){
+            ggsave(file,
+                   plot = LoadingsMatrix,
+                   device = gsub("\\.","",input$file_ext_Loadings_matrix),
+                   dpi = "print"
+            )
+            
+            on.exit({
+              tmp_filename = paste0(
+                getwd(),
+                "/www/",
+                paste("LOADINGS_Matrix_PCA_",Sys.time(),input$file_ext_Loadings_matrix,sep = "")
+              )
+              ggsave(
+                tmp_filename,
+                plot = LoadingsMatrix,
+                device = gsub("\\.","",input$file_ext_Loadings),
+                dpi = "print"
+              )
+              # Add Log Messages
+              fun_LogIt(message = "### PCA Loadings Matrix")
+              fun_LogIt(message = paste0("**PCALoadingsMatrix** - Loadings plot for Principle Components 1 till ",input$x_axis_selection))
+              fun_LogIt(message = paste0("**PCALoadingsMatrix** - Showing all entities which have an absolute Loadings value of at least", input$filterValue))
+              fun_LogIt(message = paste0("**PCALoadingsMatrix** - The corresponding Loadings Matrix plot - ![PCALoadingsMatrix](",tmp_filename,")"))
+            })
+          }
+        )
+  #    })
+        
+        
       })
-
+    
+      
       ## Log it ----
       observeEvent(input$only2Report_pca,{
           # needs global var ?! do we want that?
@@ -573,6 +669,30 @@ pca_Server <- function(id, omic_type, row_select){
         fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",global_Vars$Loadings_topSlider," and the lowest ",global_Vars$Loadings_bottomSlider," Loadings"))
         fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
 
+        removeNotification(notificationID)
+        showNotification("Saved!",type = "message", duration = 1)
+      })
+      
+      observeEvent(input$only2Report_Loadings_matrix,{
+        notificationID <- showNotification("Saving...",duration = 0)
+        
+        tmp_filename = paste0(
+            getwd(),
+            "/www/",
+            paste("LOADINGS_Matrix_PCA_",Sys.time(),input$file_ext_Loadings_matrix,sep = "")
+          )
+        ggsave(
+            tmp_filename,
+            plot = LoadingsMatrix,
+            device = gsub("\\.","",input$file_ext_Loadings),
+            dpi = "print"
+            )
+        # Add Log Messages
+        fun_LogIt(message = "### PCA Loadings Matrix")
+        fun_LogIt(message = paste0("**PCALoadingsMatrix** - Loadings plot for Principle Components 1 till ",input$x_axis_selection))
+        fun_LogIt(message = paste0("**PCALoadingsMatrix** - Showing all entities which have an absolute Loadings value of at least", input$filterValue))
+        fun_LogIt(message = paste0("**PCALoadingsMatrix** - The corresponding Loadings Matrix plot - ![PCALoadingsMatrix](",tmp_filename,")"))
+        
         removeNotification(notificationID)
         showNotification("Saved!",type = "message", duration = 1)
       })

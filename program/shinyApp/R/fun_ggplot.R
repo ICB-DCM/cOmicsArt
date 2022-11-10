@@ -228,6 +228,22 @@ getPlotCode <- function(numberOfScenario) {
           annotation_colors = anno_colors
           )'
   }
+  if(numberOfScenario == 19){
+    stringtosave = 'LoadingsMatrix <- ggplot(
+          df_loadings,
+          aes(
+            x = PC,
+            y = entitie,
+            fill = loading)
+          ) +
+          geom_raster() +
+          scale_fill_gradientn(
+            colors = c("#277d6a", "white", "orange"),
+            limits = c(global_min,global_max)
+          ) +
+          labs(x = "PCs", y = "entity", fill = "Loading") +
+          theme_bw(base_size = 15)'
+  }
   if(numberOfScenario == 0){
     stringtosave='# No_code_yet'
   }

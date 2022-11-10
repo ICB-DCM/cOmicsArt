@@ -151,6 +151,74 @@ pca_main_panel <- function(ns){
         )
       ),
       tabPanel(
+        title = "PCA_Loadings_matrix",
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          plotOutput(outputId = ns("PCA_Loadings_matrix_plot")) %>% withSpinner(type = 8),
+          NULL
+          #textOutput(outputId = ns("Loadings_plot_Options_selected_out"), container = pre)
+        ),
+        uiOutput(outputId = ns("EntitieAnno_Loadings_matrix_ui")),
+        sliderInput(
+          inputId = ns("nPCAs_to_look_at"),
+          label = "Number of PC's to include",
+          min = 1,
+          max = 25, # renderui
+          value = 5,
+          step = 1
+        ),
+        sliderInput(
+          inputId = ns("filterValue"),
+          label = "absolute Loading threshold to filter entities with low impact",
+          min = 0,
+          max = 1, # renderui
+          value = 0.3,
+          step = 0.01
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          actionButton(
+            inputId = ns("only2Report_Loadings_matrix"),
+            label = "Send only to Report",
+            class = "btn-info"
+          )
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          downloadButton(
+            outputId = ns("getR_Code_Loadings_matrix"),
+            label = "Get underlying R code and data",
+            icon = icon("code")
+          )
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          downloadButton(
+            outputId = ns("SavePlot_Loadings_matrix"),
+            label = "Save plot",
+            class = "btn-info"
+          )
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          radioGroupButtons(
+            inputId = ns("file_ext_Loadings_matrix"),
+            label = "File Type:",
+            choices = c(".png", ".tiff", ".pdf"),
+            selected = ".png"
+          )
+        )
+      ),
+      tabPanel(
         title = "Scree_Plot",
         splitLayout(
           style = "border: 1px solid silver:",
