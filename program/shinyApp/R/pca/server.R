@@ -60,6 +60,15 @@ pca_Server <- function(id, omic_type, row_select){
           multiple = F
         )
       })
+      
+      output$EntitieAnno_Loadings_matrix_ui <- renderUI({
+        selectInput(
+          inputId = ns("EntitieAnno_Loadings_matrix"),
+          label = "Select the annotype shown at y-axis",
+          choices = c(colnames(data_input_shiny()[[omic_type()]]$annotation_rows)),
+          multiple = F
+        )
+      })
       toListen2PCA <- reactive({
       list(
         input$Do_PCA,
@@ -71,6 +80,7 @@ pca_Server <- function(id, omic_type, row_select){
         input$Show_loadings,
         input$PCA_anno_tooltip,
         input$EntitieAnno_Loadings,
+        input$EntitieAnno_Loadings_matrix,
         input$filterValue,
         input$nPCAs_to_look_at
         )
@@ -521,11 +531,21 @@ pca_Server <- function(id, omic_type, row_select){
         global_max <- max(df_loadings$loading)
         global_min <- -global_max
         
+        if(!is.null(input$EntitieAnno_Loadings_matrix)){
+          req(data_input_shiny()[[omic_type()]])
+          df_loadings$chosenAnno <- factor(
+            make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix])),
+            levels = make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix]))
+          )
+        }else{
+          df_loadings$chosenAnno <- df_loadings$entity
+        }
+        
         LoadingsMatrix <- ggplot(
           df_loadings,
           aes(
             x = PC,
-            y = entity,
+            y = chosenAnno,
             fill = loading)
           ) +
           geom_raster() +

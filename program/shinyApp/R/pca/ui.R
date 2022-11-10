@@ -164,7 +164,7 @@ pca_main_panel <- function(ns){
           inputId = ns("nPCAs_to_look_at"),
           label = "Number of PC's to include",
           min = 1,
-          max = 25, # renderui
+          max = 10, # renderui?
           value = 5,
           step = 1
         ),
@@ -172,7 +172,7 @@ pca_main_panel <- function(ns){
           inputId = ns("filterValue"),
           label = "absolute Loading threshold to filter entities with low impact",
           min = 0,
-          max = 1, # renderui
+          max = 1, # renderui?
           value = 0.3,
           step = 0.01
         ),
