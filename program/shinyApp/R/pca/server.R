@@ -540,7 +540,8 @@ pca_Server <- function(id, omic_type, row_select){
         }else{
           df_loadings$chosenAnno <- df_loadings$entity
         }
-        
+        # TO DO
+        # Change thi to a pheatmap + ad possibility to cluster rows
         LoadingsMatrix <- ggplot(
           df_loadings,
           aes(
