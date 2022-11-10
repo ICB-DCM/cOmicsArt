@@ -210,17 +210,15 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
           hide(id = "Groups2Compare_ref_GSEA", anim = T)
           hide(id = "Groups2Compare_treat_GSEA", anim = T)
           hide(id = "psig_threhsold_GSEA", anim = T)
-          hide(id = "GeneSetChoice", anim = T)
         }
 
         if(input$ORA_or_GSE == "OverRepresentation_Analysis"){
-
           output$GeneSet2Enrich_ui <- renderUI({
             selectInput(
               inputId = ns("GeneSet2Enrich"),
               label = "Choose a gene set to hand over to enrich",
               choices = c("DE_Genes", "ProvidedGeneSet", "heatmap_genes"),
-              selected = "DE_Genes"
+              selected = "heatmap_genes"
             )
           })
           output$UniverseOfGene_ui <- renderUI({
@@ -234,23 +232,24 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               ),
               selected = "default"
             )
-            if(input$GeneSet2Enrich == "DE_Genes"){
-              output$UploadedGeneSet_ui <- renderUI({NULL})
-              # atm this is not done
-              # geneSetChoice<-DE_GenesGlobal_4comp
-              print("not done atm")
-              # print(paste("Gene Set provided to check for enrichment: ",length(geneSetChoice)))
-            }
+          })
+          req(input$GeneSet2Enrich)
+          if(input$GeneSet2Enrich == "DE_Genes"){
+            output$UploadedGeneSet_ui <- renderUI({NULL})
+            # atm this is not done
+            # geneSetChoice<-DE_GenesGlobal_4comp
+            print("not done atm")
+            # print(paste("Gene Set provided to check for enrichment: ",length(geneSetChoice)))
+          }
 
-            if(input$GeneSet2Enrich == "ProvidedGeneSet"){
-              output$UploadedGeneSet_ui <- renderUI(
+          if(input$GeneSet2Enrich == "ProvidedGeneSet"){
+            output$UploadedGeneSet_ui <- renderUI(
               {shiny::fileInput(
                 inputId = ns("UploadedGeneSet"),
                 label = "Select a file (.csv, 1 column, ENSEMBL, e.g. ENSMUSG....)"
               )}
-              )
-            }
-          })
+            )
+          }
         }else{
           hide(id = "GeneSet2Enrich",anim=T)
           hide(id = "UniverseOfGene",anim=T)
@@ -330,7 +329,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             }
           }
           if(input$GeneSet2Enrich == "heatmap_genes"){
-            geneSetChoice_tmp <- heatmap_genelist()
+            geneSetChoice_tmp <- heatmap_genelist
           }
         }else{
           if(input$ValueToAttach == "LFC"){
@@ -403,133 +402,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
             enrichment_results <<- gene_set_enrichment(input, output, tmp_genes)
           }else{
-            print("Translation needed?")
-            # Build in check if EntrezIDs or gene Names provided, if nothing of the two return message to user
-            providedDataType <- "None"
-            tryCatch(
-              expr = {
-                bitr(
-                  geneSetChoice()[1],
-                  fromType = "SYMBOL",
-                  toType = "ENTREZID",
-                  OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-                providedDataType <- "SYMBOL"
-              },
-              error = function(e){
-                # Not a Symbol!
-                print("Not a Gene Symbol")
-              }
-            )
-            if(providedDataType == "None"){
-              tryCatch(
-                expr = {
-                  bitr(
-                    geneSetChoice()[1],
-                    fromType = "GENENAME",
-                    toType = "ENTREZID",
-                    OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-                  providedDataType <- "SYMBOL"
-                },
-                error = function(e){
-                  # Not a Symbol!
-                  print("Not a Genename")
-                }
-              )
-            }
-            if(providedDataType == "None"){
-              tryCatch(
-                expr = {
-                  bitr(
-                    geneSetChoice()[1],
-                    fromType = "ENSEMBL",
-                    toType = "ENTREZID",
-                    OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-                  providedDataType <- "ENSEMBL"
-                },
-                error = function(e){
-                  # Not a Symbol!
-                  print("Not a ENSEMBL")
-                }
-              )
-            }
-
-
-            print(providedDataType)
-
-            if(providedDataType=="None"){
-              output$EnrichmentInfo <- renderText("Enrichment Failed - Make sure you provid the genelist with entries of type SYMBOL, GENENAME or ENSEMBL. (If you send genes from within the App, double check your annotation and re-send; for gene list from outside the App-World check and translate: https://david.ncifcrf.gov/conversion.jsp")
-              req(FALSE)
-            }
-
-            geneSetChoice_tranlsated <- bitr(
-              geneSetChoice(),
-              fromType = providedDataType,
-              toType = "ENTREZID",
-              OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-            print(paste0("Enrichment of ",length(geneSetChoice_tranlsated)," genes"))
-
-
-            if(!isTruthy(input$UniverseOfGene)){
-              universeSelected_tranlsated <- NULL
-            }else{
-              if(input$UniverseOfGene == "default"){
-                universeSelected_tranlsated <- NULL
-              }
-            }
-
-            if(input$UniverseOfGene == "allPresentGenes_before_pre_process"){
-              req(data_input_shiny())
-              universeSelected <- rownames(data_input_shiny()[[omic_type()]]$Matrix)
-              # Note if transcripts are used this will be ignored for enrichment analysis
-              universeSelected <- unique(gsub("\\..*$","",universeSelected))
-              print(paste0("Universe genes untranslated: ",length(universeSelected)))
-              universeSelected_tranlsated <- bitr(
-                universeSelected,
-                fromType = "ENSEMBL",
-                toType = "ENTREZID",
-                OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
-              print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
-            }
-
-            EnrichmentRes_Kegg <<- clusterProfiler::enrichKEGG(
-              gene = geneSetChoice_tranlsated,
-              organism = input$OrganismChoice,
-              pvalueCutoff = 0.05,
-              universe = universeSelected_tranlsated
-            )
-            if(input$ontologyForGO=="ALL"){
-              tryCatch({
-                EnrichmentRes_GO <<- clusterProfiler::enrichGO(
-                  gene = geneSetChoice_tranlsated,
-                  ont =input$ontologyForGO,
-                  pvalueCutoff = 0.05,
-                  OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))
-              },
-              error=function(e){
-                EnrichmentRes_GO <<- NULL
-                showModal(modalDialog(
-                  tags$h4('GO enrichment threw an error. Please try out the subontologies on after the other to search for enriched terms within all of them.'),
-                  footer = tagList(
-                    modalButton('OK')
-                  )
-                ))
-              })
-            }else{
-              EnrichmentRes_GO <<- clusterProfiler::enrichGO(
-                gene = geneSetChoice_tranlsated,
-                ont = input$ontologyForGO,
-                pvalueCutoff = 0.05,
-                OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))
-            }
-
-
-            EnrichmentRes_RACTOME <<- ReactomePA::enrichPathway(
-              gene = geneSetChoice_tranlsated,
-              pvalueCutoff = 0.05,
-              organism = ifelse(input$OrganismChoice == "hsa","human","mouse"),
-              universe = universeSelected_tranlsated,
-              readable = T
-            )
+            enrichment_results <<- over_representation_analysis(input, output, tmp_genes)
           }
           # TODO: deactivate ORA for now? or fix notation
           # TODO: fix scenario
