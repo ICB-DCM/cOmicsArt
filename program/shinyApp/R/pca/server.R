@@ -342,7 +342,7 @@ pca_Server <- function(id, omic_type, row_select){
     ### Do Scree plot ----
 
         var_explained_df <- data.frame(PC = paste0("PC",1:ncol(pca$x)),
-                                       var_explained=(pca$sdev)^2/sum((pca$sdev)^2))
+                                       var_explained = (pca$sdev)^2/sum((pca$sdev)^2))
         var_explained_df$Var <- paste0(round(var_explained_df$var_explained,4)*100,"%")
         var_explained_df$PC <- factor(var_explained_df$PC,levels = paste0("PC",1:ncol(pca$x)))
         scree_plot <-

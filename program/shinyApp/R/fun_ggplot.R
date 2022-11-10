@@ -229,7 +229,7 @@ getPlotCode <- function(numberOfScenario) {
           )'
   }
   if(numberOfScenario == 0){
-    stringtosave='Not_code_yet'
+    stringtosave='# No_code_yet'
   }
   
   return(paste0(CODE_DOWNLOAD_PREFACE,"\n",stringtosave))

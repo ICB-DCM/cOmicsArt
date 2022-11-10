@@ -147,7 +147,7 @@ heatmap_server <- function(id,omicType){
       
       observe({
         if(any(input$row_selection_options == "TopK")){
-          output$TopK_ui=renderUI({
+          output$TopK_ui <- renderUI({
             numericInput(inputId = ns("TopK"),
                          label = "Choose number of top entities to show (order based on p-val (LFC) or rowCount)",
                          min = 1,
