@@ -69,7 +69,7 @@ heatmap_server <- function(id,omicType){
         req(data_input_shiny())
         checkboxInput(
           inputId = ns("LFC_toHeatmap"),
-          label="Show log Fold Changes?",
+          label = "Show log Fold Changes?",
           value = FALSE,
           width = "20%"
           )
@@ -131,9 +131,9 @@ heatmap_server <- function(id,omicType){
             numericInput(
               inputId = ns("psig_threhsold_heatmap"),
               label = "adj. p-value threshold",
-              min=0, 
-              max=0.1, 
-              step=0.01,
+              min = 0, 
+              max = 0.1, 
+              step = 0.01,
               value = 0.05
               )
           })
@@ -146,7 +146,7 @@ heatmap_server <- function(id,omicType){
       })
       
       observe({
-        if(any(input$row_selection_options=="TopK")){
+        if(any(input$row_selection_options == "TopK")){
           output$TopK_ui=renderUI({
             numericInput(inputId = ns("TopK"),
                          label = "Choose number of top entities to show (order based on p-val (LFC) or rowCount)",
@@ -155,13 +155,13 @@ heatmap_server <- function(id,omicType){
                          value = 20)
             })
         }else{
-          hide(id = "TopK",anim=T)
+          hide(id = "TopK", anim = T)
         }
       })
 
       observe({
         if(input$Selection_show_annoBased & 
-           any(input$row_selection_options=="rowAnno_based")){
+           any(input$row_selection_options == "rowAnno_based")){
           
           output$anno_options_heatmap_ui <- renderUI({
             req(selectedData_processed())
@@ -169,7 +169,7 @@ heatmap_server <- function(id,omicType){
               inputId = ns("anno_options_heatmap"),
               label = "Choose the variable to select the rows after (Multiples are not possible)",
               choices = c(colnames(selectedData_processed()[[omicType()]]$annotation_rows)),
-              selected=colnames(selectedData_processed()[[omicType()]]$annotation_rows)[1],
+              selected = colnames(selectedData_processed()[[omicType()]]$annotation_rows)[1],
               multiple = F # would be cool if true, to be able to merge vars ?!,
             )
           })
@@ -179,7 +179,7 @@ heatmap_server <- function(id,omicType){
               inputId = ns("row_anno_options_heatmap"),
               label = "Which entities to use?",
               choices = c("all",unique(selectedData_processed()[[omicType()]]$annotation_rows[,input$anno_options_heatmap])),
-              selected="all",
+              selected = "all",
               multiple = T
             )
           })
@@ -226,7 +226,7 @@ heatmap_server <- function(id,omicType){
 
         print(customTitleHeatmap)
         mycolors <- list()
-        if(length(input$anno_options)==1){
+        if(length(input$anno_options) == 1){
           if(length(unique(data2Plot[[omicType()]]$sample_table[,input$anno_options])) <= 8){
             names(colorTheme) <- unique(data2Plot[[omicType()]]$sample_table[,input$anno_options])
             colorTheme <- colorTheme[!is.na(names(colorTheme))]
@@ -250,7 +250,7 @@ heatmap_server <- function(id,omicType){
             # }else{
               print("We should be here")
               print(input$row_anno_options_heatmap)
-              additionalInput_row_anno <- ifelse(any(input$row_selection_options=="rowAnno_based"),"yip",NA)
+              additionalInput_row_anno <- ifelse(any(input$row_selection_options == "rowAnno_based"),"yip",NA)
               if(!is.na(additionalInput_row_anno)){
                 additionalInput_row_anno <- input$anno_options_heatmap
                 print(additionalInput_row_anno)
@@ -356,9 +356,9 @@ heatmap_server <- function(id,omicType){
             annotation_col <- data2Plot[[omicType()]]$annotation_rows[,input$row_anno_options,drop=F]
             heatmap_plot <- pheatmap(
               t(Data2Plot[,"LFC",drop=F]),
-              main=gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
-              show_rownames=ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
-              show_colnames=TRUE,
+              main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
+              show_rownames = ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
+              show_colnames = TRUE,
               cluster_cols = input$cluster_cols,
               cluster_rows = FALSE, 
               scale=ifelse(input$rowWiseScaled,"row","none"),
@@ -395,9 +395,9 @@ heatmap_server <- function(id,omicType){
           heatmap_plot<-pheatmap(
             as.matrix(data2HandOver),
             main = customTitleHeatmap,
-            show_rownames=ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
+            show_rownames = ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
             labels_row = selectedData_processed_df[[omicType()]]$annotation_rows[rownames(data2HandOver),input$row_label_options],
-            show_colnames=TRUE,
+            show_colnames = TRUE,
             cluster_cols = input$cluster_cols,
             cluster_rows = clusterRowspossible,
             scale=ifelse(input$rowWiseScaled,"row","none"),
@@ -437,16 +437,16 @@ heatmap_server <- function(id,omicType){
           content = function(file){
             envList=list(
               Data2Plot = ifelse(exists("Data2Plot"),Data2Plot,NA),
-              data2HandOver=ifelse(exists("data2HandOver"),data2HandOver,NA),
-              selectedData_processed_df=ifelse(exists("selectedData_processed_df"),selectedData_processed_df,NA),
-              clusterRowspossible=ifelse(exists("clusterRowspossible"),clusterRowspossible,NA),
-              annotation_col=annotation_col,
-              annotation_row=ifelse(exists("annotation_row"),annotation_row,NA),
-              mycolors=ifelse(exists("mycolors"),mycolors,NA),
-              customTitleHeatmap=customTitleHeatmap,
-              input=reactiveValuesToList(input),
-              myBreaks=ifelse(exists("myBreaks"),myBreaks,NA),
-              myColor_fill=ifelse(exists("myColor_fill"),myColor_fill,NA)
+              data2HandOver = ifelse(exists("data2HandOver"),data2HandOver,NA),
+              selectedData_processed_df = ifelse(exists("selectedData_processed_df"),selectedData_processed_df,NA),
+              clusterRowspossible = ifelse(exists("clusterRowspossible"),clusterRowspossible,NA),
+              annotation_col = annotation_col,
+              annotation_row = ifelse(exists("annotation_row"),annotation_row,NA),
+              mycolors = ifelse(exists("mycolors"),mycolors,NA),
+              customTitleHeatmap = customTitleHeatmap,
+              input = reactiveValuesToList(input),
+              myBreaks = ifelse(exists("myBreaks"),myBreaks,NA),
+              myColor_fill = ifelse(exists("myColor_fill"),myColor_fill,NA)
               )
             
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
@@ -478,8 +478,8 @@ heatmap_server <- function(id,omicType){
                 )
               save_pheatmap(
                 heatmap_plot,
-                filename=tmp_filename,
-                type=gsub("\\.","",input$file_ext_Heatmap)
+                filename = tmp_filename,
+                type = gsub("\\.","",input$file_ext_Heatmap)
                 )
               
               # Add Log Messages
@@ -562,7 +562,7 @@ heatmap_server <- function(id,omicType){
           inputId = "tabsetPanel1",
           selected = "Enrichment Analysis"
           )
-        tmp_selection<<-"heatmap_genes"
+        tmp_selection <<- "heatmap_genes"
       })
       
       observeEvent(input$Do_Heatmap,{
@@ -573,7 +573,7 @@ heatmap_server <- function(id,omicType){
       })
       # send only to report
       observeEvent(input$only2Report_Heatmap,{
-        notificationID <-showNotification("Saving...",duration = 0)
+        notificationID <- showNotification("Saving...",duration = 0)
         tmp_filename <- paste0(
           getwd(),
           "/www/",
@@ -600,14 +600,14 @@ heatmap_server <- function(id,omicType){
         }
         fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",global_Vars$Heatmap_anno_options))
         fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",global_Vars$Heatmap_row_anno_options))
-        if(input$cluster_cols==TRUE){
+        if(input$cluster_cols == TRUE){
           fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
         }
-        if(global_Vars$Heatmap_cluster_rows==TRUE){
+        if(global_Vars$Heatmap_cluster_rows == TRUE){
           fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
         }
         
-        if(global_Vars$Heatmap_LFC_toHeatmap==TRUE){
+        if(global_Vars$Heatmap_LFC_toHeatmap == TRUE){
           fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
           fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",global_Vars$Heatmap_sample_annotation_types_cmp_heatmap,": ",global_Vars$Heatmap_Groups2Compare_ref_heatmap," vs ",global_Vars$Heatmap_Groups2Compare_ctrl_heatmap))
         }

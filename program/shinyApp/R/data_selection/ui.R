@@ -23,7 +23,7 @@ data_selection_sidebar_panel <- sidebarPanel(
     hr(style = "border-top: 1px solid #000000;")
   ),
   div(
-    class="DataSelection",
+    class = "DataSelection",
     h4("Row selection -  biochemical entities"),
     uiOutput(outputId = "providedRowAnnotationTypes_ui"),
     uiOutput(outputId = "row_selection_ui"),
@@ -31,7 +31,7 @@ data_selection_sidebar_panel <- sidebarPanel(
   ),
   # Outlier Selection -> for fixed removal pre-processing needs to be redone!
   div(
-    class="SampleSelection",
+    class = "SampleSelection",
     h4("Sample selection"),
     uiOutput(outputId = "providedSampleAnnotationTypes_ui"),
     uiOutput(outputId = "sample_selection_ui")),
@@ -40,11 +40,11 @@ data_selection_sidebar_panel <- sidebarPanel(
 
 
 data_selection_main_panel <- mainPanel(
-  id="mainPanel_DataSelection",
+  id = "mainPanel_DataSelection",
   tabsetPanel(
     type = "pills",
     tabPanel(
-      title="Upload section",
+      title = "Upload section",
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("85%", "10%", "5%"),
         NULL,
@@ -77,7 +77,7 @@ data_selection_main_panel <- mainPanel(
       HTML(text = "<br>"),
       HTML(text = "<br>")),
       tabPanel(
-        title="Upload visual inspection",
+        title = "Upload visual inspection",
         helpText("If you have uploaded your data, you might want to visually check the tables to confirm the correct data format. If you notice irregualarities you will need to correct the input data - this cannot be done in ShinyOmics, See the help on how your data is expected."),
         actionButton(
           inputId = "DoVisualDataInspection",

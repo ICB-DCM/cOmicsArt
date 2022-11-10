@@ -186,17 +186,17 @@ server <- function(input,output,session){
           )
         
       })
-      output$AddGeneSymbols_organism_ui=renderUI({
+      output$AddGeneSymbols_organism_ui <- renderUI({
         selectInput(
           inputId = "AddGeneSymbols_organism",
-          label="Which Organisms?",
-          choices=c("hsapiens","mus_musculus"),
+          label = "Which Organisms?",
+          choices = c("hsapiens","mus_musculus"),
           selected = "hsapiens"
           )
       })
     }else{
-      output$AddGeneSymbols_ui=NULL
-      output$AddGeneSymbols_organism_ui=NULL
+      output$AddGeneSymbols_ui = NULL
+      output$AddGeneSymbols_organism_ui = NULL
     }
   })
   
