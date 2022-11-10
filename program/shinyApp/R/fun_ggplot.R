@@ -1,19 +1,5 @@
 
 getPlotCode <- function(numberOfScenario) {
-  initalString= "# ShinyOmics R Code Download
-# Load necassary packages (if errors please install respective packages)
-library(ggplot2)
-library(ggpubr)
-library(rstudioapi)
-# if not run in RStudio  you need to specify the directory fo the file yourself!
-
-direcoty_of_files=dirname(rstudioapi::getSourceEditorContext()$path)
-envList=readRDS(paste0(direcoty_of_files,'/','Data.rds'))  
-
-list2env(envList,envir = globalenv())
-
-# Happy Adjusting! :)"
-  
   if (numberOfScenario == 1) {
     stringtosave = 'pca_plot <- ggplot(pcaData, aes(x = pcaData[,input$x_axis_selection],
                                   y = pcaData[,input$y_axis_selection],
@@ -220,7 +206,8 @@ list2env(envList,envir = globalenv())
     ylab(input$type_of_data_gene)+
     theme_bw()'
   }
-  if(numberOfScenario==14){
+  ## TODO ensure this remains working with new output from Enrichment, needs a potential update!
+  if(numberOfScenario == 14){
     stringtosave = 'KEGG_Plot_GSE=clusterProfiler::dotplot(EnrichmentRes_Kegg,split=".sign") +
                       facet_grid(.~.sign)'
   }
@@ -230,9 +217,20 @@ list2env(envList,envir = globalenv())
   if(numberOfScenario==16){
     stringtosave='GO_Plot=clusterProfiler::dotplot(EnrichmentRes_GO)'
   }
-  if(numberOfScenario==17){
+  if(numberOfScenario == 17){
     stringtosave='REACTOME_Plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME)'
   }
+  if(numberOfScenario == 18){
+    stringtosave = 'SampleCorrelationPlot_final <- pheatmap(
+          mat = cormat, 
+          annotation_row = annotationDF,
+          main = customTitleSampleCorrelation,
+          annotation_colors = anno_colors
+          )'
+  }
+  if(numberOfScenario == 0){
+    stringtosave='# No_code_yet'
+  }
   
-  return(paste0(initalString,"\n",stringtosave))
+  return(paste0(CODE_DOWNLOAD_PREFACE,"\n",stringtosave))
 }
