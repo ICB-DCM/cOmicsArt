@@ -92,7 +92,7 @@ single_gene_visualisation_server <- function(id,omicType){
       
       observeEvent(input$singleGeneGo,{
         print(input$Select_Gene)
-        GeneDataFlag=F
+        GeneDataFlag = F
         # Select data for the gene based on gene Selection & group Selection
         if(input$type_of_data_gene == "preprocessed"){
           if(input$Select_Gene %in% selectedData_processed()[[omicType()]]$annotation_rows[,input$Select_GeneAnno]){
@@ -248,7 +248,7 @@ single_gene_visualisation_server <- function(id,omicType){
               tmp_filename = paste0(getwd(),"/www/",paste(global_Vars$SingleEnt_customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep=""))
               ggsave(
                 filename = tmp_filename,
-                plot=P_boxplots,
+                plot = P_boxplots,
                 device = gsub("\\.","",input$file_ext_singleGene)
                 )
               fun_LogIt("## Single Entitie")

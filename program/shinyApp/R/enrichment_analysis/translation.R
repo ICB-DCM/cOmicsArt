@@ -15,7 +15,7 @@ translate_genes <- function(annotation_results, input, geneSetChoice){
       orgDb,
       keys = processedData_all$Transcriptomics$annotation_rows[[annotation_results$base_annotation]],
       column = "ENTREZID",
-      keytype=annotation_results$base_annotation
+      keytype = annotation_results$base_annotation
     )
   }
 }

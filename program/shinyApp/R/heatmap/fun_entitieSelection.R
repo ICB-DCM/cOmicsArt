@@ -21,16 +21,18 @@ entitieSelection <- function(
   orderMakesSense_flag <- FALSE
   print("Entitie Selection new?")
   #print(additionalInput_row_anno)
-  if(any(type=="rowAnno_based") & !(any(is.na(additionalInput_row_anno))) & !any(is.na(additionalInput_row_anno_factor))){
+  if(any(type == "rowAnno_based") & 
+  !(any(is.na(additionalInput_row_anno))) & 
+  !any(is.na(additionalInput_row_anno_factor))){
     # Note here this only what to show, LFCs and more importantly multiple test correction will be done on the entire set (without the row anno based selection!!)
-    if(any(additionalInput_row_anno_factor=="all")){
+    if(any(additionalInput_row_anno_factor == "all")){
       filtered_data <- filtered_data
     }else{
       filtered_data <- filtered_data[which(data$annotation_rows[,additionalInput_row_anno]%in%additionalInput_row_anno_factor),]
     }
   }
   if(!(is.na(additionalInput_sample_annotation_types)) & !(is.na(additionalInput_ctrl_idx)) & !(is.na(additionalInput_cmp_idx))){
-    if(any(type=="significant_LFC")){
+    if(any(type == "significant_LFC")){
       # sort based on significance
       # need LFCs
       # is reachable from here? selectedData_processed()[[input$omicType]]$sample_table
@@ -77,7 +79,7 @@ entitieSelection <- function(
    }
   }
   
-  if(any(type=="TopK")){
+  if(any(type == "TopK")){
     if(orderMakesSense_flag){
       #assumes the data to be sorted somehow
       if(nrow(filtered_data) > TopK2Show){

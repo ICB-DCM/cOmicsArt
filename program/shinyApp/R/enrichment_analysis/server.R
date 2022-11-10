@@ -114,8 +114,8 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
         selectInput(
           inputId = ns("OrganismChoice"),
           label = "Specificy your current organism",
-          choices=c("hsa", "mmu"),
-          selected="mmu"
+          choices = c("hsa", "mmu"),
+          selected = "mmu"
         )
       })
       output$ORA_or_GSE_ui <- renderUI({
@@ -123,7 +123,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
           inputId = ns("ORA_or_GSE"),
           label = "Choose type of Analysis",
           choices = c("GeneSetEnrichment","OverRepresentation_Analysis"),
-          selected="GeneSetEnrichment")
+          selected = "GeneSetEnrichment")
       })
 
       observe({
@@ -177,9 +177,9 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               numericInput(
                 inputId = ns("psig_threhsold_GSEA" ),
                 label = "adj. p-value threshold",
-                min=0,
-                max=1,
-                step=0.01,
+                min = 0,
+                max = 1,
+                step = 0.01,
                 value = 0.05
               )
             })
@@ -338,7 +338,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             ctrl_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
             comparison_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
 
-            Data2Plot<-getLFC(
+            Data2Plot <- getLFC(
               selectedData_processed()[[omic_type()]]$Matrix,
               ctrl_samples_idx,
               comparison_samples_idx
@@ -533,9 +533,9 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             numericInput(
               inputId = ns("psig_KEGG"),
               label = "adj. p-value threshold",
-              min=0,
-              max=0.1,
-              step=0.01,
+              min = 0,
+              max = 0.1,
+              step = 0.01,
               value = 0.05
             )
           })
@@ -585,7 +585,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             log2_FC = Data2Plot[,"LFC"]
           )
           # delete duplicated entries
-          testingMatrix=testingMatrix[!duplicated(testingMatrix$GeneID),]
+          testingMatrix = testingMatrix[!duplicated(testingMatrix$GeneID),]
           rownames(testingMatrix) <- testingMatrix$GeneID
           testingMatrix$GeneID <- NULL
           testingMatrix <- as.matrix(testingMatrix) #Test to global to catch

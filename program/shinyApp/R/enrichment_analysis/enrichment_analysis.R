@@ -46,7 +46,7 @@ gene_set_enrichment <- function(
       maxGSSize = 800,
       pvalueCutoff = 0.05,
       verbose = TRUE,
-      OrgDb = ifelse(input$OrganismChoice=="hsa","org.Hs.eg.db","org.Mm.eg.db"),
+      OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"),
       pAdjustMethod = "none"  # TODO: discuss
     )
   }

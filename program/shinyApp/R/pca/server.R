@@ -146,14 +146,14 @@ pca_Server <- function(id, omic_type, row_select){
                aes(
                  x = pcaData[,input$x_axis_selection],
                  y = pcaData[,input$y_axis_selection],
-                 color=pcaData[,input$coloring_options],
-                 label=global_ID,
-                 global_ID=global_ID,
-                 chosenAnno=chosenAnno)) +
+                 color = pcaData[,input$coloring_options],
+                 label = global_ID,
+                 global_ID = global_ID,
+                 chosenAnno = chosenAnno)) +
                geom_point(size = 3) +
                scale_color_manual(
                  name = input$coloring_options,
-                 values=colorTheme
+                 values = colorTheme
                )
              scenario <- 1
            }else{
@@ -162,10 +162,10 @@ pca_Server <- function(id, omic_type, row_select){
                aes(
                  x = pcaData[,input$x_axis_selection],
                  y = pcaData[,input$y_axis_selection],
-                 color=pcaData[,input$coloring_options],
-                 label=global_ID,
-                 global_ID=global_ID,
-                 chosenAnno=chosenAnno)) +
+                 color = pcaData[,input$coloring_options],
+                 label = global_ID,
+                 global_ID = global_ID,
+                 chosenAnno = chosenAnno)) +
                geom_point(size = 3)+
                scale_color_discrete(name = input$coloring_options)
              scenario <- 2
@@ -179,10 +179,10 @@ pca_Server <- function(id, omic_type, row_select){
             aes(
               x = pcaData[,input$x_axis_selection],
               y = pcaData[,input$y_axis_selection],
-              color=pcaData[,input$coloring_options],
-              label=global_ID,
-              global_ID=global_ID,
-              chosenAnno=chosenAnno)) +
+              color = pcaData[,input$coloring_options],
+              label = global_ID,
+              global_ID = global_ID,
+              chosenAnno = chosenAnno)) +
             geom_point(size =3)+
             scale_color_manual(values = colorTheme,
                                name = input$coloring_options)
@@ -251,11 +251,11 @@ pca_Server <- function(id, omic_type, row_select){
             geom_segment(
               data = df_out_r[which(df_out_r$feature!=""),],
               aes(
-                x=0,
-                y=0,
-                xend=v1,
-                yend=v2,
-                chosenAnno=chosenAnno
+                x = 0,
+                y = 0,
+                xend = v1,
+                yend = v2,
+                chosenAnno = chosenAnno
                 ),
               arrow = arrow(type = "closed",unit(0.01, "inches"),ends = "both"),
               color = "#ab0521")
@@ -268,7 +268,7 @@ pca_Server <- function(id, omic_type, row_select){
           ggplotly(
             pca_plot_final,
             tooltip = ifelse(is.null(input$PCA_anno_tooltip),"all","chosenAnno"),
-            legendgroup="color")
+            legendgroup = "color")
           })
 
         print(input$only2Report_pca)
@@ -341,17 +341,17 @@ pca_Server <- function(id, omic_type, row_select){
 
     ### Do Scree plot ----
 
-        var_explained_df <- data.frame(PC= paste0("PC",1:ncol(pca$x)),
-                                       var_explained=(pca$sdev)^2/sum((pca$sdev)^2))
+        var_explained_df <- data.frame(PC = paste0("PC",1:ncol(pca$x)),
+                                       var_explained = (pca$sdev)^2/sum((pca$sdev)^2))
         var_explained_df$Var <- paste0(round(var_explained_df$var_explained,4)*100,"%")
         var_explained_df$PC <- factor(var_explained_df$PC,levels = paste0("PC",1:ncol(pca$x)))
         scree_plot <-
           ggplot(var_explained_df,
-                 aes(x=PC,y=var_explained, group=1))+
-          geom_point(size=4,aes(label=Var))+
-          geom_line()+
-          ylab("Variance explained")+
-          theme_bw()+
+                 aes(x = PC,y = var_explained, group = 1)) +
+          geom_point(size = 4,aes(label = Var)) +
+          geom_line() +
+          ylab("Variance explained") +
+          theme_bw() +
           ggtitle("Scree-Plot for shown PCA")
         scenario <- 7
         Scree_scenario <- scenario
@@ -394,7 +394,7 @@ pca_Server <- function(id, omic_type, row_select){
             },
 
           content = function(file){
-            ggsave(file,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
+            ggsave(file, plot = scree_plot, device = gsub("\\.","",input$file_ext_Scree))
             on.exit({
               tmp_filename=paste0(
                 getwd(),
@@ -414,8 +414,8 @@ pca_Server <- function(id, omic_type, row_select){
     ### Do Loadings Plot ----
         print("Do LoadingsPlot an issue?")
         LoadingsDF <- data.frame(
-          entitie=rownames(pca$rotation),
-          Loading=pca$rotation[,input$x_axis_selection]
+          entitie = rownames(pca$rotation),
+          Loading = pca$rotation[,input$x_axis_selection]
           )
         #LoadingsDF$Loading=scale(LoadingsDF$Loading)
         LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
@@ -457,8 +457,8 @@ pca_Server <- function(id, omic_type, row_select){
             paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
           },
           content = function(file){
-            envList=list(LoadingsDF=LoadingsDF,
-                         input=reactiveValuesToList(input))
+            envList=list(LoadingsDF = LoadingsDF,
+                         input = reactiveValuesToList(input))
 
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)

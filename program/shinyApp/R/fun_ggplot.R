@@ -207,7 +207,7 @@ getPlotCode <- function(numberOfScenario) {
     theme_bw()'
   }
   ## TODO ensure this remains working with new output from Enrichment, needs a potential update!
-  if(numberOfScenario==14){
+  if(numberOfScenario == 14){
     stringtosave = 'KEGG_Plot_GSE=clusterProfiler::dotplot(EnrichmentRes_Kegg,split=".sign") +
                       facet_grid(.~.sign)'
   }
@@ -217,10 +217,10 @@ getPlotCode <- function(numberOfScenario) {
   if(numberOfScenario==16){
     stringtosave='GO_Plot=clusterProfiler::dotplot(EnrichmentRes_GO)'
   }
-  if(numberOfScenario==17){
+  if(numberOfScenario == 17){
     stringtosave='REACTOME_Plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME)'
   }
-  if(numberOfScenario==18){
+  if(numberOfScenario == 18){
     stringtosave = 'SampleCorrelationPlot_final <- pheatmap(
           mat = cormat, 
           annotation_row = annotationDF,
@@ -228,8 +228,8 @@ getPlotCode <- function(numberOfScenario) {
           annotation_colors = anno_colors
           )'
   }
-  if(numberOfScenario==0){
-    stringtosave='Not_code_yet'
+  if(numberOfScenario == 0){
+    stringtosave='# No_code_yet'
   }
   
   return(paste0(CODE_DOWNLOAD_PREFACE,"\n",stringtosave))
