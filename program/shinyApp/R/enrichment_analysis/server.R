@@ -65,7 +65,7 @@ enrichment_analysis_geneset_server <- function(
               fixedColumns = TRUE,
               autoWidth = TRUE,
               ordering = TRUE,
-              dom = 'Blfrtip',
+              dom = 'Bfrtip',
               lengthMenu = c(10, 25, 50, 100, -1),
               buttons = c('pageLength', 'copy', 'csv', 'excel')
             ),
