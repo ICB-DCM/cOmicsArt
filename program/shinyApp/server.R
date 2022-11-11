@@ -790,7 +790,7 @@ server <- function(input,output,session){
             countData = processedData,
             colData = processedData_all[[input$omicType]]$sample_table,
             design = ~DE_SeqFactor
-            ) 
+            )
           
           de_seq_result <- DESeq(dds)
           dds_vst <- vst(

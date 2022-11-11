@@ -55,20 +55,23 @@ enrichment_analysis_geneset_server <- function(
 
         # result table
         output$EnrichmentTable <- DT::renderDataTable({DT::datatable(
-          data = {result@result},
-          extensions = 'Buttons',
-          options = list(
-            paging = TRUE,
-            searching = TRUE,
-            fixedColumns = TRUE,
-            autoWidth = TRUE,
-            ordering = TRUE,
-            dom = 'Bfrtip',
-            buttons = c('copy', 'csv', 'excel')
-          ),
-          class = "display"
-        )})
-
+            data = {result@result},
+            extensions = 'Buttons',
+            filter = 'top',
+            rownames = FALSE,
+            options = list(
+              paging = TRUE,
+              searching = TRUE,
+              fixedColumns = TRUE,
+              autoWidth = TRUE,
+              ordering = TRUE,
+              dom = 'Blfrtip',
+              lengthMenu = c(10, 25, 50, 100, -1),
+              buttons = c('pageLength', 'copy', 'csv', 'excel')
+            ),
+            class = "cell-border compact stripe hover order-column"
+          )}
+        )
         # download section
         observeEvent(input$only2Report,{
           notificationID <- showNotification(ui = "Saving...",duration = 0)
