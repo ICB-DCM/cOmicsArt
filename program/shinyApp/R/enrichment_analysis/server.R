@@ -135,11 +135,11 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             selectInput(
               inputId = ns("ValueToAttach"),
               label = "Select the metric to sort the genes after",
-              choices = c("LFC"),
-              selected = "LFC")
+              choices = c("LFC", "LFC_abs"),
+              selected = "LFC_abs")
           })
           req(input$ValueToAttach)
-          if(input$ValueToAttach == "LFC"){
+          if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
             output$sample_annotation_types_cmp_GSEA_ui <- renderUI({
               req(data_input_shiny())
               selectInput(
@@ -332,7 +332,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             geneSetChoice_tmp <- heatmap_genelist
           }
         }else{
-          if(input$ValueToAttach == "LFC"){
+          if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
             #takes all genes after preprocessing
             #get LFC
             ctrl_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
@@ -346,9 +346,16 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
 
             # get thresholds to cut the set
             # TODO: currently not working with cutoff value
+
             Data2Plot_tmp <- Data2Plot
             # Data2Plot_tmp=Data2Plot[Data2Plot$p_adj<=input$psig_threhsold_GSEA,]
-            geneSetChoice_tmp <- Data2Plot_tmp$LFC
+            if(input$ValueToAttach == "LFC"){
+              geneSetChoice_tmp <- Data2Plot_tmp$LFC
+            }
+            else if(input$ValueToAttach == "LFC_abs"){
+              geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
+            }
+
             if(length(geneSetChoice_tmp) < 1){
               print("Nothing significant!")
               geneSetChoice_tmp <- NULL

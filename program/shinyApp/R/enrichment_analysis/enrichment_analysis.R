@@ -61,7 +61,7 @@ gene_set_enrichment <- function(
       TERM2GENE  =  Hallmarkset,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = 'BH',
       pvalueCutoff = 1
     )
   }
@@ -76,7 +76,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C1set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = 'BH',
       pvalueCutoff = 1
     )
   }
@@ -91,7 +91,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C2set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = 'BH',
       pvalueCutoff = 1
     )
   }
@@ -106,7 +106,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C3set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = 'BH',
       pvalueCutoff = 1
     )
   }
@@ -121,7 +121,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C4set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = 'BH',
       pvalueCutoff = 1
     )
   }
@@ -136,7 +136,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C5set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = 'BH',
       pvalueCutoff = 1
     )
   }
@@ -151,7 +151,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C6set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = 'BH',
       pvalueCutoff = 1
     )
   }
@@ -167,7 +167,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C7set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = 'BH',
       pvalueCutoff = 1
     )
   }
@@ -182,7 +182,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C8set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = 'BH',
       pvalueCutoff = 1
     )
   }
