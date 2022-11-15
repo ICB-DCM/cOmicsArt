@@ -5,13 +5,8 @@ over_representation_analysis <- function(
 ){
   # Overrepresentation analysis
   
-  # assign the correct names to geneSetChoice
-  # For now this is a global variable, as EntrezId is the only annotation type needed.
+  # no translation needed as already done before. Still asign for streamlined global variable usage
   geneSetChoice_tranlsated <<- geneSetChoice
-  names(geneSetChoice_tranlsated) <<- processedData_all$Transcriptomics$annotation_rows$ENTREZID
-  geneSetChoice_tranlsated <<- sort(geneSetChoice_tranlsated,decreasing = T)
-  # remove duplicate entries (keep the one highest in list)
-  geneSetChoice_tranlsated <<- geneSetChoice_tranlsated[!duplicated(names(geneSetChoice_tranlsated))]
 
   if(!isTruthy(input$UniverseOfGene)){
     universeSelected_tranlsated <- NULL
@@ -36,17 +31,35 @@ over_representation_analysis <- function(
   }
 
   # set all results to NULL in case some are not to be computed
-  EnrichmentRes_Kegg <- NULL
-  EnrichmentRes_GO <- NULL
-  EnrichmentRes_REACTOME <- NULL
+  # set all results to NULL in case some are not to be computed
   EnrichmentRes_Hallmarks <- NULL
   EnrichmentRes_C1 <- NULL
   EnrichmentRes_C2 <- NULL
+  EnrichmentRes_CGP <- NULL
+  EnrichmentRes_CP <- NULL
+  EnrichmentRes_BIOCARTA <- NULL
+  EnrichmentRes_Kegg <- NULL
+  EnrichmentRes_PID <- NULL
+  EnrichmentRes_REACTOME <- NULL
+  EnrichmentRes_WIKIPATHWAYS <- NULL
   EnrichmentRes_C3 <- NULL
+  EnrichmentRes_MIRDB <- NULL
+  EnrichmentRes_MIR_Legacy <- NULL
+  EnrichmentRes_GTRD <- NULL
+  EnrichmentRes_TFT_Legacy <- NULL
   EnrichmentRes_C4 <- NULL
+  EnrichmentRes_CGN <- NULL
+  EnrichmentRes_CM <- NULL
   EnrichmentRes_C5 <- NULL
+  EnrichmentRes_GO <- NULL
+  EnrichmentRes_GO_BP <- NULL
+  EnrichmentRes_GO_CC <- NULL
+  EnrichmentRes_GO_MF <- NULL
+  EnrichmentRes_HPO <-NULL
   EnrichmentRes_C6 <- NULL
   EnrichmentRes_C7 <- NULL
+  EnrichmentRes_IMMUNESIGDB <- NULL
+  EnrichmentRes_VAX <- NULL
   EnrichmentRes_C8 <- NULL
   # KEGG
   if(global_Vars$enrichments2do$KEGG){
@@ -203,19 +216,308 @@ over_representation_analysis <- function(
       TERM2GENE = C8set
     )
   }
+  # C2 subset CGP
+  if(global_Vars$enrichments2do$CGP){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C2",
+      subcategory = "CGP"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_CGP <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C2 subset CP
+  if(global_Vars$enrichments2do$CP){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C2",
+      subcategory = "CP"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_CP <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C2:CP subset BIOCARTA
+  if(global_Vars$enrichments2do$BIOCARTA){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C2",
+      subcategory = "CP:BIOCARTA"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_BIOCARTA <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C2:CP subset PID
+  if(global_Vars$enrichments2do$PID){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C2",
+      subcategory = "CP:PID"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_PID <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C2:CP subset REACTOME
+  if(global_Vars$enrichments2do$REACTOME){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C2",
+      subcategory = "CP:REACTOME"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_REACTOME <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C2:CP subset WIKIPATHWAYS
+  if(global_Vars$enrichments2do$WIKIPATHWAYS){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C2",
+      subcategory = "CP:WIKIPATHWAYS"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_WIKIPATHWAYS <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C3 subset MIR:MIRDB
+  if(global_Vars$enrichments2do$MIRDB){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C3",
+      subcategory = "MIR:MIRDB"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_MIRDB <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C3 subset MIR:MIR_Legacy
+  if(global_Vars$enrichments2do$MIR_Legacy){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C3",
+      subcategory = "MIR:MIR_Legacy"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_MIR_Legacy <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C3 subset TFT:GTRD
+  if(global_Vars$enrichments2do$GTRD){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C3",
+      subcategory = "TFT:GTRD"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_GTRD <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C3 subset TFT:TFT_Legacy
+  if(global_Vars$enrichments2do$TFT_Legacy){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C3",
+      subcategory = "TFT:TFT_Legacy"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_TFT_Legacy <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C4 subset CGN
+  if(global_Vars$enrichments2do$CGN){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C4",
+      subcategory = "CGN"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_CGN <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C4 subset CM
+  if(global_Vars$enrichments2do$CM){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C4",
+      subcategory = "CM"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_CM <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C5 subset GO BP
+  if(global_Vars$enrichments2do$GO_BP){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C5",
+      subcategory = "GO:BP"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_GO_BP <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C5 subset GO CC
+  if(global_Vars$enrichments2do$GO_CC){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C5",
+      subcategory = "GO:CC"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_GO_CC <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C5 subset GO MF
+  if(global_Vars$enrichments2do$GO_MF){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C5",
+      subcategory = "GO:MF"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_GO_MF <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C5 subset HPO
+  if(global_Vars$enrichments2do$HPO){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C5",
+      subcategory = "HPO"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_HPO <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C7 subset IMMUNESIGDB
+  if(global_Vars$enrichments2do$IMMUNESIGDB){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C7",
+      subcategory = "IMMUNESIGDB"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_IMMUNESIGDB <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+  # C7 subset VAX
+  if(global_Vars$enrichments2do$VAX){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C7",
+      subcategory = "VAX"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_VAX <- clusterProfiler::enricher(
+      gene = names(geneSetChoice_tranlsated),
+      pvalueCutoff = 0.05,
+      pAdjustMethod = "BH",
+      universe = universeSelected_tranlsated,
+      TERM2GENE = genesets4ea
+    )
+  }
+
+
 
   return(list(
-    "EnrichmentRes_KEGG" = EnrichmentRes_Kegg,
-    "EnrichmentRes_GO" = EnrichmentRes_GO,
-    "EnrichmentRes_REACTOME" = EnrichmentRes_REACTOME,
     "EnrichmentRes_Hallmarks" = EnrichmentRes_Hallmarks,
     "EnrichmentRes_C1" = EnrichmentRes_C1,
     "EnrichmentRes_C2" = EnrichmentRes_C2,
+    "EnrichmentRes_CGP" = EnrichmentRes_CGP,
+    "EnrichmentRes_CP" = EnrichmentRes_CP,
+    "EnrichmentRes_BIOCARTA" = EnrichmentRes_BIOCARTA,
+    "EnrichmentRes_Kegg" = EnrichmentRes_Kegg,
+    "EnrichmentRes_PID" = EnrichmentRes_PID,
+    "EnrichmentRes_REACTOME" = EnrichmentRes_REACTOME,
+    "EnrichmentRes_WIKIPATHWAYS" = EnrichmentRes_WIKIPATHWAYS,
     "EnrichmentRes_C3" = EnrichmentRes_C3,
+    "EnrichmentRes_MIRDB" = EnrichmentRes_MIRDB,
+    "EnrichmentRes_MIR_Legacy" = EnrichmentRes_MIR_Legacy,
+    "EnrichmentRes_GTRD" = EnrichmentRes_GTRD,
+    "EnrichmentRes_TFT_Legacy" = EnrichmentRes_TFT_Legacy,
     "EnrichmentRes_C4" = EnrichmentRes_C4,
+    "EnrichmentRes_CGN" = EnrichmentRes_CGN,
+    "EnrichmentRes_CM" = EnrichmentRes_CM,
     "EnrichmentRes_C5" = EnrichmentRes_C5,
+    "EnrichmentRes_GO" = EnrichmentRes_GO,
+    "EnrichmentRes_GO_BP" = EnrichmentRes_GO_BP,
+    "EnrichmentRes_GO_CC" = EnrichmentRes_GO_CC,
+    "EnrichmentRes_GO_MF" = EnrichmentRes_GO_MF,
+    "EnrichmentRes_HPO" = EnrichmentRes_HPO,
     "EnrichmentRes_C6" = EnrichmentRes_C6,
     "EnrichmentRes_C7" = EnrichmentRes_C7,
+    "EnrichmentRes_IMMUNESIGDB" = EnrichmentRes_IMMUNESIGDB,
+    "EnrichmentRes_VAX" = EnrichmentRes_VAX,
     "EnrichmentRes_C8" = EnrichmentRes_C8,
     "geneSetChoice_tranlsated" = geneSetChoice_tranlsated
   ))
