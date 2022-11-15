@@ -442,15 +442,20 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
         # close modal on button click
         observeEvent(input$AMC, {
           removeModal()
-          translate_genes(
-            annotation_results = anno_results,
-            input = input,
-            geneSetChoice = tmp_genes
-          )
-
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
+            translate_genes_ea(
+              annotation_results = anno_results,
+              input = input,
+              geneSetChoice = tmp_genes
+            )
             enrichment_results <<- gene_set_enrichment(input, output, tmp_genes)
           }else{
+            tmp_genes <- translate_genes_oa(
+              annotation_results = anno_results,
+              input = input,
+              geneSetChoice = tmp_genes,
+              geneSet2Enrich = input$GeneSet2Enrich
+            )
             enrichment_results <<- over_representation_analysis(input, output, tmp_genes)
           }
           # TODO: deactivate ORA for now? or fix notation
