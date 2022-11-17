@@ -226,6 +226,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               inputId = ns("GeneSet2Enrich"),
               label = "Choose a gene set to hand over to enrich",
               choices = c("DE_Genes", "ProvidedGeneSet", "heatmap_genes"),
+              multiple = F,
               selected = "heatmap_genes"
             )
           })
@@ -445,8 +446,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
             translate_genes_ea(
               annotation_results = anno_results,
-              input = input,
-              geneSetChoice = tmp_genes
+              input = input
             )
             enrichment_results <<- gene_set_enrichment(input, output, tmp_genes)
           }else{
