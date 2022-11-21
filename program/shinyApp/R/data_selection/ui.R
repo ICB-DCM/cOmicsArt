@@ -45,15 +45,24 @@ data_selection_main_panel <- mainPanel(
     type = "pills",
     tabPanel(
       title = "Upload section",
+      br(),
+      hr(style = "border-top: 2px solid #cbedca;"),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("85%", "10%", "5%"),
-        NULL,
+        actionButton(
+          inputId = "EasyTestForUser",
+          label = "Start straight away with a test-dataset!",
+          icon = icon('paper-plane'),
+          style = "color: #fffff; background-color: #cbedca; border-color: #000000"
+          
+        ),
         actionButton(
           inputId = "Reset",
           label = "Reset"
         ),
         NULL
       ),
+      hr(style = "border-top: 2px solid #cbedca;"),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
         uiOutput(outputId = "data_matrix1_ui"),
