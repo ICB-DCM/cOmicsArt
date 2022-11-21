@@ -63,17 +63,27 @@ data_selection_main_panel <- mainPanel(
         NULL
       ),
       hr(style = "border-top: 2px solid #cbedca;"),
-      splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-        uiOutput(outputId = "data_matrix1_ui"),
-        uiOutput(outputId = "data_sample_anno1_ui")
-      ),
-      splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-        uiOutput(outputId = "data_row_anno1_ui"),
-        uiOutput(
-          outputId = "data_preDone_ui"
-        ) %>% helper(type = "markdown", content = "SummarizedExp_help")
+      a(id = "toggleAdvanced",
+        "Data Upload via file input",
+        style = "background-color: #cbedca; color: black; padding: 7px 10px; "
+        ),
+        shinyjs::hidden(
+          div(
+        id = "advanced",
+        splitLayout(
+          style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+          uiOutput(outputId = "data_matrix1_ui"),
+          uiOutput(outputId = "data_sample_anno1_ui")
+        )
+        ,
+        splitLayout(
+          style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+          uiOutput(outputId = "data_row_anno1_ui"),
+          uiOutput(
+            outputId = "data_preDone_ui"
+          ) %>% helper(type = "markdown", content = "SummarizedExp_help")
+        )
+        )
       ),
       hr(style = "border-top: 2px solid #cbedca;"),
       uiOutput(outputId = "metadataInput_ui"),
