@@ -12,6 +12,7 @@ enrichment_analysis_geneset_server <- function(
         hideElement(id = "SavePlot")
         hideElement(id = "file_ext")
         hideElement(id = "Notes")
+        hideElement(id = "NotesHelper")
       }else{
         print(paste(id, "Enrichment Done"))
         print(result)
@@ -24,6 +25,7 @@ enrichment_analysis_geneset_server <- function(
           showElement(id = "SavePlot")
           showElement(id = "file_ext")
           showElement(id = "Notes")
+          showElement(id = "NotesHelper")
           hideElement(id = "EnrichmentFailure")
           output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result)})
         }

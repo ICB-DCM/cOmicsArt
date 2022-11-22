@@ -58,8 +58,11 @@ geneset_panel_UI <- function(
           label = "Notes:",
           placeholder = "Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ",
           width = "1000px"
-        )%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-        helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+        ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
+        tags$div(
+          id = ns("NotesHelper"),
+          helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+        )
       ),
       tabPanel(
         title = paste(id_wo_ns, "Enrichment Table"),
