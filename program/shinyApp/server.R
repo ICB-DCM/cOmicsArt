@@ -120,6 +120,8 @@ server <- function(input,output,session){
   
   observeEvent(input$Reset,{
     print("Jip")
+    FLAG_TEST_DATA_SELECTED <<- FALSE
+    output$debug <- renderText("<font color=\"#00851d\"><b>Reset successful</b></font>")
     shinyjs::reset(id="data_matrix1")
     shinyjs::reset(id="data_sample_anno1")
     shinyjs::reset(id="data_row_anno1")
@@ -127,38 +129,46 @@ server <- function(input,output,session){
     shinyjs::reset(id="metadataInput")
   })
   
+  observeEvent(input$EasyTestForUser,{
+    FLAG_TEST_DATA_SELECTED <<- TRUE
+    shinyjs::click("refresh1")
+  })
+  
+  shinyjs::onclick("toggleAdvanced",
+                   shinyjs::toggle(id = "advanced", anim = TRUE))
+  
   output$data_matrix1_ui <- renderUI({
     shiny::fileInput(
       inputId = "data_matrix1",
-      label = HTML('Upload data Matrix <br/>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a>'),
+      label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a></small>'),
       accept = c(".csv"),
       width = "80%")
   })
   output$data_sample_anno1_ui <- renderUI({
     shiny::fileInput(
       inputId = "data_sample_anno1",
-      label = HTML('Upload sample Annotation <br/>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv">Download example data</a>'),
+      label = HTML('Upload sample annotation <br/><small>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv">Download example data</a></small>'),
       accept = c(".csv"),
       width = "80%")
   })
   output$data_row_anno1_ui <- renderUI({
     shiny::fileInput(
       inputId = "data_row_anno1",
-      label = HTML('Upload entities Annotation Matrix <br/>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a>'),
+      label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a></small>'),
       accept = c(".csv"),
       width = "80%")
   })
   output$data_preDone_ui <- renderUI({
     shiny::fileInput(
       inputId = "data_preDone",
-      label = HTML('Load precompiled data <br/>(saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data</a>'),
+      label = HTML('Load precompiled data <br/><small>(saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data</a></small>'),
       accept = ".RDS",
       width = "80%"
       )
   })
   output$SaveInputAsList <- downloadHandler(
    filename = function() {
-      paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep="")},
+      paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep = "")},
     content = function(file){
       saveRDS(
         object = data_input_shiny(),
@@ -169,7 +179,7 @@ server <- function(input,output,session){
   output$metadataInput_ui <- renderUI({
     shiny::fileInput(
       inputId = "metadataInput",
-      label = "Upload your Meta Data Sheet (currently replaces sample annotation",
+      label = HTML("Upload your Meta Data Sheet <small>(currently replaces sample annotation)</small>"),
       accept = c(".xlsx"),
       buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),
       width = "100%"
@@ -300,12 +310,14 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**DataInput** - Uploaded Omic Type: ",input$omicType)
       )
-    
     if(!(isTruthy(input$data_preDone) | 
+         FLAG_TEST_DATA_SELECTED |
          (isTruthy(input$data_matrix1) & 
           isTruthy(input$data_sample_anno1) & 
           isTruthy(input$data_row_anno1)))){
       output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
+    }else if(FLAG_TEST_DATA_SELECTED & !(isTruthy(input$data_preDone))){
+      output$debug=renderText({"The Test Data Set was used"})
     }else{
       if(any(names(data_input_shiny()) == omicType_selected)){
         show_toast(
@@ -330,7 +342,7 @@ server <- function(input,output,session){
         }
        
         showTab(inputId = "tabsetPanel1", target = "Pre-processing")
-      }else{
+        }else{
         print("The precompiled lists types, does not match the input type!")
         output$debug=renderText({
           "<font color=\"#FF0000\"><b>The precompiled lists type, does not match the input type! Thats why the errors! Load the 3 original dataframe instead</b></font>"
@@ -342,7 +354,7 @@ server <- function(input,output,session){
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
     # What Input is required? (raw data)
-    if(!isTruthy(input$data_preDone)){
+    if(!isTruthy(input$data_preDone) & !FLAG_TEST_DATA_SELECTED){
       # Include here, that the sample anno can be replaced by metadatasheet
       # potentially this will be extended to all of the fields
       shiny::req(input$data_matrix1,input$data_row_anno1)
@@ -414,6 +426,21 @@ server <- function(input,output,session){
       }
       
       ## TODO Include here possible Data Checks
+    }else if(FLAG_TEST_DATA_SELECTED & !isTruthy(input$data_preDone)){
+      # shiny::updateSelectInput(
+      #   session = session,
+      #   inputId = "omicType",
+      #   label = "Omic Type that is uploaded",
+      #   choices = c("Transcriptomics","Metabolomics","Lipidomics"),
+      #   selected = "Transcriptomics"
+      # )
+      # Precompiled list from www folder
+      data_input[[input$omicType]] <- readRDS(
+        file = "www/Transcriptomics_only_precompiled-LS.RDS"
+      )[[input$omicType]]
+      fun_LogIt(
+        message = paste0("**DataInput** - Test Data set used")
+      )
     }else{
       # Precompiled list
       data_input[[input$omicType]] <- readRDS(
@@ -606,12 +633,8 @@ server <- function(input,output,session){
         )
       
     }
+    showTab(inputId = "tabsetPanel1",target = "Pre-processing",select = T)
 
-    updateTabsetPanel(
-      session = session,
-      inputId = "tabsetPanel1",
-      selected = "Pre-processing"
-      )
   })
   
   ## Do Selection ----  
