@@ -346,7 +346,6 @@ server <- function(input,output,session){
           })
       }
     }
-    
   })
 
 ## create data object ----
