@@ -493,7 +493,7 @@ over_representation_analysis <- function(
     "EnrichmentRes_CGP" = EnrichmentRes_CGP,
     "EnrichmentRes_CP" = EnrichmentRes_CP,
     "EnrichmentRes_BIOCARTA" = EnrichmentRes_BIOCARTA,
-    "EnrichmentRes_Kegg" = EnrichmentRes_Kegg,
+    "EnrichmentRes_KEGG" = EnrichmentRes_Kegg,
     "EnrichmentRes_PID" = EnrichmentRes_PID,
     "EnrichmentRes_REACTOME" = EnrichmentRes_REACTOME,
     "EnrichmentRes_WIKIPATHWAYS" = EnrichmentRes_WIKIPATHWAYS,
