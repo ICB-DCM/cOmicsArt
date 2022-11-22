@@ -498,7 +498,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               label = "Choose a gene set to hand over to enrich",
               choices = c(
                 # "DE_Genes",  # deactivated for now
-                "ProvidedGeneSet",
+                "ProvidedGeneSet"
                 # "heatmap_genes"  # deactivated till switch is fixed.
               ),
               multiple = F,
