@@ -535,36 +535,30 @@ heatmap_server <- function(id,omicType){
         
         ## adjust the returned names depending on chosen label of rows
         if(is.null(data2HandOver)){
-          FLAG_nonUnique_Heatmap<<-F
+          FLAG_nonUnique_Heatmap <<- F
           NA
         }else{
-          mergedData <- merge(data2HandOver,selectedData_processed()[[omicType()]]$annotation_rows,
-                              by = 0, 
-                              all.x = T,
-                              all.y = F,
-                              sort = F)
+          mergedData <- merge(
+            data2HandOver,
+            selectedData_processed()[[omicType()]]$annotation_rows,
+            by = 0,
+            all.x = T,
+            all.y = F,
+            sort = F
+          )
           
           # maybe insert save to avoid download of unmeaningfull annotation?
+          # heatmap_genelist now consists of the rownames, enabling a 
+          # smooth translation in the enrichment case
           if(length(unique(mergedData[,input$row_label_options]))<nrow(mergedData) ){
-            FLAG_nonUnique_Heatmap<<-T
-            heatmap_genelist <<- mergedData[,input$row_label_options]
+            FLAG_nonUnique_Heatmap <<- T
+            heatmap_genelist <<- mergedData[,"Row.names"]
           }else{
-            FLAG_nonUnique_Heatmap<<-F
-            heatmap_genelist <<- mergedData[,input$row_label_options]
+            FLAG_nonUnique_Heatmap <<- F
+            heatmap_genelist <<- mergedData[,"Row.names"]
           }
         }
       })
-      
-      observeEvent(input$SendHeatmap2Enrichment,{
-        #GeneSet2Enrich
-        updateTabsetPanel(
-          session = session,
-          inputId = "tabsetPanel1",
-          selected = "Enrichment Analysis"
-          )
-        tmp_selection <<- "heatmap_genes"
-      })
-      
       observeEvent(input$Do_Heatmap,{
         output$Options_selected_out_3 <- renderText({
           paste0("The number of selected entities: ",length((heatmap_genelist)))

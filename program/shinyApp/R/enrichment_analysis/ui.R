@@ -11,6 +11,7 @@ geneset_panel_UI <- function(
       tabPanel(
         title = paste(id_wo_ns, " Enrichment"),
         plotOutput(outputId = ns("EnrichmentPlot")),
+        textOutput(outputId = ns("EnrichmentFailure"), container = pre),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
@@ -57,8 +58,11 @@ geneset_panel_UI <- function(
           label = "Notes:",
           placeholder = "Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ",
           width = "1000px"
-        )%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-        helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+        ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
+        tags$div(
+          id = ns("NotesHelper"),
+          helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
+        )
       ),
       tabPanel(
         title = paste(id_wo_ns, "Enrichment Table"),
@@ -86,14 +90,6 @@ ea_sidebar <- function(ns){
       inputId = ns("enrichmentGO"),
       label = "Do enrichment analysis"
     ),
-    radioButtons(
-      inputId = ns("ontologyForGO"),
-      label = "Choose ontology for GO enrichment",
-      choices = c("BP","MF","CC","ALL"),
-      selected = "BP"
-    ),
-    helpText("Note: ALL sometime fails due to cryptic reasons. You will get notified. If this happens to you please try out the indiviudal ontologies to check whether enriched term are found. "),
-    hr(style = "border-top: 1px solid #858585;"),
     uiOutput(outputId = ns("KeggPathwayID_ui"))
   )
 }

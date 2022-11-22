@@ -75,11 +75,6 @@ heatmap_main <- function(ns){
       outputId = ns("SaveGeneList_Heatmap"),
       label = "Save genes shown in Heatmap as list"
     ),
-    actionButton(
-      inputId = ns("SendHeatmap2Enrichment"),
-      label = "Send genes shown to enrichment analysis",
-      block = F
-    ),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
       NULL,
