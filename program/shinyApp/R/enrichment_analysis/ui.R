@@ -87,14 +87,6 @@ ea_sidebar <- function(ns){
       inputId = ns("enrichmentGO"),
       label = "Do enrichment analysis"
     ),
-    radioButtons(
-      inputId = ns("ontologyForGO"),
-      label = "Choose ontology for GO enrichment",
-      choices = c("BP","MF","CC","ALL"),
-      selected = "BP"
-    ),
-    helpText("Note: ALL sometime fails due to cryptic reasons. You will get notified. If this happens to you please try out the indiviudal ontologies to check whether enriched term are found. "),
-    hr(style = "border-top: 1px solid #858585;"),
     uiOutput(outputId = ns("KeggPathwayID_ui"))
   )
 }
