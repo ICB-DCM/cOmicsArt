@@ -11,6 +11,7 @@ geneset_panel_UI <- function(
       tabPanel(
         title = paste(id_wo_ns, " Enrichment"),
         plotOutput(outputId = ns("EnrichmentPlot")),
+        textOutput(outputId = ns("EnrichmentFailure"), container = pre),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),

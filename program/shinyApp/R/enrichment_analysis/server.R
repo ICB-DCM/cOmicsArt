@@ -11,7 +11,15 @@ enrichment_analysis_geneset_server <- function(
         print(paste(id, "Enrichment Done"))
         print(result)
         # Enrichment Result Plot
-        output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result)})
+        # only plot if the best found adjustment value is significant
+        if(result@result$p.adjust[1] < 0.05){
+          hideElement(id = "EnrichmentFailure")
+          output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result)})
+        }
+        else{ # print that no significant result was found
+          hideElement(id = "EnrichmentPlot")
+          output$EnrichmentFailure <- renderText("No significant result found. For further details check the table.")
+        }
         # download R Code for further plotting
         output$getR_Code <- downloadHandler(
           filename = function(){
