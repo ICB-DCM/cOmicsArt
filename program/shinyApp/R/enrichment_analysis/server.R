@@ -499,7 +499,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               choices = c(
                 # "DE_Genes",  # deactivated for now
                 "ProvidedGeneSet",
-                "heatmap_genes"
+                # "heatmap_genes"  # deactivated till switch is fixed.
               ),
               multiple = F,
               selected = "ProvidedGeneSet"
