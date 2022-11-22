@@ -73,8 +73,7 @@ data_selection_main_panel <- mainPanel(
           style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
           uiOutput(outputId = "data_matrix1_ui"),
           uiOutput(outputId = "data_sample_anno1_ui")
-        )
-        ,
+        ),
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
           uiOutput(outputId = "data_row_anno1_ui"),
