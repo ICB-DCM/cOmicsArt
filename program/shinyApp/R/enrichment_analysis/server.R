@@ -225,9 +225,13 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             selectInput(
               inputId = ns("GeneSet2Enrich"),
               label = "Choose a gene set to hand over to enrich",
-              choices = c("DE_Genes", "ProvidedGeneSet", "heatmap_genes"),
+              choices = c(
+                # "DE_Genes",  # deactivated for now
+                "ProvidedGeneSet",
+                "heatmap_genes"
+              ),
               multiple = F,
-              selected = "heatmap_genes"
+              selected = "ProvidedGeneSet"
             )
           })
           output$UniverseOfGene_ui <- renderUI({

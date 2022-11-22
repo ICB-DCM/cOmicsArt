@@ -4,7 +4,6 @@ over_representation_analysis <- function(
   geneSetChoice
 ){
   # Overrepresentation analysis
-  
   # no translation needed as already done before. Still asign for streamlined global variable usage
   geneSetChoice_tranlsated <<- geneSetChoice
 
@@ -486,8 +485,6 @@ over_representation_analysis <- function(
       TERM2GENE = genesets4ea
     )
   }
-
-
 
   return(list(
     "EnrichmentRes_Hallmarks" = EnrichmentRes_Hallmarks,
