@@ -339,7 +339,6 @@ server <- function(input,output,session){
         }
        
         showTab(inputId = "tabsetPanel1", target = "Pre-processing")
-      
         }else{
         print("The precompiled lists types, does not match the input type!")
         output$debug=renderText({
