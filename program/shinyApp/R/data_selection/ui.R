@@ -54,7 +54,6 @@ data_selection_main_panel <- mainPanel(
           label = "Start straight away with a test-dataset!",
           icon = icon('paper-plane'),
           style = "color: #fffff; background-color: #cbedca; border-color: #000000"
-          
         ),
         actionButton(
           inputId = "Reset",
