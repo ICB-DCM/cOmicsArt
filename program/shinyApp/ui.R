@@ -212,7 +212,6 @@ ui <- shiny::fluidPage(
       )
     )
   )
-  
 )
 
 # Wrap your UI with secure_app
