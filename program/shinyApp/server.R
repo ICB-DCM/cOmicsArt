@@ -120,7 +120,7 @@ server <- function(input,output,session){
   
   observeEvent(input$Reset,{
     print("Jip")
-    FLAG_TEST_DATA_SELECTED<<-FALSE
+    FLAG_TEST_DATA_SELECTED <<- FALSE
     output$debug <- renderText("<font color=\"#00851d\"><b>Reset successful</b></font>")
     shinyjs::reset(id="data_matrix1")
     shinyjs::reset(id="data_sample_anno1")
@@ -133,6 +133,9 @@ server <- function(input,output,session){
     FLAG_TEST_DATA_SELECTED <<- TRUE
     shinyjs::click("refresh1")
   })
+  
+  shinyjs::onclick("toggleAdvanced",
+                   shinyjs::toggle(id = "advanced", anim = TRUE))
   
   output$data_matrix1_ui <- renderUI({
     shiny::fileInput(
@@ -176,7 +179,7 @@ server <- function(input,output,session){
   output$metadataInput_ui <- renderUI({
     shiny::fileInput(
       inputId = "metadataInput",
-      label = "Upload your Meta Data Sheet <small>(currently replaces sample annotation)</small>",
+      label = HTML("Upload your Meta Data Sheet <small>(currently replaces sample annotation)</small>"),
       accept = c(".xlsx"),
       buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),
       width = "100%"
