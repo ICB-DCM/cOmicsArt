@@ -559,17 +559,6 @@ heatmap_server <- function(id,omicType){
           }
         }
       })
-      
-      observeEvent(input$SendHeatmap2Enrichment,{
-        #GeneSet2Enrich
-        updateTabsetPanel(
-          session = session,
-          inputId = "tabsetPanel1",
-          selected = "Enrichment Analysis"
-          )
-        tmp_selection <<- "heatmap_genes"
-      })
-      
       observeEvent(input$Do_Heatmap,{
         output$Options_selected_out_3 <- renderText({
           paste0("The number of selected entities: ",length((heatmap_genelist)))
