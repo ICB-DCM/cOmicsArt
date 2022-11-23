@@ -526,7 +526,7 @@ pca_Server <- function(id, omic_type, row_select){
         entitiesToInclude <- apply(df_loadings_filtered, 1, any)
         
         df_loadings <- df_loadings[entitiesToInclude,] %>%
-          tidyr::gather(key = "PC", value = "loading", -entity)
+          gather(key = "PC", value = "loading", -entity)
         
         global_max <- max(df_loadings$loading)
         global_min <- -global_max
