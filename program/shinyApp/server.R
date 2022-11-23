@@ -21,6 +21,8 @@ server <- function(input,output,session){
   source("R/volcano_plot/server.R", local = T)
   source("R/single_gene_visualisation/server.R",local = T)
   source("R/sample_correlation/server.R", local = T)
+  source("R/significance_analysis/server.R", local = T)
+  source("R/significance_analysis/util.R", local = T)
   global_Vars <<- reactiveValues()
   
 # Security section ---- 
@@ -946,6 +948,12 @@ server <- function(input,output,session){
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
     scenario = 0,
+    omic_type = reactive(input$omicType)
+  )
+  # significance analysis ----
+  significance_analysis_server(
+    id = 'SignificanceAnalysis',
+    preprocess_method = reactive(input$PreProcessing_Procedure),
     omic_type = reactive(input$omicType)
   )
 }

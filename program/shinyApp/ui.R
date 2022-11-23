@@ -49,6 +49,7 @@ source("R/heatmap/ui.R",local=T)
 source("R/single_gene_visualisation/ui.R",local=T)
 source("R/enrichment_analysis/ui.R",local=T)
 source("R/sample_correlation/ui.R",local = T)
+source("R/significance_analysis/ui.R",local=T)
 
 
 options(repos = BiocManager::repositories())
@@ -175,7 +176,8 @@ ui <- shiny::fluidPage(
     volcano_plot_panel <- volcano_UI("Volcano"),
     heatmap_panel <- heatmap_UI("Heatmap"),
     single_gene_visualisation_panel <- single_gene_visualisation_UI("single_gene_visualisation"),
-    enrichment_analysis_tab_panel <- enrichment_analysis_UI("EnrichmentAnalysis")
+    enrichment_analysis_tab_panel <- enrichment_analysis_UI("EnrichmentAnalysis"),
+    significance_analysis_panel <- significance_analysis_UI("SignificanceAnalysis")
   ),
   hidden(selectInput(
     "element_02",
