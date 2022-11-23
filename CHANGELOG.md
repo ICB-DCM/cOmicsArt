@@ -6,6 +6,21 @@ Release notes
 ..........
 
 
+0.1.1 (2022-11-23)
+-------------------
+* General:
+    * Aesthetic Tab colors (#52)
+    * Fixed birthday joke (#63)
+    * Easy testing for user (#64)
+* PC:
+    * New visualisation method (#51)
+* EA and OA:
+    * Absolute LFC as default value in EA (#57)
+    * Complete EA sets choice (#55)
+    *  Data Table visualization (#53)
+    * OA translation fixed (#59)
+
+
 0.1.0 (2022-10-25)
 -------------------
 * General:
