@@ -81,8 +81,11 @@ ui <- shiny::fluidPage(
         color: #3b3b3b;
       }
       .tabbable > .nav > li > a {
-         background-color: #d5d4d6;
-         color: #3b3b3b
+         background-color: #dedede;
+         color: black
+      }
+      .tabbable > .nav > li[class=active] > a {
+          background-color: #86ba90; color:black
       }
       #sidebar_data_selection {
         background-color: #cbedca;
