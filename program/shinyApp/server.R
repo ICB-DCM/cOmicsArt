@@ -370,7 +370,6 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
-    browser()
     # What Input is required? (raw data)
     if(!isTruthy(input$data_preDone) & !FLAG_TEST_DATA_SELECTED){
       # Include here, that the sample anno can be replaced by metadatasheet
