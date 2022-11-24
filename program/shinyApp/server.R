@@ -230,8 +230,14 @@ server <- function(input,output,session){
        file = input$data_matrix1$datapath,
        header = T,
        row.names = 1,
-       check.names = F
+       check.names = T
        )
+     Matrix2 <- read.csv(
+       file = input$data_matrix1$datapath,
+       header = T,
+       row.names = 1,
+       check.names = F
+     )
      output$DataMatrix_VI <- DT::renderDataTable({
        DT::datatable(data = Matrix)
        })
@@ -271,11 +277,12 @@ server <- function(input,output,session){
        "
        })
 
-     check1 <- ifelse(all(rownames(Matrix)==rownames(annotation_rows)),snippetYes,snippetNo)
-     check2 <- ifelse(all(colnames(Matrix)==rownames(sample_table)),snippetYes,snippetNo)
-     check3 <- ifelse(any(is.na(Matrix)==T),snippetNo,snippetYes)
-     check4 <- ifelse(any(is.na(sample_table)==T),snippetNo,snippetYes)
-     check5 <- ifelse(any(is.na(annotation_rows)==T),snippetNo,snippetYes)
+     check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
+     check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
+     check3 <- ifelse(any(is.na(Matrix) == T),snippetNo,snippetYes)
+     check4 <- ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes)
+     check5 <- ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes)
+     check6 <- ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo)
      
      if(check5 == snippetNo){
        # Indicate columns with NA
@@ -288,6 +295,15 @@ server <- function(input,output,session){
        check5 <- paste0(snippetNo," Following columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
      }
      
+     if(check6 == snippetNo){
+       # add help text
+       check6 <- paste0(
+         snippetNo,
+         "\n\t A syntactically valid name consists of letters, numbers and the dot or underline characters \n
+         and starts with a letter or the dot not followed by a number.\n
+         Therefore '12345' is invalid, 'ID_12345' is valid \n
+         Remember to change the Sample ID everywhere (Matrix & Sample Table")
+     }
      output$OverallChecks <- renderText({
        paste0("Some overall Checks are running run ...\n
        Rownames of Matrix are the same as rownames of entitie table ",check1,"\n
@@ -295,6 +311,7 @@ server <- function(input,output,session){
        Matrix has no na ",check3,"\n
        Sample table no na ",check4,"\n
        Entitie table no na ",check5,"\n
+       Sample IDs have valid names ", check6, "\n
        ")
      })
     }
@@ -353,6 +370,7 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
+    browser()
     # What Input is required? (raw data)
     if(!isTruthy(input$data_preDone) & !FLAG_TEST_DATA_SELECTED){
       # Include here, that the sample anno can be replaced by metadatasheet
@@ -362,19 +380,19 @@ server <- function(input,output,session){
       if(isTruthy(input$data_sample_anno1)){
         data_input[[input$omicType]] <- list(
           type=as.character(input$omicType),
-          Matrix=read.csv(
+          Matrix = read.csv(
             file = input$data_matrix1$datapath,
             header = T,
             row.names = 1,
             check.names = F
             ),
-          sample_table <- read.csv(
+          sample_table = read.csv(
             file = input$data_sample_anno1$datapath,
             header = T,
             row.names = 1,
             check.names = F
             ),
-          annotation_rows <- read.csv(
+          annotation_rows = read.csv(
             file = input$data_row_anno1$datapath,
             header = T,
             row.names = 1,
