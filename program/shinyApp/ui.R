@@ -34,6 +34,7 @@ library(zip)
 library(cicerone)
 library(shinyalert)
 library(msigdbr)
+library(tidyr)
 # library(svglite)
 
 source("R/C.R")
