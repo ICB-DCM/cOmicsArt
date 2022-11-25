@@ -588,7 +588,7 @@ server <- function(input,output,session){
       }
     })
     # Column /Sample
-    output$providedSampleAnnotationTypes_ui <-renderUI({
+    output$providedSampleAnnotationTypes_ui <- renderUI({
       req(data_input_shiny())
       selectInput(
         inputId = "providedSampleAnnotationTypes",
