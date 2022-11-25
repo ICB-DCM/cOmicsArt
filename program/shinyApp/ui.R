@@ -113,7 +113,7 @@ ui <- shiny::fluidPage(
   ),
   ##########
   use_cicerone(),
-  useShinyalert(),
+  #useShinyalert(),
   shinyjs::useShinyjs(),
   ##########
   div(
