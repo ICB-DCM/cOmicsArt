@@ -58,10 +58,11 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
       })
       # UI to choose test method
       output$chooseTest_ui <- renderUI({
+        req(preprocess_method() != "vst_DESeq")
         selectInput(
           inputId = ns("test_method"),
           label = "Test method",
-          choices = c("Wilcoxon rank sum test", "Mann-Whitney U test", "Kruskal-Wallis test", "T-test"),
+          choices = c("Wilcoxon rank sum test", "T-test"),
           selected = "Wilcoxon rank sum test"
         )
       })
@@ -81,12 +82,27 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         selectInput(
             inputId = ns("test_correction"),
             label = "Test correction",
-            choices = c("None", "Bonferroni", "Benjamini-Hochberg"),
+            choices = c(
+              "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
+              "Holm", "Hommel", "Hochberg"
+            ),
             selected = "Benjamini-Hochberg"
         )
       })
       # Do the analysis
       observeEvent(input$significanceGo,{
+        if(input$significanceGo == 1){
+          significance_tabs_to_delete <<- NULL
+        }
+        # delete old panels
+        if(!is.null(significance_tabs_to_delete)){
+          for (i in 1:length(significance_tabs_to_delete)) {
+            removeTab(
+              inputId = "significance_analysis_results",
+              target = significance_tabs_to_delete[[i]]
+            )
+          }
+        }
         # if preproccesing method was DESeq2, then use DESeq2 for testing
         if(preprocess_method() == "vst_DESeq"){  # TODO: rename method to "DESeq"
           print("Create DESeq object")
@@ -97,7 +113,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           print(input$sample_annotation_types_cmp)
           design_formula <- paste("~", input$sample_annotation_types_cmp)
           # create DESeq object
-          dds <- DESeqDataSetFromMatrix(
+          dds <- DESeq2::DESeqDataSetFromMatrix(
               countData = processedData,
               colData = selectedData()[[omic_type()]]$sample_table,
               design = as.formula(design_formula)
@@ -105,7 +121,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           # remove lowly expressed genes
           dds <- dds[rowSums(counts(dds)) > 10,]  # TODO: make this a parameter (VA)
           # get the result
-          dds <- DESeq(dds)
+          dds <- DESeq2::DESeq(dds)  # TODO: LFC shrinkage?
 
           # rewind the comparisons again
           newList <- input$comparisons
@@ -116,17 +132,27 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           # get the results for each contrast and put it all in a big results object
           sig_results <- list()
           for (i in 1:length(contrasts)) {
-            sig_results[[input$comparisons[i]]] <- results(dds, contrast = c(input$sample_annotation_types_cmp, contrasts[[i]][1], contrasts[[i]][2]))
+            sig_results[[input$comparisons[i]]] <- DESeq2::results(
+              dds,
+              contrast = c(
+                input$sample_annotation_types_cmp,
+                contrasts[[i]][1],
+                contrasts[[i]][2]
+              ),
+              pAdjustMethod = PADJUST_METHOD[[input$test_correction]]
+            )
           }
-
           # for each result create a tabPanel
           for (i in 1:length(sig_results)) {
             create_new_tab(
               title = input$comparisons[i],
               targetPanel = "significance_analysis_results",
               result = sig_results[[input$comparisons[i]]],
-              contrast = contrasts[[i]]
+              contrast = contrasts[[i]],
+              alpha = input$significance_level,
+              ns = ns
             )
+            significance_tabs_to_delete[[i]] <<- input$comparisons[i]
           }
         }
       })

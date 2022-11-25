@@ -76,11 +76,13 @@ server <- function(input,output,session){
 # Layout upon Start ----
   hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
   hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
+  hideTab(inputId = "tabsetPanel1", target = "Significance Analysis")
   hideTab(inputId = "tabsetPanel1", target = "PCA")
   hideTab(inputId = "tabsetPanel1", target = "Volcano Plot")
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+
   
 ## Quit App Button ----
   observeEvent(input$Quit_App,{
@@ -883,6 +885,7 @@ server <- function(input,output,session){
     processedData_all[[input$omicType]]$annotation_rows <- processedData_all[[input$omicType]]$annotation_rows[rownames(processedData_all[[input$omicType]]$Matrix),]
     
     showTab(inputId = "tabsetPanel1", target = "Sample Correlation")
+    showTab(inputId = "tabsetPanel1", target = "Significance Analysis")
     showTab(inputId = "tabsetPanel1", target = "PCA")
     showTab(inputId = "tabsetPanel1", target = "Volcano Plot")
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
@@ -933,6 +936,12 @@ server <- function(input,output,session){
     omic_type = reactive(input$omicType),
     row_select = reactive(input$row_selection)
   )
+  # significance analysis ----
+  significance_analysis_server(
+    id = 'SignificanceAnalysis',
+    preprocess_method = reactive(input$PreProcessing_Procedure),
+    omic_type = reactive(input$omicType)
+  )
   # PCA
   pca_Server(id="PCA", omic_type = reactive(input$omicType), reactive(input$row_selection))
   # Volcano plots
@@ -944,16 +953,10 @@ server <- function(input,output,session){
     id = "single_gene_visualisation",
     omicType = reactive(input$omicType)
   )
-  # KEGG enrichment ----
+  # Enrichment Analysis ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
     scenario = 0,
-    omic_type = reactive(input$omicType)
-  )
-  # significance analysis ----
-  significance_analysis_server(
-    id = 'SignificanceAnalysis',
-    preprocess_method = reactive(input$PreProcessing_Procedure),
     omic_type = reactive(input$omicType)
   )
 }

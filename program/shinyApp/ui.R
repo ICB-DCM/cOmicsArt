@@ -172,12 +172,12 @@ ui <- shiny::fluidPage(
     data_selection_panel,
     pre_processing_panel,
     sample_correlation_panel <- sampleCorrelation_UI("sample_correlation"),
+    significance_analysis_panel <- significance_analysis_UI("SignificanceAnalysis"),
     pca_panel <- pca_UI("PCA"),
     volcano_plot_panel <- volcano_UI("Volcano"),
     heatmap_panel <- heatmap_UI("Heatmap"),
     single_gene_visualisation_panel <- single_gene_visualisation_UI("single_gene_visualisation"),
-    enrichment_analysis_tab_panel <- enrichment_analysis_UI("EnrichmentAnalysis"),
-    significance_analysis_panel <- significance_analysis_UI("SignificanceAnalysis")
+    enrichment_analysis_tab_panel <- enrichment_analysis_UI("EnrichmentAnalysis")
   ),
   hidden(selectInput(
     "element_02",
