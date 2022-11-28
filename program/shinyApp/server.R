@@ -21,7 +21,11 @@ server <- function(input,output,session){
   source("R/volcano_plot/server.R", local = T)
   source("R/single_gene_visualisation/server.R",local = T)
   source("R/sample_correlation/server.R", local = T)
+  source("R/fun_getCurrentVersionFromChangeLog.R",local=T)
   global_Vars <<- reactiveValues()
+  
+  # getCurrentVersion(updateDESCRIPTION=T) # Where to Place this ? So it does not always get 'updated'?
+  # Can we add this somehow as necassary to every new release?
   
 # Security section ---- 
   options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
@@ -327,6 +331,8 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**DataInput** - Uploaded Omic Type: ",input$omicType)
       )
+    fun_LogIt(message = "## title {.tabset .tabset-fade}")
+    fun_LogIt(message = "### Tab 1")
     if(!(isTruthy(input$data_preDone) | 
          FLAG_TEST_DATA_SELECTED |
          (isTruthy(input$data_matrix1) & 
@@ -528,6 +534,14 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!")
       )
+    
+    fun_LogIt(
+      message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", "))
+    )
+    
+    fun_LogIt(message = "### Tab 2")
+    fun_LogIt(message = "This will be the section with text snippets as well as mentioning of appropiate package versions")
+    fun_LogIt(message = "<br>")
     data_input
   })
   
@@ -619,9 +633,7 @@ server <- function(input,output,session){
         icon = icon("fas fa-angle-double-right")
         )
     })
-    fun_LogIt(
-      message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input_shiny()[[input$omicType]]$Matrix),collapse = ", "))
-      )
+
   })
   
 ## Log Selection ----
