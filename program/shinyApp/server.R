@@ -327,12 +327,12 @@ server <- function(input,output,session){
   data_output <- list()
   observeEvent(input$refresh1,{
     omicType_selected = input$omicType
-    fun_LogIt(message = "## Data Input")
+    fun_LogIt(message = "## DataInput {.tabset .tabset-fade}")
+    fun_LogIt(message = "### Info")
     fun_LogIt(
       message = paste0("**DataInput** - Uploaded Omic Type: ",input$omicType)
       )
-    fun_LogIt(message = "## title {.tabset .tabset-fade}")
-    fun_LogIt(message = "### Tab 1")
+
     if(!(isTruthy(input$data_preDone) | 
          FLAG_TEST_DATA_SELECTED |
          (isTruthy(input$data_matrix1) & 
@@ -539,7 +539,7 @@ server <- function(input,output,session){
       message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", "))
     )
     
-    fun_LogIt(message = "### Tab 2")
+    fun_LogIt(message = "### Publication Snippet")
     fun_LogIt(message = "This will be the section with text snippets as well as mentioning of appropiate package versions")
     fun_LogIt(message = "<br>")
     data_input
