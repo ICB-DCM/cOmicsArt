@@ -554,11 +554,13 @@ server <- function(input,output,session){
     # Row
     output$providedRowAnnotationTypes_ui=renderUI({
       req(data_input_shiny())
-      selectInput(
+      shinyWidgets::virtualSelectInput(
         inputId = "providedRowAnnotationTypes",
         label = "Which annotation type do you want to select on?",
         choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
-        multiple = F
+        multiple = F,
+        search = T,
+        showSelectedOptionsFirst = T
       )
     })
 
@@ -570,16 +572,18 @@ server <- function(input,output,session){
           inputId = "row_selection",
           label = "Which entities to use? (Your input category is numeric, selection is currently only supported for categorical data!)",
           choices = c("all"),
-          selected="all",
+          selected = "all",
           multiple = T
         )
       }else{
-        selectInput(
+        shinyWidgets::virtualSelectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Will be the union if multiple selected)",
           choices = c("High Values+IQR","all",unique(unlist(strsplit(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes],"\\|")))),
           selected="all",
-          multiple = T
+          multiple = T,
+          search = T,
+          showSelectedOptionsFirst = T
         )
       }
     })
