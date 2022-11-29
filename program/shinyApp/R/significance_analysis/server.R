@@ -2,6 +2,11 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
   moduleServer(
     id,
     function(input,output,session){
+      sig_ana_reactive <- reactiveValues(
+        start_analysis = 0,
+        update_plot_post_ana = 0,
+        info_text = "Press 'Get significance analysis' to start!"
+      )
       ns <- session$ns
       ## Sidebar UI section
       # UI to choose type of comparison
@@ -97,10 +102,10 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
             inputId = ns("visualization_method"),
             label = "Visualization method",
             choices = choices,
-            selected = "UpSetR plot"
+            selected = input$visualization_method
         )
       })
-      # UI to choose what genes to llok at (e.g. significant, upregulated, downregulated)
+      # UI to choose what genes to look at (e.g. significant, upregulated, downregulated)
       output$chooseGenesToLookAt_ui <- renderUI({
         req(input$comparisons_to_visualize)
         # choices dependent on preprocess_method
@@ -124,11 +129,26 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
             selected = "Significant unadjusted"
         )
       })
-      # Do the analysis
+      # keep updating the info panel while executing
+      observe(
+        shinyjs::html(
+          id = 'significance_analysis_info',
+          sig_ana_reactive$info_text
+        )
+      )
       observeEvent(input$significanceGo,{
+        # shinyjs::html(id = 'significance_analysis_info', "Analysis is running...")
+        sig_ana_reactive$info_text <- "Analysis is running..."
+        # start the analysis
+        sig_ana_reactive$start_analysis <- sig_ana_reactive$start_analysis + 1
+      })
+      # Do the analysis
+      observeEvent(sig_ana_reactive$start_analysis,{
+        req(sig_ana_reactive$start_analysis > 0)
         if(input$significanceGo == 1){
           significance_tabs_to_delete <<- NULL
         }
+        print("Start the Significance Analysis")
         # delete old panels
         if(!is.null(significance_tabs_to_delete)){
           for (i in 1:length(significance_tabs_to_delete)) {
@@ -224,13 +244,17 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           )
           significance_tabs_to_delete[[i]] <<- input$comparisons[i]
         }
+        sig_ana_reactive$info_text <- "Analysis is Done!"
+        # update plot
+        sig_ana_reactive$update_plot_post_ana <- sig_ana_reactive$update_plot_post_ana + 1
       })
       # update the plot whenever the user changes the visualization method
       # or the comparisons to visualize
       to_update_significance_plot <- reactive({
         list(
           input$visualization_method,
-          input$comparisons_to_visualize
+          input$comparisons_to_visualize,
+          sig_ana_reactive$update_plot_post_ana
         )
       })
       observeEvent(to_update_significance_plot(),{
@@ -238,14 +262,25 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         req(input$visualization_method)
         req(input$comparisons_to_visualize)
         req(input$sig_to_look_at)
+        req(sig_ana_reactive$update_plot_post_ana > 0)
         # get the results
         res2plot <- list()
         for (i in 1:length(input$comparisons_to_visualize)) {
-          res2plot[[input$comparisons_to_visualize[i]]] <- filter_significant_result(
-            result = sig_results[[input$comparisons_to_visualize[i]]],
-            alpha = input$significance_level,
-            filter_type = input$sig_to_look_at
-          )$gene
+          if(preprocess_method() == "vst_DESeq"){
+            res2plot[[input$comparisons_to_visualize[i]]] <- rownames(
+              filter_significant_result(
+                result = sig_results[[input$comparisons_to_visualize[i]]],
+                alpha = input$significance_level,
+                filter_type = input$sig_to_look_at
+              )
+            )
+          }else{
+            res2plot[[input$comparisons_to_visualize[i]]] <- filter_significant_result(
+              result = sig_results[[input$comparisons_to_visualize[i]]],
+              alpha = input$significance_level,
+              filter_type = input$sig_to_look_at
+            )$gene
+          }
         }
         # plot the results
         if(input$visualization_method == "UpSetR plot"){

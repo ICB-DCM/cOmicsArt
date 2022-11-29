@@ -20,8 +20,8 @@ create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns, prep
   # call create_new_tab based on preprocess_method used
   # preprocess_method: preprocess_method used
   # for other parameters see create_new_tab_*
-  if (preprocess_method == "DESeq2"){
-      create_new_tab_DESeq2(title, targetPanel, result, contrast, alpha, ns)
+  if (preprocess_method == "vst_DESeq"){
+      create_new_tab_DESeq(title, targetPanel, result, contrast, alpha, ns)
   }
   else{
       create_new_tab_manual(title, targetPanel, result, contrast, alpha, ns)
@@ -114,7 +114,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   # alpha: significance level
   # ns: namespace function
 
-  print("create_new_tab")
+  print("create new DESeq tab")
   print(title)
   print(result)
   # paste together the strings to print
