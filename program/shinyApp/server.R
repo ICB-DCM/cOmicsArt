@@ -534,13 +534,12 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!")
       )
-    
     fun_LogIt(
       message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", "))
     )
     
     fun_LogIt(message = "### Publication Snippet")
-    fun_LogIt(message = "This will be the section with text snippets as well as mentioning of appropiate package versions")
+    fun_LogIt(message = snippet_dataInput(data_dimension = paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", ")))
     fun_LogIt(message = "<br>")
     data_input
   })
