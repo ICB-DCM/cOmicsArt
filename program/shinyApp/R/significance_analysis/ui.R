@@ -1,8 +1,6 @@
 significance_analysis_sidebar_ui<- function(ns){
   sidebarPanel(
     id = "sidebar_significance_analysis",
-    # UI to choose whether to use raw data or normalised data
-    uiOutput(outputId = ns("type_of_data_ui")),
     # UI to choose type of comparison
     uiOutput(outputId = ns("type_of_comparison_ui")),
     # UI to choose comparisons
@@ -29,7 +27,15 @@ significance_analysis_main_ui <- function(ns){
     tabsetPanel(
       id = ns("significance_analysis_results"),
       tabPanel(
-        title = "Results"
+        title = "Result Visualization",
+        # UI for visualization Plot
+        plotOutput(outputId = ns("Significant_Plot_final")),
+        # UI to select comparisons to visualize
+        uiOutput(outputId = ns("chooseComparisonsToVisualize_ui")),
+        # UI to choose visualization method
+        uiOutput(outputId = ns("chooseVisualization_ui")),
+        # UI to choose what genes to llok at (e.g. significant, upregulated, downregulated)
+        uiOutput(outputId = ns("chooseGenesToLookAt_ui"))
       ),
     ),
   )

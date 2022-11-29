@@ -4,16 +4,6 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
     function(input,output,session){
       ns <- session$ns
       ## Sidebar UI section
-      # UI to choose whether to use raw data or normalised data
-      output$type_of_data_ui <- renderUI({
-        selectInput(
-          inputId = ns("type_of_data"),
-          label = "Choose Data to use",
-          choices = c("raw", "preprocessed"),
-          multiple = F,
-          selected = "preprocessed"
-        )
-      })
       # UI to choose type of comparison
       output$type_of_comparison_ui <- renderUI({
         req(data_input_shiny())
@@ -28,13 +18,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
       # UI to choose comparisons
       output$chooseComparisons_ui <- renderUI({
         req(input$sample_annotation_types_cmp)
-        req(input$type_of_data)
-        # select based on whether to use raw or normalised data
-        if(input$type_of_data == "preprocessed"){
-          annoToSelect <- selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp]
-        }else{
-          annoToSelect <- data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp]
-        }
+        annoToSelect <- selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp]
         if(length(annoToSelect) == length(unique(annoToSelect))){
           # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
           helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
@@ -62,8 +46,8 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         selectInput(
           inputId = ns("test_method"),
           label = "Test method",
-          choices = c("Wilcoxon rank sum test", "T-test"),
-          selected = "Wilcoxon rank sum test"
+          choices = c("Wilcoxon rank sum test", "T-Test"),
+          selected = "T-Test"
         )
       })
       # UI to choose significance level
@@ -87,6 +71,57 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
               "Holm", "Hommel", "Hochberg"
             ),
             selected = "Benjamini-Hochberg"
+        )
+      })
+      # UI to select comparisons to visualize
+      output$chooseComparisonsToVisualize_ui <- renderUI({
+          req(input$comparisons)
+          selectInput(
+          inputId = ns("comparisons_to_visualize"),
+          label = "Select your desired comparisons to visualize",
+          choices = input$comparisons,
+          multiple = T,
+          selected = input$comparisons
+          )
+      })
+      # UI to choose visualization method
+      output$chooseVisualization_ui <- renderUI({
+        req(input$comparisons_to_visualize)
+        # only if the number of comparisons is less than 5, have Venn diagram as option
+        if(length(input$comparisons_to_visualize) < 5){
+          choices <- c("UpSetR plot", "Venn diagram")
+        } else {
+          choices <- c("UpSetR plot")
+        }
+        selectInput(
+            inputId = ns("visualization_method"),
+            label = "Visualization method",
+            choices = choices,
+            selected = "UpSetR plot"
+        )
+      })
+      # UI to choose what genes to llok at (e.g. significant, upregulated, downregulated)
+      output$chooseGenesToLookAt_ui <- renderUI({
+        req(input$comparisons_to_visualize)
+        # choices dependent on preprocess_method
+        if(preprocess_method() == "vst_DESeq"){
+            choices <- c(
+              "Significant",
+              "Upregulated",
+              "Downregulated",
+              "Significant unadjusted"
+            )
+        } else {
+            choices <- c(
+              "Significant",
+              "Significant unadjusted"
+            )
+        }
+        selectInput(
+            inputId = ns("sig_to_look_at"),
+            label = "Type of significance to look at",
+            choices = choices,
+            selected = "Significant unadjusted"
         )
       })
       # Do the analysis
@@ -130,9 +165,9 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
             contrasts[[i]] <- unlist(strsplit(x = input$comparisons[i],split = ":"))
           }
           # get the results for each contrast and put it all in a big results object
-          sig_results <- list()
+          sig_results <<- list()
           for (i in 1:length(contrasts)) {
-            sig_results[[input$comparisons[i]]] <- DESeq2::results(
+            sig_results[[input$comparisons[i]]] <<- DESeq2::results(
               dds,
               contrast = c(
                 input$sample_annotation_types_cmp,
@@ -142,18 +177,87 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
               pAdjustMethod = PADJUST_METHOD[[input$test_correction]]
             )
           }
-          # for each result create a tabPanel
-          for (i in 1:length(sig_results)) {
-            create_new_tab(
-              title = input$comparisons[i],
-              targetPanel = "significance_analysis_results",
-              result = sig_results[[input$comparisons[i]]],
-              contrast = contrasts[[i]],
-              alpha = input$significance_level,
-              ns = ns
-            )
-            significance_tabs_to_delete[[i]] <<- input$comparisons[i]
+        }
+        else{  # all other methods require manual testing
+          # rewind the comparisons again
+          newList <- input$comparisons
+          contrasts <- vector("list", length(input$comparisons))
+          contrasts_all <- list()
+          for (i in 1:length(newList)) {
+            contrasts[[i]] <- unlist(strsplit(x = input$comparisons[i],split = ":"))
+            contrasts_all <- append(contrasts_all, contrasts[[i]])
           }
+          # make all contrasts unique
+          contrasts_all <- unique(unlist(contrasts_all))
+          # name the contrasts with the comparison names
+          names(contrasts) <- input$comparisons
+          # get names of columns we want to choose:
+          index_comparisons <- which(
+            selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp] %in% contrasts_all
+          )
+          samples_selected <- selectedData_processed()[[omic_type()]]$sample_table[index_comparisons,]
+          # get the data
+          data_selected <- selectedData_processed()[[omic_type()]]$Matrix[,index_comparisons]
+          df_selected <- data.frame(
+            data_selected
+          )
+          sig_results <<- significance_analysis(
+            df = df_selected,
+            samples = samples_selected,
+            contrasts = contrasts,
+            method = input$test_method,
+            alpha = input$significance_level,
+            correction = PADJUST_METHOD[[input$test_correction]],
+            contrast_level = input$sample_annotation_types_cmp
+          )
+        }
+        # for each result create a tabPanel
+        for (i in 1:length(sig_results)) {
+          create_new_tab(
+            title = input$comparisons[i],
+            targetPanel = "significance_analysis_results",
+            result = sig_results[[input$comparisons[i]]],
+            contrast = contrasts[[i]],
+            alpha = input$significance_level,
+            ns = ns,
+            preprocess_method = preprocess_method()
+          )
+          significance_tabs_to_delete[[i]] <<- input$comparisons[i]
+        }
+      })
+      # update the plot whenever the user changes the visualization method
+      # or the comparisons to visualize
+      to_update_significance_plot <- reactive({
+        list(
+          input$visualization_method,
+          input$comparisons_to_visualize
+        )
+      })
+      observeEvent(to_update_significance_plot(),{
+        req(input$significanceGo)
+        req(input$visualization_method)
+        req(input$comparisons_to_visualize)
+        req(input$sig_to_look_at)
+        # get the results
+        res2plot <- list()
+        for (i in 1:length(input$comparisons_to_visualize)) {
+          res2plot[[input$comparisons_to_visualize[i]]] <- filter_significant_result(
+            result = sig_results[[input$comparisons_to_visualize[i]]],
+            alpha = input$significance_level,
+            filter_type = input$sig_to_look_at
+          )$gene
+        }
+        # plot the results
+        if(input$visualization_method == "UpSetR plot"){
+          output$Significant_Plot_final <- renderPlot({
+            UpSetR::upset(
+              fromList(res2plot)
+            )
+          })
+        }else if(input$visualization_method == "Venn diagram"){
+          output$Significant_Plot_final <- renderPlot({
+            ggVennDiagram::ggVennDiagram(res2plot)
+          })
         }
       })
     }

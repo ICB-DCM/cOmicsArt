@@ -960,7 +960,3 @@ server <- function(input,output,session){
     omic_type = reactive(input$omicType)
   )
 }
-
-
-
-
