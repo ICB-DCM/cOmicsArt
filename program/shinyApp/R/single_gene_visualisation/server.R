@@ -45,7 +45,9 @@ single_gene_visualisation_server <- function(id,omicType){
       output$Select_Gene_ui <- renderUI({
         req(data_input_shiny())
         req(input$Select_GeneAnno)
-        selectInput(
+        shinyWidgets::virtualSelectInput(
+          search = T,
+          showSelectedOptionsFirst = T,
           inputId = ns("Select_Gene"),
           label = "Select the Gene from the list",
           choices = unique(data_input_shiny()[[omicType()]]$annotation_rows[,input$Select_GeneAnno]),
@@ -79,7 +81,9 @@ single_gene_visualisation_server <- function(id,omicType){
               as.character(my_comparisons[i,2])
               )
           }
-          selectInput(
+          shinyWidgets::virtualSelectInput(
+            search = T,
+            showSelectedOptionsFirst = T,
             inputId = ns("chooseComparisons"),
             label = "Select your desired comparisons",
             choices = sapply(xy.list, paste, collapse=":"),
