@@ -33,5 +33,3 @@ snippet_dataInput <- function(package_list = c(purrr = "purrr"),
   return(snippet)
 }
 
-
-
