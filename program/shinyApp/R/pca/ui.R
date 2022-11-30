@@ -31,7 +31,7 @@ pca_main_panel <- function(ns){
         title = "PCA_plot",
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          plotlyOutput(outputId = ns("PCA_plot")) ,#%>% withSpinner(type = 8),
+          plotlyOutput(outputId = ns("PCA_plot")) ,
           textOutput(outputId = ns("PCA_plot_Options_selected"), container = pre)
         ),
         uiOutput(outputId = ns("PCA_anno_tooltip_ui")),
