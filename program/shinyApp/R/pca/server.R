@@ -373,7 +373,7 @@ pca_Server <- function(id, omic_type, row_select){
         scenario <- 7
         Scree_scenario <- scenario
         output[["Scree_Plot"]] <- renderPlotly({
-          ggplotly(scree_plot,tooltip = "Var",legendgroup = "color")
+          ggplotly(scree_plot, tooltip = "Var", legendgroup = "color")
           })
 
         global_Vars$Scree_plot <- scree_plot
