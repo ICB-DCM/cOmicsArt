@@ -144,6 +144,9 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
   moduleServer(
     id,
     function(input,output,session){
+      ea_reactives <- reactiveValues(
+        ea_info = "Choose between ORA or GSEA!"
+      )
       ns <- session$ns
       ## initialize result as NULL
       global_Vars$enrichment_results <<- list(
@@ -399,18 +402,25 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
           choices = c("GeneSetEnrichment","OverRepresentation_Analysis"),
           selected = "GeneSetEnrichment")
       })
-
+      # observer for Info text
+      observe(
+        shinyjs::html(
+          id = 'EnrichmentInfo',
+          ea_reactives$ea_info
+        )
+      )
       observe({
         req(input$ORA_or_GSE)
-        output$EnrichmentInfo <- renderText("Click Do Enrichment to Start")
+        ea_reactives$ea_info <- "Click 'Do Enrichment' to Start"
 
         if(input$ORA_or_GSE == "GeneSetEnrichment"){
           output$ValueToAttach_ui <- renderUI({
             selectInput(
               inputId = ns("ValueToAttach"),
               label = "Select the metric to sort the genes after",
-              choices = c("LFC", "LFC_abs"),
-              selected = "LFC_abs")
+              choices = c("LFC_abs", "LFC"),
+              selected = input$ValueToAttach
+            )
           })
           req(input$ValueToAttach)
           if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
@@ -447,7 +457,6 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               )
             })
             output$psig_threhsold_GSEA_ui <- renderUI({
-              req(data_input_shiny())
               numericInput(
                 inputId = ns("psig_threhsold_GSEA" ),
                 label = "adj. p-value threshold",
@@ -498,11 +507,11 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               label = "Choose a gene set to hand over to enrich",
               choices = c(
                 # "DE_Genes",  # deactivated for now
-                "ProvidedGeneSet"
-                # "heatmap_genes"  # deactivated till switch is fixed.
+                "ProvidedGeneSet",
+                "heatmap_genes"
               ),
               multiple = F,
-              selected = "ProvidedGeneSet"
+              selected = input$GeneSet2Enrich
             )
           })
           output$UniverseOfGene_ui <- renderUI({
@@ -525,7 +534,6 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             print("not done atm")
             # print(paste("Gene Set provided to check for enrichment: ",length(geneSetChoice)))
           }
-
           if(input$GeneSet2Enrich == "ProvidedGeneSet"){
             output$UploadedGeneSet_ui <- renderUI(
               {shiny::fileInput(
@@ -533,6 +541,8 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
                 label = "Select a file (.csv, 1 column, ENSEMBL, e.g. ENSMUSG....)"
               )}
             )
+          }else{
+            hide(id = "UploadedGeneSet",anim=T)
           }
         }else{
           hide(id = "GeneSet2Enrich",anim=T)
@@ -635,7 +645,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               # Check if they start with "ENS.."
               if(!length(which(grepl("ENS.*",geneSetChoice_tmp) == TRUE)) == length(geneSetChoice_tmp)){
                 print("wrong data!")
-                output$EnrichmentInfo <- renderText("Check your input format, should be only gene names ENSMBL-IDs")
+                ea_reactives$ea_info <- "Check your input format, should be only gene names ENSMBL-IDs"
                 geneSetChoice_tmp <- NULL
               }else{
                 geneSetChoice_tmp <- geneSetChoice_tmp
@@ -687,7 +697,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
       output$KEGG_Enrichment <- renderPlot({ggplot()})
       observeEvent(input$enrichmentGO,{
         tmp_genes <- geneSetChoice()
-        output$EnrichmentInfo <- renderText("Enrichment is running...")
+        ea_reactives$ea_info <- "Enrichment is running..."
         print("Start Enrichment")
         output$KEGG_Enrichment <- renderPlot({ggplot()})
         fun_LogIt("## ENRICHMENT")
@@ -734,7 +744,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             global_Vars$enrichment_results <<- over_representation_analysis(input, output, tmp_genes)
           }
           # TODO: fix scenario
-          output$EnrichmentInfo <- renderText("**Enrichment Analysis Done!**")
+          ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
         })
       })
 
@@ -805,11 +815,11 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
           ctrl_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCRTL)
           comparison_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCOMP)
           if(length(comparison_samples_idx) <= 1 | length(ctrl_samples_idx) <= 1){
-            output$EnrichmentInfo <- renderText("Choose variable with at least two samples per condition!")
+            ea_reactives$ea_info <- "Choose variable with at least two samples per condition!"
             req(FALSE)
           }
           if(any(Data2PlotOnTop<0)){
-            output$EnrichmentInfo <- renderText("Choose another preprocessing, as there are negative values!")
+            ea_reactives$ea_info <- "Choose another preprocessing, as there are negative values!"
           }else{
             Data2Plot <- getLFC(
               Data2PlotOnTop,
