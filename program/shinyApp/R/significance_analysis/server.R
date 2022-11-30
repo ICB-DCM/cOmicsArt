@@ -36,7 +36,8 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
               as.character(my_comparisons[i,2])
             )
           }
-          selectInput(
+          shinyWidgets::virtualSelectInput(
+            showSelectedOptionsFirst = T,
             inputId = ns("comparisons"),
             label = "Select your desired comparisons",
             choices = sapply(xy.list, paste, collapse=":"),
@@ -47,13 +48,22 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
       })
       # UI to choose test method
       output$chooseTest_ui <- renderUI({
-        req(preprocess_method() != "vst_DESeq")
-        selectInput(
-          inputId = ns("test_method"),
-          label = "Test method",
-          choices = c("Wilcoxon rank sum test", "T-Test"),
-          selected = "T-Test"
-        )
+        if(preprocess_method() == "vst_DESeq"){
+          # TODO: can we have a box that looks the same as an input?
+          renderText(
+            expr = "DESeq is using a Wald test statistic.\nWe are using the same here.",
+            outputArgs = list(container = pre)
+          )
+        }else{
+          shinyWidgets::virtualSelectInput(
+            search = T,
+            showSelectedOptionsFirst = T,
+            inputId = ns("test_method"),
+            label = "Test method",
+            choices = c("Wilcoxon rank sum test", "T-Test"),
+            selected = "T-Test"
+          )
+        }
       })
       # UI to choose significance level
       output$chooseSignificanceLevel_ui <- renderUI({
@@ -136,6 +146,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           sig_ana_reactive$info_text
         )
       )
+      # Analysis initial info
       observeEvent(input$significanceGo,{
         # shinyjs::html(id = 'significance_analysis_info', "Analysis is running...")
         sig_ana_reactive$info_text <- "Analysis is running..."
@@ -254,17 +265,27 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         list(
           input$visualization_method,
           input$comparisons_to_visualize,
-          sig_ana_reactive$update_plot_post_ana
+          sig_ana_reactive$update_plot_post_ana,
+          input$sig_to_look_at
         )
       })
       observeEvent(to_update_significance_plot(),{
-        req(input$significanceGo)
-        req(input$visualization_method)
-        req(input$comparisons_to_visualize)
-        req(input$sig_to_look_at)
-        req(sig_ana_reactive$update_plot_post_ana > 0)
+        req(
+          input$significanceGo,
+          input$visualization_method,
+          input$comparisons_to_visualize,
+          input$sig_to_look_at,
+          sig_ana_reactive$update_plot_post_ana > 0
+        )
         # get the results
         res2plot <- list()
+        # check that you have more than one comparison
+        if(length(input$comparisons_to_visualize) == 1){
+          sig_ana_reactive$info_text <- "You tried to compare only one set. Please choose at least two comparisons."
+          # clear the plot
+          output$Significant_Plot_final <- renderPlot({})
+          return(NULL)
+        }
         for (i in 1:length(input$comparisons_to_visualize)) {
           if(preprocess_method() == "vst_DESeq"){
             res2plot[[input$comparisons_to_visualize[i]]] <- rownames(
