@@ -21,7 +21,11 @@ server <- function(input,output,session){
   source("R/volcano_plot/server.R", local = T)
   source("R/single_gene_visualisation/server.R",local = T)
   source("R/sample_correlation/server.R", local = T)
+  source("R/fun_getCurrentVersionFromChangeLog.R",local=T)
   global_Vars <<- reactiveValues()
+  
+  # getCurrentVersion(updateDESCRIPTION=T) # Where to Place this ? So it does not always get 'updated'?
+  # Can we add this somehow as necassary to every new release?
   
 # Security section ---- 
   options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
@@ -323,10 +327,12 @@ server <- function(input,output,session){
   data_output <- list()
   observeEvent(input$refresh1,{
     omicType_selected = input$omicType
-    fun_LogIt(message = "## Data Input")
+    fun_LogIt(message = "## DataInput {.tabset .tabset-fade}")
+    fun_LogIt(message = "### Info")
     fun_LogIt(
       message = paste0("**DataInput** - Uploaded Omic Type: ",input$omicType)
       )
+
     if(!(isTruthy(input$data_preDone) | 
          FLAG_TEST_DATA_SELECTED |
          (isTruthy(input$data_matrix1) & 
@@ -528,6 +534,13 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!")
       )
+    fun_LogIt(
+      message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", "))
+    )
+    
+    fun_LogIt(message = "### Publication Snippet")
+    fun_LogIt(message = snippet_dataInput(data_dimension = paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", ")))
+    fun_LogIt(message = "<br>")
     data_input
   })
   
@@ -541,11 +554,13 @@ server <- function(input,output,session){
     # Row
     output$providedRowAnnotationTypes_ui=renderUI({
       req(data_input_shiny())
-      selectInput(
+      shinyWidgets::virtualSelectInput(
         inputId = "providedRowAnnotationTypes",
         label = "Which annotation type do you want to select on?",
         choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
-        multiple = F
+        multiple = F,
+        search = T,
+        showSelectedOptionsFirst = T
       )
     })
 
@@ -557,16 +572,18 @@ server <- function(input,output,session){
           inputId = "row_selection",
           label = "Which entities to use? (Your input category is numeric, selection is currently only supported for categorical data!)",
           choices = c("all"),
-          selected="all",
+          selected = "all",
           multiple = T
         )
       }else{
-        selectInput(
+        shinyWidgets::virtualSelectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Will be the union if multiple selected)",
           choices = c("High Values+IQR","all",unique(unlist(strsplit(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes],"\\|")))),
           selected="all",
-          multiple = T
+          multiple = T,
+          search = T,
+          showSelectedOptionsFirst = T
         )
       }
     })
@@ -588,7 +605,7 @@ server <- function(input,output,session){
       }
     })
     # Column /Sample
-    output$providedSampleAnnotationTypes_ui <-renderUI({
+    output$providedSampleAnnotationTypes_ui <- renderUI({
       req(data_input_shiny())
       selectInput(
         inputId = "providedSampleAnnotationTypes",
@@ -619,9 +636,7 @@ server <- function(input,output,session){
         icon = icon("fas fa-angle-double-right")
         )
     })
-    fun_LogIt(
-      message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input_shiny()[[input$omicType]]$Matrix),collapse = ", "))
-      )
+
   })
   
 ## Log Selection ----

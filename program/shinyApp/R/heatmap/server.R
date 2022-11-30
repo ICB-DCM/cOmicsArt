@@ -175,7 +175,9 @@ heatmap_server <- function(id,omicType){
           })
           output$row_anno_options_heatmap_ui <- renderUI({
             req(selectedData_processed())
-            selectInput(
+            shinyWidgets::virtualSelectInput(
+              search = T,
+              showSelectedOptionsFirst = T,
               inputId = ns("row_anno_options_heatmap"),
               label = "Which entities to use?",
               choices = c("all",unique(selectedData_processed()[[omicType()]]$annotation_rows[,input$anno_options_heatmap])),

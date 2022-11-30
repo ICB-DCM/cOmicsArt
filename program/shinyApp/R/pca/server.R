@@ -4,7 +4,7 @@ pca_Server <- function(id, omic_type, row_select){
     id,
     function(input,output,session){
       ns <- session$ns
-
+      
       ## UI Section ----
       output$x_axis_selection_ui <- renderUI({
         radioGroupButtons(
@@ -85,13 +85,17 @@ pca_Server <- function(id, omic_type, row_select){
         input$nPCAs_to_look_at
         )
       })
+      
       observeEvent(toListen2PCA(),{
-        req(
-          omic_type(),
-          input$x_axis_selection,
-          input$y_axis_selection,
-          input$coloring_options
-        )
+        req(omic_type())
+        req(input$x_axis_selection)
+        req(input$y_axis_selection)
+        req(input$coloring_options)
+        # req(input$PCA_anno_tooltip)
+        # browser()
+        req(input$Do_PCA[1] > 0)
+        req(data_input_shiny()[[omic_type()]])
+
 
         print("PCA analysis on pre-selected data")
         customTitle <- paste0(
@@ -261,7 +265,7 @@ pca_Server <- function(id, omic_type, row_select){
 
           pca_plot_final <- pca_plot_final +
             geom_segment(
-              data = df_out_r[which(df_out_r$feature!=""),],
+              data = df_out_r[which(df_out_r$feature != ""),],
               aes(
                 x = 0,
                 y = 0,
@@ -280,9 +284,10 @@ pca_Server <- function(id, omic_type, row_select){
           ggplotly(
             pca_plot_final,
             tooltip = ifelse(is.null(input$PCA_anno_tooltip),"all","chosenAnno"),
-            legendgroup = "color")
+            legendgroup = "color"
+            )
           })
-
+        
         print(input$only2Report_pca)
         global_Vars$PCA_plot <- pca_plot_final # somehow does not update ? or just return the latest?
         global_Vars$PCA_customTitle <- customTitle
@@ -368,7 +373,7 @@ pca_Server <- function(id, omic_type, row_select){
         scenario <- 7
         Scree_scenario <- scenario
         output[["Scree_Plot"]] <- renderPlotly({
-          ggplotly(scree_plot,tooltip = "Var",legendgroup="color")
+          ggplotly(scree_plot, tooltip = "Var", legendgroup = "color")
           })
 
         global_Vars$Scree_plot <- scree_plot
