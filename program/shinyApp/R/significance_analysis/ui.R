@@ -37,7 +37,49 @@ significance_analysis_main_ui <- function(ns){
         # UI to choose visualization method
         uiOutput(outputId = ns("chooseVisualization_ui")),
         # UI to choose what genes to llok at (e.g. significant, upregulated, downregulated)
-        uiOutput(outputId = ns("chooseGenesToLookAt_ui"))
+        uiOutput(outputId = ns("chooseGenesToLookAt_ui")),
+        # Download and Report UI
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          actionButton(
+            inputId = ns("only2Report_Sig"),
+            label = "Send only to Report",
+            class = "btn-info"
+          )
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          downloadButton(
+            outputId = ns("getR_Code_Sig"),
+            label = "Get underlying R code and data",
+            icon = icon("code")
+          )
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          downloadButton(
+            outputId = ns("SavePlot_Sig"),
+            label = "Save plot",
+            class = "btn-info"
+          )
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          radioGroupButtons(
+            inputId = ns("file_ext_Sig"),
+            label = "File Type:",
+            choices = c(".png", ".tiff", ".pdf"),
+            selected = ".png"
+          )
+        ),
       ),
     ),
   )

@@ -36,8 +36,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
               as.character(my_comparisons[i,2])
             )
           }
-          shinyWidgets::virtualSelectInput(
-            showSelectedOptionsFirst = T,
+          selectInput(
             inputId = ns("comparisons"),
             label = "Select your desired comparisons",
             choices = sapply(xy.list, paste, collapse=":"),
@@ -305,17 +304,107 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         }
         # plot the results
         if(input$visualization_method == "UpSetR plot"){
-          output$Significant_Plot_final <- renderPlot({
-            UpSetR::upset(
+          sig_ana_reactive$plot_last <- UpSetR::upset(
               fromList(res2plot)
             )
+          output$Significant_Plot_final <- renderPlot({
+            sig_ana_reactive$plot_last
           })
         }else if(input$visualization_method == "Venn diagram"){
+          sig_ana_reactive$plot_last <- ggVennDiagram::ggVennDiagram(res2plot)
           output$Significant_Plot_final <- renderPlot({
-            ggVennDiagram::ggVennDiagram(res2plot)
+            sig_ana_reactive$plot_last
           })
         }
       })
+
+      # # Download and Report Section
+      # # download R Code for further plotting
+      # output$getR_Code <- downloadHandler(
+      #   filename = function(){
+      #     paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      #   },
+      #   content = function(file){
+      #     envList <- list(EnrichmentRes = result)
+      #     # assign unique name to result for saving later
+      #     result_name <- paste("EnrichmentRes", id, sep="_")
+      #     names(envList) <- result_name
+      #
+      #     temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+      #     dir.create(temp_directory)
+      #
+      #     write(getPlotCode(scenario), file.path(temp_directory, "Code.R"))
+      #
+      #     saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+      #     zip::zip(
+      #       zipfile = file,
+      #       files = dir(temp_directory),
+      #       root = temp_directory
+      #     )
+      #   },
+      #   contentType = "application/zip"
+      # )
+      #
+      # Saving Plot
+      output$SavePlot_Sig <- downloadHandler(
+        filename = function() {
+          paste0(id, Sys.time(), input$file_ext_Sig)
+        },
+        content = function(file){
+          if(input$visualization_method == "Venn diagram"){
+            print("Venn diagram saving.")
+            ggsave(
+              filename = file,
+              plot = sig_ana_reactive$plot_last,
+              device = gsub("\\.","",input$file_ext_Sig)
+            )
+          }else{
+            if(input$file_ext_Sig == ".pdf"){
+              print("pdf")
+              grDevices::pdf(
+                file = file,
+                onefile = FALSE
+              )
+              sig_ana_reactive$plot_last
+              grDevices::dev.off()
+            }else if(input$file_ext_Sig == ".png"){
+              grDevices::png(file)
+              sig_ana_reactive$plot_last
+              dev.off()
+            }else if(input$file_ext_Sig == ".tiff"){
+              grDevices::tiff(file)
+              sig_ana_reactive$plot_last
+              grDevices::dev.off()
+            }
+          }
+        }
+      )
+      # observeEvent(input$only2Report,{
+      #   notificationID <- showNotification(ui = "Saving...",duration = 0)
+      #   tmp_filename <- paste0(getwd(),"/www/", paste(id,Sys.time(),".png",sep="_"))
+      #   ggsave(
+      #     filename = tmp_filename,
+      #     plot = clusterProfiler::dotplot(result),device = "png"
+      #   )
+      #   fun_LogIt(message = paste("###", id, "ENRICHMENT", sep=" "))
+      #   fun_LogIt(message = paste("-", id, "Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
+      #   fun_LogIt(message = paste("- Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(gene_set_choice)))
+      #   fun_LogIt(message = paste("- Chosen Organism (needed for translation): ", organism_choice))
+      #   # fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",global_Vars$KEGG_UniverseOfGene, " (",length(global_Vars$KEGG_universeSelected_tranlsated)," genes)"))
+      #   fun_LogIt(message = paste("- The number of found enriched terms (p.adj <0.05): ",nrow(result@result[result@result$p.adjust<0.05,])))
+      #   fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
+      #   fun_LogIt(message = paste("- The top 5 terms are the following (sorted by adj. p.val)"))
+      #   fun_LogIt(message = knitr::kable(
+      #     head(result@result[order(result@result$p.adjust,decreasing = T),], 5),
+      #     format = "html"
+      #   ))
+      #   if(isTruthy(input$Notes) & !(isEmpty(input$Notes))){
+      #     fun_LogIt(message = "### Personal Notes:")
+      #     fun_LogIt(message = input$Notes)
+      #   }
+      #   removeNotification(notificationID)
+      #   showNotification(ui = "Saved!",type = "message", duration = 1)
+      # })
     }
   )
 }
