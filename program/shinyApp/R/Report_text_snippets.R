@@ -20,7 +20,7 @@ clean_citation <- function(citation) {
 ## done as functions
 ## Input. packages 
 snippet_dataInput <- function(package_list = c(purrr = "purrr"),
-                              data_type = input$omicType,
+                              data_type,
                               data_dimension 
                               ){
   snippet <- 
