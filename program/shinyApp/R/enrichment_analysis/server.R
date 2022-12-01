@@ -107,9 +107,18 @@ enrichment_analysis_geneset_server <- function(
           fun_LogIt(message = paste("- Chosen Organism (needed for translation): ", organism_choice))
           # fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",global_Vars$KEGG_UniverseOfGene, " (",length(global_Vars$KEGG_universeSelected_tranlsated)," genes)"))
           # TODO: discuss with Lea -> global_Vars$KEGG_UniverseOfGene is only defined in case of ORA. Wouldn't that throw an error?
-          fun_LogIt(message = paste("- The number of found enriched terms (p.adj <0.05): ",nrow(result@result[result@result$p.adjust<0.05,])))
+          fun_LogIt(
+            message = paste(
+              "- The number of found enriched terms (p.adj <0.05): ",
+              nrow(result@result[result@result$p.adjust<0.05,])
+            )
+          )
           # TODO: discuss with LEA -> On exit logging the same as this one?
-          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
+          fun_LogIt(
+            message = paste0(
+              "**", id, " ENRICHMENT** - ![", id, " ENRICHMENT](",tmp_filename,")"
+            )
+          )
           fun_LogIt(message = paste("- The top 5 terms are the following (sorted by adj. p.val)"))
           fun_LogIt(message = knitr::kable(
             head(result@result[order(result@result$p.adjust,decreasing = T),], 5),
@@ -145,7 +154,8 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
     id,
     function(input,output,session){
       ea_reactives <- reactiveValues(
-        ea_info = "Choose between ORA or GSEA!"
+        ea_info = "Choose between ORA or GSEA!",
+        can_start = FALSE
       )
       ns <- session$ns
       ## initialize result as NULL
@@ -456,16 +466,6 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
                 selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA])[2]
               )
             })
-            output$psig_threhsold_GSEA_ui <- renderUI({
-              numericInput(
-                inputId = ns("psig_threhsold_GSEA" ),
-                label = "adj. p-value threshold",
-                min = 0,
-                max = 1,
-                step = 0.01,
-                value = 0.05
-              )
-            })
             # Choose Sets to do gene set enrichment for
             output$GeneSetChoice_ui <- renderUI({
               selectInput(
@@ -489,7 +489,6 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             hide(id = "sample_annotation_types_cmp_GSEA", anim = T)
             hide(id = "Groups2Compare_ref_GSEA", anim = T)
             hide(id = "Groups2Compare_treat_GSEA", anim = T)
-            hide(id = "psig_threhsold_GSEA", anim = T)
             hide(id = "GeneSetChoice", anim = T)
           }
         }else{
@@ -497,7 +496,6 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
           hide(id = "sample_annotation_types_cmp_GSEA", anim = T)
           hide(id = "Groups2Compare_ref_GSEA", anim = T)
           hide(id = "Groups2Compare_treat_GSEA", anim = T)
-          hide(id = "psig_threhsold_GSEA", anim = T)
         }
 
         if(input$ORA_or_GSE == "OverRepresentation_Analysis"){
@@ -630,7 +628,6 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
       })
       ## Do enrichment ----
       geneSetChoice <- reactive({
-        output$KEGG_Enrichment <- renderPlot({ggplot()})
         if(isTruthy(input$GeneSet2Enrich)){
           if(input$GeneSet2Enrich == "DE_Genes"){
             # atm this is not done
@@ -672,11 +669,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               comparison_samples_idx
             )
 
-            # get thresholds to cut the set
-            # TODO: currently not working with cutoff value
-
             Data2Plot_tmp <- Data2Plot
-            # Data2Plot_tmp=Data2Plot[Data2Plot$p_adj<=input$psig_threhsold_GSEA,]
             if(input$ValueToAttach == "LFC"){
               geneSetChoice_tmp <- Data2Plot_tmp$LFC
             }
@@ -694,16 +687,15 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
         }
         geneSetChoice_tmp
       })
-      output$KEGG_Enrichment <- renderPlot({ggplot()})
       observeEvent(input$enrichmentGO,{
         tmp_genes <- geneSetChoice()
         ea_reactives$ea_info <- "Enrichment is running..."
         print("Start Enrichment")
-        output$KEGG_Enrichment <- renderPlot({ggplot()})
         fun_LogIt("## ENRICHMENT")
         req(geneSetChoice())
         # Check whether the necessary annotation is available
         anno_results <- check_annotation_enrichment_analysis()
+        ea_reactives$can_start <- anno_results$can_start
         if(anno_results$no_ann){
           showModal(modalDialog(
             title = "No annotation type detected",
@@ -733,7 +725,6 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               annotation_results = anno_results,
               input = input
             )
-            global_Vars$enrichment_results <<- gene_set_enrichment(input, output, tmp_genes)
           }else{
             tmp_genes <- translate_genes_oa(
               annotation_results = anno_results,
@@ -741,10 +732,18 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               geneSetChoice = tmp_genes,
               geneSet2Enrich = input$GeneSet2Enrich
             )
+          }
+          ea_reactives$can_start <- TRUE
+          ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
+        })
+        # start the analysis if ea_reactives$can_start == TRUE
+        observeEvent(ea_reactives$can_start, {
+          req(ea_reactives$can_start == TRUE)
+          if(input$ORA_or_GSE == "GeneSetEnrichment"){
+            global_Vars$enrichment_results <<- gene_set_enrichment(input, output, tmp_genes)
+          }else{
             global_Vars$enrichment_results <<- over_representation_analysis(input, output, tmp_genes)
           }
-          # TODO: fix scenario
-          ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
         })
       })
 
