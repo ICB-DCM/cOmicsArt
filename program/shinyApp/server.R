@@ -980,7 +980,6 @@ server <- function(input,output,session){
   # KEGG enrichment ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
-    scenario = 0,
     omic_type = reactive(input$omicType)
   )
 }
