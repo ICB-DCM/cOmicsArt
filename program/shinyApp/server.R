@@ -537,9 +537,12 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", "))
     )
-    
+
     fun_LogIt(message = "### Publication Snippet")
-    fun_LogIt(message = snippet_dataInput(data_dimension = paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", ")))
+    fun_LogIt(message = snippet_dataInput(
+      data_type = input$omicType,
+      data_dimension = paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", ")
+    ))
     fun_LogIt(message = "<br>")
     data_input
   })
