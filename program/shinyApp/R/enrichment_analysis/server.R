@@ -112,7 +112,7 @@ enrichment_analysis_geneset_server <- function(
           fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
           fun_LogIt(message = paste("- The top 5 terms are the following (sorted by adj. p.val)"))
           fun_LogIt(message = knitr::kable(
-            head(result@result[order(result@result$p.adjust,decreasing = T),], 5),
+            head(result@result[order(result@result$p.adjust, decreasing = F),], 5),
             format = "html"
           ))
           if(isTruthy(input$Notes) & !(isEmpty(input$Notes))){

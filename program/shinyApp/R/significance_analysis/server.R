@@ -379,32 +379,106 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           }
         }
       )
-      # observeEvent(input$only2Report,{
-      #   notificationID <- showNotification(ui = "Saving...",duration = 0)
-      #   tmp_filename <- paste0(getwd(),"/www/", paste(id,Sys.time(),".png",sep="_"))
-      #   ggsave(
-      #     filename = tmp_filename,
-      #     plot = clusterProfiler::dotplot(result),device = "png"
-      #   )
-      #   fun_LogIt(message = paste("###", id, "ENRICHMENT", sep=" "))
-      #   fun_LogIt(message = paste("-", id, "Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
-      #   fun_LogIt(message = paste("- Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(gene_set_choice)))
-      #   fun_LogIt(message = paste("- Chosen Organism (needed for translation): ", organism_choice))
-      #   # fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",global_Vars$KEGG_UniverseOfGene, " (",length(global_Vars$KEGG_universeSelected_tranlsated)," genes)"))
-      #   fun_LogIt(message = paste("- The number of found enriched terms (p.adj <0.05): ",nrow(result@result[result@result$p.adjust<0.05,])))
-      #   fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
-      #   fun_LogIt(message = paste("- The top 5 terms are the following (sorted by adj. p.val)"))
-      #   fun_LogIt(message = knitr::kable(
-      #     head(result@result[order(result@result$p.adjust,decreasing = T),], 5),
-      #     format = "html"
-      #   ))
-      #   if(isTruthy(input$Notes) & !(isEmpty(input$Notes))){
-      #     fun_LogIt(message = "### Personal Notes:")
-      #     fun_LogIt(message = input$Notes)
-      #   }
-      #   removeNotification(notificationID)
-      #   showNotification(ui = "Saved!",type = "message", duration = 1)
-      # })
+      # Print to report
+      observeEvent(input$only2Report_Sig,{
+        notificationID <- showNotification(ui = "Saving...",duration = 0)
+        tmp_filename <- paste0(getwd(),"/www/", paste(id,Sys.time(),".png",sep="_"))
+        png(tmp_filename)
+        sig_ana_reactive$plot_last
+        dev.off()
+        fun_LogIt(message = "### SIGNIFICANCE ANALYSIS")
+        fun_LogIt(message = paste(
+          "- Significance Analysis was performed on",
+          length(geneSetChoice_tranlsated),
+          "entities"
+        ))
+        # log which tests were performed
+        if(preprocess_method() == "vst_DESeq"){
+          fun_LogIt(
+            message = "- Significance Analysis was performed using DESeq2 pipeline"
+          )
+        }else{
+          fun_LogIt(message = paste(
+              "- Significance Analysis was performed using", input$test_method
+          ))
+        }
+        # log the significance level
+        fun_LogIt(message = paste(
+          "- Significance level was set to", input$significance_level
+        ))
+        # log the test correction method
+        fun_LogIt(message = paste(
+          "- p-values were adjusted using", input$correction_method, "correction method"
+        ))
+        # log which comparisons were performed
+        fun_LogIt(message = paste(
+          "- Comparisons performed:",
+          paste0(input$comparisons_to_visualize, collapse = ", ")
+        ))
+        # for each comparison, log the number of significant genes before and after correction
+        # and the top 5 significant genes
+        for(i in 1:length(input$comparisons_to_visualize)){
+           fun_LogIt(message = paste("####", input$comparisons_to_visualize[i]))
+          # log the number of significant genes after correction
+          fun_LogIt(message = paste(
+            "- Number of significant genes after correction for",
+            input$comparisons_to_visualize[i],
+            "is",
+            nrow(sig_results[[input$comparisons_to_visualize[i]]][
+                   sig_results[[input$comparisons_to_visualize[i]]]$padj < input$significance_level,
+                 ]
+            )
+          ))
+          # log the number of significant genes before correction
+          fun_LogIt(message = paste(
+            "- Number of significant genes after correction for",
+            input$comparisons_to_visualize[i],
+            "is",
+            nrow(sig_results[[input$comparisons_to_visualize[i]]][
+                   sig_results[[input$comparisons_to_visualize[i]]]$pvalue < input$significance_level,
+                 ]
+            )
+          ))
+          # log the top 5 significant genes
+          if(preprocess_method() == "vst_DESeq"){
+            # get the top 5 significant genes
+            top5 <- head(
+              sig_results[[input$comparisons_to_visualize[i]]]@result[order(
+                sig_results[[input$comparisons_to_visualize[i]]]@result$p.adjust,
+                decreasing = FALSE
+              ),], 5
+            )
+          }else{
+            # get the top 5 significant genes
+            top5 <- head(
+              sig_results[[input$comparisons_to_visualize[i]]][order(
+                sig_results[[input$comparisons_to_visualize[i]]]$padj,
+                decreasing = FALSE
+              ),], 5
+            )
+          }
+          fun_LogIt(message = paste(
+            "- Top 5 significant genes for",
+            input$comparisons_to_visualize[i],
+            "are the following:"
+            )
+          )
+          fun_LogIt(message = knitr::kable(
+            top5, format = "html", format.args = list(width = 40)
+          ) %>% kable_styling()
+          )
+          fun_LogIt(message = "\n")
+        }
+        fun_LogIt(message = paste0(
+          "**Overview Plot** - ![Significance Analysis](",tmp_filename,")"
+        ))
+        if(isTruthy(input$Notes) & !(isEmpty(input$Notes))){
+          fun_LogIt(message = "### Personal Notes:")
+          fun_LogIt(message = input$Notes)
+        }
+        removeNotification(notificationID)
+        showNotification(ui = "Saved!",type = "message", duration = 1)
+      })
     }
   )
 }
