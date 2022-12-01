@@ -376,20 +376,19 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
             )
           }else{
             if(input$file_ext_Sig == ".pdf"){
-              print("pdf")
               grDevices::pdf(
                 file = file,
                 onefile = FALSE
               )
-              sig_ana_reactive$plot_last
+              print(sig_ana_reactive$plot_last)
               grDevices::dev.off()
             }else if(input$file_ext_Sig == ".png"){
               grDevices::png(file)
-              sig_ana_reactive$plot_last
+              print(sig_ana_reactive$plot_last)
               dev.off()
             }else if(input$file_ext_Sig == ".tiff"){
               grDevices::tiff(file)
-              sig_ana_reactive$plot_last
+              print(sig_ana_reactive$plot_last)
               grDevices::dev.off()
             }
           }
@@ -400,7 +399,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         notificationID <- showNotification(ui = "Saving...",duration = 0)
         tmp_filename <- paste0(getwd(),"/www/", paste(id,Sys.time(),".png",sep="_"))
         png(tmp_filename)
-        sig_ana_reactive$plot_last
+        print(sig_ana_reactive$plot_last)
         dev.off()
         fun_LogIt(message = "### SIGNIFICANCE ANALYSIS")
         fun_LogIt(message = paste(
