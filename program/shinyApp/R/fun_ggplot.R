@@ -244,8 +244,14 @@ getPlotCode <- function(numberOfScenario) {
           labs(x = "PCs", y = "entity", fill = "Loading") +
           theme_bw(base_size = 15)'
   }
+  if(numberOfScenario == 20){
+    stringtosave <- 'VennDiagramm <- ggVennDiagram::ggVennDiagram(res2plot)'
+  }
+  if(numberOfScenario == 21){
+    stringtosave <- 'UpSetR::upset(fromList(res2plot))'
+  }
   if(numberOfScenario == 0){
-    stringtosave='# No_code_yet'
+    stringtosave <-'# No_code_yet'
   }
   
   return(paste0(CODE_DOWNLOAD_PREFACE,"\n",stringtosave))

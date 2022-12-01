@@ -5,7 +5,9 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
       sig_ana_reactive <- reactiveValues(
         start_analysis = 0,
         update_plot_post_ana = 0,
-        info_text = "Press 'Get significance analysis' to start!"
+        info_text = "Press 'Get significance analysis' to start!",
+        dds = NULL,
+        scenario = 0
       )
       ns <- session$ns
       ## Sidebar UI section
@@ -187,6 +189,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           dds <- dds[rowSums(counts(dds)) > 10,]  # TODO: make this a parameter (VA)
           # get the result
           dds <- DESeq2::DESeq(dds)  # TODO: LFC shrinkage?
+          sig_ana_reactive$dds <- dds
 
           # rewind the comparisons again
           newList <- input$comparisons
@@ -276,6 +279,13 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           input$sig_to_look_at,
           sig_ana_reactive$update_plot_post_ana > 0
         )
+        # assign scenario=20 for Venn Diagram and scenario=21 for UpSetR
+        if(input$visualization_method == "Venn Diagram"){
+          sig_ana_reactive$scenario <- 20
+        }
+        else{
+          sig_ana_reactive$scenario <- 21
+        }
         # get the results
         res2plot <- list()
         # check that you have more than one comparison
@@ -316,35 +326,41 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
             sig_ana_reactive$plot_last
           })
         }
+        sig_ana_reactive$results_for_plot <- res2plot
       })
 
-      # # Download and Report Section
-      # # download R Code for further plotting
-      # output$getR_Code <- downloadHandler(
-      #   filename = function(){
-      #     paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
-      #   },
-      #   content = function(file){
-      #     envList <- list(EnrichmentRes = result)
-      #     # assign unique name to result for saving later
-      #     result_name <- paste("EnrichmentRes", id, sep="_")
-      #     names(envList) <- result_name
-      #
-      #     temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-      #     dir.create(temp_directory)
-      #
-      #     write(getPlotCode(scenario), file.path(temp_directory, "Code.R"))
-      #
-      #     saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-      #     zip::zip(
-      #       zipfile = file,
-      #       files = dir(temp_directory),
-      #       root = temp_directory
-      #     )
-      #   },
-      #   contentType = "application/zip"
-      # )
-      #
+      # Download and Report Section
+      # download R Code for further plotting
+      output$getR_Code <- downloadHandler(
+        filename = function(){
+          paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+        },
+        content = function(file){
+          envList <- list(
+            sig_results = sig_results,
+            input = reactiveValuesToList(input),
+            res2plot = sig_ana_reactive$results_for_plot
+          )
+          if(preprocess_method() == "vst_DESeq"){
+            envList$dds <- sig_ana_reactive$dds
+          }
+          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+          dir.create(temp_directory)
+
+          write(
+            getPlotCode(sig_ana_reactive$scenario),  # 20 for Venn diagram, 21 for UpSetR
+            file.path(temp_directory, "Code.R")
+          )
+          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+          zip::zip(
+            zipfile = file,
+            files = dir(temp_directory),
+            root = temp_directory
+          )
+        },
+        contentType = "application/zip"
+      )
+
       # Saving Plot
       output$SavePlot_Sig <- downloadHandler(
         filename = function() {
