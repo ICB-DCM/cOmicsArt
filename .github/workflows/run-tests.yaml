@@ -67,11 +67,11 @@ jobs:
       #     })
       #     remove.packages("pak")
           
-      - name: Init renv Repo
-        shell: Rscript {0}
-        run: |
-          renv::init(bioconductor = TRUE)
-          
+      # - name: Init renv Repo
+      #   shell: Rscript {0}
+      #   run: |
+      #     renv::init(bioconductor = TRUE)
+      #     
       - name: Restore renv packages
         shell: Rscript {0}
         run: |
