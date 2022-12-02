@@ -2224,26 +2224,6 @@
         "askpass"
       ]
     },
-    "org.Hs.eg.db": {
-      "Package": "org.Hs.eg.db",
-      "Version": "3.15.0",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Hash": "ea73036cd4946b4577e0aa9e51d0a61b",
-      "Requirements": [
-        "AnnotationDbi"
-      ]
-    },
-    "org.Mm.eg.db": {
-      "Package": "org.Mm.eg.db",
-      "Version": "3.15.0",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Hash": "ad876508bf40966eaad1a0e89a83d522",
-      "Requirements": [
-        "AnnotationDbi"
-      ]
-    },
     "packrat": {
       "Package": "packrat",
       "Version": "0.8.1",
