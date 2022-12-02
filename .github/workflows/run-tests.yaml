@@ -19,6 +19,7 @@ jobs:
           - {os: ubuntu-18.04, r: '4.2.0', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
 
     steps:
+    
       - name: Check out repository
         uses: actions/checkout@v2
         
