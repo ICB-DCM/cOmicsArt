@@ -57,6 +57,7 @@ jobs:
         shell: Rscript {0}
         run: |
           install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/")
+          install.packages("jsonlite")
           lapply(names(jsonlite::read_json("renv.lock")$Packages), function(pkg) {
             pak::pkg_system_requirements(pkg, execute = TRUE)
           })
