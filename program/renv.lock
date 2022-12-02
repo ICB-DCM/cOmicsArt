@@ -3156,18 +3156,14 @@
     },
     "stringr": {
       "Package": "stringr",
-      "Version": "1.5.0",
+      "Version": "1.4.1",
       "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "671a4d384ae9d32fc47a14e98bfa3dc8",
+      "Repository": "RSPM",
+      "Hash": "a66ad12140cd34d4f9dfcc19e84fc2a5",
       "Requirements": [
-        "cli",
         "glue",
-        "lifecycle",
         "magrittr",
-        "rlang",
-        "stringi",
-        "vctrs"
+        "stringi"
       ]
     },
     "survival": {
