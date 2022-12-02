@@ -72,6 +72,7 @@ jobs:
       - name: Restore renv packages
         shell: Rscript {0}
         run: |
+          renv::activate()
           renv::restore(lockfile = 'program/renv.lock')
           
       - name: Run tests
