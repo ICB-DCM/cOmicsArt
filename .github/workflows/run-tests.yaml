@@ -23,7 +23,6 @@ jobs:
       RSPM: ${{ matrix.config.rspm }}
 
     steps:
-    
       - uses: actions/checkout@v2
         
       - name: Prepare R ${{ matrix.config.r }}
