@@ -10,44 +10,73 @@ name: run-tests
 jobs:
   run-tests:
     runs-on: ${{ matrix.config.os }}
-    
+
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
-  
+
     strategy:
       fail-fast: false
       matrix:
         config:
           - {os: ubuntu-18.04, r: '4.2.0', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
+
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       RSPM: ${{ matrix.config.rspm }}
-
+      
     steps:
+      # do not convert line feeds in windows
+      - name: Windows git setup
+        if: runner.os == 'Windows'
+        run:
+          git config --global core.autocrlf false
+
       - uses: actions/checkout@v2
-        
-      - name: Prepare R ${{ matrix.config.r }}
-        uses: r-lib/actions/setup-r@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        id: install-r
         with:
           r-version: ${{ matrix.config.r }}
+          http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
-        
+
+      - uses: r-lib/actions/setup-pandoc@v2
+      
+      - name: Query dependencies
+        run: |
+          install.packages('remotes')
+          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
+          writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
+        shell: Rscript {0}
+
+      - name: Cache R packages
+        uses: actions/cache@v1
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
+          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
+          
       - name: Set up Renv
-       uses: r-lib/actions/setup-renv@v2
-       with:
-         cache-version: 2
-       env:
-         RENV_CONFIG_REPOS_OVERRIDE: ${{ env.RSPM }}
-        
+        uses: r-lib/actions/setup-renv@v2
+        with:
+          cache-version: 2
+        env:
+          RENV_CONFIG_REPOS_OVERRIDE: ${{ env.RSPM }}
+      
+      - name: Make sure renv exists
+        shell: Rscript {0}
+        run: |
+          if (system.file(package = "renv") == "") install.packages("renv")
+      
       - name: Restore renv packages
         shell: Rscript {0}
         run: |
           renv::restore(lockfile = 'program/renv.lock')
-
-     - name: Run tests
+          
+      - name: Run tests
         shell: Rscript {0}
-       run: |
+        run: |
           shiny::runTests("program/shinyApp", assert = TRUE)
-
+          
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@master
