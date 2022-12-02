@@ -48,13 +48,18 @@ jobs:
           key: ${{ matrix.config.os }}-${{ steps.install-r.outputs.installed-r-version }}-1-${{ hashFiles('program/renv.lock') }}
           restore-keys: ${{ matrix.config.os }}-${{ steps.install-r.outputs.installed-r-version }}-1-
           
-      - uses: r-lib/actions/setup-renv@v2
+      - name: Set up Renv
+        uses: r-lib/actions/setup-renv@v2
+        with:
+          cache-version: 2
+        env:
+          RENV_CONFIG_REPOS_OVERRIDE: ${{ env.RSPM }}
+      
       
       - name: Make sure renv exists
         shell: Rscript {0}
         run: |
           if (system.file(package = "renv") == "") install.packages("renv")
-          if (system.file(package = "stringr") == "") install.packages("stringr")
       
       # - name: Install system dependencies
       #   if: runner.os == 'Linux'
