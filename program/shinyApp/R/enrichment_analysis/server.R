@@ -694,11 +694,11 @@ enrichment_analysis_Server <- function(id, omic_type){
         geneSetChoice_tmp
       })
       observeEvent(input$enrichmentGO,{
-        tmp_genes <- geneSetChoice()
         ea_reactives$ea_info <- "Enrichment is running..."
         print("Start Enrichment")
         fun_LogIt("## ENRICHMENT")
         req(geneSetChoice())
+        tmp_genes <- geneSetChoice()
         # Check whether the necessary annotation is available
         anno_results <- check_annotation_enrichment_analysis()
         ea_reactives$can_start <- anno_results$can_start
@@ -724,7 +724,8 @@ enrichment_analysis_Server <- function(id, omic_type){
           ))
         }else if(anno_results$can_start == FALSE){
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            translate_genes_ea(
+            processedData_all$Transcriptomics$annotation_rows$ENTREZID <<-translate_genes_ea(
+              data = processedData_all,
               annotation_results = anno_results,
               input = input
             )
@@ -740,10 +741,11 @@ enrichment_analysis_Server <- function(id, omic_type){
         }
         # close modal on button click
         observeEvent(input$AMC, {
-          annotation_results$base_annotation <- input$AnnotationSelection
+          anno_results$base_annotation <- input$AnnotationSelection
           removeModal()
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            translate_genes_ea(
+            processedData_all$Transcriptomics$annotation_rows$ENTREZID <<-translate_genes_ea(
+              data = processedData_all,
               annotation_results = anno_results,
               input = input
             )

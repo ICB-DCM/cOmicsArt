@@ -1,7 +1,7 @@
-translate_genes_ea <- function(annotation_results, input){
+translate_genes_ea <- function(data, annotation_results, input, testing = FALSE){
   if(annotation_results$no_ann){
     # copy rownames with corresponding annotation as columnname
-    processedData_all$Transcriptomics$annotation_rows[annotation_results$base_annotation] <<- rownames(processedData_all$Transcriptomics$annotation_rows)
+    data$Transcriptomics$annotation_rows[annotation_results$base_annotation] <- rownames(data$Transcriptomics$annotation_rows)
   }
   # translate to entrez id
   if(input$OrganismChoice == "hsa"){
@@ -9,11 +9,27 @@ translate_genes_ea <- function(annotation_results, input){
   }else{
     orgDb <- org.Mm.eg.db
   }
-  processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- mapIds(
-    orgDb,
-    keys = processedData_all$Transcriptomics$annotation_rows[[annotation_results$base_annotation]],
-    column = "ENTREZID",
-    keytype = annotation_results$base_annotation
+  tryCatch(
+    {
+      ids <- mapIds(
+        orgDb,
+        keys = data$Transcriptomics$annotation_rows[[annotation_results$base_annotation]],
+        column = "ENTREZID",
+        keytype = annotation_results$base_annotation
+      )
+      return(ids)
+    },
+    error = function(e) {
+      show_toast(
+        title = "You chose the wrong Organism. Please restart the app.",
+        type = "info",
+        position = "top",
+        timerProgressBar = TRUE,
+        width = "30%"
+      )
+      # let the program wait for 5 seconds
+      Sys.sleep(3)
+    }
   )
 }
 
