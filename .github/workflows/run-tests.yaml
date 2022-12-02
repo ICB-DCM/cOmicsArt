@@ -36,15 +36,17 @@ jobs:
         id: install-r
         with:
           r-version: ${{ matrix.config.r }}
+          http-user-agent: ${{ matrix.config.http-user-agent }}
+          use-public-rspm: true
 
       - uses: r-lib/actions/setup-pandoc@v2
 
-      # - name: Cache R packages
-      #   uses: actions/cache@v1
-      #   with:
-      #     path: renv/library
-      #     key: ${{ matrix.config.os }}-${{ steps.install-r.outputs.installed-r-version }}-1-${{ hashFiles('program/renv.lock') }}
-      #     restore-keys: ${{ matrix.config.os }}-${{ steps.install-r.outputs.installed-r-version }}-1-
+      - name: Cache R packages
+        uses: actions/cache@v1
+        with:
+          path: renv/library
+          key: ${{ matrix.config.os }}-${{ steps.install-r.outputs.installed-r-version }}-1-${{ hashFiles('program/renv.lock') }}
+          restore-keys: ${{ matrix.config.os }}-${{ steps.install-r.outputs.installed-r-version }}-1-
           
       - uses: r-lib/actions/setup-renv@v2
       
