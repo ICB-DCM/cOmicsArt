@@ -51,22 +51,22 @@ jobs:
         run: |
           if (system.file(package = "renv") == "") install.packages("renv")
       
-      - name: Install system dependencies
-        if: runner.os == 'Linux'
-        # do not record `pak` activity
-        shell: Rscript {0}
-        run: |
-          install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/")
-          install.packages("jsonlite")
-          lapply(names(jsonlite::read_json("program/renv.lock")$Packages), function(pkg) {
-            pak::pkg_system_requirements(pkg, execute = TRUE)
-          })
-          remove.packages("pak")
+      # - name: Install system dependencies
+      #   if: runner.os == 'Linux'
+      #   # do not record `pak` activity
+      #   shell: Rscript {0}
+      #   run: |
+      #     install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/")
+      #     install.packages("jsonlite")
+      #     lapply(names(jsonlite::read_json("program/renv.lock")$Packages), function(pkg) {
+      #       pak::pkg_system_requirements(pkg, execute = TRUE)
+      #     })
+      #     remove.packages("pak")
           
       - name: Restore renv packages
         shell: Rscript {0}
         run: |
-          renv::restore()
+          renv::restore(lockfile = 'program/renv.lock')
           
       - name: Run tests
         shell: Rscript {0}
