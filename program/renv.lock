@@ -358,6 +358,14 @@
         "graph"
       ]
     },
+    "KernSmooth": {
+      "Package": "KernSmooth",
+      "Version": "2.23-20",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8dcfa99b14c296bc9f1fd64d52fd3ce7",
+      "Requirements": []
+    },
     "MASS": {
       "Package": "MASS",
       "Version": "7.3-58.1",
@@ -974,6 +982,16 @@
         "shiny"
       ]
     },
+    "class": {
+      "Package": "class",
+      "Version": "7.3-20",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "da09d82223e669d270e47ed24ac8686e",
+      "Requirements": [
+        "MASS"
+      ]
+    },
     "classInt": {
       "Package": "classInt",
       "Version": "0.4-8",
@@ -981,6 +999,8 @@
       "Repository": "CRAN",
       "Hash": "298fa500d773db0845935cd73bfd9c2e",
       "Requirements": [
+        "KernSmooth",
+        "class",
         "e1071"
       ]
     },
@@ -1287,6 +1307,7 @@
       "Repository": "CRAN",
       "Hash": "0d776df7577206e100c2c4b508208b10",
       "Requirements": [
+        "class",
         "proxy"
       ]
     },
