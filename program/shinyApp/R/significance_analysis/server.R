@@ -300,20 +300,42 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         sig_ana_reactive$info_text <- "Analysis is Done!"
         for (i in 1:length(input$comparisons_to_visualize)) {
           if(preprocess_method() == "vst_DESeq"){
-            res2plot[[input$comparisons_to_visualize[i]]] <- rownames(
+            to_add_tmp <- rownames(
               filter_significant_result(
                 result = sig_results[[input$comparisons_to_visualize[i]]],
                 alpha = input$significance_level,
                 filter_type = input$sig_to_look_at
               )
             )
+            # only add if the result is not empty
+            if(length(to_add_tmp) > 0){
+              res2plot[input$comparisons_to_visualize[i]] <- to_add_tmp
+            }
           }else{
-            res2plot[[input$comparisons_to_visualize[i]]] <- filter_significant_result(
+            to_add_tmp <- filter_significant_result(
               result = sig_results[[input$comparisons_to_visualize[i]]],
               alpha = input$significance_level,
               filter_type = input$sig_to_look_at
             )$gene
+            # only add if the result is not empty
+            if(length(to_add_tmp) > 0){
+              res2plot[input$comparisons_to_visualize[i]] <- to_add_tmp
+            }
           }
+        }
+        # check that you have more than one comparison
+        if(length(res2plot) <= 1){
+          sig_ana_reactive$info_text <- "You either have no significant results or only significant results in one comparison."
+          # if current plots to llok at are adjusted pvalues, suggest to look at raw pvalues
+            if(input$sig_to_look_at == "Significant"){
+                sig_ana_reactive$info_text <- paste0(
+                sig_ana_reactive$info_text,
+                "\nYou tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level."
+                )
+            }
+          # clear the plot
+          output$Significant_Plot_final <- renderPlot({})
+          return(NULL)
         }
         # plot the results
         if(input$visualization_method == "UpSetR plot"){
