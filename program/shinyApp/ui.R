@@ -34,6 +34,7 @@ library(zip)
 library(cicerone)
 library(shinyalert)
 library(msigdbr)
+library(tidyr)
 # library(svglite)
 
 source("R/C.R")
@@ -116,7 +117,7 @@ ui <- shiny::fluidPage(
   ),
   ##########
   use_cicerone(),
-  useShinyalert(),
+  #useShinyalert(),
   shinyjs::useShinyjs(),
   ##########
   div(

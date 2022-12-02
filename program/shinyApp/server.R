@@ -23,9 +23,13 @@ server <- function(input,output,session){
   source("R/sample_correlation/server.R", local = T)
   source("R/significance_analysis/server.R", local = T)
   source("R/significance_analysis/util.R", local = T)
+  source("R/fun_getCurrentVersionFromChangeLog.R",local=T)
   global_Vars <<- reactiveValues()
   
-# Security section ---- 
+  # getCurrentVersion(updateDESCRIPTION=T) # Where to Place this ? So it does not always get 'updated'?
+  # Can we add this somehow as necassary to every new release?
+
+# Security section ----
   options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
 
   observeEvent(input$guide_cicerone_next,{
@@ -82,7 +86,6 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
-
   
 ## Quit App Button ----
   observeEvent(input$Quit_App,{
@@ -234,8 +237,14 @@ server <- function(input,output,session){
        file = input$data_matrix1$datapath,
        header = T,
        row.names = 1,
-       check.names = F
+       check.names = T
        )
+     Matrix2 <- read.csv(
+       file = input$data_matrix1$datapath,
+       header = T,
+       row.names = 1,
+       check.names = F
+     )
      output$DataMatrix_VI <- DT::renderDataTable({
        DT::datatable(data = Matrix)
        })
@@ -275,11 +284,12 @@ server <- function(input,output,session){
        "
        })
 
-     check1 <- ifelse(all(rownames(Matrix)==rownames(annotation_rows)),snippetYes,snippetNo)
-     check2 <- ifelse(all(colnames(Matrix)==rownames(sample_table)),snippetYes,snippetNo)
-     check3 <- ifelse(any(is.na(Matrix)==T),snippetNo,snippetYes)
-     check4 <- ifelse(any(is.na(sample_table)==T),snippetNo,snippetYes)
-     check5 <- ifelse(any(is.na(annotation_rows)==T),snippetNo,snippetYes)
+     check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
+     check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
+     check3 <- ifelse(any(is.na(Matrix) == T),snippetNo,snippetYes)
+     check4 <- ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes)
+     check5 <- ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes)
+     check6 <- ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo)
      
      if(check5 == snippetNo){
        # Indicate columns with NA
@@ -292,6 +302,15 @@ server <- function(input,output,session){
        check5 <- paste0(snippetNo," Following columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
      }
      
+     if(check6 == snippetNo){
+       # add help text
+       check6 <- paste0(
+         snippetNo,
+         "\n\t A syntactically valid name consists of letters, numbers and the dot or underline characters \n
+         and starts with a letter or the dot not followed by a number.\n
+         Therefore '12345' is invalid, 'ID_12345' is valid \n
+         Remember to change the Sample ID everywhere (Matrix & Sample Table")
+     }
      output$OverallChecks <- renderText({
        paste0("Some overall Checks are running run ...\n
        Rownames of Matrix are the same as rownames of entitie table ",check1,"\n
@@ -299,6 +318,7 @@ server <- function(input,output,session){
        Matrix has no na ",check3,"\n
        Sample table no na ",check4,"\n
        Entitie table no na ",check5,"\n
+       Sample IDs have valid names ", check6, "\n
        ")
      })
     }
@@ -310,11 +330,13 @@ server <- function(input,output,session){
   data_output <- list()
   observeEvent(input$refresh1,{
     omicType_selected = input$omicType
-    fun_LogIt(message = "## Data Input")
+    fun_LogIt(message = "## DataInput {.tabset .tabset-fade}")
+    fun_LogIt(message = "### Info")
     fun_LogIt(
       message = paste0("**DataInput** - Uploaded Omic Type: ",input$omicType)
       )
-    if(!(isTruthy(input$data_preDone) | 
+
+    if(!(isTruthy(input$data_preDone) |
          FLAG_TEST_DATA_SELECTED |
          (isTruthy(input$data_matrix1) & 
           isTruthy(input$data_sample_anno1) & 
@@ -366,19 +388,19 @@ server <- function(input,output,session){
       if(isTruthy(input$data_sample_anno1)){
         data_input[[input$omicType]] <- list(
           type=as.character(input$omicType),
-          Matrix=read.csv(
+          Matrix = read.csv(
             file = input$data_matrix1$datapath,
             header = T,
             row.names = 1,
             check.names = F
             ),
-          sample_table <- read.csv(
+          sample_table = read.csv(
             file = input$data_sample_anno1$datapath,
             header = T,
             row.names = 1,
             check.names = F
             ),
-          annotation_rows <- read.csv(
+          annotation_rows = read.csv(
             file = input$data_row_anno1$datapath,
             header = T,
             row.names = 1,
@@ -515,6 +537,16 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!")
       )
+    fun_LogIt(
+      message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", "))
+    )
+
+    fun_LogIt(message = "### Publication Snippet")
+    fun_LogIt(message = snippet_dataInput(
+      data_type = input$omicType,
+      data_dimension = paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", ")
+    ))
+    fun_LogIt(message = "<br>")
     data_input
   })
   
@@ -528,11 +560,13 @@ server <- function(input,output,session){
     # Row
     output$providedRowAnnotationTypes_ui=renderUI({
       req(data_input_shiny())
-      selectInput(
+      shinyWidgets::virtualSelectInput(
         inputId = "providedRowAnnotationTypes",
         label = "Which annotation type do you want to select on?",
         choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
-        multiple = F
+        multiple = F,
+        search = T,
+        showSelectedOptionsFirst = T
       )
     })
 
@@ -544,16 +578,18 @@ server <- function(input,output,session){
           inputId = "row_selection",
           label = "Which entities to use? (Your input category is numeric, selection is currently only supported for categorical data!)",
           choices = c("all"),
-          selected="all",
+          selected = "all",
           multiple = T
         )
       }else{
-        selectInput(
+        shinyWidgets::virtualSelectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Will be the union if multiple selected)",
           choices = c("High Values+IQR","all",unique(unlist(strsplit(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes],"\\|")))),
           selected="all",
-          multiple = T
+          multiple = T,
+          search = T,
+          showSelectedOptionsFirst = T
         )
       }
     })
@@ -575,7 +611,7 @@ server <- function(input,output,session){
       }
     })
     # Column /Sample
-    output$providedSampleAnnotationTypes_ui <-renderUI({
+    output$providedSampleAnnotationTypes_ui <- renderUI({
       req(data_input_shiny())
       selectInput(
         inputId = "providedSampleAnnotationTypes",
@@ -606,9 +642,7 @@ server <- function(input,output,session){
         icon = icon("fas fa-angle-double-right")
         )
     })
-    fun_LogIt(
-      message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input_shiny()[[input$omicType]]$Matrix),collapse = ", "))
-      )
+
   })
   
 ## Log Selection ----
@@ -956,7 +990,6 @@ server <- function(input,output,session){
   # Enrichment Analysis ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
-    scenario = 0,
     omic_type = reactive(input$omicType)
   )
 }
