@@ -8,43 +8,46 @@ on:
 name: run-tests
 
 jobs:
-  runs-on: ${{ matrix.config.os }}
+  run-tests:
+    runs-on: ${{ matrix.config.os }}
+    
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
   
-strategy:
-  matrix:
-    config:
-      - {os: ubuntu-18.04, r: '4.2.0', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
+    strategy:
+      matrix:
+        config:
+          - {os: ubuntu-18.04, r: '4.2.0', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
 
-  steps:
-    - name: Check out repository
-      uses: actions/checkout@v2
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
         
-    - name: Prepare R ${{ matrix.config.r }}
-      uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: ${{ matrix.config.r }}
-        use-public-rspm: true
+      - name: Prepare R ${{ matrix.config.r }}
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          use-public-rspm: true
         
-    - name: Set up Renv
-      uses: r-lib/actions/setup-renv@v2
-      with:
-        cache-version: 2
-      env:
-        RENV_CONFIG_REPOS_OVERRIDE: ${{ env.RSPM }}
+      - name: Set up Renv
+       uses: r-lib/actions/setup-renv@v2
+       with:
+         cache-version: 2
+       env:
+         RENV_CONFIG_REPOS_OVERRIDE: ${{ env.RSPM }}
         
-    - name: Restore renv packages
-      shell: Rscript {0}
-      run: |
-        renv::restore(lockfile = 'program/renv.lock')
+      - name: Restore renv packages
+        shell: Rscript {0}
+        run: |
+          renv::restore(lockfile = 'program/renv.lock')
 
-    - name: Run tests
-      shell: Rscript {0}
-      run: |
-        shiny::runTests("program/shinyApp", assert = TRUE)
+     - name: Run tests
+        shell: Rscript {0}
+       run: |
+          shiny::runTests("program/shinyApp", assert = TRUE)
 
-    - name: Upload test results
-      if: failure()
-      uses: actions/upload-artifact@master
-      with:
-        name: ${{ runner.os }}-r${{ matrix.config.r }}-tests
-      path: tests
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ runner.os }}-r${{ matrix.config.r }}-tests
+          path: tests
