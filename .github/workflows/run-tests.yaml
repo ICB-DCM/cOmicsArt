@@ -66,6 +66,7 @@ jobs:
       - name: Restore renv packages
         shell: Rscript {0}
         run: |
+          renv::init(bioconductor = TRUE)
           renv::restore(lockfile = 'program/renv.lock')
           
       - name: Run tests
