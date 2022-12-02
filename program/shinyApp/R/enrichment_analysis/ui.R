@@ -75,6 +75,7 @@ geneset_panel_UI <- function(
 
 ea_sidebar <- function(ns){
   sidebarPanel(
+    id = "sidebar_enrichment_analysis",
     uiOutput(outputId = ns("OrganismChoice_ui")),
     uiOutput(outputId = ns("ORA_or_GSE_ui")),
     uiOutput(outputId = ns("ValueToAttach_ui")),

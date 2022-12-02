@@ -33,7 +33,7 @@ translate_genes_oa <- function(annotation_results, input, geneSetChoice, geneSet
       annotation_results$base_annotation <- input$AnnotationSelection
     }
     # translate to entrez id
-    processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- mapIds(
+    processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- AnnotationDbi::mapIds(
       orgDb,
       keys = processedData_all$Transcriptomics$annotation_rows[[annotation_results$base_annotation]],
       column = "ENTREZID",
@@ -46,7 +46,7 @@ translate_genes_oa <- function(annotation_results, input, geneSetChoice, geneSet
   }
   # translation from ensemble to entrez id in case geneSet2Enrich is ProvidedGeneSet
   if(geneSet2Enrich == "ProvidedGeneSet"){
-    geneSetChoice <- mapIds(
+    geneSetChoice <- AnnotationDbi::mapIds(
       orgDb,
       keys = geneSetChoice,
       column = "ENTREZID",

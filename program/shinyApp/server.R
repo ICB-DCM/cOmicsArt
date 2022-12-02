@@ -21,13 +21,15 @@ server <- function(input,output,session){
   source("R/volcano_plot/server.R", local = T)
   source("R/single_gene_visualisation/server.R",local = T)
   source("R/sample_correlation/server.R", local = T)
+  source("R/significance_analysis/server.R", local = T)
+  source("R/significance_analysis/util.R", local = T)
   source("R/fun_getCurrentVersionFromChangeLog.R",local=T)
   global_Vars <<- reactiveValues()
   
   # getCurrentVersion(updateDESCRIPTION=T) # Where to Place this ? So it does not always get 'updated'?
   # Can we add this somehow as necassary to every new release?
-  
-# Security section ---- 
+
+# Security section ----
   options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
 
   observeEvent(input$guide_cicerone_next,{
@@ -78,6 +80,7 @@ server <- function(input,output,session){
 # Layout upon Start ----
   hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
   hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
+  hideTab(inputId = "tabsetPanel1", target = "Significance Analysis")
   hideTab(inputId = "tabsetPanel1", target = "PCA")
   hideTab(inputId = "tabsetPanel1", target = "Volcano Plot")
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
@@ -333,7 +336,7 @@ server <- function(input,output,session){
       message = paste0("**DataInput** - Uploaded Omic Type: ",input$omicType)
       )
 
-    if(!(isTruthy(input$data_preDone) | 
+    if(!(isTruthy(input$data_preDone) |
          FLAG_TEST_DATA_SELECTED |
          (isTruthy(input$data_matrix1) & 
           isTruthy(input$data_sample_anno1) & 
@@ -916,6 +919,7 @@ server <- function(input,output,session){
     processedData_all[[input$omicType]]$annotation_rows <- processedData_all[[input$omicType]]$annotation_rows[rownames(processedData_all[[input$omicType]]$Matrix),]
     
     showTab(inputId = "tabsetPanel1", target = "Sample Correlation")
+    showTab(inputId = "tabsetPanel1", target = "Significance Analysis")
     showTab(inputId = "tabsetPanel1", target = "PCA")
     showTab(inputId = "tabsetPanel1", target = "Volcano Plot")
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
@@ -966,6 +970,12 @@ server <- function(input,output,session){
     omic_type = reactive(input$omicType),
     row_select = reactive(input$row_selection)
   )
+  # significance analysis ----
+  significance_analysis_server(
+    id = 'SignificanceAnalysis',
+    preprocess_method = reactive(input$PreProcessing_Procedure),
+    omic_type = reactive(input$omicType)
+  )
   # PCA
   pca_Server(id="PCA", omic_type = reactive(input$omicType), reactive(input$row_selection))
   # Volcano plots
@@ -977,13 +987,9 @@ server <- function(input,output,session){
     id = "single_gene_visualisation",
     omicType = reactive(input$omicType)
   )
-  # KEGG enrichment ----
+  # Enrichment Analysis ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
     omic_type = reactive(input$omicType)
   )
 }
-
-
-
-
