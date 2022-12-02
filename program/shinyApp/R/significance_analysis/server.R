@@ -7,7 +7,8 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         update_plot_post_ana = 0,
         info_text = "Press 'Get significance analysis' to start!",
         dds = NULL,
-        scenario = 0
+        scenario = 0,
+        comparisons_for_plot = "all"
       )
       ns <- session$ns
       ## Sidebar UI section
@@ -91,14 +92,14 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
       })
       # UI to select comparisons to visualize
       output$chooseComparisonsToVisualize_ui <- renderUI({
-          req(input$comparisons)
-          selectInput(
+        req(input$comparisons)
+        selectInput(
           inputId = ns("comparisons_to_visualize"),
           label = "Select your desired comparisons to visualize",
-          choices = input$comparisons,
+          choices = sig_ana_reactive$comparisons_for_plot,
           multiple = T,
-          selected = input$comparisons
-          )
+          selected = input$comparisons_to_visualize
+        )
       })
       # UI to choose visualization method
       output$chooseVisualization_ui <- renderUI({
@@ -260,6 +261,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         sig_ana_reactive$info_text <- "Analysis is Done!"
         # update plot
         sig_ana_reactive$update_plot_post_ana <- sig_ana_reactive$update_plot_post_ana + 1
+        sig_ana_reactive$comparisons_for_plot <- input$comparisons
       })
       # update the plot whenever the user changes the visualization method
       # or the comparisons to visualize
@@ -295,6 +297,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           output$Significant_Plot_final <- renderPlot({})
           return(NULL)
         }
+        sig_ana_reactive$info_text <- "Analysis is Done!"
         for (i in 1:length(input$comparisons_to_visualize)) {
           if(preprocess_method() == "vst_DESeq"){
             res2plot[[input$comparisons_to_visualize[i]]] <- rownames(
@@ -321,7 +324,11 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
             sig_ana_reactive$plot_last
           })
         }else if(input$visualization_method == "Venn diagram"){
-          sig_ana_reactive$plot_last <- ggVennDiagram::ggVennDiagram(res2plot)
+          # set colors for each comparison
+          sig_ana_reactive$plot_last <- ggVennDiagram::ggVennDiagram(res2plot) +
+            scale_fill_gradient(high ="#FDE4CF",low = "#dedede") +  # color based on count
+            scale_x_continuous(expand = expansion(mult = .2))
+
           output$Significant_Plot_final <- renderPlot({
             sig_ana_reactive$plot_last
           })

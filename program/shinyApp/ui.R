@@ -86,28 +86,31 @@ ui <- shiny::fluidPage(
          color: black
       }
       .tabbable > .nav > li[class=active] > a {
-          background-color: #86ba90; color:black
+          background-color: #90DBF4; color:black
       }
       #sidebar_data_selection {
-        background-color: #cbedca;
+        background-color: #90DBF4;
       }
       #sidebar_pre_processing {
-        background-color: #edceec;
+        background-color: #8EECF5;
       }
       #sidebar_pca {
-        background-color: #cecef2;
+        background-color: #F1C0E8;
+      }
+      #sidebar_significance_analysis {
+          background-color: #FDE4CF;
       }
       #sidebar_volcano_plot {
-        background-color: #f2e6c2;
+        background-color: #FFCFD2;
       }
       #sidebar_heatmap {
-        background-color: #d4c2f2;
+        background-color: #F1C0E8;
       }
       #sidebar_single_gene_visualisation {
-          background-color: #c2f2e6;
+          background-color: #B9FBC0;
       }
       #sidebar_enrichment_analysis {
-          background-color: #f2c2c2;
+          background-color: #CFBAF0;
       }
   "))
   ),
