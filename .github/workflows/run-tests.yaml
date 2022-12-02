@@ -66,6 +66,8 @@ jobs:
         shell: Rscript {0}
         run: |
           if (system.file(package = "renv") == "") install.packages("renv")
+          packageURL="https://packagemanager.rstudio.com/bioconductor/packages/3.15/data/annotation/src/contrib/org.Hs.eg.db_3.15.0.tar.gz"
+          install.packages(packageURL, repos=NULL, type="source")
       
       - name: Restore renv packages
         shell: Rscript {0}
