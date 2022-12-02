@@ -9,7 +9,7 @@ Release notes
 0.1.3 (2022-12-02)
 -------------------
 * General
-   * Fix various bugs (#78, #76, #84, #80, #85, #86)
+   * Fix various bugs (#78, #76, #84, #80, #85, #86, #91)
 * Significance Panel (#81)
     * allows for significance analysis of two conditions, multiple times
     * choice of test, adjustment
