@@ -34,7 +34,7 @@ jobs:
     - name: Restore renv packages
       shell: Rscript {0}
       run: |
-      renv::restore(lockfile = 'program/renv.lock')
+        renv::restore(lockfile = 'program/renv.lock')
 
     - name: Run tests
       shell: Rscript {0}
