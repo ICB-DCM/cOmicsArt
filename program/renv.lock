@@ -464,11 +464,12 @@
     },
     "RSQLite": {
       "Package": "RSQLite",
-      "Version": "2.2.19",
+      "Version": "2.2.5",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "becd8219ad7056f1dbe2f3517c75c17d",
+      "Hash": "b9b7248fa58ec21fe41f38083e75d568",
       "Requirements": [
+        "BH",
         "DBI",
         "Rcpp",
         "bit64",
