@@ -44,8 +44,7 @@ test_that("significance_analysis works", {
   # create test sample df
   samples <- data.frame(
     row.names = list("A1", "A2", "A3", "B1", "B2", "B3"),
-    woNA = c("A", "A", "A", "B", "B", "B"),
-    wNA = c("A", "A", "A", "B", "B", "B")
+    woNA = c("A", "A", "A", "B", "B", "B")
   )
   # create test contrast df
   contrasts <- list(
