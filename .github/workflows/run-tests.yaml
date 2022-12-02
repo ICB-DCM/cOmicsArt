@@ -39,13 +39,15 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v2
 
-      - name: Cache R packages
-        uses: actions/cache@v1
-        with:
-          path: renv/library
-          key: ${{ matrix.config.os }}-${{ steps.install-r.outputs.installed-r-version }}-1-${{ hashFiles('program/renv.lock') }}
-          restore-keys: ${{ matrix.config.os }}-${{ steps.install-r.outputs.installed-r-version }}-1-
-
+      # - name: Cache R packages
+      #   uses: actions/cache@v1
+      #   with:
+      #     path: renv/library
+      #     key: ${{ matrix.config.os }}-${{ steps.install-r.outputs.installed-r-version }}-1-${{ hashFiles('program/renv.lock') }}
+      #     restore-keys: ${{ matrix.config.os }}-${{ steps.install-r.outputs.installed-r-version }}-1-
+          
+      - uses: r-lib/actions/setup-renv@v2
+      
       - name: Make sure renv exists
         shell: Rscript {0}
         run: |
@@ -63,10 +65,14 @@ jobs:
       #     })
       #     remove.packages("pak")
           
-      - name: Restore renv packages
+      - name: Init renv Repo
         shell: Rscript {0}
         run: |
           renv::init(bioconductor = TRUE)
+          
+      - name: Restore renv packages
+        shell: Rscript {0}
+        run: |
           renv::restore(lockfile = 'program/renv.lock')
           
       - name: Run tests
