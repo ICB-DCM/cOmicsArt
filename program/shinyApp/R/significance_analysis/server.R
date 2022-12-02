@@ -487,7 +487,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           )
           fun_LogIt(message = knitr::kable(
             top5, format = "html", format.args = list(width = 40)
-          ) %>% kable_styling()
+          ) %>% kableExtra::kable_styling()
           )
           fun_LogIt(message = "\n")
         }

@@ -35,6 +35,7 @@ library(cicerone)
 library(shinyalert)
 library(msigdbr)
 library(tidyr)
+library(kableExtra)
 # library(svglite)
 
 source("R/C.R")
