@@ -318,7 +318,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         # plot the results
         if(input$visualization_method == "UpSetR plot"){
           sig_ana_reactive$plot_last <- UpSetR::upset(
-              fromList(res2plot)
+            UpSetR::fromList(res2plot)
             )
           output$Significant_Plot_final <- renderPlot({
             sig_ana_reactive$plot_last
