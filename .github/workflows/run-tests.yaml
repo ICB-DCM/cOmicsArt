@@ -54,6 +54,7 @@ jobs:
         shell: Rscript {0}
         run: |
           if (system.file(package = "renv") == "") install.packages("renv")
+          if (system.file(package = "stringr") == "") install.packages("stringr")
       
       # - name: Install system dependencies
       #   if: runner.os == 'Linux'
