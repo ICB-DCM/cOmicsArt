@@ -21,6 +21,7 @@ jobs:
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      RENV_PATHS_ROOT: ~/.local/share/renv
       RSPM: ${{ matrix.config.rspm }}
       
     steps:
@@ -51,23 +52,22 @@ jobs:
       - name: Cache R packages
         uses: actions/cache@v1
         with:
-          path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
-          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
+          path: ${{ env.RENV_PATHS_ROOT }}
+          key: ${{ runner.os }}-renv-${{ hashFiles('**/renv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-renv-
           
-      - name: Set up Renv
-        uses: r-lib/actions/setup-renv@v2
-        with:
-          cache-version: 2
-        env:
-          RENV_CONFIG_REPOS_OVERRIDE: ${{ env.RSPM }}
+      # - name: Set up Renv
+      #   uses: r-lib/actions/setup-renv@v2
+      #   with:
+      #     cache-version: 2
+      #   env:
+      #     RENV_CONFIG_REPOS_OVERRIDE: ${{ env.RSPM }}
       
       - name: Make sure renv exists
         shell: Rscript {0}
         run: |
           if (system.file(package = "renv") == "") install.packages("renv")
-          packageURL="https://packagemanager.rstudio.com/bioconductor/packages/3.15/data/annotation/src/contrib/org.Hs.eg.db_3.15.0.tar.gz"
-          install.packages(packageURL, repos=NULL, type="source")
       
       - name: Restore renv packages
         shell: Rscript {0}
