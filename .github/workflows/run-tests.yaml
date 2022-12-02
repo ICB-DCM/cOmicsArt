@@ -58,7 +58,7 @@ jobs:
           stopifnot(
             compareVersion(
               paste0(R.version$major, ".", R.version$minor),
-              jsonlite::read_json("renv.lock")$R$Version
+              jsonlite::read_json("program/renv.lock")$R$Version
             ) == 0
           )
       - name: Install system dependencies
