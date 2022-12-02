@@ -50,17 +50,7 @@ jobs:
         shell: Rscript {0}
         run: |
           if (system.file(package = "renv") == "") install.packages("renv")
-      - name: Verify R version matches
-        shell: Rscript {0}
-        run: |
-          renv::restore(packages = "jsonlite")
-          # Assert that R versions match
-          stopifnot(
-            compareVersion(
-              paste0(R.version$major, ".", R.version$minor),
-              jsonlite::read_json("program/renv.lock")$R$Version
-            ) == 0
-          )
+      
       - name: Install system dependencies
         if: runner.os == 'Linux'
         # do not record `pak` activity
@@ -71,25 +61,11 @@ jobs:
             pak::pkg_system_requirements(pkg, execute = TRUE)
           })
           remove.packages("pak")
+          
       - name: Restore renv packages
         shell: Rscript {0}
         run: |
           renv::restore()
-          
-      - name: Find PhantomJS path
-        id: phantomjs
-        run: |
-          echo "::set-output name=path::$(Rscript -e 'cat(shinytest:::phantom_paths()[[1]])')"
-      - name: Cache PhantomJS
-        uses: actions/cache@v2
-        with:
-          path: ${{ steps.phantomjs.outputs.path }}
-          key: ${{ matrix.config.os }}-phantomjs
-          restore-keys: ${{ matrix.config.os }}-phantomjs
-      - name: Install PhantomJS
-        shell: Rscript {0}
-        run: |
-          if (!shinytest::dependenciesInstalled()) shinytest::installDependencies()
           
       - name: Run tests
         shell: Rscript {0}
