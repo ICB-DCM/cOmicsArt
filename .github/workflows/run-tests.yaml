@@ -69,11 +69,11 @@ jobs:
         run: |
           if (system.file(package = "renv") == "") install.packages("renv")
       
-      - name: Restore renv packages
-        shell: Rscript {0}
-        run: |
-          renv::activate()
-          renv::restore(lockfile = 'program/renv.lock')
+      # - name: Restore renv packages
+      #   shell: Rscript {0}
+      #   run: |
+      #     renv::activate()
+      #     renv::restore(lockfile = 'program/renv.lock')
           
       - name: Run tests
         shell: Rscript {0}
