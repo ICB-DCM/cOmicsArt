@@ -37,6 +37,7 @@ jobs:
     - name: Install and activate renv
       run: |
         install.packages("renv")
+        install.packages("qvalue")
         renv::renstore()
       shell: Rscript {0}
       
