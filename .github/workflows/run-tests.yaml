@@ -39,6 +39,7 @@ jobs:
         install.packages("renv")
         install.packages("qvalue")
         renv::restore()
+        renv::status()
       shell: Rscript {0}
       
     - name: Get R and OS version
