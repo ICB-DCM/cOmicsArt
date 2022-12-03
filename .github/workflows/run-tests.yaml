@@ -18,71 +18,50 @@ jobs:
       matrix:
         config:
           - {os: ubuntu-20.04, r: '4.2.0', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
-
-    env:
-      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
-      RENV_PATHS_ROOT: ~/.local/share/renv
-      RSPM: ${{ matrix.config.rspm }}
-      
+    
     steps:
-      # do not convert line feeds in windows
-      - name: Windows git setup
-        if: runner.os == 'Windows'
-        run:
-          git config --global core.autocrlf false
+    - uses: actions/checkout@v2
 
-      - uses: actions/checkout@v2
-
-      - uses: r-lib/actions/setup-r@v2
+    - uses: r-lib/actions/setup-r@v2
         id: install-r
         with:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
+          
+    - name: Set RENV_PATHS_ROOT
+      shell: bash
+      run: |
+        echo "RENV_PATHS_ROOT=${{ runner.temp }}/renv" >> $GITHUB_ENV
+        
+    - name: Install and activate renv
+      run: |
+        install.packages("renv")
+        renv::renstore()
+      shell: Rscript {0}
+      
+    - name: Get R and OS version
+      id: get-version
+      run: |
+        cat("##[set-output name=os-version;]", sessionInfo()$running, "\n", sep = "")
+        cat("##[set-output name=r-version;]", R.Version()$version.string, sep = "")
+      shell: Rscript {0}
+      
+    - name: Query dependencies
+      run: |
+        install.packages('remotes')
+        saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
+        writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
+      shell: Rscript {0}
 
-      - uses: r-lib/actions/setup-pandoc@v2
-      
-      - name: Query dependencies
-        run: |
-          install.packages('remotes')
-          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
-          writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
-        shell: Rscript {0}
-
-      - name: Cache R packages
-        uses: actions/cache@v1
-        with:
-          path: ${{ env.RENV_PATHS_ROOT }}
-          key: ${{ runner.os }}-renv-${{ hashFiles('**/program/renv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-renv-
+    - name: Run tests
+      shell: Rscript {0}
+      run: |
+        shiny::runTests("program/shinyApp", assert = TRUE)
           
-      # - name: Set up Renv
-      #   uses: r-lib/actions/setup-renv@v2
-      #   with:
-      #     cache-version: 2
-      #   env:
-      #     RENV_CONFIG_REPOS_OVERRIDE: ${{ env.RSPM }}
-      
-      - name: Make sure renv exists
-        shell: Rscript {0}
-        run: |
-          if (system.file(package = "renv") == "") install.packages("renv")
-      
-      - name: Restore renv packages
-        shell: Rscript {0}
-        run: |
-          renv::activate()
-          renv::restore(lockfile = 'program/renv.lock', exclude = c("qvalue"))
-          
-      - name: Run tests
-        shell: Rscript {0}
-        run: |
-          shiny::runTests("program/shinyApp", assert = TRUE)
-          
-      - name: Upload test results
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: ${{ runner.os }}-r${{ matrix.config.r }}-tests
-          path: tests
+    - name: Upload test results
+      if: failure()
+      uses: actions/upload-artifact@master
+      with:
+        name: ${{ runner.os }}-r${{ matrix.config.r }}-tests
+        path: tests
