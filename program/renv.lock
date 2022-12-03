@@ -2224,6 +2224,26 @@
         "askpass"
       ]
     },
+    "org.Hs.eg.db": {
+      "Package": "org.Hs.eg.db",
+      "Version": "3.15.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "ea73036cd4946b4577e0aa9e51d0a61b",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "org.Mm.eg.db": {
+      "Package": "org.Mm.eg.db",
+      "Version": "3.15.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "ad876508bf40966eaad1a0e89a83d522",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
     "packrat": {
       "Package": "packrat",
       "Version": "0.8.1",
@@ -2597,13 +2617,13 @@
     },
     "qvalue": {
       "Package": "qvalue",
-      "Version": "2.28.0",
+      "Version": "2.30.0",
       "Source": "Bioconductor",
       "git_url": "https://git.bioconductor.org/packages/qvalue",
-      "git_branch": "RELEASE_3_15",
-      "git_last_commit": "aaa62d5",
-      "git_last_commit_date": "2022-04-26",
-      "Hash": "a3644a39e055b5a91d41e68d84415f54",
+      "git_branch": "RELEASE_3_16",
+      "git_last_commit": "e8a4c22",
+      "git_last_commit_date": "2022-11-01",
+      "Hash": "27af855e624e3038119dfa91e91183c2",
       "Requirements": [
         "ggplot2",
         "reshape2"
