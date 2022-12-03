@@ -38,8 +38,8 @@ jobs:
       run: |
         install.packages("renv")
         install.packages("qvalue")
-#        install.packages("shiny")
-        renv::restore(lock.file = program/renv.lock)
+        install.packages("shiny")
+        renv::restore()
         renv::status()
       shell: Rscript {0}
       
