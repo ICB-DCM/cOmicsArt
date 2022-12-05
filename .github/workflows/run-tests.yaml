@@ -41,10 +41,7 @@ jobs:
     - name: Install and activate renv
       run: |
         install.packages("renv")
-        install.packages("qvalue")
-        options(connectionObserver = NULL)
         renv::restore(lockfile="program/renv.lock")
-        renv::status()
       shell: Rscript {0}
       
     - name: Get R and OS version
