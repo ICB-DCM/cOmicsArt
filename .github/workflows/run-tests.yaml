@@ -38,6 +38,7 @@ jobs:
       run: |
         install.packages("renv")
         install.packages("qvalue")
+        options(connectionObserver = NULL)
         renv::restore(lockfile="program/renv.lock")
         renv::status()
       shell: Rscript {0}
