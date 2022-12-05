@@ -33,6 +33,10 @@ jobs:
       shell: bash
       run: |
         echo "RENV_PATHS_ROOT=${{ runner.temp }}/renv" >> $GITHUB_ENV
+      
+    - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: XML
         
     - name: Install and activate renv
       run: |
