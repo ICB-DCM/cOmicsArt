@@ -36,7 +36,13 @@ jobs:
       
     - uses: r-lib/actions/setup-r-dependencies@v2
       with:
-        packages: XML
+        packages: XML      
+    
+    - name: Install system dependencies
+	        if: runner.os == 'Linux'
+	        run: |
+	          sudo apt-get update -y
+	          sudo apt-get install -y libglpk-dev
         
     - name: Install and activate renv
       continue-on-error: true
@@ -52,12 +58,12 @@ jobs:
         cat("##[set-output name=r-version;]", R.Version()$version.string, sep = "")
       shell: Rscript {0}
       
-    - name: Query dependencies
-      run: |
-        install.packages('remotes')
-        saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
-        writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
-      shell: Rscript {0}
+    # - name: Query dependencies
+    #   run: |
+    #     install.packages('remotes')
+    #     saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
+    #     writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
+    #   shell: Rscript {0}
 
     - name: Run tests
       shell: Rscript {0}
