@@ -39,6 +39,7 @@ jobs:
         packages: XML
         
     - name: Install and activate renv
+      continue-on-error: true
       run: |
         install.packages("renv")
         renv::restore(lockfile="program/renv.lock")
