@@ -32,10 +32,10 @@ jobs:
         http-user-agent: ${{ matrix.config.http-user-agent }}
         use-public-rspm: true
           
-    # - name: Set RENV_PATHS_ROOT
-    #   shell: bash
-    #   run: |
-    #     echo "RENV_PATHS_ROOT=${{ runner.temp }}/renv" >> $GITHUB_ENV
+    - name: Set RENV_PATHS_ROOT
+      shell: bash
+      run: |
+        echo "RENV_PATHS_ROOT=${{ runner.temp }}/renv" >> $GITHUB_ENV
     # - name: SetUp R
     # - uses: r-lib/actions/setup-r-dependencies@v2
     #   with:
