@@ -2,6 +2,10 @@
 
 ![example workflow](https://github.com/LeaSeep/OmicShiny/actions/workflows/run-tests.yaml/badge.svg)
 
+![develop status](https://github.com/LeaSeep/OmicShiny/actions/workflows/run-tests.yaml/badge.svg?branch=develop)
+
+![main status](https://github.com/LeaSeep/OmicShiny/actions/workflows/run-tests.yaml/badge.svg?branch=main)
+
 3 tables are needed:
 1. data-table (e.g. counts or intensitites)
   - row names must be entities (e.g. genes or metabolites)
