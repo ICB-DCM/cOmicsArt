@@ -1,4 +1,6 @@
 # Data Input Notes:
+#https://github.com/<OWNER>/<REPOSITORY>/actions/workflows/<WORKFLOW_FILE>/badge.svg
+![example workflow](https://github.com/LeaSeep/OmicShiny/actions/workflows/run-tests.yaml/badge.svg)
 
 3 tables are needed:
 1. data-table (e.g. counts or intensitites)
