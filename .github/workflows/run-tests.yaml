@@ -50,20 +50,6 @@ jobs:
         install.packages("renv")
         renv::restore(lockfile="program/renv.lock")
       shell: Rscript {0}
-      
-    - name: Get R and OS version
-      id: get-version
-      run: |
-        cat("##[set-output name=os-version;]", sessionInfo()$running, "\n", sep = "")
-        cat("##[set-output name=r-version;]", R.Version()$version.string, sep = "")
-      shell: Rscript {0}
-      
-    # - name: Query dependencies
-    #   run: |
-    #     install.packages('remotes')
-    #     saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
-    #     writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
-    #   shell: Rscript {0}
 
     - name: Run tests
       shell: Rscript {0}
