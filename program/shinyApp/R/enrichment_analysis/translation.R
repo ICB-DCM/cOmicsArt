@@ -1,4 +1,4 @@
-translate_genes_ea <- function(data, annotation_results, input, testing = FALSE){
+translate_genes_ea <- function(data, annotation_results, input){
   if(annotation_results$no_ann){
     # copy rownames with corresponding annotation as columnname
     data$Transcriptomics$annotation_rows[annotation_results$base_annotation] <- rownames(data$Transcriptomics$annotation_rows)
@@ -11,7 +11,7 @@ translate_genes_ea <- function(data, annotation_results, input, testing = FALSE)
   }
   tryCatch(
     {
-      ids <- mapIds(
+      ids <- AnnotationDbi::mapIds(
         orgDb,
         keys = data$Transcriptomics$annotation_rows[[annotation_results$base_annotation]],
         column = "ENTREZID",
