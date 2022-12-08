@@ -18,6 +18,9 @@ jobs:
       matrix:
         config:
           - {os: ubuntu-20.04, r: '4.2.0', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
+          
+    env:
+      RENV_PATHS_ROOT: ~/.local/share/renv
     
     steps:
     - uses: actions/checkout@v2
@@ -29,10 +32,12 @@ jobs:
         http-user-agent: ${{ matrix.config.http-user-agent }}
         use-public-rspm: true
           
-    - name: Set RENV_PATHS_ROOT
-      shell: bash
-      run: |
-        echo "RENV_PATHS_ROOT=${{ runner.temp }}/renv" >> $GITHUB_ENV
+    # - name: Set RENV_PATHS_ROOT
+    #   shell: bash
+    #   run: |
+    #     echo "RENV_PATHS_ROOT=${{ runner.temp }}/renv" >> $GITHUB_ENV
+    
+
       
     - uses: r-lib/actions/setup-r-dependencies@v2
       with:
@@ -43,6 +48,14 @@ jobs:
       run: |
         sudo apt-get update -y
         sudo apt-get install -y libglpk-dev
+        
+    - name: Cache packages
+      uses: actions/cache@v1
+      with:
+        path: ${{ env.RENV_PATHS_ROOT }}
+        key: ${{ runner.os }}-renv-${{ hashFiles('**/program/renv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-renv-
         
     - name: Install and activate renv
       run: |
