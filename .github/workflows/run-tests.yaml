@@ -45,16 +45,15 @@ jobs:
         sudo apt-get install -y libglpk-dev
         
     - name: Install and activate renv
-      continue-on-error: true
       run: |
         install.packages("renv")
         renv::restore(lockfile="program/renv.lock")
       shell: Rscript {0}
 
-    - name: Run tests
+    - name: Test - Significance Panel
       shell: Rscript {0}
       run: |
-        shiny::runTests("program/shinyApp", assert = TRUE)
+        shiny::runTests("program/shinyApp", assert = TRUE, filter='testthat_sig')
           
     - name: Upload test results
       if: failure()
