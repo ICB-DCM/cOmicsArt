@@ -67,6 +67,11 @@ jobs:
       shell: Rscript {0}
       run: |
         shiny::runTests("program/shinyApp", assert = TRUE, filter='testthat_sig')
+
+    - name: Test - Enrichment Analysis Panel
+      shell: Rscript {0}
+      run: |
+        shiny::runTests("program/shinyApp", assert = TRUE, filter='testthat_enrich')
           
     - name: Upload test results
       if: failure()
