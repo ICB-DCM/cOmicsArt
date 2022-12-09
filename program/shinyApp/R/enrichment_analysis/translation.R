@@ -37,9 +37,9 @@ translate_genes_ea <- function(data, annotation_results, input){
 translate_genes_oa <- function(annotation_results, input, geneSetChoice, geneSet2Enrich){
   # set OrgDb to organism
   if(input$OrganismChoice == "hsa"){
-    orgDb <- org.Hs.eg.db
+    orgDb <- org.Hs.eg.db::org.Hs.eg.db
   }else{
-    orgDb <- org.Mm.eg.db
+    orgDb <- org.Mm.eg.db::org.Mm.eg.db
   }
   # translation in case genSet2enrich is heatmap_genes
   if(geneSet2Enrich == "heatmap_genes"){
