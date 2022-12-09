@@ -5,9 +5,9 @@ translate_genes_ea <- function(data, annotation_results, input){
   }
   # translate to entrez id
   if(input$OrganismChoice == "hsa"){
-    orgDb <- org.Hs.eg.db
+    orgDb <- org.Hs.eg.db::org.Hs.eg.db
   }else{
-    orgDb <- org.Mm.eg.db
+    orgDb <- org.Mm.eg.db::org.Mm.eg.db
   }
   tryCatch(
     {
