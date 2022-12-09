@@ -37,8 +37,6 @@ translate_genes_ea <- function(data, annotation_results, input){
 translate_genes_oa <- function(annotation_results, input, geneSetChoice, geneSet2Enrich){
   # set OrgDb to organism
   if(input$OrganismChoice == "hsa"){
-    # does this explicit loading work?
-    library("org.Hs.eg.db")
     orgDb <- org.Hs.eg.db
   }else{
     orgDb <- org.Mm.eg.db
