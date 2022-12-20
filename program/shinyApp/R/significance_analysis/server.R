@@ -232,7 +232,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           samples_selected <- selectedData_processed()[[omic_type()]]$sample_table[index_comparisons,]
           # get the data
           data_selected <- selectedData_processed()[[omic_type()]]$Matrix[,index_comparisons]
-          df_selected <- data.frame(
+          df_selected <- as.data.frame(
             data_selected
           )
           sig_results <<- significance_analysis(
