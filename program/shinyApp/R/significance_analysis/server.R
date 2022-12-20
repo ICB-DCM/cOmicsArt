@@ -62,7 +62,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
             showSelectedOptionsFirst = T,
             inputId = ns("test_method"),
             label = "Test method",
-            choices = c("Wilcoxon rank sum test", "T-Test"),
+            choices = c("Wilcoxon rank sum test", "T-Test", "Welch-Test"),
             selected = "T-Test"
           )
         }
