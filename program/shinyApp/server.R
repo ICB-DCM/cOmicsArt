@@ -1,5 +1,4 @@
 server <- function(input,output,session){
-  # TODO source from extra file 
   source("R/SourceAll.R",local=T)
   global_Vars <<- reactiveValues()
   
