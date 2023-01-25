@@ -141,9 +141,9 @@ volcano_Server <- function(id, omic_type){
             annoData = selectedData_processed()[[omic_type()]]$annotation_rows
             )
           # assign res_temp
-          res_temp["Volcano"] <- VolcanoPlot_df
+          res_temp["Volcano"] <<- VolcanoPlot_df
           # assign par_temp
-          par_temp["Volcano"] <- list(
+          par_temp["Volcano"] <<- list(
             "sample_annotation_types_cmp" = input$sample_annotation_types_cmp,
             "Groups2Compare_ref" = input$Groups2Compare_ref,
             "Groups2Compare_treat" = input$Groups2Compare_treat,
@@ -290,6 +290,7 @@ volcano_Server <- function(id, omic_type){
 
           #Use annotation selected in plot also for the output of the names
 
+          # TODO: Who are you and what do you do?
           DE_total <<- rbind(DE_UP,DE_Down)
           output$SaveDE_List <- downloadHandler(
             filename = function() {
