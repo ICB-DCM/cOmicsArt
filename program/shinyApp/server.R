@@ -1,6 +1,9 @@
 server <- function(input,output,session){
   source("R/SourceAll.R",local=T)
   global_Vars <<- reactiveValues()
+  # create res_temp and par_temp, two global empty lists to be filled later
+  res_temp <<- list()
+  par_temp <<- list()
   
   # getCurrentVersion(updateDESCRIPTION=T) # Where to Place this ? So it does not always get 'updated'?
   # Can we add this somehow as necassary to every new release?

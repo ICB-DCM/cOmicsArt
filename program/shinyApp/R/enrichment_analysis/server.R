@@ -165,7 +165,7 @@ enrichment_analysis_Server <- function(id, omic_type){
       )
       ns <- session$ns
       ## initialize result as NULL
-      res_temp["enrichment"] <<- list(
+      global_Vars$enrichment_results <<- list(
         "EnrichmentRes_Hallmarks" = NULL,
         "EnrichmentRes_C1" = NULL,
         "EnrichmentRes_C2" = NULL,
@@ -200,70 +200,70 @@ enrichment_analysis_Server <- function(id, omic_type){
       ## Call Modules
       enrichment_analysis_geneset_server_reactive(
         id = 'KEGG',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'GO',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'REACTOME',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'Hallmarks',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'C1',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'C2',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'C3',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'C4',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'C5',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'C6',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
@@ -271,133 +271,133 @@ enrichment_analysis_Server <- function(id, omic_type){
       # Currently C7 subset Immunesigdb
       enrichment_analysis_geneset_server_reactive(
         id = 'C7',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'C8',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'CGP',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'CP',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'BIOCARTA',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'PID',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'WIKIPATHWAYS',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'MIRDB',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'MIR_Legacy',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'GTRD',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'TFT_Legacy',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'CGN',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'CM',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'GO_BP',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'GO_CC',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'GO_MF',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'HPO',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'IMMUNESIGDB',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
       )
       enrichment_analysis_geneset_server_reactive(
         id = 'VAX',
-        result = reactive(res_temp["enrichment"]),
+        result = reactive(global_Vars$enrichment_results),
         ea_type = input$ORA_or_GSE,
         organism_choice = input$OrganismChoice,
         gene_set_choice = tmp_genes
@@ -700,7 +700,8 @@ enrichment_analysis_Server <- function(id, omic_type){
         req(geneSetChoice())
         tmp_genes <- geneSetChoice()
         # Check whether the necessary annotation is available
-        anno_results <- check_annotation_enrichment_analysis()
+        anno_results <- check_annotation_enrichment_analysis(processedData_all)
+        processedData_all <<- anno_results$new_data
         ea_reactives$can_start <- anno_results$can_start
         if(anno_results$no_ann){
           showModal(modalDialog(
@@ -718,7 +719,7 @@ enrichment_analysis_Server <- function(id, omic_type){
           ))
         }else if(anno_results$can_start == FALSE){
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            processedData_all$Transcriptomics$annotation_rows$ENTREZID <<-translate_genes_ea(
+            processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- translate_genes_ea(
               data = processedData_all,
               annotation_results = anno_results,
               input = input
@@ -738,7 +739,7 @@ enrichment_analysis_Server <- function(id, omic_type){
           anno_results$base_annotation <- input$AnnotationSelection
           removeModal()
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            processedData_all$Transcriptomics$annotation_rows$ENTREZID <<-translate_genes_ea(
+            processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- translate_genes_ea(
               data = processedData_all,
               annotation_results = anno_results,
               input = input
@@ -757,11 +758,13 @@ enrichment_analysis_Server <- function(id, omic_type){
         observeEvent(ea_reactives$can_start, {
           req(ea_reactives$can_start == TRUE)
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            res_temp["enrichment"] <<- gene_set_enrichment(input, output, tmp_genes)
+            global_Vars$enrichment_results <<- gene_set_enrichment(input, output, tmp_genes)
           }else{
-            res_temp["enrichment"] <<- over_representation_analysis(input, output, tmp_genes)
+            global_Vars$enrichment_results <<- over_representation_analysis(input, output, tmp_genes)
           }
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
+          # res_temp Zuweisung
+          res_temp["Enrichment"] <<- global_Vars$enrichment_results
           # par_temp Zuweisung
           par_temp["ValueToAttach"] <<- input$ValueToAttach
           par_temp["GeneSet2Enrich"] <<- input$GeneSet2Enrich

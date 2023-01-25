@@ -339,13 +339,6 @@ heatmap_server <- function(id,omicType){
               ctrl_samples_idx = ctrl_samples_idx,
               comparison_samples_idx = comparison_samples_idx
               )
-            # adjust sample annotation
-            # if the value is accross all group-members the same keep 1 col otherwise remove
-            keep_ctrl <- apply(data2Plot[[omicType()]]$sample_table[ctrl_samples_idx,],2,function (x) length(unique(x))==1)
-            keep_treat <- apply(data2Plot[[omicType()]]$sample_table[comparison_samples_idx,],2,function (x) length(unique(x))==1)
-            
-            # keep  only if both TRUE
-            keep_final <- names(data2Plot[[omicType()]]$sample_table)[keep_ctrl & keep_treat]
             
             ## do pheatmap
             #remove anything non sig
@@ -413,24 +406,46 @@ heatmap_server <- function(id,omicType){
         heatmap_scenario <- scenario
         output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
         
-        global_Vars$Heatmap_customTitleHeatmap <- customTitleHeatmap
+        Heatmap_customTitleHeatmap <- customTitleHeatmap
         # Longer names causes issues for saving 
-        if(nchar(global_Vars$Heatmap_customTitleHeatmap) >= 250){
-          global_Vars$Heatmap_customTitleHeatmap <- "Heatmap"
+        if(nchar(Heatmap_customTitleHeatmap) >= 250){
+          Heatmap_customTitleHeatmap <- "Heatmap"
         }
-        global_Vars$Heatmap_heatmap_plot <- heatmap_plot
-        global_Vars$Heatmap_row_selection_options <- input$row_selection_options
-        global_Vars$Heatmap_row_anno_options_heatmap <- input$row_anno_options_heatmap
-        global_Vars$Heatmap_TopK <- input$TopK
-        global_Vars$Heatmap_row_selection_options <- input$row_selection_options
-        global_Vars$Heatmap_anno_options <- input$anno_options
-        global_Vars$Heatmap_row_anno_options <- input$row_anno_options
-        global_Vars$Heatmap_cluster_cols <- input$cluster_cols
-        global_Vars$Heatmap_cluster_rows <- input$cluster_rows
-        global_Vars$Heatmap_LFC_toHeatmap <- input$LFC_toHeatmap
-        global_Vars$Heatmap_sample_annotation_types_cmp_heatmap <- input$sample_annotation_types_cmp_heatmap
-        global_Vars$Heatmap_Groups2Compare_ref_heatmap <- input$Groups2Compare_ref_heatmap
-        global_Vars$Heatmap_Groups2Compare_ctrl_heatmap <- input$Groups2Compare_ctrl_heatmap
+        Heatmap_heatmap_plot <- heatmap_plot
+        Heatmap_row_anno_options_heatmap <- input$row_anno_options_heatmap
+        Heatmap_TopK <- input$TopK
+        Heatmap_row_selection_options <- input$row_selection_options
+        Heatmap_anno_options <- input$anno_options
+        Heatmap_row_anno_options <- input$row_anno_options
+        Heatmap_cluster_rows <- input$cluster_rows
+        Heatmap_LFC_toHeatmap <- input$LFC_toHeatmap
+        Heatmap_sample_annotation_types_cmp_heatmap <- input$sample_annotation_types_cmp_heatmap
+        Heatmap_Groups2Compare_ref_heatmap <- input$Groups2Compare_ref_heatmap
+        Heatmap_Groups2Compare_ctrl_heatmap <- input$Groups2Compare_ctrl_heatmap
+
+        # res_temp gets data2HandOver or Data2Plot depending on scenario
+        if(scenario == 10){
+          res_temp["Heatmap"] <<- Data2Plot
+        }else if(scenario == 11){
+          res_temp["Heatmap"] <<- data2HandOver
+        }
+        # par_temp gets the parameters used for the heatmap
+        par_temp["Heatmap"] <<- list(
+          anno_options = input$anno_options,
+          row_anno_options = input$row_anno_options,
+          row_label_options = input$row_label_options,
+          cluster_rows = input$cluster_rows,
+          cluster_cols = input$cluster_cols,
+          LFCToHeatmap = input$LFC_toHeatmap,
+          row_selection_options = input$row_selection_options,
+          rowWiseScaled = input$rowWiseScaled,
+          sample_annotation_types_cmp_heatmap = input$sample_annotation_types_cmp_heatmap,
+          Groups2Compare_ref_heatmap = input$Groups2Compare_ref_heatmap,
+          Groups2Compare_ctrl_heatmap = input$Groups2Compare_ctrl_heatmap,
+          TopK = input$TopK,
+          anno_options_heatmap = input$anno_options_heatmap,
+          row_anno_options_heatmap = input$row_anno_options_heatmap,
+        )
         
         output$getR_Code_Heatmap <- downloadHandler(
           filename = function(){
@@ -468,7 +483,7 @@ heatmap_server <- function(id,omicType){
 
         output$SavePlot_Heatmap <- downloadHandler(
           filename = function() { 
-            paste(global_Vars$Heatmap_customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="") 
+            paste(Heatmap_customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="") 
             },
           content = function(file){
             save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
@@ -476,7 +491,7 @@ heatmap_server <- function(id,omicType){
               tmp_filename <- paste0(
                 getwd(),
                 "/www/",
-                paste(paste(global_Vars$Heatmap_customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep=""))
+                paste(paste(Heatmap_customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep=""))
                 )
               save_pheatmap(
                 heatmap_plot,
@@ -561,23 +576,22 @@ heatmap_server <- function(id,omicType){
           }
         }
       })
-      observeEvent(input$Do_Heatmap,{
-        output$Options_selected_out_3 <- renderText({
-          paste0("The number of selected entities: ",length((heatmap_genelist)))
-          })
-        
-      })
+      # observeEvent(input$Do_Heatmap,{
+      #   output$Options_selected_out_3 <- renderText({
+      #     paste0("The number of selected entities: ",length((heatmap_genelist)))
+      #     })
+      # })
       # send only to report
       observeEvent(input$only2Report_Heatmap,{
         notificationID <- showNotification("Saving...",duration = 0)
         tmp_filename <- paste0(
           getwd(),
           "/www/",
-          paste(paste(global_Vars$Heatmap_customTitleHeatmap,Sys.time(),".png",sep=""))
+          paste(paste0(Heatmap_customTitleHeatmap, Sys.time(), ".png"))
           )
 
         save_pheatmap(
-          global_Vars$Heatmap_heatmap_plot,
+          Heatmap_heatmap_plot,
           filename=tmp_filename,
           type="png"
           )
@@ -585,27 +599,27 @@ heatmap_server <- function(id,omicType){
         # Add Log Messages
         
         fun_LogIt(message = "## HEATMAP")
-        fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",global_Vars$Heatmap_row_selection_options))
-        if(any(global_Vars$Heatmap_row_selection_options=="rowAnno_based")){
-          fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ", global_Vars$Heatmap_row_anno_options," :",global_Vars$Heatmap_row_anno_options_heatmap))
+        fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",Heatmap_row_selection_options))
+        if(any(Heatmap_row_selection_options=="rowAnno_based")){
+          fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ", Heatmap_row_anno_options," :",Heatmap_row_anno_options_heatmap))
         }
-        if(!is.null(global_Vars$Heatmap_TopK)){
-          fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",global_Vars$Heatmap_TopK))
-          fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",global_Vars$Heatmap_row_selection_options))
+        if(!is.null(Heatmap_TopK)){
+          fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",Heatmap_TopK))
+          fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",Heatmap_row_selection_options))
           # either based on LFC or on pVal
         }
-        fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",global_Vars$Heatmap_anno_options))
-        fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",global_Vars$Heatmap_row_anno_options))
+        fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",Heatmap_anno_options))
+        fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",Heatmap_row_anno_options))
         if(input$cluster_cols == TRUE){
           fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
         }
-        if(global_Vars$Heatmap_cluster_rows == TRUE){
+        if(Heatmap_cluster_rows == TRUE){
           fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
         }
         
-        if(global_Vars$Heatmap_LFC_toHeatmap == TRUE){
+        if(Heatmap_LFC_toHeatmap == TRUE){
           fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
-          fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",global_Vars$Heatmap_sample_annotation_types_cmp_heatmap,": ",global_Vars$Heatmap_Groups2Compare_ref_heatmap," vs ",global_Vars$Heatmap_Groups2Compare_ctrl_heatmap))
+          fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",Heatmap_sample_annotation_types_cmp_heatmap,": ",Heatmap_Groups2Compare_ref_heatmap," vs ",Heatmap_Groups2Compare_ctrl_heatmap))
         }
         
         fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
