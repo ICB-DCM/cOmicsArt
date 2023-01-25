@@ -1,6 +1,7 @@
 server <- function(input,output,session){
   source("R/SourceAll.R",local=T)
-  global_Vars <<- reactiveValues()
+  
+  global_Vars <<- reactiveValues() # OUTDATED?
   
   # getCurrentVersion(updateDESCRIPTION=T) # Where to Place this ? So it does not always get 'updated'?
   # Can we add this somehow as necassary to every new release?
@@ -63,6 +64,9 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
   
+# Init res Object ----
+  res_tmp <<- list()
+  par_tmp <<- list()
 ## Quit App Button ----
   observeEvent(input$Quit_App,{
     showModal(
@@ -103,7 +107,8 @@ server <- function(input,output,session){
   
   observeEvent(input$Reset,{
     print("Jip")
-    FLAG_TEST_DATA_SELECTED <<- FALSE
+    par_tmp["FLAG_TEST_DATA_SELECTED"] <<- FALSE # should be not global
+    FLAG_TEST_DATA_SELECTED <- reactiveVal(FALSE)
     output$debug <- renderText("<font color=\"#00851d\"><b>Reset successful</b></font>")
     shinyjs::reset(id="data_matrix1")
     shinyjs::reset(id="data_sample_anno1")
@@ -113,7 +118,9 @@ server <- function(input,output,session){
   })
   
   observeEvent(input$EasyTestForUser,{
-    FLAG_TEST_DATA_SELECTED <<- TRUE
+    browser()
+    FLAG_TEST_DATA_SELECTED <- reactiveVal(FALSE)
+    par_tmp["FLAG_TEST_DATA_SELECTED"] <<- TRUE
     shinyjs::click("refresh1")
   })
   
@@ -313,12 +320,12 @@ server <- function(input,output,session){
       )
 
     if(!(isTruthy(input$data_preDone) |
-         FLAG_TEST_DATA_SELECTED |
+         par_tmp["FLAG_TEST_DATA_SELECTED"] |
          (isTruthy(input$data_matrix1) & 
           isTruthy(input$data_sample_anno1) & 
           isTruthy(input$data_row_anno1)))){
       output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
-    }else if(FLAG_TEST_DATA_SELECTED & !(isTruthy(input$data_preDone))){
+    }else if(par_tmp["FLAG_TEST_DATA_SELECTED"] & !(isTruthy(input$data_preDone))){
       output$debug=renderText({"The Test Data Set was used"})
     }else{
       if(any(names(data_input_shiny()) == omicType_selected)){
@@ -356,7 +363,7 @@ server <- function(input,output,session){
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
     # What Input is required? (raw data)
-    if(!isTruthy(input$data_preDone) & !FLAG_TEST_DATA_SELECTED){
+    if(!isTruthy(input$data_preDone) & !par_tmp["FLAG_TEST_DATA_SELECTED"]){
       # Include here, that the sample anno can be replaced by metadatasheet
       # potentially this will be extended to all of the fields
       shiny::req(input$data_matrix1,input$data_row_anno1)
@@ -428,7 +435,7 @@ server <- function(input,output,session){
       }
       
       ## TODO Include here possible Data Checks
-    }else if(FLAG_TEST_DATA_SELECTED & !isTruthy(input$data_preDone)){
+    }else if(par_tmp["FLAG_TEST_DATA_SELECTED"] & !isTruthy(input$data_preDone)){
       # shiny::updateSelectInput(
       #   session = session,
       #   inputId = "omicType",
