@@ -131,7 +131,6 @@ volcano_Server <- function(id, omic_type){
             #data2Volcano=data2Volcano+10^-15  => Log(data +1)
           }
           print(dim(data2Volcano))
-          report <- data2Volcano
           VolcanoPlot_df <- Volcano_Plot(
             data = data2Volcano,
             ctrl_samples_idx = ctrl_samples_idx,
@@ -188,12 +187,8 @@ volcano_Server <- function(id, omic_type){
                      legendgroup="color")
             })
 
-          LFCTable <- getLFC(
-            data2Volcano,
-            ctrl_samples_idx,
-            comparison_samples_idx,
-            input$get_entire_table
-            )
+          # LFC Table is VolcanoPlot_df but only the columns LFC, rawpvalue, p_adj, probename
+          LFCTable <- VolcanoPlot_df[,c("LFC","rawpvalue","p_adj","probename")]
           # add annotation to Table
           LFCTable <- merge(
             LFCTable,
