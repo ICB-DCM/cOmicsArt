@@ -649,6 +649,7 @@ server <- function(input,output,session){
   ## Do Selection ----  
   selectedData <- reactive({
     shiny::req(input$row_selection, input$sample_selection)
+    par_tmp["row_selection"] <<- input$row_selection
     print("Alright do Row selection")
     selected <- c()
 
@@ -748,7 +749,7 @@ server <- function(input,output,session){
 ## Do preprocessing ----  
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     print(selectedData())
-
+    par_tmp['PreProcessing_Procedure'] <<- input$PreProcessing_Procedure
     processedData_all <- tmp_data_selected
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
@@ -911,33 +912,51 @@ server <- function(input,output,session){
   })
   
   output$debug <- renderText(dim(res_tmp$data))
-  ## UP TILL HERE ## 
-  # Sample Correlation
+  ## UP TILL HERE ##
+  
+  # Sample Correlation ----
   sample_correlation_server(
     id = "sample_correlation",
-    omic_type = reactive(input$omicType),
-    row_select = reactive(input$row_selection)
+    omic_type = reactive(input$omicType), # par_tmp$omicType_selected
+    row_select = reactive(input$row_selection) #par_tmp$row_selection
   )
+  
   # significance analysis ----
   significance_analysis_server(
     id = 'SignificanceAnalysis',
     preprocess_method = reactive(input$PreProcessing_Procedure),
-    omic_type = reactive(input$omicType)
+    omic_type = reactive(input$omicType) # par_tmp$omicType_selected
   )
-  # PCA
-  pca_Server(id="PCA", omic_type = reactive(input$omicType), reactive(input$row_selection))
-  # Volcano plots
-  volcano_Server(id="Volcano", omic_type = reactive(input$omicType))
-  # Heatmap
-  heatmap_server(id = 'Heatmap',omicType = reactive(input$omicType))
+  
+  # PCA ----
+  pca_Server(
+    id = "PCA", 
+    omic_type = reactive(input$omicType), # par_tmp$omicType_selected 
+    reactive(input$row_selection)
+    )
+  
+  # Volcano plots ----
+  volcano_Server(
+    id = "Volcano", 
+    omic_type = reactive(input$omicType) # par_tmp$omicType_selected
+    )
+  
+  # Heatmap ----
+  heatmap_server(
+    id = 'Heatmap',
+    omicType = reactive(input$omicType) # par_tmp$omicType_selected
+    )
+  
   # Single Gene Visualisations ----
   single_gene_visualisation_server(
     id = "single_gene_visualisation",
-    omicType = reactive(input$omicType)
+    omicType = reactive(input$omicType) # par_tmp$omicType_selected
   )
+  
   # Enrichment Analysis ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
-    omic_type = reactive(input$omicType)
+    omic_type = reactive(input$omicType) # par_tmp$omicType_selected
   )
+  
 }
