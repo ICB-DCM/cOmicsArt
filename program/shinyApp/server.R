@@ -103,11 +103,13 @@ server <- function(input,output,session){
   
 # Data Upload + checks ----
   print("Data Upload")
+## Set reactiveVals ----
+  FLAG_TEST_DATA_SELECTED <- reactiveVal(FALSE)
 ## Ui Section ----
-  
+
   observeEvent(input$Reset,{
     print("Jip")
-    FLAG_TEST_DATA_SELECTED <- reactiveVal(FALSE)
+    FLAG_TEST_DATA_SELECTED(FALSE)
     output$debug <- renderText("<font color=\"#00851d\"><b>Reset successful</b></font>")
     shinyjs::reset(id="data_matrix1")
     shinyjs::reset(id="data_sample_anno1")
@@ -117,7 +119,7 @@ server <- function(input,output,session){
   })
   
   observeEvent(input$EasyTestForUser,{
-    FLAG_TEST_DATA_SELECTED <- reactiveVal(TRUE)
+    FLAG_TEST_DATA_SELECTED(TRUE)
     shinyjs::click("refresh1")
   })
   
@@ -315,7 +317,6 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**DataInput** - Uploaded Omic Type: ", par_tmp['omicType_selected'])
       )
-
     if(!(isTruthy(input$data_preDone) |
          FLAG_TEST_DATA_SELECTED() |
          (isTruthy(input$data_matrix1) & 
@@ -485,42 +486,53 @@ server <- function(input,output,session){
 
     }
     res_tmp['SumExp'] <<- data_input[[paste0(input$omicType,"_SumExp")]]
-
+    browser()
     #Delete data_input to save space
-    data_input <- NULL
-
-    for(dataFrameToClean in names(data_input[[input$omicType]])){
-      if(!(dataFrameToClean %in% c("type","Matrix"))){
-        print(paste0("(before) No. anno options ",dataFrameToClean, ": ",ncol(data_input[[input$omicType]][[dataFrameToClean]])))
-        data_input[[input$omicType]][[dataFrameToClean]]=data_input[[input$omicType]][[dataFrameToClean]] %>% 
-          purrr::keep(~length(unique(.x)) != 1)
-        print(paste0("(after) No. anno options ",dataFrameToClean, ": ",ncol(data_input[[input$omicType]][[dataFrameToClean]])))
-      }
-    }
+    #data_input <- NULL
+    res_tmp['varying_anno'] <<- res_tmp['SumExp']
+    print(paste0("(before) No. anno options sample_table: ",
+             ncol(colData(res_tmp['SumExp']$SumExp)))
+      )
+    colData(res_tmp['varying_anno']$varying_anno) <- 
+      DataFrame(as.data.frame(colData(res_tmp['varying_anno']$varying_anno)) %>% 
+      purrr::keep(~length(unique(.x)) != 1))
+    print(paste0("(after) No. anno options sample_table: ",
+                 ncol(colData(res_tmp['varying_anno']$varying_anno)))
+          )
+    print(paste0("(before) No. anno options annotation_rows: ",
+                 ncol(rowData(res_tmp['SumExp']$SumExp)))
+    )
+    rowData(res_tmp['varying_anno']$varying_anno) <- 
+      DataFrame(as.data.frame(rowData(res_tmp['varying_anno']$varying_anno)) %>% 
+                  purrr::keep(~length(unique(.x)) != 1))
+    print(paste0("(after) No. anno options annotation_rows: ",
+                 ncol(rowData(res_tmp['varying_anno']$varying_anno)))
+    )
 
     fun_LogIt(
-      message = paste0("**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!")
+      message = 
+        "**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!"
       )
     fun_LogIt(
-      message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", "))
+      message = paste0("**DataInput** - The raw data dimensions are:",
+                       paste0(dim(res_tmp$SumExp),collapse = ", "))
     )
 
     fun_LogIt(message = "### Publication Snippet")
     fun_LogIt(message = snippet_dataInput(
-      data_type = input$omicType,
-      data_dimension = paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", ")
+      data_type = par_tmp$omicType_selected,
+      data_dimension = paste0(dim(res_tmp$SumExp),collapse = ", ")
     ))
     fun_LogIt(message = "<br>")
-    data_input
+    data_input # does this needs to be returned now that we have a global?
   })
-  
+  #data_input_shiny = is the res object now which is global => not needed ?!
   print("Data Input done")
   
 # Data Selection  ----
 ## Ui Section ----
   observe({
     req(data_input_shiny())
-    print(input$omicType)
     # Row
     output$providedRowAnnotationTypes_ui=renderUI({
       req(data_input_shiny())
