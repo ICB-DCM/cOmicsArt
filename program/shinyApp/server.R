@@ -479,36 +479,28 @@ server <- function(input,output,session){
     if(!any(class(data_input[[input$omicType]]) == "SummarizedExperiment")){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
       data_input[[paste0(input$omicType,"_SumExp")]]=
-        SummarizedExperiment(assays  = data_input[[input$omicType]]$Matrix,
+        SummarizedExperiment(assays  = list(raw = data_input[[input$omicType]]$Matrix),
                              rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
                              colData = data_input[[input$omicType]]$sample_table
                              )
-
     }
-    res_tmp['SumExp'] <<- data_input[[paste0(input$omicType,"_SumExp")]]
-    #data_input <- NULL
+    res_tmp['data_original'] <<- data_input[paste0(input$omicType,"_SumExp")]
+    # Make a copy, to leave original data untouched
+    res_tmp['data'] <<- res_tmp['data_original']
     
-    #Delete data_input to save space
-
-    res_tmp['varying_anno'] <<- res_tmp['SumExp']
-    print(paste0("(before) No. anno options sample_table: ",
-             ncol(colData(res_tmp['SumExp']$SumExp)))
-      )
-    colData(res_tmp['varying_anno']$varying_anno) <- 
-      DataFrame(as.data.frame(colData(res_tmp['varying_anno']$varying_anno)) %>% 
+    
+    print(paste0("(before) No. anno options sample_table: ",ncol(res_tmp$data_original)))
+    colData(res_tmp$data) <- 
+      DataFrame(as.data.frame(colData(res_tmp$data)) %>% 
       purrr::keep(~length(unique(.x)) != 1))
-    print(paste0("(after) No. anno options sample_table: ",
-                 ncol(colData(res_tmp['varying_anno']$varying_anno)))
-          )
-    print(paste0("(before) No. anno options annotation_rows: ",
-                 ncol(rowData(res_tmp['SumExp']$SumExp)))
-    )
-    rowData(res_tmp['varying_anno']$varying_anno) <- 
-      DataFrame(as.data.frame(rowData(res_tmp['varying_anno']$varying_anno)) %>% 
+    print(paste0("(after) No. anno options sample_table: ",ncol(res_tmp$data)))
+
+    print(paste0("(before) No. anno options annotation_rows: ",ncol(res_tmp$data_original)))
+
+    rowData(res_tmp$data) <- 
+      DataFrame(as.data.frame(rowData(res_tmp$data)) %>% 
                   purrr::keep(~length(unique(.x)) != 1))
-    print(paste0("(after) No. anno options annotation_rows: ",
-                 ncol(rowData(res_tmp['varying_anno']$varying_anno)))
-    )
+    print(paste0("(after) No. anno options annotation_rows: ",ncol(res_tmp$data)))
 
     fun_LogIt(
       message = 
@@ -516,13 +508,13 @@ server <- function(input,output,session){
       )
     fun_LogIt(
       message = paste0("**DataInput** - The raw data dimensions are:",
-                       paste0(dim(res_tmp$SumExp),collapse = ", "))
+                       paste0(dim(res_tmp$data_original),collapse = ", "))
     )
 
     fun_LogIt(message = "### Publication Snippet")
     fun_LogIt(message = snippet_dataInput(
       data_type = par_tmp$omicType_selected,
-      data_dimension = paste0(dim(res_tmp$SumExp),collapse = ", ")
+      data_dimension = paste0(dim(res_tmp$data_original),collapse = ", ")
     ))
     fun_LogIt(message = "<br>")
     return("DataUploadSuccesful")
@@ -534,14 +526,14 @@ server <- function(input,output,session){
 ## Ui Section ----
   observe({
     req(data_input_shiny())
-    isTruthy(res_tmp$varying_anno)
+    isTruthy(res_tmp$data)
     # Row
     output$providedRowAnnotationTypes_ui=renderUI({
       req(data_input_shiny())
       shinyWidgets::virtualSelectInput(
         inputId = "providedRowAnnotationTypes",
         label = "Which annotation type do you want to select on?",
-        choices = c(colnames(rowData(res_tmp$varying_anno))),
+        choices = c(colnames(rowData(res_tmp$data))),
         multiple = F,
         search = T,
         showSelectedOptionsFirst = T
@@ -551,7 +543,7 @@ server <- function(input,output,session){
     output$row_selection_ui=renderUI({
       req(data_input_shiny())
       req(input$providedRowAnnotationTypes)
-      if(is.numeric(rowData(res_tmp$varying_anno)[,input$providedRowAnnotationTypes])){
+      if(is.numeric(rowData(res_tmp$data)[,input$providedRowAnnotationTypes])){
         selectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Your input category is numeric, selection is currently only supported for categorical data!)",
@@ -563,7 +555,7 @@ server <- function(input,output,session){
         shinyWidgets::virtualSelectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Will be the union if multiple selected)",
-          choices = c("High Values+IQR","all",unique(unlist(strsplit(rowData(res_tmp$varying_anno)[,input$providedRowAnnotationTypes],"\\|")))),
+          choices = c("High Values+IQR","all",unique(unlist(strsplit(rowData(res_tmp$data)[,input$providedRowAnnotationTypes],"\\|")))),
           selected = "all",
           multiple = T,
           search = T,
@@ -594,8 +586,8 @@ server <- function(input,output,session){
       selectInput(
         inputId = "providedSampleAnnotationTypes",
         label = "Which annotation type do you want to select on?",
-        choices = c(colnames(colData(res_tmp$varying_anno))),
-        selected = c(colnames(colData(res_tmp$varying_anno)))[1],
+        choices = c(colnames(colData(res_tmp$data))),
+        selected = c(colnames(colData(res_tmp$data)))[1],
         multiple = F
       )
     })
@@ -605,7 +597,7 @@ server <- function(input,output,session){
         inputId = "sample_selection",
         label = "Which entities to use? (Will be the union if multiple selected)",
         choices = c("all",
-                    unique(colData(res_tmp$varying_anno)[,input$providedSampleAnnotationTypes])
+                    unique(colData(res_tmp$data)[,input$providedSampleAnnotationTypes])
                     ),
         selected = "all",
         multiple = T
@@ -655,33 +647,35 @@ server <- function(input,output,session){
   
   ## Do Selection ----  
   selectedData <- reactive({
-    shiny::req(input$row_selection,input$sample_selection)
+    shiny::req(input$row_selection, input$sample_selection)
     print("Alright do Row selection")
     selected <- c()
 
     if(any(input$row_selection == "all")){
-      selected <- rownames(rowData(res_tmp$varying_anno))
-    }else if(!(length(input$row_selection)==1 & any(input$row_selection == "High Values+IQR"))){
-      selected=unique(
+      selected <- rownames(rowData(res_tmp$data))
+    }else if(!(length(input$row_selection) == 1 & any(input$row_selection == "High Values+IQR"))){
+      selected = unique(
         c(selected,
-          rownames(rowData(res_tmp$varying_anno))[
-            which(rowData(res_tmp$varying_anno)[,input$providedRowAnnotationTypes]%in%input$row_selection)
+          rownames(rowData(res_tmp$data))[
+            which(rowData(res_tmp$data)[,input$providedRowAnnotationTypes]%in%input$row_selection)
             ]
           )
         )
     }
     if(any(input$row_selection == "High Values+IQR")){
       if(length(input$row_selection) == 1){
-        filteredIQR_Expr <- data_input_shiny()[[input$omicType]]$Matrix[filter_rna(
-          rna = data_input_shiny()[[input$omicType]]$Matrix,
+        toKeep <- filter_rna(
+          rna = assay(res_tmp$data),
           prop = input$propensityChoiceUser
-          ),]
+        )
+        filteredIQR_Expr <- assay(res_tmp$data)[toKeep,]
         selected <- rownames(filteredIQR_Expr)
       }else{
-        filteredIQR_Expr <- data_input_shiny()[[input$omicType]]$Matrix[filter_rna(
-          rna = data_input_shiny()[[input$omicType]]$Matrix[selected,],
+        toKeep <- filter_rna(
+          rna = assay(res_tmp$data)[selected,],
           prop = input$propensityChoiceUser
-          ),]
+        )
+        filteredIQR_Expr <- assay(res_tmp$data)[toKeep,]
         selected <- intersect(
           selected,
           rownames(filteredIQR_Expr)
@@ -693,30 +687,20 @@ server <- function(input,output,session){
     # Column Selection
     samples_selected <- c()
     if(any(input$sample_selection == "all")){
-      samples_selected <- colnames(data_input_shiny()[[input$omicType]]$Matrix)
+      samples_selected <- colnames(assay(res_tmp$data))
     }else{
-      samples_selected <-c(
+      samples_selected <- c(
         samples_selected,
-        rownames(data_input_shiny()[[input$omicType]]$sample_table)[which(
-          data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes]%in%input$sample_selection
+        rownames(colData(res_tmp$data))[which(
+          colData(res_tmp$data)[,input$providedSampleAnnotationTypes] %in% input$sample_selection
           )]
         )
     }
 
     # Data set selection
-
-    data_output[[input$omicType]] <- list(
-      type=input$omicType,
-      Matrix=data_input_shiny()[[input$omicType]]$Matrix[selected,samples_selected],
-      sample_table=data_input_shiny()[[input$omicType]]$sample_table[samples_selected,],
-      annotation_rows=data_input_shiny()[[input$omicType]]$annotation_rows[selected,]
-      )
-    #req(input$Sample_selection,isTruthy(data_input_shiny()),input$providedSampleAnnotationTypes)
     print("Alright do Column selection")
-    print(length(selected))
-    print(length(samples_selected))
-
-    return(data_output)
+    res_tmp$data <<- res_tmp$data[selected,samples_selected]
+    return("Selection Success")
   })
   
 # Preprocessing after Selection ----
@@ -731,7 +715,7 @@ server <- function(input,output,session){
       selectInput(
         inputId = "DESeq_formula",
         label = "Choose factors for desing formula in DESeq pipeline (currently only one factor allowed + App might crash if your factor as only 1 sample per level)",
-        choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
+        choices = c(colnames(res_tmp$data)),
         multiple = F,
         selected = "condition"
       )
@@ -739,27 +723,6 @@ server <- function(input,output,session){
       NULL
     }
   })
-  # output$NextPanel2_ui <- renderUI({
-  #   actionButton(
-  #     inputId = "NextPanel2",
-  #     label = "Go to PCA",
-  #     icon = icon("fas fa-hat-wizard")
-  #     )
-  # })
-  # output$NextPanel3_ui <- renderUI({
-  #   actionButton(
-  #     inputId = "NextPanel3",
-  #     label = "Go to Volcano",
-  #     icon = icon("fas fa-mountain")
-  #     )
-  # })
-  # output$NextPanel4_ui <- renderUI({
-  #   actionButton(
-  #     inputId = "NextPanel4",
-  #     label = "Go to Heatmap",
-  #     icon = icon("fas fa-thermometer-full")
-  #     )
-  # })
   
   observeEvent(input$NextPanel2,{
     updateTabsetPanel(
@@ -784,51 +747,51 @@ server <- function(input,output,session){
 
 ## Do preprocessing ----  
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
-    processedData_all <- selectedData()
+    print(selectedData())
+    processedData_all <- res_tmp$data
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
-    processedData_all[[input$omicType]]$Matrix <- processedData_all[[input$omicType]]$Matrix[which(apply(processedData_all[[input$omicType]]$Matrix,1,sd)!=0),]
+    res_tmp$data <<- res_tmp$data[which(apply(assay(res_tmp$data),1,sd) != 0),]
     
-    if(input$omicType == "Transcriptomics"){
+    if(par_tmp$omicType_selected == "Transcriptomics"){
       print("Also remove anything of rowCount <=10")
-      print(dim(processedData_all[[input$omicType]]$Matrix))
-      processedData_all[[input$omicType]]$Matrix <- processedData_all[[input$omicType]]$Matrix[which(rowSums(processedData_all[[input$omicType]]$Matrix)>10),]
+      print(dim(res_tmp$data))
+      res_tmp$data <<- res_tmp$data[which(rowSums(assay(res_tmp$data)) > 10),]
     }
     
-    if(input$omicType == "Metabolomics"){
+    if(par_tmp$omicType_selected == "Metabolomics"){
       print("Remove anything which has a row median of 0")
-      print(dim(processedData_all[[input$omicType]]$Matrix))
-      processedData_all[[input$omicType]]$Matrix <-processedData_all[[input$omicType]]$Matrix[which(apply(processedData_all[[input$omicType]]$Matrix,1,median)!=0),]
+      print(dim(res_tmp$data))
+      res_tmp$data <<- res_tmp$data[which(apply(assay(res_tmp$data),1,median)!=0),]
     }
     
-    print(dim(processedData_all[[input$omicType]]$Matrix))
+    print(dim(res_tmp$data))
     
     if(input$PreProcessing_Procedure != "none"){
       print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
       if(input$PreProcessing_Procedure == "simpleCenterScaling"){
-        processedData<-as.data.frame(t(
+        processedData <- as.data.frame(t(
           scale(
-          x = as.data.frame(t(processedData_all[[input$omicType]]$Matrix)),
+          x = as.data.frame(t(assay(res_tmp$data))),
           scale = T,
           center = T
           )
           )
           )
-        processedData_all[[input$omicType]]$Matrix=processedData
+        assay(res_tmp$data) <<- DataFrame(processedData)
       }
       if(input$PreProcessing_Procedure == "vst_DESeq"){
-        if(input$omicType == "Transcriptomics"){
-          processedData <- processedData_all[[input$omicType]]$Matrix
+        if(par_tmp$omicType_selected == "Transcriptomics"){
+          processedData <- res_tmp$data
           print(input$DESeq_formula)
-          processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"] <- as.factor(
-            processedData_all[[input$omicType]]$sample_table[,input$DESeq_formula]
+          colData(res_tmp$data)[,"DE_SeqFactor"] <<- as.factor(
+            colData(res_tmp$data)[,input$DESeq_formula]
             )
           
-          print(processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"])
+          print(colData(res_tmp$data)[,"DE_SeqFactor"])
           # TODO take more complicated formulas into consideration
-          dds <- DESeqDataSetFromMatrix(
-            countData = processedData,
-            colData = processedData_all[[input$omicType]]$sample_table,
+          browser()
+          dds <- DESeqDataSet(res_tmp$data,
             design = ~DE_SeqFactor
             )
           
