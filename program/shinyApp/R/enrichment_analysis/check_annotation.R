@@ -1,33 +1,33 @@
-check_annotation_enrichment_analysis <- function(){
+check_annotation_enrichment_analysis <- function(data){
   # allowed annotations
   ensembl_opt <- c(
-    "ensembl", "Ensembl", "ensembl_id", "Ensembl_ID", "Ensemble ID", "ENSEMBL"
+    "ensembl", "Ensembl", "ensembl_id", "Ensembl_ID", "Ensemble.ID", "ENSEMBL"
   )
   entrez_opt <- c(
-    "entrez", "Entrez", "entrez_id", "Entrez_ID", "Entrez ID", "Entrez Gene ID", "ENTREZID"
+    "entrez", "Entrez", "entrez_id", "Entrez_ID", "Entrez_Gene_ID", "ENTREZID", "Entrez.ID"
   )
   symbol_opt <- c(
-    "symbol", "Symbol", "gene_symbol", "Gene_Symbol", "Gene Symbol", "Nomenclature", "SYMBOL"
+    "symbol", "Symbol", "gene_symbol", "Gene_Symbol", "Nomenclature", "SYMBOL", "Gene.Symbol"
   )
   # check if annotation is in row-annotation
-  if (any(entrez_opt %in% colnames(processedData_all$Transcriptomics$annotation_rows))){
-    names(processedData_all$Transcriptomics$annotation_rows)[names(processedData_all$Transcriptomics$annotation_rows) == entrez_opt[entrez_opt %in% colnames(processedData_all$Transcriptomics$annotation_rows)]] <<- "ENTREZID"
+  if (any(entrez_opt %in% colnames(data$Transcriptomics$annotation_rows))){
+    names(data$Transcriptomics$annotation_rows)[names(data$Transcriptomics$annotation_rows) == entrez_opt[entrez_opt %in% colnames(data$Transcriptomics$annotation_rows)]] <- "ENTREZID"
     return(list(
       "no_ann" = FALSE,
       "base_annotation" = "ENTREZID",
       "can_start" = TRUE
     ))
   }
-  if (any(ensembl_opt %in% colnames(processedData_all$Transcriptomics$annotation_rows))){
-    names(processedData_all$Transcriptomics$annotation_rows)[names(processedData_all$Transcriptomics$annotation_rows) == ensembl_opt[ensembl_opt %in% colnames(processedData_all$Transcriptomics$annotation_rows)]] <<- "ENSEMBL"
+  if (any(ensembl_opt %in% colnames(data$Transcriptomics$annotation_rows))){
+    names(data$Transcriptomics$annotation_rows)[names(data$Transcriptomics$annotation_rows) == ensembl_opt[ensembl_opt %in% colnames(data$Transcriptomics$annotation_rows)]] <- "ENSEMBL"
     return(list(
       "no_ann" = FALSE,
       "base_annotation" = "ENSEMBL",
       "can_start" = FALSE
     ))
   }
-  if (any(symbol_opt %in% colnames(processedData_all$Transcriptomics$annotation_rows))){
-    names(processedData_all$Transcriptomics$annotation_rows)[names(processedData_all$Transcriptomics$annotation_rows) == symbol_opt[symbol_opt %in% colnames(processedData_all$Transcriptomics$annotation_rows)]] <<- "SYMBOL"
+  if (any(symbol_opt %in% colnames(data$Transcriptomics$annotation_rows))){
+    names(data$Transcriptomics$annotation_rows)[names(data$Transcriptomics$annotation_rows) == symbol_opt[symbol_opt %in% colnames(data$Transcriptomics$annotation_rows)]] <- "SYMBOL"
     return(list(
       "no_ann" = FALSE,
       "base_annotation" = "SYMBOL",
