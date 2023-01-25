@@ -107,7 +107,6 @@ server <- function(input,output,session){
   
   observeEvent(input$Reset,{
     print("Jip")
-    par_tmp["FLAG_TEST_DATA_SELECTED"] <<- FALSE # should be not global
     FLAG_TEST_DATA_SELECTED <- reactiveVal(FALSE)
     output$debug <- renderText("<font color=\"#00851d\"><b>Reset successful</b></font>")
     shinyjs::reset(id="data_matrix1")
@@ -118,9 +117,7 @@ server <- function(input,output,session){
   })
   
   observeEvent(input$EasyTestForUser,{
-    browser()
-    FLAG_TEST_DATA_SELECTED <- reactiveVal(FALSE)
-    par_tmp["FLAG_TEST_DATA_SELECTED"] <<- TRUE
+    FLAG_TEST_DATA_SELECTED <- reactiveVal(TRUE)
     shinyjs::click("refresh1")
   })
   
@@ -177,12 +174,12 @@ server <- function(input,output,session){
   })
   
   observeEvent(input$omicType,{
-    if(input$omicType=="Transcriptomics"){
+    if(input$omicType == "Transcriptomics"){
       output$AddGeneSymbols_ui=renderUI({
         checkboxInput(
           inputId = "AddGeneSymbols",
-          label="Adding gene Annotation?",
-          value=F
+          label = "Adding gene Annotation?",
+          value = F
           )
         
       })
@@ -312,26 +309,26 @@ server <- function(input,output,session){
   data_input <- list()
   data_output <- list()
   observeEvent(input$refresh1,{
-    omicType_selected = input$omicType
+    par_tmp['omicType_selected'] <<- input$omicType
     fun_LogIt(message = "## DataInput {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
     fun_LogIt(
-      message = paste0("**DataInput** - Uploaded Omic Type: ",input$omicType)
+      message = paste0("**DataInput** - Uploaded Omic Type: ", par_tmp['omicType_selected'])
       )
 
     if(!(isTruthy(input$data_preDone) |
-         par_tmp["FLAG_TEST_DATA_SELECTED"] |
+         FLAG_TEST_DATA_SELECTED() |
          (isTruthy(input$data_matrix1) & 
           isTruthy(input$data_sample_anno1) & 
           isTruthy(input$data_row_anno1)))){
       output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
-    }else if(par_tmp["FLAG_TEST_DATA_SELECTED"] & !(isTruthy(input$data_preDone))){
-      output$debug=renderText({"The Test Data Set was used"})
+    }else if(FLAG_TEST_DATA_SELECTED() & !(isTruthy(input$data_preDone))){
+      output$debug = renderText({"The Test Data Set was used"})
     }else{
-      if(any(names(data_input_shiny()) == omicType_selected)){
+      if(any(names(data_input_shiny()) == par_tmp['omicType_selected'])){
         show_toast(
-          title = paste0(input$omicType,"Data Upload"),
-          text = paste0(input$omicType,"-data upload was successful"),
+          title = paste0(par_tmp['omicType_selected'],"Data Upload"),
+          text = paste0(par_tmp['omicType_selected'],"-data upload was successful"),
           position = "top",
           timer = 1500,
           timerProgressBar = T
@@ -362,15 +359,14 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
-    # What Input is required? (raw data)
-    if(!isTruthy(input$data_preDone) & !par_tmp["FLAG_TEST_DATA_SELECTED"]){
+    if(!isTruthy(input$data_preDone) & !FLAG_TEST_DATA_SELECTED()){
       # Include here, that the sample anno can be replaced by metadatasheet
       # potentially this will be extended to all of the fields
       shiny::req(input$data_matrix1,input$data_row_anno1)
       
       if(isTruthy(input$data_sample_anno1)){
         data_input[[input$omicType]] <- list(
-          type=as.character(input$omicType),
+          type = as.character(input$omicType),
           Matrix = read.csv(
             file = input$data_matrix1$datapath,
             header = T,
@@ -393,7 +389,6 @@ server <- function(input,output,session){
         
         # check if only 1 col in anno row, 
         # add dummy col to ensure R does not turn it into a vector
-        
         if(ncol(data_input[[input$omicType]]$annotation_rows) < 2){
           print("Added dummy column to annotation row")
           data_input[[input$omicType]]$annotation_rows$origRownames <- rownames(data_input[[input$omicType]]$annotation_rows)
@@ -402,7 +397,6 @@ server <- function(input,output,session){
       }else if(isTruthy(input$metadataInput)){
        
         tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
-        #TODO ensure explicit the correct order (done in Matrix ordering the cols) 
 
         tryCatch(
           {
@@ -435,18 +429,12 @@ server <- function(input,output,session){
       }
       
       ## TODO Include here possible Data Checks
-    }else if(par_tmp["FLAG_TEST_DATA_SELECTED"] & !isTruthy(input$data_preDone)){
-      # shiny::updateSelectInput(
-      #   session = session,
-      #   inputId = "omicType",
-      #   label = "Omic Type that is uploaded",
-      #   choices = c("Transcriptomics","Metabolomics","Lipidomics"),
-      #   selected = "Transcriptomics"
-      # )
-      # Precompiled list from www folder
+    }else if(FLAG_TEST_DATA_SELECTED() & !isTruthy(input$data_preDone)){
+
       data_input[[input$omicType]] <- readRDS(
         file = "www/Transcriptomics_only_precompiled-LS.RDS"
       )[[input$omicType]]
+      
       fun_LogIt(
         message = paste0("**DataInput** - Test Data set used")
       )
@@ -471,7 +459,7 @@ server <- function(input,output,session){
       print("Add gene annotation")
       
       if(input$AddGeneSymbols_organism == "hsapiens"){
-        ensembl<- readRDS("data/ENSEMBL_Human_05_07_22")
+        ensembl <- readRDS("data/ENSEMBL_Human_05_07_22")
       }else{
         ensembl <- readRDS("data/ENSEMBL_Mouse_05_07_22")
       }
@@ -496,17 +484,10 @@ server <- function(input,output,session){
                              )
 
     }
-    
-    # TODO:
-    # For Loading summarizedExperiemnt make sure to to more extensive check 
-    # Option1 coming from complete outside
-    # Option2 coming from inside here
-    
-    # # Due to Object change a  lot needs to be changed Downstream! For the moment revert back to "original" obj
-    # data_input[[input$omicType]]=list(type=as.character(input$omicType),
-    #                                   Matrix=as.data.frame(assay(SummarizedExperiment)),
-    #                                   sample_table=as.data.frame(colData(tmp)),
-    #                                   annotation_rows=as.data.frame(rowData(tmp)))
+    res_tmp['SumExp'] <<- data_input[[paste0(input$omicType,"_SumExp")]]
+
+    #Delete data_input to save space
+    data_input <- NULL
 
     for(dataFrameToClean in names(data_input[[input$omicType]])){
       if(!(dataFrameToClean %in% c("type","Matrix"))){
