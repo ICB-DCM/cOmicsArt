@@ -1,6 +1,6 @@
 server <- function(input,output,session){
   source("R/SourceAll.R",local=T)
-  
+
   global_Vars <<- reactiveValues() # OUTDATED?
   
   # getCurrentVersion(updateDESCRIPTION=T) # Where to Place this ? So it does not always get 'updated'?
@@ -435,7 +435,7 @@ server <- function(input,output,session){
       data_input[[input$omicType]] <- readRDS(
         file = "www/Transcriptomics_only_precompiled-LS.RDS"
       )[[input$omicType]]
-      
+
       fun_LogIt(
         message = paste0("**DataInput** - Test Data set used")
       )
@@ -488,23 +488,23 @@ server <- function(input,output,session){
     res_tmp['data_original'] <<- data_input[paste0(input$omicType,"_SumExp")]
     # Make a copy, to leave original data untouched
     res_tmp['data'] <<- res_tmp['data_original']
-    
+
     
     print(paste0("(before) No. anno options sample_table: ",ncol(res_tmp$data_original)))
-    colData(res_tmp$data) <- 
-      DataFrame(as.data.frame(colData(res_tmp$data)) %>% 
+    colData(res_tmp$data) <-
+      DataFrame(as.data.frame(colData(res_tmp$data)) %>%
       purrr::keep(~length(unique(.x)) != 1))
     print(paste0("(after) No. anno options sample_table: ",ncol(res_tmp$data)))
 
     print(paste0("(before) No. anno options annotation_rows: ",ncol(res_tmp$data_original)))
 
-    rowData(res_tmp$data) <- 
-      DataFrame(as.data.frame(rowData(res_tmp$data)) %>% 
+    rowData(res_tmp$data) <-
+      DataFrame(as.data.frame(rowData(res_tmp$data)) %>%
                   purrr::keep(~length(unique(.x)) != 1))
     print(paste0("(after) No. anno options annotation_rows: ",ncol(res_tmp$data)))
 
     fun_LogIt(
-      message = 
+      message =
         "**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!"
       )
     fun_LogIt(
@@ -519,7 +519,7 @@ server <- function(input,output,session){
     ))
     fun_LogIt(message = "<br>")
     return("DataUploadSuccesful")
-  }) 
+  })
   #data_input_shiny = is the res object now which is global => not needed ?!
   print("Data Input done")
   
@@ -793,7 +793,7 @@ server <- function(input,output,session){
           
           print(colData(res_tmp$data)[,"DE_SeqFactor"])
           # TODO take more complicated formulas into consideration
-          
+
           dds <- DESeqDataSetFromMatrix(
             countData = assay(res_tmp$data),
             colData = colData(res_tmp$data),
@@ -806,14 +806,14 @@ server <- function(input,output,session){
             object = de_seq_result,
             blind = TRUE
             )
-          
+
           assay(res_tmp$data) <<- DataFrame(assay(dds_vst))
         }else{
           output$Statisitcs_Data=renderText({
             "<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"
             })
         }
-      } 
+      }
       if(input$PreProcessing_Procedure == "Scaling_0_1"){
         processedData <- as.data.frame(t(
           apply(assay(res_tmp$data),1,function(x){
@@ -913,50 +913,50 @@ server <- function(input,output,session){
   
   output$debug <- renderText(dim(res_tmp$data))
   ## UP TILL HERE ##
-  
+
   # Sample Correlation ----
   sample_correlation_server(
     id = "sample_correlation",
     omic_type = reactive(input$omicType), # par_tmp$omicType_selected
     row_select = reactive(input$row_selection) #par_tmp$row_selection
   )
-  
+
   # significance analysis ----
   significance_analysis_server(
     id = 'SignificanceAnalysis',
     preprocess_method = reactive(input$PreProcessing_Procedure),
     omic_type = reactive(input$omicType) # par_tmp$omicType_selected
   )
-  
+
   # PCA ----
   pca_Server(
-    id = "PCA", 
-    omic_type = reactive(input$omicType), # par_tmp$omicType_selected 
+    id = "PCA",
+    omic_type = reactive(input$omicType), # par_tmp$omicType_selected
     reactive(input$row_selection)
     )
-  
+
   # Volcano plots ----
   volcano_Server(
-    id = "Volcano", 
+    id = "Volcano",
     omic_type = reactive(input$omicType) # par_tmp$omicType_selected
     )
-  
+
   # Heatmap ----
   heatmap_server(
     id = 'Heatmap',
     omicType = reactive(input$omicType) # par_tmp$omicType_selected
     )
-  
+
   # Single Gene Visualisations ----
   single_gene_visualisation_server(
     id = "single_gene_visualisation",
     omicType = reactive(input$omicType) # par_tmp$omicType_selected
   )
-  
+
   # Enrichment Analysis ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
     omic_type = reactive(input$omicType) # par_tmp$omicType_selected
   )
-  
+
 }

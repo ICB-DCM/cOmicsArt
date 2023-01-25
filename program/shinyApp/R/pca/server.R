@@ -92,7 +92,6 @@ pca_Server <- function(id, omic_type, row_select){
         req(input$y_axis_selection)
         req(input$coloring_options)
         # req(input$PCA_anno_tooltip)
-        # browser()
         req(input$Do_PCA[1] > 0)
         req(data_input_shiny()[[omic_type()]])
 
@@ -623,8 +622,10 @@ pca_Server <- function(id, omic_type, row_select){
             })
           }
         )
-  #    })
-        
+        # assign res_temp
+        res_temp["PCA"] <<- pca
+        # assign par_temp as empty list
+        par_temp["PCA"] <<- list()
         
       })
     
