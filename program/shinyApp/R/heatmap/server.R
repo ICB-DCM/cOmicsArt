@@ -444,7 +444,7 @@ heatmap_server <- function(id,omicType){
           Groups2Compare_ctrl_heatmap = input$Groups2Compare_ctrl_heatmap,
           TopK = input$TopK,
           anno_options_heatmap = input$anno_options_heatmap,
-          row_anno_options_heatmap = input$row_anno_options_heatmap,
+          row_anno_options_heatmap = input$row_anno_options_heatmap
         )
         
         output$getR_Code_Heatmap <- downloadHandler(
