@@ -589,6 +589,7 @@ enrichment_analysis_Server <- function(id, omic_type){
       # change values in list to true if selected
       observeEvent(input$GeneSetChoice, {
         # reset list
+        # TODO: make local 
         global_Vars$enrichments2do <<- list(
           "Hallmarks" = F,
           "C1" = F,
