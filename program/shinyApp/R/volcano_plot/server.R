@@ -141,6 +141,16 @@ volcano_Server <- function(id, omic_type){
             annotation_add = input$VOLCANO_anno_tooltip,
             annoData = selectedData_processed()[[omic_type()]]$annotation_rows
             )
+          # assign res_temp
+          res_temp["Volcano"] <- VolcanoPlot_df
+          # assign par_temp
+          par_temp["Volcano"] <- list(
+            "sample_annotation_types_cmp" = input$sample_annotation_types_cmp,
+            "Groups2Compare_ref" = input$Groups2Compare_ref,
+            "Groups2Compare_treat" = input$Groups2Compare_treat,
+            "psig_threhsold" = input$psig_threhsold,
+            "lfc_threshold" = input$lfc_threshold
+          )
           colorScheme <- c("#cf0e5b","#939596")
           names(colorScheme) <- c("significant","non-significant")
           alphaScheme <- c(0.8,0.1)
@@ -192,12 +202,11 @@ volcano_Server <- function(id, omic_type){
             all.x=TRUE,
             all.y=F)
           rownames(LFCTable) <- LFCTable$Row.names
-          global_Vars$Volcano_plot <- VolcanoPlot
-          global_Vars$Volcano_sampleAnnoTypes_cmp <- input$sample_annotation_types_cmp
-          global_Vars$Volcano_groupRef <- input$Groups2Compare_ref
-          global_Vars$Volcano_groupTreat <- input$Groups2Compare_treat
-          global_Vars$Volcano_file_ext_Volcano <- input$file_ext_Volcano
-          global_Vars$Volcano_table <- LFCTable[order(LFCTable$p_adj,decreasing = T),]
+          LFCTable <- LFCTable[order(LFCTable$p_adj,decreasing = T),]
+          Volcano_plot <- VolcanoPlot
+          Volcano_sampleAnnoTypes_cmp <- input$sample_annotation_types_cmp
+          Volcano_groupRef <- input$Groups2Compare_ref
+          Volcano_groupTreat <- input$Groups2Compare_treat
 
           output$getR_Code_Volcano <- downloadHandler(
             filename = function(){
@@ -287,13 +296,14 @@ volcano_Server <- function(id, omic_type){
           #Use annotation selected in plot also for the output of the names
 
           DE_total <<- rbind(DE_UP,DE_Down)
-          output$SaveDE_List=downloadHandler(
+          output$SaveDE_List <- downloadHandler(
             filename = function() {
-              paste("DE_Genes ",
-                    input$sample_annotation_types_cmp,
-                    ": ",input$Groups2Compare_treat,
-                    " vs. ",input$Groups2Compare_ref,
-                    "_",Sys.time(),".csv",sep="")
+              paste0(
+                "DE_Genes ",
+                input$sample_annotation_types_cmp, ": ", input$Groups2Compare_treat,
+                " vs. ",
+                input$Groups2Compare_ref,
+                "_", Sys.time(), ".csv")
               },
             content = function(file){
               write.csv(DE_total,file = file)
@@ -321,20 +331,20 @@ volcano_Server <- function(id, omic_type){
         notificationID <- showNotification("Saving...",duration = 0)
 
         tmp_filename <- paste0(
-          getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),".png",sep=""))
+          getwd(),"/www/",paste(paste0("VOLCANO_", Sys.time(), ".png"))
           )
 
-        ggsave(tmp_filename,plot=global_Vars$Volcano_plot,device = "png")
+        ggsave(tmp_filename,plot=Volcano_plot,device = "png")
 
         # Add Log Messages
         fun_LogIt(message = "## VOLCANO")
         fun_LogIt(
-          message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", global_Vars$Volcano_sampleAnnoTypes_cmp,": ",global_Vars$Volcano_groupRef," vs ", global_Vars$Volcano_sampleAnnoTypes_cmp,": ",global_Vars$Volcano_groupTreat)
+          message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", Volcano_sampleAnnoTypes_cmp,": ",Volcano_groupRef," vs ", Volcano_sampleAnnoTypes_cmp,": ",Volcano_groupTreat)
           )
         fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
 
         fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
-        fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(global_Vars$Volcano_table[order(global_Vars$Volcano_table$p_adj,decreasing = T),],10),format = "html")))
+        fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable,10),format = "html")))
 
         if(isTruthy(input$NotesVolcano) &
            !(isEmpty(input$NotesVolcano))){

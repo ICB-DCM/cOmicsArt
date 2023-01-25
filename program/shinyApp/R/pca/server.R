@@ -92,7 +92,6 @@ pca_Server <- function(id, omic_type, row_select){
         req(input$y_axis_selection)
         req(input$coloring_options)
         # req(input$PCA_anno_tooltip)
-        # browser()
         req(input$Do_PCA[1] > 0)
         req(data_input_shiny()[[omic_type()]])
 
@@ -122,7 +121,6 @@ pca_Server <- function(id, omic_type, row_select){
 
         # Define data for plotting
         pcaData <- data.frame(pca$x,selectedData_processed()[[omic_type()]]$sample_table)
-        browser()
 
         # Coloring Options
         print(input$coloring_options)
