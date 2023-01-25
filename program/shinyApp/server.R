@@ -483,6 +483,7 @@ server <- function(input,output,session){
                              rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
                              colData = data_input[[input$omicType]]$sample_table
                              )
+      #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
     }
     res_tmp['data_original'] <<- data_input[paste0(input$omicType,"_SumExp")]
     # Make a copy, to leave original data untouched
@@ -774,7 +775,7 @@ server <- function(input,output,session){
       if(input$PreProcessing_Procedure == "simpleCenterScaling"){
         processedData <- as.data.frame(t(
           scale(
-          x = as.data.frame(t(assay(tmp_data_selected))),
+          x = as.data.frame(t(as.data.frame(assay(res_tmp$data)))),
           scale = T,
           center = T
           )
@@ -786,16 +787,16 @@ server <- function(input,output,session){
         if(par_tmp$omicType_selected == "Transcriptomics"){
           print(input$DESeq_formula)
           # on purpose local
-          colData(tmp_data_selected)[,"DE_SeqFactor"] <- as.factor(
-            colData(tmp_data_selected)[,input$DESeq_formula]
+          colData(res_tmp$data)[,"DE_SeqFactor"] <- as.factor(
+            colData(res_tmp$data)[,input$DESeq_formula]
             )
           
           print(colData(res_tmp$data)[,"DE_SeqFactor"])
           # TODO take more complicated formulas into consideration
           
           dds <- DESeqDataSetFromMatrix(
-            countData = assay(tmp_data_selected),
-            colData = colData(tmp_data_selected),
+            countData = assay(res_tmp$data),
+            colData = colData(res_tmp$data),
             design = ~DE_SeqFactor
             )
           
@@ -815,20 +816,20 @@ server <- function(input,output,session){
       } 
       if(input$PreProcessing_Procedure == "Scaling_0_1"){
         processedData <- as.data.frame(t(
-          apply(assay(tmp_data_selected),1,function(x){
+          apply(assay(res_tmp$data),1,function(x){
             (x - min(x))/(max(x) - min(x))
             })
           ))
-        assay(res_tmp$data) <<- DataFrame(tmp_data_selected)
+        assay(res_tmp$data) <<- DataFrame(res_tmp$data)
       }
       if(input$PreProcessing_Procedure == "ln"){
         processedData <- as.data.frame(log(
-          assay(tmp_data_selected)
+          assay(res_tmp$data)
           ))
         assay(res_tmp$data) <<- DataFrame(processedData)
       }
       if(input$PreProcessing_Procedure == "log10"){
-        processedData <- as.data.frame(assay(tmp_data_selected))
+        processedData <- as.data.frame(assay(res_tmp$data))
         if(any(processedData<0)){
           output$Statisitcs_Data <- renderText({
             "Negative entries, cannot take log10!!"
@@ -846,7 +847,7 @@ server <- function(input,output,session){
         assay(res_tmp$data) <<- DataFrame(processedData)
       }
       if(input$PreProcessing_Procedure == "pareto_scaling"){
-        processedData <- as.data.frame(assay(tmp_data_selected))
+        processedData <- as.data.frame(assay(res_tmp$data))
         centered <- as.data.frame(t(
           apply(processedData, 1, function(x){x - mean(x)})
           ))
@@ -888,9 +889,9 @@ server <- function(input,output,session){
   
 ## Log preprocessing ----
   observeEvent(input$Do_preprocessing,{
-    if(input$omicType == "Transcriptomics"){
+    if(par_tmp$omicType_selected == "Transcriptomics"){
       tmp_logMessage <- "Remove anything which row Count <= 10"
-    }else if(input$omicType == "Metabolomics"){
+    }else if(par_tmp$omicType_selected == "Metabolomics"){
       tmp_logMessage <- "Remove anything which has a row median of 0"
     }else{
       tmp_logMessage <- "none"
@@ -910,7 +911,8 @@ server <- function(input,output,session){
       )
   })
   
-  output$debug <- renderText(dim(selectedData_processed()[[input$omicType]]$Matrix))
+  output$debug <- renderText(dim(res_tmp$data))
+  ## UP TILL HERE ## 
   # Sample Correlation
   sample_correlation_server(
     id = "sample_correlation",
