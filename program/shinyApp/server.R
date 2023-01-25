@@ -757,7 +757,6 @@ server <- function(input,output,session){
     if(par_tmp$omicType_selected == "Transcriptomics"){
       print("Also remove anything of rowCount <=10")
       print(dim(tmp_data_selected))
-      browser()
       res_tmp$data <<- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]
     }
     
@@ -820,11 +819,11 @@ server <- function(input,output,session){
             (x - min(x))/(max(x) - min(x))
             })
           ))
-        assay(res_tmp$data) <<- DataFrame(res_tmp$data)
+        assay(res_tmp$data) <<- DataFrame(processedData)
       }
       if(input$PreProcessing_Procedure == "ln"){
         processedData <- as.data.frame(log(
-          assay(res_tmp$data)
+          as.data.frame(assay(res_tmp$data))
           ))
         assay(res_tmp$data) <<- DataFrame(processedData)
       }
