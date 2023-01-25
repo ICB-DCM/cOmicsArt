@@ -715,7 +715,7 @@ server <- function(input,output,session){
       selectInput(
         inputId = "DESeq_formula",
         label = "Choose factors for desing formula in DESeq pipeline (currently only one factor allowed + App might crash if your factor as only 1 sample per level)",
-        choices = c(colnames(res_tmp$data)),
+        choices = c(colnames(colData(res_tmp$data))),
         multiple = F,
         selected = "condition"
       )
@@ -748,6 +748,7 @@ server <- function(input,output,session){
 ## Do preprocessing ----  
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     print(selectedData())
+
     processedData_all <- res_tmp$data
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
@@ -766,6 +767,7 @@ server <- function(input,output,session){
     }
     
     print(dim(res_tmp$data))
+    assay(res_tmp$data) <<- DataFrame(assay(res_tmp$data))
     
     if(input$PreProcessing_Procedure != "none"){
       print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
@@ -790,76 +792,78 @@ server <- function(input,output,session){
           
           print(colData(res_tmp$data)[,"DE_SeqFactor"])
           # TODO take more complicated formulas into consideration
-          browser()
-          dds <- DESeqDataSet(res_tmp$data,
+          assay(res_tmp$data) <- DataFrame(assay(res_tmp$data))
+          dds <- DESeqDataSetFromMatrix(
+            countData = assay(res_tmp$data),
+            colData = colData(res_tmp$data),
             design = ~DE_SeqFactor
             )
           
           de_seq_result <- DESeq(dds)
+          res_tmp$DESeq_obj <<- de_seq_result
           dds_vst <- vst(
             object = de_seq_result,
             blind = TRUE
             )
-          processedData_all[[input$omicType]]$Matrix=assay(dds_vst)
+          
+          assay(res_tmp$data) <<- DataFrame(assay(dds_vst))
         }else{
           output$Statisitcs_Data=renderText({
             "<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"
             })
         }
-      }
+      } 
       if(input$PreProcessing_Procedure == "Scaling_0_1"){
-        processedData=as.data.frame(t(
-          apply(processedData_all[[input$omicType]]$Matrix,1,function(x){
-            (x-min(x))/(max(x)-min(x))
+        processedData <- as.data.frame(t(
+          apply(assay(res_tmp$data),1,function(x){
+            (x - min(x))/(max(x) - min(x))
             })
           ))
-        processedData_all[[input$omicType]]$Matrix=processedData
+        assay(res_tmp$data) <- DataFrame(processedData)
       }
       if(input$PreProcessing_Procedure == "ln"){
         processedData <- as.data.frame(log(
           processedData_all[[input$omicType]]$Matrix
           ))
-        processedData_all[[input$omicType]]$Matrix <- processedData
+        assay(res_tmp$data) <- DataFrame(processedData)
       }
       if(input$PreProcessing_Procedure == "log10"){
-        if(any(processedData_all[[input$omicType]]$Matrix<0)){
-          output$Statisitcs_Data=renderText({
+        processedData <- as.data.frame(assay(res_tmp$data))
+        if(any(processedData<0)){
+          output$Statisitcs_Data <- renderText({
             "Negative entries, cannot take log10!!"
             })
           req(FALSE)
         }
-        if(any(processedData_all[[input$omicType]]$Matrix==0)){
-          processedData=as.data.frame(log10(
-            (processedData_all[[input$omicType]]$Matrix)+1)
+        if(any(processedData==0)){
+          processedData <- as.data.frame(log10(
+            processedData+1)
             )
         }
         processedData <- as.data.frame(log10(
-          processedData_all[[input$omicType]]$Matrix+1)
+          processedData+1)
           )
-        processedData_all[[input$omicType]]$Matrix <- processedData
+        assay(res_tmp$data) <<- DataFrame(processedData)
       }
       if(input$PreProcessing_Procedure == "pareto_scaling"){
+        processedData <- as.data.frame(assay(res_tmp$data))
         centered <- as.data.frame(t(
-          apply(processedData_all[[input$omicType]]$Matrix, 1, function(x){x - mean(x)})
+          apply(processedData, 1, function(x){x - mean(x)})
           ))
         pareto.matrix <- as.data.frame(t(
           apply(centered, 1, function(x){x/sqrt(sd(x))})
           ))
 
-        processedData_all[[input$omicType]]$Matrix <- pareto.matrix
+        assay(res_tmp$data) <<- DataFrame(pareto.matrix)
       }
     }
     
-    if(any(is.na(processedData_all[[input$omicType]]$Matrix))){
-      processedData_all[[input$omicType]]$Matrix <- processedData_all[[input$omicType]]$Matrix[complete.cases(processedData_all[[input$omicType]]$Matrix),]
+    if(any(is.na(assay(res_tmp$data)))){
+      res_tmp$data <<- res_tmp$data[complete.cases(assay(res_tmp$data)),]
     }
-    #### Potentially some entities removed hence update the annotation table
-    print("What are the colnamaes here? X at the beginning??")
-    print(colnames(processedData_all[[input$omicType]]$Matrix))
-    
-    processedData_all[[input$omicType]]$sample_table <- processedData_all[[input$omicType]]$sample_table[colnames(processedData_all[[input$omicType]]$Matrix),]
-    processedData_all[[input$omicType]]$annotation_rows <- processedData_all[[input$omicType]]$annotation_rows[rownames(processedData_all[[input$omicType]]$Matrix),]
-    
+
+    print(colnames(res_tmp$data))
+
     showTab(inputId = "tabsetPanel1", target = "Sample Correlation")
     showTab(inputId = "tabsetPanel1", target = "Significance Analysis")
     showTab(inputId = "tabsetPanel1", target = "PCA")
@@ -868,17 +872,17 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
     showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
 
-    processedData_all <<- processedData_all
-    processedData_all
+    return("Pre-Processing successfully")
   })
   
-  output$Statisitcs_Data=renderText({
+  output$Statisitcs_Data <- renderText({
+    selectedData_processed()
     paste0("The data has the dimensions of: ",
-           paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", "),
+           paste0(dim(res_tmp$data),collapse = ", "),
            "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
            "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
            "<br","See help for details",
-           "<br>",ifelse(any(selectedData_processed()[[input$omicType]]$Matrix<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
+           "<br>",ifelse(any(as.data.frame(assay(res_tmp$data))<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
   
 ## Log preprocessing ----
@@ -901,7 +905,7 @@ server <- function(input,output,session){
       message = paste0("**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula),input$PreProcessing_Procedure))
       )
     fun_LogIt(
-      message = paste0("**PreProcessing** - The resulting dimensions are: ",paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", "))
+      message = paste0("**PreProcessing** - The resulting dimensions are: ",paste0(dim(res_tmp$data),collapse = ", "))
       )
   })
   
