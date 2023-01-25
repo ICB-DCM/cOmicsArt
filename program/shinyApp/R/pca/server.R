@@ -122,6 +122,7 @@ pca_Server <- function(id, omic_type, row_select){
 
         # Define data for plotting
         pcaData <- data.frame(pca$x,selectedData_processed()[[omic_type()]]$sample_table)
+        browser()
 
         # Coloring Options
         print(input$coloring_options)
@@ -623,8 +624,10 @@ pca_Server <- function(id, omic_type, row_select){
             })
           }
         )
-  #    })
-        
+        # assign res_temp
+        res_temp["PCA"] <<- pca
+        # assign par_temp as empty list
+        par_temp["PCA"] <<- list()
         
       })
     
