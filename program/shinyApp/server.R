@@ -486,9 +486,10 @@ server <- function(input,output,session){
 
     }
     res_tmp['SumExp'] <<- data_input[[paste0(input$omicType,"_SumExp")]]
-    browser()
-    #Delete data_input to save space
     #data_input <- NULL
+    
+    #Delete data_input to save space
+
     res_tmp['varying_anno'] <<- res_tmp['SumExp']
     print(paste0("(before) No. anno options sample_table: ",
              ncol(colData(res_tmp['SumExp']$SumExp)))
@@ -524,8 +525,8 @@ server <- function(input,output,session){
       data_dimension = paste0(dim(res_tmp$SumExp),collapse = ", ")
     ))
     fun_LogIt(message = "<br>")
-    data_input # does this needs to be returned now that we have a global?
-  })
+    return("DataUploadSuccesful")
+  }) 
   #data_input_shiny = is the res object now which is global => not needed ?!
   print("Data Input done")
   
@@ -533,13 +534,14 @@ server <- function(input,output,session){
 ## Ui Section ----
   observe({
     req(data_input_shiny())
+    isTruthy(res_tmp$varying_anno)
     # Row
     output$providedRowAnnotationTypes_ui=renderUI({
       req(data_input_shiny())
       shinyWidgets::virtualSelectInput(
         inputId = "providedRowAnnotationTypes",
         label = "Which annotation type do you want to select on?",
-        choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
+        choices = c(colnames(rowData(res_tmp$varying_anno))),
         multiple = F,
         search = T,
         showSelectedOptionsFirst = T
@@ -549,7 +551,7 @@ server <- function(input,output,session){
     output$row_selection_ui=renderUI({
       req(data_input_shiny())
       req(input$providedRowAnnotationTypes)
-      if(is.numeric(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes])){
+      if(is.numeric(rowData(res_tmp$varying_anno)[,input$providedRowAnnotationTypes])){
         selectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Your input category is numeric, selection is currently only supported for categorical data!)",
@@ -561,8 +563,8 @@ server <- function(input,output,session){
         shinyWidgets::virtualSelectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Will be the union if multiple selected)",
-          choices = c("High Values+IQR","all",unique(unlist(strsplit(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes],"\\|")))),
-          selected="all",
+          choices = c("High Values+IQR","all",unique(unlist(strsplit(rowData(res_tmp$varying_anno)[,input$providedRowAnnotationTypes],"\\|")))),
+          selected = "all",
           multiple = T,
           search = T,
           showSelectedOptionsFirst = T
@@ -576,8 +578,8 @@ server <- function(input,output,session){
           numericInput(inputId = "propensityChoiceUser",
                        label = "Specifcy the propensity for variablity & Expr",
                        value = 0.85,
-                       min=0,
-                       max=1
+                       min = 0,
+                       max = 1
           )
         })
       }else{
@@ -592,8 +594,8 @@ server <- function(input,output,session){
       selectInput(
         inputId = "providedSampleAnnotationTypes",
         label = "Which annotation type do you want to select on?",
-        choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
-        selected = c(colnames(data_input_shiny()[[input$omicType]]$sample_table))[1],
+        choices = c(colnames(colData(res_tmp$varying_anno))),
+        selected = c(colnames(colData(res_tmp$varying_anno)))[1],
         multiple = F
       )
     })
@@ -603,9 +605,9 @@ server <- function(input,output,session){
         inputId = "sample_selection",
         label = "Which entities to use? (Will be the union if multiple selected)",
         choices = c("all",
-                    unique(data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes])
+                    unique(colData(res_tmp$varying_anno)[,input$providedSampleAnnotationTypes])
                     ),
-        selected="all",
+        selected = "all",
         multiple = T
       )
     })
@@ -652,18 +654,19 @@ server <- function(input,output,session){
   })
   
   ## Do Selection ----  
-  selectedData=reactive({
+  selectedData <- reactive({
     shiny::req(input$row_selection,input$sample_selection)
     print("Alright do Row selection")
     selected <- c()
 
     if(any(input$row_selection == "all")){
-      selected <- rownames(data_input_shiny()[[input$omicType]]$annotation_rows)
-    }else if(!(length(input$row_selection)==1 & any(input$row_selection=="High Values+IQR"))){
+      selected <- rownames(rowData(res_tmp$varying_anno))
+    }else if(!(length(input$row_selection)==1 & any(input$row_selection == "High Values+IQR"))){
       selected=unique(
         c(selected,
-          rownames(data_input_shiny()[[input$omicType]]$annotation_rows)
-          [which(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes]%in%input$row_selection)]
+          rownames(rowData(res_tmp$varying_anno))[
+            which(rowData(res_tmp$varying_anno)[,input$providedRowAnnotationTypes]%in%input$row_selection)
+            ]
           )
         )
     }
