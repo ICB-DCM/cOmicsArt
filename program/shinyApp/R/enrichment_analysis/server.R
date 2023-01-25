@@ -766,14 +766,16 @@ enrichment_analysis_Server <- function(id, omic_type){
           # res_temp Zuweisung
           res_temp["Enrichment"] <<- global_Vars$enrichment_results
           # par_temp Zuweisung
-          par_temp["ValueToAttach"] <<- input$ValueToAttach
-          par_temp["GeneSet2Enrich"] <<- input$GeneSet2Enrich
-          par_temp["Groups2Compare_ref_GSEA"] <<- input$Groups2Compare_ref_GSEA
-          par_temp["Groups2Compare_treat_GSEA"] <<- input$Groups2Compare_treat_GSEA
-          par_temp["sample_annotation_types_cmp_GSEA"] <<- input$sample_annotation_types_cmp_GSEA
-          par_temp["ORA_or_GSE"] <<- input$ORA_or_GSE
-          par_temp["OrganismChoice"] <<- input$OrganismChoice
-          par_temp["UniverseOfGene"] <<- input$UniverseOfGene
+          par_temp["Enrichment"] <<- list(
+            "ValueToAttach" = input$ValueToAttach,
+            "GeneSet2Enrich" = input$GeneSet2Enrich,
+            "Groups2Compare_ref_GSEA" = input$Groups2Compare_ref_GSEA,
+            "Groups2Compare_treat_GSEA" = input$Groups2Compare_treat_GSEA,
+            "sample_annotation_types_cmp_GSEA" = input$sample_annotation_types_cmp_GSEA,
+            "ORA_or_GSE" = input$ORA_or_GSE,
+            "OrganismChoice" = input$OrganismChoice,
+            "UniverseOfGene" = input$UniverseOfGene
+          )
         })
       })
 
