@@ -533,7 +533,7 @@ server <- function(input,output,session){
       shinyWidgets::virtualSelectInput(
         inputId = "providedRowAnnotationTypes",
         label = "Which annotation type do you want to select on?",
-        choices = c(colnames(rowData(res_tmp$data))),
+        choices = c(colnames(rowData(res_tmp$data_original))),
         multiple = F,
         search = T,
         showSelectedOptionsFirst = T
@@ -543,7 +543,7 @@ server <- function(input,output,session){
     output$row_selection_ui=renderUI({
       req(data_input_shiny())
       req(input$providedRowAnnotationTypes)
-      if(is.numeric(rowData(res_tmp$data)[,input$providedRowAnnotationTypes])){
+      if(is.numeric(rowData(res_tmp$data_original)[,input$providedRowAnnotationTypes])){
         selectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Your input category is numeric, selection is currently only supported for categorical data!)",
@@ -555,7 +555,7 @@ server <- function(input,output,session){
         shinyWidgets::virtualSelectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Will be the union if multiple selected)",
-          choices = c("High Values+IQR","all",unique(unlist(strsplit(rowData(res_tmp$data)[,input$providedRowAnnotationTypes],"\\|")))),
+          choices = c("High Values+IQR","all",unique(unlist(strsplit(rowData(res_tmp$data_original)[,input$providedRowAnnotationTypes],"\\|")))),
           selected = "all",
           multiple = T,
           search = T,
@@ -586,8 +586,8 @@ server <- function(input,output,session){
       selectInput(
         inputId = "providedSampleAnnotationTypes",
         label = "Which annotation type do you want to select on?",
-        choices = c(colnames(colData(res_tmp$data))),
-        selected = c(colnames(colData(res_tmp$data)))[1],
+        choices = c(colnames(colData(res_tmp$data_original))),
+        selected = c(colnames(colData(res_tmp$data_original)))[1],
         multiple = F
       )
     })
@@ -597,7 +597,7 @@ server <- function(input,output,session){
         inputId = "sample_selection",
         label = "Which entities to use? (Will be the union if multiple selected)",
         choices = c("all",
-                    unique(colData(res_tmp$data)[,input$providedSampleAnnotationTypes])
+                    unique(colData(res_tmp$data_original)[,input$providedSampleAnnotationTypes])
                     ),
         selected = "all",
         multiple = T
@@ -652,12 +652,12 @@ server <- function(input,output,session){
     selected <- c()
 
     if(any(input$row_selection == "all")){
-      selected <- rownames(rowData(res_tmp$data))
+      selected <- rownames(rowData(res_tmp$data_original))
     }else if(!(length(input$row_selection) == 1 & any(input$row_selection == "High Values+IQR"))){
       selected = unique(
         c(selected,
-          rownames(rowData(res_tmp$data))[
-            which(rowData(res_tmp$data)[,input$providedRowAnnotationTypes]%in%input$row_selection)
+          rownames(rowData(res_tmp$data_original))[
+            which(rowData(res_tmp$data_original)[,input$providedRowAnnotationTypes]%in%input$row_selection)
             ]
           )
         )
@@ -665,17 +665,17 @@ server <- function(input,output,session){
     if(any(input$row_selection == "High Values+IQR")){
       if(length(input$row_selection) == 1){
         toKeep <- filter_rna(
-          rna = assay(res_tmp$data),
+          rna = assay(res_tmp$data_original),
           prop = input$propensityChoiceUser
         )
-        filteredIQR_Expr <- assay(res_tmp$data)[toKeep,]
+        filteredIQR_Expr <- assay(res_tmp$data_original)[toKeep,]
         selected <- rownames(filteredIQR_Expr)
       }else{
         toKeep <- filter_rna(
-          rna = assay(res_tmp$data)[selected,],
+          rna = assay(res_tmp$data_original)[selected,],
           prop = input$propensityChoiceUser
         )
-        filteredIQR_Expr <- assay(res_tmp$data)[toKeep,]
+        filteredIQR_Expr <- assay(res_tmp$data_original)[toKeep,]
         selected <- intersect(
           selected,
           rownames(filteredIQR_Expr)
@@ -687,35 +687,34 @@ server <- function(input,output,session){
     # Column Selection
     samples_selected <- c()
     if(any(input$sample_selection == "all")){
-      samples_selected <- colnames(assay(res_tmp$data))
+      samples_selected <- colnames(assay(res_tmp$data_original))
     }else{
       samples_selected <- c(
         samples_selected,
-        rownames(colData(res_tmp$data))[which(
-          colData(res_tmp$data)[,input$providedSampleAnnotationTypes] %in% input$sample_selection
+        rownames(colData(res_tmp$data_original))[which(
+          colData(res_tmp$data_original)[,input$providedSampleAnnotationTypes] %in% input$sample_selection
           )]
         )
     }
 
     # Data set selection
     print("Alright do Column selection")
-    res_tmp$data <<- res_tmp$data[selected,samples_selected]
+    res_tmp$data <<- res_tmp$data_original[selected,samples_selected]
+    tmp_data_selected <<- res_tmp$data_original[selected,samples_selected]
     return("Selection Success")
   })
   
-# Preprocessing after Selection ----
+# Pre-processing after Selection ----
+# Set Selected Data as Head to allow reiteration of pre-processing
+
 ## UI section ----
-  # set pre processing as golbal variable
-  observeEvent(input$PreProcessing_Procedure, {
-    pre_processing_procedure <<- input$PreProcessing_Procedure
-  })
   output$DESeq_formula_ui <- renderUI({
     req(data_input_shiny())
     if(input$PreProcessing_Procedure == "vst_DESeq"){
       selectInput(
         inputId = "DESeq_formula",
         label = "Choose factors for desing formula in DESeq pipeline (currently only one factor allowed + App might crash if your factor as only 1 sample per level)",
-        choices = c(colnames(colData(res_tmp$data))),
+        choices = c(colnames(colData(tmp_data_selected))),
         multiple = F,
         selected = "condition"
       )
@@ -749,21 +748,22 @@ server <- function(input,output,session){
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     print(selectedData())
 
-    processedData_all <- res_tmp$data
+    processedData_all <- tmp_data_selected
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
-    res_tmp$data <<- res_tmp$data[which(apply(assay(res_tmp$data),1,sd) != 0),]
+    res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]
     
     if(par_tmp$omicType_selected == "Transcriptomics"){
       print("Also remove anything of rowCount <=10")
-      print(dim(res_tmp$data))
-      res_tmp$data <<- res_tmp$data[which(rowSums(assay(res_tmp$data)) > 10),]
+      print(dim(tmp_data_selected))
+      browser()
+      res_tmp$data <<- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]
     }
     
     if(par_tmp$omicType_selected == "Metabolomics"){
       print("Remove anything which has a row median of 0")
-      print(dim(res_tmp$data))
-      res_tmp$data <<- res_tmp$data[which(apply(assay(res_tmp$data),1,median)!=0),]
+      print(dim(tmp_data_selected))
+      res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,median)!=0),]
     }
     
     print(dim(res_tmp$data))
@@ -774,7 +774,7 @@ server <- function(input,output,session){
       if(input$PreProcessing_Procedure == "simpleCenterScaling"){
         processedData <- as.data.frame(t(
           scale(
-          x = as.data.frame(t(assay(res_tmp$data))),
+          x = as.data.frame(t(assay(tmp_data_selected))),
           scale = T,
           center = T
           )
@@ -784,18 +784,18 @@ server <- function(input,output,session){
       }
       if(input$PreProcessing_Procedure == "vst_DESeq"){
         if(par_tmp$omicType_selected == "Transcriptomics"){
-          processedData <- res_tmp$data
           print(input$DESeq_formula)
-          colData(res_tmp$data)[,"DE_SeqFactor"] <<- as.factor(
-            colData(res_tmp$data)[,input$DESeq_formula]
+          # on purpose local
+          colData(tmp_data_selected)[,"DE_SeqFactor"] <- as.factor(
+            colData(tmp_data_selected)[,input$DESeq_formula]
             )
           
           print(colData(res_tmp$data)[,"DE_SeqFactor"])
           # TODO take more complicated formulas into consideration
-          assay(res_tmp$data) <- DataFrame(assay(res_tmp$data))
+          
           dds <- DESeqDataSetFromMatrix(
-            countData = assay(res_tmp$data),
-            colData = colData(res_tmp$data),
+            countData = assay(tmp_data_selected),
+            colData = colData(tmp_data_selected),
             design = ~DE_SeqFactor
             )
           
@@ -815,20 +815,20 @@ server <- function(input,output,session){
       } 
       if(input$PreProcessing_Procedure == "Scaling_0_1"){
         processedData <- as.data.frame(t(
-          apply(assay(res_tmp$data),1,function(x){
+          apply(assay(tmp_data_selected),1,function(x){
             (x - min(x))/(max(x) - min(x))
             })
           ))
-        assay(res_tmp$data) <- DataFrame(processedData)
+        assay(res_tmp$data) <<- DataFrame(tmp_data_selected)
       }
       if(input$PreProcessing_Procedure == "ln"){
         processedData <- as.data.frame(log(
-          processedData_all[[input$omicType]]$Matrix
+          assay(tmp_data_selected)
           ))
-        assay(res_tmp$data) <- DataFrame(processedData)
+        assay(res_tmp$data) <<- DataFrame(processedData)
       }
       if(input$PreProcessing_Procedure == "log10"){
-        processedData <- as.data.frame(assay(res_tmp$data))
+        processedData <- as.data.frame(assay(tmp_data_selected))
         if(any(processedData<0)){
           output$Statisitcs_Data <- renderText({
             "Negative entries, cannot take log10!!"
@@ -846,7 +846,7 @@ server <- function(input,output,session){
         assay(res_tmp$data) <<- DataFrame(processedData)
       }
       if(input$PreProcessing_Procedure == "pareto_scaling"){
-        processedData <- as.data.frame(assay(res_tmp$data))
+        processedData <- as.data.frame(assay(tmp_data_selected))
         centered <- as.data.frame(t(
           apply(processedData, 1, function(x){x - mean(x)})
           ))
@@ -859,6 +859,7 @@ server <- function(input,output,session){
     }
     
     if(any(is.na(assay(res_tmp$data)))){
+      print("This might be problem due to mismatched Annotation Data?!")
       res_tmp$data <<- res_tmp$data[complete.cases(assay(res_tmp$data)),]
     }
 
