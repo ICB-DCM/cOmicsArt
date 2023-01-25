@@ -26,7 +26,7 @@ sample_correlation_server <- function(id, omic_type, row_select){
       observeEvent(toListen2CorrelationPlot(),{
         req(selectedData_processed())
         req(input$SampleAnnotationChoice)
-        annotationDF = selectedData_processed()[[omic_type()]]$sample_table[,input$SampleAnnotationChoice,drop = F]
+        annotationDF <- selectedData_processed()[[omic_type()]]$sample_table[,input$SampleAnnotationChoice,drop = F]
         cormat <- cor(
           x = selectedData_processed()[[omic_type()]]$Matrix,
           method = input$corrMethod
@@ -72,6 +72,10 @@ sample_correlation_server <- function(id, omic_type, row_select){
           main = customTitleSampleCorrelation,
           annotation_colors = anno_colors
           )
+        # assign res_temp["SampleCorrelation"]
+        res_temp["SampleCorrelation"] <<- cormat
+        # assign par_temp["SampleCorrelation"] as empty
+        par_temp["SampleCorrelation"] <<- list()
         
         sampleCorrelation_scenario <- 18
         output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
