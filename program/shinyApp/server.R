@@ -29,9 +29,9 @@ server <- function(input,output,session){
   if(dir.exists("www")){
     setwd("www")
     print(list.files())
-    file.remove(setdiff(setdiff(list.files(path="."),
-                                list.files(path=".",pattern = ".csv")),
-                        list.files(path=".",pattern = ".RDS")))
+    file.remove(list.files(path=".") %>%
+                  setdiff(list.files(path=".", pattern = ".csv")) %>%
+                  setdiff(list.files(path=".", pattern = ".RDS")))
     print("Removed old Report files for fresh start")
     setwd("..")
   }
@@ -67,6 +67,10 @@ server <- function(input,output,session){
 # Init res Object ----
   res_tmp <<- list()
   par_tmp <<- list()
+# Init update Object ----
+  # updating is a reative value that counts up whenever data is updated
+  # this is used to trigger the update of the servers
+  updating <<- reactiveValues(count = 0)
 ## Quit App Button ----
   observeEvent(input$Quit_App,{
     showModal(
@@ -488,6 +492,8 @@ server <- function(input,output,session){
     res_tmp['data_original'] <<- data_input[paste0(input$omicType,"_SumExp")]
     # Make a copy, to leave original data untouched
     res_tmp['data'] <<- res_tmp['data_original']
+    # Count up updating
+    updating$count <<- updating$count + 1
 
     
     print(paste0("(before) No. anno options sample_table: ",ncol(res_tmp$data_original)))
@@ -703,6 +709,8 @@ server <- function(input,output,session){
     print("Alright do Column selection")
     res_tmp$data <<- res_tmp$data_original[selected,samples_selected]
     tmp_data_selected <<- res_tmp$data_original[selected,samples_selected]
+    # Count up updating
+    updating$count <<- updating$count + 1
     return("Selection Success")
   })
   
@@ -874,6 +882,8 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
     showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
 
+    # Count up updating
+    updating$count <<- updating$count + 1
     return("Pre-Processing successfully")
   })
   
@@ -914,50 +924,47 @@ server <- function(input,output,session){
   output$debug <- renderText(dim(res_tmp$data))
   ## UP TILL HERE ##
 
-  # Sample Correlation ----
-  sample_correlation_server(
-    id = "sample_correlation",
-    omic_type = reactive(input$omicType), # par_tmp$omic_type
-    row_select = reactive(input$row_selection) #par_tmp$row_selection
-  )
-
-  # significance analysis ----
-  significance_analysis_server(
-    id = 'SignificanceAnalysis',
-    preprocess_method = reactive(input$PreProcessing_Procedure),
-    omic_type = reactive(input$omicType) # par_tmp$omic_type
-  )
-
-  # PCA ----
-  pca_Server(
-    id = "PCA",
-    data = res_tmp,
-    params = par_tmp,
-    reactive(input$row_selection)
+  # Encompass the server calls in an observeEvent
+  observeEvent(updating$count,{
+    req(updating$count > 0 )
+    # Sample Correlation ----
+    sample_correlation_server(
+      id = "sample_correlation",
+      omic_type = reactive(input$omicType), # par_tmp$omic_type
+      row_select = reactive(input$row_selection) #par_tmp$row_selection
     )
-
-  # Volcano plots ----
-  volcano_Server(
-    id = "Volcano",
-    omic_type = reactive(input$omicType) # par_tmp$omic_type
+    # significance analysis ----
+    significance_analysis_server(
+      id = 'SignificanceAnalysis',
+      preprocess_method = reactive(input$PreProcessing_Procedure),
+      omic_type = reactive(input$omicType) # par_tmp$omic_type
     )
-
-  # Heatmap ----
-  heatmap_server(
-    id = 'Heatmap',
-    omicType = reactive(input$omicType) # par_tmp$omic_type
+    # PCA ----
+    pca_Server(
+      id = "PCA",
+      data = res_tmp,
+      params = par_tmp,
+      reactive(input$row_selection)
+      )
+    # Volcano plots ----
+    volcano_Server(
+      id = "Volcano",
+      omic_type = reactive(input$omicType) # par_tmp$omic_type
+      )
+    # Heatmap ----
+    heatmap_server(
+      id = 'Heatmap',
+      omicType = reactive(input$omicType) # par_tmp$omic_type
+      )
+    # Single Gene Visualisations ----
+    single_gene_visualisation_server(
+      id = "single_gene_visualisation",
+      omicType = reactive(input$omicType) # par_tmp$omic_type
     )
-
-  # Single Gene Visualisations ----
-  single_gene_visualisation_server(
-    id = "single_gene_visualisation",
-    omicType = reactive(input$omicType) # par_tmp$omic_type
-  )
-
-  # Enrichment Analysis ----
-  enrichment_analysis_Server(
-    id = 'EnrichmentAnalysis',
-    omic_type = reactive(input$omicType) # par_tmp$omic_type
-  )
-
+    # Enrichment Analysis ----
+    enrichment_analysis_Server(
+      id = 'EnrichmentAnalysis',
+      omic_type = reactive(input$omicType) # par_tmp$omic_type
+    )
+  })
 }

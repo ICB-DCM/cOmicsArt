@@ -524,6 +524,8 @@ pca_Server <- function(id, data, params, row_select){
         )
         
         ### Do Loadings Plot Matrix ----
+        # TODO: If we have less data points than nPCAs_to_look_at,
+        #  we need to adjust the nPCAs_to_look_at
         df_loadings <- data.frame(
           entity = row.names(pca$rotation), 
           pca$rotation[, 1:input$nPCAs_to_look_at]
@@ -625,9 +627,9 @@ pca_Server <- function(id, data, params, row_select){
           }
         )
         # assign res_temp
-        res_temp["PCA"] <<- pca
+        res_tmp["PCA"] <<- pca
         # assign par_temp as empty list
-        par_temp["PCA"] <<- list(
+        par_tmp["PCA"] <<- list(
           # add a dummy parameter to avoid error
           dummy = "dummy"
         )
