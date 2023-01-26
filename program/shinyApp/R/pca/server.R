@@ -6,6 +6,8 @@ pca_Server <- function(id, data, params, row_select){
       pca_reactives <- reactiveValues(
         calculate = 0,
         counter = input$Do_PCA[1],
+        # ensures Do_PCA is clicked at least once after refresh
+        one_do_pca_after_server_refresh = FALSE,
         percentVar = NULL,
         pcaData = NULL,
         df_out_r = NULL,
@@ -14,7 +16,7 @@ pca_Server <- function(id, data, params, row_select){
         df_loadings = NULL
       )
       ns <- session$ns
-      
+
       ## UI Section ----
       output$x_axis_selection_ui <- renderUI({
         radioGroupButtons(
@@ -70,7 +72,7 @@ pca_Server <- function(id, data, params, row_select){
           multiple = F
         )
       })
-      
+
       output$EntitieAnno_Loadings_matrix_ui <- renderUI({
         selectInput(
           inputId = ns("EntitieAnno_Loadings_matrix"),
@@ -100,13 +102,14 @@ pca_Server <- function(id, data, params, row_select){
         req(input$Do_PCA > pca_reactives$counter)
         pca_reactives$counter <- input$Do_PCA
         pca_reactives$calculate <- 1
+        pca_reactives$one_do_pca_after_server_refresh <- TRUE
       })
-      
+
       observeEvent(toListen2PCA(),{
         req(input$x_axis_selection)
         req(input$y_axis_selection)
         req(input$coloring_options)
-        req(input$Do_PCA[1] > 0)
+        req(pca_reactives$one_do_pca_after_server_refresh)
         req(data$data)
 
         print("PCA analysis on pre-selected data")
