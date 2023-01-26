@@ -288,10 +288,10 @@ pca_Server <- function(id, data, params, row_select){
         print(input$only2Report_pca)
         global_Vars$PCA_plot <- pca_plot_final # somehow does not update ? or just return the latest?
         # TODO: remove?
-        global_Vars$PCA_customTitle <- customTitle
+        # customTitle <- customTitle
         # Longer names causes issues for saving 
-        if(nchar(global_Vars$PCA_customTitle) >= 250){
-          global_Vars$PCA_customTitle <- "PCA"
+        if(nchar(customTitle) >= 250){
+          customTitle <- "PCA"
         }
         global_Vars$PCA_coloring <- input$coloring_options
         global_Vars$PCA_noLoadings <- ifelse(input$Show_loadings == "Yes",length(TopK),0)
@@ -325,7 +325,7 @@ pca_Server <- function(id, data, params, row_select){
 
         output$SavePlot_pos1 <- downloadHandler(
           filename = function() {
-            paste(global_Vars$PCA_customTitle,Sys.time(),input$file_ext_plot1,sep="")
+            paste(customTitle,Sys.time(),input$file_ext_plot1,sep="")
             },
           # cannot get the final destination as this is a download on server side
           content = function(file){
@@ -338,7 +338,7 @@ pca_Server <- function(id, data, params, row_select){
               TEST = paste0(
                 getwd(),
                 "/www/",
-                paste0(global_Vars$PCA_customTitle, Sys.time(), input$file_ext_plot1)
+                paste0(customTitle, Sys.time(), input$file_ext_plot1)
               )
               ggsave(
                 filename = TEST,
@@ -639,7 +639,7 @@ pca_Server <- function(id, data, params, row_select){
       observeEvent(input$only2Report_pca,{
           # needs global var ?! do we want that?
           notificationID <- showNotification("Saving...",duration = 0)
-          TEST <- paste0(getwd(),"/www/",paste(global_Vars$PCA_customTitle, Sys.time(),".png",sep=""))
+          TEST <- paste0(getwd(),"/www/",paste(customTitle, Sys.time(),".png",sep=""))
           ggsave(
             TEST,
             plot = global_Vars$PCA_plot,
