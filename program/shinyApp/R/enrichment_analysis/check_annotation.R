@@ -11,33 +11,37 @@ check_annotation_enrichment_analysis <- function(data){
   )
   # check if annotation is in row-annotation
   if (any(entrez_opt %in% colnames(data$Transcriptomics$annotation_rows))){
-    names(data$Transcriptomics$annotation_rows)[names(data$Transcriptomics$annotation_rows) == entrez_opt[entrez_opt %in% colnames(data$Transcriptomics$annotation_rows)]] <- "ENTREZID"
+    data$Transcriptomics$annotation_rows["ENTREZID"] <- data$Transcriptomics$annotation_rows[entrez_opt[entrez_opt %in% colnames(data$Transcriptomics$annotation_rows)]]
     return(list(
       "no_ann" = FALSE,
       "base_annotation" = "ENTREZID",
-      "can_start" = TRUE
+      "can_start" = TRUE,
+      "new_data" = data
     ))
   }
   if (any(ensembl_opt %in% colnames(data$Transcriptomics$annotation_rows))){
-    names(data$Transcriptomics$annotation_rows)[names(data$Transcriptomics$annotation_rows) == ensembl_opt[ensembl_opt %in% colnames(data$Transcriptomics$annotation_rows)]] <- "ENSEMBL"
+    data$Transcriptomics$annotation_rows["ENSEMBL"] <- data$Transcriptomics$annotation_rows[ensembl_opt[ensembl_opt %in% colnames(data$Transcriptomics$annotation_rows)]]
     return(list(
       "no_ann" = FALSE,
       "base_annotation" = "ENSEMBL",
-      "can_start" = FALSE
+      "can_start" = FALSE,
+      "new_data" = data
     ))
   }
   if (any(symbol_opt %in% colnames(data$Transcriptomics$annotation_rows))){
-    names(data$Transcriptomics$annotation_rows)[names(data$Transcriptomics$annotation_rows) == symbol_opt[symbol_opt %in% colnames(data$Transcriptomics$annotation_rows)]] <- "SYMBOL"
+    data$Transcriptomics$annotation_rows["SYMBOL"] <- data$Transcriptomics$annotation_rows[symbol_opt[symbol_opt %in% colnames(data$Transcriptomics$annotation_rows)]]
     return(list(
       "no_ann" = FALSE,
       "base_annotation" = "SYMBOL",
-      "can_start" = FALSE
+      "can_start" = FALSE,
+      "new_data" = data
     ))
   }
   # if no annotation is found, add popup asking for annotation
   return(list(
     "no_ann" = TRUE,
     "base_annotation" = NULL,
-    "can_start" = FALSE
+    "can_start" = FALSE,
+    "new_data" = data
   ))
 }

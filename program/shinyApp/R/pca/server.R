@@ -1,4 +1,4 @@
-pca_Server <- function(id, omic_type, row_select){
+pca_Server <- function(id, data, params, row_select){
 
   moduleServer(
     id,
@@ -38,7 +38,7 @@ pca_Server <- function(id, omic_type, row_select){
         selectInput(
           inputId = ns("coloring_options"),
           label = "Choose the variable to color the samples after",
-          choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
+          choices = c(colnames(colData(data$data))),
           multiple = F # would be cool if true, to be able to merge vars ?!
         )
       })
@@ -47,7 +47,7 @@ pca_Server <- function(id, omic_type, row_select){
         selectInput(
           inputId = ns("PCA_anno_tooltip"),
           label = "Select the anno to be shown at tooltip",
-          choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
+          choices = c(colnames(colData(data$data))),
           multiple = F
         )
       })
@@ -56,7 +56,7 @@ pca_Server <- function(id, omic_type, row_select){
         selectInput(
           inputId = ns("EntitieAnno_Loadings"),
           label = "Select the annotype shown at y-axis",
-          choices = c(colnames(data_input_shiny()[[omic_type()]]$annotation_rows)),
+          choices = c(colnames(rowData(data$data))),
           multiple = F
         )
       })
@@ -65,7 +65,7 @@ pca_Server <- function(id, omic_type, row_select){
         selectInput(
           inputId = ns("EntitieAnno_Loadings_matrix"),
           label = "Select the annotype shown at y-axis",
-          choices = c(colnames(data_input_shiny()[[omic_type()]]$annotation_rows)),
+          choices = c(colnames(rowData(data$data))),
           multiple = F
         )
       })
@@ -87,19 +87,17 @@ pca_Server <- function(id, omic_type, row_select){
       })
       
       observeEvent(toListen2PCA(),{
-        req(omic_type())
         req(input$x_axis_selection)
         req(input$y_axis_selection)
         req(input$coloring_options)
-        # req(input$PCA_anno_tooltip)
         req(input$Do_PCA[1] > 0)
-        req(data_input_shiny()[[omic_type()]])
+        req(data$data)
 
 
         print("PCA analysis on pre-selected data")
         customTitle <- paste0(
-          "PCA - ", omic_type(), "-",
-          paste0("entities:",row_select(),collapse = "_"),
+          "PCA - ", params$omic_type, "-",
+          paste0("entities:",row_select(),collapse = "_"),  # TODO: make row_select obsolete
           "-samples",
           ifelse(any(input$sample_selection != "all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),"")
           , "-preprocessing: ",
@@ -109,7 +107,7 @@ pca_Server <- function(id, omic_type, row_select){
 
         # PCA
         pca <- prcomp(
-          as.data.frame(t(selectedData_processed()[[omic_type()]]$Matrix)),
+          x = as.data.frame(t(as.data.frame(assay(data$data)))),
           center = T,
           scale. = FALSE
         )
@@ -120,10 +118,11 @@ pca_Server <- function(id, omic_type, row_select){
         percentVar <- round(100 * explVar, digits = 1)
 
         # Define data for plotting
-        pcaData <- data.frame(pca$x,selectedData_processed()[[omic_type()]]$sample_table)
+        pcaData <- data.frame(pca$x,colnames(data$data))
 
         # Coloring Options
         print(input$coloring_options)
+        browser()
         continiousColors <- F
         if(is.double(pcaData[,input$coloring_options]) &
            length(levels(as.factor(pcaData[,input$coloring_options]))) > 8
@@ -255,10 +254,10 @@ pca_Server <- function(id, omic_type, row_select){
           df_out_r$global_ID <- rownames(df_out_r)
           df_out_r$chosenAnno <- rownames(df_out_r)
           if(!is.null(input$EntitieAnno_Loadings)){
-            req(data_input_shiny()[[omic_type()]])
+            req(data_input_shiny())
             df_out_r$chosenAnno <- factor(
-              make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])),
-              levels = make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings]))
+              make.unique(as.character(rowData(data$data)[rownames(df_out_r),input$EntitieAnno_Loadings])),
+              levels = make.unique(as.character(rowData(data$data)[rownames(df_out_r),input$EntitieAnno_Loadings]))
               )
           }
 
@@ -289,6 +288,7 @@ pca_Server <- function(id, omic_type, row_select){
         
         print(input$only2Report_pca)
         global_Vars$PCA_plot <- pca_plot_final # somehow does not update ? or just return the latest?
+        # TODO: remove?
         global_Vars$PCA_customTitle <- customTitle
         # Longer names causes issues for saving 
         if(nchar(global_Vars$PCA_customTitle) >= 250){
@@ -336,10 +336,11 @@ pca_Server <- function(id, omic_type, row_select){
               device = gsub("\\.","",input$file_ext_plot1)
               )
             on.exit({
-              TEST = paste0(getwd(),
-                            "/www/",
-                            paste(global_Vars$PCA_customTitle,Sys.time(),input$file_ext_plot1,sep="")
-                            )
+              TEST = paste0(
+                getwd(),
+                "/www/",
+                paste0(global_Vars$PCA_customTitle, Sys.time(), input$file_ext_plot1)
+              )
               ggsave(
                 filename = TEST,
                 plot = pca_plot_final,
@@ -357,8 +358,10 @@ pca_Server <- function(id, omic_type, row_select){
 
     ### Do Scree plot ----
 
-        var_explained_df <- data.frame(PC = paste0("PC",1:ncol(pca$x)),
-                                       var_explained = (pca$sdev)^2/sum((pca$sdev)^2))
+        var_explained_df <- data.frame(
+          PC = paste0("PC",1:ncol(pca$x)),
+          var_explained = (pca$sdev)^2/sum((pca$sdev)^2)
+        )
         var_explained_df$Var <- paste0(round(var_explained_df$var_explained,4)*100,"%")
         var_explained_df$PC <- factor(var_explained_df$PC,levels = paste0("PC",1:ncol(pca$x)))
         scree_plot <-
@@ -441,10 +444,10 @@ pca_Server <- function(id, omic_type, row_select){
           )
         LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
         if(!is.null(input$EntitieAnno_Loadings)){
-          req(data_input_shiny()[[omic_type()]])
+          req(data_input_shiny())
           LoadingsDF$entitie=factor(
-            make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
-            levels = make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+            make.unique(as.character(rowData(data$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
+            levels = make.unique(as.character(rowData(data$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
             )
         }
         plotOut <- ggplot(LoadingsDF,aes(x = Loading,y = entitie)) +
@@ -536,10 +539,10 @@ pca_Server <- function(id, omic_type, row_select){
         global_min <- -global_max
         
         if(!is.null(input$EntitieAnno_Loadings_matrix)){
-          req(data_input_shiny()[[omic_type()]])
+          req(data_input_shiny())
           df_loadings$chosenAnno <- factor(
-            make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix])),
-            levels = make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix]))
+            make.unique(as.character(rowData(data$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix])),
+            levels = make.unique(as.character(rowData(data$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix]))
           )
         }else{
           df_loadings$chosenAnno <- df_loadings$entity
@@ -706,7 +709,7 @@ pca_Server <- function(id, omic_type, row_select){
         tmp_filename = paste0(
             getwd(),
             "/www/",
-            paste("LOADINGS_Matrix_PCA_",Sys.time(),input$file_ext_Loadings_matrix,sep = "")
+            paste0("LOADINGS_Matrix_PCA_", Sys.time(), input$file_ext_Loadings_matrix)
           )
         ggsave(
             tmp_filename,
