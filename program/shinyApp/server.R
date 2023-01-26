@@ -926,19 +926,18 @@ server <- function(input,output,session){
 
   # Encompass the server calls in an observeEvent
   observeEvent(updating$count,{
-    req(updating$count > 0 )
-    # Sample Correlation ----
-    sample_correlation_server(
-      id = "sample_correlation",
-      omic_type = reactive(input$omicType), # par_tmp$omic_type
-      row_select = reactive(input$row_selection) #par_tmp$row_selection
-    )
-    # significance analysis ----
-    significance_analysis_server(
-      id = 'SignificanceAnalysis',
-      preprocess_method = reactive(input$PreProcessing_Procedure),
-      omic_type = reactive(input$omicType) # par_tmp$omic_type
-    )
+    # # Sample Correlation ----
+    # sample_correlation_server(
+    #   id = "sample_correlation",
+    #   omic_type = reactive(input$omicType), # par_tmp$omic_type
+    #   row_select = reactive(input$row_selection) #par_tmp$row_selection
+    # )
+    # # significance analysis ----
+    # significance_analysis_server(
+    #   id = 'SignificanceAnalysis',
+    #   preprocess_method = reactive(input$PreProcessing_Procedure),
+    #   omic_type = reactive(input$omicType) # par_tmp$omic_type
+    # )
     # PCA ----
     pca_Server(
       id = "PCA",
@@ -946,25 +945,25 @@ server <- function(input,output,session){
       params = par_tmp,
       reactive(input$row_selection)
       )
-    # Volcano plots ----
-    volcano_Server(
-      id = "Volcano",
-      omic_type = reactive(input$omicType) # par_tmp$omic_type
-      )
-    # Heatmap ----
-    heatmap_server(
-      id = 'Heatmap',
-      omicType = reactive(input$omicType) # par_tmp$omic_type
-      )
-    # Single Gene Visualisations ----
-    single_gene_visualisation_server(
-      id = "single_gene_visualisation",
-      omicType = reactive(input$omicType) # par_tmp$omic_type
-    )
-    # Enrichment Analysis ----
-    enrichment_analysis_Server(
-      id = 'EnrichmentAnalysis',
-      omic_type = reactive(input$omicType) # par_tmp$omic_type
-    )
+    # # Volcano plots ----
+    # volcano_Server(
+    #   id = "Volcano",
+    #   omic_type = reactive(input$omicType) # par_tmp$omic_type
+    #   )
+    # # Heatmap ----
+    # heatmap_server(
+    #   id = 'Heatmap',
+    #   omicType = reactive(input$omicType) # par_tmp$omic_type
+    #   )
+    # # Single Gene Visualisations ----
+    # single_gene_visualisation_server(
+    #   id = "single_gene_visualisation",
+    #   omicType = reactive(input$omicType) # par_tmp$omic_type
+    # )
+    # # Enrichment Analysis ----
+    # enrichment_analysis_Server(
+    #   id = 'EnrichmentAnalysis',
+    #   omic_type = reactive(input$omicType) # par_tmp$omic_type
+    # )
   })
 }
