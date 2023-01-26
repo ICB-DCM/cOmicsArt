@@ -118,11 +118,10 @@ pca_Server <- function(id, data, params, row_select){
         percentVar <- round(100 * explVar, digits = 1)
 
         # Define data for plotting
-        pcaData <- data.frame(pca$x,colnames(data$data))
+        pcaData <- data.frame(pca$x,colData(data$data))
 
         # Coloring Options
         print(input$coloring_options)
-        browser()
         continiousColors <- F
         if(is.double(pcaData[,input$coloring_options]) &
            length(levels(as.factor(pcaData[,input$coloring_options]))) > 8
@@ -628,7 +627,10 @@ pca_Server <- function(id, data, params, row_select){
         # assign res_temp
         res_temp["PCA"] <<- pca
         # assign par_temp as empty list
-        par_temp["PCA"] <<- list()
+        par_temp["PCA"] <<- list(
+          # add a dummy parameter to avoid error
+          dummy = "dummy"
+        )
         
       })
     
