@@ -1,5 +1,6 @@
 server <- function(input,output,session){
   source("R/SourceAll.R",local=T)
+  source("R/util.R")
 
   global_Vars <<- reactiveValues() # OUTDATED?
   
@@ -709,8 +710,6 @@ server <- function(input,output,session){
     print("Alright do Column selection")
     res_tmp$data <<- res_tmp$data_original[selected,samples_selected]
     tmp_data_selected <<- res_tmp$data_original[selected,samples_selected]
-    # Count up updating
-    updating$count <<- updating$count + 1
     return("Selection Success")
   })
   
@@ -924,46 +923,44 @@ server <- function(input,output,session){
   output$debug <- renderText(dim(res_tmp$data))
   ## UP TILL HERE ##
 
-  # Encompass the server calls in an observeEvent
-  observeEvent(updating$count,{
-    # # Sample Correlation ----
-    # sample_correlation_server(
-    #   id = "sample_correlation",
-    #   omic_type = reactive(input$omicType), # par_tmp$omic_type
-    #   row_select = reactive(input$row_selection) #par_tmp$row_selection
-    # )
-    # # significance analysis ----
-    # significance_analysis_server(
-    #   id = 'SignificanceAnalysis',
-    #   preprocess_method = reactive(input$PreProcessing_Procedure),
-    #   omic_type = reactive(input$omicType) # par_tmp$omic_type
-    # )
-    # PCA ----
-    pca_Server(
-      id = "PCA",
-      data = res_tmp,
-      params = par_tmp,
-      reactive(input$row_selection)
-      )
-    # # Volcano plots ----
-    # volcano_Server(
-    #   id = "Volcano",
-    #   omic_type = reactive(input$omicType) # par_tmp$omic_type
-    #   )
-    # # Heatmap ----
-    # heatmap_server(
-    #   id = 'Heatmap',
-    #   omicType = reactive(input$omicType) # par_tmp$omic_type
-    #   )
-    # # Single Gene Visualisations ----
-    # single_gene_visualisation_server(
-    #   id = "single_gene_visualisation",
-    #   omicType = reactive(input$omicType) # par_tmp$omic_type
-    # )
-    # # Enrichment Analysis ----
-    # enrichment_analysis_Server(
-    #   id = 'EnrichmentAnalysis',
-    #   omic_type = reactive(input$omicType) # par_tmp$omic_type
-    # )
-  })
+  # Sample Correlation ----
+  sample_correlation_server(
+    id = "sample_correlation",
+    omic_type = reactive(input$omicType), # par_tmp$omic_type
+    row_select = reactive(input$row_selection) #par_tmp$row_selection
+  )
+  # significance analysis ----
+  significance_analysis_server(
+    id = 'SignificanceAnalysis',
+    preprocess_method = reactive(input$PreProcessing_Procedure),
+    omic_type = reactive(input$omicType) # par_tmp$omic_type
+  )
+  # PCA ----
+  pca_Server(
+    id = "PCA",
+    data = res_tmp,
+    params = par_tmp,
+    reactive(input$row_selection),
+    reactive(updating$count)
+    )
+  # Volcano plots ----
+  volcano_Server(
+    id = "Volcano",
+    omic_type = reactive(input$omicType) # par_tmp$omic_type
+    )
+  # Heatmap ----
+  heatmap_server(
+    id = 'Heatmap',
+    omicType = reactive(input$omicType) # par_tmp$omic_type
+    )
+  # Single Gene Visualisations ----
+  single_gene_visualisation_server(
+    id = "single_gene_visualisation",
+    omicType = reactive(input$omicType) # par_tmp$omic_type
+  )
+  # Enrichment Analysis ----
+  enrichment_analysis_Server(
+    id = 'EnrichmentAnalysis',
+    omic_type = reactive(input$omicType) # par_tmp$omic_type
+  )
 }

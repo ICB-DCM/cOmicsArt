@@ -1,13 +1,13 @@
-pca_Server <- function(id, data, params, row_select){
+pca_Server <- function(id, data, params, row_select, updates){
 
   moduleServer(
     id,
     function(input,output,session){
       pca_reactives <- reactiveValues(
         calculate = 0,
-        counter = input$Do_PCA[1],
+        counter = 0,
         # ensures Do_PCA is clicked at least once after refresh
-        one_do_pca_after_server_refresh = FALSE,
+        current_updates = 0,
         percentVar = NULL,
         pcaData = NULL,
         df_out_r = NULL,
@@ -98,19 +98,18 @@ pca_Server <- function(id, data, params, row_select){
         )
       })
       # only when we click on Do_PCA, we set the calculate to 1
-      observeEvent(input$Do_PCA,{
+      session$userData$clicks_observer <- observeEvent(input$Do_PCA,{
         req(input$Do_PCA > pca_reactives$counter)
         pca_reactives$counter <- input$Do_PCA
         pca_reactives$calculate <- 1
-        pca_reactives$one_do_pca_after_server_refresh <- TRUE
       })
 
       observeEvent(toListen2PCA(),{
         req(input$x_axis_selection)
         req(input$y_axis_selection)
         req(input$coloring_options)
-        req(pca_reactives$one_do_pca_after_server_refresh)
         req(data$data)
+        req(input$Do_PCA[1] > 0)
 
         print("PCA analysis on pre-selected data")
         customTitle <- paste0(
@@ -122,9 +121,12 @@ pca_Server <- function(id, data, params, row_select){
           input$PreProcessing_Procedure
         )
         print(customTitle)
-
+        
         # only calculate PCA, Scrre and Loadings if the counter is 1
         if(pca_reactives$calculate == 1){
+          # update the data if needed
+          data <- update_data(data, updates, pca_reactives$current_updates)
+          pca_reactives$current_updates <- updates()
           # set the counter to 0 to prevent any further plotting
           pca_reactives$calculate <- 0
           print("Calculate PCA")
