@@ -1,4 +1,4 @@
-heatmap_server <- function(id,omicType){
+heatmap_server <- function(id, data, params, updates){
   moduleServer(
     id,
     function(input,output,session){
@@ -12,9 +12,9 @@ heatmap_server <- function(id,omicType){
             selectInput(
               inputId = ns("anno_options"),
               label = "Choose the variable to color the samples after (Multiples are possible)",
-              choices = c(colnames(data_input_shiny()[[omicType()]]$sample_table)),
+              choices = c(colnames(colData(data$data))),
               multiple = T , # would be cool if true, to be able to merge vars ?!,
-              selected= c(colnames(data_input_shiny()[[omicType()]]$sample_table))[1]
+              selected= c(colnames(colData(data$data)))[1]
             )
           })
           output$row_anno_options_ui <- renderUI({
@@ -22,9 +22,10 @@ heatmap_server <- function(id,omicType){
             selectInput(
               inputId = ns("row_anno_options"),
               label = "Choose the variable to color the rows after (Multiples are possible)",
-              choices = c(colnames(data_input_shiny()[[omicType()]]$annotation_rows)),
+              choices = c(colnames(rowData(data$data))),
               multiple = T, # would be cool if true, to be able to merge vars ?!,
-              selected = c(colnames(data_input_shiny()[[omicType()]]$annotation_rows))[length(c(colnames(data_input_shiny()[[omicType()]]$annotation_rows)))]
+              # TODO: no better way to write this?
+              selected = c(colnames(rowData(data$data)))[length(c(colnames(rowData(data$data))))]
             )
           })
           output$row_label_options_ui <- renderUI({
