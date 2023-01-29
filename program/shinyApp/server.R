@@ -938,10 +938,8 @@ server <- function(input,output,session){
   # PCA ----
   pca_Server(
     id = "PCA",
-    data = res_tmp,
-    params = par_tmp,
-    reactive(input$row_selection),
-    reactive(updating$count)
+    omic_type = reactive(input$omicType), # par_tmp$omicType_selected
+    reactive(input$row_selection)
     )
   # Volcano plots ----
   volcano_Server(
@@ -953,7 +951,6 @@ server <- function(input,output,session){
     id = 'Heatmap',
     data = res_tmp,
     params = par_tmp,
-    reactive(input$row_selection),
     reactive(updating$count)
     )
   # Single Gene Visualisations ----

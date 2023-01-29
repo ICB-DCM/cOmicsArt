@@ -294,9 +294,9 @@ heatmap_server <- function(id, data, params, updates){
         
         if(any(input$row_selection_options=="all")){
           # TODO: if this does not work, needs to be replaced with data$data$assay
-          data2HandOver <- data$data
+          print("No entitie selection")
+          data2HandOver <- as.data.frame(assay(data$data))
         }else{
-          print(input$row_selection_options)
           data2HandOver <- entitieSelection(
             data$data,
             type = input$row_selection_options,
@@ -321,6 +321,7 @@ heatmap_server <- function(id, data, params, updates){
         }
         
         print(paste0("plot LFC's?",input$LFC_toHeatmap))
+        browser()
         # Dependent to plot raw data or LFC
         if(input$LFC_toHeatmap){
           ctrl_samples_idx <- which(
