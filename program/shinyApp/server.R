@@ -71,7 +71,7 @@ server <- function(input,output,session){
 # Init update Object ----
   # updating is a reative value that counts up whenever data is updated
   # this is used to trigger the update of the servers
-  updating <<- reactiveValues(count = 0)
+  updating <- reactiveValues(count = 0)
 ## Quit App Button ----
   observeEvent(input$Quit_App,{
     showModal(
@@ -494,7 +494,7 @@ server <- function(input,output,session){
     # Make a copy, to leave original data untouched
     res_tmp['data'] <<- res_tmp['data_original']
     # Count up updating
-    updating$count <<- updating$count + 1
+    updating$count <- updating$count + 1
 
     
     print(paste0("(before) No. anno options sample_table: ",ncol(res_tmp$data_original)))
@@ -882,7 +882,7 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
 
     # Count up updating
-    updating$count <<- updating$count + 1
+    updating$count <- updating$count + 1
     return("Pre-Processing successfully")
   })
   

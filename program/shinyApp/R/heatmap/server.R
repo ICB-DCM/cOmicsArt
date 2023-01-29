@@ -335,14 +335,15 @@ heatmap_server <- function(id, data, params, updates){
             doThis_flag <- F
           }
           if(input$PreProcessing_Procedure == "simpleCenterScaling"|
-             any(data$data <0)){
+             any(as.data.frame(assay(data$data)) < 0)){
+            # TODO: there must be a nicer way to do this then as.data.frame(assay(data$data))
             print("Remember do not use normal center + scaling (negative Values!)")
             output$Options_selected_out_3 <- renderText("Choose another preprocessing, as there are negative values!")
 
           }else if(doThis_flag){
             print(dim(selectedData_processed()[[omicType()]]$Matrix))
             Data2Plot <- getLFC(
-              data = data2Plot[[omicType()]]$Matrix,
+              data = as.data.frame(assay(data$data)),
               ctrl_samples_idx = ctrl_samples_idx,
               comparison_samples_idx = comparison_samples_idx
               )
@@ -355,7 +356,7 @@ heatmap_server <- function(id, data, params, updates){
                           seq(max(Data2Plot$LFC)/paletteLength, max(Data2Plot$LFC), length.out=floor(paletteLength/2)))
             
             scenario <- 10
-            annotation_col <- data2Plot[[omicType()]]$annotation_rows[,input$row_anno_options,drop=F]
+            annotation_col <- rowData(data2Plot)[,input$row_anno_options,drop=F]
             heatmap_plot <- pheatmap(
               t(Data2Plot[,"LFC",drop=F]),
               main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
@@ -364,11 +365,7 @@ heatmap_server <- function(id, data, params, updates){
               cluster_cols = input$cluster_cols,
               cluster_rows = FALSE, 
               scale=ifelse(input$rowWiseScaled,"row","none"),
-              # cutree_cols = 4,
-              #fontsize = font.size,
               annotation_col = annotation_col,
-              #annotation_row = data2Plot[[omicType()]]$annotation_rows[,input$row_anno_options,drop=F],
-              #annotation_colors = mycolors,
               silent = F,
               breaks = myBreaks,
               color = myColor_fill
@@ -382,23 +379,22 @@ heatmap_server <- function(id, data, params, updates){
               data2HandOver <- data2HandOver[-idx_of_nas,] 
             }
 
-            annotation_col <- selectedData_processed()[[omicType()]]$sample_table[-idx_of_nas,input$anno_options,drop=F]
-            annotation_row <- selectedData_processed()[[omicType()]]$annotation_rows[-idx_of_nas,input$row_anno_options,drop=F]
+            annotation_col <- colData(data$data)[-idx_of_nas,input$anno_options,drop=F]
+            annotation_row <- rowData(data$data)[-idx_of_nas,input$row_anno_options,drop=F]
           }else{
-            annotation_col <- selectedData_processed()[[omicType()]]$sample_table[,input$anno_options,drop=F]
-            annotation_row <- selectedData_processed()[[omicType()]]$annotation_rows[,input$row_anno_options,drop=F]
+            annotation_col <- colData(data$data)[,input$anno_options,drop=F]
+            annotation_row <- rowData(data$data)[,input$row_anno_options,drop=F]
           }
           clusterRowspossible <- ifelse(nrow(as.matrix(data2HandOver))>1,input$cluster_rows,F)
           print(input$anno_options)
           print(input$row_label_options)
           #row_label_options
           scenario <- 11
-          selectedData_processed_df <- selectedData_processed()
           heatmap_plot<-pheatmap(
             as.matrix(data2HandOver),
             main = customTitleHeatmap,
             show_rownames = ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
-            labels_row = selectedData_processed_df[[omicType()]]$annotation_rows[rownames(data2HandOver),input$row_label_options],
+            labels_row = rowData(data$data)[rownames(data2HandOver),input$row_label_options],
             show_colnames = TRUE,
             cluster_cols = input$cluster_cols,
             cluster_rows = clusterRowspossible,
@@ -564,7 +560,7 @@ heatmap_server <- function(id, data, params, updates){
         }else{
           mergedData <- merge(
             data2HandOver,
-            selectedData_processed()[[omicType()]]$annotation_rows,
+            rowData(data$data),
             by = 0,
             all.x = T,
             all.y = F,
