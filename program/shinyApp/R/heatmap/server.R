@@ -321,7 +321,6 @@ heatmap_server <- function(id, data, params, updates){
         }
         
         print(paste0("plot LFC's?",input$LFC_toHeatmap))
-        browser()
         # Dependent to plot raw data or LFC
         if(input$LFC_toHeatmap){
           ctrl_samples_idx <- which(
@@ -382,9 +381,15 @@ heatmap_server <- function(id, data, params, updates){
 
             annotation_col <- colData(data$data)[-idx_of_nas,input$anno_options,drop=F]
             annotation_row <- rowData(data$data)[-idx_of_nas,input$row_anno_options,drop=F]
+            # convert both to data.frame
+            annotation_col <- as.data.frame(annotation_col)
+            annotation_row <- as.data.frame(annotation_row)
           }else{
             annotation_col <- colData(data$data)[,input$anno_options,drop=F]
             annotation_row <- rowData(data$data)[,input$row_anno_options,drop=F]
+            # convert both to data.frame
+            annotation_col <- as.data.frame(annotation_col)
+            annotation_row <- as.data.frame(annotation_row)
           }
           clusterRowspossible <- ifelse(nrow(as.matrix(data2HandOver))>1,input$cluster_rows,F)
           print(input$anno_options)
@@ -427,14 +432,14 @@ heatmap_server <- function(id, data, params, updates){
         Heatmap_Groups2Compare_ref_heatmap <- input$Groups2Compare_ref_heatmap
         Heatmap_Groups2Compare_ctrl_heatmap <- input$Groups2Compare_ctrl_heatmap
 
-        # res_temp gets data2HandOver or Data2Plot depending on scenario
+        # res_tmp gets data2HandOver or Data2Plot depending on scenario
         if(scenario == 10){
-          res_temp["Heatmap"] <<- Data2Plot
+          res_tmp["Heatmap"] <<- Data2Plot
         }else if(scenario == 11){
-          res_temp["Heatmap"] <<- data2HandOver
+          res_tmp["Heatmap"] <<- data2HandOver
         }
-        # par_temp gets the parameters used for the heatmap
-        par_temp["Heatmap"] <<- list(
+        # par_tmp gets the parameters used for the heatmap
+        par_tmp["Heatmap"] <<- list(
           anno_options = input$anno_options,
           row_anno_options = input$row_anno_options,
           row_label_options = input$row_label_options,
