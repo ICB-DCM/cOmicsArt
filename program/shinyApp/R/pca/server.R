@@ -288,7 +288,6 @@ pca_Server <- function(id, data, params, row_select, updates){
 
         # Actual Plotting
         if(length(levels(pcaData[,input$coloring_options])) > 8){
-          browser()
            if(continiousColors){
              colorTheme <- viridis::viridis(n = 10)
              pca_plot <- ggplot(
@@ -457,7 +456,7 @@ pca_Server <- function(id, data, params, row_select, updates){
         ### Do Scree plot ----
         scree_plot <-
           ggplot(var_explained_df,
-                 aes(x = PC,y = var_explained, group = 1)) +
+                 aes(x = PC, y = var_explained, group = 1)) +
           geom_point(size = 4,aes(label = Var)) +
           geom_line() +
           ylab("Variance explained") +
