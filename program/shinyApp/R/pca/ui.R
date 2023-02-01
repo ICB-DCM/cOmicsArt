@@ -165,7 +165,7 @@ pca_main_panel <- function(ns){
           label = "Number of PC's to include",
           min = 1,
           max = 10, # renderui?
-          value = 5,
+          value = 4,
           step = 1
         ),
         sliderInput(

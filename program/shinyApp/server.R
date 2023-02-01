@@ -938,8 +938,10 @@ server <- function(input,output,session){
   # PCA ----
   pca_Server(
     id = "PCA",
-    omic_type = reactive(input$omicType), # par_tmp$omicType_selected
-    reactive(input$row_selection)
+    data = res_tmp,
+    params = par_tmp,
+    reactive(input$row_selection),
+    reactive(updating$count)
     )
   # Volcano plots ----
   volcano_Server(

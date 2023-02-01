@@ -1,10 +1,22 @@
-pca_Server <- function(id, omic_type, row_select){
+pca_Server <- function(id, data, params, row_select, updates){
 
   moduleServer(
     id,
     function(input,output,session){
+      pca_reactives <- reactiveValues(
+        calculate = 0,
+        counter = 0,
+        # ensures Do_PCA is clicked at least once after refresh
+        current_updates = 0,
+        percentVar = NULL,
+        pcaData = NULL,
+        df_out_r = NULL,
+        var_explained_df = NULL,
+        LoadingsDF = NULL,
+        df_loadings = NULL
+      )
       ns <- session$ns
-      
+
       ## UI Section ----
       output$x_axis_selection_ui <- renderUI({
         radioGroupButtons(
@@ -38,7 +50,7 @@ pca_Server <- function(id, omic_type, row_select){
         selectInput(
           inputId = ns("coloring_options"),
           label = "Choose the variable to color the samples after",
-          choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
+          choices = c(colnames(colData(data$data))),
           multiple = F # would be cool if true, to be able to merge vars ?!
         )
       })
@@ -47,7 +59,7 @@ pca_Server <- function(id, omic_type, row_select){
         selectInput(
           inputId = ns("PCA_anno_tooltip"),
           label = "Select the anno to be shown at tooltip",
-          choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
+          choices = c(colnames(colData(data$data))),
           multiple = F
         )
       })
@@ -56,16 +68,16 @@ pca_Server <- function(id, omic_type, row_select){
         selectInput(
           inputId = ns("EntitieAnno_Loadings"),
           label = "Select the annotype shown at y-axis",
-          choices = c(colnames(data_input_shiny()[[omic_type()]]$annotation_rows)),
+          choices = c(colnames(rowData(data$data))),
           multiple = F
         )
       })
-      
+
       output$EntitieAnno_Loadings_matrix_ui <- renderUI({
         selectInput(
           inputId = ns("EntitieAnno_Loadings_matrix"),
           label = "Select the annotype shown at y-axis",
-          choices = c(colnames(data_input_shiny()[[omic_type()]]$annotation_rows)),
+          choices = c(colnames(rowData(data$data))),
           multiple = F
         )
       })
@@ -85,42 +97,164 @@ pca_Server <- function(id, omic_type, row_select){
         input$nPCAs_to_look_at
         )
       })
-      
+      # only when we click on Do_PCA, we set the calculate to 1
+      session$userData$clicks_observer <- observeEvent(input$Do_PCA,{
+        req(input$Do_PCA > pca_reactives$counter)
+        pca_reactives$counter <- input$Do_PCA
+        pca_reactives$calculate <- 1
+      })
+
       observeEvent(toListen2PCA(),{
-        req(omic_type())
         req(input$x_axis_selection)
         req(input$y_axis_selection)
         req(input$coloring_options)
-        # req(input$PCA_anno_tooltip)
+        req(data$data)
         req(input$Do_PCA[1] > 0)
-        req(data_input_shiny()[[omic_type()]])
-
 
         print("PCA analysis on pre-selected data")
         customTitle <- paste0(
-          "PCA - ", omic_type(), "-",
-          paste0("entities:",row_select(),collapse = "_"),
+          "PCA - ", params$omic_type, "-",
+          paste0("entities:",row_select(),collapse = "_"),  # TODO: make row_select obsolete
           "-samples",
           ifelse(any(input$sample_selection != "all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),"")
           , "-preprocessing: ",
           input$PreProcessing_Procedure
         )
         print(customTitle)
+        
+        # only calculate PCA, Scrre and Loadings if the counter is 1
+        if(pca_reactives$calculate == 1){
+          # update the data if needed
+          data <- update_data(data, updates, pca_reactives$current_updates)
+          pca_reactives$current_updates <- updates()
+          # set the counter to 0 to prevent any further plotting
+          pca_reactives$calculate <- 0
+          print("Calculate PCA")
+          # PCA
+          pca <- prcomp(
+            x = as.data.frame(t(as.data.frame(assay(data$data)))),
+            center = T,
+            scale. = FALSE
+          )
+          # how much variance is explained by each PC
+          explVar <- pca$sdev^2/sum(pca$sdev^2)
+          names(explVar) <- colnames(pca$x)
+          # transform variance to percent
+          percentVar <- round(100 * explVar, digits = 1)
 
-        # PCA
-        pca <- prcomp(
-          as.data.frame(t(selectedData_processed()[[omic_type()]]$Matrix)),
-          center = T,
-          scale. = FALSE
-        )
-        # how much variance is explained by each PC
-        explVar <- pca$sdev^2/sum(pca$sdev^2)
-        names(explVar) <- colnames(pca$x)
-        # transform variance to percent
-        percentVar <- round(100 * explVar, digits = 1)
+          # Define data for plotting
+          pcaData <- data.frame(pca$x,colData(data$data))
 
-        # Define data for plotting
-        pcaData <- data.frame(pca$x,selectedData_processed()[[omic_type()]]$sample_table)
+          df_out_r <- NULL
+          if(input$Show_loadings == "Yes"){
+            df_out <- pca$x
+            df_out_r <- as.data.frame(pca$rotation)
+            df_out_r$feature <- row.names(df_out_r)
+
+            # Get 5 best loadings
+            # TODO: Option for number? Discuss!
+            TopK <- rownames(df_out_r)[
+              order(
+                sqrt(
+                  (df_out_r[,input$x_axis_selection])^2+(df_out_r[,input$y_axis_selection])^2
+                  ),
+                decreasing = T
+                )[1:5]
+              ]
+            df_out_r$feature[!df_out_r$feature %in% TopK] <- ""
+
+            mult <- min(
+              (max(df_out[,input$y_axis_selection]) - min(df_out[,input$y_axis_selection])/(max(df_out_r[,input$y_axis_selection])-min(df_out_r[,input$y_axis_selection]))),
+              (max(df_out[,input$x_axis_selection]) - min(df_out[,input$x_axis_selection])/(max(df_out_r[,input$x_axis_selection])-min(df_out_r[,input$x_axis_selection])))
+            )
+
+            df_out_r <- transform(
+              df_out_r,
+              v1 = 1.2 * mult * (get(input$x_axis_selection)),
+              v2 = 1.2 * mult * (get(input$y_axis_selection))
+            )
+
+            df_out_r$global_ID <- rownames(df_out_r)
+            df_out_r$chosenAnno <- rownames(df_out_r)
+            if(!is.null(input$EntitieAnno_Loadings)){
+              req(data_input_shiny())
+              df_out_r$chosenAnno <- factor(
+                make.unique(as.character(rowData(data$data)[rownames(df_out_r),input$EntitieAnno_Loadings])),
+                levels = make.unique(as.character(rowData(data$data)[rownames(df_out_r),input$EntitieAnno_Loadings]))
+                )
+            }
+          }
+          # Scree Plot calculations
+          var_explained_df <- data.frame(
+            PC = paste0("PC",1:ncol(pca$x)),
+            var_explained = (pca$sdev)^2/sum((pca$sdev)^2)
+          )
+          var_explained_df$Var <- paste0(round(var_explained_df$var_explained,4)*100,"%")
+          var_explained_df$PC <- factor(var_explained_df$PC,levels = paste0("PC",1:ncol(pca$x)))
+          # Loadings calculations
+          LoadingsDF <- data.frame(
+            entitie = rownames(pca$rotation),
+            Loading = pca$rotation[,input$x_axis_selection]
+            )
+          #LoadingsDF$Loading=scale(LoadingsDF$Loading)
+          LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
+          LoadingsDF <- rbind(
+            LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - input$bottomSlider),],
+            LoadingsDF[input$topSlider:1,]
+            )
+          LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
+          if(!is.null(input$EntitieAnno_Loadings)){
+            req(data_input_shiny())
+            LoadingsDF$entitie=factor(
+              make.unique(as.character(rowData(data$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
+              levels = make.unique(as.character(rowData(data$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+              )
+          }
+          # Loadings Matrix plot
+          # TODO: If we have less data points than nPCAs_to_look_at,
+          #  we need to adjust the nPCAs_to_look_at
+          df_loadings <- data.frame(
+            entity = row.names(pca$rotation),
+            pca$rotation[, 1:input$nPCAs_to_look_at]
+            )
+          df_loadings_filtered <- as.matrix(df_loadings[,-1]) >= abs(input$filterValue)
+          entitiesToInclude <- apply(df_loadings_filtered, 1, any)
+
+          df_loadings <- df_loadings[entitiesToInclude,] %>%
+            tidyr::gather(key = "PC", value = "loading", -entity)
+
+          if(!is.null(input$EntitieAnno_Loadings_matrix)){
+            req(data_input_shiny())
+            df_loadings$chosenAnno <- factor(
+              make.unique(as.character(rowData(data$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix])),
+              levels = make.unique(as.character(rowData(data$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix]))
+            )
+          }else{
+            df_loadings$chosenAnno <- df_loadings$entity
+          }
+          # overwrite all reactive values with the current results
+          pca_reactives$percentVar <- percentVar
+          pca_reactives$pcaData <- pcaData
+          pca_reactives$df_out_r <- df_out_r
+          pca_reactives$var_explained_df <- var_explained_df
+          pca_reactives$LoadingsDF <- LoadingsDF
+          pca_reactives$df_loadings <- df_loadings
+          # assign res_temp
+          res_tmp["PCA"] <<- pca
+          # assign par_temp as empty list
+          par_tmp["PCA"] <<- list(
+            # add a dummy parameter to avoid error
+            dummy = "dummy"
+          )
+        } else {
+          # otherwise read the reactive values
+          percentVar <- pca_reactives$percentVar
+          pcaData <- pca_reactives$pcaData
+          df_out_r <- pca_reactives$df_out_r
+          var_explained_df <- pca_reactives$var_explained_df
+          LoadingsDF <- pca_reactives$LoadingsDF
+          df_loadings <- pca_reactives$df_loadings
+        }
 
         # Coloring Options
         print(input$coloring_options)
@@ -225,43 +359,6 @@ pca_Server <- function(id, omic_type, row_select){
 
         ## Add Loadings if wanted
         if(input$Show_loadings == "Yes"){
-          df_out <- pca$x
-          df_out_r <- as.data.frame(pca$rotation)
-          df_out_r$feature <- row.names(df_out_r)
-
-          # Get 5 best loadings
-          # TODO: Option for number? Discuss!
-          TopK <- rownames(df_out_r)[
-            order(
-              sqrt(
-                (df_out_r[,input$x_axis_selection])^2+(df_out_r[,input$y_axis_selection])^2
-                ),
-              decreasing = T
-              )[1:5]
-            ]
-          df_out_r$feature[!df_out_r$feature %in% TopK] <- ""
-
-          mult <- min(
-            (max(df_out[,input$y_axis_selection]) - min(df_out[,input$y_axis_selection])/(max(df_out_r[,input$y_axis_selection])-min(df_out_r[,input$y_axis_selection]))),
-            (max(df_out[,input$x_axis_selection]) - min(df_out[,input$x_axis_selection])/(max(df_out_r[,input$x_axis_selection])-min(df_out_r[,input$x_axis_selection])))
-          )
-
-          df_out_r <- transform(
-            df_out_r,
-            v1 = 1.2 * mult * (get(input$x_axis_selection)),
-            v2 = 1.2 * mult * (get(input$y_axis_selection))
-          )
-
-          df_out_r$global_ID <- rownames(df_out_r)
-          df_out_r$chosenAnno <- rownames(df_out_r)
-          if(!is.null(input$EntitieAnno_Loadings)){
-            req(data_input_shiny()[[omic_type()]])
-            df_out_r$chosenAnno <- factor(
-              make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings])),
-              levels = make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[rownames(df_out_r),input$EntitieAnno_Loadings]))
-              )
-          }
-
           pca_plot_final <- pca_plot_final +
             geom_segment(
               data = df_out_r[which(df_out_r$feature != ""),],
@@ -289,10 +386,10 @@ pca_Server <- function(id, omic_type, row_select){
         
         print(input$only2Report_pca)
         global_Vars$PCA_plot <- pca_plot_final # somehow does not update ? or just return the latest?
-        global_Vars$PCA_customTitle <- customTitle
+        # customTitle <- customTitle
         # Longer names causes issues for saving 
-        if(nchar(global_Vars$PCA_customTitle) >= 250){
-          global_Vars$PCA_customTitle <- "PCA"
+        if(nchar(customTitle) >= 250){
+          customTitle <- "PCA"
         }
         global_Vars$PCA_coloring <- input$coloring_options
         global_Vars$PCA_noLoadings <- ifelse(input$Show_loadings == "Yes",length(TopK),0)
@@ -326,7 +423,7 @@ pca_Server <- function(id, omic_type, row_select){
 
         output$SavePlot_pos1 <- downloadHandler(
           filename = function() {
-            paste(global_Vars$PCA_customTitle,Sys.time(),input$file_ext_plot1,sep="")
+            paste(customTitle,Sys.time(),input$file_ext_plot1,sep="")
             },
           # cannot get the final destination as this is a download on server side
           content = function(file){
@@ -336,10 +433,11 @@ pca_Server <- function(id, omic_type, row_select){
               device = gsub("\\.","",input$file_ext_plot1)
               )
             on.exit({
-              TEST = paste0(getwd(),
-                            "/www/",
-                            paste(global_Vars$PCA_customTitle,Sys.time(),input$file_ext_plot1,sep="")
-                            )
+              TEST = paste0(
+                getwd(),
+                "/www/",
+                paste0(customTitle, Sys.time(), input$file_ext_plot1)
+              )
               ggsave(
                 filename = TEST,
                 plot = pca_plot_final,
@@ -355,15 +453,10 @@ pca_Server <- function(id, omic_type, row_select){
           }
         )
 
-    ### Do Scree plot ----
-
-        var_explained_df <- data.frame(PC = paste0("PC",1:ncol(pca$x)),
-                                       var_explained = (pca$sdev)^2/sum((pca$sdev)^2))
-        var_explained_df$Var <- paste0(round(var_explained_df$var_explained,4)*100,"%")
-        var_explained_df$PC <- factor(var_explained_df$PC,levels = paste0("PC",1:ncol(pca$x)))
+        ### Do Scree plot ----
         scree_plot <-
           ggplot(var_explained_df,
-                 aes(x = PC,y = var_explained, group = 1)) +
+                 aes(x = PC, y = var_explained, group = 1)) +
           geom_point(size = 4,aes(label = Var)) +
           geom_line() +
           ylab("Variance explained") +
@@ -429,24 +522,6 @@ pca_Server <- function(id, omic_type, row_select){
 
     ### Do Loadings Plot ----
         print("Do LoadingsPlot an issue?")
-        LoadingsDF <- data.frame(
-          entitie = rownames(pca$rotation),
-          Loading = pca$rotation[,input$x_axis_selection]
-          )
-        #LoadingsDF$Loading=scale(LoadingsDF$Loading)
-        LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
-        LoadingsDF <- rbind(
-          LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - input$bottomSlider),],
-          LoadingsDF[input$topSlider:1,]
-          )
-        LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
-        if(!is.null(input$EntitieAnno_Loadings)){
-          req(data_input_shiny()[[omic_type()]])
-          LoadingsDF$entitie=factor(
-            make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
-            levels = make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
-            )
-        }
         plotOut <- ggplot(LoadingsDF,aes(x = Loading,y = entitie)) +
           geom_col(aes(fill = Loading)) +
           scale_y_discrete(
@@ -522,29 +597,6 @@ pca_Server <- function(id, omic_type, row_select){
         )
         
         ### Do Loadings Plot Matrix ----
-        df_loadings <- data.frame(
-          entity = row.names(pca$rotation), 
-          pca$rotation[, 1:input$nPCAs_to_look_at]
-          )
-        df_loadings_filtered <- as.matrix(df_loadings[,-1]) >= abs(input$filterValue)
-        entitiesToInclude <- apply(df_loadings_filtered, 1, any)
-        
-        df_loadings <- df_loadings[entitiesToInclude,] %>%
-          tidyr::gather(key = "PC", value = "loading", -entity)
-        
-        global_max <- max(df_loadings$loading)
-        global_min <- -global_max
-        
-        if(!is.null(input$EntitieAnno_Loadings_matrix)){
-          req(data_input_shiny()[[omic_type()]])
-          df_loadings$chosenAnno <- factor(
-            make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix])),
-            levels = make.unique(as.character(data_input_shiny()[[omic_type()]]$annotation_rows[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix]))
-          )
-        }else{
-          df_loadings$chosenAnno <- df_loadings$entity
-        }
-        # TO DO
         # Change thi to a pheatmap + ad possibility to cluster rows
         LoadingsMatrix <- ggplot(
           df_loadings,
@@ -556,11 +608,10 @@ pca_Server <- function(id, omic_type, row_select){
           geom_raster() +
           scale_fill_gradientn(
             colors = c("#277d6a", "white", "orange"),
-            limits = c(global_min,global_max)
+            limits = c(-max(df_loadings$loading),max(df_loadings$loading))
           ) +
           labs(x = "PCs", y = "entity", fill = "Loading") +
           theme_bw(base_size = 15)
-        
         scenario <- 19
         #Loading_scenario <- scenario
         output[["PCA_Loadings_matrix_plot"]] <- renderPlot({LoadingsMatrix})
@@ -622,11 +673,6 @@ pca_Server <- function(id, omic_type, row_select){
             })
           }
         )
-        # assign res_temp
-        res_temp["PCA"] <<- pca
-        # assign par_temp as empty list
-        par_temp["PCA"] <<- list()
-        
       })
     
       
@@ -634,7 +680,7 @@ pca_Server <- function(id, omic_type, row_select){
       observeEvent(input$only2Report_pca,{
           # needs global var ?! do we want that?
           notificationID <- showNotification("Saving...",duration = 0)
-          TEST <- paste0(getwd(),"/www/",paste(global_Vars$PCA_customTitle, Sys.time(),".png",sep=""))
+          TEST <- paste0(getwd(),"/www/",paste(customTitle, Sys.time(),".png",sep=""))
           ggsave(
             TEST,
             plot = global_Vars$PCA_plot,
@@ -706,7 +752,7 @@ pca_Server <- function(id, omic_type, row_select){
         tmp_filename = paste0(
             getwd(),
             "/www/",
-            paste("LOADINGS_Matrix_PCA_",Sys.time(),input$file_ext_Loadings_matrix,sep = "")
+            paste0("LOADINGS_Matrix_PCA_", Sys.time(), input$file_ext_Loadings_matrix)
           )
         ggsave(
             tmp_filename,
