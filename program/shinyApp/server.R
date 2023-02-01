@@ -1,5 +1,6 @@
 server <- function(input,output,session){
   source("R/SourceAll.R",local=T)
+  source("R/util.R")
 
   global_Vars <<- reactiveValues() # OUTDATED?
   
@@ -29,9 +30,9 @@ server <- function(input,output,session){
   if(dir.exists("www")){
     setwd("www")
     print(list.files())
-    file.remove(setdiff(setdiff(list.files(path="."),
-                                list.files(path=".",pattern = ".csv")),
-                        list.files(path=".",pattern = ".RDS")))
+    file.remove(list.files(path=".") %>%
+                  setdiff(list.files(path=".", pattern = ".csv")) %>%
+                  setdiff(list.files(path=".", pattern = ".RDS")))
     print("Removed old Report files for fresh start")
     setwd("..")
   }
@@ -67,6 +68,10 @@ server <- function(input,output,session){
 # Init res Object ----
   res_tmp <<- list()
   par_tmp <<- list()
+# Init update Object ----
+  # updating is a reative value that counts up whenever data is updated
+  # this is used to trigger the update of the servers
+  updating <- reactiveValues(count = 0)
 ## Quit App Button ----
   observeEvent(input$Quit_App,{
     showModal(
@@ -311,11 +316,11 @@ server <- function(input,output,session){
   data_input <- list()
   data_output <- list()
   observeEvent(input$refresh1,{
-    par_tmp['omicType_selected'] <<- input$omicType
+    par_tmp['omic_type'] <<- input$omicType
     fun_LogIt(message = "## DataInput {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
     fun_LogIt(
-      message = paste0("**DataInput** - Uploaded Omic Type: ", par_tmp['omicType_selected'])
+      message = paste0("**DataInput** - Uploaded Omic Type: ", par_tmp['omic_type'])
       )
     if(!(isTruthy(input$data_preDone) |
          FLAG_TEST_DATA_SELECTED() |
@@ -326,10 +331,10 @@ server <- function(input,output,session){
     }else if(FLAG_TEST_DATA_SELECTED() & !(isTruthy(input$data_preDone))){
       output$debug = renderText({"The Test Data Set was used"})
     }else{
-      if(any(names(data_input_shiny()) == par_tmp['omicType_selected'])){
+      if(any(names(data_input_shiny()) == par_tmp['omic_type'])){
         show_toast(
-          title = paste0(par_tmp['omicType_selected'],"Data Upload"),
-          text = paste0(par_tmp['omicType_selected'],"-data upload was successful"),
+          title = paste0(par_tmp['omic_type'],"Data Upload"),
+          text = paste0(par_tmp['omic_type'],"-data upload was successful"),
           position = "top",
           timer = 1500,
           timerProgressBar = T
@@ -488,6 +493,8 @@ server <- function(input,output,session){
     res_tmp['data_original'] <<- data_input[paste0(input$omicType,"_SumExp")]
     # Make a copy, to leave original data untouched
     res_tmp['data'] <<- res_tmp['data_original']
+    # Count up updating
+    updating$count <- updating$count + 1
 
     
     print(paste0("(before) No. anno options sample_table: ",ncol(res_tmp$data_original)))
@@ -514,7 +521,7 @@ server <- function(input,output,session){
 
     fun_LogIt(message = "### Publication Snippet")
     fun_LogIt(message = snippet_dataInput(
-      data_type = par_tmp$omicType_selected,
+      data_type = par_tmp$omic_type,
       data_dimension = paste0(dim(res_tmp$data_original),collapse = ", ")
     ))
     fun_LogIt(message = "<br>")
@@ -755,13 +762,13 @@ server <- function(input,output,session){
     print("As general remove all entities which are constant over all samples")
     res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]
     
-    if(par_tmp$omicType_selected == "Transcriptomics"){
+    if(par_tmp$omic_type == "Transcriptomics"){
       print("Also remove anything of rowCount <=10")
       print(dim(tmp_data_selected))
       res_tmp$data <<- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]
     }
     
-    if(par_tmp$omicType_selected == "Metabolomics"){
+    if(par_tmp$omic_type == "Metabolomics"){
       print("Remove anything which has a row median of 0")
       print(dim(tmp_data_selected))
       res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,median)!=0),]
@@ -784,7 +791,7 @@ server <- function(input,output,session){
         assay(res_tmp$data) <<- DataFrame(processedData)
       }
       if(input$PreProcessing_Procedure == "vst_DESeq"){
-        if(par_tmp$omicType_selected == "Transcriptomics"){
+        if(par_tmp$omic_type == "Transcriptomics"){
           print(input$DESeq_formula)
           # on purpose local
           colData(res_tmp$data)[,"DE_SeqFactor"] <- as.factor(
@@ -874,6 +881,8 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
     showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
 
+    # Count up updating
+    updating$count <- updating$count + 1
     return("Pre-Processing successfully")
   })
   
@@ -889,9 +898,9 @@ server <- function(input,output,session){
   
 ## Log preprocessing ----
   observeEvent(input$Do_preprocessing,{
-    if(par_tmp$omicType_selected == "Transcriptomics"){
+    if(par_tmp$omic_type == "Transcriptomics"){
       tmp_logMessage <- "Remove anything which row Count <= 10"
-    }else if(par_tmp$omicType_selected == "Metabolomics"){
+    }else if(par_tmp$omic_type == "Metabolomics"){
       tmp_logMessage <- "Remove anything which has a row median of 0"
     }else{
       tmp_logMessage <- "none"
@@ -917,46 +926,41 @@ server <- function(input,output,session){
   # Sample Correlation ----
   sample_correlation_server(
     id = "sample_correlation",
-    omic_type = reactive(input$omicType), # par_tmp$omicType_selected
+    omic_type = reactive(input$omicType), # par_tmp$omic_type
     row_select = reactive(input$row_selection) #par_tmp$row_selection
   )
-
   # significance analysis ----
   significance_analysis_server(
     id = 'SignificanceAnalysis',
     preprocess_method = reactive(input$PreProcessing_Procedure),
-    omic_type = reactive(input$omicType) # par_tmp$omicType_selected
+    omic_type = reactive(input$omicType) # par_tmp$omic_type
   )
-
   # PCA ----
   pca_Server(
     id = "PCA",
-    omic_type = reactive(input$omicType), # par_tmp$omicType_selected
-    reactive(input$row_selection)
+    data = res_tmp,
+    params = par_tmp,
+    reactive(input$row_selection),
+    reactive(updating$count)
     )
-
   # Volcano plots ----
   volcano_Server(
     id = "Volcano",
-    omic_type = reactive(input$omicType) # par_tmp$omicType_selected
+    omic_type = reactive(input$omicType) # par_tmp$omic_type
     )
-
   # Heatmap ----
   heatmap_server(
     id = 'Heatmap',
-    omicType = reactive(input$omicType) # par_tmp$omicType_selected
+    omicType = reactive(input$omicType) # par_tmp$omic_type
     )
-
   # Single Gene Visualisations ----
   single_gene_visualisation_server(
     id = "single_gene_visualisation",
-    omicType = reactive(input$omicType) # par_tmp$omicType_selected
+    omicType = reactive(input$omicType) # par_tmp$omic_type
   )
-
   # Enrichment Analysis ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
-    omic_type = reactive(input$omicType) # par_tmp$omicType_selected
+    omic_type = reactive(input$omicType) # par_tmp$omic_type
   )
-
 }

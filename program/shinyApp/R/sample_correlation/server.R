@@ -75,7 +75,10 @@ sample_correlation_server <- function(id, omic_type, row_select){
         # assign res_temp["SampleCorrelation"]
         res_temp["SampleCorrelation"] <<- cormat
         # assign par_temp["SampleCorrelation"] as empty
-        par_temp["SampleCorrelation"] <<- list()
+        par_temp["SampleCorrelation"] <<- list(
+          # add a dummy parameter to avoid error
+          dummy = "dummy"
+        )
         
         sampleCorrelation_scenario <- 18
         output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
