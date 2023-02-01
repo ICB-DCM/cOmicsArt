@@ -3,7 +3,7 @@ heatmap_server <- function(id, data, params, updates){
     id,
     function(input,output,session){
       # Heatmap ----
-      heatmap_reactive <- reactiveValues(
+      heatmap_reactives <- reactiveValues(
         current_updates = 0,
       )
       ## UI Section ----
@@ -219,8 +219,8 @@ heatmap_server <- function(id, data, params, updates){
         )
         req(selectedData_processed())
         # update the data if needed
-        data <- update_data(data, updates, pca_reactives$current_updates)
-        pca_reactives$current_updates <- updates()
+        data <- update_data(data, updates, heatmap_reactives$current_updates)
+        heatmap_reactives$current_updates <- updates()
         print("Heatmap on selected Data")
         # Value need to be setted in case there is nothing to plot to avoid crash
         scenario <- 0
