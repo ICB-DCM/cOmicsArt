@@ -327,6 +327,7 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**DataInput** - Uploaded Omic Type: ",input$omicType)
       )
+    browser()
     if(!(isTruthy(input$data_preDone) | 
          FLAG_TEST_DATA_SELECTED |
          (isTruthy(input$data_matrix1) & 
@@ -528,6 +529,7 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!")
       )
+    FLAG_TEST_DATA_SELECTED <<- FALSE
     data_input
   })
   
