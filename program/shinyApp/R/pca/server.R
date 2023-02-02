@@ -240,7 +240,7 @@ pca_Server <- function(id, data, params, row_select, updates){
           pca_reactives$LoadingsDF <- LoadingsDF
           pca_reactives$df_loadings <- df_loadings
           # assign res_temp
-          res_tmp["PCA"] <<- pca
+          res_tmp["PCA"] <<- list(pca)
           # assign par_temp as empty list
           par_tmp["PCA"] <<- list(
             # add a dummy parameter to avoid error
