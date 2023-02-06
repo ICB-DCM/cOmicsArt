@@ -1,0 +1,102 @@
+significance_analysis_sidebar_ui<- function(ns){
+  sidebarPanel(
+    id = "sidebar_significance_analysis",
+    # UI to choose type of comparison
+    uiOutput(outputId = ns("type_of_comparison_ui")),
+    # UI to choose comparisons
+    uiOutput(outputId = ns("chooseComparisons_ui")),
+    # UI to choose test method
+    uiOutput(outputId = ns("chooseTest_ui")),
+    # UI to choose significance level
+    uiOutput(outputId = ns("chooseSignificanceLevel_ui")),
+    # UI to choose test correction
+    uiOutput(outputId = ns("chooseTestCorrection_ui")),
+    # Button to start analysis
+    actionButton(
+      inputId = ns("significanceGo"),
+      label = "Get significance analysis"
+      ),
+    hr(style = "border-top: 1px solid #858585;")
+  )
+}
+
+# Main panel
+significance_analysis_main_ui <- function(ns){
+  mainPanel(
+    id = "main_significance_analysis",
+    # informative text, whether analysis was done or not
+    htmlOutput(outputId = ns("significance_analysis_info"), container = pre),
+    tabsetPanel(
+      id = ns("significance_analysis_results"),
+      tabPanel(
+        title = "Result Visualization",
+        # UI for visualization Plot
+        plotOutput(outputId = ns("Significant_Plot_final")),
+        # UI to select comparisons to visualize
+        uiOutput(outputId = ns("chooseComparisonsToVisualize_ui")),
+        # UI to choose visualization method
+        uiOutput(outputId = ns("chooseVisualization_ui")),
+        # UI to choose what genes to llok at (e.g. significant, upregulated, downregulated)
+        uiOutput(outputId = ns("chooseGenesToLookAt_ui")),
+        # Download and Report UI
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          actionButton(
+            inputId = ns("only2Report_Sig"),
+            label = "Send only to Report",
+            class = "btn-info"
+          )
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          downloadButton(
+            outputId = ns("getR_Code_Sig"),
+            label = "Get underlying R code and data",
+            icon = icon("code")
+          )
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          downloadButton(
+            outputId = ns("SavePlot_Sig"),
+            label = "Save plot",
+            class = "btn-info"
+          )
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          radioGroupButtons(
+            inputId = ns("file_ext_Sig"),
+            label = "File Type:",
+            choices = c(".png", ".tiff", ".pdf"),
+            selected = ".png"
+          )
+        ),
+      ),
+    ),
+  )
+}
+
+# Complete UI
+significance_analysis_UI <- function(id){
+  ns <- NS(id)
+
+  tabPanel(
+    title = "Significance Analysis",
+    id = "significance_analysis",
+    fluid = T,
+    h4("Significance Analysis"),
+    # sidebar
+    significance_analysis_sidebar_ui(ns),
+    # main
+    significance_analysis_main_ui(ns)
+  )
+}

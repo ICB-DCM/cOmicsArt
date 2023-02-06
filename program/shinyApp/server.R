@@ -1,29 +1,11 @@
 server <- function(input,output,session){
-  # TODO source from extra file 
-  source("R/fun_filterRNA.R",local = T)
-  source("R/fun_LFC.R",local = T)
-  source("R/fun_volcano.R",local = T)
-  source("R/fun_popupModal.R",local = T)
-  source("R/heatmap/fun_entitieSelection.R",local = T)
-  source("R/fun_savePheatmap.R",local = T)
-  source("R/fun_LogIt.R",local = T)
-  source("R/fun_readInSampleTable.R",local = T)
-  source("R/fun_ggplot.R",local = T)
-  source("R/Guide.R",local = T)
-  source("R/module_DownloadReport.R",local = T)
-  source("R/enrichment_analysis/enrichment_analysis.R", local = T)
-  source("R/enrichment_analysis/overrepresentation_analysis.R", local = T)
-  source("R/enrichment_analysis/check_annotation.R", local = T)
-  source("R/enrichment_analysis/translation.R", local = T)
-  source("R/enrichment_analysis/server.R", local = T)
-  source("R/heatmap/server.R",local = T)
-  source("R/pca/server.R", local = T)
-  source("R/volcano_plot/server.R", local = T)
-  source("R/single_gene_visualisation/server.R",local = T)
-  source("R/sample_correlation/server.R", local = T)
+  source("R/SourceAll.R",local=T)
   global_Vars <<- reactiveValues()
   
-# Security section ---- 
+  # getCurrentVersion(updateDESCRIPTION=T) # Where to Place this ? So it does not always get 'updated'?
+  # Can we add this somehow as necassary to every new release?
+
+# Security section ----
   options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
 
   observeEvent(input$guide_cicerone_next,{
@@ -74,6 +56,7 @@ server <- function(input,output,session){
 # Layout upon Start ----
   hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
   hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
+  hideTab(inputId = "tabsetPanel1", target = "Significance Analysis")
   hideTab(inputId = "tabsetPanel1", target = "PCA")
   hideTab(inputId = "tabsetPanel1", target = "Volcano Plot")
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
@@ -323,11 +306,13 @@ server <- function(input,output,session){
   data_output <- list()
   observeEvent(input$refresh1,{
     omicType_selected = input$omicType
-    fun_LogIt(message = "## Data Input")
+    fun_LogIt(message = "## DataInput {.tabset .tabset-fade}")
+    fun_LogIt(message = "### Info")
     fun_LogIt(
       message = paste0("**DataInput** - Uploaded Omic Type: ",input$omicType)
       )
-    if(!(isTruthy(input$data_preDone) | 
+
+    if(!(isTruthy(input$data_preDone) |
          FLAG_TEST_DATA_SELECTED |
          (isTruthy(input$data_matrix1) & 
           isTruthy(input$data_sample_anno1) & 
@@ -528,7 +513,20 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!")
       )
+
     FLAG_TEST_DATA_SELECTED <<- FALSE
+
+    fun_LogIt(
+      message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", "))
+    )
+
+    fun_LogIt(message = "### Publication Snippet")
+    fun_LogIt(message = snippet_dataInput(
+      data_type = input$omicType,
+      data_dimension = paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", ")
+    ))
+    fun_LogIt(message = "<br>")
+
     data_input
   })
   
@@ -542,11 +540,13 @@ server <- function(input,output,session){
     # Row
     output$providedRowAnnotationTypes_ui=renderUI({
       req(data_input_shiny())
-      selectInput(
+      shinyWidgets::virtualSelectInput(
         inputId = "providedRowAnnotationTypes",
         label = "Which annotation type do you want to select on?",
         choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
-        multiple = F
+        multiple = F,
+        search = T,
+        showSelectedOptionsFirst = T
       )
     })
 
@@ -558,16 +558,18 @@ server <- function(input,output,session){
           inputId = "row_selection",
           label = "Which entities to use? (Your input category is numeric, selection is currently only supported for categorical data!)",
           choices = c("all"),
-          selected="all",
+          selected = "all",
           multiple = T
         )
       }else{
-        selectInput(
+        shinyWidgets::virtualSelectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Will be the union if multiple selected)",
           choices = c("High Values+IQR","all",unique(unlist(strsplit(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes],"\\|")))),
           selected="all",
-          multiple = T
+          multiple = T,
+          search = T,
+          showSelectedOptionsFirst = T
         )
       }
     })
@@ -589,7 +591,7 @@ server <- function(input,output,session){
       }
     })
     # Column /Sample
-    output$providedSampleAnnotationTypes_ui <-renderUI({
+    output$providedSampleAnnotationTypes_ui <- renderUI({
       req(data_input_shiny())
       selectInput(
         inputId = "providedSampleAnnotationTypes",
@@ -620,9 +622,7 @@ server <- function(input,output,session){
         icon = icon("fas fa-angle-double-right")
         )
     })
-    fun_LogIt(
-      message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input_shiny()[[input$omicType]]$Matrix),collapse = ", "))
-      )
+
   })
   
 ## Log Selection ----
@@ -899,6 +899,7 @@ server <- function(input,output,session){
     processedData_all[[input$omicType]]$annotation_rows <- processedData_all[[input$omicType]]$annotation_rows[rownames(processedData_all[[input$omicType]]$Matrix),]
     
     showTab(inputId = "tabsetPanel1", target = "Sample Correlation")
+    showTab(inputId = "tabsetPanel1", target = "Significance Analysis")
     showTab(inputId = "tabsetPanel1", target = "PCA")
     showTab(inputId = "tabsetPanel1", target = "Volcano Plot")
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
@@ -949,6 +950,12 @@ server <- function(input,output,session){
     omic_type = reactive(input$omicType),
     row_select = reactive(input$row_selection)
   )
+  # significance analysis ----
+  significance_analysis_server(
+    id = 'SignificanceAnalysis',
+    preprocess_method = reactive(input$PreProcessing_Procedure),
+    omic_type = reactive(input$omicType)
+  )
   # PCA
   pca_Server(id="PCA", omic_type = reactive(input$omicType), reactive(input$row_selection))
   # Volcano plots
@@ -960,14 +967,9 @@ server <- function(input,output,session){
     id = "single_gene_visualisation",
     omicType = reactive(input$omicType)
   )
-  # KEGG enrichment ----
+  # Enrichment Analysis ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
-    scenario = 0,
     omic_type = reactive(input$omicType)
   )
 }
-
-
-
-

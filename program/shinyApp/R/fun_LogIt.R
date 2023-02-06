@@ -53,7 +53,8 @@ fun_LogIt <- function(
       ### Überschrift mit links zu versionen und textbausteinen (eventuell rein linken)
       # SetUp Hea
       write(
-        paste0("# ShinyOmics Report (",format(Sys.Date(),'%d/%m/%Y'),")"),
+        paste0("# ShinyOmics Report (",format(Sys.Date(),'%d/%m/%Y'),")",
+               "\n **AppVersion: ",getCurrentVersion(updateDESCRIPTION = F),"** \n"),
         file=LogfileName
       )
       write(line, file = LogfileName, append = TRUE)
