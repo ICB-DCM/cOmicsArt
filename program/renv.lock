@@ -3517,7 +3517,6 @@
       "Hash": "ef43e4acfdd350b93b1445698671f1de",
       "Requirements": [
         "Biobase",
-        "affy",
         "ggplot2",
         "lattice",
         "limma"
