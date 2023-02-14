@@ -31,8 +31,8 @@ over_representation_analysis <- function(
   }
   
   if(input$UniverseOfGene == "allPresentGenes_after_pre_process"){
-    req(processedData_all())
-    universeSelected <- rownames(processedData_all()$Transcriptomics$Matrix)
+    req(processedData_all)
+    universeSelected <- rownames(processedData_all$Transcriptomics$Matrix)
     # Note if transcripts are used this will be ignored for enrichment analysis
     universeSelected <- unique(gsub("\\..*$","",universeSelected))
     print(paste0("Universe genes untranslated: ",length(universeSelected)))
