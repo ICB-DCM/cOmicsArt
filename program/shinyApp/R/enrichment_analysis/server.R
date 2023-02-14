@@ -700,7 +700,7 @@ enrichment_analysis_Server <- function(id, omic_type){
         req(geneSetChoice())
         tmp_genes <- geneSetChoice()
         # Check whether the necessary annotation is available
-        anno_results <- check_annotation_enrichment_analysis()
+        anno_results <- check_annotation_enrichment_analysis(selectedData_processed())
         ea_reactives$can_start <- anno_results$can_start
         if(anno_results$no_ann){
           showModal(modalDialog(
@@ -730,7 +730,7 @@ enrichment_analysis_Server <- function(id, omic_type){
               input = input
             )
           }else{
-            tmp_genes <- translate_genes_oa(
+            tmp_genes <<- translate_genes_oa(
               annotation_results = anno_results,
               input = input,
               geneSetChoice = tmp_genes,
@@ -750,14 +750,13 @@ enrichment_analysis_Server <- function(id, omic_type){
               input = input
             )
           }else{
-            tmp_genes <- translate_genes_oa(
+            tmp_genes <<- translate_genes_oa(
               annotation_results = anno_results,
               input = input,
               geneSetChoice = tmp_genes,
               geneSet2Enrich = input$GeneSet2Enrich
             )
           }
-          ea_reactives$can_start <- TRUE
         })
         # start the analysis if ea_reactives$can_start == TRUE
         observeEvent(ea_reactives$can_start, {
@@ -765,6 +764,7 @@ enrichment_analysis_Server <- function(id, omic_type){
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
             global_Vars$enrichment_results <<- gene_set_enrichment(input, output, tmp_genes)
           }else{
+            browser()
             global_Vars$enrichment_results <<- over_representation_analysis(input, output, tmp_genes)
           }
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
