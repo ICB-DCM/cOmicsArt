@@ -757,6 +757,7 @@ enrichment_analysis_Server <- function(id, omic_type){
               geneSet2Enrich = input$GeneSet2Enrich
             )
           }
+          ea_reactives$can_start <- TRUE
         })
         # start the analysis if ea_reactives$can_start == TRUE
         observeEvent(ea_reactives$can_start, {
@@ -764,7 +765,6 @@ enrichment_analysis_Server <- function(id, omic_type){
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
             global_Vars$enrichment_results <<- gene_set_enrichment(input, output, tmp_genes)
           }else{
-            browser()
             global_Vars$enrichment_results <<- over_representation_analysis(input, output, tmp_genes)
           }
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"

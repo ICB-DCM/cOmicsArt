@@ -14,10 +14,25 @@ over_representation_analysis <- function(
       universeSelected_tranlsated <- NULL
     }
   }
-  # TODO: workaround and is needed?
+  print("Here?")
+  # TODO: Universe now requires ENSEMBL should be flexible
   if(input$UniverseOfGene == "allPresentGenes_before_pre_process"){
     req(data_input_shiny())
-    universeSelected <- rownames(data_input_shiny()[[omic_type()]]$Matrix)
+    universeSelected <- rownames(data_input_shiny()$Transcriptomics$Matrix)
+    # Note if transcripts are used this will be ignored for enrichment analysis
+    universeSelected <- unique(gsub("\\..*$","",universeSelected))
+    print(paste0("Universe genes untranslated: ",length(universeSelected)))
+    universeSelected_tranlsated <- bitr(
+      universeSelected,
+      fromType = "ENSEMBL",
+      toType = "ENTREZID",
+      OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+    print(paste0("Universe genes translated (hence actually used): ",length(universeSelected_tranlsated)))
+  }
+  
+  if(input$UniverseOfGene == "allPresentGenes_after_pre_process"){
+    req(processedData_all())
+    universeSelected <- rownames(processedData_all()$Transcriptomics$Matrix)
     # Note if transcripts are used this will be ignored for enrichment analysis
     universeSelected <- unique(gsub("\\..*$","",universeSelected))
     print(paste0("Universe genes untranslated: ",length(universeSelected)))
