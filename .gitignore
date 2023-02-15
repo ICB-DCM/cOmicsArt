@@ -16,4 +16,7 @@ program/shinyApp/*.RDS
 program/shinyApp/*.png
 program/shinyApp/*.xml
 program/shinyApp/*.log
-program/shinyApp/www/*.md
+program/shinyApp/www/*md
+!.github/
+!./renv/cellar
+

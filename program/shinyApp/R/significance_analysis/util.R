@@ -226,7 +226,6 @@ significance_analysis <- function(
   # method: method to use for the test
   # alpha: significance level
   # correction: correction method to use
-
   # get the test function
   if(method == "T-Test"){
     # TODO test for Varianz Homogenität (Levene Test) - 
@@ -271,8 +270,8 @@ significance_analysis <- function(
   comp_name <- 1
   for(contrast in contrasts){
     # get the samples for the comparison
-    idx <- rownames(samples[samples[contrast_level] == contrast[[1]],])
-    idy <- rownames(samples[samples[contrast_level] == contrast[[2]],])
+    idx <- rownames(samples[samples[contrast_level] == contrast[[1]],, drop = FALSE])
+    idy <- rownames(samples[samples[contrast_level] == contrast[[2]],, drop = FALSE])
     # perform the test
     res <- apply(
       X = df,

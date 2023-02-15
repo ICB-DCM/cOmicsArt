@@ -1,4 +1,13 @@
 # Data Input Notes:
+## Status Quo
+General Test:
+![example workflow](https://github.com/LeaSeep/OmicShiny/actions/workflows/run-tests.yaml/badge.svg)
+
+Develop-Version Test-Status:
+![develop status](https://github.com/LeaSeep/OmicShiny/actions/workflows/run-tests.yaml/badge.svg?branch=develop)
+
+Main-Version Test-Status:
+![main status](https://github.com/LeaSeep/OmicShiny/actions/workflows/run-tests.yaml/badge.svg?branch=main)
 
 3 tables are needed:
 1. data-table (e.g. counts or intensitites)
