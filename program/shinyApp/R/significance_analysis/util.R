@@ -228,7 +228,13 @@ significance_analysis <- function(
   # correction: correction method to use
   # get the test function
   if(method == "T-Test"){
-      test_function <- t.test
+    # TODO test for Varianz Homogenität (Levene Test) - 
+    # intermediate Lösung könnte sein einfach standard abweichungen der Gruppen anzugeben
+    # User hinweisen diese zu untersuchen!
+    test_function <- function(...) t.test(..., var.equal = TRUE)
+      
+  }else if(method == "Welch-Test"){
+    test_function <- function(...) t.test(..., var.equal = FALSE)
   }
   else{
       test_function <- wilcox.test
