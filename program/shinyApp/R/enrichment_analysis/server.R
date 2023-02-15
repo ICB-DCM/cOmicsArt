@@ -154,7 +154,7 @@ enrichment_analysis_geneset_server_reactive <- function(
 }
 
 
-enrichment_analysis_Server <- function(id, omic_type){
+enrichment_analysis_Server <- function(id, data, params, updates){
 
   moduleServer(
     id,
@@ -445,9 +445,9 @@ enrichment_analysis_Server <- function(id, omic_type){
               selectInput(
                 inputId = ns("sample_annotation_types_cmp_GSEA"),
                 label = "Choose type for LFC-based ordering",
-                choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
+                choices = c(colnames(colData(data$data))),
                 multiple = F,
-                selected = c(colnames(data_input_shiny()[[omic_type()]]$sample_table))[1]
+                selected = c(colnames(colData(data$data)))[1]
               )
             })
             output$Groups2Compare_ref_GSEA_ui <- renderUI({
@@ -456,9 +456,9 @@ enrichment_analysis_Server <- function(id, omic_type){
               selectInput(
                 inputId = ns("Groups2Compare_ref_GSEA"),
                 label = "Choose reference of log2 FoldChange",
-                choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA]),
+                choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_GSEA]),
                 multiple = F ,
-                selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA])[1]
+                selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_GSEA])[1]
               )
             })
             output$Groups2Compare_treat_GSEA_ui <- renderUI({
@@ -467,9 +467,9 @@ enrichment_analysis_Server <- function(id, omic_type){
               selectInput(
                 inputId = ns("Groups2Compare_treat_GSEA"),
                 label = "Choose treatment group of log2 FoldChange",
-                choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA]),
+                choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_GSEA]),
                 multiple = F ,
-                selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA])[2]
+                selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_GSEA])[2]
               )
             })
             # Choose Sets to do gene set enrichment for
@@ -667,11 +667,11 @@ enrichment_analysis_Server <- function(id, omic_type){
           if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
             #takes all genes after preprocessing
             #get LFC
-            ctrl_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
-            comparison_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
+            ctrl_samples_idx <- which(colData(data$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
+            comparison_samples_idx <- which(selectedData_processed()[[par_tmp$omic_type]]$sample_table[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
 
             Data2Plot <- getLFC(
-              selectedData_processed()[[omic_type()]]$Matrix,
+              selectedData_processed()[[par_tmp$omic_type]]$Matrix,
               ctrl_samples_idx,
               comparison_samples_idx
             )
@@ -789,7 +789,7 @@ enrichment_analysis_Server <- function(id, omic_type){
             selectInput(
               inputId = ns("sample_anno_types_KEGG"),
               label = "Choose type for LFC overlay",
-              choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
+              choices = c(colnames(data_input_shiny()[[par_tmp$omic_type]]$sample_table)),
               multiple = F ,
               selected = NULL
             )
@@ -799,9 +799,9 @@ enrichment_analysis_Server <- function(id, omic_type){
             selectInput(
               inputId = ns("ComparisonOptionsCRTL"),
               label = "Choose reference of log2 FoldChange",
-              choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]),
+              choices = unique(data_input_shiny()[[par_tmp$omic_type]]$sample_table[,input$sample_anno_types_KEGG]),
               multiple = F ,
-              selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG])[1]
+              selected = unique(data_input_shiny()[[par_tmp$omic_type]]$sample_table[,input$sample_anno_types_KEGG])[1]
             )
           })
           output$ComparisonOptionsCOMP_ui <- renderUI({
@@ -809,9 +809,9 @@ enrichment_analysis_Server <- function(id, omic_type){
             selectInput(
               inputId = ns("ComparisonOptionsCOMP"),
               label = "Choose treatment group of log2 FoldChange",
-              choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]),
+              choices = unique(data_input_shiny()[[par_tmp$omic_type]]$sample_table[,input$sample_anno_types_KEGG]),
               multiple = F ,
-              selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG])[2]
+              selected = unique(data_input_shiny()[[par_tmp$omic_type]]$sample_table[,input$sample_anno_types_KEGG])[2]
             )
           })
           output$psig_KEGG_ui=renderUI({
@@ -844,9 +844,9 @@ enrichment_analysis_Server <- function(id, omic_type){
         ## reduce dataset to selected genes
 
         if(input$plotOnTopOption == "LFC"){
-          Data2PlotOnTop <- selectedData_processed()[[omic_type()]]$Matrix[geneSetChoice(),,drop=F]
-          ctrl_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCRTL)
-          comparison_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCOMP)
+          Data2PlotOnTop <- selectedData_processed()[[par_tmp$omic_type]]$Matrix[geneSetChoice(),,drop=F]
+          ctrl_samples_idx <- which(selectedData_processed()[[par_tmp$omic_type]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCRTL)
+          comparison_samples_idx <- which(selectedData_processed()[[par_tmp$omic_type]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCOMP)
           if(length(comparison_samples_idx) <= 1 | length(ctrl_samples_idx) <= 1){
             ea_reactives$ea_info <- "Choose variable with at least two samples per condition!"
             req(FALSE)

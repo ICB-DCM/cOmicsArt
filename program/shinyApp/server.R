@@ -961,6 +961,8 @@ server <- function(input,output,session){
   # Enrichment Analysis ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
-    omic_type = reactive(input$omicType) # par_tmp$omic_type
+    data = res_tmp,
+    params = par_tmp,
+    reactive(updating$count)
   )
 }
