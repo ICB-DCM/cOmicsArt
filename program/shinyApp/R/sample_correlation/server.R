@@ -1,4 +1,4 @@
-sample_correlation_server <- function(id, data_r, params, row_select){
+sample_correlation_server <- function(id, data, params, row_select){
   moduleServer(
     id,
     function(input,output,session){
@@ -7,9 +7,6 @@ sample_correlation_server <- function(id, data_r, params, row_select){
       # UI Section ----
       output$SampleAnnotationChoice_ui <- renderUI({
         req(selectedData_processed()) # is coming from preprocessing
-        browser()
-        data <- data_r()   
-        colnames(colData(data$data))[1]
           selectInput(
             inputId = ns("SampleAnnotationChoice"),
             label = "Choose the color annotation for the samples",
