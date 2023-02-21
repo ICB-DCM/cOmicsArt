@@ -1,12 +1,16 @@
-sample_correlation_server <- function(id, data, params){
+sample_correlation_server <- function(id, data, params, row_select){
   moduleServer(
     id,
     function(input,output,session){
       ns <- session$ns
-      # UI Section ----
       
+      # UI Section ----
+      browser()
       output$SampleAnnotationChoice_ui <- renderUI({
-          req(data_input_shiny())
+        req(selectedData_processed()) # is coming from preprocessing
+         #req(data_input_shiny())
+        # TODO find a way to proper use data! (data must be a reactive?)
+        data <- res_tmp    
           selectInput(
             inputId = ns("SampleAnnotationChoice"),
             label = "Choose the color annotation for the samples",
@@ -19,14 +23,15 @@ sample_correlation_server <- function(id, data, params){
       # DO sample Correaltion plot 
       toListen2CorrelationPlot <- reactive({
         list(
-          input$Do_SampleCorrelation
-          #input$SampleAnnotationChoice
+          input$Do_SampleCorrelation,
+          input$SampleAnnotationChoice
         )
       })
       
       observeEvent(toListen2CorrelationPlot(),{
-        req(selectedData_processed())
+        req(selectedData_processed()) # is coming from preprocessing
         req(input$SampleAnnotationChoice)
+        # check value of input$Do_SampleCorrelation
         annotationDF <- colData(data$data)[,input$SampleAnnotationChoice,drop = F]
         cormat <- cor(
           x = as.matrix(assay(data$data)),
@@ -74,7 +79,7 @@ sample_correlation_server <- function(id, data, params){
           annotation_colors = anno_colors
           )
         # assign res_temp["SampleCorrelation"]
-        res_tmp["SampleCorrelation"] <<- cormat
+        res_tmp[["SampleCorrelation"]] <<- cormat
         # assign par_temp["SampleCorrelation"] as empty
         par_tmp["SampleCorrelation"] <<- list(
           corrMethod = input$corrMethod

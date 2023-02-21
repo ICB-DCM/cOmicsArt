@@ -924,6 +924,9 @@ server <- function(input,output,session){
   ## UP TILL HERE ##
 
   # Sample Correlation ----
+  # calling server without reactive it will be init upon start, with no update
+  # of respective data inputs hence need of at least one reactive!
+
   sample_correlation_server(
     id = "sample_correlation",
     data = res_tmp,
@@ -931,6 +934,8 @@ server <- function(input,output,session){
     #omic_type = reactive(input$omicType), # par_tmp$omic_type
     #row_select = reactive(input$row_selection) #par_tmp$row_selection ? # only for title?
   )
+
+
   # significance analysis ----
   significance_analysis_server(
     id = 'SignificanceAnalysis',
