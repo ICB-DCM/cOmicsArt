@@ -5,7 +5,6 @@ sample_correlation_server <- function(id, data, params, row_select){
       ns <- session$ns
       
       # UI Section ----
-      browser()
       output$SampleAnnotationChoice_ui <- renderUI({
         req(selectedData_processed()) # is coming from preprocessing
          #req(data_input_shiny())
