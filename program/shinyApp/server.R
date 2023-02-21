@@ -750,7 +750,6 @@ server <- function(input,output,session){
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     print(selectedData())
     par_tmp['PreProcessing_Procedure'] <<- input$PreProcessing_Procedure
-    browser()
     processedData_all <- tmp_data_selected
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
@@ -768,8 +767,9 @@ server <- function(input,output,session){
       res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,median)!=0),]
     }
     
-    print(dim(res_tmp$data))  # TODO: Error here
-    assay(res_tmp$data) <<- DataFrame(assay(res_tmp$data))
+    print(dim(res_tmp$data))
+    # explicitly set rownames to avoid any errors.
+    assay(res_tmp$data) <<- DataFrame(assay(res_tmp$data), row.names = rownames(res_tmp$data))
     
     if(input$PreProcessing_Procedure != "none"){
       print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
