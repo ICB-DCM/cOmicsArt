@@ -926,8 +926,10 @@ server <- function(input,output,session){
   # Sample Correlation ----
   sample_correlation_server(
     id = "sample_correlation",
-    omic_type = reactive(input$omicType), # par_tmp$omic_type
-    row_select = reactive(input$row_selection) #par_tmp$row_selection
+    data = res_tmp,
+    params = par_tmp
+    #omic_type = reactive(input$omicType), # par_tmp$omic_type
+    #row_select = reactive(input$row_selection) #par_tmp$row_selection ? # only for title?
   )
   # significance analysis ----
   significance_analysis_server(

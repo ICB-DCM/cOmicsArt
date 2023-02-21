@@ -1,45 +1,46 @@
-sample_correlation_server <- function(id, omic_type, row_select){
+sample_correlation_server <- function(id, data, params){
   moduleServer(
     id,
     function(input,output,session){
       ns <- session$ns
       # UI Section ----
+      
       output$SampleAnnotationChoice_ui <- renderUI({
           req(data_input_shiny())
           selectInput(
             inputId = ns("SampleAnnotationChoice"),
             label = "Choose the color annotation for the samples",
-            choices = c(colnames(selectedData_processed()[[omic_type()]]$sample_table)),
+            choices = colnames(colData(data$data)),
             multiple = T,
-            selected = c(colnames(selectedData_processed()[[omic_type()]]$sample_table))[1]
+            selected = colnames(colData(data$data))[1]
           )
         })
       
       # DO sample Correaltion plot 
       toListen2CorrelationPlot <- reactive({
         list(
-          input$Do_SampleCorrelation,
-          input$SampleAnnotationChoice
+          input$Do_SampleCorrelation
+          #input$SampleAnnotationChoice
         )
       })
       
       observeEvent(toListen2CorrelationPlot(),{
         req(selectedData_processed())
         req(input$SampleAnnotationChoice)
-        annotationDF <- selectedData_processed()[[omic_type()]]$sample_table[,input$SampleAnnotationChoice,drop = F]
+        annotationDF <- colData(data$data)[,input$SampleAnnotationChoice,drop = F]
         cormat <- cor(
-          x = selectedData_processed()[[omic_type()]]$Matrix,
+          x = as.matrix(assay(data$data)),
           method = input$corrMethod
           )
         
         customTitleSampleCorrelation <- paste0(
           "Sample Correlation - ",
-          omic_type(),"-",
-          paste0("entities:",row_select(),collapse = "_"),
+          params$omic_type,"-",
+          paste0("entities:",params$row_selection,collapse = "_"),
           "-samples",
-          ifelse(any(row_select() != "all"),paste0(" (with: ",paste0(row_select(),collapse = ", "),")"),""),
+          ifelse(any(params$row_selection != "all"),paste0(" (with: ",paste0(params$row_selection,collapse = ", "),")"),""),
           "-preprocessing: ",
-          input$PreProcessing_Procedure
+          params$PreProcessing_Procedure
         )
         
         # more advanced colors
@@ -68,21 +69,21 @@ sample_correlation_server <- function(id, omic_type, row_select){
 
         SampleCorrelationPlot_final <- pheatmap(
           mat = cormat, 
-          annotation_row = annotationDF,
+          annotation_row = as.data.frame(annotationDF),
           main = customTitleSampleCorrelation,
           annotation_colors = anno_colors
           )
         # assign res_temp["SampleCorrelation"]
-        res_temp["SampleCorrelation"] <<- cormat
+        res_tmp["SampleCorrelation"] <<- cormat
         # assign par_temp["SampleCorrelation"] as empty
-        par_temp["SampleCorrelation"] <<- list(
-          # add a dummy parameter to avoid error
-          dummy = "dummy"
+        par_tmp["SampleCorrelation"] <<- list(
+          corrMethod = input$corrMethod
         )
         
         sampleCorrelation_scenario <- 18
         output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
         
+        #ToDO get rid of global vars structure; should be replaced by params
         global_Vars$customTitleSampleCorrelation <- customTitleSampleCorrelation
         # Longer names causes issues for saving 
         if(nchar(global_Vars$customTitleSampleCorrelation) >= 250){
