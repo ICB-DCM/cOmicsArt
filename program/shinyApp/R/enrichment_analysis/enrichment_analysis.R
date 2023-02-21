@@ -42,7 +42,7 @@ gene_set_enrichment <- function(
   EnrichmentRes_VAX <- NULL
   EnrichmentRes_C8 <- NULL
 
-  if(enrichments2do$KEGG){
+  if(enrichments2do$KEGG){ # currently a bug somehow
     EnrichmentRes_Kegg <- clusterProfiler::gseKEGG(
       geneList = geneSetChoice,
       keyType = "ncbi-geneid",  # equal to ENTREZID
