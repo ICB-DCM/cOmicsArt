@@ -125,6 +125,7 @@ pca_Server <- function(id, data, params, row_select, updates){
         # only calculate PCA, Scrre and Loadings if the counter is 1
         if(pca_reactives$calculate == 1){
           # update the data if needed
+          # TODO check if the follwoing still needed as update is now done on 1st server level
           data <- update_data(data, updates, pca_reactives$current_updates)
           pca_reactives$current_updates <- updates()
           # set the counter to 0 to prevent any further plotting
