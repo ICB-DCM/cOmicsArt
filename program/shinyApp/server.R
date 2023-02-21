@@ -767,7 +767,7 @@ server <- function(input,output,session){
       print(dim(tmp_data_selected))
       res_tmp$data <<- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]
     }
-    
+     
     if(par_tmp$omic_type == "Metabolomics"){
       print("Remove anything which has a row median of 0")
       print(dim(tmp_data_selected))
