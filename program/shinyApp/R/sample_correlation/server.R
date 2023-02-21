@@ -5,7 +5,6 @@ sample_correlation_server <- function(id, data, params, updates){
       sample_corr_reactive <- reactiveValues(
         calculate = 0,
         counter = 0,
-        # ensures Do_PCA is clicked at least once after refresh
         current_updates = 0,
       )
       session$userData$clicks_observer <- observeEvent(input$Do_SampleCorrelation,{
