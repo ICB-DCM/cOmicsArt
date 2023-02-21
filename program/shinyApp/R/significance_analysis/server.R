@@ -319,7 +319,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
             )$gene
             # only add if the result is not empty
             if(length(to_add_tmp) > 0){
-              res2plot[input$comparisons_to_visualize[i]] <- to_add_tmp
+              res2plot[[input$comparisons_to_visualize[i]]] <- to_add_tmp
             }
           }
         }
@@ -341,10 +341,10 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         if(input$visualization_method == "UpSetR plot"){
           sig_ana_reactive$plot_last <- UpSetR::upset(
             UpSetR::fromList(res2plot)
-            )
-          output$Significant_Plot_final <- renderPlot({
+          )
+          output$Significant_Plot_final <- renderPlot(
             sig_ana_reactive$plot_last
-          })
+          )
         }else if(input$visualization_method == "Venn diagram"){
           # set colors for each comparison
           sig_ana_reactive$plot_last <- ggVennDiagram::ggVennDiagram(res2plot) +
