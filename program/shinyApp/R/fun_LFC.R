@@ -5,7 +5,7 @@ getLFC <- function(
   comparison_samples_idx,
   completeOutput = FALSE
 ){
-  df <- as.data.frame(data$raw)
+  df <- as.data.frame(data)
   # Todo by @Lea: discuss and finalize how to handle this. constant row are not removed but small noise is added should in here a check if all 0 rows?
   ttest_raw <- function(df, grp1, grp2) {
     x <- df[grp1]

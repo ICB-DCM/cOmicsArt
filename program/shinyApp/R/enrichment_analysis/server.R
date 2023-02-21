@@ -670,7 +670,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             comparison_samples_idx <- which(colData(data$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
 
             Data2Plot <- getLFC(
-              assays(data$data),
+              assays(data$data)$raw,
               ctrl_samples_idx,
               comparison_samples_idx
             )
