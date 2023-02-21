@@ -329,37 +329,30 @@ server <- function(input,output,session){
           isTruthy(input$data_row_anno1)))){
       output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
     }else if(FLAG_TEST_DATA_SELECTED() & !(isTruthy(input$data_preDone))){
-      output$debug = renderText({"The Test Data Set was used"})
+      output$debug <- renderText({"The Test Data Set was used"})
     }else{
-      if(any(names(data_input_shiny()) == par_tmp['omic_type'])){
-        show_toast(
-          title = paste0(par_tmp['omic_type'],"Data Upload"),
-          text = paste0(par_tmp['omic_type'],"-data upload was successful"),
-          position = "top",
-          timer = 1500,
-          timerProgressBar = T
+      show_toast(
+        title = paste0(par_tmp['omic_type'],"Data Upload"),
+        text = paste0(par_tmp['omic_type'],"-data upload was successful"),
+        position = "top",
+        timer = 1500,
+        timerProgressBar = T
+        )
+      output$debug <- renderText({
+        "<font color=\"#00851d\"><b>Upload successful</b></font>"
+        })
+      if(isTruthy(input$data_preDone)){
+        # precomplied set used
+        fun_LogIt(
+          message = paste0("**DataInput** - The used data was precompiled. Filename: \n\t",input$data_preDone$name)
           )
-        output$debug <- renderText({
-          "<font color=\"#00851d\"><b>Upload successful</b></font>"
-          })
-        if(isTruthy(input$data_preDone)){
-          # precomplied set used
-          fun_LogIt(
-            message = paste0("**DataInput** - The used data was precompiled. Filename: \n\t",input$data_preDone$name)
-            )
-        }else{
-          fun_LogIt(
-            message = paste0("The following data was used: \n\t",input$data_matrix1$name,"\n\t",input$data_sample_anno1$name,"\n\t",input$data_row_anno1$name)
-            )
-        }
-       
-        showTab(inputId = "tabsetPanel1", target = "Pre-processing")
-        }else{
-        print("The precompiled lists types, does not match the input type!")
-        output$debug=renderText({
-          "<font color=\"#FF0000\"><b>The precompiled lists type, does not match the input type! Thats why the errors! Load the 3 original dataframe instead</b></font>"
-          })
+      }else{
+        fun_LogIt(
+          message = paste0("The following data was used: \n\t",input$data_matrix1$name,"\n\t",input$data_sample_anno1$name,"\n\t",input$data_row_anno1$name)
+          )
       }
+
+      showTab(inputId = "tabsetPanel1", target = "Pre-processing")
     }
   })
 
@@ -663,7 +656,7 @@ server <- function(input,output,session){
     if(any(input$row_selection == "all")){
       selected <- rownames(rowData(res_tmp$data_original))
     }else if(!(length(input$row_selection) == 1 & any(input$row_selection == "High Values+IQR"))){
-      selected = unique(
+      selected <- unique(
         c(selected,
           rownames(rowData(res_tmp$data_original))[
             which(rowData(res_tmp$data_original)[,input$providedRowAnnotationTypes]%in%input$row_selection)
@@ -757,6 +750,7 @@ server <- function(input,output,session){
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     print(selectedData())
     par_tmp['PreProcessing_Procedure'] <<- input$PreProcessing_Procedure
+    browser()
     processedData_all <- tmp_data_selected
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
@@ -774,7 +768,7 @@ server <- function(input,output,session){
       res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,median)!=0),]
     }
     
-    print(dim(res_tmp$data))
+    print(dim(res_tmp$data))  # TODO: Error here
     assay(res_tmp$data) <<- DataFrame(assay(res_tmp$data))
     
     if(input$PreProcessing_Procedure != "none"){
