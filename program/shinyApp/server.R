@@ -925,25 +925,24 @@ server <- function(input,output,session){
   
   # Data Update  ----
   # Data Update to trigger server-module refresh
-  observe({
-    print(updating$count)
-    # data_r is a copy of the curren res_tmp and is updated reactivly
-    data_r <<- update_data(res_tmp, reactive(updating$count), 0)
-    print("Data Update")
-  })
+  # observe({
+  #   print(updating$count)
+  #   # data_r is a reactive copy of the curren res_tmp and is updated reactivly
+  #   data_r <- reactive(update_data(res_tmp, reactive(updating$count), 0))
+  #   print("Data Update")
+  # })
   
   # Sample Correlation ----
   # calling server without reactive it will be init upon start, with no update
   # of respective data inputs hence need of at least one reactive!
-
   sample_correlation_server(
     id = "sample_correlation",
-    data = data_r,
-    params = par_tmp
+    data = res_tmp,
+    params = par_tmp,
+    reactive(updating$count)
     #omic_type = reactive(input$omicType), # par_tmp$omic_type
     #row_select = reactive(input$row_selection) #par_tmp$row_selection ? # only for title?
   )
-
 
   # significance analysis ----
   significance_analysis_server(

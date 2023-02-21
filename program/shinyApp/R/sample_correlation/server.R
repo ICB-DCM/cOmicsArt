@@ -1,9 +1,20 @@
-sample_correlation_server <- function(id, data, params){
+sample_correlation_server <- function(id, data, params, updates){
   moduleServer(
     id,
     function(input,output,session){
-      ns <- session$ns
+      sample_corr_reactive <- reactiveValues(
+        calculate = 0,
+        counter = 0,
+        # ensures Do_PCA is clicked at least once after refresh
+        current_updates = 0,
+      )
+      session$userData$clicks_observer <- observeEvent(input$Do_SampleCorrelation,{
+        req(input$Do_SampleCorrelation > sample_corr_reactive$counter)
+        sample_corr_reactive$counter <- input$Do_SampleCorrelation
+        sample_corr_reactive$calculate <- 1
+      })
       
+      ns <- session$ns
       # UI Section ----
       output$SampleAnnotationChoice_ui <- renderUI({
         req(selectedData_processed()) # is coming from preprocessing
@@ -27,6 +38,14 @@ sample_correlation_server <- function(id, data, params){
       observeEvent(toListen2CorrelationPlot(),{
         req(selectedData_processed()) # is coming from preprocessing
         req(input$SampleAnnotationChoice)
+        
+        if(sample_corr_reactive$calculate == 1){
+          # update the data if needed
+          data <- update_data(data, updates, sample_corr_reactive$current_updates)
+          sample_corr_reactive$current_updates <- updates()
+          # set the counter to 0 to prevent any further plotting
+          sample_corr_reactive$calculate <- 0
+          
         # check value of input$Do_SampleCorrelation
         annotationDF <- colData(data$data)[,input$SampleAnnotationChoice,drop = F]
         cormat <- cor(
@@ -95,6 +114,7 @@ sample_correlation_server <- function(id, data, params){
         global_Vars$annotationDF <- annotationDF
         global_Vars$anno_colors <- anno_colors
         global_Vars$sampleCorrelation_scenario <- sampleCorrelation_scenario
+        }
       })
 
       
