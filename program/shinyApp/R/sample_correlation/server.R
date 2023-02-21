@@ -1,4 +1,4 @@
-sample_correlation_server <- function(id, data, params, row_select){
+sample_correlation_server <- function(id, data, params){
   moduleServer(
     id,
     function(input,output,session){
