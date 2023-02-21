@@ -764,7 +764,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               output,
               tmp_genes,
               data$data,
-              ea_reactives$enrichments2do()
+              ea_reactives$enrichments2do
             )
           }else{
             ea_reactives$enrichment_results <- over_representation_analysis(
@@ -772,14 +772,14 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               output,
               tmp_genes,
               data$data,
-              ea_reactives$enrichments2do()
+              ea_reactives$enrichments2do
             )
           }
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
           # res_temp Zuweisung
-          res_temp["Enrichment"] <<- ea_reactives$enrichment_results
+          res_tmp["Enrichment"] <<- ea_reactives$enrichment_results
           # par_temp Zuweisung
-          par_temp["Enrichment"] <<- list(
+          par_tmp["Enrichment"] <<- list(
             "ValueToAttach" = input$ValueToAttach,
             "GeneSet2Enrich" = input$GeneSet2Enrich,
             "Groups2Compare_ref_GSEA" = input$Groups2Compare_ref_GSEA,

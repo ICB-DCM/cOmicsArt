@@ -11,7 +11,7 @@ translate_genes_ea <- function(data, annotation_results, input){
   }
   tryCatch(
     {
-      rowData(data$data)[["ENTREZID"]] <- AnnotationDbi::mapIds(
+      rowData(data)[["ENTREZID"]] <- AnnotationDbi::mapIds(
         orgDb,
         keys = rowData(data)[[annotation_results$base_annotation]],
         column = "ENTREZID",
@@ -55,7 +55,7 @@ translate_genes_oa <- function(
       annotation_results$base_annotation <- input$AnnotationSelection
     }
     # translate to entrez id
-    rowData(data$data)[["ENTREZID"]] <- AnnotationDbi::mapIds(
+    rowData(data)[["ENTREZID"]] <- AnnotationDbi::mapIds(
       orgDb,
       keys = rowData(data$data)[[annotation_results$base_annotation]],
       column = "ENTREZID",
