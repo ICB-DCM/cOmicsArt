@@ -951,7 +951,9 @@ server <- function(input,output,session){
   # Heatmap ----
   heatmap_server(
     id = 'Heatmap',
-    omicType = reactive(input$omicType) # par_tmp$omic_type
+    data = res_tmp,
+    params = par_tmp,
+    reactive(updating$count)
     )
   # Single Gene Visualisations ----
   single_gene_visualisation_server(
