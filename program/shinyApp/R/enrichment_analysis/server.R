@@ -154,7 +154,7 @@ enrichment_analysis_geneset_server_reactive <- function(
 }
 
 
-enrichment_analysis_Server <- function(id, omic_type){
+enrichment_analysis_Server <- function(id, data, params, updates){
 
   moduleServer(
     id,
@@ -445,9 +445,9 @@ enrichment_analysis_Server <- function(id, omic_type){
               selectInput(
                 inputId = ns("sample_annotation_types_cmp_GSEA"),
                 label = "Choose type for LFC-based ordering",
-                choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
+                choices = c(colnames(colData(data$data))),
                 multiple = F,
-                selected = c(colnames(data_input_shiny()[[omic_type()]]$sample_table))[1]
+                selected = c(colnames(colData(data$data)))[1]
               )
             })
             output$Groups2Compare_ref_GSEA_ui <- renderUI({
@@ -456,9 +456,9 @@ enrichment_analysis_Server <- function(id, omic_type){
               selectInput(
                 inputId = ns("Groups2Compare_ref_GSEA"),
                 label = "Choose reference of log2 FoldChange",
-                choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA]),
+                choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_GSEA]),
                 multiple = F ,
-                selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA])[1]
+                selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_GSEA])[1]
               )
             })
             output$Groups2Compare_treat_GSEA_ui <- renderUI({
@@ -467,9 +467,9 @@ enrichment_analysis_Server <- function(id, omic_type){
               selectInput(
                 inputId = ns("Groups2Compare_treat_GSEA"),
                 label = "Choose treatment group of log2 FoldChange",
-                choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA]),
+                choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_GSEA]),
                 multiple = F ,
-                selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA])[2]
+                selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_GSEA])[2]
               )
             })
             # Choose Sets to do gene set enrichment for
@@ -555,7 +555,7 @@ enrichment_analysis_Server <- function(id, omic_type){
         }
         })
       # create List to track which enrichements are to do
-      global_Vars$enrichments2do <- list(
+      ea_reactives$enrichments2do <- list(
         "Hallmarks" = F,
         "C1" = F,
         "C2" = F,
@@ -589,8 +589,7 @@ enrichment_analysis_Server <- function(id, omic_type){
       # change values in list to true if selected
       observeEvent(input$GeneSetChoice, {
         # reset list
-        # TODO: make local 
-        global_Vars$enrichments2do <<- list(
+        ea_reactives$enrichments2do <- list(
           "Hallmarks" = F,
           "C1" = F,
           "C2" = F,
@@ -622,14 +621,14 @@ enrichment_analysis_Server <- function(id, omic_type){
           "C8" = F
         )
         for(i in 1:length(input$GeneSetChoice)){
-          global_Vars$enrichments2do[[input$GeneSetChoice[i]]] <- T
+          ea_reactives$enrichments2do[[input$GeneSetChoice[i]]] <- T
         }
         # hide the unselected ones
-        for(name in names(which(global_Vars$enrichments2do == FALSE))){
+        for(name in names(which(ea_reactives$enrichments2do == FALSE))){
           hideTab(inputId = "EnrichmentTabs", target = name)
         }
         # show the selected ones
-        for(name in names(which(global_Vars$enrichments2do == TRUE))){
+        for(name in names(which(ea_reactives$enrichments2do == TRUE))){
           showTab(inputId = "EnrichmentTabs", target = name)
         }
       })
@@ -667,11 +666,11 @@ enrichment_analysis_Server <- function(id, omic_type){
           if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
             #takes all genes after preprocessing
             #get LFC
-            ctrl_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
-            comparison_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
+            ctrl_samples_idx <- which(colData(data$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
+            comparison_samples_idx <- which(colData(data$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
 
             Data2Plot <- getLFC(
-              selectedData_processed()[[omic_type()]]$Matrix,
+              assays(data$data)$raw,
               ctrl_samples_idx,
               comparison_samples_idx
             )
@@ -701,8 +700,8 @@ enrichment_analysis_Server <- function(id, omic_type){
         req(geneSetChoice())
         tmp_genes <- geneSetChoice()
         # Check whether the necessary annotation is available
-        anno_results <- check_annotation_enrichment_analysis(processedData_all)
-        processedData_all <<- anno_results$new_data
+        anno_results <- check_annotation_enrichment_analysis(data$data)
+        data$data <- anno_results$new_data
         ea_reactives$can_start <- anno_results$can_start
         if(anno_results$no_ann){
           showModal(modalDialog(
@@ -720,8 +719,8 @@ enrichment_analysis_Server <- function(id, omic_type){
           ))
         }else if(anno_results$can_start == FALSE){
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- translate_genes_ea(
-              data = processedData_all,
+            data$data <- translate_genes_ea(
+              data = data$data,
               annotation_results = anno_results,
               input = input
             )
@@ -730,7 +729,8 @@ enrichment_analysis_Server <- function(id, omic_type){
               annotation_results = anno_results,
               input = input,
               geneSetChoice = tmp_genes,
-              geneSet2Enrich = input$GeneSet2Enrich
+              geneSet2Enrich = input$GeneSet2Enrich,
+              data = data$data
             )
           }
           ea_reactives$can_start <- TRUE
@@ -740,8 +740,8 @@ enrichment_analysis_Server <- function(id, omic_type){
           anno_results$base_annotation <- input$AnnotationSelection
           removeModal()
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- translate_genes_ea(
-              data = processedData_all,
+            data$data <- translate_genes_ea(
+              data = data$data,
               annotation_results = anno_results,
               input = input
             )
@@ -759,15 +759,27 @@ enrichment_analysis_Server <- function(id, omic_type){
         observeEvent(ea_reactives$can_start, {
           req(ea_reactives$can_start == TRUE)
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            ea_reactives$enrichment_results <- gene_set_enrichment(input, output, tmp_genes)
+            ea_reactives$enrichment_results <- gene_set_enrichment(
+              input,
+              output,
+              tmp_genes,
+              data$data,
+              ea_reactives$enrichments2do
+            )
           }else{
-            ea_reactives$enrichment_results <- over_representation_analysis(input, output, tmp_genes)
+            ea_reactives$enrichment_results <- over_representation_analysis(
+              input,
+              output,
+              tmp_genes,
+              data$data,
+              ea_reactives$enrichments2do
+            )
           }
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
           # res_temp Zuweisung
-          res_temp["Enrichment"] <<- ea_reactives$enrichment_results
+          res_tmp["Enrichment"] <<- ea_reactives$enrichment_results
           # par_temp Zuweisung
-          par_temp["Enrichment"] <<- list(
+          par_tmp["Enrichment"] <<- list(
             "ValueToAttach" = input$ValueToAttach,
             "GeneSet2Enrich" = input$GeneSet2Enrich,
             "Groups2Compare_ref_GSEA" = input$Groups2Compare_ref_GSEA,
@@ -777,7 +789,6 @@ enrichment_analysis_Server <- function(id, omic_type){
             "OrganismChoice" = input$OrganismChoice,
             "UniverseOfGene" = input$UniverseOfGene
           )
-          browser()
         })
       })
 
@@ -789,7 +800,7 @@ enrichment_analysis_Server <- function(id, omic_type){
             selectInput(
               inputId = ns("sample_anno_types_KEGG"),
               label = "Choose type for LFC overlay",
-              choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
+              choices = c(colnames(colData(data$data))),
               multiple = F ,
               selected = NULL
             )
@@ -799,9 +810,9 @@ enrichment_analysis_Server <- function(id, omic_type){
             selectInput(
               inputId = ns("ComparisonOptionsCRTL"),
               label = "Choose reference of log2 FoldChange",
-              choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]),
+              choices = unique(colData(data$data)[,input$sample_anno_types_KEGG]),
               multiple = F ,
-              selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG])[1]
+              selected = unique(colData(data$data)$sample_table[,input$sample_anno_types_KEGG])[1]
             )
           })
           output$ComparisonOptionsCOMP_ui <- renderUI({
@@ -809,12 +820,12 @@ enrichment_analysis_Server <- function(id, omic_type){
             selectInput(
               inputId = ns("ComparisonOptionsCOMP"),
               label = "Choose treatment group of log2 FoldChange",
-              choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]),
+              choices = unique(colData(data$data)[,input$sample_anno_types_KEGG]),
               multiple = F ,
-              selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG])[2]
+              selected = unique(colData(data$data)[,input$sample_anno_types_KEGG])[2]
             )
           })
-          output$psig_KEGG_ui=renderUI({
+          output$psig_KEGG_ui <- renderUI({
             req(data_input_shiny())
             numericInput(
               inputId = ns("psig_KEGG"),
@@ -844,9 +855,9 @@ enrichment_analysis_Server <- function(id, omic_type){
         ## reduce dataset to selected genes
 
         if(input$plotOnTopOption == "LFC"){
-          Data2PlotOnTop <- selectedData_processed()[[omic_type()]]$Matrix[geneSetChoice(),,drop=F]
-          ctrl_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCRTL)
-          comparison_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCOMP)
+          Data2PlotOnTop <- data$data[geneSetChoice(),,drop=F]
+          ctrl_samples_idx <- which(colData(data$data)[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCRTL)
+          comparison_samples_idx <- which(colData(data$data)[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCOMP)
           if(length(comparison_samples_idx) <= 1 | length(ctrl_samples_idx) <= 1){
             ea_reactives$ea_info <- "Choose variable with at least two samples per condition!"
             req(FALSE)
@@ -871,7 +882,7 @@ enrichment_analysis_Server <- function(id, omic_type){
             log2_FC = Data2Plot[,"LFC"]
           )
           # delete duplicated entries
-          testingMatrix = testingMatrix[!duplicated(testingMatrix$GeneID),]
+          testingMatrix <- testingMatrix[!duplicated(testingMatrix$GeneID),]
           rownames(testingMatrix) <- testingMatrix$GeneID
           testingMatrix$GeneID <- NULL
           testingMatrix <- as.matrix(testingMatrix) #Test to global to catch
