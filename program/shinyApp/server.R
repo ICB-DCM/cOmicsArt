@@ -922,16 +922,6 @@ server <- function(input,output,session){
   
   output$debug <- renderText(dim(res_tmp$data))
   ## UP TILL HERE ##
-  
-  # Data Update  ----
-  # Data Update to trigger server-module refresh
-  # observe({
-  #   print(updating$count)
-  #   # data_r is a reactive copy of the curren res_tmp and is updated reactivly
-  #   data_r <- reactive(update_data(res_tmp, reactive(updating$count), 0))
-  #   print("Data Update")
-  # })
-  
   # Sample Correlation ----
   # calling server without reactive it will be init upon start, with no update
   # of respective data inputs hence need of at least one reactive!
