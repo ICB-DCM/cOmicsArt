@@ -94,7 +94,7 @@ sample_correlation_server <- function(id, data, params, updates){
           )
         # assign res_temp["SampleCorrelation"]
         res_tmp[["SampleCorrelation"]] <<- cormat
-        # assign par_temp["SampleCorrelation"] as empty
+        # assign par_temp["SampleCorrelation"] 
         par_tmp["SampleCorrelation"] <<- list(
           corrMethod = input$corrMethod
         )
