@@ -102,8 +102,6 @@ sample_correlation_server <- function(id, data, params, updates){
         sampleCorrelation_scenario <- 18
         output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
         
-        #TODO get rid of global vars structure; should be replaced by params
-        
         # Longer names causes issues for saving 
         if(nchar(customTitleSampleCorrelation) >= 250){
           customTitleSampleCorrelation <- "SampleCorrelation"
@@ -117,8 +115,6 @@ sample_correlation_server <- function(id, data, params, updates){
           anno_colors = anno_colors,
           sampleCorrelation_scenario = sampleCorrelation_scenario
         )
-        par_tmp[["SampleCorr"]]
-        browser()
         }
       })
 
