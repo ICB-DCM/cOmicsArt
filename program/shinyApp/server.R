@@ -748,12 +748,13 @@ server <- function(input,output,session){
 
 ## Do preprocessing ----  
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
+    print("Do Preprocessing")
     print(selectedData())
     par_tmp['PreProcessing_Procedure'] <<- input$PreProcessing_Procedure
     processedData_all <- tmp_data_selected
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
-    res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]
+    res_tmp$data <<- res_tmp$data[rownames(tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]),]
     
     if(par_tmp$omic_type == "Transcriptomics"){
       print("Also remove anything of rowCount <=10")
@@ -769,7 +770,9 @@ server <- function(input,output,session){
     
     print(dim(res_tmp$data))
     # explicitly set rownames to avoid any errors.
-    assay(res_tmp$data) <<- DataFrame(assay(res_tmp$data), row.names = rownames(res_tmp$data))
+    # new object Created for res_tmp
+    res_tmp$data <<- res_tmp$data[rownames(res_tmp$data),]
+
     
     if(input$PreProcessing_Procedure != "none"){
       print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
@@ -813,6 +816,7 @@ server <- function(input,output,session){
           output$Statisitcs_Data=renderText({
             "<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"
             })
+          browser()
         }
       }
       if(input$PreProcessing_Procedure == "Scaling_0_1"){
@@ -839,11 +843,11 @@ server <- function(input,output,session){
         }
         if(any(processedData==0)){
           processedData <- as.data.frame(log10(
-            processedData+1)
+            processedData + 1)
             )
         }
         processedData <- as.data.frame(log10(
-          processedData+1)
+          processedData + 1)
           )
         assay(res_tmp$data) <<- DataFrame(processedData)
       }
@@ -877,7 +881,7 @@ server <- function(input,output,session){
 
     # Count up updating
     updating$count <- updating$count + 1
-    return("Pre-Processing successfully")
+    return(paste0("Pre-Processing successfully",input$Do_preprocessing))
   })
   
   output$Statisitcs_Data <- renderText({
