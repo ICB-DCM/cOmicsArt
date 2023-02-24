@@ -862,6 +862,9 @@ server <- function(input,output,session){
     
     if(any(is.na(assay(res_tmp$data)))){
       print("This might be problem due to mismatched Annotation Data?!")
+      nrow_before = nrow(assay(res_tmp$data))
+      nrow_after = nrow(res_tmp$data[complete.cases(assay(res_tmp$data)),])
+      addWarning <- paste0("<font color=\"#FF0000\"><b>There were NA's after pre-processing, any row containg such was completly removed! (before/after): ",nrow_before,"/",nrow_after,"</b></font>")
       res_tmp$data <<- res_tmp$data[complete.cases(assay(res_tmp$data)),]
     }
 
