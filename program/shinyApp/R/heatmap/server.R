@@ -341,7 +341,7 @@ heatmap_server <- function(id, data, params, updates){
             doThis_flag <- F
           }
           if(input$PreProcessing_Procedure == "simpleCenterScaling"|
-             any(assay(data$data))< 0)){
+             any(assay(data$data))< 0){
             # TODO: there must be a nicer way to do this then as.data.frame(assay(data$data))
             print("Remember do not use normal center + scaling (negative Values!)")
             output$Options_selected_out_3 <- renderText("Choose another preprocessing, as there are negative values!")
