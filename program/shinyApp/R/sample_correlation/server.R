@@ -102,17 +102,23 @@ sample_correlation_server <- function(id, data, params, updates){
         sampleCorrelation_scenario <- 18
         output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
         
-        #ToDO get rid of global vars structure; should be replaced by params
-        global_Vars$customTitleSampleCorrelation <- customTitleSampleCorrelation
+        #TODO get rid of global vars structure; should be replaced by params
+        
         # Longer names causes issues for saving 
-        if(nchar(global_Vars$customTitleSampleCorrelation) >= 250){
-          global_Vars$customTitleSampleCorrelation <- "SampleCorrelation"
+        if(nchar(customTitleSampleCorrelation) >= 250){
+          customTitleSampleCorrelation <- "SampleCorrelation"
         }
-        global_Vars$SampleCorrelationPlot_final <- SampleCorrelationPlot_final
-        global_Vars$cormat <- cormat
-        global_Vars$annotationDF <- annotationDF
-        global_Vars$anno_colors <- anno_colors
-        global_Vars$sampleCorrelation_scenario <- sampleCorrelation_scenario
+        
+        par_tmp[["SampleCorr"]] <<- list(
+          customTitleSampleCorrelation = customTitleSampleCorrelation,
+          SampleCorrelationPlot_final = SampleCorrelationPlot_final,
+          cormat = cormat,
+          annotationDF = annotationDF,
+          anno_colors = anno_colors,
+          sampleCorrelation_scenario = sampleCorrelation_scenario
+        )
+        par_tmp[["SampleCorr"]]
+        browser()
         }
       })
 
@@ -124,16 +130,16 @@ sample_correlation_server <- function(id, data, params, updates){
         },
         content = function(file){
           envList = list(
-            cormat = ifelse(exists("cormat"),global_Vars$cormat,NA),
-            annotationDF = ifelse(exists("annotationDF"),global_Vars$annotationDF,NA),
-            customTitleSampleCorrelation = ifelse(exists("customTitleSampleCorrelation"),global_Vars$customTitleSampleCorrelation,NA),
-            anno_colors = ifelse(exists("anno_colors"),global_Vars$anno_colors,NA)
+            cormat = ifelse(exists("cormat"),par_tmp[["SampleCorr"]]$cormat,NA),
+            annotationDF = ifelse(exists("annotationDF"),par_tmp[["SampleCorr"]]$annotationDF,NA),
+            customTitleSampleCorrelation = ifelse(exists("customTitleSampleCorrelation"),par_tmp[["SampleCorr"]]$customTitleSampleCorrelation,NA),
+            anno_colors = ifelse(exists("anno_colors"),par_tmp[["SampleCorr"]]$anno_colors,NA)
           )
           
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
           
-          write(getPlotCode(global_Vars$sampleCorrelation_scenario), file.path(temp_directory, "Code.R"))
+          write(getPlotCode(par_tmp[["SampleCorr"]]$sampleCorrelation_scenario), file.path(temp_directory, "Code.R"))
           
           saveRDS(envList, file.path(temp_directory, "Data.RDS"))
           zip::zip(
@@ -147,18 +153,18 @@ sample_correlation_server <- function(id, data, params, updates){
       
       output$SavePlot_SampleCorrelation <- downloadHandler(
         filename = function() { 
-          paste(global_Vars$customTitleSampleCorrelation,Sys.time(),input$file_ext_Heatmap,sep = "") 
+          paste(par_tmp[["SampleCorr"]]$customTitleSampleCorrelation,Sys.time(),input$file_ext_Heatmap,sep = "") 
         },
         content = function(file){
-          save_pheatmap(global_Vars$SampleCorrelationPlot_final,filename = file,type=gsub("\\.","",input$file_ext_SampleCorrelation))
+          save_pheatmap(par_tmp[["SampleCorr"]]$SampleCorrelationPlot_final,filename = file,type=gsub("\\.","",input$file_ext_SampleCorrelation))
           on.exit({
             tmp_filename <- paste0(
               getwd(),
               "/www/",
-              paste(paste(global_Vars$customTitleSampleCorrelation,Sys.time(),input$file_ext_SampleCorrelation,sep = ""))
+              paste(paste(par_tmp[["SampleCorr"]]$customTitleSampleCorrelation,Sys.time(),input$file_ext_SampleCorrelation,sep = ""))
             )
             save_pheatmap(
-              global_Vars$SampleCorrelationPlot_final,
+              par_tmp[["SampleCorr"]]$SampleCorrelationPlot_final,
               filename = tmp_filename,
               type = gsub("\\.","",input$file_ext_SampleCorrelation)
             )
@@ -179,11 +185,11 @@ sample_correlation_server <- function(id, data, params, updates){
         tmp_filename <- paste0(
           getwd(),
           "/www/",
-          paste(paste(global_Vars$customTitleSampleCorrelation,Sys.time(),".png",sep = ""))
+          paste(paste(par_tmp[["SampleCorr"]]$customTitleSampleCorrelation,Sys.time(),".png",sep = ""))
         )
         
         save_pheatmap(
-          global_Vars$SampleCorrelationPlot_final,
+          par_tmp[["SampleCorr"]]$SampleCorrelationPlot_final,
           filename = tmp_filename,
           type = "png"
         )
