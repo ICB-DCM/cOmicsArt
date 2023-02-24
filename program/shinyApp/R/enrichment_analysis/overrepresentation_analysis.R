@@ -88,7 +88,7 @@ over_representation_analysis <- function(
   if(global_Vars$enrichments2do$GO){
     EnrichmentRes_GO <- clusterProfiler::enrichGO(
       gene = geneSetChoice_tranlsated,
-      ont = input$ontologyForGO,
+      ont = "ALL",
       pvalueCutoff = 0.05,
       OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db")
     )

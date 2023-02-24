@@ -57,7 +57,13 @@ translate_genes_oa <- function(annotation_results, input, geneSetChoice, geneSet
     )
     # select only the translations also in the geneSetChoice
     tmp_genes <- geneSetChoice
-    names(tmp_genes) <- processedData_all$Transcriptomics$annotation_rows[rownames(geneSetChoice), "ENTREZID"]
+    # is geneSetChoice ever a dataframe? not too sure
+    if(is.null(rownames(geneSetChoice))){
+      names(tmp_genes) <- processedData_all$Transcriptomics$annotation_rows[geneSetChoice, "ENTREZID"]
+    }else{
+      names(tmp_genes) <- processedData_all$Transcriptomics$annotation_rows[rownames(geneSetChoice), "ENTREZID"]
+    }
+    
     return(tmp_genes)
   }
   # translation from ensemble to entrez id in case geneSet2Enrich is ProvidedGeneSet
