@@ -8,7 +8,8 @@ significance_analysis_server <- function(id, data, params, updates){
         info_text = "Press 'Get significance analysis' to start!",
         dds = NULL,
         scenario = 0,
-        comparisons_for_plot = "all"
+        comparisons_for_plot = "all",
+        current_updates = 0,
       )
       ns <- session$ns
       ## Sidebar UI section
@@ -162,6 +163,9 @@ significance_analysis_server <- function(id, data, params, updates){
           significance_tabs_to_delete <<- NULL
         }
         print("Start the Significance Analysis")
+        # update the data if needed
+        data <- update_data(data, updates, sig_ana_reactive$current_updates)
+        sig_ana_reactive$current_updates <- updates()
         # delete old panels
         if(!is.null(significance_tabs_to_delete)){
           for (i in 1:length(significance_tabs_to_delete)) {
@@ -216,8 +220,8 @@ significance_analysis_server <- function(id, data, params, updates){
           # get the data
           data_selected <- as.matrix(assay(data$data))[,index_comparisons]
           sig_results <<- significance_analysis(
-            df = data_selected,
-            samples = samples_selected,
+            df = as.data.frame(data_selected),
+            samples = as.data.frame(samples_selected),
             contrasts = contrasts,
             method = input$test_method,
             correction = PADJUST_METHOD[[input$test_correction]],
