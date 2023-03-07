@@ -10,16 +10,21 @@ significance_analysis_server <- function(id, data, params, updates){
         scenario = 0,
         comparisons_for_plot = "all",
         current_updates = 0,
+        coldata = NULL
       )
       ns <- session$ns
       ## Sidebar UI section
       # UI to choose type of comparison
       output$type_of_comparison_ui <- renderUI({
         req(data_input_shiny())
+        if(is.null(sig_ana_reactive$coldata)){
+          sig_ana_reactive$coldata <- colData(data$data)
+        }
+        req(sig_ana_reactive$coldata)
         selectInput(
           inputId = ns("sample_annotation_types_cmp"),
           label = "Choose groups to compare",
-          choices = c(colnames(colData(data$data))),
+          choices = c(colnames(sig_ana_reactive$coldata)),
           multiple = F ,
           selected = NULL
         )
@@ -27,7 +32,7 @@ significance_analysis_server <- function(id, data, params, updates){
       # UI to choose comparisons
       output$chooseComparisons_ui <- renderUI({
         req(input$sample_annotation_types_cmp)
-        annoToSelect <- colData(data$data)[,input$sample_annotation_types_cmp]
+        annoToSelect <- sig_ana_reactive$coldata[,input$sample_annotation_types_cmp]
         if(length(annoToSelect) == length(unique(annoToSelect))){
           # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
           helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
@@ -149,6 +154,12 @@ significance_analysis_server <- function(id, data, params, updates){
           sig_ana_reactive$info_text
         )
       )
+      # refresh the UI/data if needed
+      observeEvent(input$refreshUI, {
+        data <- update_data(data, updates, sig_ana_reactive$current_updates)
+        sig_ana_reactive$current_updates <- updates()
+        sig_ana_reactive$coldata <- colData(data$data)
+      })
       # Analysis initial info
       observeEvent(input$significanceGo,{
         # shinyjs::html(id = 'significance_analysis_info', "Analysis is running...")
@@ -166,6 +177,7 @@ significance_analysis_server <- function(id, data, params, updates){
         # update the data if needed
         data <- update_data(data, updates, sig_ana_reactive$current_updates)
         sig_ana_reactive$current_updates <- updates()
+        sig_ana_reactive$coldata <- colData(data$data)
         # delete old panels
         if(!is.null(significance_tabs_to_delete)){
           for (i in 1:length(significance_tabs_to_delete)) {
