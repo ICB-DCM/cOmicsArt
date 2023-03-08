@@ -110,8 +110,6 @@ enrichment_analysis_geneset_server <- function(
           fun_LogIt(message = paste("###", id, "ENRICHMENT", sep=" "))
           fun_LogIt(message = paste("-", id, "Enrichment was performed with a gene set of interest of size: ",length(gene_set_choice)))
           fun_LogIt(message = paste("- Chosen Organism (needed for translation): ", organism_choice))
-          # fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",global_Vars$KEGG_UniverseOfGene, " (",length(global_Vars$KEGG_universeSelected_tranlsated)," genes)"))
-          # TODO: discuss with Lea -> global_Vars$KEGG_UniverseOfGene is only defined in case of ORA. Wouldn't that throw an error?
           fun_LogIt(
             message = paste(
               "- The number of found enriched terms (p.adj <0.05): ",
