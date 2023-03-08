@@ -3,7 +3,8 @@ gene_set_enrichment <- function(
   output,
   geneSetChoice,
   data,
-  enrichments2do
+  enrichments2do,
+  adjustMethod
 ){
   # assign the correct names to geneSetChoice
   names(geneSetChoice) <- rowData(data)[["ENTREZID"]]
@@ -42,16 +43,19 @@ gene_set_enrichment <- function(
   EnrichmentRes_VAX <- NULL
   EnrichmentRes_C8 <- NULL
 
-  if(enrichments2do$KEGG){ # TODO: currently a bug does not correctly display KEGG results
-    EnrichmentRes_Kegg <- clusterProfiler::gseKEGG(
-      geneList = geneSetChoice,
-      keyType = "ncbi-geneid",  # equal to ENTREZID
-      organism = ifelse(input$OrganismChoice == "hsa","hsa","mmu"),
-      minGSSize = 3,
-      maxGSSize = 800,
-      pvalueCutoff = 0.05,
-      verbose = TRUE,
-      pAdjustMethod = "BH"
+  if(enrichments2do$KEGG){
+    genesets4ea <- msigdbr(
+      species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+      category = "C2",
+      subcategory = "CP:KEGG"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_BIOCARTA <- GSEA(
+      geneSetChoice,
+      TERM2GENE = genesets4ea,
+      verbose = FALSE,
+      eps = 0,
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pvalueCutoff = 1
     )
   }
   if(enrichments2do$GO){
@@ -78,7 +82,7 @@ gene_set_enrichment <- function(
       TERM2GENE  =  Hallmarkset,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'BH',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -93,7 +97,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C1set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'BH',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -108,7 +112,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C2set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'BH',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -123,7 +127,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C3set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'BH',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -138,7 +142,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C4set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'BH',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -153,7 +157,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C5set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'BH',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -168,7 +172,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C6set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'BH',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -183,7 +187,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'BH',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -198,7 +202,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C8set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'BH',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -214,7 +218,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -230,7 +234,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -246,7 +250,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -262,7 +266,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -278,7 +282,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -294,7 +298,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -310,7 +314,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -326,7 +330,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -342,7 +346,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -358,7 +362,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -374,7 +378,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -390,7 +394,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -406,7 +410,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -422,7 +426,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -438,7 +442,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -454,7 +458,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -470,7 +474,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }
@@ -486,7 +490,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = 'bonferroni',
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
   }

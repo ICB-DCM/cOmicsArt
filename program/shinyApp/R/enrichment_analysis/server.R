@@ -425,6 +425,18 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           ea_reactives$ea_info
         )
       )
+      # UI to choose test correction
+      output$AdjustmentMethod_ui <- renderUI({
+        selectInput(
+            inputId = ns("test_correction"),
+            label = "Test correction",
+            choices = c(
+              "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
+              "Holm", "Hommel", "Hochberg"
+            ),
+            selected = "Benjamini-Hochberg"
+        )
+      })
       observe({
         req(input$ORA_or_GSE)
         ea_reactives$ea_info <- "Click 'Do Enrichment' to Start"
@@ -745,6 +757,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               annotation_results = anno_results,
               input = input
             )
+            browser()
           }else{
             tmp_genes <- translate_genes_oa(
               annotation_results = anno_results,
@@ -764,7 +777,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               output,
               tmp_genes,
               data$data,
-              ea_reactives$enrichments2do
+              ea_reactives$enrichments2do,
+              input$test_correction
             )
           }else{
             ea_reactives$enrichment_results <- over_representation_analysis(
@@ -772,7 +786,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               output,
               tmp_genes,
               data$data,
-              ea_reactives$enrichments2do
+              ea_reactives$enrichments2do,
+              input$test_correction
             )
           }
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
