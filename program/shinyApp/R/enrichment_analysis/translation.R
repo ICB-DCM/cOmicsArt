@@ -43,12 +43,14 @@ translate_genes_oa <- function(annotation_results, input, geneSetChoice, geneSet
   }
   # translation in case genSet2enrich is heatmap_genes
   if(geneSet2Enrich == "heatmap_genes"){
+    browser()
     if(annotation_results$no_ann){
       # copy rownames with corresponding annotation as columnname
       processedData_all$Transcriptomics$annotation_rows[input$AnnotationSelection] <<- rownames(processedData_all$Transcriptomics$annotation_rows)
       annotation_results$base_annotation <- input$AnnotationSelection
     }
     # translate to entrez id
+    #TODO Try and Catch to prevent crash if e.g. wrong things selected
     processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- AnnotationDbi::mapIds(
       orgDb,
       keys = processedData_all$Transcriptomics$annotation_rows[[annotation_results$base_annotation]],
