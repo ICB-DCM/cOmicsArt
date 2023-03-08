@@ -494,7 +494,6 @@ gene_set_enrichment <- function(
       pvalueCutoff = 1
     )
   }
-  browser()
 
 
   return(list(
