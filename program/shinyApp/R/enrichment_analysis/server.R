@@ -108,15 +108,14 @@ enrichment_analysis_geneset_server <- function(
             plot = clusterProfiler::dotplot(result),device = "png"
           )
           fun_LogIt(message = paste("###", id, "ENRICHMENT", sep=" "))
-          fun_LogIt(message = paste("-", id, "Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
-          fun_LogIt(message = paste("- Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(gene_set_choice)))
+          fun_LogIt(message = paste("-", id, "Enrichment was performed with a gene set of interest of size: ",length(gene_set_choice)))
           fun_LogIt(message = paste("- Chosen Organism (needed for translation): ", organism_choice))
           # fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",global_Vars$KEGG_UniverseOfGene, " (",length(global_Vars$KEGG_universeSelected_tranlsated)," genes)"))
           # TODO: discuss with Lea -> global_Vars$KEGG_UniverseOfGene is only defined in case of ORA. Wouldn't that throw an error?
           fun_LogIt(
             message = paste(
               "- The number of found enriched terms (p.adj <0.05): ",
-              nrow(result@result[result@result$p.adjust<0.05,])
+              nrows(result@result[result@result$p.adjust<0.05,])
             )
           )
           # TODO: discuss with LEA -> On exit logging the same as this one?
@@ -780,6 +779,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               ea_reactives$enrichments2do,
               input$test_correction
             )
+            browser()
           }else{
             ea_reactives$enrichment_results <- over_representation_analysis(
               input,
@@ -927,7 +927,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           )
           # this will be saved in current directory
           if(is.matrix(geneSetChoice_final)){
-            if(ncol(geneSetChoice_final) >= 2){
+            if(ncols(geneSetChoice_final) >= 2){
               outfile <- paste0(getwd(),"/",real_PathwayID,".pathview.multi.png")
             }else{
               outfile <- paste0(getwd(),"/",real_PathwayID,".pathview.png")

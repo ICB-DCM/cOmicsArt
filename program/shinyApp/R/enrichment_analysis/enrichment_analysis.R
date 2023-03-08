@@ -49,7 +49,7 @@ gene_set_enrichment <- function(
       category = "C2",
       subcategory = "CP:KEGG"
     ) %>% dplyr::select(gs_name, entrez_gene)
-    EnrichmentRes_BIOCARTA <- GSEA(
+    EnrichmentRes_Kegg <- GSEA(
       geneSetChoice,
       TERM2GENE = genesets4ea,
       verbose = FALSE,
@@ -494,7 +494,7 @@ gene_set_enrichment <- function(
       pvalueCutoff = 1
     )
   }
-
+  browser()
 
 
   return(list(
@@ -504,7 +504,7 @@ gene_set_enrichment <- function(
     "EnrichmentRes_CGP" = EnrichmentRes_CGP,
     "EnrichmentRes_CP" = EnrichmentRes_CP,
     "EnrichmentRes_BIOCARTA" = EnrichmentRes_BIOCARTA,
-    "EnrichmentRes_Kegg" = EnrichmentRes_Kegg,
+    "EnrichmentRes_KEGG" = EnrichmentRes_Kegg,
     "EnrichmentRes_PID" = EnrichmentRes_PID,
     "EnrichmentRes_REACTOME" = EnrichmentRes_REACTOME,
     "EnrichmentRes_WIKIPATHWAYS" = EnrichmentRes_WIKIPATHWAYS,
