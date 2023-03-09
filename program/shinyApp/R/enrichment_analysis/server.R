@@ -707,6 +707,8 @@ enrichment_analysis_Server <- function(id, omic_type){
             title = "No annotation type detected",
             footer = NULL,
             p("No valid annotation type was detected in your row annotation. Please indicate the type of annotation with which you uploaded your genes."),
+            p("Therefore, what kind of IDs are the following? (Excerpt from your data)"),
+            p(paste0(head(rownames(processedData_all$Transcriptomics$annotation_rows)),collapse = ", ")),
             selectInput(
               inputId = ns("AnnotationSelection"),
               label = "Which annotation are you using?",
