@@ -195,32 +195,11 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
 }
 
 
-test_one_gene <- function(data, test_function, samples_selected, contrasts){
-  # written for sapply function. Gets the row of the data and performs the test
-  # data: row of the data
-  # test_method: test method to use
-  # alpha: significance level
-  # return: p-value
-  data <- t(data)
-  # rename colname to "value"
-  colnames(data) <- "value"
-  # add a column with the group
-  data$group <- samples_selected$combination
-  # perform the test
-  res_to_return <- test_function(
-     data = data,
-     formula = value ~ group,
-     comparisons = contrasts
-  )
-  res_to_return
-}
-
-
 significance_analysis <- function(
-  df, samples, contrasts, method, alpha, correction, contrast_level
+  df, samples, contrasts, method, correction, contrast_level
 ){
   # perform significance analysis
-  # df: dataframe with the data
+  # df: dataframe or matrix with the data
   # samples: dataframe with the samples
   # contrasts: list of contrasts to compare
   # method: method to use for the test

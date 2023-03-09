@@ -1,4 +1,4 @@
-significance_analysis_server <- function(id, preprocess_method, omic_type){
+significance_analysis_server <- function(id, data, params, updates){
   moduleServer(
     id,
     function(input,output,session){
@@ -8,17 +8,23 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         info_text = "Press 'Get significance analysis' to start!",
         dds = NULL,
         scenario = 0,
-        comparisons_for_plot = "all"
+        comparisons_for_plot = "all",
+        current_updates = 0,
+        coldata = NULL
       )
       ns <- session$ns
       ## Sidebar UI section
       # UI to choose type of comparison
       output$type_of_comparison_ui <- renderUI({
         req(data_input_shiny())
+        if(is.null(sig_ana_reactive$coldata)){
+          sig_ana_reactive$coldata <- colData(data$data)
+        }
+        req(sig_ana_reactive$coldata)
         selectInput(
           inputId = ns("sample_annotation_types_cmp"),
           label = "Choose groups to compare",
-          choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
+          choices = c(colnames(sig_ana_reactive$coldata)),
           multiple = F ,
           selected = NULL
         )
@@ -26,7 +32,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
       # UI to choose comparisons
       output$chooseComparisons_ui <- renderUI({
         req(input$sample_annotation_types_cmp)
-        annoToSelect <- selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp]
+        annoToSelect <- sig_ana_reactive$coldata[,input$sample_annotation_types_cmp]
         if(length(annoToSelect) == length(unique(annoToSelect))){
           # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
           helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
@@ -50,7 +56,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
       })
       # UI to choose test method
       output$chooseTest_ui <- renderUI({
-        if(preprocess_method() == "vst_DESeq"){
+        if(params$PreProcessing_Procedure == "vst_DESeq"){
           # TODO: can we have a box that looks the same as an input?
           renderText(
             expr = "DESeq is using a Wald test statistic.\nWe are using the same here.",
@@ -121,7 +127,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
       output$chooseGenesToLookAt_ui <- renderUI({
         req(input$comparisons_to_visualize)
         # choices dependent on preprocess_method
-        if(preprocess_method() == "vst_DESeq"){
+        if(params$PreProcessing_Procedure == "vst_DESeq"){
             choices <- c(
               "Significant",
               "Upregulated",
@@ -148,6 +154,12 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           sig_ana_reactive$info_text
         )
       )
+      # refresh the UI/data if needed
+      observeEvent(input$refreshUI, {
+        data <- update_data(data, updates, sig_ana_reactive$current_updates)
+        sig_ana_reactive$current_updates <- updates()
+        sig_ana_reactive$coldata <- colData(data$data)
+      })
       # Analysis initial info
       observeEvent(input$significanceGo,{
         # shinyjs::html(id = 'significance_analysis_info', "Analysis is running...")
@@ -162,6 +174,10 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           significance_tabs_to_delete <<- NULL
         }
         print("Start the Significance Analysis")
+        # update the data if needed
+        data <- update_data(data, updates, sig_ana_reactive$current_updates)
+        sig_ana_reactive$current_updates <- updates()
+        sig_ana_reactive$coldata <- colData(data$data)
         # delete old panels
         if(!is.null(significance_tabs_to_delete)){
           for (i in 1:length(significance_tabs_to_delete)) {
@@ -172,25 +188,8 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           }
         }
         # if preproccesing method was DESeq2, then use DESeq2 for testing
-        if(preprocess_method() == "vst_DESeq"){  # TODO: rename method to "DESeq"
-          print("Create DESeq object")
-          processedData <- selectedData()[[omic_type()]]$Matrix
-          original_length <- length(rownames(processedData))
-          # remove NA rows  # TODO: make it an option how to handle this (VA)
-          processedData <- processedData[complete.cases(processedData),]
-          print(input$sample_annotation_types_cmp)
-          design_formula <- paste("~", input$sample_annotation_types_cmp)
-          # create DESeq object
-          dds <- DESeq2::DESeqDataSetFromMatrix(
-              countData = processedData,
-              colData = selectedData()[[omic_type()]]$sample_table,
-              design = as.formula(design_formula)
-          )
-          # remove lowly expressed genes
-          dds <- dds[rowSums(counts(dds)) > 10,]  # TODO: make this a parameter (VA)
-          # get the result
-          dds <- DESeq2::DESeq(dds)  # TODO: LFC shrinkage?
-          sig_ana_reactive$dds <- dds
+        if(params$PreProcessing_Procedure == "vst_DESeq"){  # TODO: rename method to "DESeq"
+          dds <- data$DESeq_obj
 
           # rewind the comparisons again
           newList <- input$comparisons
@@ -227,20 +226,16 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
           names(contrasts) <- input$comparisons
           # get names of columns we want to choose:
           index_comparisons <- which(
-            selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp] %in% contrasts_all
+            colData(data$data)[,input$sample_annotation_types_cmp] %in% contrasts_all
           )
-          samples_selected <- selectedData_processed()[[omic_type()]]$sample_table[index_comparisons,]
+          samples_selected <- colData(data$data)[index_comparisons,]
           # get the data
-          data_selected <- selectedData_processed()[[omic_type()]]$Matrix[,index_comparisons]
-          df_selected <- data.frame(
-            data_selected
-          )
+          data_selected <- as.matrix(assay(data$data))[,index_comparisons]
           sig_results <<- significance_analysis(
-            df = df_selected,
-            samples = samples_selected,
+            df = as.data.frame(data_selected),
+            samples = as.data.frame(samples_selected),
             contrasts = contrasts,
             method = input$test_method,
-            alpha = input$significance_level,
             correction = PADJUST_METHOD[[input$test_correction]],
             contrast_level = input$sample_annotation_types_cmp
           )
@@ -254,7 +249,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
             contrast = contrasts[[i]],
             alpha = input$significance_level,
             ns = ns,
-            preprocess_method = preprocess_method()
+            preprocess_method = params$PreProcessing_Procedure
           )
           significance_tabs_to_delete[[i]] <<- input$comparisons[i]
         }
@@ -299,7 +294,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         }
         sig_ana_reactive$info_text <- "Analysis is Done!"
         for (i in 1:length(input$comparisons_to_visualize)) {
-          if(preprocess_method() == "vst_DESeq"){
+          if(params$PreProcessing_Procedure == "vst_DESeq"){
             to_add_tmp <- rownames(
               filter_significant_result(
                 result = sig_results[[input$comparisons_to_visualize[i]]],
@@ -309,7 +304,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
             )
             # only add if the result is not empty
             if(length(to_add_tmp) > 0){
-              res2plot[input$comparisons_to_visualize[i]] <- to_add_tmp
+              res2plot[[input$comparisons_to_visualize[i]]] <- to_add_tmp
             }
           }else{
             to_add_tmp <- filter_significant_result(
@@ -370,8 +365,8 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
             input = reactiveValuesToList(input),
             res2plot = sig_ana_reactive$results_for_plot
           )
-          if(preprocess_method() == "vst_DESeq"){
-            envList$dds <- sig_ana_reactive$dds
+          if(params$PreProcessing_Procedure == "vst_DESeq"){
+            envList$dds <- data$DESeq_obj
           }
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
@@ -433,11 +428,11 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
         fun_LogIt(message = "### SIGNIFICANCE ANALYSIS")
         fun_LogIt(message = paste(
           "- Significance Analysis was performed on",
-          length(geneSetChoice_tranlsated),
+          length(data$data),
           "entities"
         ))
         # log which tests were performed
-        if(preprocess_method() == "vst_DESeq"){
+        if(params$PreProcessing_Procedure == "vst_DESeq"){
           fun_LogIt(
             message = "- Significance Analysis was performed using DESeq2 pipeline"
           )
@@ -484,7 +479,7 @@ significance_analysis_server <- function(id, preprocess_method, omic_type){
             )
           ))
           # log the top 5 significant genes
-          if(preprocess_method() == "vst_DESeq"){
+          if(params$PreProcessing_Procedure == "vst_DESeq"){
             # get the top 5 significant genes
             top5 <- head(
               sig_results[[input$comparisons_to_visualize[i]]]@result[order(

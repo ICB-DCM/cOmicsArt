@@ -795,13 +795,13 @@ server <- function(input,output,session){
           print(colData(res_tmp$data)[,"DE_SeqFactor"])
           # TODO take more complicated formulas into consideration
 
-          dds <- DESeqDataSetFromMatrix(
+          dds <- DESeq2::DESeqDataSetFromMatrix(
             countData = assay(res_tmp$data),
             colData = colData(res_tmp$data),
             design = ~DE_SeqFactor
             )
           
-          de_seq_result <- DESeq(dds)
+          de_seq_result <- DESeq2::DESeq(dds)
           res_tmp$DESeq_obj <<- de_seq_result
           dds_vst <- vst(
             object = de_seq_result,
@@ -882,6 +882,7 @@ server <- function(input,output,session){
   
   output$Statisitcs_Data <- renderText({
     selectedData_processed()
+    click("SignificanceAnalysis-refreshUI",asis = T)
     paste0("The data has the dimensions of: ",
            paste0(dim(res_tmp$data),collapse = ", "),
            "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
@@ -931,8 +932,9 @@ server <- function(input,output,session){
   # significance analysis ----
   significance_analysis_server(
     id = 'SignificanceAnalysis',
-    preprocess_method = reactive(input$PreProcessing_Procedure),
-    omic_type = reactive(input$omicType) # par_tmp$omic_type
+    data = res_tmp,
+    params = par_tmp,
+    reactive(updating$count)
   )
   # PCA ----
   pca_Server(
