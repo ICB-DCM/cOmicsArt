@@ -49,15 +49,38 @@ translate_genes_oa <- function(annotation_results, input, geneSetChoice, geneSet
       annotation_results$base_annotation <- input$AnnotationSelection
     }
     # translate to entrez id
-    processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- AnnotationDbi::mapIds(
+    #TODO Try and Catch to prevent crash if e.g. wrong things selected
+    tryCatch({
+      processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- AnnotationDbi::mapIds(
       orgDb,
       keys = processedData_all$Transcriptomics$annotation_rows[[annotation_results$base_annotation]],
       column = "ENTREZID",
-      keytype = annotation_results$base_annotation
+      keytype = annotation_results$base_annotation)
+      },
+    error=function(err){
+      message_to_user <- "ERROR - check your Inputs! Is the organism correct? Is the annotation correct? NO RESULTS DUE TO ERROR"
+      warning(message_to_user)
+      show_toast(
+        title = message_to_user,
+        type = "error",
+        position = "top",
+        timerProgressBar = TRUE,
+        width = "30%"
+      )
+      processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- NULL
+      annotation_results$base_annotation <- NULL
+    }
     )
+
     # select only the translations also in the geneSetChoice
     tmp_genes <- geneSetChoice
-    names(tmp_genes) <- processedData_all$Transcriptomics$annotation_rows[rownames(geneSetChoice), "ENTREZID"]
+    # is geneSetChoice ever a dataframe? not too sure
+    if(is.null(rownames(geneSetChoice))){
+      names(tmp_genes) <- processedData_all$Transcriptomics$annotation_rows[geneSetChoice, "ENTREZID"]
+    }else{
+      names(tmp_genes) <- processedData_all$Transcriptomics$annotation_rows[rownames(geneSetChoice), "ENTREZID"]
+    }
+    
     return(tmp_genes)
   }
   # translation from ensemble to entrez id in case geneSet2Enrich is ProvidedGeneSet
