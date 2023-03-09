@@ -275,12 +275,16 @@ significance_analysis <- function(
       grp2 = idy
     )
     # create a dataframe with the results
+   
     res <- data.frame(
       gene = rownames(df),
       pvalue = res,
       padj = p.adjust(res, method = correction),
       stringsAsFactors = FALSE
     )
+    # add data from rowData to put out more information
+    res = cbind(res,as.data.frame(rowData(res_tmp$data_original))[rownames(res),])
+    
     sig_results[[names(contrasts)[comp_name]]] <- res
     comp_name <- comp_name + 1
   }
