@@ -748,12 +748,15 @@ server <- function(input,output,session){
 
 ## Do preprocessing ----  
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
+  #observeEvent(input$Do_preprocessing,{
+    print("Do Preprocessing")
     print(selectedData())
+    addWarning <- ""
     par_tmp['PreProcessing_Procedure'] <<- input$PreProcessing_Procedure
     processedData_all <- tmp_data_selected
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
-    res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]
+    res_tmp$data <<- res_tmp$data[rownames(tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]),]
     
     if(par_tmp$omic_type == "Transcriptomics"){
       print("Also remove anything of rowCount <=10")
@@ -769,7 +772,9 @@ server <- function(input,output,session){
     
     print(dim(res_tmp$data))
     # explicitly set rownames to avoid any errors.
-    assay(res_tmp$data) <<- DataFrame(assay(res_tmp$data), row.names = rownames(res_tmp$data))
+    # new object Created for res_tmp
+    res_tmp$data <<- res_tmp$data[rownames(res_tmp$data),]
+
     
     if(input$PreProcessing_Procedure != "none"){
       print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
@@ -782,7 +787,7 @@ server <- function(input,output,session){
           )
           )
           )
-        assay(res_tmp$data) <<- DataFrame(processedData)
+        assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "vst_DESeq"){
         if(par_tmp$omic_type == "Transcriptomics"){
@@ -808,11 +813,9 @@ server <- function(input,output,session){
             blind = TRUE
             )
 
-          assay(res_tmp$data) <<- DataFrame(assay(dds_vst))
+          assay(res_tmp$data) <<- as.data.frame(assay(dds_vst))
         }else{
-          output$Statisitcs_Data=renderText({
-            "<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"
-            })
+          addWarning <- "<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"
         }
       }
       if(input$PreProcessing_Procedure == "Scaling_0_1"){
@@ -821,31 +824,28 @@ server <- function(input,output,session){
             (x - min(x))/(max(x) - min(x))
             })
           ))
-        assay(res_tmp$data) <<- DataFrame(processedData)
+        assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "ln"){
         processedData <- as.data.frame(log(
           as.data.frame(assay(res_tmp$data))
           ))
-        assay(res_tmp$data) <<- DataFrame(processedData)
+        assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "log10"){
         processedData <- as.data.frame(assay(res_tmp$data))
         if(any(processedData<0)){
-          output$Statisitcs_Data <- renderText({
-            "Negative entries, cannot take log10!!"
-            })
-          req(FALSE)
+          addWarning <- "<font color=\"#FF0000\"><b>Negative entries, cannot take log10!!</b></font>"
         }
         if(any(processedData==0)){
           processedData <- as.data.frame(log10(
-            processedData+1)
+            processedData + 1)
             )
         }
         processedData <- as.data.frame(log10(
-          processedData+1)
+          processedData + 1)
           )
-        assay(res_tmp$data) <<- DataFrame(processedData)
+        assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "pareto_scaling"){
         processedData <- as.data.frame(assay(res_tmp$data))
@@ -856,12 +856,18 @@ server <- function(input,output,session){
           apply(centered, 1, function(x){x/sqrt(sd(x))})
           ))
 
-        assay(res_tmp$data) <<- DataFrame(pareto.matrix)
+        assay(res_tmp$data) <<- as.data.frame(pareto.matrix)
       }
     }
     
     if(any(is.na(assay(res_tmp$data)))){
       print("This might be problem due to mismatched Annotation Data?!")
+      nrow_before = nrow(assay(res_tmp$data))
+      nrow_after = nrow(res_tmp$data[complete.cases(assay(res_tmp$data)),])
+      addWarning <- paste0("<font color=\"#FF0000\"><b>There were NA's after pre-processing, any row containg such was completly removed! (before/after): ",nrow_before,"/",nrow_after,"</b></font>")
+      if(!(nrow_after > 0)){
+        addWarning <- paste0(addWarning, "<br> <font color=\"#FF0000\"><b> There is nothing left, choose different pre-processing other-wise App will crash!</b></font>")
+      }
       res_tmp$data <<- res_tmp$data[complete.cases(assay(res_tmp$data)),]
     }
 
@@ -875,11 +881,23 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
     showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
 
+    output$Statisitcs_Data <- renderText({
+      #selectedData_processed()
+      paste0(addWarning,
+             "The data has the dimensions of: ",
+             paste0(dim(res_tmp$data),collapse = ", "),
+             "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
+             "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
+             "<br","See help for details",
+             "<br>",ifelse(any(as.data.frame(assay(res_tmp$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
+    })
+    
     # Count up updating
     updating$count <- updating$count + 1
     return("Pre-Processing successfully")
   })
   
+
   output$Statisitcs_Data <- renderText({
     selectedData_processed()
     click("SignificanceAnalysis-refreshUI",asis = T)
@@ -890,9 +908,11 @@ server <- function(input,output,session){
            "<br","See help for details",
            "<br>",ifelse(any(as.data.frame(assay(res_tmp$data))<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
+
   
 ## Log preprocessing ----
   observeEvent(input$Do_preprocessing,{
+    print(selectedData_processed())
     if(par_tmp$omic_type == "Transcriptomics"){
       tmp_logMessage <- "Remove anything which row Count <= 10"
     }else if(par_tmp$omic_type == "Metabolomics"){
