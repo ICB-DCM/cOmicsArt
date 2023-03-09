@@ -314,7 +314,7 @@ significance_analysis_server <- function(id, data, params, updates){
             )$gene
             # only add if the result is not empty
             if(length(to_add_tmp) > 0){
-              res2plot[input$comparisons_to_visualize[i]] <- to_add_tmp
+              res2plot[[input$comparisons_to_visualize[i]]] <- to_add_tmp
             }
           }
         }
