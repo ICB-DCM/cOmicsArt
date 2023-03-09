@@ -1,110 +1,126 @@
-single_gene_visualisation_server <- function(id,omicType){
+single_gene_visualisation_server <- function(id, data, params, row_select, updates){
   moduleServer(
     id,
     function(input,output,session){
       ns <- session$ns
-      ## Ui section ----
-      output$type_of_data_gene_ui <- renderUI({
-        req(data_input_shiny())
-        selectInput(
-          inputId = ns("type_of_data_gene"),
-          label = "Choose Data to use (in case of DESeq- vst normalized counts are used)",
-          choices = c("raw","preprocessed"),
-          multiple = F ,
-          selected = "preprocessed"
-        )
-      })
-      output$accross_condition_ui <- renderUI({
-        req(data_input_shiny())
-        selectInput(
-          inputId = ns("accross_condition"),
-          label = "Choose the groups to show the data for",
-          choices = unique(colnames(data_input_shiny()[[omicType()]]$sample_table)),
-          multiple = F
-        )
-      })
-      output$type_of_visualitsation_ui <- renderUI({
-        req(data_input_shiny())
-        selectInput(
-          inputId = ns("type_of_visualitsation"),
-          label = "Choose the style of visualisation",
-          choices = c("boxplots","boxplots_withTesting"),
-          multiple = F ,
-          selected = "boxplots_withTesting"
-        )
-      })
-      output$Select_GeneAnno_ui <- renderUI({
-        req(data_input_shiny())
-        selectInput(
-          inputId = ns("Select_GeneAnno"),
-          label = "Select Annotation you want to select an entitie from",
-          choices = colnames(data_input_shiny()[[omicType()]]$annotation_rows), # for TESTING restricting to top 10
-          multiple = F 
-        )
-      })
-      output$Select_Gene_ui <- renderUI({
-        req(data_input_shiny())
-        req(input$Select_GeneAnno)
-        shinyWidgets::virtualSelectInput(
-          search = T,
-          showSelectedOptionsFirst = T,
-          inputId = ns("Select_Gene"),
-          label = "Select the Gene from the list",
-          choices = unique(data_input_shiny()[[omicType()]]$annotation_rows[,input$Select_GeneAnno]),
-          multiple = F 
-        )
-      })
-      
-      output$chooseComparisons_ui <- renderUI({
-        req(selectedData_processed())
-        req(input$Select_GeneAnno)
-        req(input$type_of_data_gene)
-        if(input$type_of_data_gene == "raw"){
-          annoToSelect=c(data_input_shiny()[[omicType()]]$sample_table[,input$accross_condition])
-        }else{
-          annoToSelect=c(selectedData_processed()[[omicType()]]$sample_table[,input$accross_condition])
-        }
-        
-        if(length(annoToSelect) == length(unique(annoToSelect))){
-          # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
-          helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
-        }else{
-          my_comparisons <- t(combn(
-            x = unique(annoToSelect),
-            m = 2
-            )
-            )
-          xy.list <- vector("list", nrow(my_comparisons))
-          for (i in 1:nrow(my_comparisons)) {
-            xy.list[[i]] <- c(
-              as.character(my_comparisons[i,1]),
-              as.character(my_comparisons[i,2])
-              )
-          }
+      # Observe the button will be clicked upon preprocessing
+      observeEvent(input$refreshSigGene,{
+        print("update SingleGeneVis")
+        ## Ui section ----
+        output$type_of_data_gene_ui <- renderUI({
+          req(data_input_shiny())
+          selectInput(
+            inputId = ns("type_of_data_gene"),
+            label = "Choose Data to use (in case of DESeq- vst normalized counts are used)",
+            choices = c("raw","preprocessed"),
+            multiple = F ,
+            selected = "preprocessed"
+          )
+        })
+        output$accross_condition_ui <- renderUI({
+          req(data_input_shiny())
+          selectInput(
+            inputId = ns("accross_condition"),
+            label = "Choose the groups to show the data for",
+            choices = unique(colnames(colData(data$data))),
+            multiple = F
+          )
+        })
+        output$type_of_visualitsation_ui <- renderUI({
+          req(data_input_shiny())
+          selectInput(
+            inputId = ns("type_of_visualitsation"),
+            label = "Choose the style of visualisation",
+            choices = c("boxplots","boxplots_withTesting"),
+            multiple = F ,
+            selected = "boxplots_withTesting"
+          )
+        })
+        output$Select_GeneAnno_ui <- renderUI({
+          req(data_input_shiny())
+          selectInput(
+            inputId = ns("Select_GeneAnno"),
+            label = "Select Annotation you want to select an entitie from",
+            choices = colnames(rowData(data$data)),
+            multiple = F 
+          )
+        })
+        output$Select_Gene_ui <- renderUI({
+          req(data_input_shiny())
+          req(input$Select_GeneAnno)
           shinyWidgets::virtualSelectInput(
             search = T,
             showSelectedOptionsFirst = T,
-            inputId = ns("chooseComparisons"),
-            label = "Select your desired comparisons",
-            choices = sapply(xy.list, paste, collapse=":"),
-            multiple = T,
-            selected = sapply(xy.list, paste, collapse=":")[1]
+            inputId = ns("Select_Gene"),
+            label = "Select the Gene from the list",
+            choices = unique(rowData(data$data)[,input$Select_GeneAnno]),
+            multiple = F 
           )
-        }
+        })
         
+        output$chooseComparisons_ui <- renderUI({
+          req(selectedData_processed())
+          req(input$Select_GeneAnno)
+          req(input$type_of_data_gene)
+          if(input$type_of_data_gene == "raw"){
+            annoToSelect=c(colData(data$data)[,input$accross_condition])
+          }else{
+            annoToSelect=c(colData(data$data)[,input$accross_condition])
+          }
+          
+          if(length(annoToSelect) == length(unique(annoToSelect))){
+            # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
+            helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
+          }else{
+            my_comparisons <- t(combn(
+              x = unique(annoToSelect),
+              m = 2
+            )
+            )
+            xy.list <- vector("list", nrow(my_comparisons))
+            for (i in 1:nrow(my_comparisons)) {
+              xy.list[[i]] <- c(
+                as.character(my_comparisons[i,1]),
+                as.character(my_comparisons[i,2])
+              )
+            }
+            shinyWidgets::virtualSelectInput(
+              search = T,
+              showSelectedOptionsFirst = T,
+              inputId = ns("chooseComparisons"),
+              label = "Select your desired comparisons",
+              choices = sapply(xy.list, paste, collapse=":"),
+              multiple = T,
+              selected = sapply(xy.list, paste, collapse=":")[1]
+            )
+          }
+        })
+        
+
       })
       
-      observeEvent(input$singleGeneGo,{
+      toListen <- reactive({
+        list(
+          input$singleGeneGo,
+          input$chooseComparisons
+        )
+      })
+      
+
+
+      # Visualize single Gene ----
+      observeEvent(toListen(),{
+        req(input$singleGeneGo>0)
         print(input$Select_Gene)
         GeneDataFlag = F
         # Select data for the gene based on gene Selection & group Selection
         if(input$type_of_data_gene == "preprocessed"){
-          if(input$Select_Gene %in% selectedData_processed()[[omicType()]]$annotation_rows[,input$Select_GeneAnno]){
+          if(input$Select_Gene %in% rowData(data$data)[,input$Select_GeneAnno]){
             #get IDX to data
-            idx_selected <- which(input$Select_Gene == selectedData_processed()[[omicType()]]$annotation_rows[,input$Select_GeneAnno])
-            GeneData <- as.data.frame(t(selectedData_processed()[[omicType()]]$Matrix[idx_selected,,drop=F]))
+            idx_selected <- which(input$Select_Gene == rowData(data$data)[,input$Select_GeneAnno])
+            GeneData <- as.data.frame(t(as.data.frame(assay(data$data))[idx_selected,,drop=F]))
             print(input$accross_condition)
-            GeneData$anno <- selectedData_processed()[[omicType()]]$sample_table[,input$accross_condition]
+            GeneData$anno <- colData(data$data)[,input$accross_condition]
             GeneDataFlag <- T
           }else{
             print("different Gene")
@@ -113,12 +129,12 @@ single_gene_visualisation_server <- function(id,omicType){
           
           
         }else if(input$type_of_data_gene == "raw" ){
-          if(input$Select_Gene %in% data_input_shiny()[[omicType()]]$annotation_rows[,input$Select_GeneAnno]){
+          if(input$Select_Gene %in% rowData(data$data_original)[,input$Select_GeneAnno]){
             #get IDX to data
-            idx_selected <- which(input$Select_Gene == data_input_shiny()[[omicType()]]$annotation_rows[,input$Select_GeneAnno])
-            GeneData <- as.data.frame(t(data_input_shiny()[[omicType()]]$Matrix[idx_selected,,drop=F]))
-            GeneData$anno <- data_input_shiny()[[omicType()]]$sample_table[,input$accross_condition]
-            print(dim(data_input_shiny()[[omicType()]]$Matrix))
+            idx_selected <- which(input$Select_Gene == rowData(data$data_original)[,input$Select_GeneAnno])
+            GeneData <- as.data.frame(t(assay(data$data_original)[idx_selected,,drop=F]))
+            GeneData$anno <- colData(data$data_original)[,input$accross_condition]
+            #print(data$data_original)
             GeneDataFlag <- T
           }else{
             GeneDataFlag <- F
@@ -139,8 +155,9 @@ single_gene_visualisation_server <- function(id,omicType){
             GeneData, 
             aes(
               x=anno,
-              y=GeneData[,colnames(GeneData)[-ncol(GeneData)]]
-              ,fill=anno)
+              #y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],
+              y=GeneData[,-ncol(GeneData)],
+              fill=anno)
             ) +
             geom_boxplot() +
             scale_fill_brewer(palette="RdBu") +
@@ -160,7 +177,7 @@ single_gene_visualisation_server <- function(id,omicType){
               scenario <- 12
               P_boxplots <- P_boxplots +
                 geom_hline(
-                  yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), 
+                  yintercept = mean(GeneData[,-ncol(GeneData)]), 
                   linetype = 2) + # Add horizontal line at base mean
                 #stat_compare_means(method = "anova")+        # Add global annova p-value
                 stat_compare_means(
@@ -186,7 +203,7 @@ single_gene_visualisation_server <- function(id,omicType){
           customTitle_boxplot <- paste0(
             "Boxplot_",
             input$type_of_data_gene,
-            "_data_",colnames(GeneData)[-ncol(GeneData)]
+            "_data_",paste0(input$Select_Gene,collapse = ",")
             )
           global_Vars$SingleEnt_customTitle_boxplot <- customTitle_boxplot
           # Longer names causes issues for saving 
