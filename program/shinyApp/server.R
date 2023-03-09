@@ -882,6 +882,7 @@ server <- function(input,output,session){
   
   output$Statisitcs_Data <- renderText({
     selectedData_processed()
+    click("SignificanceAnalysis-refreshUI",asis = T)
     paste0("The data has the dimensions of: ",
            paste0(dim(res_tmp$data),collapse = ", "),
            "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
