@@ -205,17 +205,26 @@ single_gene_visualisation_server <- function(id, data, params, row_select, updat
             input$type_of_data_gene,
             "_data_",paste0(input$Select_Gene,collapse = ",")
             )
-          global_Vars$SingleEnt_customTitle_boxplot <- customTitle_boxplot
+          
+          SingleEnt_customTitle_boxplot <- customTitle_boxplot
           # Longer names causes issues for saving 
-          if(nchar(global_Vars$SingleEnt_customTitle_boxplot) >= 250){
-            global_Vars$SingleEnt_customTitle_boxplot <- "SingleGeneVis"
+          if(nchar(SingleEnt_customTitle_boxplot) >= 250){
+            SingleEnt_customTitle_boxplot <- "SingleGeneVis"
           }
-          global_Vars$SingleEnt_P_boxplots <- P_boxplots
-          global_Vars$SingleEnt_Select_Gene <- input$Select_Gene
-          global_Vars$SingleEnt_type_of_data_gene <- input$type_of_data_gene
-          global_Vars$SingleEnt_accross_condition <- input$accross_condition
-          global_Vars$SingleEnt_testMethod <- testMethod
-          global_Vars$SingleEnt_GeneData_anno <- GeneData$anno
+          
+          # Where to save the plot (needed currently to be global, to be able to be saved)
+          res_tmp[["SingleEntVis"]] <<- P_boxplots
+          #SingleEnt_P_boxplots <- P_boxplots
+          
+          # DO not know if necassary to track in par_tmp (if not global var needed)
+          par_tmp[["SingleEntVis"]] <<- list(
+            SingleEnt_customTitle_boxplot = SingleEnt_customTitle_boxplot,
+            SingleEnt_Select_Gene = input$Select_Gene,
+            SingleEnt_type_of_data_gene = input$type_of_data_gene,
+            SingleEnt_accross_condition = input$accross_condition,
+            SingleEnt_testMethod = testMethod,
+            SingleEnt_GeneData_anno = GeneData$anno
+          )
         }else{
           customTitle_boxplot <- "NoBoxplot"
         }
@@ -255,21 +264,34 @@ single_gene_visualisation_server <- function(id, data, params, row_select, updat
         
         output$SavePlot_singleGene <- downloadHandler(
           filename = function() { 
-            paste(global_Vars$SingleEnt_customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep="") 
+            paste(
+              par_tmp$SingleEntVis$SingleEnt_customTitle_boxplot, 
+              " ",
+              Sys.time(),
+              input$file_ext_singleGene,sep=""
+              ) 
             },
           
           content = function(file){
             ggsave(
               file = file,
-              plot = P_boxplots,
+              plot = res_tmp$SingleEntVis,
               device = gsub("\\.","",input$file_ext_singleGene)
               )
             
             on.exit({
-              tmp_filename = paste0(getwd(),"/www/",paste(global_Vars$SingleEnt_customTitle_boxplot, " ",Sys.time(),input$file_ext_singleGene,sep=""))
+              tmp_filename = paste0(
+                getwd(),
+                "/www/",
+                paste(
+                  par_tmp$SingleEntVis$SingleEnt_customTitle_boxplot, 
+                  " ",
+                  Sys.time(),
+                  input$file_ext_singleGene,sep="")
+                )
               ggsave(
                 filename = tmp_filename,
-                plot = P_boxplots,
+                plot = res_tmp$SingleEntVis,
                 device = gsub("\\.","",input$file_ext_singleGene)
                 )
               fun_LogIt("## Single Entitie")
@@ -292,19 +314,41 @@ single_gene_visualisation_server <- function(id, data, params, row_select, updat
       
       ## download only to report
       observeEvent(input$only2Report_SingleEntities,{
+        browser()
         notificationID <- showNotification("Saving...",duration = 0)
-        tmp_filename <- paste0(getwd(),"/www/",paste(global_Vars$SingleEnt_customTitle_boxplot, " ",Sys.time(),".png",sep=""))
+        tmp_filename <- paste0(
+          getwd(),
+          "/www/",
+          paste(
+            par_tmp$SingleEntVis$SingleEnt_customTitle_boxplot, 
+            " ",
+            Sys.time(),
+            ".png",
+            sep="")
+          )
         ggsave(
           filename = tmp_filename,
-          plot = global_Vars$SingleEnt_P_boxplots,
+          plot = res_tmp$SingleEntVis,
           device = "png"
           )
         fun_LogIt(message = "## Single Entitie")
-        fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",global_Vars$SingleEnt_Select_Gene))
-        fun_LogIt(message = paste0("**Single Entitie** - Values shown are: ",global_Vars$SingleEnt_type_of_data_gene, " data input"))
-        fun_LogIt(message = paste0("**Single Entitie** - Values are grouped for all levels within: ",global_Vars$SingleEnt_accross_condition, " (",paste0(levels(global_Vars$SingleEnt_GeneData_anno),collapse = ";"),")"))
-        fun_LogIt(message = paste0("**Single Entitie** - Test for differences: ",global_Vars$SingleEnt_testMethod))
-        if(length(levels(global_Vars$SingleEnt_GeneData_anno))>2){
+        fun_LogIt(message = paste0(
+          "**Single Entitie** - The following single entitie was plotted: ",
+          par_tmp$SingleEntVis$SingleEnt_Select_Gene))
+        fun_LogIt(message = paste0(
+          "**Single Entitie** - Values shown are: ",
+          par_tmp$SingleEntVis$SingleEnt_type_of_data_gene, " data input"))
+        fun_LogIt(message = paste0(
+          "**Single Entitie** - Values are grouped for all levels within: ",
+          par_tmp$SingleEntVis$SingleEnt_accross_condition, 
+          " (",
+          paste0(levels(par_tmp$SingleEntVis$SingleEnt_GeneData_anno),collapse = ";")
+          ,")"))
+        fun_LogIt(message = paste0(
+          "**Single Entitie** - Test for differences: ",
+          par_tmp$SingleEntVis$SingleEnt_testMethod))
+        
+        if(length(levels(par_tmp$SingleEntVis$SingleEnt_GeneData_anno))>2){
           fun_LogIt(
             message = paste0("**Single Entitie** - ANOVA performed, reference group is the overall mean")
             )
