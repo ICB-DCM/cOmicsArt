@@ -11,7 +11,8 @@ PADJUST_METHOD <<- list(
   "Benjamini Yekutieli" = "BY",
   "Holm" = "holm",
   "Hommel" = "hommel",
-  "Hochberg" = "hochberg"
+  "Hochberg" = "hochberg",
+  "FDR" = "BH"
 )
 
 CODE_DOWNLOAD_PREFACE <<- "# ShinyOmics R Code Download\n# Load necassary packages (if errors please install respective packages)

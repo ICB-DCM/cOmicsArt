@@ -91,7 +91,7 @@ significance_analysis_server <- function(id, data, params, updates){
             label = "Test correction",
             choices = c(
               "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
-              "Holm", "Hommel", "Hochberg"
+              "Holm", "Hommel", "Hochberg", "FDR"
             ),
             selected = "Benjamini-Hochberg"
         )
