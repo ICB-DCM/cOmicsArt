@@ -6,8 +6,9 @@ over_representation_analysis <- function(
   # Overrepresentation analysis
   # no translation needed as already done before. Still asign for streamlined global variable usage
   geneSetChoice_tranlsated <<- geneSetChoice
-  # I think this is optimized for GSEA for ORA the follwoing is needed:
+  # I think this is optimized for GSEA for ORA the following is needed:
   geneListToUse <- na.omit(names(geneSetChoice_tranlsated))
+  
 
   if(!isTruthy(input$UniverseOfGene)){
     universeSelected_tranlsated <- NULL

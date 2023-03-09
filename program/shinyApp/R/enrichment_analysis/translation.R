@@ -58,7 +58,6 @@ translate_genes_oa <- function(annotation_results, input, geneSetChoice, geneSet
       keytype = annotation_results$base_annotation)
       },
     error=function(err){
-      browser()
       message_to_user <- "ERROR - check your Inputs! Is the organism correct? Is the annotation correct? NO RESULTS DUE TO ERROR"
       warning(message_to_user)
       show_toast(
