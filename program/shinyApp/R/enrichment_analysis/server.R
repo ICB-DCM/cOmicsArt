@@ -634,7 +634,7 @@ enrichment_analysis_Server <- function(id, omic_type){
       })
       ## Do enrichment ----
       geneSetChoice <- reactive({
-        if(isTruthy(input$GeneSet2Enrich)){
+        if(isTruthy(input$GeneSet2Enrich) & input$ORA_or_GSE == "OverRepresentation_Analysis"){
           if(input$GeneSet2Enrich == "DE_Genes"){
             # atm this is not done
             geneSetChoice_tmp <- DE_genelist()
