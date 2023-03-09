@@ -882,7 +882,6 @@ server <- function(input,output,session){
   
   output$Statisitcs_Data <- renderText({
     selectedData_processed()
-    browser()
     click("SignificanceAnalysis-refreshUI",asis = T)
     paste0("The data has the dimensions of: ",
            paste0(dim(res_tmp$data),collapse = ", "),
