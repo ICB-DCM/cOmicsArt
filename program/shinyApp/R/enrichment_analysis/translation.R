@@ -43,7 +43,6 @@ translate_genes_oa <- function(annotation_results, input, geneSetChoice, geneSet
   }
   # translation in case genSet2enrich is heatmap_genes
   if(geneSet2Enrich == "heatmap_genes"){
-    browser()
     if(annotation_results$no_ann){
       # copy rownames with corresponding annotation as columnname
       processedData_all$Transcriptomics$annotation_rows[input$AnnotationSelection] <<- rownames(processedData_all$Transcriptomics$annotation_rows)
@@ -51,12 +50,29 @@ translate_genes_oa <- function(annotation_results, input, geneSetChoice, geneSet
     }
     # translate to entrez id
     #TODO Try and Catch to prevent crash if e.g. wrong things selected
-    processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- AnnotationDbi::mapIds(
+    tryCatch({
+      processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- AnnotationDbi::mapIds(
       orgDb,
       keys = processedData_all$Transcriptomics$annotation_rows[[annotation_results$base_annotation]],
       column = "ENTREZID",
-      keytype = annotation_results$base_annotation
+      keytype = annotation_results$base_annotation)
+      },
+    error=function(err){
+      browser()
+      message_to_user <- "ERROR - check your Inputs! Is the organism correct? Is the annotation correct? NO RESULTS DUE TO ERROR"
+      warning(message_to_user)
+      show_toast(
+        title = message_to_user,
+        type = "error",
+        position = "top",
+        timerProgressBar = TRUE,
+        width = "30%"
+      )
+      processedData_all$Transcriptomics$annotation_rows$ENTREZID <<- NULL
+      annotation_results$base_annotation <- NULL
+    }
     )
+
     # select only the translations also in the geneSetChoice
     tmp_genes <- geneSetChoice
     # is geneSetChoice ever a dataframe? not too sure
