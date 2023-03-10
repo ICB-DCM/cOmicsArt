@@ -792,18 +792,15 @@ server <- function(input,output,session){
       if(input$PreProcessing_Procedure == "vst_DESeq"){
         if(par_tmp$omic_type == "Transcriptomics"){
           print(input$DESeq_formula)
+          design_formula <- paste("~", input$DESeq_formula)
           # on purpose local
-          colData(res_tmp$data)[,"DE_SeqFactor"] <- as.factor(
-            colData(res_tmp$data)[,input$DESeq_formula]
-            )
-          
-          print(colData(res_tmp$data)[,"DE_SeqFactor"])
+          print(colData(res_tmp$data)[,input$DESeq_formula])
           # TODO take more complicated formulas into consideration
 
           dds <- DESeq2::DESeqDataSetFromMatrix(
             countData = assay(res_tmp$data),
             colData = colData(res_tmp$data),
-            design = ~DE_SeqFactor
+            design = as.formula(design_formula)
             )
           
           de_seq_result <- DESeq2::DESeq(dds)
