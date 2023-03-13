@@ -164,8 +164,10 @@ server <- function(input,output,session){
    filename = function() {
       paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep = "")},
     content = function(file){
+      browser()
+      # TODO Q: What to save here in future?
       saveRDS(
-        object = data_input_shiny(),
+        object = res_tmp$data_original,
         file = file
         )
     }
@@ -358,6 +360,7 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
+    browser()
     if(!isTruthy(input$data_preDone) & !FLAG_TEST_DATA_SELECTED()){
       # Include here, that the sample anno can be replaced by metadatasheet
       # potentially this will be extended to all of the fields
@@ -365,6 +368,7 @@ server <- function(input,output,session){
       
       if(isTruthy(input$data_sample_anno1)){
         data_input[[input$omicType]] <- list(
+          #TODO needs a change?
           type = as.character(input$omicType),
           Matrix = read.csv(
             file = input$data_matrix1$datapath,
@@ -429,7 +433,7 @@ server <- function(input,output,session){
       
       ## TODO Include here possible Data Checks
     }else if(FLAG_TEST_DATA_SELECTED() & !isTruthy(input$data_preDone)){
-
+      browser()
       data_input[[input$omicType]] <- readRDS(
         file = "www/Transcriptomics_only_precompiled-LS.RDS"
       )[[input$omicType]]
@@ -439,9 +443,9 @@ server <- function(input,output,session){
       )
     }else{
       # Precompiled list
-      data_input[[input$omicType]] <- readRDS(
+      res_tmp[['data_original']] <- readRDS(
         file = input$data_preDone$datapath
-        )[[input$omicType]]
+        )
       ## Include here possible Data Checks
       ## TODO Include here possible Data Checks
     }
@@ -483,6 +487,7 @@ server <- function(input,output,session){
                              )
       #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
     }
+    # TODO SumExp only needed hence more restructuring needed
     res_tmp['data_original'] <<- data_input[paste0(input$omicType,"_SumExp")]
     # Make a copy, to leave original data untouched
     res_tmp['data'] <<- res_tmp['data_original']
