@@ -623,6 +623,8 @@ server <- function(input,output,session){
   
 ## Log Selection ----
   observeEvent(input$NextPanel,{
+    # Do actual selection before logging
+    print(selectedData())
     # add row and col selection options
     fun_LogIt("## Data Selection")
     fun_LogIt(
@@ -884,7 +886,6 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
 
     output$Statisitcs_Data <- renderText({
-      #selectedData_processed()
       paste0(addWarning,
              "The data has the dimensions of: ",
              paste0(dim(res_tmp$data),collapse = ", "),
