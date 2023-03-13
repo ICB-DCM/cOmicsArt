@@ -164,7 +164,6 @@ server <- function(input,output,session){
    filename = function() {
       paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep = "")},
     content = function(file){
-      browser()
       # TODO Q: What to save here? only original enough?
       saveRDS(
         object = res_tmp$data_original,
@@ -442,9 +441,10 @@ server <- function(input,output,session){
       )
     }else{
       # Precompiled list
-      res_tmp[['data_original']] <- readRDS(
+      data_input[[paste0(input$omicType,"_SumExp")]] <- readRDS(
         file = input$data_preDone$datapath
         )
+
       ## Include here possible Data Checks
       ## TODO Include here possible Data Checks
     }
@@ -477,7 +477,8 @@ server <- function(input,output,session){
       data_input$annotation_rows$GeneName <- out$external_gene_name
     }
     
-    if(!any(class(data_input) == "SummarizedExperiment")){
+    if(!any(class(data_input) == "SummarizedExperiment") & !(grepl('SumExp',names(data_input))) ){
+      browser()
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
       data_input[[paste0(input$omicType,"_SumExp")]]=
         SummarizedExperiment(assays  = list(raw = data_input$Matrix),
@@ -487,9 +488,9 @@ server <- function(input,output,session){
       #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
     }
     # TODO SumExp only needed hence more restructuring needed
-    res_tmp['data_original'] <<- data_input[paste0(input$omicType,"_SumExp")]
+    res_tmp[['data_original']] <<- data_input[[paste0(input$omicType,"_SumExp")]]
     # Make a copy, to leave original data untouched
-    res_tmp['data'] <<- res_tmp['data_original']
+    res_tmp[['data']] <<- res_tmp$data_original
     # Count up updating
     updating$count <- updating$count + 1
 
