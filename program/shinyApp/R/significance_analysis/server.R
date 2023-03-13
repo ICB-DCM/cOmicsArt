@@ -190,6 +190,7 @@ significance_analysis_server <- function(id, data, params, updates){
         # if preproccesing method was DESeq2, then use DESeq2 for testing
         if(params$PreProcessing_Procedure == "vst_DESeq"){  # TODO: rename method to "DESeq"
           dds <- data$DESeq_obj
+          browser()
 
           # rewind the comparisons again
           newList <- input$comparisons
@@ -335,7 +336,8 @@ significance_analysis_server <- function(id, data, params, updates){
         # plot the results
         if(input$visualization_method == "UpSetR plot"){
           sig_ana_reactive$plot_last <- UpSetR::upset(
-            UpSetR::fromList(res2plot)
+            UpSetR::fromList(res2plot),
+            nsets = length(res2plot)
             )
           output$Significant_Plot_final <- renderPlot({
             sig_ana_reactive$plot_last
