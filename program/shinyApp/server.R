@@ -476,9 +476,8 @@ server <- function(input,output,session){
       data_input$annotation_rows$gene_type <- out$gene_biotype
       data_input$annotation_rows$GeneName <- out$external_gene_name
     }
-    
-    if(!any(class(data_input) == "SummarizedExperiment") & !(grepl('SumExp',names(data_input))) ){
-      browser()
+    browser()
+    if(!any(class(data_input) == "SummarizedExperiment") & !any(grepl('SumExp',names(data_input))) ){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
       data_input[[paste0(input$omicType,"_SumExp")]]=
         SummarizedExperiment(assays  = list(raw = data_input$Matrix),
