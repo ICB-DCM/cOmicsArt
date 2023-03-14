@@ -164,8 +164,9 @@ server <- function(input,output,session){
    filename = function() {
       paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep = "")},
     content = function(file){
+      # TODO Q: What to save here? only original enough?
       saveRDS(
-        object = data_input_shiny(),
+        object = res_tmp$data_original,
         file = file
         )
     }
@@ -364,7 +365,7 @@ server <- function(input,output,session){
       shiny::req(input$data_matrix1,input$data_row_anno1)
       
       if(isTruthy(input$data_sample_anno1)){
-        data_input[[input$omicType]] <- list(
+        data_input<- list(
           type = as.character(input$omicType),
           Matrix = read.csv(
             file = input$data_matrix1$datapath,
@@ -388,9 +389,9 @@ server <- function(input,output,session){
         
         # check if only 1 col in anno row, 
         # add dummy col to ensure R does not turn it into a vector
-        if(ncol(data_input[[input$omicType]]$annotation_rows) < 2){
+        if(ncol(data_input$annotation_rows) < 2){
           print("Added dummy column to annotation row")
-          data_input[[input$omicType]]$annotation_rows$origRownames <- rownames(data_input[[input$omicType]]$annotation_rows)
+          data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
         }
         
       }else if(isTruthy(input$metadataInput)){
@@ -399,7 +400,7 @@ server <- function(input,output,session){
 
         tryCatch(
           {
-            data_input[[input$omicType]] <- list(
+            data_input <- list(
               type = as.character(input$omicType),
               Matrix = read.csv(
                 file = input$data_matrix1$datapath,
@@ -429,8 +430,9 @@ server <- function(input,output,session){
       
       ## TODO Include here possible Data Checks
     }else if(FLAG_TEST_DATA_SELECTED() & !isTruthy(input$data_preDone)){
+      #TODO change test data to also not rely on 'Transcriptomics'
 
-      data_input[[input$omicType]] <- readRDS(
+      data_input <- readRDS(
         file = "www/Transcriptomics_only_precompiled-LS.RDS"
       )[[input$omicType]]
 
@@ -438,13 +440,19 @@ server <- function(input,output,session){
         message = paste0("**DataInput** - Test Data set used")
       )
     }else{
-      # Precompiled list
-      # TODO: Change appropriately
-      data_input[[input$omicType]] <- readRDS(
+
+      uploadedFile <- readRDS(
+
         file = input$data_preDone$datapath
-        )[[input$omicType]]
-      ## Include here possible Data Checks
-      ## TODO Include here possible Data Checks
+      )
+      
+      if(any(names(uploadedFile)%in% input$omicType)){
+        # This is an file precompiled before 14.March.2023
+        data_input <- uploadedFile[[input$omicType]]
+      }else{
+        data_input[[paste0(input$omicType,"_SumExp")]] <- uploadedFile
+      }
+      
     }
 
     ### Added here gene annotation if asked for 
@@ -466,27 +474,28 @@ server <- function(input,output,session){
       
       out <- getBM(
         attributes = c("ensembl_gene_id", "gene_biotype","external_gene_name"),
-        values = rownames(data_input[[input$omicType]]$annotation_rows),
+        values = rownames(data_input$annotation_rows),
         mart = ensembl
         )
-      out <- out[base::match(rownames(data_input[[input$omicType]]$annotation_rows), out$ensembl_gene_id),] 
+      out <- out[base::match(rownames(data_input$annotation_rows), out$ensembl_gene_id),] 
       
-      data_input[[input$omicType]]$annotation_rows$gene_type <- out$gene_biotype
-      data_input[[input$omicType]]$annotation_rows$GeneName <- out$external_gene_name
+      data_input$annotation_rows$gene_type <- out$gene_biotype
+      data_input$annotation_rows$GeneName <- out$external_gene_name
     }
-    
-    if(!any(class(data_input[[input$omicType]]) == "SummarizedExperiment")){
+
+    if(!any(class(data_input) == "SummarizedExperiment") & !any(grepl('SumExp',names(data_input))) ){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
       data_input[[paste0(input$omicType,"_SumExp")]]=
-        SummarizedExperiment(assays  = list(raw = data_input[[input$omicType]]$Matrix),
-                             rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
-                             colData = data_input[[input$omicType]]$sample_table
+        SummarizedExperiment(assays  = list(raw = data_input$Matrix),
+                             rowData = data_input$annotation_rows[rownames(data_input$Matrix),],
+                             colData = data_input$sample_table
                              )
       #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
     }
-    res_tmp['data_original'] <<- data_input[paste0(input$omicType,"_SumExp")]
+    # TODO SumExp only needed hence more restructuring needed
+    res_tmp[['data_original']] <<- data_input[[paste0(input$omicType,"_SumExp")]]
     # Make a copy, to leave original data untouched
-    res_tmp['data'] <<- res_tmp['data_original']
+    res_tmp[['data']] <<- res_tmp$data_original
     # Count up updating
     updating$count <- updating$count + 1
 
@@ -619,6 +628,8 @@ server <- function(input,output,session){
   
 ## Log Selection ----
   observeEvent(input$NextPanel,{
+    # Do actual selection before logging
+    print(selectedData())
     # add row and col selection options
     fun_LogIt("## Data Selection")
     fun_LogIt(
@@ -880,7 +891,6 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
 
     output$Statisitcs_Data <- renderText({
-      #selectedData_processed()
       paste0(addWarning,
              "The data has the dimensions of: ",
              paste0(dim(res_tmp$data),collapse = ", "),
