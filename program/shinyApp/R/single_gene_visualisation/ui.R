@@ -6,7 +6,7 @@ single_gene_visualisation_sidebar_ui<- function(ns){
     uiOutput(outputId = ns("Select_GeneAnno_ui")),
     uiOutput(outputId = ns("Select_Gene_ui")),
     helpText("Note: if you choose a group rather than a single entitie, the values will be summarized by taking the median"),
-    uiOutput(outputId = ns("accross_condition_ui")),
+
     actionButton(
       inputId = ns("singleGeneGo"), 
       label = "Get single gene visualisation"
@@ -16,7 +16,8 @@ single_gene_visualisation_sidebar_ui<- function(ns){
       inputId = ns("refreshSigGene"),
       label = "Refresh"
     )),
-    hr(style = "border-top: 1px solid #858585;")
+    hr(style = "border-top: 1px solid #858585;"),
+    uiOutput(outputId = ns("accross_condition_ui"))
   )
 }
 

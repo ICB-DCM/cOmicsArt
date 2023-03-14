@@ -960,9 +960,8 @@ server <- function(input,output,session){
   # Single Gene Visualisations ----
   single_gene_visualisation_server(
     id = "single_gene_visualisation",
-    data = res_tmp,
+    data = reactive(res_tmp),
     params = par_tmp,
-    reactive(updating$count)
   )
   # Enrichment Analysis ----
   enrichment_analysis_Server(

@@ -1,4 +1,4 @@
-single_gene_visualisation_server <- function(id, data, params, row_select, updates){
+single_gene_visualisation_server <- function(id, data, params, row_select){
   moduleServer(
     id,
     function(input,output,session){
@@ -6,6 +6,7 @@ single_gene_visualisation_server <- function(id, data, params, row_select, updat
       # Observe the button will be clicked upon preprocessing
       observeEvent(input$refreshSigGene,{
         print("update SingleGeneVis")
+        req(data())
         ## Ui section ----
         output$type_of_data_gene_ui <- renderUI({
           req(data_input_shiny())
@@ -22,7 +23,7 @@ single_gene_visualisation_server <- function(id, data, params, row_select, updat
           selectInput(
             inputId = ns("accross_condition"),
             label = "Choose the groups to show the data for",
-            choices = unique(colnames(colData(data$data))),
+            choices = unique(colnames(colData(data()$data))),
             multiple = F
           )
         })
@@ -41,7 +42,7 @@ single_gene_visualisation_server <- function(id, data, params, row_select, updat
           selectInput(
             inputId = ns("Select_GeneAnno"),
             label = "Select Annotation you want to select an entitie from",
-            choices = colnames(rowData(data$data)),
+            choices = colnames(rowData(data()$data)),
             multiple = F 
           )
         })
@@ -53,7 +54,7 @@ single_gene_visualisation_server <- function(id, data, params, row_select, updat
             showSelectedOptionsFirst = T,
             inputId = ns("Select_Gene"),
             label = "Select the Gene from the list",
-            choices = unique(rowData(data$data)[,input$Select_GeneAnno]),
+            choices = unique(rowData(data()$data)[,input$Select_GeneAnno]),
             multiple = F 
           )
         })
@@ -62,14 +63,11 @@ single_gene_visualisation_server <- function(id, data, params, row_select, updat
           req(selectedData_processed())
           req(input$Select_GeneAnno)
           req(input$type_of_data_gene)
-          if(input$type_of_data_gene == "raw"){
-            annoToSelect=c(colData(data$data)[,input$accross_condition])
-          }else{
-            annoToSelect=c(colData(data$data)[,input$accross_condition])
-          }
           
-          if(length(annoToSelect) == length(unique(annoToSelect))){
-            # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
+          annoToSelect=c(colData(data()$data)[,input$accross_condition])
+
+          
+          if(length(unique(annoToSelect))<2){
             helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
           }else{
             my_comparisons <- t(combn(
@@ -115,12 +113,12 @@ single_gene_visualisation_server <- function(id, data, params, row_select, updat
         GeneDataFlag = F
         # Select data for the gene based on gene Selection & group Selection
         if(input$type_of_data_gene == "preprocessed"){
-          if(input$Select_Gene %in% rowData(data$data)[,input$Select_GeneAnno]){
+          if(input$Select_Gene %in% rowData(data()$data)[,input$Select_GeneAnno]){
             #get IDX to data
-            idx_selected <- which(input$Select_Gene == rowData(data$data)[,input$Select_GeneAnno])
-            GeneData <- as.data.frame(t(as.data.frame(assay(data$data))[idx_selected,,drop=F]))
+            idx_selected <- which(input$Select_Gene == rowData(data()$data)[,input$Select_GeneAnno])
+            GeneData <- as.data.frame(t(as.data.frame(assay(data()$data))[idx_selected,,drop=F]))
             print(input$accross_condition)
-            GeneData$anno <- colData(data$data)[,input$accross_condition]
+            GeneData$anno <- colData(data()$data)[,input$accross_condition]
             GeneDataFlag <- T
           }else{
             print("different Gene")
@@ -129,11 +127,17 @@ single_gene_visualisation_server <- function(id, data, params, row_select, updat
           
           
         }else if(input$type_of_data_gene == "raw" ){
-          if(input$Select_Gene %in% rowData(data$data_original)[,input$Select_GeneAnno]){
+          if(input$Select_Gene %in% rowData(data()$data_original)[,input$Select_GeneAnno]){
             #get IDX to data
-            idx_selected <- which(input$Select_Gene == rowData(data$data_original)[,input$Select_GeneAnno])
-            GeneData <- as.data.frame(t(assay(data$data_original)[idx_selected,,drop=F]))
-            GeneData$anno <- colData(data$data_original)[,input$accross_condition]
+            idx_selected <- which(input$Select_Gene == rowData(data()$data_original)[,input$Select_GeneAnno])
+            GeneData <- as.data.frame(t(assay(data()$data_original)[idx_selected,,drop=F]))
+            
+            
+            GeneData$anno <- colData(data()$data_original)[,input$accross_condition]
+            
+            # select to selection of processed data
+            annoToSelect=unique(c(colData(data()$data)[,input$accross_condition]))
+            GeneData = subset(GeneData, anno %in% annoToSelect)
             #print(data$data_original)
             GeneDataFlag <- T
           }else{
@@ -167,6 +171,9 @@ single_gene_visualisation_server <- function(id, data, params, row_select, updat
           testMethod <- "t.test"
           scenario <- 13
           if(input$type_of_visualitsation == "boxplots_withTesting"){
+            # TODO add warning to user if there are too many observations to perform test
+            # to explain missing tests in Viz
+            # already a warning in backend
             
             if(isTruthy(input$chooseComparisons)){
               newList <- input$chooseComparisons
