@@ -440,13 +440,19 @@ server <- function(input,output,session){
         message = paste0("**DataInput** - Test Data set used")
       )
     }else{
-      # Precompiled list
-      data_input[[paste0(input$omicType,"_SumExp")]] <- readRDS(
-        file = input$data_preDone$datapath
-        )
+      # Here check if 'old' or 'new type' of data uploaded for back compatibility
 
-      ## Include here possible Data Checks
-      ## TODO Include here possible Data Checks
+      uploadedFile <- readRDS(
+        file = input$data_preDone$datapath
+      )
+      
+      if(any(names(uploadedFile)%in% input$omicType)){
+        # This is an file precompiled before 14.March.2023
+        data_input <- uploadedFile[[input$omicType]]
+      }else{
+        data_input[[paste0(input$omicType,"_SumExp")]] <- uploadedFile
+      }
+      
     }
 
     ### Added here gene annotation if asked for 
@@ -476,7 +482,7 @@ server <- function(input,output,session){
       data_input$annotation_rows$gene_type <- out$gene_biotype
       data_input$annotation_rows$GeneName <- out$external_gene_name
     }
-    browser()
+
     if(!any(class(data_input) == "SummarizedExperiment") & !any(grepl('SumExp',names(data_input))) ){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
       data_input[[paste0(input$omicType,"_SumExp")]]=
