@@ -283,7 +283,6 @@ significance_analysis <- function(
       stringsAsFactors = FALSE
     )
     # add data from rowData to put out more information
-    browser()
     res = cbind(res,as.data.frame(selectedData_processed()[[1]]$annotation_rows)[rownames(res),])
     
     sig_results[[names(contrasts)[comp_name]]] <- res
