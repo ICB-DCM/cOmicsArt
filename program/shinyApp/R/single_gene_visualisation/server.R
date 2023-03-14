@@ -314,7 +314,6 @@ single_gene_visualisation_server <- function(id, data, params, row_select, updat
       
       ## download only to report
       observeEvent(input$only2Report_SingleEntities,{
-        browser()
         notificationID <- showNotification("Saving...",duration = 0)
         tmp_filename <- paste0(
           getwd(),
