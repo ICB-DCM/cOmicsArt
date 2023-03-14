@@ -877,6 +877,7 @@ server <- function(input,output,session){
 
     # Count up updating
     updating$count <- updating$count + 1
+    
     return("Pre-Processing successfully")
   })
   
@@ -958,11 +959,14 @@ server <- function(input,output,session){
     reactive(updating$count)
     )
   # Single Gene Visualisations ----
-  single_gene_visualisation_server(
-    id = "single_gene_visualisation",
-    data = reactive(res_tmp),
-    params = par_tmp,
-  )
+  observeEvent(input$`single_gene_visualisation-refreshSigGene`,{
+    single_gene_visualisation_server(
+      id = "single_gene_visualisation",
+      data = reactive(res_tmp),
+      params = par_tmp,
+    )
+  })
+
   # Enrichment Analysis ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
