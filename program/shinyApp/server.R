@@ -962,7 +962,7 @@ server <- function(input,output,session){
   observeEvent(input$`single_gene_visualisation-refreshSigGene`,{
     single_gene_visualisation_server(
       id = "single_gene_visualisation",
-      data = reactive(res_tmp),
+      data = res_tmp,
       params = par_tmp,
     )
   })

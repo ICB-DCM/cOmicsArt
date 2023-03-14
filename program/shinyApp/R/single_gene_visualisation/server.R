@@ -23,7 +23,7 @@ single_gene_visualisation_server <- function(id, data, params, row_select){
           selectInput(
             inputId = ns("accross_condition"),
             label = "Choose the groups to show the data for",
-            choices = unique(colnames(colData(data()$data))),
+            choices = unique(colnames(colData(data$data))),
             multiple = F
           )
         })
@@ -42,7 +42,7 @@ single_gene_visualisation_server <- function(id, data, params, row_select){
           selectInput(
             inputId = ns("Select_GeneAnno"),
             label = "Select Annotation you want to select an entitie from",
-            choices = colnames(rowData(data()$data)),
+            choices = colnames(rowData(data$data)),
             multiple = F 
           )
         })
@@ -54,7 +54,7 @@ single_gene_visualisation_server <- function(id, data, params, row_select){
             showSelectedOptionsFirst = T,
             inputId = ns("Select_Gene"),
             label = "Select the Gene from the list",
-            choices = unique(rowData(data()$data)[,input$Select_GeneAnno]),
+            choices = unique(rowData(data$data)[,input$Select_GeneAnno]),
             multiple = F 
           )
         })
@@ -64,7 +64,7 @@ single_gene_visualisation_server <- function(id, data, params, row_select){
           req(input$Select_GeneAnno)
           req(input$type_of_data_gene)
           
-          annoToSelect=c(colData(data()$data)[,input$accross_condition])
+          annoToSelect=c(colData(data$data)[,input$accross_condition])
 
           
           if(length(unique(annoToSelect))<2){
@@ -113,12 +113,12 @@ single_gene_visualisation_server <- function(id, data, params, row_select){
         GeneDataFlag = F
         # Select data for the gene based on gene Selection & group Selection
         if(input$type_of_data_gene == "preprocessed"){
-          if(input$Select_Gene %in% rowData(data()$data)[,input$Select_GeneAnno]){
+          if(input$Select_Gene %in% rowData(data$data)[,input$Select_GeneAnno]){
             #get IDX to data
-            idx_selected <- which(input$Select_Gene == rowData(data()$data)[,input$Select_GeneAnno])
-            GeneData <- as.data.frame(t(as.data.frame(assay(data()$data))[idx_selected,,drop=F]))
+            idx_selected <- which(input$Select_Gene == rowData(data$data)[,input$Select_GeneAnno])
+            GeneData <- as.data.frame(t(as.data.frame(assay(data$data))[idx_selected,,drop=F]))
             print(input$accross_condition)
-            GeneData$anno <- colData(data()$data)[,input$accross_condition]
+            GeneData$anno <- colData(data$data)[,input$accross_condition]
             GeneDataFlag <- T
           }else{
             print("different Gene")
@@ -127,16 +127,16 @@ single_gene_visualisation_server <- function(id, data, params, row_select){
           
           
         }else if(input$type_of_data_gene == "raw" ){
-          if(input$Select_Gene %in% rowData(data()$data_original)[,input$Select_GeneAnno]){
+          if(input$Select_Gene %in% rowData(data$data_original)[,input$Select_GeneAnno]){
             #get IDX to data
-            idx_selected <- which(input$Select_Gene == rowData(data()$data_original)[,input$Select_GeneAnno])
-            GeneData <- as.data.frame(t(assay(data()$data_original)[idx_selected,,drop=F]))
+            idx_selected <- which(input$Select_Gene == rowData(data$data_original)[,input$Select_GeneAnno])
+            GeneData <- as.data.frame(t(assay(data$data_original)[idx_selected,,drop=F]))
             
             
-            GeneData$anno <- colData(data()$data_original)[,input$accross_condition]
+            GeneData$anno <- colData(data$data_original)[,input$accross_condition]
             
             # select to selection of processed data
-            annoToSelect=unique(c(colData(data()$data)[,input$accross_condition]))
+            annoToSelect=unique(c(colData(data$data)[,input$accross_condition]))
             GeneData = subset(GeneData, anno %in% annoToSelect)
             #print(data$data_original)
             GeneDataFlag <- T
