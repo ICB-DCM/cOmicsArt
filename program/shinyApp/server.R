@@ -711,14 +711,34 @@ server <- function(input,output,session){
 # Set Selected Data as Head to allow reiteration of pre-processing
 
 ## UI section ----
-  output$DESeq_formula_ui <- renderUI({
+  output$DESeq_formula_main_ui <- renderUI({
     req(data_input_shiny())
     if(input$PreProcessing_Procedure == "vst_DESeq"){
       selectInput(
-        inputId = "DESeq_formula",
-        label = "Choose factors for desing formula in DESeq pipeline (currently only one factor allowed + App might crash if your factor as only 1 sample per level)",
+        inputId = "DESeq_formula_main",
+        label = paste0(
+          "Choose main factor for desing formula in DESeq pipeline ",
+          "(App might crash if your factor as only 1 sample per level)"
+        ),
         choices = c(colnames(colData(tmp_data_selected))),
         multiple = F,
+        selected = "condition"
+      )
+    }else{
+      NULL
+    }
+  })
+  output$DESeq_formula_sub_ui <- renderUI({
+    req(data_input_shiny())
+    if(input$PreProcessing_Procedure == "vst_DESeq"){
+      selectInput(
+        inputId = "DESeq_formula_sub",
+        label = paste0(
+          "Choose other factors to account for",
+          "(App might crash if your factor as only 1 sample per level)"
+        )
+        choices = c(colnames(colData(tmp_data_selected))),
+        multiple = T,
         selected = "condition"
       )
     }else{
@@ -792,10 +812,10 @@ server <- function(input,output,session){
       }
       if(input$PreProcessing_Procedure == "vst_DESeq"){
         if(par_tmp$omic_type == "Transcriptomics"){
-          print(input$DESeq_formula)
-          design_formula <- paste("~", input$DESeq_formula)
+          print(input$DESeq_formula_main)
+          design_formula <- paste("~", input$DESeq_formula_main)
           # on purpose local
-          print(colData(res_tmp$data)[,input$DESeq_formula])
+          print(colData(res_tmp$data)[,input$DESeq_formula_main])
           # TODO take more complicated formulas into consideration
 
           dds <- DESeq2::DESeqDataSetFromMatrix(
@@ -926,7 +946,7 @@ server <- function(input,output,session){
       message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage)
       )
     fun_LogIt(
-      message = paste0("**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula),input$PreProcessing_Procedure))
+      message = paste0("**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),input$PreProcessing_Procedure))
       )
     fun_LogIt(
       message = paste0("**PreProcessing** - The resulting dimensions are: ",paste0(dim(res_tmp$data),collapse = ", "))

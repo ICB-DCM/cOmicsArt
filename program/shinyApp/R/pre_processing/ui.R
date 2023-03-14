@@ -13,7 +13,9 @@ pre_processing_sidebar_panel <- sidebarPanel(
     ),
     selected = "none"
   ),
-  uiOutput(outputId = "DESeq_formula_ui"),
+  uiOutput(outputId = "DESeq_formula_main_ui"),
+  uiOutput(outputId = "DESeq_formula_sub_ui"),
+  uiOutput(outputId = "DESeq_formula_advanced_ui"),
   actionButton(
     inputId = "Do_preprocessing",
     label = "Pre-Process",
