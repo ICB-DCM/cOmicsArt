@@ -1,18 +1,22 @@
 # Volcano Plot----
-volcano_Server <- function(id, omic_type){
+volcano_Server <- function(id, data, params, updates){
 
   moduleServer(
     id,
     function(input,output,session){
+      volcano_reactive <- reactiveValues(
+        current_updates = 0,
+        VolcanoPlot = NULL,
+        LFCTable = NULL
+      )
       ns <- session$ns
-
       ## UI Section----
       output$sample_annotation_types_cmp_ui <- renderUI({
         req(data_input_shiny())
         selectInput(
           inputId = ns("sample_annotation_types_cmp"),
           label = "Choose type for LFC comparison",
-          choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
+          choices = c(colnames(colData(data$data))),
           multiple = F ,
           selected = NULL
         )
@@ -23,21 +27,21 @@ volcano_Server <- function(id, omic_type){
         selectInput(
           inputId = ns("Groups2Compare_ref"),
           label = "Choose reference of log2 FoldChange",
-          choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp]),
+          choices = unique(colData(data$data)[,input$sample_annotation_types_cmp]),
           multiple = F ,
-          selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp])[1]
+          selected = unique(colData(data$data)[,input$sample_annotation_types_cmp])[1]
         )
       })
       output$Groups2Compare_treat_ui <- renderUI({
         req(data_input_shiny())
         req(input$sample_annotation_types_cmp)
-        print(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp])
+        print(colData(data$data)[,input$sample_annotation_types_cmp])
         selectInput(
           inputId = ns("Groups2Compare_treat"),
           label = "Choose treatment group of log2 FoldChange",
-          choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp]),
+          choices = unique(colData(data$data)[,input$sample_annotation_types_cmp]),
           multiple = F ,
-          selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp])[2]
+          selected = unique(colData(data$data)[,input$sample_annotation_types_cmp])[2]
         )
       })
       output$psig_threhsold_ui <- renderUI({
@@ -66,9 +70,15 @@ volcano_Server <- function(id, omic_type){
         selectInput(
           inputId = ns("VOLCANO_anno_tooltip"),
           label = "Select the anno to be shown at tooltip",
-          choices = c(colnames(data_input_shiny()[[omic_type()]]$annotation_rows)),
+          choices = c(colnames(rowData(data$data))),
           multiple = F
         )
+      })
+      # refresh the UI/data if needed
+      observeEvent(input$refreshUI, {
+        data <- update_data(data, updates, volcano_reactive$current_updates)
+        params <- update_params(params, updates, volcano_reactive$current_updates)
+        volcano_reactive$current_updates <- updates()
       })
 
       toListen2Volcano <- reactive({
@@ -83,48 +93,44 @@ volcano_Server <- function(id, omic_type){
       ## Do Volcano----
       observeEvent(toListen2Volcano(),{
         req(
-          omic_type(),
           isTruthy(selectedData_processed()),
           input$sample_annotation_types_cmp,
           input$psig_threhsold,
           input$lfc_threshold,
           input$Do_Volcano[1] >= 1
-          )
+        )
         print("Volcano analysis on pre-selected data")
         print(input$sample_annotation_types_cmp)
         ctrl_samples_idx <- which(
-          selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp] %in% input$Groups2Compare_ref
-          )
+          colData(data$data)[,input$sample_annotation_types_cmp] %in% input$Groups2Compare_ref
+        )
         comparison_samples_idx <- which(
-          selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp] %in% input$Groups2Compare_treat
-          )
+          colData(data$data)[,input$sample_annotation_types_cmp] %in% input$Groups2Compare_treat
+        )
 
         if(length(comparison_samples_idx) <= 1 |
            length(ctrl_samples_idx)<=1){
-          output$debug=renderText("Choose variable with at least two samples per condition!")
+          output$debug <- renderText(
+            "Choose variable with at least two samples per condition!"
+          )
           req(FALSE)
         }
-        if(pre_processing_procedure=="simpleCenterScaling"){
+        if(params$PreProcessing_Procedure=="simpleCenterScaling"){
           print("Remember do not use normal center + scaling (negative Values!)")
-          output$debug=renderText(
+          output$debug <- renderText(
             "Choose another preprocessing, as there are negative values!"
             )
           req(FALSE)
         }else{
-          if(pre_processing_procedure == "ln" |
-             pre_processing_procedure == "log10" ){
-              print("Data was logged already => delog, take FC and log ?!")
-              if(pre_processing_procedure == "ln"){
-                data2Volcano <- as.data.frame(exp(
-                  selectedData_processed()[[omic_type()]]$Matrix
-                  ))
-              }else{
-                data2Volcano <- as.data.frame(10^(
-                  selectedData_processed()[[omic_type()]]$Matrix
-                  ))
-              }
+          if(params$PreProcessing_Procedure == "ln" | params$PreProcessing_Procedure == "log10" ){
+            print("Data was logged already => delog, take FC and log ?!")
+               if(params$PreProcessing_Procedure == "ln"){
+                 data2Volcano <- as.data.frame(exp(assay(data$data)))
+               }else{
+                 data2Volcano <- as.data.frame(10^(assay(data$data)))
+               }
           }else{
-              data2Volcano <- selectedData_processed()[[omic_type()]]$Matrix
+              data2Volcano <- as.data.frame(assay(data$data))
           }
           if(any(data2Volcano == 0)){
             #macht es mehr sinn nur die nullen + eps zu machen oder lieber alle daten punkte + eps?
@@ -138,12 +144,12 @@ volcano_Server <- function(id, omic_type){
             p_sig_threshold = input$psig_threhsold,
             LFC_threshold = input$lfc_threshold,
             annotation_add = input$VOLCANO_anno_tooltip,
-            annoData = selectedData_processed()[[omic_type()]]$annotation_rows
+            annoData = rowData(data$data)
             )
           # assign res_temp
-          res_temp["Volcano"] <<- VolcanoPlot_df
+          res_tmp[["Volcano"]] <<- VolcanoPlot_df
           # assign par_temp
-          par_temp["Volcano"] <<- list(
+          par_tmp[["Volcano"]] <<- list(
             "sample_annotation_types_cmp" = input$sample_annotation_types_cmp,
             "Groups2Compare_ref" = input$Groups2Compare_ref,
             "Groups2Compare_treat" = input$Groups2Compare_treat,
@@ -181,34 +187,32 @@ volcano_Server <- function(id, omic_type){
           scenario <- 9
           scenario_Volcano <- scenario
 
-          output[[plotPosition]] <- renderPlotly({
-            ggplotly(VolcanoPlot,
-                     tooltip = ifelse(!is.null(input$VOLCANO_anno_tooltip),"tooltip","all"),
-                     legendgroup="color")
-            })
+          output[[plotPosition]] <- renderPlotly({ggplotly(
+            VolcanoPlot,
+            tooltip = ifelse(!is.null(input$VOLCANO_anno_tooltip),"tooltip","all"),
+            legendgroup="color"
+          )})
 
           # LFC Table is VolcanoPlot_df but only the columns LFC, rawpvalue, p_adj, probename
           LFCTable <- VolcanoPlot_df[,c("LFC","rawpvalue","p_adj","probename")]
           # add annotation to Table
           LFCTable <- merge(
             LFCTable,
-            selectedData_processed()[[omic_type()]]$annotation_rows,
+            rowData(data$data),
             by=0,
             all.x=TRUE,
-            all.y=F)
+            all.y=F
+          )
           rownames(LFCTable) <- LFCTable$Row.names
-          LFCTable <- LFCTable[order(LFCTable$p_adj,decreasing = T),]
-          Volcano_plot <- VolcanoPlot
-          Volcano_sampleAnnoTypes_cmp <- input$sample_annotation_types_cmp
-          Volcano_groupRef <- input$Groups2Compare_ref
-          Volcano_groupTreat <- input$Groups2Compare_treat
+          volcano_reactive$LFCTable <- LFCTable[order(LFCTable$p_adj,decreasing = T),]
+          volcano_reactive$VolcanoPlot <- VolcanoPlot
 
           output$getR_Code_Volcano <- downloadHandler(
             filename = function(){
               paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
             },
             content = function(file){
-              envList=list(
+              envList <- list(
                 VolcanoPlot_df = VolcanoPlot_df,
                 input = reactiveValuesToList(input),
                 colorScheme = colorScheme,
@@ -233,31 +237,43 @@ volcano_Server <- function(id, omic_type){
             content = function(file){
               ggsave(
                 filename = file,
-                plot = VolcanoPlot,
+                plot = volcano_reactive$VolcanoPlot,
                 device = gsub("\\.","",input$file_ext_Volcano)
                 )
               on.exit({
                 tmp_filename <- paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="")))
                 ggsave(
                   filename = tmp_filename,
-                  plot = VolcanoPlot,
+                  plot = volcano_reactive$VolcanoPlot,
                   device = gsub("\\.","",input$file_ext_Volcano)
                   )
 
                 # Add Log Messages
                 fun_LogIt(message = "## VOLCANO")
-                fun_LogIt(message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",input$Groups2Compare_treat))
+                fun_LogIt(message = paste0(
+                  "**VOLCANO** - Underlying Volcano Comparison: ",
+                  input$sample_annotation_types_cmp,": ",
+                  input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",
+                  input$Groups2Compare_treat
+                ))
                 fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
 
-                fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
-                fun_LogIt(message = head(LFCTable[order(LFCTable$p_adj,decreasing = T),],10),tableSaved=T)
+                fun_LogIt(message = paste0(
+                  "**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"
+                ))
+                fun_LogIt(
+                  message = head(
+                    volcano_reactive$LFCTable[order(volcano_reactive$LFCTable$p_adj,decreasing = T),],10
+                  ),
+                  tableSaved=T
+                )
               })
             }
 
           )
 
           output[["Volcano_table_final"]] <-DT::renderDataTable({DT::datatable(
-            {LFCTable},
+            {volcano_reactive$LFCTable},
             extensions = 'Buttons',
             options = list(
               paging = TRUE,
@@ -271,11 +287,11 @@ volcano_Server <- function(id, omic_type){
             class = "display"
           )})
           DE_UP <- subset(
-            LFCTable,
+            volcano_reactive$LFCTable,
             subset = (p_adj<input$psig_threhsold & LFC>=input$lfc_threshold)
             )
           DE_DOWN <- subset(
-            LFCTable,
+            volcano_reactive$LFCTable,
             subset = p_adj<input$psig_threhsold & LFC<=input$lfc_threshold
             )
 
@@ -290,7 +306,6 @@ volcano_Server <- function(id, omic_type){
 
           #Use annotation selected in plot also for the output of the names
 
-          # TODO: Who are you and what do you do?
           DE_total <<- rbind(DE_UP,DE_Down)
           output$SaveDE_List <- downloadHandler(
             filename = function() {
@@ -330,17 +345,22 @@ volcano_Server <- function(id, omic_type){
           getwd(),"/www/",paste(paste0("VOLCANO_", Sys.time(), ".png"))
           )
 
-        ggsave(tmp_filename,plot=Volcano_plot,device = "png")
+        ggsave(tmp_filename, plot=volcano_reactive$VolcanoPlot, device = "png")
 
         # Add Log Messages
         fun_LogIt(message = "## VOLCANO")
-        fun_LogIt(
-          message = paste0("**VOLCANO** - Underlying Volcano Comparison: ", Volcano_sampleAnnoTypes_cmp,": ",Volcano_groupRef," vs ", Volcano_sampleAnnoTypes_cmp,": ",Volcano_groupTreat)
-          )
+        fun_LogIt(message = paste(
+          "**VOLCANO** - Underlying Volcano Comparison:", input$sample_annotation_types_cmp,":",
+          input$Groups2Compare_ref,"vs", input$sample_annotation_types_cmp,":",input$Groups2Compare_treat
+        ))
         fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
 
-        fun_LogIt(message = paste0("**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"))
-        fun_LogIt(message = paste0("**VOLCANO** - \n",knitr::kable(head(LFCTable,10),format = "html")))
+        fun_LogIt(message = paste0(
+          "**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"
+        ))
+        fun_LogIt(message = paste0(
+          "**VOLCANO** - \n",knitr::kable(head(volcano_reactive$LFCTable,10),format = "html")
+        ))
 
         if(isTruthy(input$NotesVolcano) &
            !(isEmpty(input$NotesVolcano))){
