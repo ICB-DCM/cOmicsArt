@@ -439,6 +439,7 @@ server <- function(input,output,session){
       )
     }else{
       # Precompiled list
+      # TODO: Change appropriately
       data_input[[input$omicType]] <- readRDS(
         file = input$data_preDone$datapath
         )[[input$omicType]]

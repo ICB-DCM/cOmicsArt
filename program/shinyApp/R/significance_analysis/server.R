@@ -190,7 +190,6 @@ significance_analysis_server <- function(id, data, params, updates){
         # if preproccesing method was DESeq2, then use DESeq2 for testing
         if(params$PreProcessing_Procedure == "vst_DESeq"){  # TODO: rename method to "DESeq"
           dds <- data$DESeq_obj
-          browser()
 
           # rewind the comparisons again
           newList <- input$comparisons
