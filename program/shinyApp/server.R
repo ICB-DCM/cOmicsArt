@@ -440,9 +440,9 @@ server <- function(input,output,session){
         message = paste0("**DataInput** - Test Data set used")
       )
     }else{
-      # Here check if 'old' or 'new type' of data uploaded for back compatibility
 
       uploadedFile <- readRDS(
+
         file = input$data_preDone$datapath
       )
       
