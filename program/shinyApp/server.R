@@ -736,13 +736,21 @@ server <- function(input,output,session){
         label = paste0(
           "Choose other factors to account for",
           "(App might crash if your factor as only 1 sample per level)"
-        )
+        ),
         choices = c(colnames(colData(tmp_data_selected))),
         multiple = T,
         selected = "condition"
       )
     }else{
       NULL
+    }
+  })
+  observe({
+    if(input$DESeq_show_advanced){
+      output$DESeq_formula_advanced_ui <- renderUI({
+        req(data_input_shiny())
+
+      })
     }
   })
   
