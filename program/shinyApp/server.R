@@ -749,8 +749,17 @@ server <- function(input,output,session){
     if(input$DESeq_show_advanced){
       output$DESeq_formula_advanced_ui <- renderUI({
         req(data_input_shiny())
-
+        textInput(
+          inputId = "DESeq_formula_advanced",
+          label = "Insert your formula:",
+          value = "",
+          width = NULL,
+          placeholder = NULL
+        )
       })
+    } else {
+      # hide the advanced UI
+      hide("DESeq_formula_advanced", anim = T)
     }
   })
   
@@ -820,11 +829,21 @@ server <- function(input,output,session){
       }
       if(input$PreProcessing_Procedure == "vst_DESeq"){
         if(par_tmp$omic_type == "Transcriptomics"){
-          print(input$DESeq_formula_main)
           design_formula <- paste("~", input$DESeq_formula_main)
+          if(length(input$DESeq_formula_sub) > 0){
+            design_formula <- paste(
+              design_formula, " + ",
+              paste(input$DESeq_formula_sub, collapse = " + "))
+          }
+          # if advanced formula is used, overwrite the other formula
+          if(input$DESeq_show_advanced){
+            if(startsWith(input$DESeq_formula_advanced, "~")){
+              design_formula <- input$DESeq_formula_advanced
+            }
+          }
+          print(design_formula)
           # on purpose local
           print(colData(res_tmp$data)[,input$DESeq_formula_main])
-          # TODO take more complicated formulas into consideration
 
           dds <- DESeq2::DESeqDataSetFromMatrix(
             countData = assay(res_tmp$data),
@@ -888,8 +907,8 @@ server <- function(input,output,session){
     
     if(any(is.na(assay(res_tmp$data)))){
       print("This might be problem due to mismatched Annotation Data?!")
-      nrow_before = nrow(assay(res_tmp$data))
-      nrow_after = nrow(res_tmp$data[complete.cases(assay(res_tmp$data)),])
+      nrow_before <- nrow(assay(res_tmp$data))
+      nrow_after <- nrow(res_tmp$data[complete.cases(assay(res_tmp$data)),])
       addWarning <- paste0("<font color=\"#FF0000\"><b>There were NA's after pre-processing, any row containg such was completly removed! (before/after): ",nrow_before,"/",nrow_after,"</b></font>")
       if(!(nrow_after > 0)){
         addWarning <- paste0(addWarning, "<br> <font color=\"#FF0000\"><b> There is nothing left, choose different pre-processing other-wise App will crash!</b></font>")
