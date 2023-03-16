@@ -835,13 +835,14 @@ server <- function(input,output,session){
           if(length(input$DESeq_formula_sub) > 0){
             design_formula <- paste(
               design_formula, " + ",
-              paste(input$DESeq_formula_sub, collapse = " + "))
-            par_tmp["DESeq_factors"] <<- c(
+              paste(input$DESeq_formula_sub, collapse = " + ")
+            )
+            par_tmp[["DESeq_factors"]] <<- c(
               input$DESeq_formula_main,input$DESeq_formula_sub
             )
           }
           else{
-            par_tmp["DESeq_factors"] <<- c(input$DESeq_formula_main)
+            par_tmp[["DESeq_factors"]] <<- c(input$DESeq_formula_main)
           }
           # if advanced formula is used, overwrite the other formula
           if(input$DESeq_show_advanced){
@@ -949,13 +950,14 @@ server <- function(input,output,session){
     
     # Count up updating
     updating$count <- updating$count + 1
+    # Update Hidden Buttons
+    click("SignificanceAnalysis-refreshUI",asis = T)
     return("Pre-Processing successfully")
   })
   
 
   output$Statisitcs_Data <- renderText({
     selectedData_processed()
-    click("SignificanceAnalysis-refreshUI",asis = T)
     paste0("The data has the dimensions of: ",
            paste0(dim(res_tmp$data),collapse = ", "),
            "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",

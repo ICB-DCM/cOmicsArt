@@ -169,6 +169,7 @@ significance_analysis_server <- function(id, data, params, updates){
       # refresh the UI/data if needed
       observeEvent(input$refreshUI, {
         data <- update_data(data, updates, sig_ana_reactive$current_updates)
+        params <- update_params(params, updates, sig_ana_reactive$current_updates)
         sig_ana_reactive$current_updates <- updates()
         sig_ana_reactive$coldata <- colData(data$data)
       })
