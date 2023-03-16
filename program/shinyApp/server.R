@@ -786,7 +786,8 @@ server <- function(input,output,session){
 
 ## Do preprocessing ----  
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
-  #observeEvent(input$Do_preprocessing,{
+    # only enter this when you actually click data
+    req(input$Do_preprocessing > 0)
     print("Do Preprocessing")
     print(selectedData())
     addWarning <- ""
@@ -828,20 +829,30 @@ server <- function(input,output,session){
         assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "vst_DESeq"){
+        par_tmp["DESeq_advanced"] <<- FALSE
         if(par_tmp$omic_type == "Transcriptomics"){
           design_formula <- paste("~", input$DESeq_formula_main)
           if(length(input$DESeq_formula_sub) > 0){
             design_formula <- paste(
               design_formula, " + ",
               paste(input$DESeq_formula_sub, collapse = " + "))
+            par_tmp["DESeq_factors"] <<- c(
+              input$DESeq_formula_main,input$DESeq_formula_sub
+            )
+          }
+          else{
+            par_tmp["DESeq_factors"] <<- c(input$DESeq_formula_main)
           }
           # if advanced formula is used, overwrite the other formula
           if(input$DESeq_show_advanced){
             if(startsWith(input$DESeq_formula_advanced, "~")){
+              print("Advanced formula used")
               design_formula <- input$DESeq_formula_advanced
+              par_tmp["DESeq_advanced"] <<- TRUE
             }
           }
           print(design_formula)
+          par_tmp["DESeq_formula"] <<- design_formula
           # on purpose local
           print(colData(res_tmp$data)[,input$DESeq_formula_main])
 
@@ -857,7 +868,6 @@ server <- function(input,output,session){
             object = de_seq_result,
             blind = TRUE
             )
-
           assay(res_tmp$data) <<- as.data.frame(assay(dds_vst))
         }else{
           addWarning <- "<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"
