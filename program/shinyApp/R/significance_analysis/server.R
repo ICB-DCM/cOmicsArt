@@ -22,7 +22,6 @@ significance_analysis_server <- function(id, data, params, updates){
         }
         req(sig_ana_reactive$coldata)
         if(params$PreProcessing_Procedure == "vst_DESeq"){
-          print(paste("factors:", params$DESeq_factors))
           selectInput(
             inputId = ns("sample_annotation_types_cmp"),
             label = "Choose groups to compare",

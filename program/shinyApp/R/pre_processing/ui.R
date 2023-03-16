@@ -17,7 +17,7 @@ pre_processing_sidebar_panel <- sidebarPanel(
   uiOutput(outputId = "DESeq_formula_sub_ui"),
   switchInput(
       inputId = "DESeq_show_advanced",
-      label = "Advanced formula options",
+      label = "Advanced formula options for DESeq2",
       inline = T,
       size = "mini",
       value = F

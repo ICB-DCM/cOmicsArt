@@ -832,11 +832,21 @@ server <- function(input,output,session){
         par_tmp["DESeq_advanced"] <<- FALSE
         if(par_tmp$omic_type == "Transcriptomics"){
           design_formula <- paste("~", input$DESeq_formula_main)
+          # only do this locally
+          colData(res_tmp$data)[,input$DESeq_formula_main] <- as.factor(
+            colData(res_tmp$data)[,input$DESeq_formula_main]
+          )
           if(length(input$DESeq_formula_sub) > 0){
             design_formula <- paste(
               design_formula, " + ",
               paste(input$DESeq_formula_sub, collapse = " + ")
             )
+            # turn each factor into a factor
+            for(i in input$DESeq_formula_sub){
+              colData(res_tmp$data)[,i] <- as.factor(
+                colData(res_tmp$data)[,i]
+              )
+            }
             par_tmp[["DESeq_factors"]] <<- c(
               input$DESeq_formula_main,input$DESeq_formula_sub
             )
