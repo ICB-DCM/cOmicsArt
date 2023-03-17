@@ -15,8 +15,6 @@ single_gene_visualisation_server <- function(id, data, params, updates){
         print("Refresh UI Single Gene")
         data <- update_data(data, updates, single_Gene_vis$current_updates)
         single_Gene_vis$current_updates <- updates()
-        single_Gene_vis$coldata <- colData(data$data)
-
       
       ## Ui section ----
       output$type_of_data_gene_ui <- renderUI({
@@ -104,7 +102,7 @@ single_gene_visualisation_server <- function(id, data, params, updates){
           )
         }
       })
-      })
+      })    
     
      
       toListen <- reactive({
@@ -114,15 +112,18 @@ single_gene_visualisation_server <- function(id, data, params, updates){
         )
       })
       
+      session$userData$clicks_observer <- observeEvent(input$singleGeneGo,{
+        req(input$singleGeneGo > single_Gene_vis$counter)
+        single_Gene_vis$counter <- input$singleGeneGo
+        single_Gene_vis$calculate <- 1
+      })
 
 
       # Visualize single Gene ----
       observeEvent(toListen(),{
         req(input$singleGeneGo>0)
         print(input$Select_Gene)
-        
         if(single_Gene_vis$calculate == 1){
-          browser()
           # update the data if needed
           data <- update_data(data, updates, single_Gene_vis$current_updates)
           single_Gene_vis$current_updates <- updates()
