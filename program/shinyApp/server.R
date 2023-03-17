@@ -649,7 +649,7 @@ server <- function(input,output,session){
   ## Do Selection ----  
   selectedData <- reactive({
     shiny::req(input$row_selection, input$sample_selection)
-    par_tmp["row_selection"] <<- input$row_selection
+    par_tmp[["row_selection"]] <<- input$row_selection
     print("Alright do Row selection")
     selected <- c()
 
@@ -884,7 +884,7 @@ server <- function(input,output,session){
   output$Statisitcs_Data <- renderText({
     selectedData_processed()
     click("SignificanceAnalysis-refreshUI",asis = T)
-    click("single_gene_visualisation-refreshSigGene",asis = T)
+    click("single_gene_visualisation-refreshUI",asis = T)
     paste0("The data has the dimensions of: ",
            paste0(dim(res_tmp$data),collapse = ", "),
            "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
@@ -959,13 +959,13 @@ server <- function(input,output,session){
     reactive(updating$count)
     )
   # Single Gene Visualisations ----
-  observeEvent(input$`single_gene_visualisation-refreshSigGene`,{
-    single_gene_visualisation_server(
+  single_gene_visualisation_server(
       id = "single_gene_visualisation",
       data = res_tmp,
       params = par_tmp,
+      reactive(updating$count)
     )
-  })
+
 
   # Enrichment Analysis ----
   enrichment_analysis_Server(

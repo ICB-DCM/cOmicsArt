@@ -13,7 +13,7 @@ single_gene_visualisation_sidebar_ui<- function(ns){
       ),
     # hidden Button to refresh the UI
     hidden(actionButton(
-      inputId = ns("refreshSigGene"),
+      inputId = ns("refreshUI"),
       label = "Refresh"
     )),
     hr(style = "border-top: 1px solid #858585;"),
