@@ -204,7 +204,9 @@ volcano_Server <- function(id, data, params, updates){
             all.y=F
           )
           rownames(LFCTable) <- LFCTable$Row.names
-          volcano_reactive$LFCTable <- LFCTable[order(LFCTable$p_adj,decreasing = T),]
+          volcano_reactive$LFCTable <- as.data.frame(
+            LFCTable[order(LFCTable$p_adj,decreasing = T),]
+          )
           volcano_reactive$VolcanoPlot <- VolcanoPlot
 
           output$getR_Code_Volcano <- downloadHandler(
