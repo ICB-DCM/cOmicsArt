@@ -722,18 +722,55 @@ server <- function(input,output,session){
 # Set Selected Data as Head to allow reiteration of pre-processing
 
 ## UI section ----
-  output$DESeq_formula_ui <- renderUI({
+  output$DESeq_formula_main_ui <- renderUI({
     req(data_input_shiny())
     if(input$PreProcessing_Procedure == "vst_DESeq"){
       selectInput(
-        inputId = "DESeq_formula",
-        label = "Choose factors for desing formula in DESeq pipeline (currently only one factor allowed + App might crash if your factor as only 1 sample per level)",
+        inputId = "DESeq_formula_main",
+        label = paste0(
+          "Choose main factor for desing formula in DESeq pipeline ",
+          "(App might crash if your factor as only 1 sample per level)"
+        ),
         choices = c(colnames(colData(tmp_data_selected))),
         multiple = F,
         selected = "condition"
       )
     }else{
       NULL
+    }
+  })
+  output$DESeq_formula_sub_ui <- renderUI({
+    req(data_input_shiny())
+    if(input$PreProcessing_Procedure == "vst_DESeq"){
+      selectInput(
+        inputId = "DESeq_formula_sub",
+        label = paste0(
+          "Choose other factors to account for",
+          "(App might crash if your factor as only 1 sample per level)"
+        ),
+        choices = c(colnames(colData(tmp_data_selected))),
+        multiple = T,
+        selected = "condition"
+      )
+    }else{
+      NULL
+    }
+  })
+  observe({
+    if(input$DESeq_show_advanced){
+      output$DESeq_formula_advanced_ui <- renderUI({
+        req(data_input_shiny())
+        textInput(
+          inputId = "DESeq_formula_advanced",
+          label = "Insert your formula:",
+          value = "",
+          width = NULL,
+          placeholder = NULL
+        )
+      })
+    } else {
+      # hide the advanced UI
+      hide("DESeq_formula_advanced", anim = T)
     }
   })
   
@@ -760,7 +797,8 @@ server <- function(input,output,session){
 
 ## Do preprocessing ----  
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
-  #observeEvent(input$Do_preprocessing,{
+    # only enter this when you actually click data
+    req(input$Do_preprocessing > 0)
     print("Do Preprocessing")
     print(selectedData())
     addWarning <- ""
@@ -802,12 +840,43 @@ server <- function(input,output,session){
         assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "vst_DESeq"){
+        par_tmp["DESeq_advanced"] <<- FALSE
         if(par_tmp$omic_type == "Transcriptomics"){
-          print(input$DESeq_formula)
-          design_formula <- paste("~", input$DESeq_formula)
+          design_formula <- paste("~", input$DESeq_formula_main)
+          # only do this locally
+          colData(res_tmp$data)[,input$DESeq_formula_main] <- as.factor(
+            colData(res_tmp$data)[,input$DESeq_formula_main]
+          )
+          if(length(input$DESeq_formula_sub) > 0){
+            design_formula <- paste(
+              design_formula, " + ",
+              paste(input$DESeq_formula_sub, collapse = " + ")
+            )
+            # turn each factor into a factor
+            for(i in input$DESeq_formula_sub){
+              colData(res_tmp$data)[,i] <- as.factor(
+                colData(res_tmp$data)[,i]
+              )
+            }
+            par_tmp[["DESeq_factors"]] <<- c(
+              input$DESeq_formula_main,input$DESeq_formula_sub
+            )
+          }
+          else{
+            par_tmp[["DESeq_factors"]] <<- c(input$DESeq_formula_main)
+          }
+          # if advanced formula is used, overwrite the other formula
+          if(input$DESeq_show_advanced){
+            if(startsWith(input$DESeq_formula_advanced, "~")){
+              print("Advanced formula used")
+              design_formula <- input$DESeq_formula_advanced
+              par_tmp["DESeq_advanced"] <<- TRUE
+            }
+          }
+          print(design_formula)
+          par_tmp["DESeq_formula"] <<- design_formula
           # on purpose local
-          print(colData(res_tmp$data)[,input$DESeq_formula])
-          # TODO take more complicated formulas into consideration
+          print(colData(res_tmp$data)[,input$DESeq_formula_main])
 
           dds <- DESeq2::DESeqDataSetFromMatrix(
             countData = assay(res_tmp$data),
@@ -821,7 +890,6 @@ server <- function(input,output,session){
             object = de_seq_result,
             blind = TRUE
             )
-
           assay(res_tmp$data) <<- as.data.frame(assay(dds_vst))
         }else{
           addWarning <- "<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"
@@ -871,8 +939,8 @@ server <- function(input,output,session){
     
     if(any(is.na(assay(res_tmp$data)))){
       print("This might be problem due to mismatched Annotation Data?!")
-      nrow_before = nrow(assay(res_tmp$data))
-      nrow_after = nrow(res_tmp$data[complete.cases(assay(res_tmp$data)),])
+      nrow_before <- nrow(assay(res_tmp$data))
+      nrow_after <- nrow(res_tmp$data[complete.cases(assay(res_tmp$data)),])
       addWarning <- paste0("<font color=\"#FF0000\"><b>There were NA's after pre-processing, any row containg such was completly removed! (before/after): ",nrow_before,"/",nrow_after,"</b></font>")
       if(!(nrow_after > 0)){
         addWarning <- paste0(addWarning, "<br> <font color=\"#FF0000\"><b> There is nothing left, choose different pre-processing other-wise App will crash!</b></font>")
@@ -902,13 +970,14 @@ server <- function(input,output,session){
     
     # Count up updating
     updating$count <- updating$count + 1
+    # Update Hidden Buttons
+    click("SignificanceAnalysis-refreshUI",asis = T)
     return("Pre-Processing successfully")
   })
   
 
   output$Statisitcs_Data <- renderText({
     selectedData_processed()
-    click("SignificanceAnalysis-refreshUI",asis = T)
     paste0("The data has the dimensions of: ",
            paste0(dim(res_tmp$data),collapse = ", "),
            "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
@@ -936,7 +1005,7 @@ server <- function(input,output,session){
       message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage)
       )
     fun_LogIt(
-      message = paste0("**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula),input$PreProcessing_Procedure))
+      message = paste0("**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),input$PreProcessing_Procedure))
       )
     fun_LogIt(
       message = paste0("**PreProcessing** - The resulting dimensions are: ",paste0(dim(res_tmp$data),collapse = ", "))
