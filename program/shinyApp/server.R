@@ -164,8 +164,9 @@ server <- function(input,output,session){
    filename = function() {
       paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep = "")},
     content = function(file){
+      # TODO Q: What to save here? only original enough?
       saveRDS(
-        object = data_input_shiny(),
+        object = res_tmp$data_original,
         file = file
         )
     }
@@ -364,7 +365,7 @@ server <- function(input,output,session){
       shiny::req(input$data_matrix1,input$data_row_anno1)
       
       if(isTruthy(input$data_sample_anno1)){
-        data_input[[input$omicType]] <- list(
+        data_input<- list(
           type = as.character(input$omicType),
           Matrix = read.csv(
             file = input$data_matrix1$datapath,
@@ -388,9 +389,9 @@ server <- function(input,output,session){
         
         # check if only 1 col in anno row, 
         # add dummy col to ensure R does not turn it into a vector
-        if(ncol(data_input[[input$omicType]]$annotation_rows) < 2){
+        if(ncol(data_input$annotation_rows) < 2){
           print("Added dummy column to annotation row")
-          data_input[[input$omicType]]$annotation_rows$origRownames <- rownames(data_input[[input$omicType]]$annotation_rows)
+          data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
         }
         
       }else if(isTruthy(input$metadataInput)){
@@ -399,7 +400,7 @@ server <- function(input,output,session){
 
         tryCatch(
           {
-            data_input[[input$omicType]] <- list(
+            data_input <- list(
               type = as.character(input$omicType),
               Matrix = read.csv(
                 file = input$data_matrix1$datapath,
@@ -429,8 +430,9 @@ server <- function(input,output,session){
       
       ## TODO Include here possible Data Checks
     }else if(FLAG_TEST_DATA_SELECTED() & !isTruthy(input$data_preDone)){
+      #TODO change test data to also not rely on 'Transcriptomics'
 
-      data_input[[input$omicType]] <- readRDS(
+      data_input <- readRDS(
         file = "www/Transcriptomics_only_precompiled-LS.RDS"
       )[[input$omicType]]
 
@@ -438,12 +440,19 @@ server <- function(input,output,session){
         message = paste0("**DataInput** - Test Data set used")
       )
     }else{
-      # Precompiled list
-      data_input[[input$omicType]] <- readRDS(
+
+      uploadedFile <- readRDS(
+
         file = input$data_preDone$datapath
-        )[[input$omicType]]
-      ## Include here possible Data Checks
-      ## TODO Include here possible Data Checks
+      )
+      
+      if(any(names(uploadedFile)%in% input$omicType)){
+        # This is an file precompiled before 14.March.2023
+        data_input <- uploadedFile[[input$omicType]]
+      }else{
+        data_input[[paste0(input$omicType,"_SumExp")]] <- uploadedFile
+      }
+      
     }
 
     ### Added here gene annotation if asked for 
@@ -465,27 +474,28 @@ server <- function(input,output,session){
       
       out <- getBM(
         attributes = c("ensembl_gene_id", "gene_biotype","external_gene_name"),
-        values = rownames(data_input[[input$omicType]]$annotation_rows),
+        values = rownames(data_input$annotation_rows),
         mart = ensembl
         )
-      out <- out[base::match(rownames(data_input[[input$omicType]]$annotation_rows), out$ensembl_gene_id),] 
+      out <- out[base::match(rownames(data_input$annotation_rows), out$ensembl_gene_id),] 
       
-      data_input[[input$omicType]]$annotation_rows$gene_type <- out$gene_biotype
-      data_input[[input$omicType]]$annotation_rows$GeneName <- out$external_gene_name
+      data_input$annotation_rows$gene_type <- out$gene_biotype
+      data_input$annotation_rows$GeneName <- out$external_gene_name
     }
-    
-    if(!any(class(data_input[[input$omicType]]) == "SummarizedExperiment")){
+
+    if(!any(class(data_input) == "SummarizedExperiment") & !any(grepl('SumExp',names(data_input))) ){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
       data_input[[paste0(input$omicType,"_SumExp")]]=
-        SummarizedExperiment(assays  = list(raw = data_input[[input$omicType]]$Matrix),
-                             rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
-                             colData = data_input[[input$omicType]]$sample_table
+        SummarizedExperiment(assays  = list(raw = data_input$Matrix),
+                             rowData = data_input$annotation_rows[rownames(data_input$Matrix),],
+                             colData = data_input$sample_table
                              )
       #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
     }
-    res_tmp['data_original'] <<- data_input[paste0(input$omicType,"_SumExp")]
+    # TODO SumExp only needed hence more restructuring needed
+    res_tmp[['data_original']] <<- data_input[[paste0(input$omicType,"_SumExp")]]
     # Make a copy, to leave original data untouched
-    res_tmp['data'] <<- res_tmp['data_original']
+    res_tmp[['data']] <<- res_tmp$data_original
     # Count up updating
     updating$count <- updating$count + 1
 
@@ -618,6 +628,8 @@ server <- function(input,output,session){
   
 ## Log Selection ----
   observeEvent(input$NextPanel,{
+    # Do actual selection before logging
+    print(selectedData())
     # add row and col selection options
     fun_LogIt("## Data Selection")
     fun_LogIt(
@@ -710,18 +722,55 @@ server <- function(input,output,session){
 # Set Selected Data as Head to allow reiteration of pre-processing
 
 ## UI section ----
-  output$DESeq_formula_ui <- renderUI({
+  output$DESeq_formula_main_ui <- renderUI({
     req(data_input_shiny())
     if(input$PreProcessing_Procedure == "vst_DESeq"){
       selectInput(
-        inputId = "DESeq_formula",
-        label = "Choose factors for desing formula in DESeq pipeline (currently only one factor allowed + App might crash if your factor as only 1 sample per level)",
+        inputId = "DESeq_formula_main",
+        label = paste0(
+          "Choose main factor for desing formula in DESeq pipeline ",
+          "(App might crash if your factor as only 1 sample per level)"
+        ),
         choices = c(colnames(colData(tmp_data_selected))),
         multiple = F,
         selected = "condition"
       )
     }else{
       NULL
+    }
+  })
+  output$DESeq_formula_sub_ui <- renderUI({
+    req(data_input_shiny())
+    if(input$PreProcessing_Procedure == "vst_DESeq"){
+      selectInput(
+        inputId = "DESeq_formula_sub",
+        label = paste0(
+          "Choose other factors to account for",
+          "(App might crash if your factor as only 1 sample per level)"
+        ),
+        choices = c(colnames(colData(tmp_data_selected))),
+        multiple = T,
+        selected = "condition"
+      )
+    }else{
+      NULL
+    }
+  })
+  observe({
+    if(input$DESeq_show_advanced){
+      output$DESeq_formula_advanced_ui <- renderUI({
+        req(data_input_shiny())
+        textInput(
+          inputId = "DESeq_formula_advanced",
+          label = "Insert your formula:",
+          value = "",
+          width = NULL,
+          placeholder = NULL
+        )
+      })
+    } else {
+      # hide the advanced UI
+      hide("DESeq_formula_advanced", anim = T)
     }
   })
   
@@ -748,12 +797,16 @@ server <- function(input,output,session){
 
 ## Do preprocessing ----  
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
+    # only enter this when you actually click data
+    req(input$Do_preprocessing > 0)
+    print("Do Preprocessing")
     print(selectedData())
+    addWarning <- ""
     par_tmp['PreProcessing_Procedure'] <<- input$PreProcessing_Procedure
     processedData_all <- tmp_data_selected
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
-    res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]
+    res_tmp$data <<- res_tmp$data[rownames(tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]),]
     
     if(par_tmp$omic_type == "Transcriptomics"){
       print("Also remove anything of rowCount <=10")
@@ -769,7 +822,9 @@ server <- function(input,output,session){
     
     print(dim(res_tmp$data))
     # explicitly set rownames to avoid any errors.
-    assay(res_tmp$data) <<- DataFrame(assay(res_tmp$data), row.names = rownames(res_tmp$data))
+    # new object Created for res_tmp
+    res_tmp$data <<- res_tmp$data[rownames(res_tmp$data),]
+
     
     if(input$PreProcessing_Procedure != "none"){
       print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
@@ -782,23 +837,51 @@ server <- function(input,output,session){
           )
           )
           )
-        assay(res_tmp$data) <<- DataFrame(processedData)
+        assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "vst_DESeq"){
+        par_tmp["DESeq_advanced"] <<- FALSE
         if(par_tmp$omic_type == "Transcriptomics"){
-          print(input$DESeq_formula)
-          # on purpose local
-          colData(res_tmp$data)[,"DE_SeqFactor"] <- as.factor(
-            colData(res_tmp$data)[,input$DESeq_formula]
+          design_formula <- paste("~", input$DESeq_formula_main)
+          # only do this locally
+          colData(res_tmp$data)[,input$DESeq_formula_main] <- as.factor(
+            colData(res_tmp$data)[,input$DESeq_formula_main]
+          )
+          if(length(input$DESeq_formula_sub) > 0){
+            design_formula <- paste(
+              design_formula, " + ",
+              paste(input$DESeq_formula_sub, collapse = " + ")
             )
-          
-          print(colData(res_tmp$data)[,"DE_SeqFactor"])
-          # TODO take more complicated formulas into consideration
+            # turn each factor into a factor
+            for(i in input$DESeq_formula_sub){
+              colData(res_tmp$data)[,i] <- as.factor(
+                colData(res_tmp$data)[,i]
+              )
+            }
+            par_tmp[["DESeq_factors"]] <<- c(
+              input$DESeq_formula_main,input$DESeq_formula_sub
+            )
+          }
+          else{
+            par_tmp[["DESeq_factors"]] <<- c(input$DESeq_formula_main)
+          }
+          # if advanced formula is used, overwrite the other formula
+          if(input$DESeq_show_advanced){
+            if(startsWith(input$DESeq_formula_advanced, "~")){
+              print("Advanced formula used")
+              design_formula <- input$DESeq_formula_advanced
+              par_tmp["DESeq_advanced"] <<- TRUE
+            }
+          }
+          print(design_formula)
+          par_tmp["DESeq_formula"] <<- design_formula
+          # on purpose local
+          print(colData(res_tmp$data)[,input$DESeq_formula_main])
 
           dds <- DESeq2::DESeqDataSetFromMatrix(
             countData = assay(res_tmp$data),
             colData = colData(res_tmp$data),
-            design = ~DE_SeqFactor
+            design = as.formula(design_formula)
             )
           
           de_seq_result <- DESeq2::DESeq(dds)
@@ -807,12 +890,9 @@ server <- function(input,output,session){
             object = de_seq_result,
             blind = TRUE
             )
-
-          assay(res_tmp$data) <<- DataFrame(assay(dds_vst))
+          assay(res_tmp$data) <<- as.data.frame(assay(dds_vst))
         }else{
-          output$Statisitcs_Data=renderText({
-            "<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"
-            })
+          addWarning <- "<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"
         }
       }
       if(input$PreProcessing_Procedure == "Scaling_0_1"){
@@ -821,31 +901,28 @@ server <- function(input,output,session){
             (x - min(x))/(max(x) - min(x))
             })
           ))
-        assay(res_tmp$data) <<- DataFrame(processedData)
+        assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "ln"){
         processedData <- as.data.frame(log(
           as.data.frame(assay(res_tmp$data))
           ))
-        assay(res_tmp$data) <<- DataFrame(processedData)
+        assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "log10"){
         processedData <- as.data.frame(assay(res_tmp$data))
         if(any(processedData<0)){
-          output$Statisitcs_Data <- renderText({
-            "Negative entries, cannot take log10!!"
-            })
-          req(FALSE)
+          addWarning <- "<font color=\"#FF0000\"><b>Negative entries, cannot take log10!!</b></font>"
         }
         if(any(processedData==0)){
           processedData <- as.data.frame(log10(
-            processedData+1)
+            processedData + 1)
             )
         }
         processedData <- as.data.frame(log10(
-          processedData+1)
+          processedData + 1)
           )
-        assay(res_tmp$data) <<- DataFrame(processedData)
+        assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "pareto_scaling"){
         processedData <- as.data.frame(assay(res_tmp$data))
@@ -856,12 +933,18 @@ server <- function(input,output,session){
           apply(centered, 1, function(x){x/sqrt(sd(x))})
           ))
 
-        assay(res_tmp$data) <<- DataFrame(pareto.matrix)
+        assay(res_tmp$data) <<- as.data.frame(pareto.matrix)
       }
     }
     
     if(any(is.na(assay(res_tmp$data)))){
       print("This might be problem due to mismatched Annotation Data?!")
+      nrow_before <- nrow(assay(res_tmp$data))
+      nrow_after <- nrow(res_tmp$data[complete.cases(assay(res_tmp$data)),])
+      addWarning <- paste0("<font color=\"#FF0000\"><b>There were NA's after pre-processing, any row containg such was completly removed! (before/after): ",nrow_before,"/",nrow_after,"</b></font>")
+      if(!(nrow_after > 0)){
+        addWarning <- paste0(addWarning, "<br> <font color=\"#FF0000\"><b> There is nothing left, choose different pre-processing other-wise App will crash!</b></font>")
+      }
       res_tmp$data <<- res_tmp$data[complete.cases(assay(res_tmp$data)),]
     }
 
@@ -875,12 +958,22 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
     showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
 
+    output$Statisitcs_Data <- renderText({
+      paste0(addWarning,
+             "The data has the dimensions of: ",
+             paste0(dim(res_tmp$data),collapse = ", "),
+             "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
+             "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
+             "<br","See help for details",
+             "<br>",ifelse(any(as.data.frame(assay(res_tmp$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
+    })
+    
     # Count up updating
     updating$count <- updating$count + 1
-    
     return("Pre-Processing successfully")
   })
   
+
   output$Statisitcs_Data <- renderText({
     selectedData_processed()
     click("SignificanceAnalysis-refreshUI",asis = T)
@@ -892,9 +985,11 @@ server <- function(input,output,session){
            "<br","See help for details",
            "<br>",ifelse(any(as.data.frame(assay(res_tmp$data))<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
+
   
 ## Log preprocessing ----
   observeEvent(input$Do_preprocessing,{
+    print(selectedData_processed())
     if(par_tmp$omic_type == "Transcriptomics"){
       tmp_logMessage <- "Remove anything which row Count <= 10"
     }else if(par_tmp$omic_type == "Metabolomics"){
@@ -910,7 +1005,7 @@ server <- function(input,output,session){
       message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage)
       )
     fun_LogIt(
-      message = paste0("**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula),input$PreProcessing_Procedure))
+      message = paste0("**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),input$PreProcessing_Procedure))
       )
     fun_LogIt(
       message = paste0("**PreProcessing** - The resulting dimensions are: ",paste0(dim(res_tmp$data),collapse = ", "))

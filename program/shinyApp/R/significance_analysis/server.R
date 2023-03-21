@@ -21,13 +21,24 @@ significance_analysis_server <- function(id, data, params, updates){
           sig_ana_reactive$coldata <- colData(data$data)
         }
         req(sig_ana_reactive$coldata)
-        selectInput(
-          inputId = ns("sample_annotation_types_cmp"),
-          label = "Choose groups to compare",
-          choices = c(colnames(sig_ana_reactive$coldata)),
-          multiple = F ,
-          selected = NULL
-        )
+        if(params$PreProcessing_Procedure == "vst_DESeq"){
+          selectInput(
+            inputId = ns("sample_annotation_types_cmp"),
+            label = "Choose groups to compare",
+            choices = params$DESeq_factors,
+            multiple = F,
+            selected = NULL
+          )
+        } else{
+          selectInput(
+            inputId = ns("sample_annotation_types_cmp"),
+            label = "Choose groups to compare",
+            choices = c(colnames(sig_ana_reactive$coldata)),
+            multiple = F ,
+            selected = NULL
+          )
+        }
+
       })
       # UI to choose comparisons
       output$chooseComparisons_ui <- renderUI({
@@ -91,7 +102,7 @@ significance_analysis_server <- function(id, data, params, updates){
             label = "Test correction",
             choices = c(
               "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
-              "Holm", "Hommel", "Hochberg"
+              "Holm", "Hommel", "Hochberg", "FDR"
             ),
             selected = "Benjamini-Hochberg"
         )
@@ -157,6 +168,7 @@ significance_analysis_server <- function(id, data, params, updates){
       # refresh the UI/data if needed
       observeEvent(input$refreshUI, {
         data <- update_data(data, updates, sig_ana_reactive$current_updates)
+        params <- update_params(params, updates, sig_ana_reactive$current_updates)
         sig_ana_reactive$current_updates <- updates()
         sig_ana_reactive$coldata <- colData(data$data)
       })
@@ -314,7 +326,7 @@ significance_analysis_server <- function(id, data, params, updates){
             )$gene
             # only add if the result is not empty
             if(length(to_add_tmp) > 0){
-              res2plot[input$comparisons_to_visualize[i]] <- to_add_tmp
+              res2plot[[input$comparisons_to_visualize[i]]] <- to_add_tmp
             }
           }
         }
@@ -335,7 +347,8 @@ significance_analysis_server <- function(id, data, params, updates){
         # plot the results
         if(input$visualization_method == "UpSetR plot"){
           sig_ana_reactive$plot_last <- UpSetR::upset(
-            UpSetR::fromList(res2plot)
+            UpSetR::fromList(res2plot),
+            nsets = length(res2plot)
             )
           output$Significant_Plot_final <- renderPlot({
             sig_ana_reactive$plot_last
