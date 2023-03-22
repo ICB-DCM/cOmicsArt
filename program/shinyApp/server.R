@@ -445,14 +445,14 @@ server <- function(input,output,session){
 
         file = input$data_preDone$datapath
       )
-      
+
       if(any(names(uploadedFile)%in% input$omicType)){
         # This is an file precompiled before 14.March.2023
         data_input <- uploadedFile[[input$omicType]]
       }else{
         data_input[[paste0(input$omicType,"_SumExp")]] <- uploadedFile
       }
-      
+
     }
 
     ### Added here gene annotation if asked for 
@@ -477,7 +477,7 @@ server <- function(input,output,session){
         values = rownames(data_input$annotation_rows),
         mart = ensembl
         )
-      out <- out[base::match(rownames(data_input$annotation_rows), out$ensembl_gene_id),] 
+      out <- out[base::match(rownames(data_input$annotation_rows), out$ensembl_gene_id),]
       
       data_input$annotation_rows$gene_type <- out$gene_biotype
       data_input$annotation_rows$GeneName <- out$external_gene_name
@@ -773,7 +773,7 @@ server <- function(input,output,session){
       hide("DESeq_formula_advanced", anim = T)
     }
   })
-  
+
   observeEvent(input$NextPanel2,{
     updateTabsetPanel(
       session = session,
@@ -978,6 +978,7 @@ server <- function(input,output,session){
     selectedData_processed()
     click("SignificanceAnalysis-refreshUI",asis = T)
     click("single_gene_visualisation-refreshUI",asis = T)
+    click("Volcano-refreshUI",asis = T)
     paste0("The data has the dimensions of: ",
            paste0(dim(res_tmp$data),collapse = ", "),
            "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
@@ -1044,7 +1045,9 @@ server <- function(input,output,session){
   # Volcano plots ----
   volcano_Server(
     id = "Volcano",
-    omic_type = reactive(input$omicType) # par_tmp$omic_type
+    data = res_tmp,
+    params = par_tmp,
+    reactive(updating$count)
     )
   # Heatmap ----
   heatmap_server(
