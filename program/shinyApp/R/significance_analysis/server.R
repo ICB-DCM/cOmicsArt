@@ -21,13 +21,24 @@ significance_analysis_server <- function(id, data, params, updates){
           sig_ana_reactive$coldata <- colData(data$data)
         }
         req(sig_ana_reactive$coldata)
-        selectInput(
-          inputId = ns("sample_annotation_types_cmp"),
-          label = "Choose groups to compare",
-          choices = c(colnames(sig_ana_reactive$coldata)),
-          multiple = F ,
-          selected = NULL
-        )
+        if(params$PreProcessing_Procedure == "vst_DESeq"){
+          selectInput(
+            inputId = ns("sample_annotation_types_cmp"),
+            label = "Choose groups to compare",
+            choices = params$DESeq_factors,
+            multiple = F,
+            selected = NULL
+          )
+        } else{
+          selectInput(
+            inputId = ns("sample_annotation_types_cmp"),
+            label = "Choose groups to compare",
+            choices = c(colnames(sig_ana_reactive$coldata)),
+            multiple = F ,
+            selected = NULL
+          )
+        }
+
       })
       # UI to choose comparisons
       output$chooseComparisons_ui <- renderUI({
@@ -157,6 +168,7 @@ significance_analysis_server <- function(id, data, params, updates){
       # refresh the UI/data if needed
       observeEvent(input$refreshUI, {
         data <- update_data(data, updates, sig_ana_reactive$current_updates)
+        params <- update_params(params, updates, sig_ana_reactive$current_updates)
         sig_ana_reactive$current_updates <- updates()
         sig_ana_reactive$coldata <- colData(data$data)
       })
