@@ -160,7 +160,7 @@ ui <- shiny::fluidPage(
     div(
       id = "TitleID_normal",
       column(width=1, tags$img(src = "Logo_cOmicsArt_clear.png", height="100%", width="100%")),
-      h2(HTML('<span style="color:#EC0014">c</span><span style="color:#FD8D33">O</span><span style="color:#3897F1">m</span><span style="color:#FFD335">i</span><span style="color:#A208BA">c</span><span style="color:#EF0089">s</span><span style="color:#EC0014">A</span><span style="color:#FD8D33">r</span><span style="color:#3897F1">t</span>'))
+      h1(HTML('<span style="color:#EC0014">c</span><span style="color:#FD8D33">O</span><span style="color:#3897F1">m</span><span style="color:#FFD335">i</span><span style="color:#A208BA">c</span><span style="color:#EF0089">s</span><span style="color:#EC0014">A</span><span style="color:#FD8D33">r</span><span style="color:#3897F1">t</span>'))
     ),
   ),
   conditionalPanel(
@@ -204,10 +204,15 @@ ui <- shiny::fluidPage(
     })),
   conditionalPanel(
     condition = "input.element_02 == 0",
-    div(
-      id = "foot_normal",
-      absolutePanel("Brought to you by Lea Seep & Paul Jonas Jost", bottom = 0, left = 10, fixed = TRUE)
-    )
+    absolutePanel("Brought to you by Lea Seep & Paul Jonas Jost",
+                         bottom = 0, left = 10, fixed = TRUE)
+    ## TODO Discuss this placement
+    # div(
+    #   id = "foot_normal",
+    #   absolutePanel(column(width=1, tags$img(src = "Logo_cOmicsArt_clear.png", height="100%", width="100%")),
+    #                 h5(HTML("Brought to you by Lea Seep & Paul Jonas Jost")),
+    #                         bottom = 0, left = 10, fixed = TRUE)
+    # )
   ),
   conditionalPanel(
     condition = "input.element_02 == 1",
