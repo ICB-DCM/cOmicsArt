@@ -91,28 +91,31 @@ ui <- shiny::fluidPage(
           background-color: #90DBF4; color:black
       }
       #sidebar_data_selection {
-        background-color: #90DBF4;
+        background-color: #EC001447;
       }
       #sidebar_pre_processing {
-        background-color: #8EECF5;
+        background-color: #FD8D3347;
       }
-      #sidebar_pca {
-        background-color: #F1C0E8;
+      #sidebar_sampleCorrelation {
+        background-color: #FFD33547;
       }
       #sidebar_significance_analysis {
-          background-color: #FDE4CF;
+          background-color: #70BF4F47;
+      }
+      #sidebar_pca {
+        background-color: #3897F147;
       }
       #sidebar_volcano_plot {
-        background-color: #FFCFD2;
+        background-color: #A208BA47;
       }
       #sidebar_heatmap {
-        background-color: #F1C0E8;
+        background-color: #EC001447;
       }
       #sidebar_single_gene_visualisation {
-          background-color: #B9FBC0;
+          background-color: #FD8D3347;
       }
       #sidebar_enrichment_analysis {
-          background-color: #CFBAF0;
+          background-color: #FFD33547;
       }
   "))
   ),
@@ -154,7 +157,7 @@ ui <- shiny::fluidPage(
   )),
   conditionalPanel(
     condition = "input.element == 0",
-    div(id = "TitleID_normal",titlePanel("ShinyOmics")),
+    div(id = "TitleID_normal",titlePanel("cOmicsArt")),
   ),
   conditionalPanel(
     condition = "input.element == 1",
