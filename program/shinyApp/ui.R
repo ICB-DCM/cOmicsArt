@@ -157,7 +157,11 @@ ui <- shiny::fluidPage(
   )),
   conditionalPanel(
     condition = "input.element == 0",
-    div(id = "TitleID_normal",titlePanel("cOmicsArt")),
+    div(
+      id = "TitleID_normal",
+      column(width=1, tags$img(src = "Logo_cOmicsArt.pdf", height="100%", width="100%")),
+      h2(HTML('<span style="color:#EC0014">c</span><span style="color:#FD8D33">O</span><span style="color:#3897F1">m</span><span style="color:#FFD335">i</span><span style="color:#A208BA">c</span><span style="color:#EF0089">s</span><span style="color:#EC0014">A</span><span style="color:#FD8D33">r</span><span style="color:#3897F1">t</span>'))
+    ),
   ),
   conditionalPanel(
     condition = "input.element == 1",
