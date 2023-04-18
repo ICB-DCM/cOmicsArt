@@ -88,7 +88,7 @@ ui <- shiny::fluidPage(
          color: black
       }
       .tabbable > .nav > li[class=active] > a {
-          background-color: #90DBF4; color:black
+          background-color: #7a7e80; color:black
       }
       #sidebar_data_selection {
         background-color: #EC001447;
@@ -159,7 +159,7 @@ ui <- shiny::fluidPage(
     condition = "input.element == 0",
     div(
       id = "TitleID_normal",
-      column(width=1, tags$img(src = "Logo_cOmicsArt.pdf", height="100%", width="100%")),
+      column(width=1, tags$img(src = "Logo_cOmicsArt_clear.png", height="100%", width="100%")),
       h2(HTML('<span style="color:#EC0014">c</span><span style="color:#FD8D33">O</span><span style="color:#3897F1">m</span><span style="color:#FFD335">i</span><span style="color:#A208BA">c</span><span style="color:#EF0089">s</span><span style="color:#EC0014">A</span><span style="color:#FD8D33">r</span><span style="color:#3897F1">t</span>'))
     ),
   ),

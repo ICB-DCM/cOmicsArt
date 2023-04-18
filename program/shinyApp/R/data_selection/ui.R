@@ -46,14 +46,14 @@ data_selection_main_panel <- mainPanel(
     tabPanel(
       title = "Upload section",
       br(),
-      hr(style = "border-top: 2px solid #90DBF4;"),
+      hr(style = "border-top: 2px solid #7a7e80;"),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("85%", "10%", "5%"),
         actionButton(
           inputId = "EasyTestForUser",
           label = "Start straight away with a test-dataset!",
           icon = icon('paper-plane'),
-          style = "color: #fffff; background-color: #90DBF4; border-color: #000000"
+          style = "color: #fffff; background-color: #7a7e80; border-color: #000000"
         ),
         actionButton(
           inputId = "Reset",
@@ -61,10 +61,10 @@ data_selection_main_panel <- mainPanel(
         ),
         NULL
       ),
-      hr(style = "border-top: 2px solid #90DBF4;"),
+      hr(style = "border-top: 2px solid #7a7e80;"),
       a(id = "toggleAdvanced",
         "Data Upload via file input",
-        style = "background-color: #90DBF4; color: black; padding: 7px 10px; "
+        style = "background-color: #7a7e80; color: black; padding: 7px 10px; "
         ),
         shinyjs::hidden(
           div(
@@ -83,9 +83,9 @@ data_selection_main_panel <- mainPanel(
         )
         )
       ),
-      hr(style = "border-top: 2px solid #90DBF4;"),
+      hr(style = "border-top: 2px solid #7a7e80;"),
       uiOutput(outputId = "metadataInput_ui"),
-      hr(style = "border-top: 2px solid #90DBF4;"),
+      hr(style = "border-top: 2px solid #7a7e80;"),
       downloadButton(
         outputId = "SaveInputAsList",
         label = "Save file input to upload later"
