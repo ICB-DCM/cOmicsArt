@@ -28,14 +28,13 @@ server <- function(input,output,session){
   if(dir.exists("www")){
     setwd("www")
     print(list.files())
-    browser()
     file.remove(
       setdiff(
         setdiff(
           setdiff(list.files(path="."),list.files(path=".",pattern = ".csv")),
           list.files(path=".",pattern = ".RDS")
           ),
-      list.files(path=".",pattern = "Logo_cOmicsArt.pdf")
+      list.files(path=".",pattern = "Logo_cOmicsArt")
       )
     )
     print("Removed old Report files for fresh start")
