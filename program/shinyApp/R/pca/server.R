@@ -54,6 +54,37 @@ pca_Server <- function(id, data, params, row_select, updates){
           multiple = F # would be cool if true, to be able to merge vars ?!
         )
       })
+      ## Data Selection UI ---
+      observe({
+        if(input$data_selection_pca){
+          output$SampleAnnotationTypes_pca_ui <- renderUI({
+            req(data_input_shiny())
+            selectInput(
+              inputId = ns("SampleAnnotationTypes_pca"),
+              label = "Which annotation type do you want to select on?",
+              choices = c(colnames(colData(data$data))),
+              selected = c(colnames(colData(data$data)))[1],
+              multiple = F
+            )
+          })
+          output$sample_selection_pca_ui <- renderUI({
+            req(data_input_shiny(),isTruthy(input$SampleAnnotationTypes_pca))
+            selectInput(
+              inputId = ns("sample_selection_pca"),
+              label = "Which entities to use? (Will be the union if multiple selected)",
+              choices = c(
+                "all",
+                unique(colData(data$data)[,input$SampleAnnotationTypes_pca])
+              ),
+              selected = "all",
+              multiple = T
+            )
+          })
+        }else{
+          hide(id = "SampleAnnotationTypes_pca",anim=T)
+          hide(id = "sample_selection_pca",anim=T)
+        }
+      })
 
       output$PCA_anno_tooltip_ui <- renderUI({
         selectInput(
@@ -126,14 +157,22 @@ pca_Server <- function(id, data, params, row_select, updates){
         if(pca_reactives$calculate == 1){
           # update the data if needed
           # TODO check if the follwoing still needed as update is now done on 1st server level
-          data <- update_data(data, updates, pca_reactives$current_updates)
+          data2plot <- update_data(data, updates, pca_reactives$current_updates)
+          # select the neccesary data
+          if(input$data_selection_pca){
+            data2plot <- select_data(
+              data2plot,
+              input$sample_selection_pca,
+              input$SampleAnnotationTypes_pca
+            )
+          }
           pca_reactives$current_updates <- updates()
           # set the counter to 0 to prevent any further plotting
           pca_reactives$calculate <- 0
           print("Calculate PCA")
           # PCA
           pca <- prcomp(
-            x = as.data.frame(t(as.data.frame(assay(data$data)))),
+            x = as.data.frame(t(as.data.frame(assay(data2plot$data)))),
             center = T,
             scale. = FALSE
           )
@@ -144,7 +183,7 @@ pca_Server <- function(id, data, params, row_select, updates){
           percentVar <- round(100 * explVar, digits = 1)
 
           # Define data for plotting
-          pcaData <- data.frame(pca$x,colData(data$data))
+          pcaData <- data.frame(pca$x,colData(data2plot$data))
 
           df_out_r <- NULL
           if(input$Show_loadings == "Yes"){
@@ -180,8 +219,8 @@ pca_Server <- function(id, data, params, row_select, updates){
             if(!is.null(input$EntitieAnno_Loadings)){
               req(data_input_shiny())
               df_out_r$chosenAnno <- factor(
-                make.unique(as.character(rowData(data$data)[rownames(df_out_r),input$EntitieAnno_Loadings])),
-                levels = make.unique(as.character(rowData(data$data)[rownames(df_out_r),input$EntitieAnno_Loadings]))
+                make.unique(as.character(rowData(data2plot$data)[rownames(df_out_r),input$EntitieAnno_Loadings])),
+                levels = make.unique(as.character(rowData(data2plot$data)[rownames(df_out_r),input$EntitieAnno_Loadings]))
                 )
             }
           }
@@ -207,8 +246,8 @@ pca_Server <- function(id, data, params, row_select, updates){
           if(!is.null(input$EntitieAnno_Loadings)){
             req(data_input_shiny())
             LoadingsDF$entitie=factor(
-              make.unique(as.character(rowData(data$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
-              levels = make.unique(as.character(rowData(data$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+              make.unique(as.character(rowData(data2plot$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
+              levels = make.unique(as.character(rowData(data2plot$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
               )
           }
           # Loadings Matrix plot
@@ -227,8 +266,8 @@ pca_Server <- function(id, data, params, row_select, updates){
           if(!is.null(input$EntitieAnno_Loadings_matrix)){
             req(data_input_shiny())
             df_loadings$chosenAnno <- factor(
-              make.unique(as.character(rowData(data$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix])),
-              levels = make.unique(as.character(rowData(data$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix]))
+              make.unique(as.character(rowData(data2plot$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix])),
+              levels = make.unique(as.character(rowData(data2plot$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix]))
             )
           }else{
             df_loadings$chosenAnno <- df_loadings$entity

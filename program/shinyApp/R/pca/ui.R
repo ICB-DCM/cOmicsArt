@@ -6,11 +6,22 @@ pca_sidebar_panel <- function(ns){
     # PCA
     #########################################
     h4("Explorative Analysis"),
+    ### data selection
+    switchInput(
+      inputId = ns("data_selection_pca"),
+      label = "Select Data",
+      inline = T,
+      size = "mini"
+    ),
+    uiOutput(outputId = ns("SampleAnnotationTypes_pca_ui")),
+    uiOutput(outputId = ns("sample_selection_pca_ui")),
+    ### start pca ---
     actionButton(
       inputId = ns("Do_PCA"),
       label = "Perform PCA",
       icon("fas fa-laptop-code")
     ),
+    ### further visualizations
     hr(style = "border-top: 1px solid #000000;"),
     uiOutput(outputId = ns("coloring_options_ui")),
     uiOutput(outputId = ns("x_axis_selection_ui")),
