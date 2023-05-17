@@ -181,6 +181,7 @@ single_gene_visualisation_server <- function(id, data, params, updates){
             GeneData <- GeneData[,c("rowMedian","anno")]
           }
           GeneData$anno <- as.factor(GeneData$anno)
+
           P_boxplots <- ggplot(
             GeneData, 
             aes(
@@ -188,12 +189,19 @@ single_gene_visualisation_server <- function(id, data, params, updates){
               #y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],
               y=GeneData[,-ncol(GeneData)],
               fill=anno)
-            ) +
-            geom_boxplot() +
+          ) +
+            #geom_boxplot(alpha = 0.5) +
+            geom_point(shape = 21,size=5)+
             scale_fill_brewer(palette="RdBu") +
             xlab(input$Select_Gene) +
             ylab(input$type_of_data_gene) +
             theme_bw()
+          
+          # check if it is more than 3 points per group, to draw boxplots as well
+          if(any(table(GeneData$anno)>3)){
+            P_boxplots <- P_boxplots + geom_boxplot(alpha = 0.5) 
+          }
+         
           testMethod <- "t.test"
           scenario <- 13
           if(input$type_of_visualitsation == "boxplots_withTesting"){
