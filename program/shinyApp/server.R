@@ -661,7 +661,7 @@ server <- function(input,output,session){
   ## Do Selection ----  
   selectedData <- reactive({
     shiny::req(input$row_selection, input$sample_selection)
-    par_tmp["row_selection"] <<- input$row_selection
+    par_tmp[["row_selection"]] <<- input$row_selection
     print("Alright do Row selection")
     selected <- c()
 
@@ -957,8 +957,15 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
     showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+    
+    # Count up updating
+    updating$count <- updating$count + 1
 
     output$Statisitcs_Data <- renderText({
+      
+      shinyjs::click("SignificanceAnalysis-refreshUI",asis = T)
+      shinyjs::click("single_gene_visualisation-refreshUI",asis = T)
+      shinyjs::click("Volcano-refreshUI",asis = T)
       paste0(addWarning,
              "The data has the dimensions of: ",
              paste0(dim(res_tmp$data),collapse = ", "),
@@ -968,25 +975,23 @@ server <- function(input,output,session){
              "<br>",ifelse(any(as.data.frame(assay(res_tmp$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
     
-    # Count up updating
-    updating$count <- updating$count + 1
-    # Update Hidden Buttons
-    click("SignificanceAnalysis-refreshUI",asis = T)
+
     return("Pre-Processing successfully")
   })
   
+  ## DO not why this was moved here ? 
 
-  output$Statisitcs_Data <- renderText({
-    selectedData_processed()
-    click("SignificanceAnalysis-refreshUI",asis = T)
-    click("Volcano-refreshUI",asis = T)
-    paste0("The data has the dimensions of: ",
-           paste0(dim(res_tmp$data),collapse = ", "),
-           "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
-           "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
-           "<br","See help for details",
-           "<br>",ifelse(any(as.data.frame(assay(res_tmp$data))<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
-    })
+  # output$Statisitcs_Data <- renderText({
+  #   browser()
+  #   selectedData_processed()
+  # 
+  #   paste0("The data has the dimensions of: ",
+  #          paste0(dim(res_tmp$data),collapse = ", "),
+  #          "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
+  #          "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
+  #          "<br","See help for details",
+  #          "<br>",ifelse(any(as.data.frame(assay(res_tmp$data))<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
+  #   })
 
   
 ## Log preprocessing ----
@@ -1059,9 +1064,13 @@ server <- function(input,output,session){
     )
   # Single Gene Visualisations ----
   single_gene_visualisation_server(
-    id = "single_gene_visualisation",
-    omicType = reactive(input$omicType) # par_tmp$omic_type
-  )
+      id = 'single_gene_visualisation',
+      data = res_tmp,
+      params = par_tmp,
+      reactive(updating$count)
+    )
+
+
   # Enrichment Analysis ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',

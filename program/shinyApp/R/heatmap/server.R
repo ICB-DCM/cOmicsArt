@@ -445,7 +445,7 @@ heatmap_server <- function(id, data, params, updates){
           res_tmp["Heatmap"] <<- data2HandOver
         }
         # par_tmp gets the parameters used for the heatmap
-        par_tmp["Heatmap"] <<- list(
+        par_tmp[["Heatmap"]] <<- list(
           anno_options = input$anno_options,
           row_anno_options = input$row_anno_options,
           row_label_options = input$row_label_options,
