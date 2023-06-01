@@ -153,7 +153,7 @@ ui <- shiny::fluidPage(
     "element",
     label = "PrideMonth?",
     choices = c(0, 1),
-    selected = ifelse(format(as.POSIXct(Sys.time()), "%m") == "06", 1, 0)
+    selected = ifelse(format(as.POSIXct(Sys.time()), "%m") == "07", 1, 0)
   )),
   conditionalPanel(
     condition = "input.element == 0",
