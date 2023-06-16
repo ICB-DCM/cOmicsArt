@@ -155,7 +155,21 @@ significance_analysis_server <- function(id, data, params, updates){
             inputId = ns("sig_to_look_at"),
             label = "Type of significance to look at",
             choices = choices,
-            selected = "Significant unadjusted"
+            selected = input$sig_to_look_at
+        )
+      })
+      # ui to choose intersections to highlight in venn diagram
+      output$chooseIntersections_ui <- renderUI({
+        req(input$visualization_method=="UpSetR plot")
+        # require current plot and upset matrix
+        req(sig_ana_reactive$plot_last)
+        choices <- append("None", sig_ana_reactive$intersect_names)
+        selectInput(
+            inputId = ns("intersection_high"),
+            label = "Intersections to highlight",
+            choices = choices,
+            multiple = T,
+            selected = input$intersection_high
         )
       })
       # keep updating the info panel while executing
@@ -346,18 +360,24 @@ significance_analysis_server <- function(id, data, params, updates){
         }
         # plot the results
         if(input$visualization_method == "UpSetR plot"){
-          sig_ana_reactive$plot_last <- UpSetR::upset(
-            UpSetR::fromList(res2plot),
-            nsets = length(res2plot)
-            )
+          sig_ana_reactive$overlap_list <- prepare_upset_plot(res2plot=res2plot)
+          sig_ana_reactive$plot_last <- ComplexUpset::upset(
+            sig_ana_reactive$overlap_list,
+            colnames(sig_ana_reactive$overlap_list),
+            themes=list(default=theme())
+          )
+          sig_ana_reactive$intersect_names <-  ggplot_build(
+            sig_ana_reactive$plot_last
+          )$layout$panel_params[[1]]$x$get_labels()
           output$Significant_Plot_final <- renderPlot({
             sig_ana_reactive$plot_last
           })
         }else if(input$visualization_method == "Venn diagram"){
           # set colors for each comparison
-          sig_ana_reactive$plot_last <- ggVennDiagram::ggVennDiagram(res2plot) +
-            scale_fill_gradient(high ="#FDE4CF",low = "#dedede") +  # color based on count
-            scale_x_continuous(expand = expansion(mult = .2))
+          sig_ana_reactive$plot_last <- ggvenn::ggvenn(
+            res2plot, fill_color=c("#44af69", "#f8333c", "#fcab10", "#2b9eb3"),
+            set_name_size = 3
+          )
 
           output$Significant_Plot_final <- renderPlot({
             sig_ana_reactive$plot_last
@@ -365,6 +385,44 @@ significance_analysis_server <- function(id, data, params, updates){
         }
         sig_ana_reactive$results_for_plot <- res2plot
       })
+      # if we want to change the highlighting
+      observeEvent(input$intersection_high,{
+        querie_names_all <- map_intersects_for_highlight(
+          highlights=sig_ana_reactive$intersect_names,
+          plot=sig_ana_reactive$plot_last,
+          overlap_list=sig_ana_reactive$overlap_list
+        )
+        querie_names <- map_intersects_for_highlight(
+          highlights=input$intersection_high,
+          plot=sig_ana_reactive$plot_last,
+          overlap_list=sig_ana_reactive$overlap_list
+        )
+        queries <- vector("list", length(querie_names_all))
+        for(i_querie in seq_along(sig_ana_reactive$intersect_names)){
+          if(sig_ana_reactive$intersect_names[[i_querie]] %in% input$intersection_high){
+            queries[[i_querie]] <- upset_query(
+              intersect=querie_names_all[[i_querie]],
+              color='red',
+              fill='red',
+              only_components=c('intersections_matrix', 'Intersection size')
+            )
+          } else{
+            queries[[i_querie]] <- upset_query(
+              intersect=querie_names_all[[i_querie]],
+              color='#595959',
+              fill='#595959',
+              only_components=c('intersections_matrix', 'Intersection size')
+            )
+          }
+        }
+        sig_ana_reactive$plot_last <- ComplexUpset::upset(
+          sig_ana_reactive$overlap_list,
+          colnames(sig_ana_reactive$overlap_list),
+          themes=list(default=theme()),
+          queries=queries
+        )
+      })
+
 
       # Download and Report Section
       # download R Code for further plotting
@@ -417,15 +475,24 @@ significance_analysis_server <- function(id, data, params, updates){
                 file = file,
                 onefile = FALSE
               )
-              print(sig_ana_reactive$plot_last)
+              print(UpSetR::upset(
+                UpSetR::fromList(sig_ana_reactive$results_for_plot),
+                nsets = length(sig_ana_reactive$results_for_plot)
+              ))
               grDevices::dev.off()
             }else if(input$file_ext_Sig == ".png"){
               grDevices::png(file)
-              print(sig_ana_reactive$plot_last)
+              print(UpSetR::upset(
+                UpSetR::fromList(sig_ana_reactive$results_for_plot),
+                nsets = length(sig_ana_reactive$results_for_plot)
+              ))
               dev.off()
             }else if(input$file_ext_Sig == ".tiff"){
               grDevices::tiff(file)
-              print(sig_ana_reactive$plot_last)
+              print(UpSetR::upset(
+                UpSetR::fromList(sig_ana_reactive$results_for_plot),
+                nsets = length(sig_ana_reactive$results_for_plot)
+              ))
               grDevices::dev.off()
             }
           }
