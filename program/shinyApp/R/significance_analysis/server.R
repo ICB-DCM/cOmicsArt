@@ -369,20 +369,16 @@ significance_analysis_server <- function(id, data, params, updates){
           sig_ana_reactive$intersect_names <-  ggplot_build(
             sig_ana_reactive$plot_last
           )$layout$panel_params[[1]]$x$get_labels()
-          output$Significant_Plot_final <- renderPlot({
-            sig_ana_reactive$plot_last
-          })
         }else if(input$visualization_method == "Venn diagram"){
           # set colors for each comparison
           sig_ana_reactive$plot_last <- ggvenn::ggvenn(
             res2plot, fill_color=c("#44af69", "#f8333c", "#fcab10", "#2b9eb3"),
             set_name_size = 3
           )
-
-          output$Significant_Plot_final <- renderPlot({
-            sig_ana_reactive$plot_last
-          })
         }
+        output$Significant_Plot_final <- renderPlot({
+            print(sig_ana_reactive$plot_last)
+        })
         sig_ana_reactive$results_for_plot <- res2plot
       })
       # if we want to change the highlighting
@@ -401,17 +397,15 @@ significance_analysis_server <- function(id, data, params, updates){
         for(i_querie in seq_along(sig_ana_reactive$intersect_names)){
           if(sig_ana_reactive$intersect_names[[i_querie]] %in% input$intersection_high){
             queries[[i_querie]] <- upset_query(
-              intersect=querie_names_all[[i_querie]],
+              intersect=colnames(sig_ana_reactive$overlap_list)[querie_names_all[[i_querie]]],
               color='red',
-              fill='red',
-              only_components=c('intersections_matrix', 'Intersection size')
+              fill='red'
             )
           } else{
             queries[[i_querie]] <- upset_query(
-              intersect=querie_names_all[[i_querie]],
+              intersect=colnames(sig_ana_reactive$overlap_list)[querie_names_all[[i_querie]]],
               color='#595959',
-              fill='#595959',
-              only_components=c('intersections_matrix', 'Intersection size')
+              fill='#595959'
             )
           }
         }
@@ -422,6 +416,43 @@ significance_analysis_server <- function(id, data, params, updates){
           queries=queries
         )
       })
+      # download the intersect table
+      output$downloadIntersections <- downloadHandler(
+        filename = function(){
+          paste0("IntersectionsList_", Sys.time(), ".csv")
+        },
+        content = function(file){
+          req(input$intersection_high)
+          # copy overlap list to keep the original in case of changes
+          df <- as.data.frame(lapply(sig_ana_reactive$overlap_list, as.logical))
+          rownames(df) <- rownames(sig_ana_reactive$overlap_list)
+          # get intersects
+          intersects <- map_intersects_for_highlight(
+            highlights=input$intersection_high,
+            plot=sig_ana_reactive$plot_last,
+            overlap_list=sig_ana_reactive$overlap_list
+          )
+          intersect_set <- vector("list", length(intersects))
+          intersect_name <- vector("list", length(intersects))
+          for(i_inter in 1:length(intersects)){
+            # select dataframe for only comparisons considered in intersect
+            df_inter <- as.data.frame(df[,intersects[[i_inter]]])  # as.data.frame for intersects of size 1
+            rownames(df_inter) <- rownames(df)
+            # add logical value True if row is present in all columns
+            df_inter$keep_row <- apply(df_inter, 1, all)
+            # select on df$keep_row
+            df_inter <- df_inter[df_inter$keep_row==TRUE,]
+            intersect_set[[i_inter]] <- rownames(df_inter)
+            intersect_name[[i_inter]] <- paste(
+              colnames(sig_ana_reactive$overlap_list)[intersects[[i_inter]]],
+              collapse = "_vs_"
+            )
+          }
+          names(intersect_set) <- intersect_name
+          tosave <- data.frame(sapply(intersect_set, "length<-", max(lengths(intersect_set))))
+          write.csv(tosave, file, row.names = FALSE)
+        }
+      )
 
 
       # Download and Report Section

@@ -282,12 +282,11 @@ prepare_upset_plot <- function(res2plot){
 }
 
 map_intersects_for_highlight <- function(highlights, plot, overlap_list){
+  namesInPlot <- ggplot_build(plot)$layout$panel_params[[1]]$y$get_labels()
   # maps the names of the intersections to hightlight to the correct ones in upset plot
   mapping <- match(
       colnames(overlap_list),
-      ggplot_build(
-          plot
-      )$layout$panel_params[[1]]$y$get_labels()
+      namesInPlot[base::sort.default(names(namesInPlot))]
   )
   querie_names_pre <- lapply(strsplit(highlights, "-"), as.integer)
   querie_names <- vector("list", length(querie_names_pre))

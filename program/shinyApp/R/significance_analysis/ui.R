@@ -48,7 +48,7 @@ significance_analysis_main_ui <- function(ns){
         uiOutput(outputId = ns("chooseIntersections_ui")),
         # Download highlighted intersections as table
         downloadButton(
-            outputId = ns("downloadIntersections_ui"),
+            outputId = ns("downloadIntersections"),
             label = "Download Intersections",
             class = "btn-info"
         ),
