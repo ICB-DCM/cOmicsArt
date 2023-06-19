@@ -19,7 +19,12 @@ volcano_sidebar_panel <- function(ns){
       inputId = ns("get_entire_table"),
       label = "show next to LFCs also the raw data that was used to calculate",
       inline = T
-    )
+    ),
+    # Button to refresh the UI
+    hidden(actionButton(
+      inputId = ns("refreshUI"),
+      label = "Refresh UI"
+    ))
   )
 }
 

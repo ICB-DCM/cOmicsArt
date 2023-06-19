@@ -16,6 +16,11 @@ significance_analysis_sidebar_ui<- function(ns){
       inputId = ns("significanceGo"),
       label = "Get significance analysis"
       ),
+    # Button to refresh the UI
+    hidden(actionButton(
+      inputId = ns("refreshUI"),
+      label = "Refresh UI"
+      )),
     hr(style = "border-top: 1px solid #858585;")
   )
 }
