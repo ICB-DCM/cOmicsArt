@@ -1,6 +1,8 @@
 server <- function(input,output,session){
   source("R/SourceAll.R",local=T)
-  global_Vars <<- reactiveValues()
+  source("R/util.R")
+
+  global_Vars <<- reactiveValues() # OUTDATED?
   
   # getCurrentVersion(updateDESCRIPTION=T) # Where to Place this ? So it does not always get 'updated'?
   # Can we add this somehow as necassary to every new release?
@@ -28,9 +30,9 @@ server <- function(input,output,session){
   if(dir.exists("www")){
     setwd("www")
     print(list.files())
-    file.remove(setdiff(setdiff(list.files(path="."),
-                                list.files(path=".",pattern = ".csv")),
-                        list.files(path=".",pattern = ".RDS")))
+    file.remove(list.files(path=".") %>%
+                  setdiff(list.files(path=".", pattern = ".csv")) %>%
+                  setdiff(list.files(path=".", pattern = ".RDS")))
     print("Removed old Report files for fresh start")
     setwd("..")
   }
@@ -63,6 +65,13 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
   
+# Init res Object ----
+  res_tmp <<- list()
+  par_tmp <<- list()
+# Init update Object ----
+  # updating is a reative value that counts up whenever data is updated
+  # this is used to trigger the update of the servers
+  updating <- reactiveValues(count = 0)
 ## Quit App Button ----
   observeEvent(input$Quit_App,{
     showModal(
@@ -99,11 +108,13 @@ server <- function(input,output,session){
   
 # Data Upload + checks ----
   print("Data Upload")
+## Set reactiveVals ----
+  FLAG_TEST_DATA_SELECTED <- reactiveVal(FALSE)
 ## Ui Section ----
-  
+
   observeEvent(input$Reset,{
     print("Jip")
-    FLAG_TEST_DATA_SELECTED <<- FALSE
+    FLAG_TEST_DATA_SELECTED(FALSE)
     output$debug <- renderText("<font color=\"#00851d\"><b>Reset successful</b></font>")
     shinyjs::reset(id="data_matrix1")
     shinyjs::reset(id="data_sample_anno1")
@@ -113,7 +124,7 @@ server <- function(input,output,session){
   })
   
   observeEvent(input$EasyTestForUser,{
-    FLAG_TEST_DATA_SELECTED <<- TRUE
+    FLAG_TEST_DATA_SELECTED(TRUE)
     shinyjs::click("refresh1")
   })
   
@@ -153,8 +164,9 @@ server <- function(input,output,session){
    filename = function() {
       paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep = "")},
     content = function(file){
+      # TODO Q: What to save here? only original enough?
       saveRDS(
-        object = data_input_shiny(),
+        object = res_tmp$data_original,
         file = file
         )
     }
@@ -170,12 +182,12 @@ server <- function(input,output,session){
   })
   
   observeEvent(input$omicType,{
-    if(input$omicType=="Transcriptomics"){
+    if(input$omicType == "Transcriptomics"){
       output$AddGeneSymbols_ui=renderUI({
         checkboxInput(
           inputId = "AddGeneSymbols",
-          label="Adding gene Annotation?",
-          value=F
+          label = "Adding gene Annotation?",
+          value = F
           )
         
       })
@@ -285,58 +297,49 @@ server <- function(input,output,session){
   data_input <- list()
   data_output <- list()
   observeEvent(input$refresh1,{
-    omicType_selected = input$omicType
+    par_tmp['omic_type'] <<- input$omicType
     fun_LogIt(message = "## DataInput {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
     fun_LogIt(
-      message = paste0("**DataInput** - Uploaded Omic Type: ",input$omicType)
+      message = paste0("**DataInput** - Uploaded Omic Type: ", par_tmp['omic_type'])
       )
-
     if(!(isTruthy(input$data_preDone) |
-         FLAG_TEST_DATA_SELECTED |
+         FLAG_TEST_DATA_SELECTED() |
          (isTruthy(input$data_matrix1) & 
           isTruthy(input$data_sample_anno1) & 
           isTruthy(input$data_row_anno1)))){
       output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
-    }else if(FLAG_TEST_DATA_SELECTED & !(isTruthy(input$data_preDone))){
-      output$debug=renderText({"The Test Data Set was used"})
+    }else if(FLAG_TEST_DATA_SELECTED() & !(isTruthy(input$data_preDone))){
+      output$debug <- renderText({"The Test Data Set was used"})
     }else{
-      if(any(names(data_input_shiny()) == omicType_selected)){
-        show_toast(
-          title = paste0(input$omicType,"Data Upload"),
-          text = paste0(input$omicType,"-data upload was successful"),
-          position = "top",
-          timer = 1500,
-          timerProgressBar = T
+      show_toast(
+        title = paste0(par_tmp['omic_type'],"Data Upload"),
+        text = paste0(par_tmp['omic_type'],"-data upload was successful"),
+        position = "top",
+        timer = 1500,
+        timerProgressBar = T
+        )
+      output$debug <- renderText({
+        "<font color=\"#00851d\"><b>Upload successful</b></font>"
+        })
+      if(isTruthy(input$data_preDone)){
+        # precomplied set used
+        fun_LogIt(
+          message = paste0("**DataInput** - The used data was precompiled. Filename: \n\t",input$data_preDone$name)
           )
-        output$debug <- renderText({
-          "<font color=\"#00851d\"><b>Upload successful</b></font>"
-          })
-        if(isTruthy(input$data_preDone)){
-          # precomplied set used
-          fun_LogIt(
-            message = paste0("**DataInput** - The used data was precompiled. Filename: \n\t",input$data_preDone$name)
-            )
-        }else{
-          fun_LogIt(
-            message = paste0("The following data was used: \n\t",input$data_matrix1$name,"\n\t",input$data_sample_anno1$name,"\n\t",input$data_row_anno1$name)
-            )
-        }
-       
-        showTab(inputId = "tabsetPanel1", target = "Pre-processing")
-        }else{
-        print("The precompiled lists types, does not match the input type!")
-        output$debug=renderText({
-          "<font color=\"#FF0000\"><b>The precompiled lists type, does not match the input type! Thats why the errors! Load the 3 original dataframe instead</b></font>"
-          })
+      }else{
+        fun_LogIt(
+          message = paste0("The following data was used: \n\t",input$data_matrix1$name,"\n\t",input$data_sample_anno1$name,"\n\t",input$data_row_anno1$name)
+          )
       }
+
+      showTab(inputId = "tabsetPanel1", target = "Pre-processing")
     }
   })
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
-    # What Input is required? (raw data)
-    if(!isTruthy(input$data_preDone) & !FLAG_TEST_DATA_SELECTED){
+    if(!isTruthy(input$data_preDone) & !FLAG_TEST_DATA_SELECTED()){
       # Include here, that the sample anno can be replaced by metadatasheet
       # potentially this will be extended to all of the fields
       shiny::req(input$data_matrix1,input$data_row_anno1)
@@ -351,20 +354,18 @@ server <- function(input,output,session){
         
         # check if only 1 col in anno row, 
         # add dummy col to ensure R does not turn it into a vector
-        
-        if(ncol(data_input[[input$omicType]]$annotation_rows) < 2){
+        if(ncol(data_input$annotation_rows) < 2){
           print("Added dummy column to annotation row")
-          data_input[[input$omicType]]$annotation_rows$origRownames <- rownames(data_input[[input$omicType]]$annotation_rows)
+          data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
         }
         
       }else if(isTruthy(input$metadataInput)){
        
         tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
-        #TODO ensure explicit the correct order (done in Matrix ordering the cols) 
 
         tryCatch(
           {
-            data_input[[input$omicType]] <- list(
+            data_input <- list(
               type = as.character(input$omicType),
               Matrix = read_file(input$data_matrix1$datapath)[,rownames(my_data_tmp)],
               sample_table = tmp_sampleTable,
@@ -384,28 +385,30 @@ server <- function(input,output,session){
       }
       
       ## TODO Include here possible Data Checks
-    }else if(FLAG_TEST_DATA_SELECTED & !isTruthy(input$data_preDone)){
-      # shiny::updateSelectInput(
-      #   session = session,
-      #   inputId = "omicType",
-      #   label = "Omic Type that is uploaded",
-      #   choices = c("Transcriptomics","Metabolomics","Lipidomics"),
-      #   selected = "Transcriptomics"
-      # )
-      # Precompiled list from www folder
-      data_input[[input$omicType]] <- readRDS(
+    }else if(FLAG_TEST_DATA_SELECTED() & !isTruthy(input$data_preDone)){
+      #TODO change test data to also not rely on 'Transcriptomics'
+
+      data_input <- readRDS(
         file = "www/Transcriptomics_only_precompiled-LS.RDS"
       )[[input$omicType]]
+
       fun_LogIt(
         message = paste0("**DataInput** - Test Data set used")
       )
     }else{
-      # Precompiled list
-      data_input[[input$omicType]] <- readRDS(
+
+      uploadedFile <- readRDS(
+
         file = input$data_preDone$datapath
-        )[[input$omicType]]
-      ## Include here possible Data Checks
-      ## TODO Include here possible Data Checks
+      )
+
+      if(any(names(uploadedFile)%in% input$omicType)){
+        # This is an file precompiled before 14.March.2023
+        data_input <- uploadedFile[[input$omicType]]
+      }else{
+        data_input[[paste0(input$omicType,"_SumExp")]] <- uploadedFile
+      }
+
     }
 
     ### Added here gene annotation if asked for 
@@ -420,82 +423,84 @@ server <- function(input,output,session){
       print("Add gene annotation")
       
       if(input$AddGeneSymbols_organism == "hsapiens"){
-        ensembl<- readRDS("data/ENSEMBL_Human_05_07_22")
+        ensembl <- readRDS("data/ENSEMBL_Human_05_07_22")
       }else{
         ensembl <- readRDS("data/ENSEMBL_Mouse_05_07_22")
       }
       
       out <- getBM(
         attributes = c("ensembl_gene_id", "gene_biotype","external_gene_name"),
-        values = rownames(data_input[[input$omicType]]$annotation_rows),
+        values = rownames(data_input$annotation_rows),
         mart = ensembl
         )
-      out <- out[base::match(rownames(data_input[[input$omicType]]$annotation_rows), out$ensembl_gene_id),] 
+      out <- out[base::match(rownames(data_input$annotation_rows), out$ensembl_gene_id),]
       
-      data_input[[input$omicType]]$annotation_rows$gene_type <- out$gene_biotype
-      data_input[[input$omicType]]$annotation_rows$GeneName <- out$external_gene_name
+      data_input$annotation_rows$gene_type <- out$gene_biotype
+      data_input$annotation_rows$GeneName <- out$external_gene_name
     }
-    
-    if(!any(class(data_input[[input$omicType]]) == "SummarizedExperiment")){
+
+    if(!any(class(data_input) == "SummarizedExperiment") & !any(grepl('SumExp',names(data_input))) ){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
       data_input[[paste0(input$omicType,"_SumExp")]]=
-        SummarizedExperiment(assays  = data_input[[input$omicType]]$Matrix,
-                             rowData = data_input[[input$omicType]]$annotation_rows[rownames(data_input[[input$omicType]]$Matrix),],
-                             colData = data_input[[input$omicType]]$sample_table
+        SummarizedExperiment(assays  = list(raw = data_input$Matrix),
+                             rowData = data_input$annotation_rows[rownames(data_input$Matrix),],
+                             colData = data_input$sample_table
                              )
-
+      #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
     }
-    
-    # TODO:
-    # For Loading summarizedExperiemnt make sure to to more extensive check 
-    # Option1 coming from complete outside
-    # Option2 coming from inside here
-    
-    # # Due to Object change a  lot needs to be changed Downstream! For the moment revert back to "original" obj
-    # data_input[[input$omicType]]=list(type=as.character(input$omicType),
-    #                                   Matrix=as.data.frame(assay(SummarizedExperiment)),
-    #                                   sample_table=as.data.frame(colData(tmp)),
-    #                                   annotation_rows=as.data.frame(rowData(tmp)))
+    # TODO SumExp only needed hence more restructuring needed
+    res_tmp[['data_original']] <<- data_input[[paste0(input$omicType,"_SumExp")]]
+    # Make a copy, to leave original data untouched
+    res_tmp[['data']] <<- res_tmp$data_original
+    # Count up updating
+    updating$count <- updating$count + 1
 
-    for(dataFrameToClean in names(data_input[[input$omicType]])){
-      if(!(dataFrameToClean %in% c("type","Matrix"))){
-        print(paste0("(before) No. anno options ",dataFrameToClean, ": ",ncol(data_input[[input$omicType]][[dataFrameToClean]])))
-        data_input[[input$omicType]][[dataFrameToClean]]=data_input[[input$omicType]][[dataFrameToClean]] %>% 
-          purrr::keep(~length(unique(.x)) != 1)
-        print(paste0("(after) No. anno options ",dataFrameToClean, ": ",ncol(data_input[[input$omicType]][[dataFrameToClean]])))
-      }
-    }
+    
+    print(paste0("(before) No. anno options sample_table: ",ncol(res_tmp$data_original)))
+    colData(res_tmp$data) <-
+      DataFrame(as.data.frame(colData(res_tmp$data)) %>%
+      purrr::keep(~length(unique(.x)) != 1))
+    print(paste0("(after) No. anno options sample_table: ",ncol(res_tmp$data)))
+
+    print(paste0("(before) No. anno options annotation_rows: ",ncol(res_tmp$data_original)))
+
+    rowData(res_tmp$data) <-
+      DataFrame(as.data.frame(rowData(res_tmp$data)) %>%
+                  purrr::keep(~length(unique(.x)) != 1))
+    print(paste0("(after) No. anno options annotation_rows: ",ncol(res_tmp$data)))
 
     fun_LogIt(
-      message = paste0("**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!")
+      message =
+        "**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!"
       )
     fun_LogIt(
-      message = paste0("**DataInput** - The raw data dimensions are:",paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", "))
+      message = paste0("**DataInput** - The raw data dimensions are:",
+                       paste0(dim(res_tmp$data_original),collapse = ", "))
     )
 
     fun_LogIt(message = "### Publication Snippet")
     fun_LogIt(message = snippet_dataInput(
-      data_type = input$omicType,
-      data_dimension = paste0(dim(data_input[[input$omicType]]$Matrix),collapse = ", ")
+      data_type = par_tmp$omic_type,
+      data_dimension = paste0(dim(res_tmp$data_original),collapse = ", ")
     ))
     fun_LogIt(message = "<br>")
-    data_input
+    return("DataUploadSuccesful")
   })
-  
+  #data_input_shiny = is the res object now which is global => not needed ?!
   print("Data Input done")
   
 # Data Selection  ----
 ## Ui Section ----
   observe({
     req(data_input_shiny())
-    print(input$omicType)
+    isTruthy(res_tmp$data)
     # Row
     output$providedRowAnnotationTypes_ui=renderUI({
       req(data_input_shiny())
       shinyWidgets::virtualSelectInput(
         inputId = "providedRowAnnotationTypes",
         label = "Which annotation type do you want to select on?",
-        choices = c(colnames(data_input_shiny()[[input$omicType]]$annotation_rows)),
+        choices = c(colnames(rowData(res_tmp$data_original))),
         multiple = F,
         search = T,
         showSelectedOptionsFirst = T
@@ -505,7 +510,7 @@ server <- function(input,output,session){
     output$row_selection_ui=renderUI({
       req(data_input_shiny())
       req(input$providedRowAnnotationTypes)
-      if(is.numeric(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes])){
+      if(is.numeric(rowData(res_tmp$data_original)[,input$providedRowAnnotationTypes])){
         selectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Your input category is numeric, selection is currently only supported for categorical data!)",
@@ -517,8 +522,8 @@ server <- function(input,output,session){
         shinyWidgets::virtualSelectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Will be the union if multiple selected)",
-          choices = c("High Values+IQR","all",unique(unlist(strsplit(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes],"\\|")))),
-          selected="all",
+          choices = c("High Values+IQR","all",unique(unlist(strsplit(rowData(res_tmp$data_original)[,input$providedRowAnnotationTypes],"\\|")))),
+          selected = "all",
           multiple = T,
           search = T,
           showSelectedOptionsFirst = T
@@ -532,8 +537,8 @@ server <- function(input,output,session){
           numericInput(inputId = "propensityChoiceUser",
                        label = "Specifcy the propensity for variablity & Expr",
                        value = 0.85,
-                       min=0,
-                       max=1
+                       min = 0,
+                       max = 1
           )
         })
       }else{
@@ -548,8 +553,8 @@ server <- function(input,output,session){
       selectInput(
         inputId = "providedSampleAnnotationTypes",
         label = "Which annotation type do you want to select on?",
-        choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
-        selected = c(colnames(data_input_shiny()[[input$omicType]]$sample_table))[1],
+        choices = c(colnames(colData(res_tmp$data_original))),
+        selected = c(colnames(colData(res_tmp$data_original)))[1],
         multiple = F
       )
     })
@@ -559,9 +564,9 @@ server <- function(input,output,session){
         inputId = "sample_selection",
         label = "Which entities to use? (Will be the union if multiple selected)",
         choices = c("all",
-                    unique(data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes])
+                    unique(colData(res_tmp$data_original)[,input$providedSampleAnnotationTypes])
                     ),
-        selected="all",
+        selected = "all",
         multiple = T
       )
     })
@@ -579,6 +584,8 @@ server <- function(input,output,session){
   
 ## Log Selection ----
   observeEvent(input$NextPanel,{
+    # Do actual selection before logging
+    print(selectedData())
     # add row and col selection options
     fun_LogIt("## Data Selection")
     fun_LogIt(
@@ -608,33 +615,37 @@ server <- function(input,output,session){
   })
   
   ## Do Selection ----  
-  selectedData=reactive({
-    shiny::req(input$row_selection,input$sample_selection)
+  selectedData <- reactive({
+    shiny::req(input$row_selection, input$sample_selection)
+    par_tmp[["row_selection"]] <<- input$row_selection
     print("Alright do Row selection")
     selected <- c()
 
     if(any(input$row_selection == "all")){
-      selected <- rownames(data_input_shiny()[[input$omicType]]$annotation_rows)
-    }else if(!(length(input$row_selection)==1 & any(input$row_selection=="High Values+IQR"))){
-      selected=unique(
+      selected <- rownames(rowData(res_tmp$data_original))
+    }else if(!(length(input$row_selection) == 1 & any(input$row_selection == "High Values+IQR"))){
+      selected <- unique(
         c(selected,
-          rownames(data_input_shiny()[[input$omicType]]$annotation_rows)
-          [which(data_input_shiny()[[input$omicType]]$annotation_rows[,input$providedRowAnnotationTypes]%in%input$row_selection)]
+          rownames(rowData(res_tmp$data_original))[
+            which(rowData(res_tmp$data_original)[,input$providedRowAnnotationTypes]%in%input$row_selection)
+            ]
           )
         )
     }
     if(any(input$row_selection == "High Values+IQR")){
       if(length(input$row_selection) == 1){
-        filteredIQR_Expr <- data_input_shiny()[[input$omicType]]$Matrix[filter_rna(
-          rna = data_input_shiny()[[input$omicType]]$Matrix,
+        toKeep <- filter_rna(
+          rna = assay(res_tmp$data_original),
           prop = input$propensityChoiceUser
-          ),]
+        )
+        filteredIQR_Expr <- assay(res_tmp$data_original)[toKeep,]
         selected <- rownames(filteredIQR_Expr)
       }else{
-        filteredIQR_Expr <- data_input_shiny()[[input$omicType]]$Matrix[filter_rna(
-          rna = data_input_shiny()[[input$omicType]]$Matrix[selected,],
+        toKeep <- filter_rna(
+          rna = assay(res_tmp$data_original)[selected,],
           prop = input$propensityChoiceUser
-          ),]
+        )
+        filteredIQR_Expr <- assay(res_tmp$data_original)[toKeep,]
         selected <- intersect(
           selected,
           rownames(filteredIQR_Expr)
@@ -646,45 +657,37 @@ server <- function(input,output,session){
     # Column Selection
     samples_selected <- c()
     if(any(input$sample_selection == "all")){
-      samples_selected <- colnames(data_input_shiny()[[input$omicType]]$Matrix)
+      samples_selected <- colnames(assay(res_tmp$data_original))
     }else{
-      samples_selected <-c(
+      samples_selected <- c(
         samples_selected,
-        rownames(data_input_shiny()[[input$omicType]]$sample_table)[which(
-          data_input_shiny()[[input$omicType]]$sample_table[,input$providedSampleAnnotationTypes]%in%input$sample_selection
+        rownames(colData(res_tmp$data_original))[which(
+          colData(res_tmp$data_original)[,input$providedSampleAnnotationTypes] %in% input$sample_selection
           )]
         )
     }
 
     # Data set selection
-
-    data_output[[input$omicType]] <- list(
-      type=input$omicType,
-      Matrix=data_input_shiny()[[input$omicType]]$Matrix[selected,samples_selected],
-      sample_table=data_input_shiny()[[input$omicType]]$sample_table[samples_selected,],
-      annotation_rows=data_input_shiny()[[input$omicType]]$annotation_rows[selected,]
-      )
-    #req(input$Sample_selection,isTruthy(data_input_shiny()),input$providedSampleAnnotationTypes)
     print("Alright do Column selection")
-    print(length(selected))
-    print(length(samples_selected))
-
-    return(data_output)
+    res_tmp$data <<- res_tmp$data_original[selected,samples_selected]
+    tmp_data_selected <<- res_tmp$data_original[selected,samples_selected]
+    return("Selection Success")
   })
   
-# Preprocessing after Selection ----
+# Pre-processing after Selection ----
+# Set Selected Data as Head to allow reiteration of pre-processing
+
 ## UI section ----
-  # set pre processing as golbal variable
-  observeEvent(input$PreProcessing_Procedure, {
-    pre_processing_procedure <<- input$PreProcessing_Procedure
-  })
-  output$DESeq_formula_ui <- renderUI({
+  output$DESeq_formula_main_ui <- renderUI({
     req(data_input_shiny())
     if(input$PreProcessing_Procedure == "vst_DESeq"){
       selectInput(
-        inputId = "DESeq_formula",
-        label = "Choose factors for desing formula in DESeq pipeline (currently only one factor allowed + App might crash if your factor as only 1 sample per level)",
-        choices = c(colnames(data_input_shiny()[[input$omicType]]$sample_table)),
+        inputId = "DESeq_formula_main",
+        label = paste0(
+          "Choose main factor for desing formula in DESeq pipeline ",
+          "(App might crash if your factor as only 1 sample per level)"
+        ),
+        choices = c(colnames(colData(tmp_data_selected))),
         multiple = F,
         selected = "condition"
       )
@@ -692,28 +695,41 @@ server <- function(input,output,session){
       NULL
     }
   })
-  # output$NextPanel2_ui <- renderUI({
-  #   actionButton(
-  #     inputId = "NextPanel2",
-  #     label = "Go to PCA",
-  #     icon = icon("fas fa-hat-wizard")
-  #     )
-  # })
-  # output$NextPanel3_ui <- renderUI({
-  #   actionButton(
-  #     inputId = "NextPanel3",
-  #     label = "Go to Volcano",
-  #     icon = icon("fas fa-mountain")
-  #     )
-  # })
-  # output$NextPanel4_ui <- renderUI({
-  #   actionButton(
-  #     inputId = "NextPanel4",
-  #     label = "Go to Heatmap",
-  #     icon = icon("fas fa-thermometer-full")
-  #     )
-  # })
-  
+  output$DESeq_formula_sub_ui <- renderUI({
+    req(data_input_shiny())
+    if(input$PreProcessing_Procedure == "vst_DESeq"){
+      selectInput(
+        inputId = "DESeq_formula_sub",
+        label = paste0(
+          "Choose other factors to account for",
+          "(App might crash if your factor as only 1 sample per level)"
+        ),
+        choices = c(colnames(colData(tmp_data_selected))),
+        multiple = T,
+        selected = "condition"
+      )
+    }else{
+      NULL
+    }
+  })
+  observe({
+    if(input$DESeq_show_advanced){
+      output$DESeq_formula_advanced_ui <- renderUI({
+        req(data_input_shiny())
+        textInput(
+          inputId = "DESeq_formula_advanced",
+          label = "Insert your formula:",
+          value = "",
+          width = NULL,
+          placeholder = NULL
+        )
+      })
+    } else {
+      # hide the advanced UI
+      hide("DESeq_formula_advanced", anim = T)
+    }
+  })
+
   observeEvent(input$NextPanel2,{
     updateTabsetPanel(
       session = session,
@@ -737,119 +753,159 @@ server <- function(input,output,session){
 
 ## Do preprocessing ----  
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
-    processedData_all <- selectedData()
+    # only enter this when you actually click data
+    req(input$Do_preprocessing > 0)
+    print("Do Preprocessing")
+    print(selectedData())
+    addWarning <- ""
+    par_tmp['PreProcessing_Procedure'] <<- input$PreProcessing_Procedure
+    processedData_all <- tmp_data_selected
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
-    processedData_all[[input$omicType]]$Matrix <- processedData_all[[input$omicType]]$Matrix[which(apply(processedData_all[[input$omicType]]$Matrix,1,sd)!=0),]
+    res_tmp$data <<- res_tmp$data[rownames(tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]),]
     
-    if(input$omicType == "Transcriptomics"){
+    if(par_tmp$omic_type == "Transcriptomics"){
       print("Also remove anything of rowCount <=10")
-      print(dim(processedData_all[[input$omicType]]$Matrix))
-      processedData_all[[input$omicType]]$Matrix <- processedData_all[[input$omicType]]$Matrix[which(rowSums(processedData_all[[input$omicType]]$Matrix)>10),]
+      print(dim(tmp_data_selected))
+      res_tmp$data <<- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]
     }
     
-    if(input$omicType == "Metabolomics"){
+    if(par_tmp$omic_type == "Metabolomics"){
       print("Remove anything which has a row median of 0")
-      print(dim(processedData_all[[input$omicType]]$Matrix))
-      processedData_all[[input$omicType]]$Matrix <-processedData_all[[input$omicType]]$Matrix[which(apply(processedData_all[[input$omicType]]$Matrix,1,median)!=0),]
+      print(dim(tmp_data_selected))
+      res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,median)!=0),]
     }
     
-    print(dim(processedData_all[[input$omicType]]$Matrix))
+    print(dim(res_tmp$data))
+    # explicitly set rownames to avoid any errors.
+    # new object Created for res_tmp
+    res_tmp$data <<- res_tmp$data[rownames(res_tmp$data),]
+
     
     if(input$PreProcessing_Procedure != "none"){
       print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
       if(input$PreProcessing_Procedure == "simpleCenterScaling"){
-        processedData<-as.data.frame(t(
+        processedData <- as.data.frame(t(
           scale(
-          x = as.data.frame(t(processedData_all[[input$omicType]]$Matrix)),
+          x = as.data.frame(t(as.data.frame(assay(res_tmp$data)))),
           scale = T,
           center = T
           )
           )
           )
-        processedData_all[[input$omicType]]$Matrix=processedData
+        assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "vst_DESeq"){
-        if(input$omicType == "Transcriptomics"){
-          processedData <- processedData_all[[input$omicType]]$Matrix
-          print(input$DESeq_formula)
-          processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"] <- as.factor(
-            processedData_all[[input$omicType]]$sample_table[,input$DESeq_formula]
+        par_tmp["DESeq_advanced"] <<- FALSE
+        if(par_tmp$omic_type == "Transcriptomics"){
+          design_formula <- paste("~", input$DESeq_formula_main)
+          # only do this locally
+          colData(res_tmp$data)[,input$DESeq_formula_main] <- as.factor(
+            colData(res_tmp$data)[,input$DESeq_formula_main]
+          )
+          if(length(input$DESeq_formula_sub) > 0){
+            design_formula <- paste(
+              design_formula, " + ",
+              paste(input$DESeq_formula_sub, collapse = " + ")
+            )
+            # turn each factor into a factor
+            for(i in input$DESeq_formula_sub){
+              colData(res_tmp$data)[,i] <- as.factor(
+                colData(res_tmp$data)[,i]
+              )
+            }
+            par_tmp[["DESeq_factors"]] <<- c(
+              input$DESeq_formula_main,input$DESeq_formula_sub
+            )
+          }
+          else{
+            par_tmp[["DESeq_factors"]] <<- c(input$DESeq_formula_main)
+          }
+          # if advanced formula is used, overwrite the other formula
+          if(input$DESeq_show_advanced){
+            if(startsWith(input$DESeq_formula_advanced, "~")){
+              print("Advanced formula used")
+              design_formula <- input$DESeq_formula_advanced
+              par_tmp["DESeq_advanced"] <<- TRUE
+            }
+          }
+          print(design_formula)
+          par_tmp["DESeq_formula"] <<- design_formula
+          # on purpose local
+          print(colData(res_tmp$data)[,input$DESeq_formula_main])
+
+          dds <- DESeq2::DESeqDataSetFromMatrix(
+            countData = assay(res_tmp$data),
+            colData = colData(res_tmp$data),
+            design = as.formula(design_formula)
             )
           
-          print(processedData_all[[input$omicType]]$sample_table[,"DE_SeqFactor"])
-          # TODO take more complicated formulas into consideration
-          dds <- DESeqDataSetFromMatrix(
-            countData = processedData,
-            colData = processedData_all[[input$omicType]]$sample_table,
-            design = ~DE_SeqFactor
-            )
-          
-          de_seq_result <- DESeq(dds)
+          de_seq_result <- DESeq2::DESeq(dds)
+          res_tmp$DESeq_obj <<- de_seq_result
           dds_vst <- vst(
             object = de_seq_result,
             blind = TRUE
             )
-          processedData_all[[input$omicType]]$Matrix=assay(dds_vst)
+          assay(res_tmp$data) <<- as.data.frame(assay(dds_vst))
         }else{
-          output$Statisitcs_Data=renderText({
-            "<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"
-            })
+          addWarning <- "<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'none' was selected!</b></font>"
         }
       }
       if(input$PreProcessing_Procedure == "Scaling_0_1"){
-        processedData=as.data.frame(t(
-          apply(processedData_all[[input$omicType]]$Matrix,1,function(x){
-            (x-min(x))/(max(x)-min(x))
+        processedData <- as.data.frame(t(
+          apply(assay(res_tmp$data),1,function(x){
+            (x - min(x))/(max(x) - min(x))
             })
           ))
-        processedData_all[[input$omicType]]$Matrix=processedData
+        assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "ln"){
         processedData <- as.data.frame(log(
-          processedData_all[[input$omicType]]$Matrix
+          as.data.frame(assay(res_tmp$data))
           ))
-        processedData_all[[input$omicType]]$Matrix <- processedData
+        assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "log10"){
-        if(any(processedData_all[[input$omicType]]$Matrix<0)){
-          output$Statisitcs_Data=renderText({
-            "Negative entries, cannot take log10!!"
-            })
-          req(FALSE)
+        processedData <- as.data.frame(assay(res_tmp$data))
+        if(any(processedData<0)){
+          addWarning <- "<font color=\"#FF0000\"><b>Negative entries, cannot take log10!!</b></font>"
         }
-        if(any(processedData_all[[input$omicType]]$Matrix==0)){
-          processedData=as.data.frame(log10(
-            (processedData_all[[input$omicType]]$Matrix)+1)
+        if(any(processedData==0)){
+          processedData <- as.data.frame(log10(
+            processedData + 1)
             )
         }
         processedData <- as.data.frame(log10(
-          processedData_all[[input$omicType]]$Matrix+1)
+          processedData + 1)
           )
-        processedData_all[[input$omicType]]$Matrix <- processedData
+        assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "pareto_scaling"){
+        processedData <- as.data.frame(assay(res_tmp$data))
         centered <- as.data.frame(t(
-          apply(processedData_all[[input$omicType]]$Matrix, 1, function(x){x - mean(x)})
+          apply(processedData, 1, function(x){x - mean(x)})
           ))
         pareto.matrix <- as.data.frame(t(
           apply(centered, 1, function(x){x/sqrt(sd(x))})
           ))
 
-        processedData_all[[input$omicType]]$Matrix <- pareto.matrix
+        assay(res_tmp$data) <<- as.data.frame(pareto.matrix)
       }
     }
     
-    if(any(is.na(processedData_all[[input$omicType]]$Matrix))){
-      processedData_all[[input$omicType]]$Matrix <- processedData_all[[input$omicType]]$Matrix[complete.cases(processedData_all[[input$omicType]]$Matrix),]
+    if(any(is.na(assay(res_tmp$data)))){
+      print("This might be problem due to mismatched Annotation Data?!")
+      nrow_before <- nrow(assay(res_tmp$data))
+      nrow_after <- nrow(res_tmp$data[complete.cases(assay(res_tmp$data)),])
+      addWarning <- paste0("<font color=\"#FF0000\"><b>There were NA's after pre-processing, any row containg such was completly removed! (before/after): ",nrow_before,"/",nrow_after,"</b></font>")
+      if(!(nrow_after > 0)){
+        addWarning <- paste0(addWarning, "<br> <font color=\"#FF0000\"><b> There is nothing left, choose different pre-processing other-wise App will crash!</b></font>")
+      }
+      res_tmp$data <<- res_tmp$data[complete.cases(assay(res_tmp$data)),]
     }
-    #### Potentially some entities removed hence update the annotation table
-    print("What are the colnamaes here? X at the beginning??")
-    print(colnames(processedData_all[[input$omicType]]$Matrix))
-    
-    processedData_all[[input$omicType]]$sample_table <- processedData_all[[input$omicType]]$sample_table[colnames(processedData_all[[input$omicType]]$Matrix),]
-    processedData_all[[input$omicType]]$annotation_rows <- processedData_all[[input$omicType]]$annotation_rows[rownames(processedData_all[[input$omicType]]$Matrix),]
-    
+
+    print(colnames(res_tmp$data))
+
     showTab(inputId = "tabsetPanel1", target = "Sample Correlation")
     showTab(inputId = "tabsetPanel1", target = "Significance Analysis")
     showTab(inputId = "tabsetPanel1", target = "PCA")
@@ -857,25 +913,49 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
     showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+    
+    # Count up updating
+    updating$count <- updating$count + 1
 
-    processedData_all <<- processedData_all
-    processedData_all
+    output$Statisitcs_Data <- renderText({
+      
+      shinyjs::click("SignificanceAnalysis-refreshUI",asis = T)
+      shinyjs::click("single_gene_visualisation-refreshUI",asis = T)
+      shinyjs::click("Volcano-refreshUI",asis = T)
+      paste0(addWarning,
+             "The data has the dimensions of: ",
+             paste0(dim(res_tmp$data),collapse = ", "),
+             "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
+             "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
+             "<br","See help for details",
+             "<br>",ifelse(any(as.data.frame(assay(res_tmp$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
+    })
+    
+
+    return("Pre-Processing successfully")
   })
   
-  output$Statisitcs_Data=renderText({
-    paste0("The data has the dimensions of: ",
-           paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", "),
-           "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
-           "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
-           "<br","See help for details",
-           "<br>",ifelse(any(selectedData_processed()[[input$omicType]]$Matrix<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
-    })
+  ## DO not why this was moved here ? 
+
+  # output$Statisitcs_Data <- renderText({
+  #   browser()
+  #   selectedData_processed()
+  # 
+  #   paste0("The data has the dimensions of: ",
+  #          paste0(dim(res_tmp$data),collapse = ", "),
+  #          "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
+  #          "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
+  #          "<br","See help for details",
+  #          "<br>",ifelse(any(as.data.frame(assay(res_tmp$data))<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
+  #   })
+
   
 ## Log preprocessing ----
   observeEvent(input$Do_preprocessing,{
-    if(input$omicType == "Transcriptomics"){
+    print(selectedData_processed())
+    if(par_tmp$omic_type == "Transcriptomics"){
       tmp_logMessage <- "Remove anything which row Count <= 10"
-    }else if(input$omicType == "Metabolomics"){
+    }else if(par_tmp$omic_type == "Metabolomics"){
       tmp_logMessage <- "Remove anything which has a row median of 0"
     }else{
       tmp_logMessage <- "none"
@@ -888,40 +968,70 @@ server <- function(input,output,session){
       message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage)
       )
     fun_LogIt(
-      message = paste0("**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula),input$PreProcessing_Procedure))
+      message = paste0("**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),input$PreProcessing_Procedure))
       )
     fun_LogIt(
-      message = paste0("**PreProcessing** - The resulting dimensions are: ",paste0(dim(selectedData_processed()[[input$omicType]]$Matrix),collapse = ", "))
+      message = paste0("**PreProcessing** - The resulting dimensions are: ",paste0(dim(res_tmp$data),collapse = ", "))
       )
   })
   
-  output$debug <- renderText(dim(selectedData_processed()[[input$omicType]]$Matrix))
-  # Sample Correlation
+  output$debug <- renderText(dim(res_tmp$data))
+  ## UP TILL HERE ##
+  # Sample Correlation ----
+  # calling server without reactive it will be init upon start, with no update
+  # of respective data inputs hence need of at least one reactive!
   sample_correlation_server(
     id = "sample_correlation",
-    omic_type = reactive(input$omicType),
-    row_select = reactive(input$row_selection)
+    data = res_tmp,
+    params = par_tmp,
+    reactive(updating$count)
+    #omic_type = reactive(input$omicType), # par_tmp$omic_type
+    #row_select = reactive(input$row_selection) #par_tmp$row_selection ? # only for title?
   )
+
   # significance analysis ----
   significance_analysis_server(
     id = 'SignificanceAnalysis',
-    preprocess_method = reactive(input$PreProcessing_Procedure),
-    omic_type = reactive(input$omicType)
+    data = res_tmp,
+    params = par_tmp,
+    reactive(updating$count)
   )
-  # PCA
-  pca_Server(id="PCA", omic_type = reactive(input$omicType), reactive(input$row_selection))
-  # Volcano plots
-  volcano_Server(id="Volcano", omic_type = reactive(input$omicType))
-  # Heatmap
-  heatmap_server(id = 'Heatmap',omicType = reactive(input$omicType))
+  # PCA ----
+  pca_Server(
+    id = "PCA",
+    data = res_tmp,
+    params = par_tmp,
+    reactive(input$row_selection),
+    reactive(updating$count)
+    )
+  # Volcano plots ----
+  volcano_Server(
+    id = "Volcano",
+    data = res_tmp,
+    params = par_tmp,
+    reactive(updating$count)
+    )
+  # Heatmap ----
+  heatmap_server(
+    id = 'Heatmap',
+    data = res_tmp,
+    params = par_tmp,
+    reactive(updating$count)
+    )
   # Single Gene Visualisations ----
   single_gene_visualisation_server(
-    id = "single_gene_visualisation",
-    omicType = reactive(input$omicType)
-  )
+      id = 'single_gene_visualisation',
+      data = res_tmp,
+      params = par_tmp,
+      reactive(updating$count)
+    )
+
+
   # Enrichment Analysis ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
-    omic_type = reactive(input$omicType)
+    data = res_tmp,
+    params = par_tmp,
+    reactive(updating$count)
   )
 }
