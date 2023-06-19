@@ -764,7 +764,7 @@ server <- function(input,output,session){
     processedData_all <- tmp_data_selected
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
-    res_tmp$data <<- res_tmp$data[rownames(tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]),]
+    res_tmp$data <<- tmp_data_selected[rownames(tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]),]
     
     if(par_tmp$omic_type == "Transcriptomics"){
       print("Also remove anything of rowCount <=10")
