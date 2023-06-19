@@ -309,10 +309,13 @@ significance_analysis_server <- function(id, data, params, updates){
 
         if(any(input$comparisons_to_visualize == "all")){
           # show all comparisons if no more than 4
-          if(length(input$comparisons_to_visualize)<5){
+          if(length(input$comparisons)<5){
             chosenVizSet <- input$comparisons
           }else{
-            chosenVizSet <- "Nope, choose precisely"
+            browser()
+            chosenVizSet <-  input$comparisons[c(1,2)]
+            sig_ana_reactive$info_text <- "Note: Although you choose 'all' to visualize only first 2 comparisons are shown to avoid unwanted computational overhead, 
+            as you got more than 4 comparisons. Please choose precisely the comparisons for visualisation."
           }
         }else{
           chosenVizSet <- input$comparisons_to_visualize
