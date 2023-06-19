@@ -135,21 +135,21 @@ server <- function(input,output,session){
     shiny::fileInput(
       inputId = "data_matrix1",
       label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a></small>'),
-      accept = c(".csv"),
+      accept = c(".csv", ".xlsx"),
       width = "80%")
   })
   output$data_sample_anno1_ui <- renderUI({
     shiny::fileInput(
       inputId = "data_sample_anno1",
       label = HTML('Upload sample annotation <br/><small>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv">Download example data</a></small>'),
-      accept = c(".csv"),
+      accept = c(".csv", ".xlsx"),
       width = "80%")
   })
   output$data_row_anno1_ui <- renderUI({
     shiny::fileInput(
       inputId = "data_row_anno1",
       label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a></small>'),
-      accept = c(".csv"),
+      accept = c(".csv", ".xlsx"),
       width = "80%")
   })
   output$data_preDone_ui <- renderUI({
@@ -221,39 +221,19 @@ server <- function(input,output,session){
         "The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!"
         )
     }else{
-     Matrix <- read.csv(
-       file = input$data_matrix1$datapath,
-       header = T,
-       row.names = 1,
-       check.names = T
-       )
-     Matrix2 <- read.csv(
-       file = input$data_matrix1$datapath,
-       header = T,
-       row.names = 1,
-       check.names = F
-     )
+     Matrix <- read_file(input$data_matrix1$datapath, check.names=T)
+     Matrix2 <- read_file(input$data_matrix1$datapath, check.names=F)
      output$DataMatrix_VI <- DT::renderDataTable({
        DT::datatable(data = Matrix)
        })
      output$DataMatrix_VI_INFO <- renderText({"Matrix:"})
-     sample_table <- read.csv(
-       file = input$data_sample_anno1$datapath,
-       header = T,
-       row.names = 1,
-       check.names = F
-       )
+     sample_table <- read_file(input$data_sample_anno1$datapath, check.names=T)
      output$SampleMatrix_VI <- DT::renderDataTable({
        DT::datatable(data = sample_table)
        })
      output$SampleMatrix_VI_INFO <- renderText({"Sample table:"})
      
-     annotation_rows <- read.csv(
-       file = input$data_row_anno1$datapath,
-       header = T,
-       row.names = 1,
-       check.names = F
-       )
+     annotation_rows <- read_file(input$data_row_anno1$datapath, check.names=T)
      output$EntitieMatrix_VI <- DT::renderDataTable({
        DT::datatable(data = annotation_rows)
        })
@@ -367,24 +347,9 @@ server <- function(input,output,session){
       if(isTruthy(input$data_sample_anno1)){
         data_input<- list(
           type = as.character(input$omicType),
-          Matrix = read.csv(
-            file = input$data_matrix1$datapath,
-            header = T,
-            row.names = 1,
-            check.names = F
-            ),
-          sample_table = read.csv(
-            file = input$data_sample_anno1$datapath,
-            header = T,
-            row.names = 1,
-            check.names = F
-            ),
-          annotation_rows = read.csv(
-            file = input$data_row_anno1$datapath,
-            header = T,
-            row.names = 1,
-            check.names = F
-            )
+          Matrix = read_file(input$data_matrix1$datapath, check.names=T),
+          sample_table = read_file(input$data_sample_anno1$datapath, check.names=T),
+          annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
           )
         
         # check if only 1 col in anno row, 
@@ -402,18 +367,11 @@ server <- function(input,output,session){
           {
             data_input <- list(
               type = as.character(input$omicType),
-              Matrix = read.csv(
-                file = input$data_matrix1$datapath,
-                header = T,
-                row.names = 1,
-                check.names = F
+              Matrix = read_file(
+                input$data_matrix1$datapath, check.names=T
                 )[,rownames(my_data_tmp)],
               sample_table = tmp_sampleTable,
-              annotation_rows = read.csv(
-                file = input$data_row_anno1$datapath,
-                header = T,
-                row.names = 1,
-                check.names = F)
+              annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
               )
             return(data_input)
           },
