@@ -40,7 +40,12 @@ volcano_main_panel <- function(ns){
     tabsetPanel(
       tabPanel(
         title = "Volcano_Plot",
-        plotlyOutput(outputId = ns("Volcano_Plot_final")) %>% withSpinner(type = 8),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          plotlyOutput(outputId = ns("Volcano_Plot_final")) %>% withSpinner(type = 8),
+          plotlyOutput(outputId = ns("Volcano_Plot_final_default")),
+        ),
         uiOutput(outputId = ns("VOLCANO_anno_tooltip_ui")),
         splitLayout(
           style = "border: 1px solid silver:",
