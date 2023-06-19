@@ -312,7 +312,7 @@ significance_analysis_server <- function(id, data, params, updates){
           if(length(input$comparisons)<5){
             chosenVizSet <- input$comparisons
           }else{
-            browser()
+
             chosenVizSet <-  input$comparisons[c(1,2)]
             sig_ana_reactive$info_text <- "Note: Although you choose 'all' to visualize only first 2 comparisons are shown to avoid unwanted computational overhead, 
             as you got more than 4 comparisons. Please choose precisely the comparisons for visualisation."
