@@ -5,6 +5,7 @@ Volcano_Plot <- function(
   comparison_samples_idx,
   p_sig_threshold,
   LFC_threshold,
+  correction_test_method,
   annotation_add=NULL,
   annoData=NULL,
   alreadyLogged=F
@@ -18,29 +19,18 @@ Volcano_Plot <- function(
     results <- t.test(x, y)
     results$p.value
   }
-  
+
   #remove constant rows for control and comparisons separately
-  removedAsConst_1 <- which(apply(df[,ctrl_samples_idx], 1, sd) < 1e-6)
-  df[removedAsConst_1, ctrl_samples_idx] <- df[removedAsConst_1, ctrl_samples_idx] + t(apply(df[removedAsConst_1, ctrl_samples_idx],1,function(x){
-    rnorm(
-      n = length(x),
-      mean = 0,
-      sd=0.0000001
-    )}))
-  
-  removedAsConst_2 <- which(apply(df[,comparison_samples_idx],1,sd) < 1e-6)
-  df[removedAsConst_2, comparison_samples_idx] <- df[removedAsConst_2,comparison_samples_idx] + t(apply(df[removedAsConst_2, comparison_samples_idx],1, function(x){
-    rnorm(
-      n = length(x),
-      mean = 0,
-      sd=0.0000001
-    )}))
+  df <- df[(apply(df[,ctrl_samples_idx], 1, sd) > 0),]
+  df <- df[(apply(df[,comparison_samples_idx], 1, sd) > 0),]
+
+  print(paste0("Number of rows removed due to being group-wise constant: ",dim(as.data.frame(data))[1]-dim(df)[1]))
   
   rawpvalue <- apply(
     df, 1, ttest_raw, grp1 = ctrl_samples_idx, grp2 = comparison_samples_idx
   )
   
-  p_adj <- p.adjust(rawpvalue, method = "fdr")
+  p_adj <- p.adjust(rawpvalue, method = PADJUST_METHOD[[correction_test_method]])
   
   Ctrl_mean <- apply(df[,ctrl_samples_idx],1,mean)
   # check whether there are 0's in Ctrl mean

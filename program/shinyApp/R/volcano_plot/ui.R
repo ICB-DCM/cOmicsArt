@@ -7,6 +7,11 @@ volcano_sidebar_panel <- function(ns){
     uiOutput(outputId = ns("sample_annotation_types_cmp_ui")),
     uiOutput(outputId = ns("Groups2Compare_ref_ui")),
     uiOutput(outputId = ns("Groups2Compare_treat_ui")),
+
+    uiOutput(outputId = ns("chooseTest_ui")),
+    uiOutput(outputId = ns("chooseSignificanceLevel_ui")),
+    uiOutput(outputId = ns("chooseTestCorrection_ui")),
+    
     actionButton(
       inputId = ns("Do_Volcano"),
       label = "Do Volcano Plot",

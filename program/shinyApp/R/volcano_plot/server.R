@@ -44,6 +44,44 @@ volcano_Server <- function(id, data, params, updates){
           selected = unique(colData(data$data)[,input$sample_annotation_types_cmp])[2]
         )
       })
+      
+      output$chooseTest_ui <- renderUI({
+          shinyWidgets::virtualSelectInput(
+            search = T,
+            showSelectedOptionsFirst = T,
+            inputId = ns("test_method"),
+            label = "Test method",
+            choices = c("Wilcoxon rank sum test", "T-Test", "Welch-Test"),
+            selected = "T-Test"
+          )
+        })
+      
+      output$chooseSignificanceLevel_ui <- renderUI({
+        sliderInput(
+          inputId = ns("significance_level"),
+          label = "Significance level",
+          min = 0.005,
+          max = 0.1,
+          value = 0.05,
+          step = 0.005
+        )
+      })
+      
+      output$chooseTestCorrection_ui <- renderUI({
+        selectInput(
+          inputId = ns("chooseTestCorrection"),
+          label = "Test correction",
+          choices = c(
+            "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
+            "Holm", "Hommel", "Hochberg", "FDR"
+          ),
+          selected = "Benjamini-Hochberg"
+        )
+      })
+      
+      
+      
+      
       output$psig_threhsold_ui <- renderUI({
         req(data_input_shiny())
         numericInput(
@@ -59,9 +97,9 @@ volcano_Server <- function(id, data, params, updates){
         numericInput(
           inputId = ns("lfc_threshold"),
           label = "Log FC threshold (both sides!)",
-          min=0,
-          max=10,
-          step=0.1,
+          min = 0,
+          max = 10,
+          step = 0.1,
           value = 1.0
           )
       })
@@ -133,8 +171,8 @@ volcano_Server <- function(id, data, params, updates){
               data2Volcano <- as.data.frame(assay(data$data))
           }
           if(any(data2Volcano == 0)){
-            #macht es mehr sinn nur die nullen + eps zu machen oder lieber alle daten punkte + eps?
-            #data2Volcano=data2Volcano+10^-15  => Log(data +1)
+            # constant row are kicked out, mean of 0 only problem left - need to
+            # be thrown out (plotted elsewhere?)
           }
           print(dim(data2Volcano))
           VolcanoPlot_df <- Volcano_Plot(
@@ -143,6 +181,7 @@ volcano_Server <- function(id, data, params, updates){
             comparison_samples_idx = comparison_samples_idx,
             p_sig_threshold = input$psig_threhsold,
             LFC_threshold = input$lfc_threshold,
+            correction_test_method = input$chooseTestCorrection,
             annotation_add = input$VOLCANO_anno_tooltip,
             annoData = rowData(data$data)
             )
