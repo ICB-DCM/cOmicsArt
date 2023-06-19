@@ -113,9 +113,9 @@ significance_analysis_server <- function(id, data, params, updates){
         selectInput(
           inputId = ns("comparisons_to_visualize"),
           label = "Select your desired comparisons to visualize",
-          choices = sig_ana_reactive$comparisons_for_plot,
+          choices = c("all",sig_ana_reactive$comparisons_for_plot),
           multiple = T,
-          selected = input$comparisons_to_visualize
+          selected = "all"
         )
       })
       # UI to choose visualization method
@@ -299,35 +299,46 @@ significance_analysis_server <- function(id, data, params, updates){
         # get the results
         res2plot <- list()
         # check that you have more than one comparison
-        if(length(input$comparisons_to_visualize) == 1){
+        if(length(input$comparisons_to_visualize) == 1 & input$comparisons_to_visualize[1]!="all"){
           sig_ana_reactive$info_text <- "You tried to compare only one set. Please choose at least two comparisons."
           # clear the plot
           output$Significant_Plot_final <- renderPlot({})
           return(NULL)
         }
         sig_ana_reactive$info_text <- "Analysis is Done!"
-        for (i in 1:length(input$comparisons_to_visualize)) {
+
+        if(any(input$comparisons_to_visualize == "all")){
+          # show all comparisons if no more than 4
+          if(length(input$comparisons_to_visualize)<5){
+            chosenVizSet <- input$comparisons
+          }else{
+            chosenVizSet <- "Nope, choose precisely"
+          }
+        }else{
+          chosenVizSet <- input$comparisons_to_visualize
+        }
+        for (i in 1:length(chosenVizSet)) {
           if(params$PreProcessing_Procedure == "vst_DESeq"){
             to_add_tmp <- rownames(
               filter_significant_result(
-                result = sig_results[[input$comparisons_to_visualize[i]]],
+                result = sig_results[[chosenVizSet[i]]],
                 alpha = input$significance_level,
                 filter_type = input$sig_to_look_at
               )
             )
             # only add if the result is not empty
             if(length(to_add_tmp) > 0){
-              res2plot[[input$comparisons_to_visualize[i]]] <- to_add_tmp
+              res2plot[[chosenVizSet[i]]] <- to_add_tmp
             }
           }else{
             to_add_tmp <- filter_significant_result(
-              result = sig_results[[input$comparisons_to_visualize[i]]],
+              result = sig_results[[chosenVizSet[i]]],
               alpha = input$significance_level,
               filter_type = input$sig_to_look_at
             )$gene
             # only add if the result is not empty
             if(length(to_add_tmp) > 0){
-              res2plot[[input$comparisons_to_visualize[i]]] <- to_add_tmp
+              res2plot[[chosenVizSet[i]]] <- to_add_tmp
             }
           }
         }
