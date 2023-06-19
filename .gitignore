@@ -19,3 +19,4 @@ program/shinyApp/*.log
 program/shinyApp/www/*md
 !.github/
 !./renv/cellar
+

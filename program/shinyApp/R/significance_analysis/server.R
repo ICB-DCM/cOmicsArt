@@ -79,7 +79,7 @@ significance_analysis_server <- function(id, data, params, updates){
             showSelectedOptionsFirst = T,
             inputId = ns("test_method"),
             label = "Test method",
-            choices = c("Wilcoxon rank sum test", "T-Test"),
+            choices = c("Wilcoxon rank sum test", "T-Test", "Welch-Test"),
             selected = "T-Test"
           )
         }
@@ -221,6 +221,7 @@ significance_analysis_server <- function(id, data, params, updates){
               ),
               pAdjustMethod = PADJUST_METHOD[[input$test_correction]]
             )
+            ### put in here browser if use of `script_getSigToExcel`
           }
         }
         else{  # all other methods require manual testing
