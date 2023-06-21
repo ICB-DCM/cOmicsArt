@@ -766,25 +766,45 @@ server <- function(input,output,session){
     print("As general remove all entities which are constant over all samples")
     res_tmp$data <<- tmp_data_selected[rownames(tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]),]
     
-    if(par_tmp$omic_type == "Transcriptomics"){
-      print("Also remove anything of rowCount <=10")
-      print(dim(tmp_data_selected))
-      res_tmp$data <<- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]
-    }
-    
-    if(par_tmp$omic_type == "Metabolomics"){
-      print("Remove anything which has a row median of 0")
-      print(dim(tmp_data_selected))
-      res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,median)!=0),]
-    }
+
     
     print(dim(res_tmp$data))
     # explicitly set rownames to avoid any errors.
     # new object Created for res_tmp
     res_tmp$data <<- res_tmp$data[rownames(res_tmp$data),]
 
-    
     if(input$PreProcessing_Procedure != "none"){
+      if(input$PreProcessing_Procedure == "filterOnly"){
+        
+        if(par_tmp$omic_type == "Transcriptomics"){
+          print("Also remove anything of rowCount <=10")
+          print(dim(tmp_data_selected))
+          res_tmp$data <<- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]
+          }
+        
+        if(par_tmp$omic_type == "Metabolomics"){
+          print("Remove anything which has a row median of 0")
+          print(dim(tmp_data_selected))
+          res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,median)!=0),]
+          }
+        addWarning <- "<font color=\"#000000\"><b>Only Filtering of low abundant is done only if Transcriptomics or Metabolomics was chosen\n</b></font>"
+      }else{
+        if(par_tmp$omic_type == "Transcriptomics"){
+          print("Also remove anything of rowCount <=10")
+          print(dim(tmp_data_selected))
+          res_tmp$data <<- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]
+        }
+        
+        if(par_tmp$omic_type == "Metabolomics"){
+          print("Remove anything which has a row median of 0")
+          print(dim(tmp_data_selected))
+          
+        addWarning <- "<font color=\"#000000\"><b>Pre Filtering to remove low abundant entities done if Transcriptomics or Metabolomics was chosen\n</b></font>"
+        }
+      }
+      
+      print(dim(res_tmp$data))
+      
       print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
       if(input$PreProcessing_Procedure == "simpleCenterScaling"){
         processedData <- as.data.frame(t(
