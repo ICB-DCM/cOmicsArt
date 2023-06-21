@@ -863,6 +863,7 @@ server <- function(input,output,session){
         assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "ln"){
+        #TODO check if 0 then do ln (+1)
         processedData <- as.data.frame(log(
           as.data.frame(assay(res_tmp$data))
           ))
