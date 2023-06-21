@@ -41,7 +41,6 @@ getPlotCode <- function(
   }
   }
 
-  
   if(par_tmp$col_selection == "all"){
     stringSelection <- paste0(stringSelection,
                               'samples_selected <- colnames(assay(res_tmp$data_original))
