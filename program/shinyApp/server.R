@@ -658,6 +658,7 @@ server <- function(input,output,session){
 
     # Column Selection
     samples_selected <- c()
+    par_tmp[["col_selection"]] <<- input$sample_selection
     if(any(input$sample_selection == "all")){
       samples_selected <- colnames(assay(res_tmp$data_original))
     }else{
