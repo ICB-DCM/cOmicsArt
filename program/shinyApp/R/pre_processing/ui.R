@@ -8,7 +8,7 @@ pre_processing_sidebar_panel <- sidebarPanel(
     inputId = "PreProcessing_Procedure",
     label = "Pre-Processing Procedures",
     choices = c(
-      "none", "vst_DESeq", "simpleCenterScaling", "Scaling_0_1",
+      "none","filterOnly", "vst_DESeq", "simpleCenterScaling", "Scaling_0_1",
       "log10", "pareto_scaling", "ln"
     ),
     selected = "none"
