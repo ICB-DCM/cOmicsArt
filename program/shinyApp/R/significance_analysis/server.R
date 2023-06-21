@@ -439,8 +439,10 @@ significance_analysis_server <- function(id, data, params, updates){
             # select dataframe for only comparisons considered in intersect
             df_inter <- as.data.frame(df[,intersects[[i_inter]]])  # as.data.frame for intersects of size 1
             rownames(df_inter) <- rownames(df)
-            # add logical value True if row is present in all columns
-            df_inter$keep_row <- apply(df_inter, 1, all)
+            df_not_inter <- as.data.frame(df[,-intersects[[i_inter]]])  # as.data.frame for intersects of size 1
+            rownames(df_inter) <- rownames(df)
+            # add logical value True if row is present in all columns but in none of the not_intersect
+            df_inter$keep_row <- apply(df_inter, 1, all) & apply(!df_not_inter, 1, all)
             # select on df$keep_row
             df_inter <- df_inter[df_inter$keep_row==TRUE,]
             intersect_set[[i_inter]] <- rownames(df_inter)
@@ -494,40 +496,12 @@ significance_analysis_server <- function(id, data, params, updates){
           paste0(id, Sys.time(), input$file_ext_Sig)
         },
         content = function(file){
-          if(input$visualization_method == "Venn diagram"){
-            print("Venn diagram saving.")
-            ggsave(
-              filename = file,
-              plot = sig_ana_reactive$plot_last,
-              device = gsub("\\.","",input$file_ext_Sig)
-            )
-          }else{
-            if(input$file_ext_Sig == ".pdf"){
-              grDevices::pdf(
-                file = file,
-                onefile = FALSE
-              )
-              print(UpSetR::upset(
-                UpSetR::fromList(sig_ana_reactive$results_for_plot),
-                nsets = length(sig_ana_reactive$results_for_plot)
-              ))
-              grDevices::dev.off()
-            }else if(input$file_ext_Sig == ".png"){
-              grDevices::png(file)
-              print(UpSetR::upset(
-                UpSetR::fromList(sig_ana_reactive$results_for_plot),
-                nsets = length(sig_ana_reactive$results_for_plot)
-              ))
-              dev.off()
-            }else if(input$file_ext_Sig == ".tiff"){
-              grDevices::tiff(file)
-              print(UpSetR::upset(
-                UpSetR::fromList(sig_ana_reactive$results_for_plot),
-                nsets = length(sig_ana_reactive$results_for_plot)
-              ))
-              grDevices::dev.off()
-            }
-          }
+          print("Plot saving.")
+          ggsave(
+            filename = file,
+            plot = sig_ana_reactive$plot_last,
+            device = gsub("\\.","",input$file_ext_Sig)
+          )
         }
       )
       # Print to report

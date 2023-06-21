@@ -224,7 +224,7 @@ single_gene_visualisation_server <- function(id, data, params, updates){
                 stat_compare_means(
                   comparisons = xy.list,
                   method = testMethod,
-                  label = "p.signif",
+                  label = "p.format",
                   hide.ns = TRUE
                   )
             }else{
