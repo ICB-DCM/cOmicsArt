@@ -152,7 +152,7 @@ pca_Server <- function(id, data, params, row_select, updates){
           input$PreProcessing_Procedure
         )
         print(customTitle)
-        
+        par_tmp$PCA$customTitle <<- customTitle
         # only calculate PCA, Scrre and Loadings if the counter is 1
         if(pca_reactives$calculate == 1){
           # update the data if needed
@@ -434,20 +434,35 @@ pca_Server <- function(id, data, params, row_select, updates){
         global_Vars$PCA_coloring <- input$coloring_options
         global_Vars$PCA_noLoadings <- ifelse(input$Show_loadings == "Yes",length(TopK),0)
 
+        par_tmp$PCA$colorTheme <<- colorTheme
+        # This exports all reactive Values in the PCA namespace
+        tmp <- isolate(reactiveValuesToList(input))
+        to_include <- unlist(lapply(tmp,function(x){
+          if("shinyActionButtonValue" %in%  class(x)){
+            FALSE
+          }else{
+            TRUE
+          }
+        }))
+        par_tmp$PCA[names(tmp[to_include])] <<- tmp[to_include]
         output$getR_Code_PCA <- downloadHandler(
           filename = function(){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
-            envList<-list(
-              pcaData = pcaData,
-              input = reactiveValuesToList(input),
-              global_ID = pcaData$global_ID,
-              chosenAnno = pcaData$chosenAnno,
-              percentVar = percentVar,
-              customTitle = customTitle,
-              colorTheme = colorTheme
-              )
+            # envList<-list(
+            #   pcaData = pcaData,
+            #   input = reactiveValuesToList(input),
+            #   global_ID = pcaData$global_ID,
+            #   chosenAnno = pcaData$chosenAnno,
+            #   percentVar = percentVar,
+            #   customTitle = customTitle,
+            #   colorTheme = colorTheme
+            #   )
+            envList <- list(
+              res_tmp = res_tmp,
+              par_tmp = par_tmp
+            )
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
             write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
