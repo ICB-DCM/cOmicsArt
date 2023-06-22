@@ -54,6 +54,18 @@ pca_Server <- function(id, data, params, row_select, updates){
           multiple = F # would be cool if true, to be able to merge vars ?!
         )
       })
+      output$nPCAs_to_look_at_ui <- renderUI({
+        req(data_input_shiny())
+        sliderInput(
+          inputId = ns("nPCAs_to_look_at"),
+          label = "Number of PC's to include",
+          min = 1,
+          max = length(c(colnames(colData(data$data)))), 
+          value = 4,
+          step = 1
+        )
+      })
+      
       ## Data Selection UI ---
       observe({
         if(input$data_selection_pca){
@@ -112,6 +124,8 @@ pca_Server <- function(id, data, params, row_select, updates){
           multiple = F
         )
       })
+
+
       toListen2PCA <- reactive({
       list(
         input$Do_PCA,
@@ -152,9 +166,8 @@ pca_Server <- function(id, data, params, row_select, updates){
           input$PreProcessing_Procedure
         )
         print(customTitle)
-        
         # only calculate PCA, Scrre and Loadings if the counter is 1
-        if(pca_reactives$calculate == 1){
+        if(pca_reactives$calculate >= 0){
           # update the data if needed
           # TODO check if the follwoing still needed as update is now done on 1st server level
           data2plot <- update_data(data, updates, pca_reactives$current_updates)
@@ -253,10 +266,18 @@ pca_Server <- function(id, data, params, row_select, updates){
           # Loadings Matrix plot
           # TODO: If we have less data points than nPCAs_to_look_at,
           #  we need to adjust the nPCAs_to_look_at
-          df_loadings <- data.frame(
-            entity = row.names(pca$rotation),
-            pca$rotation[, 1:input$nPCAs_to_look_at]
+          if(is.null(input$nPCAs_to_look_at)){
+            df_loadings <- data.frame(
+              entity = row.names(pca$rotation),
+              pca$rotation[, 1:2]
             )
+          }else{
+            df_loadings <- data.frame(
+              entity = row.names(pca$rotation),
+              pca$rotation[, 1:input$nPCAs_to_look_at]
+            )
+          }
+
           df_loadings_filtered <- as.matrix(df_loadings[,-1]) >= abs(input$filterValue)
           entitiesToInclude <- apply(df_loadings_filtered, 1, any)
 

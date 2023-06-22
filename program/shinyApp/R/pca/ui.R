@@ -171,14 +171,8 @@ pca_main_panel <- function(ns){
           #textOutput(outputId = ns("Loadings_plot_Options_selected_out"), container = pre)
         ),
         uiOutput(outputId = ns("EntitieAnno_Loadings_matrix_ui")),
-        sliderInput(
-          inputId = ns("nPCAs_to_look_at"),
-          label = "Number of PC's to include",
-          min = 1,
-          max = 10, # renderui?
-          value = 4,
-          step = 1
-        ),
+        uiOutput(outputId = ns("nPCAs_to_look_at_ui")),
+
         sliderInput(
           inputId = ns("filterValue"),
           label = "absolute Loading threshold to filter entities with low impact",
