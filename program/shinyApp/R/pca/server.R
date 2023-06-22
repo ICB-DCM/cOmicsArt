@@ -111,14 +111,15 @@ pca_Server <- function(id, data, params, row_select, updates){
           choices = c(colnames(rowData(data$data))),
           multiple = F
         )
-        output$nPCAs_to_look_at_ui <- renderUI({
-          sliderInput(
-            inputId = ns("nPCAs_to_look_at"),
-            label = "Number of PC's to include",
-            min = 1,
-            max = ncol(data$data), # renderui?
-            value = 4,
-            step = 1
+      })
+      output$nPCAs_to_look_at_ui <- renderUI({
+        sliderInput(
+          inputId = ns("nPCAs_to_look_at"),
+          label = "Number of PC's to include",
+          min = 1,
+          max = ncol(data$data), 
+          value = 4,
+          step = 1
           )
         })
 
