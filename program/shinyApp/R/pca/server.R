@@ -436,29 +436,13 @@ pca_Server <- function(id, data, params, row_select, updates){
 
         par_tmp$PCA$colorTheme <<- colorTheme
         ## This exports all reactive Values in the PCA namespace 
-        tmp <- isolate(reactiveValuesToList(input))
-        to_include <- unlist(lapply(tmp,function(x){
-          if("shinyActionButtonValue" %in%  class(x)){
-            FALSE
-          }else{
-            TRUE
-          }
-        }))
-        par_tmp$PCA[names(tmp[to_include])] <<- tmp[to_include]
+        tmp <- getUserReactiveValues(input)
+        par_tmp$PCA[names(tmp)] <<- tmp
         output$getR_Code_PCA <- downloadHandler(
           filename = function(){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
-            # envList<-list(
-            #   pcaData = pcaData,
-            #   input = reactiveValuesToList(input),
-            #   global_ID = pcaData$global_ID,
-            #   chosenAnno = pcaData$chosenAnno,
-            #   percentVar = percentVar,
-            #   customTitle = customTitle,
-            #   colorTheme = colorTheme
-            #   )
             envList <- list(
               res_tmp = res_tmp,
               par_tmp = par_tmp
