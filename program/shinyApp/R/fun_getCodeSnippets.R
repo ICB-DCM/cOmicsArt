@@ -208,7 +208,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings)){
       coord_fixed()+
       theme_classic()+
       theme(aspect.ratio = 1)+
-      ggtitle(customTitle)'
+      ggtitle(par_tmp$PCA$customTitle)'
     }
     if (numberOfScenario == 2) {
       stringtosave = 'pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$PCA$x_axis_selection],
@@ -224,7 +224,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings)){
       coord_fixed()+
       theme_classic()+
       theme(aspect.ratio = 1)+
-      ggtitle(customTitle)'
+      ggtitle(par_tmp$PCA$customTitle)'
     }
     if (numberOfScenario == 3) {
       stringtosave = 'pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$PCA$x_axis_selection],
@@ -241,7 +241,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings)){
       coord_fixed()+
       theme_classic()+
       theme(aspect.ratio = 1)+
-      ggtitle(customTitle)'
+      ggtitle(par_tmp$PCA$customTitle)'
     }
     if (numberOfScenario == 4) {
       stringtosave = 'pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$PCA$x_axis_selection],
@@ -257,7 +257,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings)){
       coord_fixed()+
       theme_classic()+
       theme(aspect.ratio = 1)+
-      ggtitle(customTitle)+geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
+      ggtitle(par_tmp$PCA$customTitle)+geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
                                                       aes(x=0, y=0, xend=v1, yend=v2),
                                                       arrow=arrow(type="closed",unit(0.01, "inches"),ends = "both"),
                                                       #linetype="solid",
@@ -280,7 +280,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings)){
     coord_fixed()+
     theme_classic()+
     theme(aspect.ratio = 1)+
-    ggtitle(customTitle)+
+    ggtitle(par_tmp$PCA$customTitle)+
     geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
                                                       aes(x=0, y=0, xend=v1, yend=v2),
                                                       arrow=arrow(type="closed",unit(0.01, "inches"),ends = "both"),
@@ -303,7 +303,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings)){
       coord_fixed()+
       theme_classic()+
       theme(aspect.ratio = 1)+
-      ggtitle(customTitle)+geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
+      ggtitle(par_tmp$PCA$customTitle)+geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
                  aes(x=0, y=0, xend=v1, yend=v2),
                  arrow=arrow(type="closed",unit(0.01, "inches"),ends = "both"),
                  #linetype="solid",
