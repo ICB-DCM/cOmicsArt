@@ -42,7 +42,7 @@ getPlotCode <- function(
   }
 
   if(par_tmp$col_selection == "all"){
-    stringSelection <- paste0(stringSelection,
+    stringSelection <- paste0(stringSelection,"\n",
                               'samples_selected <- colnames(assay(res_tmp$data_original))
                               ')
   }else{
@@ -151,70 +151,109 @@ getPlotCode <- function(
     
 
     # Plot Code ----
-  if (numberOfScenario == 1) {
-    stringtosave = 'pcaData <- data.frame(res_tmp$PCA$x,colData(res_tmp$data))
-    pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$x_axis_selection],
-                                  y = pcaData[,par_tmp$y_axis_selection],
-                                  color=pcaData[,par_tmp$coloring_options],
+  ## PCA ----
+  if(numberOfScenario %in% c(1:8)){
+    # Calculate all necassary intermediate datasets
+    prequel_stringtosave <- 'pcaData <- data.frame(res_tmp$PCA$x,colData(res_tmp$data))
+# Annotation (important for plotly)
+    if(!any(colnames(pcaData) == "global_ID")){
+    pcaData$global_ID <- rownames(pcaData)
+    }
+    if(!is.null(par_tmp$PCA$PCA_anno_tooltip)){
+    adj2colname <- gsub(" ",".",par_tmp$PCA$PCA_anno_tooltip)
+    pcaData$chosenAnno <- pcaData[,adj2colname]
+    }else{
+    pcaData$chosenAnno <- pcaData$global_ID
+  }
+# Scree Plot calculations
+var_explained_df <- data.frame(
+    PC = paste0("PC",1:ncol(res_tmp$PCA$x)),
+    var_explained = (res_tmp$PCA$sdev)^2/sum((res_tmp$PCA$sdev)^2)
+)
+var_explained_df$Var <- paste0(round(var_explained_df$var_explained,4)*100,"%")
+var_explained_df$PC <- factor(var_explained_df$PC,levels = paste0("PC",1:ncol(res_tmp$PCA$x)))
+percentVar <- round(100 * var_explained_df$var_explained, digits = 1)
+names(percentVar)<- var_explained_df$PC
+
+# Loadings calculations
+LoadingsDF <- data.frame(
+  entitie = rownames(res_tmp$PCA$rotation),
+  Loading = res_tmp$PCA$rotation[,par_tmp$PCA$x_axis_selection]
+)
+LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
+LoadingsDF <- rbind(
+LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - par_tmp$PCA$bottomSlider),],
+  LoadingsDF[par_tmp$PCA$topSlider:1,]
+)
+LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
+if(!is.null(par_tmp$PCA$EntitieAnno_Loadings)){
+  LoadingsDF$entitie=factor(
+  make.unique(as.character(rowData(data2plot$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
+  levels = make.unique(as.character(rowData(data2plot$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+  )
+}
+'
+    
+    if (numberOfScenario == 1) {
+      stringtosave = 'pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$PCA$x_axis_selection],
+                                  y = pcaData[,par_tmp$PCA$y_axis_selection],
+                                  color=pcaData[,par_tmp$PCA$coloring_options],
                                   label=global_ID,
                                   global_ID=global_ID,
                                   chosenAnno=chosenAnno)) +
     geom_point(size =3)+
-    scale_color_manual(name = par_tmp$coloring_options,values=colorTheme)+
-      xlab(paste0(names(percentVar[par_tmp$x_axis_selection]),": ",percentVar[par_tmp$x_axis_selection], "% variance")) +
-      ylab(paste0(names(percentVar[par_tmp$y_axis_selection]),": ", percentVar[par_tmp$y_axis_selection], "% variance")) +
+    scale_color_manual(name = par_tmp$PCA$coloring_options,values=par_tmp$PCA$colorTheme)+
+      xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
+      ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
       theme_classic()+
       theme(aspect.ratio = 1)+
       ggtitle(customTitle)'
-  }
-  if (numberOfScenario == 2) {
-    stringtosave = 'pcaData <- data.frame(res_tmp$PCA$x,colData(res_tmp$data))
-    pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$x_axis_selection],
-                                         y = pcaData[,par_tmp$y_axis_selection],
-                                         color=pcaData[,par_tmp$coloring_options],
+    }
+    if (numberOfScenario == 2) {
+      stringtosave = 'pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$PCA$x_axis_selection],
+                                         y = pcaData[,par_tmp$PCA$y_axis_selection],
+                                         color=pcaData[,par_tmp$PCA$coloring_options],
                                          label=global_ID,
                                          global_ID=global_ID,
                                          chosenAnno=chosenAnno)) +
            geom_point(size =3)+
-           scale_color_discrete(name = par_tmp$coloring_options)+
-      xlab(paste0(names(percentVar[par_tmp$x_axis_selection]),": ",percentVar[par_tmp$x_axis_selection], "% variance")) +
-      ylab(paste0(names(percentVar[par_tmp$y_axis_selection]),": ", percentVar[par_tmp$y_axis_selection], "% variance")) +
+           scale_color_discrete(name = par_tmp$PCA$coloring_options)+
+      xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
+      ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
       theme_classic()+
       theme(aspect.ratio = 1)+
       ggtitle(customTitle)'
-  }
-  if (numberOfScenario == 3) {
-    stringtosave = 'pcaData <- data.frame(res_tmp$PCA$x,colData(res_tmp$data))
-    pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$x_axis_selection],
-                                  y = pcaData[,par_tmp$y_axis_selection],
-                                  color=pcaData[,par_tmp$coloring_options],
+    }
+    if (numberOfScenario == 3) {
+      stringtosave = 'pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$PCA$x_axis_selection],
+                                  y = pcaData[,par_tmp$PCA$y_axis_selection],
+                                  color=pcaData[,par_tmp$PCA$coloring_options],
                                   label=global_ID,
                                   global_ID=global_ID,
                                   chosenAnno=chosenAnno)) +
     geom_point(size =3)+
-    scale_color_manual(values=colorTheme,
-                       name = par_tmp$coloring_options)+
-      xlab(paste0(names(percentVar[par_tmp$x_axis_selection]),": ",percentVar[par_tmp$x_axis_selection], "% variance")) +
-      ylab(paste0(names(percentVar[par_tmp$y_axis_selection]),": ", percentVar[par_tmp$y_axis_selection], "% variance")) +
+    scale_color_manual(values=par_tmp$PCA$colorTheme,
+                       name = par_tmp$PCA$coloring_options)+
+      xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
+      ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
       theme_classic()+
       theme(aspect.ratio = 1)+
       ggtitle(customTitle)'
-  }
-  if (numberOfScenario == 4) {
-    stringtosave = 'pcaData <- data.frame(res_tmp$PCA$x,colData(res_tmp$data))
-    pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$x_axis_selection],
-                                  y = pcaData[,par_tmp$y_axis_selection],
-                                  color=pcaData[,par_tmp$coloring_options],
+    }
+    if (numberOfScenario == 4) {
+      stringtosave = 'pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$PCA$x_axis_selection],
+                                  y = pcaData[,par_tmp$PCA$y_axis_selection],
+                                  color=pcaData[,par_tmp$PCA$coloring_options],
                                   label=global_ID,
                                   global_ID=global_ID,
                                   chosenAnno=chosenAnno)) +
     geom_point(size =3)+
-    scale_color_manual(name = par_tmp$coloring_options,values=colorTheme)+
-      xlab(paste0(names(percentVar[par_tmp$x_axis_selection]),": ",percentVar[par_tmp$x_axis_selection], "% variance")) +
-      ylab(paste0(names(percentVar[par_tmp$y_axis_selection]),": ", percentVar[par_tmp$y_axis_selection], "% variance")) +
+    scale_color_manual(name = par_tmp$PCA$coloring_options,values=par_tmp$PCA$colorTheme)+
+      xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
+      ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
       theme_classic()+
       theme(aspect.ratio = 1)+
@@ -224,21 +263,20 @@ getPlotCode <- function(
                                                       #linetype="solid",
                                                       #alpha=0.5,
                                                       color="#ab0521")'
-    
-    
-  }
-  if (numberOfScenario == 5) {
-    stringtosave = 'pcaData <- data.frame(res_tmp$PCA$x,colData(res_tmp$data))
-    pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$x_axis_selection],
-                                               y = pcaData[,par_tmp$y_axis_selection],
-                                               color=pcaData[,par_tmp$coloring_options],
+      
+      
+    }
+    if (numberOfScenario == 5) {
+      stringtosave = 'pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$PCA$PCA$x_axis_selection],
+                                               y = pcaData[,par_tmp$PCA$PCA$y_axis_selection],
+                                               color=pcaData[,par_tmp$PCA$PCA$coloring_options],
                                                label=global_ID,
                                                global_ID=global_ID,
                                                chosenAnno=chosenAnno)) +
     geom_point(size =3)+
-    scale_color_discrete(name = par_tmp$coloring_options)+
-    xlab(paste0(names(percentVar[par_tmp$x_axis_selection]),": ",percentVar[par_tmp$x_axis_selection], "% variance")) +
-    ylab(paste0(names(percentVar[par_tmp$y_axis_selection]),": ", percentVar[par_tmp$y_axis_selection], "% variance")) +
+    scale_color_discrete(name = par_tmp$PCA$coloring_options)+
+    xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
+    ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
     coord_fixed()+
     theme_classic()+
     theme(aspect.ratio = 1)+
@@ -249,21 +287,19 @@ getPlotCode <- function(
                                                       #linetype="solid",
                                                       #alpha=0.5,
                                                       color="#ab0521")'
-  }
-  
-  if (numberOfScenario == 6) {
-    stringtosave = 'pcaData <- data.frame(res_tmp$PCA$x,colData(res_tmp$data))
-    pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$x_axis_selection],
-                                  y = pcaData[,par_tmp$y_axis_selection],
-                                  color=pcaData[,par_tmp$coloring_options],
+    }
+    if (numberOfScenario == 6) {
+      stringtosave = 'pca_plot <- ggplot(pcaData, aes(x = pcaData[,par_tmp$PCA$x_axis_selection],
+                                  y = pcaData[,par_tmp$PCA$y_axis_selection],
+                                  color=pcaData[,par_tmp$PCA$coloring_options],
                                   label=global_ID,
                                   global_ID=global_ID,
                                   chosenAnno=chosenAnno)) +
     geom_point(size =3)+
-    scale_color_manual(values=colorTheme,
-                       name = par_tmp$coloring_options)+
-      xlab(paste0(names(percentVar[par_tmp$x_axis_selection]),": ",percentVar[par_tmp$x_axis_selection], "% variance")) +
-      ylab(paste0(names(percentVar[par_tmp$y_axis_selection]),": ", percentVar[par_tmp$y_axis_selection], "% variance")) +
+    scale_color_manual(values=par_tmp$PCA$colorTheme,
+                       name = par_tmp$PCA$coloring_options)+
+      xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
+      ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
       theme_classic()+
       theme(aspect.ratio = 1)+
@@ -273,50 +309,32 @@ getPlotCode <- function(
                  #linetype="solid",
                  #alpha=0.5,
                  color="#ab0521")'
-  }
-  
-  if (numberOfScenario == 7) {
-    stringtosave = '# Scree Plot calculations
-    var_explained_df <- data.frame(
-    PC = paste0("PC",1:ncol(res_tmp$PCA$x)),
-    var_explained = (res_tmp$PCA$sdev)^2/sum((res_tmp$PCA$sdev)^2)
-    )
-    var_explained_df$Var <- paste0(round(var_explained_df$var_explained,4)*100,"%")
-    var_explained_df$PC <- factor(var_explained_df$PC,levels = paste0("PC",1:ncol(res_tmp$PCA$x)))
+    }
+    if (numberOfScenario == 7) {
+      stringtosave = '
     scree_plot=ggplot(var_explained_df,aes(x=PC,y=var_explained, group=1))+
                                   geom_point(size=4,aes(label=Var))+
                                   geom_line()+
                                   ylab("Variance explained")+
                                   theme_bw()+
                                   ggtitle("Scree-Plot for shown PCA")'
-  }
-  if (numberOfScenario == 8) {
-    stringtosave = '# Loadings calculations
-          LoadingsDF <- data.frame(
-            entitie = rownames(res_tmp$PCA$rotation),
-            Loading = res_tmp$PCA$rotation[,par_tmp$x_axis_selection]
-            )
-
-          LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
-          LoadingsDF <- rbind(
-            LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - par_tmp$bottomSlider),],
-            LoadingsDF[par_tmp$topSlider:1,]
-            )
-          LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
-          if(!is.null(par_tmp$EntitieAnno_Loadings)){
-            LoadingsDF$entitie=factor(
-              make.unique(as.character(rowData(data2plot$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
-              levels = make.unique(as.character(rowData(data2plot$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
-              )
-          }
+    }
+    if (numberOfScenario == 8) {
+      stringtosave = '
     plotOut=ggplot(LoadingsDF,aes(x=Loading,y=entitie))+
       geom_col(aes(fill=Loading))+
       scale_y_discrete(breaks=LoadingsDF$entitie,labels=gsub("\\.[0-9].*$","",LoadingsDF$entitie))+
       scale_fill_gradient2(low="#277d6a",mid="white",high="orange")+
-      ylab(ifelse(is.null(input$EntitieAnno_Loadings),"",input$EntitieAnno_Loadings))+
-      xlab(paste0("Loadings: ",input$x_axis_selection))+
+      ylab(ifelse(is.null(par_tmp$PCA$EntitieAnno_Loadings),"",par_tmp$PCA$EntitieAnno_Loadings))+
+      xlab(paste0("Loadings: ",par_tmp$PCA$x_axis_selection))+
       theme_bw(base_size = 20)'
+    }
+    
+  stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave)
+    
   }
+
+  
   # Volcano Missing
   if (numberOfScenario == 9) {
     stringtosave='VolcanoPlot=ggplot(VolcanoPlot_df,aes(label=probename)) +
