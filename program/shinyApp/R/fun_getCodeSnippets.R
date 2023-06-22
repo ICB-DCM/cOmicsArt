@@ -6,7 +6,7 @@ getPlotCode <- function(
     col_selection = par_tmp$col_selection) {
   #TODO  change all data download to par_tmp and res_tmp
  # Selection ----
-  if(par_tmp$row_selection == "all"){
+  if(any(par_tmp$row_selection == "all")){
     stringSelection <- 'selected <- rownames(rowData(res_tmp$data_original))
     '
   }else{
@@ -140,10 +140,8 @@ getPlotCode <- function(
       assay(res_tmp$data) <- as.data.frame(pareto.matrix)
       '
     }
-
-
     stringPreProcessing <- paste0(prequel_stringPreProcessing,"\n",stringPreProcessing)
-    }
+  }
     
 
     # Plot Code ----
@@ -325,7 +323,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
                  #alpha=0.5,
                  color="#ab0521")'
     }
-
+### Scree 
     if (numberOfScenario == 7) {
       stringtosave = 'scree_plot=ggplot(var_explained_df,aes(x=PC,y=var_explained, group=1))+
                                   geom_point(size=4,aes(label=Var))+
@@ -334,6 +332,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
                                   theme_bw()+
                                   ggtitle("Scree-Plot for shown PCA")'
     }
+### Loadings single
     if (numberOfScenario == 8) {
       stringtosave = 'plotOut=ggplot(LoadingsDF,aes(x = Loading,y = entitie)) +
       geom_col(aes(fill = Loading)) +
@@ -345,7 +344,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
       xlab(paste0("Loadings: ",par_tmp$PCA$x_axis_selection)) +
       theme_bw(base_size = 15)'
     }
-  
+### Loadings matrix
   if (numberOfScenario == 8.1) {
     stringtosave =  'LoadingsMatrix <- ggplot(df_loadings,
     aes(x = PC,y = chosenAnno,fill = loading)) +
@@ -363,16 +362,24 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
   }
 
   
-# Volcano Missing ----
+# Volcano ----
   if (numberOfScenario == 9) {
-    stringtosave='VolcanoPlot=ggplot(VolcanoPlot_df,aes(label=probename)) +
-                                geom_point(aes(x = LFC, y = -log10(p_adj), colour = threshold,alpha=threshold_fc))+
-                                geom_hline(yintercept=-log10(input$psig_threhsold),color="lightgrey")+
-                                geom_vline(xintercept = c(-input$lfc_threshold,input$lfc_threshold),color="lightgrey")+
-                                scale_color_manual(values=colorScheme, name="")+
-                                scale_alpha_manual(values=alphaScheme, name="")+
-                                xlab("Log FoldChange")+
-                                theme_bw()'
+    stringtosave='VolcanoPlot <- ggplot(res_tmp$Volcano,
+    aes(label=probename,tooltip=annotation_add)) +
+    geom_point(aes(x = LFC,y = -log10(p_adj),colour = threshold,alpha = threshold_fc)) +
+    geom_hline(
+      yintercept = -log10(par_tmp$Volcano$psig_threhsold),
+      color="lightgrey"
+    ) +
+    geom_vline(
+      xintercept = c(-par_tmp$Volcano$lfc_threshold,par_tmp$Volcano$lfc_threshold),
+      color="lightgrey"
+    ) +
+    scale_color_manual(values=par_tmp$Volcano$colorScheme, name="")+
+    scale_alpha_manual(values=par_tmp$Volcano$alphaScheme, name="")+
+    xlab("Log FoldChange")+
+    ylab("-log10(p-value)")+
+    theme_bw()'
   }
   
   ## 2 heatmaps

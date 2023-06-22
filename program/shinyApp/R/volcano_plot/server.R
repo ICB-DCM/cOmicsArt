@@ -210,17 +210,25 @@ volcano_Server <- function(id, data, params, updates){
           # assign res_temp
           res_tmp[["Volcano"]] <<- VolcanoPlot_df
           # assign par_temp
-          par_tmp[["Volcano"]] <<- list(
-            "sample_annotation_types_cmp" = input$sample_annotation_types_cmp,
-            "Groups2Compare_ref" = input$Groups2Compare_ref,
-            "Groups2Compare_treat" = input$Groups2Compare_treat,
-            "psig_threhsold" = input$psig_threhsold,
-            "lfc_threshold" = input$lfc_threshold
-          )
+          # par_tmp[["Volcano"]] <<- list(
+          #   "sample_annotation_types_cmp" = input$sample_annotation_types_cmp,
+          #   "Groups2Compare_ref" = input$Groups2Compare_ref,
+          #   "Groups2Compare_treat" = input$Groups2Compare_treat,
+          #   "psig_threhsold" = input$psig_threhsold,
+          #   "lfc_threshold" = input$lfc_threshold
+          # )
+
+          
+          
           colorScheme <- c("#cf0e5b","#939596")
           names(colorScheme) <- c("significant","non-significant")
           alphaScheme <- c(0.8,0.1)
           names(alphaScheme) <- c("change"," ")
+          
+          tmp <- getUserReactiveValues(input)
+          par_tmp$Volcano[names(tmp)] <<- tmp
+          par_tmp$Volcano$colorScheme <<- colorScheme
+          par_tmp$Volcano$alphaScheme <<- alphaScheme
 
           VolcanoPlot <- ggplot(
             VolcanoPlot_df,
@@ -322,11 +330,9 @@ volcano_Server <- function(id, data, params, updates){
             },
             content = function(file){
               envList <- list(
-                VolcanoPlot_df = VolcanoPlot_df,
-                input = reactiveValuesToList(input),
-                colorScheme = colorScheme,
-                alphaScheme = alphaScheme
-                )
+                res_tmp = res_tmp,
+                par_tmp = par_tmp
+              )
 
               temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
               dir.create(temp_directory)

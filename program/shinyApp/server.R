@@ -620,6 +620,7 @@ server <- function(input,output,session){
   selectedData <- reactive({
     shiny::req(input$row_selection, input$sample_selection)
     par_tmp[["row_selection"]] <<- input$row_selection
+    par_tmp[["providedRowAnnotationTypes"]] <<- input$providedRowAnnotationTypes
     print("Alright do Row selection")
     selected <- c()
 
