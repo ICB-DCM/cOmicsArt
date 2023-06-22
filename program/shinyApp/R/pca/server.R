@@ -111,6 +111,17 @@ pca_Server <- function(id, data, params, row_select, updates){
           choices = c(colnames(rowData(data$data))),
           multiple = F
         )
+        output$nPCAs_to_look_at_ui <- renderUI({
+          sliderInput(
+            inputId = ns("nPCAs_to_look_at"),
+            label = "Number of PC's to include",
+            min = 1,
+            max = ncol(data$data), # renderui?
+            value = 4,
+            step = 1
+          )
+        })
+
       })
       toListen2PCA <- reactive({
       list(
@@ -152,9 +163,8 @@ pca_Server <- function(id, data, params, row_select, updates){
           input$PreProcessing_Procedure
         )
         print(customTitle)
-        
         # only calculate PCA, Scrre and Loadings if the counter is 1
-        if(pca_reactives$calculate == 1){
+        if(pca_reactives$calculate >= 0){
           # update the data if needed
           # TODO check if the follwoing still needed as update is now done on 1st server level
           data2plot <- update_data(data, updates, pca_reactives$current_updates)
