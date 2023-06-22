@@ -94,12 +94,12 @@ getPlotCode <- function(
           design = as.formula(par_tmp$DESeq_formula)
         )
       de_seq_result <- DESeq2::DESeq(dds)
-      res_tmp$DESeq_obj <<- de_seq_result
+      res_tmp$DESeq_obj <- de_seq_result
       dds_vst <- vst(
       object = de_seq_result,
       blind = TRUE
       )
-      assay(res_tmp$data) <<- as.data.frame(assay(dds_vst))
+      assay(res_tmp$data) <- as.data.frame(assay(dds_vst))
       '
       }
     if(input$PreProcessing_Procedure == "Scaling_0_1"){
@@ -115,27 +115,21 @@ getPlotCode <- function(
       stringPreProcessing <- 'processedData <- as.data.frame(log(
         as.data.frame(assay(res_tmp$data))
       ))
-      assay(res_tmp$data) <<- as.data.frame(processedData)
+      assay(res_tmp$data) <- as.data.frame(processedData)
       '
-      
     }
     if(input$PreProcessing_Procedure == "log10"){
-      processedData <- as.data.frame(assay(res_tmp$data))
-      if(any(processedData<0)){
-        addWarning <- "<font color=\"#FF0000\"><b>Negative entries, cannot take log10!!</b></font>"
-      }
+      stringPreProcessing <- 'processedData <- as.data.frame(assay(res_tmp$data))
       if(any(processedData==0)){
         processedData <- as.data.frame(log10(
-          processedData + 1)
-        )
-      }
-      processedData <- as.data.frame(log10(
         processedData + 1)
-      )
-      assay(res_tmp$data) <<- as.data.frame(processedData)
+       )
+      assay(res_tmp$data) <- as.data.frame(processedData)
+      }'
     }
+    
     if(input$PreProcessing_Procedure == "pareto_scaling"){
-      processedData <- as.data.frame(assay(res_tmp$data))
+      stringPreProcessing <- 'processedData <- as.data.frame(assay(res_tmp$data))
       centered <- as.data.frame(t(
         apply(processedData, 1, function(x){x - mean(x)})
       ))
@@ -143,8 +137,10 @@ getPlotCode <- function(
         apply(centered, 1, function(x){x/sqrt(sd(x))})
       ))
       
-      assay(res_tmp$data) <<- as.data.frame(pareto.matrix)
+      assay(res_tmp$data) <- as.data.frame(pareto.matrix)
+      '
     }
+
 
     stringPreProcessing <- paste0(prequel_stringPreProcessing,"\n",stringPreProcessing)
     }
@@ -152,7 +148,7 @@ getPlotCode <- function(
 
     # Plot Code ----
   ## PCA ----
-  if(numberOfScenario %in% c(1:8)){
+  if(numberOfScenario>=1 & numberOfScenario <9){
     # Calculate all necassary intermediate datasets
     prequel_stringtosave <- 'pcaData <- data.frame(res_tmp$PCA$x,colData(res_tmp$data))
 # Annotation (important for plotly)
@@ -188,9 +184,28 @@ LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - par_tmp$PCA$bottomSlider),],
 LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
 if(!is.null(par_tmp$PCA$EntitieAnno_Loadings)){
   LoadingsDF$entitie=factor(
-  make.unique(as.character(rowData(data2plot$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
-  levels = make.unique(as.character(rowData(data2plot$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+  make.unique(as.character(rowData(res_tmp$data)[rownames(LoadingsDF),par_tmp$PCA$EntitieAnno_Loadings])),
+  levels = make.unique(as.character(rowData(res_tmp$data)[rownames(LoadingsDF),par_tmp$PCA$EntitieAnno_Loadings]))
   )
+}
+
+df_loadings <- data.frame(
+  entity = row.names(res_tmp$PCA$rotation),
+  res_tmp$PCA$rotation[, 1:par_tmp$PCA$nPCAs_to_look_at]
+)
+df_loadings_filtered <- as.matrix(df_loadings[,-1]) >= abs(par_tmp$PCA$filterValue)
+entitiesToInclude <- apply(df_loadings_filtered, 1, any)
+
+df_loadings <- df_loadings[entitiesToInclude,] %>%
+  tidyr::gather(key = "PC", value = "loading", -entity)
+
+if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
+  df_loadings$chosenAnno <- factor(
+    make.unique(as.character(rowData(res_tmp$data)[unique(df_loadings$entity),par_tmp$PCA$EntitieAnno_Loadings_matrix])),
+    levels = make.unique(as.character(rowData(res_tmp$data)[unique(df_loadings$entity),par_tmp$PCA$EntitieAnno_Loadings_matrix]))
+  )
+}else{
+  df_loadings$chosenAnno <- df_loadings$entity
 }
 '
     
@@ -310,9 +325,9 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings)){
                  #alpha=0.5,
                  color="#ab0521")'
     }
+
     if (numberOfScenario == 7) {
-      stringtosave = '
-    scree_plot=ggplot(var_explained_df,aes(x=PC,y=var_explained, group=1))+
+      stringtosave = 'scree_plot=ggplot(var_explained_df,aes(x=PC,y=var_explained, group=1))+
                                   geom_point(size=4,aes(label=Var))+
                                   geom_line()+
                                   ylab("Variance explained")+
@@ -320,22 +335,35 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings)){
                                   ggtitle("Scree-Plot for shown PCA")'
     }
     if (numberOfScenario == 8) {
-      stringtosave = '
-    plotOut=ggplot(LoadingsDF,aes(x=Loading,y=entitie))+
-      geom_col(aes(fill=Loading))+
-      scale_y_discrete(breaks=LoadingsDF$entitie,labels=gsub("\\.[0-9].*$","",LoadingsDF$entitie))+
-      scale_fill_gradient2(low="#277d6a",mid="white",high="orange")+
-      ylab(ifelse(is.null(par_tmp$PCA$EntitieAnno_Loadings),"",par_tmp$PCA$EntitieAnno_Loadings))+
-      xlab(paste0("Loadings: ",par_tmp$PCA$x_axis_selection))+
-      theme_bw(base_size = 20)'
+      stringtosave = 'plotOut=ggplot(LoadingsDF,aes(x = Loading,y = entitie)) +
+      geom_col(aes(fill = Loading)) +
+      scale_y_discrete(
+        breaks = LoadingsDF$entitie,
+        labels = stringr::str_wrap(gsub("\\\\.[0-9].*$","",LoadingsDF$entitie),20)) +
+      scale_fill_gradient2(low = "#277d6a",mid = "white",high = "orange") +
+      ylab(ifelse(is.null(par_tmp$PCA$EntitieAnno_Loadings),"",par_tmp$PCA$EntitieAnno_Loadings)) +
+      xlab(paste0("Loadings: ",par_tmp$PCA$x_axis_selection)) +
+      theme_bw(base_size = 15)'
     }
-    
+  
+  if (numberOfScenario == 8.1) {
+    stringtosave =  'LoadingsMatrix <- ggplot(df_loadings,
+    aes(x = PC,y = chosenAnno,fill = loading)) +
+    geom_raster() +
+    scale_fill_gradientn(
+    colors = c("#277d6a", "white", "orange"),
+    limits = c(-max(df_loadings$loading),max(df_loadings$loading))
+    ) +
+    labs(x = "PCs", y = "entity", fill = "Loading") +
+    theme_bw(base_size = 15)'
+  }
+
   stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave)
     
   }
 
   
-  # Volcano Missing
+# Volcano Missing ----
   if (numberOfScenario == 9) {
     stringtosave='VolcanoPlot=ggplot(VolcanoPlot_df,aes(label=probename)) +
                                 geom_point(aes(x = LFC, y = -log10(p_adj), colour = threshold,alpha=threshold_fc))+
@@ -428,22 +456,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings)){
           annotation_colors = anno_colors
           )'
   }
-  if(numberOfScenario == 19){
-    stringtosave = 'LoadingsMatrix <- ggplot(
-          df_loadings,
-          aes(
-            x = PC,
-            y = entitie,
-            fill = loading)
-          ) +
-          geom_raster() +
-          scale_fill_gradientn(
-            colors = c("#277d6a", "white", "orange"),
-            limits = c(global_min,global_max)
-          ) +
-          labs(x = "PCs", y = "entity", fill = "Loading") +
-          theme_bw(base_size = 15)'
-  }
+
   if(numberOfScenario == 20){
     stringtosave <- 'VennDiagramm <- ggVennDiagram::ggVennDiagram(res2plot)'
   }
