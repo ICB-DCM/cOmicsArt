@@ -455,13 +455,15 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
   if(numberOfScenario == 17){
     stringtosave='REACTOME_Plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME)'
   }
+
+### Sample Correlation plot
   if(numberOfScenario == 18){
-    stringtosave = 'SampleCorrelationPlot_final <- pheatmap(
-          mat = cormat, 
-          annotation_row = annotationDF,
-          main = customTitleSampleCorrelation,
-          annotation_colors = anno_colors
-          )'
+    stringtosave = 'SampleCorrelationPlot <- pheatmap(
+    mat = res_tmp$SampleCorr, 
+    annotation_row = par_tmp$SampleCorr$annotationDF,
+    main = par_tmp$SampleCorr$customTitleSampleCorrelation,
+    annotation_colors = par_tmp$SampleCorr$anno_colors
+    )'
   }
 
   if(numberOfScenario == 20){
