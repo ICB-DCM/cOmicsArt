@@ -141,6 +141,8 @@ getPlotCode <- function(
       '
     }
     stringPreProcessing <- paste0(prequel_stringPreProcessing,"\n",stringPreProcessing)
+  }else{
+    stringPreProcessing <- 'res_tmp$data <- processedData'
   }
     
 
@@ -417,30 +419,76 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
                            silent = F)'
   }
   #11
-  
-  if (numberOfScenario == 12) {
-    stringtosave = 'P_boxplots=ggplot(GeneData, aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],x=anno,fill=anno))+
-    geom_boxplot()+
-    scale_fill_brewer(palette="RdBu")+
-    xlab(input$Select_Gene)+
-    ylab(input$type_of_data_gene)+
-    theme_bw()+
-        geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
-        #stat_compare_means(method = "anova")+        # Add global annova p-value
-        stat_compare_means(comparisons = xy.list,
-                           method = testMethod,
+# Single Gene Visualisation ----
+if(numberOfScenario %in% c(12,13)){
+  if(par_tmp$SingleEntVis$type_of_data_gene == "preprocessed"){
+    prequel_stringtosave <- '#get IDX to data
+idx_selected <- which(par_tmp$SingleEntVis$Select_Gene == rowData(res_tmp$data)[,par_tmp$SingleEntVis$Select_GeneAnno])
+GeneData <- as.data.frame(t(as.data.frame(assay(res_tmp$data))[idx_selected,,drop=F]))
+GeneData$anno <- colData(res_tmp$data)[,par_tmp$SingleEntVis$accross_condition]
+if(length(idx_selected)>1){
+  # summarise the data
+  GeneData_medians <- rowMedians(as.matrix(GeneData[,-ncol(GeneData)]))
+  GeneData <- GeneData[,ncol(GeneData),drop=F]
+  GeneData$rowMedian <- GeneData_medians
+  GeneData <- GeneData[,c("rowMedian","anno")]
+}
+GeneData$anno <- as.factor(GeneData$anno)
+    '
+  }else if(par_tmp$SingleEntVis$type_of_data_gene == "raw" ){
+    prequel_stringtosave <- '#get IDX to data
+idx_selected <- which(par_tmp$SingleEntVis$Select_Gene == rowData(res_tmp$data_original)[,par_tmp$SingleEntVis$Select_GeneAnno])
+GeneData <- as.data.frame(t(assay(res_tmp$data_original)[idx_selected,,drop=F]))
+GeneData$anno <- colData(res_tmp$data_original)[,par_tmp$SingleEntVis$accross_condition]
+# select to selection of processed data
+annoToSelect=unique(c(colData(res_tmp$data)[,par_tmp$SingleEntVis$accross_condition]))
+GeneData = subset(GeneData, anno %in% annoToSelect)
+if(length(idx_selected)>1){
+  # summarise the data
+  GeneData_medians <- rowMedians(as.matrix(GeneData[,-ncol(GeneData)]))
+  GeneData <- GeneData[,ncol(GeneData),drop=F]
+  GeneData$rowMedian <- GeneData_medians
+  GeneData <- GeneData[,c("rowMedian","anno")]
+  }
+GeneData$anno <- as.factor(GeneData$anno)
+    '
+  }
 
-                 label = "p.signif",
-                           hide.ns = TRUE)'
+  if (numberOfScenario == 12) {
+    stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
+P_boxplots <- ggplot(res_tmp$SingleEntVis, 
+  aes(y=res_tmp$SingleEntVis[,colnames(res_tmp$SingleEntVis)[-ncol(res_tmp$SingleEntVis)]],
+      x=anno,
+      fill=anno))+
+  geom_boxplot()+ # unable if less then 4 samples in all groups to get the same plot as in the App
+  geom_point(shape = 21,size=5)+
+  scale_fill_brewer(palette="RdBu")+
+  xlab(par_tmp$SingleEntVis$Select_Gene)+
+  ylab(par_tmp$SingleEntVis$type_of_data_gene)+
+  theme_bw()+
+  geom_hline(yintercept = mean(res_tmp$SingleEntVis[,colnames(res_tmp$SingleEntVis)[-ncol(res_tmp$SingleEntVis)]]), linetype = 2)+ # Add horizontal line at base mean
+  #stat_compare_means(method = "anova")+        # Add global annova p-value
+  stat_compare_means(comparisons = xy.list,
+                     method = par_tmp$SingleEntVis$testMethod,
+                     label = "p.signif",
+                     hide.ns = TRUE)'
   }
   if (numberOfScenario == 13) {
-    stringtosave = 'P_boxplots=ggplot(GeneData, aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],x=anno,fill=anno))+
-    geom_boxplot()+
-    scale_fill_brewer(palette="RdBu")+
-    xlab(input$Select_Gene)+
-    ylab(input$type_of_data_gene)+
-    theme_bw()'
+    stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
+P_boxplots <- ggplot(res_tmp$SingleEntVis, 
+  aes(y=res_tmp$SingleEntVis[,colnames(res_tmp$SingleEntVis)[-ncol(res_tmp$SingleEntVis)]],
+      x=anno,
+      fill=anno))+
+  geom_boxplot()+# unable if less then 4 samples in all groups to get the same plot as in the App
+  geom_point(shape = 21,size=5)+
+  scale_fill_brewer(palette="RdBu")+
+  xlab(par_tmp$SingleEntVis$Select_Gene)+
+  ylab(par_tmp$SingleEntVis$type_of_data_gene)+
+  theme_bw()'
   }
+  stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave)
+}
+ 
   ## TODO ensure this remains working with new output from Enrichment, needs a potential update!
   if(numberOfScenario == 14){
     stringtosave = 'KEGG_Plot_GSE=clusterProfiler::dotplot(EnrichmentRes_Kegg,split=".sign") +
@@ -456,7 +504,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
     stringtosave='REACTOME_Plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME)'
   }
 
-### Sample Correlation plot
+# Sample Correlation plot ----
   if(numberOfScenario == 18){
     stringtosave = 'SampleCorrelationPlot <- pheatmap(
     mat = res_tmp$SampleCorr, 
