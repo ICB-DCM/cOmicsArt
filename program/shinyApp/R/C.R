@@ -21,6 +21,8 @@ library(ggpubr)
 library(rstudioapi)
 library(SummarizedExperiment)
 library(pheatmap)
+library(ggVennDiagram)
+library(UpSetR)
 # if not run in RStudio  you need to specify the directory fo the file yourself!
 
 direcoty_of_files=dirname(rstudioapi::getSourceEditorContext()$path)

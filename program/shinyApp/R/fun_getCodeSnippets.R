@@ -146,10 +146,10 @@ getPlotCode <- function(
   }
     
 
-    # Plot Code ----
+# Plot Code ----
   ## PCA ----
-  if(numberOfScenario>=1 & numberOfScenario <9){
-    # Calculate all necassary intermediate datasets
+  if(numberOfScenario >= 1 & numberOfScenario < 9){
+    # Calculate all necessary intermediate data sets
     prequel_stringtosave <- 'pcaData <- data.frame(res_tmp$PCA$x,colData(res_tmp$data))
 # Annotation (important for plotly)
     if(!any(colnames(pcaData) == "global_ID")){
@@ -513,13 +513,16 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
     annotation_colors = par_tmp$SampleCorr$anno_colors
     )'
   }
-
+# Significance Analysis -----
+## Venn Diagram ----
   if(numberOfScenario == 20){
-    stringtosave <- 'VennDiagramm <- ggVennDiagram::ggVennDiagram(res2plot)'
+    stringtosave <- 'VennDiagramm <- ggVennDiagram::ggVennDiagram(res_tmp$SignificanceAnalysis)'
   }
+## Upset plot ----
   if(numberOfScenario == 21){
-    stringtosave <- 'UpSetR::upset(fromList(res2plot))'
+    stringtosave <- 'UpSetR::upset(fromList(res_tmp$SignificanceAnalysis))'
   }
+
   if(numberOfScenario == 0){
     stringtosave <- '# No_code_yet'
   }
