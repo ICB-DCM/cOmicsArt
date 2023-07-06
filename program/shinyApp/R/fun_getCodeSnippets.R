@@ -12,12 +12,12 @@ getPlotCode <- function(
   }else{
     if(!(length(par_tmp$row_selection) == 1 & any(par_tmp$row_selection == "High Values+IQR"))){
     stringSelection <- 'selected <- c()
-    selected <- unique(
-      c(selected,rownames(rowData(res_tmp$data_original))[
-          which(rowData(res_tmp$data_original)
-          [,par_tmp$providedRowAnnotationTypes]%in%par_tmp$row_selection)
-        ]
-      )
+  selected <- unique(
+    c(selected,rownames(rowData(res_tmp$data_original))[
+    which(rowData(res_tmp$data_original)
+    [,par_tmp$providedRowAnnotationTypes]%in%par_tmp$row_selection)
+    ]
+    )
     )
     '
   }
@@ -142,7 +142,7 @@ getPlotCode <- function(
     }
     stringPreProcessing <- paste0(prequel_stringPreProcessing,"\n",stringPreProcessing)
   }else{
-    stringPreProcessing <- 'res_tmp$data <- processedData'
+    stringPreProcessing <- ''
   }
     
 
@@ -384,41 +384,59 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
     theme_bw()'
   }
   
-  ## 2 heatmaps
+# Heatmap ----
+if(numberOfScenario >=10  & numberOfScenario <= 11){
+  prequel_stringtosave <- '
+colorTheme <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c","#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
+paletteLength <- 25
+myColor_fill <- colorRampPalette(c("blue", "white", "firebrick"))(paletteLength)
+
+  '
+  
   if(numberOfScenario==10){
-    stringtosave='heatmap_plot<-pheatmap((t(Data2Plot[,"LFC",drop=F])),
-                           main=gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
-                           show_rownames=ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
-                           show_colnames=TRUE,
-                           cluster_cols = input$cluster_cols,
-                           cluster_rows = FALSE, # input$cluster_rows,
-                           scale=ifelse(input$rowWiseScaled,"row","none"),
-                           # cutree_cols = 4,
-                           #fontsize = font.size,
-                           annotation_col = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F],
-                           #annotation_row = data2Plot[[input$omicType]]$annotation_rows[,input$row_anno_options,drop=F],
-                           #annotation_colors = mycolors,
-                           silent = F,
-                           breaks = myBreaks,
-                           color = myColor_fill)'
+    stringtosave <- '
+annotation_col <- rowData(res_tmp$data)[,par_tmp$Heatmap$row_anno_options,drop=F]
+myBreaks <- c(seq(min(res_tmp$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
+seq(max(res_tmp$Heatmap$LFC)/paletteLength, max(res_tmp$Heatmap$LFC), length.out=floor(paletteLength/2)))  
+    
+heatmap_plot <- pheatmap((t(res_tmp$Heatmap[,"LFC",drop=F])),
+  main=gsub("^Heatmap","Heatmap_LFC",par_tmp$Heatmap$customTitleHeatmap),
+  show_rownames=ifelse(nrow(res_tmp$Heatmap)<=25,TRUE,FALSE),
+  show_colnames=TRUE,
+  cluster_cols = par_tmp$Heatmap$cluster_cols,
+  cluster_rows = FALSE, # par_tmp$Heatmap$cluster_rows,
+  scale=ifelse(par_tmp$Heatmap$rowWiseScaled,"row","none"),
+  # cutree_cols = 4,
+  #fontsize = font.size,
+  annotation_col = res_tmp$data[[par_tmp$Heatmap$omicType]]$annotation_rows[,par_tmp$Heatmap$row_anno_options,drop=F],
+  #annotation_row = res_tmp$data[[par_tmp$Heatmap$omicType]]$annotation_rows[,par_tmp$Heatmap$row_anno_options,drop=F],
+  silent = F,
+  breaks = myBreaks,
+  color = myColor_fill)'
   }
   if(numberOfScenario==11){
-    stringtosave='heatmap_plot<-pheatmap(as.matrix(data2HandOver),
-                           main=customTitleHeatmap,
-                           show_rownames=ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
-                           labels_row = selectedData_processed_df[[input$omicType]]$annotation_rows[rownames(data2HandOver),input$row_label_options],
-                           show_colnames=TRUE,
-                           cluster_cols = input$cluster_cols,
-                           cluster_rows = clusterRowspossible,
-                           scale=ifelse(input$rowWiseScaled,"row","none"),
-                           # cutree_cols = 4,
-                           #fontsize = font.size,
-                           annotation_col = annotation_col,
-                           annotation_row =annotation_row,
-                           annotation_colors = mycolors,
-                           silent = F)'
+    stringtosave <- '
+clusterRowspossible <- ifelse(nrow(as.matrix(res_tmp$Heatmap))>1,par_tmp$Heatmap$cluster_rows,F)
+heatmap_plot <- pheatmap(as.matrix(res_tmp$Heatmap),
+main=par_tmp$Heatmap$customTitleHeatmap,
+  show_rownames=ifelse(nrow(res_tmp$Heatmap)<=par_tmp$Heatmap$row_label_no,TRUE,FALSE),
+  labels_row = rowData(res_tmp$data)[rownames(res_tmp$Heatmap),par_tmp$Heatmap$row_label_options],
+  show_colnames=TRUE,
+  cluster_cols = par_tmp$Heatmap$cluster_cols,
+  cluster_rows = clusterRowspossible,
+  scale=ifelse(par_tmp$Heatmap$rowWiseScaled,"row","none"),
+  # cutree_cols = 4,
+  #fontsize = font.size,
+  annotation_col = par_tmp$Heatmap$annotation_col,
+  annotation_row =par_tmp$Heatmap$annotation_row,
+  annotation_colors = par_tmp$Heatmap$mycolors,
+  silent = F)'
   }
-  #11
+stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave)
+}
+
+
+
 # Single Gene Visualisation ----
 if(numberOfScenario %in% c(12,13)){
   if(par_tmp$SingleEntVis$type_of_data_gene == "preprocessed"){
@@ -522,6 +540,10 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
   if(numberOfScenario == 21){
     stringtosave <- 'UpSetR::upset(fromList(res_tmp$SignificanceAnalysis))'
   }
+
+
+
+
 
   if(numberOfScenario == 0){
     stringtosave <- '# No_code_yet'
