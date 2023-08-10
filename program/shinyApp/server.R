@@ -306,7 +306,7 @@ server <- function(input,output,session){
          Remember to change the Sample ID everywhere (Matrix & Sample Table")
      }
      output$OverallChecks <- renderText({
-       paste0("Some overall Checks are running run ...\n,
+       paste0("Some overall Checks are running run ...\n
        Data Matrix is a real csv (has ',' as separators:): ",check0,"\n
            Most likely: You had a xlsx and exported to csv but your excel is in german 
            and / or you use ',' as separators for decimal positions. 
@@ -369,6 +369,7 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
+    browser()
     if(!isTruthy(input$data_preDone) & !FLAG_TEST_DATA_SELECTED()){
       # Include here, that the sample anno can be replaced by metadatasheet
       # potentially this will be extended to all of the fields
@@ -390,10 +391,9 @@ server <- function(input,output,session){
         }
         
       }else if(isTruthy(input$metadataInput)){
-       
         tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
-
-        tryCatch(
+        test_data_upload <- function(){
+          tryCatch(
           {
             data_input <- list(
               type = as.character(input$omicType),
@@ -414,9 +414,12 @@ server <- function(input,output,session){
             return(NULL)
           }
         )
+        }
+        data_input <- test_data_upload()
       }
       
       ## TODO Include here possible Data Checks
+    
     }else if(FLAG_TEST_DATA_SELECTED() & !isTruthy(input$data_preDone)){
       #TODO change test data to also not rely on 'Transcriptomics'
 
@@ -427,11 +430,10 @@ server <- function(input,output,session){
       fun_LogIt(
         message = paste0("**DataInput** - Test Data set used")
       )
-    }else{
-
-      uploadedFile <- readRDS(
-
-        file = input$data_preDone$datapath
+    
+      }else{
+        uploadedFile <- readRDS(
+          file = input$data_preDone$datapath
       )
 
       if(any(names(uploadedFile)%in% input$omicType)){
@@ -442,7 +444,6 @@ server <- function(input,output,session){
       }
 
     }
-
     ### Added here gene annotation if asked for 
     if(input$AddGeneSymbols & 
        input$omicType == "Transcriptomics"){
@@ -475,11 +476,12 @@ server <- function(input,output,session){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
       data_input[[paste0(input$omicType,"_SumExp")]]=
         SummarizedExperiment(assays  = list(raw = data_input$Matrix),
-                             rowData = data_input$annotation_rows[rownames(data_input$Matrix),],
+                             rowData = data_input$annotation_rows[rownames(data_input$Matrix),,drop=F],
                              colData = data_input$sample_table
                              )
       #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
     }
+    browser()
     # TODO SumExp only needed hence more restructuring needed
     res_tmp[['data_original']] <<- data_input[[paste0(input$omicType,"_SumExp")]]
     # Make a copy, to leave original data untouched
@@ -528,6 +530,7 @@ server <- function(input,output,session){
     isTruthy(res_tmp$data)
     # Row
     output$providedRowAnnotationTypes_ui=renderUI({
+      browser()
       req(data_input_shiny())
       shinyWidgets::virtualSelectInput(
         inputId = "providedRowAnnotationTypes",
