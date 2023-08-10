@@ -36,6 +36,7 @@ library(shinyalert)
 library(msigdbr)
 library(tidyr)
 library(kableExtra)
+library(readxl)
 # library(svglite)
 
 source("R/C.R")

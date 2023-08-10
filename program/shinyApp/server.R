@@ -215,19 +215,44 @@ server <- function(input,output,session){
       req(F)
     }
     if(!(isTruthy(input$data_matrix1) & 
-         isTruthy(input$data_sample_anno1) & 
+         (isTruthy(input$data_sample_anno1)|isTruthy(input$metadataInput)) & 
          isTruthy(input$data_row_anno1))){
       output$DataMatrix_VI_Info=renderText(
         "The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!"
         )
     }else{
-     Matrix <- read_file(input$data_matrix1$datapath, check.names=T)
-     Matrix2 <- read_file(input$data_matrix1$datapath, check.names=F)
+      flag_csv <- F
+      tryCatch(
+        expr = {
+        Matrix <- read_file(input$data_matrix1$datapath, check.names=T)
+        Matrix2 <- read_file(input$data_matrix1$datapath, check.names=F)
+        flag_csv <- T
+      },
+      error = function(cond){
+        print("Not a real csv file!")
+      }
+      )
+      if(!flag_csv){
+        Matrix <- read.table(input$data_matrix1$datapath,check.names = T)
+        Matrix2 <- read.table(input$data_matrix1$datapath, check.names = F)
+      }else{
+        Matrix <- read_file(input$data_matrix1$datapath, check.names=T)
+        Matrix2 <- read_file(input$data_matrix1$datapath, check.names=F)
+      }
+
+      
      output$DataMatrix_VI <- DT::renderDataTable({
        DT::datatable(data = Matrix)
        })
      output$DataMatrix_VI_INFO <- renderText({"Matrix:"})
-     sample_table <- read_file(input$data_sample_anno1$datapath, check.names=T)
+     if(isTruthy(input$data_sample_anno1)){
+       sample_table <- read_file(input$data_sample_anno1$datapath, check.names=T)
+     }else if(isTruthy(input$metadataInput)){
+       sample_table <- fun_readInSampleTable(input$metadataInput$datapath)
+     }else{
+       sample_table <- data.frame()
+     }
+     
      output$SampleMatrix_VI <- DT::renderDataTable({
        DT::datatable(data = sample_table)
        })
@@ -252,6 +277,7 @@ server <- function(input,output,session){
        "
        })
 
+     check0 <- ifelse(flag_csv,snippetYes,snippetNo)
      check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
      check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
      check3 <- ifelse(any(is.na(Matrix) == T),snippetNo,snippetYes)
@@ -280,7 +306,11 @@ server <- function(input,output,session){
          Remember to change the Sample ID everywhere (Matrix & Sample Table")
      }
      output$OverallChecks <- renderText({
-       paste0("Some overall Checks are running run ...\n
+       paste0("Some overall Checks are running run ...\n,
+       Data Matrix is a real csv (has ',' as separators:): ",check0,"\n
+           Most likely: You had a xlsx and exported to csv but your excel is in german 
+           and / or you use ',' as separators for decimal positions. 
+           Fix: change your decimal separator in Excel and re-export!
        Rownames of Matrix are the same as rownames of entitie table ",check1,"\n
        Colnames of Matrix are same as rownames of sample table ",check2," \n
        Matrix has no na ",check3,"\n
@@ -369,7 +399,7 @@ server <- function(input,output,session){
               type = as.character(input$omicType),
               Matrix = read_file(
                 input$data_matrix1$datapath, check.names=T
-                )[,rownames(my_data_tmp)],
+                )[,rownames(tmp_sampleTable)],
               sample_table = tmp_sampleTable,
               annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
               )
