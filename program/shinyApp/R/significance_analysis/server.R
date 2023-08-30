@@ -58,7 +58,7 @@ significance_analysis_server <- function(id, data, params, updates){
           }
           selectInput(
             inputId = ns("comparisons"),
-            label = "Select your desired comparisons",
+            label = "Select your desired comparisons. Notation is Treatment:Control",
             choices = sapply(xy.list, paste, collapse=":"),
             multiple = T,
             selected = sapply(xy.list, paste, collapse=":")[1]
