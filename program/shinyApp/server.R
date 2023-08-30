@@ -135,21 +135,21 @@ server <- function(input,output,session){
     shiny::fileInput(
       inputId = "data_matrix1",
       label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a></small>'),
-      accept = c(".csv"),
+      accept = c(".csv", ".xlsx"),
       width = "80%")
   })
   output$data_sample_anno1_ui <- renderUI({
     shiny::fileInput(
       inputId = "data_sample_anno1",
       label = HTML('Upload sample annotation <br/><small>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv">Download example data</a></small>'),
-      accept = c(".csv"),
+      accept = c(".csv", ".xlsx"),
       width = "80%")
   })
   output$data_row_anno1_ui <- renderUI({
     shiny::fileInput(
       inputId = "data_row_anno1",
       label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a></small>'),
-      accept = c(".csv"),
+      accept = c(".csv", ".xlsx"),
       width = "80%")
   })
   output$data_preDone_ui <- renderUI({
@@ -215,45 +215,50 @@ server <- function(input,output,session){
       req(F)
     }
     if(!(isTruthy(input$data_matrix1) & 
-         isTruthy(input$data_sample_anno1) & 
+         (isTruthy(input$data_sample_anno1)|isTruthy(input$metadataInput)) & 
          isTruthy(input$data_row_anno1))){
       output$DataMatrix_VI_Info=renderText(
         "The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!"
         )
     }else{
-     Matrix <- read.csv(
-       file = input$data_matrix1$datapath,
-       header = T,
-       row.names = 1,
-       check.names = T
-       )
-     Matrix2 <- read.csv(
-       file = input$data_matrix1$datapath,
-       header = T,
-       row.names = 1,
-       check.names = F
-     )
+      flag_csv <- F
+      tryCatch(
+        expr = {
+        Matrix <- read_file(input$data_matrix1$datapath, check.names=T)
+        Matrix2 <- read_file(input$data_matrix1$datapath, check.names=F)
+        flag_csv <- T
+      },
+      error = function(cond){
+        print("Not a real csv file!")
+      }
+      )
+      if(!flag_csv){
+        Matrix <- read.table(input$data_matrix1$datapath,check.names = T)
+        Matrix2 <- read.table(input$data_matrix1$datapath, check.names = F)
+      }else{
+        Matrix <- read_file(input$data_matrix1$datapath, check.names=T)
+        Matrix2 <- read_file(input$data_matrix1$datapath, check.names=F)
+      }
+
+      
      output$DataMatrix_VI <- DT::renderDataTable({
        DT::datatable(data = Matrix)
        })
      output$DataMatrix_VI_INFO <- renderText({"Matrix:"})
-     sample_table <- read.csv(
-       file = input$data_sample_anno1$datapath,
-       header = T,
-       row.names = 1,
-       check.names = F
-       )
+     if(isTruthy(input$data_sample_anno1)){
+       sample_table <- read_file(input$data_sample_anno1$datapath, check.names=T)
+     }else if(isTruthy(input$metadataInput)){
+       sample_table <- fun_readInSampleTable(input$metadataInput$datapath)
+     }else{
+       sample_table <- data.frame()
+     }
+     
      output$SampleMatrix_VI <- DT::renderDataTable({
        DT::datatable(data = sample_table)
        })
      output$SampleMatrix_VI_INFO <- renderText({"Sample table:"})
      
-     annotation_rows <- read.csv(
-       file = input$data_row_anno1$datapath,
-       header = T,
-       row.names = 1,
-       check.names = F
-       )
+     annotation_rows <- read_file(input$data_row_anno1$datapath, check.names=T)
      output$EntitieMatrix_VI <- DT::renderDataTable({
        DT::datatable(data = annotation_rows)
        })
@@ -272,6 +277,7 @@ server <- function(input,output,session){
        "
        })
 
+     check0 <- ifelse(flag_csv,snippetYes,snippetNo)
      check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
      check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
      check3 <- ifelse(any(is.na(Matrix) == T),snippetNo,snippetYes)
@@ -301,6 +307,10 @@ server <- function(input,output,session){
      }
      output$OverallChecks <- renderText({
        paste0("Some overall Checks are running run ...\n
+       Data Matrix is a real csv (has ',' as separators:): ",check0,"\n
+           Most likely: You had a xlsx and exported to csv but your excel is in german 
+           and / or you use ',' as separators for decimal positions. 
+           Fix: change your decimal separator in Excel and re-export!
        Rownames of Matrix are the same as rownames of entitie table ",check1,"\n
        Colnames of Matrix are same as rownames of sample table ",check2," \n
        Matrix has no na ",check3,"\n
@@ -359,6 +369,7 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
+    browser()
     if(!isTruthy(input$data_preDone) & !FLAG_TEST_DATA_SELECTED()){
       # Include here, that the sample anno can be replaced by metadatasheet
       # potentially this will be extended to all of the fields
@@ -367,24 +378,9 @@ server <- function(input,output,session){
       if(isTruthy(input$data_sample_anno1)){
         data_input<- list(
           type = as.character(input$omicType),
-          Matrix = read.csv(
-            file = input$data_matrix1$datapath,
-            header = T,
-            row.names = 1,
-            check.names = F
-            ),
-          sample_table = read.csv(
-            file = input$data_sample_anno1$datapath,
-            header = T,
-            row.names = 1,
-            check.names = F
-            ),
-          annotation_rows = read.csv(
-            file = input$data_row_anno1$datapath,
-            header = T,
-            row.names = 1,
-            check.names = F
-            )
+          Matrix = read_file(input$data_matrix1$datapath, check.names=T),
+          sample_table = read_file(input$data_sample_anno1$datapath, check.names=T),
+          annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
           )
         
         # check if only 1 col in anno row, 
@@ -395,25 +391,17 @@ server <- function(input,output,session){
         }
         
       }else if(isTruthy(input$metadataInput)){
-       
         tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
-
-        tryCatch(
+        test_data_upload <- function(){
+          tryCatch(
           {
             data_input <- list(
               type = as.character(input$omicType),
-              Matrix = read.csv(
-                file = input$data_matrix1$datapath,
-                header = T,
-                row.names = 1,
-                check.names = F
-                )[,rownames(my_data_tmp)],
+              Matrix = read_file(
+                input$data_matrix1$datapath, check.names=T
+                )[,rownames(tmp_sampleTable)],
               sample_table = tmp_sampleTable,
-              annotation_rows = read.csv(
-                file = input$data_row_anno1$datapath,
-                header = T,
-                row.names = 1,
-                check.names = F)
+              annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
               )
             return(data_input)
           },
@@ -426,9 +414,12 @@ server <- function(input,output,session){
             return(NULL)
           }
         )
+        }
+        data_input <- test_data_upload()
       }
       
       ## TODO Include here possible Data Checks
+    
     }else if(FLAG_TEST_DATA_SELECTED() & !isTruthy(input$data_preDone)){
       #TODO change test data to also not rely on 'Transcriptomics'
 
@@ -439,11 +430,10 @@ server <- function(input,output,session){
       fun_LogIt(
         message = paste0("**DataInput** - Test Data set used")
       )
-    }else{
-
-      uploadedFile <- readRDS(
-
-        file = input$data_preDone$datapath
+    
+      }else{
+        uploadedFile <- readRDS(
+          file = input$data_preDone$datapath
       )
 
       if(any(names(uploadedFile)%in% input$omicType)){
@@ -454,7 +444,6 @@ server <- function(input,output,session){
       }
 
     }
-
     ### Added here gene annotation if asked for 
     if(input$AddGeneSymbols & 
        input$omicType == "Transcriptomics"){
@@ -487,11 +476,12 @@ server <- function(input,output,session){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
       data_input[[paste0(input$omicType,"_SumExp")]]=
         SummarizedExperiment(assays  = list(raw = data_input$Matrix),
-                             rowData = data_input$annotation_rows[rownames(data_input$Matrix),],
+                             rowData = data_input$annotation_rows[rownames(data_input$Matrix),,drop=F],
                              colData = data_input$sample_table
                              )
       #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
     }
+    browser()
     # TODO SumExp only needed hence more restructuring needed
     res_tmp[['data_original']] <<- data_input[[paste0(input$omicType,"_SumExp")]]
     # Make a copy, to leave original data untouched
@@ -540,6 +530,7 @@ server <- function(input,output,session){
     isTruthy(res_tmp$data)
     # Row
     output$providedRowAnnotationTypes_ui=renderUI({
+      browser()
       req(data_input_shiny())
       shinyWidgets::virtualSelectInput(
         inputId = "providedRowAnnotationTypes",
@@ -806,27 +797,47 @@ server <- function(input,output,session){
     processedData_all <- tmp_data_selected
     # as general remove all genes which are constant over all rows
     print("As general remove all entities which are constant over all samples")
-    res_tmp$data <<- res_tmp$data[rownames(tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]),]
+    res_tmp$data <<- tmp_data_selected[rownames(tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]),]
     
-    if(par_tmp$omic_type == "Transcriptomics"){
-      print("Also remove anything of rowCount <=10")
-      print(dim(tmp_data_selected))
-      res_tmp$data <<- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]
-    }
-    
-    if(par_tmp$omic_type == "Metabolomics"){
-      print("Remove anything which has a row median of 0")
-      print(dim(tmp_data_selected))
-      res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,median)!=0),]
-    }
+
     
     print(dim(res_tmp$data))
     # explicitly set rownames to avoid any errors.
     # new object Created for res_tmp
     res_tmp$data <<- res_tmp$data[rownames(res_tmp$data),]
 
-    
     if(input$PreProcessing_Procedure != "none"){
+      if(input$PreProcessing_Procedure == "filterOnly"){
+        
+        if(par_tmp$omic_type == "Transcriptomics"){
+          print("Also remove anything of rowCount <=10")
+          print(dim(tmp_data_selected))
+          res_tmp$data <<- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]
+          }
+        
+        if(par_tmp$omic_type == "Metabolomics"){
+          print("Remove anything which has a row median of 0")
+          print(dim(tmp_data_selected))
+          res_tmp$data <<- tmp_data_selected[which(apply(assay(tmp_data_selected),1,median)!=0),]
+          }
+        addWarning <- "<font color=\"#000000\"><b>Only Filtering of low abundant is done only if Transcriptomics or Metabolomics was chosen\n</b></font>"
+      }else{
+        if(par_tmp$omic_type == "Transcriptomics"){
+          print("Also remove anything of rowCount <=10")
+          print(dim(tmp_data_selected))
+          res_tmp$data <<- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]
+        }
+        
+        if(par_tmp$omic_type == "Metabolomics"){
+          print("Remove anything which has a row median of 0")
+          print(dim(tmp_data_selected))
+          
+        addWarning <- "<font color=\"#000000\"><b>Pre Filtering to remove low abundant entities done if Transcriptomics or Metabolomics was chosen\n</b></font>"
+        }
+      }
+      
+      print(dim(res_tmp$data))
+      
       print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
       if(input$PreProcessing_Procedure == "simpleCenterScaling"){
         processedData <- as.data.frame(t(

@@ -44,6 +44,44 @@ volcano_Server <- function(id, data, params, updates){
           selected = unique(colData(data$data)[,input$sample_annotation_types_cmp])[2]
         )
       })
+      
+      output$chooseTest_ui <- renderUI({
+          shinyWidgets::virtualSelectInput(
+            search = T,
+            showSelectedOptionsFirst = T,
+            inputId = ns("chooseTest"),
+            label = "Test method",
+            choices = c("Wilcoxon rank sum test", "T-Test", "Welch-Test"),
+            selected = "T-Test"
+          )
+        })
+      
+      output$chooseSignificanceLevel_ui <- renderUI({
+        sliderInput(
+          inputId = ns("significance_level"),
+          label = "Significance level",
+          min = 0.005,
+          max = 0.1,
+          value = 0.05,
+          step = 0.005
+        )
+      })
+      
+      output$chooseTestCorrection_ui <- renderUI({
+        selectInput(
+          inputId = ns("chooseTestCorrection"),
+          label = "Test correction",
+          choices = c(
+            "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
+            "Holm", "Hommel", "Hochberg", "FDR"
+          ),
+          selected = "Benjamini-Hochberg"
+        )
+      })
+      
+      
+      
+      
       output$psig_threhsold_ui <- renderUI({
         req(data_input_shiny())
         numericInput(
@@ -59,9 +97,9 @@ volcano_Server <- function(id, data, params, updates){
         numericInput(
           inputId = ns("lfc_threshold"),
           label = "Log FC threshold (both sides!)",
-          min=0,
-          max=10,
-          step=0.1,
+          min = 0,
+          max = 10,
+          step = 0.1,
           value = 1.0
           )
       })
@@ -133,19 +171,42 @@ volcano_Server <- function(id, data, params, updates){
               data2Volcano <- as.data.frame(assay(data$data))
           }
           if(any(data2Volcano == 0)){
-            #macht es mehr sinn nur die nullen + eps zu machen oder lieber alle daten punkte + eps?
-            #data2Volcano=data2Volcano+10^-15  => Log(data +1)
+            # constant row are kicked out, mean of 0 only problem left - need to
+            # be thrown out (plotted elsewhere?)
           }
           print(dim(data2Volcano))
+          # If "none" for test correction is selected
+          # we decided to always show a corrected plot 
+          
+          if(input$chooseTestCorrection == "None"){
+            VolcanoPlot_df_default <- Volcano_Plot(
+              data = data2Volcano,
+              ctrl_samples_idx = ctrl_samples_idx,
+              comparison_samples_idx = comparison_samples_idx,
+              p_sig_threshold = input$psig_threhsold,
+              LFC_threshold = input$lfc_threshold,
+              correction_test_method = "Benjamini-Hochberg",
+              method = input$chooseTest,
+              annotation_add = input$VOLCANO_anno_tooltip,
+              annoData = rowData(data$data)
+            )
+          }else{
+            VolcanoPlot_df_default <- NULL
+          }
+          
           VolcanoPlot_df <- Volcano_Plot(
             data = data2Volcano,
             ctrl_samples_idx = ctrl_samples_idx,
             comparison_samples_idx = comparison_samples_idx,
             p_sig_threshold = input$psig_threhsold,
             LFC_threshold = input$lfc_threshold,
+            correction_test_method = input$chooseTestCorrection,
+            method = input$chooseTest,
             annotation_add = input$VOLCANO_anno_tooltip,
             annoData = rowData(data$data)
             )
+          
+
           # assign res_temp
           res_tmp[["Volcano"]] <<- VolcanoPlot_df
           # assign par_temp
@@ -159,7 +220,7 @@ volcano_Server <- function(id, data, params, updates){
           colorScheme <- c("#cf0e5b","#939596")
           names(colorScheme) <- c("significant","non-significant")
           alphaScheme <- c(0.8,0.1)
-          names(alphaScheme) <- c("change","steady")
+          names(alphaScheme) <- c("change"," ")
 
           VolcanoPlot <- ggplot(
             VolcanoPlot_df,
@@ -181,7 +242,11 @@ volcano_Server <- function(id, data, params, updates){
             scale_color_manual(values=colorScheme, name="")+
             scale_alpha_manual(values=alphaScheme, name="")+
             xlab("Log FoldChange")+
-            theme_bw()
+            ylab("-log10(p-value)")+
+            theme_bw()+
+            ggtitle(label=ifelse(is.null(VolcanoPlot_df_default),
+                                 "corrected pVals on y-Axis",
+                                 "Uncorrected pVals on y-Axis"))
 
           plotPosition <- "Volcano_Plot_final"
           scenario <- 9
@@ -192,6 +257,48 @@ volcano_Server <- function(id, data, params, updates){
             tooltip = ifelse(!is.null(input$VOLCANO_anno_tooltip),"tooltip","all"),
             legendgroup="color"
           )})
+          
+          if(!is.null(VolcanoPlot_df_default)){
+            VolcanoPlot_default <- ggplot(
+              VolcanoPlot_df_default,
+              aes(label=probename,tooltip=annotation_add)
+            ) +
+              geom_point(aes(
+                x = LFC,
+                y = -log10(p_adj),
+                colour = threshold,
+                alpha = threshold_fc)) +
+              geom_hline(
+                yintercept = -log10(input$psig_threhsold),
+                color="lightgrey"
+              ) +
+              geom_vline(
+                xintercept = c(-input$lfc_threshold,input$lfc_threshold),
+                color="lightgrey"
+              ) +
+              scale_color_manual(values=colorScheme, name="")+
+              scale_alpha_manual(values=alphaScheme, name="")+
+              xlab("Log FoldChange")+
+              ylab("-log10(p-value)")+
+              theme_bw()+ 
+              theme(legend.position = "none")+
+              ggtitle("BH-corrected p-Vals on y Axis")
+            
+            plotPosition <- "Volcano_Plot_final_default"
+
+            
+            output[[plotPosition]] <- renderPlotly({ggplotly(
+              VolcanoPlot_default,
+              tooltip = ifelse(!is.null(input$VOLCANO_anno_tooltip),"tooltip","all"),
+              legendgroup="color"
+            )})
+          }else{
+            plotPosition <- "Volcano_Plot_final_default"
+            
+            
+            output[[plotPosition]] <- NULL
+          }
+
 
           # LFC Table is VolcanoPlot_df but only the columns LFC, rawpvalue, p_adj, probename
           LFCTable <- VolcanoPlot_df[,c("LFC","rawpvalue","p_adj","probename")]

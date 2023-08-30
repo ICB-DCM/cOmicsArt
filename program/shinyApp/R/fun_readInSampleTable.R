@@ -2,9 +2,10 @@
 # Search for sample_section save row number
 # read in again and skip first row number lines
 fun_readInSampleTable <- function(dataFileName){
-  my_data_tmp <- as.data.frame(read_excel(dataFileName,sheet="Input"))
-  RowsToSkip <- which(my_data_tmp[,1]%in%"Sample-section")+1
-  my_data_tmp <- as.data.frame(read_excel(dataFileName,sheet="Input",skip = RowsToSkip))
+  my_data_tmp <- as.data.frame(readxl::read_excel(dataFileName,sheet="Input"))
+  RowsToSkip <- which(my_data_tmp[,1]%in%"Sample-Section")+1
+  
+  my_data_tmp <- as.data.frame(readxl::read_excel(dataFileName,sheet="Input",skip = RowsToSkip))
   
   # Advance: check if subsample etc are present 
   # for now remove any non complete rows
@@ -16,6 +17,8 @@ fun_readInSampleTable <- function(dataFileName){
   colnames(my_data_tmp) <- my_data_tmp[1,]
   my_data_tmp <- as.data.frame(my_data_tmp[-1,])
  
+  my_data_tmp <- my_data_tmp[!is.na(my_data_tmp$global_ID),]
+  
   return(my_data_tmp) 
 }
 

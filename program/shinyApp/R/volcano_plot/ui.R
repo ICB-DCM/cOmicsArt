@@ -7,6 +7,11 @@ volcano_sidebar_panel <- function(ns){
     uiOutput(outputId = ns("sample_annotation_types_cmp_ui")),
     uiOutput(outputId = ns("Groups2Compare_ref_ui")),
     uiOutput(outputId = ns("Groups2Compare_treat_ui")),
+
+    uiOutput(outputId = ns("chooseTest_ui")),
+    uiOutput(outputId = ns("chooseSignificanceLevel_ui")),
+    uiOutput(outputId = ns("chooseTestCorrection_ui")),
+    
     actionButton(
       inputId = ns("Do_Volcano"),
       label = "Do Volcano Plot",
@@ -35,7 +40,12 @@ volcano_main_panel <- function(ns){
     tabsetPanel(
       tabPanel(
         title = "Volcano_Plot",
-        plotlyOutput(outputId = ns("Volcano_Plot_final")) %>% withSpinner(type = 8),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          plotlyOutput(outputId = ns("Volcano_Plot_final")) %>% withSpinner(type = 8),
+          plotlyOutput(outputId = ns("Volcano_Plot_final_default")),
+        ),
         uiOutput(outputId = ns("VOLCANO_anno_tooltip_ui")),
         splitLayout(
           style = "border: 1px solid silver:",
