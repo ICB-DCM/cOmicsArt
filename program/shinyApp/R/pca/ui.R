@@ -40,11 +40,8 @@ pca_main_panel <- function(ns){
       type = "pills",
       tabPanel(
         title = "PCA_plot",
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          plotlyOutput(outputId = ns("PCA_plot")) ,
-          textOutput(outputId = ns("PCA_plot_Options_selected"), container = pre)
-        ),
+        textOutput(outputId = ns("PCA_Info"), container = pre),
+        plotlyOutput(outputId = ns("PCA_plot")) ,
         uiOutput(outputId = ns("PCA_anno_tooltip_ui")),
         splitLayout(
           style = "border: 1px solid silver:",

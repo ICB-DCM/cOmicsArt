@@ -45,76 +45,98 @@ sample_correlation_server <- function(id, data, params, updates){
           # set the counter to 0 to prevent any further plotting
           sample_corr_reactive$calculate <- 0
           
-        # check value of input$Do_SampleCorrelation
-        annotationDF <- colData(data$data)[,input$SampleAnnotationChoice,drop = F]
-        cormat <- cor(
-          x = as.matrix(assay(data$data)),
-          method = input$corrMethod
+          # check value of input$Do_SampleCorrelation
+          annotationDF <- colData(data$data)[,input$SampleAnnotationChoice,drop = F]
+          check <- check_calculations(
+            list(corrMethod = input$corrMethod),
+            "SampleCorrelation"
           )
-        
-        customTitleSampleCorrelation <- paste0(
-          "Sample Correlation - ",
-          params$omic_type,"-",
-          paste0("entities:",params$row_selection,collapse = "_"),
-          "-samples",
-          ifelse(any(params$row_selection != "all"),paste0(" (with: ",paste0(params$row_selection,collapse = ", "),")"),""),
-          "-preprocessing: ",
-          params$PreProcessing_Procedure
-        )
-        
-        # more advanced colors
-        # Identify how many anno colors it is asked for (max 3 atm)
-        # check the levels if more than 8 go for rainbow
-        # more divergent palletes
-        palletteOrder <- c("Paired","Pastel2","Dark2")
-        anno_colors <- list()
-        for (i in 1:(ncol(annotationDF))) {
-          if (i > 3) {
-            break
+          if (check == "No Result yet"){
+            output$SampleCorr_Info <- renderText(
+              "Correlation Matrix successfully computed."
+            )
+            cormat <- cor(
+              x = as.matrix(assay(data$data)),
+              method = input$corrMethod
+            )
+          } else if (check == "Result exists"){
+            output$SampleCorr_Info <- renderText(
+              "Correlation Matrix was already computed, no need to click the Button again."
+            )
+            cormat <- res_tmp$SampleCorrelation
+          } else if (check == "Overwrite"){
+            output$SampleCorr_Info <- renderText(
+              "Correlation Matrix result overwritten with different parameters."
+            )
+            cormat <- cor(
+              x = as.matrix(assay(data$data)),
+              method = input$corrMethod
+            )
           }
-          if (length(unique(annotationDF[,i])) == 2){
-            colors_tmp <- c("navy","orange")
-            names(colors_tmp) <- unique(annotationDF[,i])
-            anno_colors[[colnames(annotationDF)[i]]] <- colors_tmp
-          }else if (length(unique(annotationDF[,i])) <= 8) {
-            colors_tmp <- RColorBrewer::brewer.pal(
-              n = length(unique(annotationDF[,i])),
-              name = palletteOrder[i]
-              )
-            names(colors_tmp) <- unique(annotationDF[,i])
-            anno_colors[[colnames(annotationDF)[i]]] <- colors_tmp
-          }
-        }
 
-        SampleCorrelationPlot_final <- pheatmap(
-          mat = cormat, 
-          annotation_row = as.data.frame(annotationDF),
-          main = customTitleSampleCorrelation,
-          annotation_colors = anno_colors
+          customTitleSampleCorrelation <- paste0(
+            "Sample Correlation - ",
+            params$omic_type,"-",
+            paste0("entities:",params$row_selection,collapse = "_"),
+            "-samples",
+            ifelse(any(params$row_selection != "all"),paste0(" (with: ",paste0(params$row_selection,collapse = ", "),")"),""),
+            "-preprocessing: ",
+            params$PreProcessing_Procedure
           )
-        # assign res_temp["SampleCorrelation"]
-        res_tmp[["SampleCorrelation"]] <<- cormat
-        # assign par_temp["SampleCorrelation"] 
-        par_tmp["SampleCorrelation"] <<- list(
-          corrMethod = input$corrMethod
-        )
-        
-        sampleCorrelation_scenario <- 18
-        output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
-        
-        # Longer names causes issues for saving 
-        if(nchar(customTitleSampleCorrelation) >= 250){
-          customTitleSampleCorrelation <- "SampleCorrelation"
-        }
-        
-        par_tmp[["SampleCorr"]] <<- list(
-          customTitleSampleCorrelation = customTitleSampleCorrelation,
-          SampleCorrelationPlot_final = SampleCorrelationPlot_final,
-          cormat = cormat,
-          annotationDF = annotationDF,
-          anno_colors = anno_colors,
-          sampleCorrelation_scenario = sampleCorrelation_scenario
-        )
+
+          # more advanced colors
+          # Identify how many anno colors it is asked for (max 3 atm)
+          # check the levels if more than 8 go for rainbow
+          # more divergent palletes
+          palletteOrder <- c("Paired","Pastel2","Dark2")
+          anno_colors <- list()
+          for (i in 1:(ncol(annotationDF))) {
+            if (i > 3) {
+              break
+            }
+            if (length(unique(annotationDF[,i])) == 2){
+              colors_tmp <- c("navy","orange")
+              names(colors_tmp) <- unique(annotationDF[,i])
+              anno_colors[[colnames(annotationDF)[i]]] <- colors_tmp
+            }else if (length(unique(annotationDF[,i])) <= 8) {
+              colors_tmp <- RColorBrewer::brewer.pal(
+                n = length(unique(annotationDF[,i])),
+                name = palletteOrder[i]
+                )
+              names(colors_tmp) <- unique(annotationDF[,i])
+              anno_colors[[colnames(annotationDF)[i]]] <- colors_tmp
+            }
+          }
+
+          SampleCorrelationPlot_final <- pheatmap(
+            mat = cormat,
+            annotation_row = as.data.frame(annotationDF),
+            main = customTitleSampleCorrelation,
+            annotation_colors = anno_colors
+            )
+          # assign res_temp["SampleCorrelation"]
+          res_tmp[["SampleCorrelation"]] <<- cormat
+          # assign par_temp["SampleCorrelation"]
+          par_tmp[["SampleCorrelation"]] <<- list(
+            corrMethod = input$corrMethod
+          )
+
+          sampleCorrelation_scenario <- 18
+          output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
+
+          # Longer names causes issues for saving
+          if(nchar(customTitleSampleCorrelation) >= 250){
+            customTitleSampleCorrelation <- "SampleCorrelation"
+          }
+
+          par_tmp[["SampleCorr"]] <<- list(
+            customTitleSampleCorrelation = customTitleSampleCorrelation,
+            SampleCorrelationPlot_final = SampleCorrelationPlot_final,
+            cormat = cormat,
+            annotationDF = annotationDF,
+            anno_colors = anno_colors,
+            sampleCorrelation_scenario = sampleCorrelation_scenario
+          )
         }
       })
 

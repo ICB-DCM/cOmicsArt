@@ -22,6 +22,7 @@ sampleCorrelation_sidebar_panel <- function(ns){
 sampleCorrelation_main_panel <- function(ns){
   mainPanel(
   id = "main_sampleCorrelation",
+  textOutput(outputId = ns("SampleCorr_Info"), container = pre),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("100%"),
     plotOutput(
