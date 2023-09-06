@@ -138,6 +138,27 @@ volcano_Server <- function(id, data, params, updates){
           input$Do_Volcano[1] >= 1
         )
         print("Volcano analysis on pre-selected data")
+        # check whether we have to calculate
+        check <- check_calculations(list(
+            "sample_annotation_types_cmp" = input$sample_annotation_types_cmp,
+            "Groups2Compare_ref" = input$Groups2Compare_ref,
+            "Groups2Compare_treat" = input$Groups2Compare_treat,
+            "psig_threhsold" = input$psig_threhsold,
+            "lfc_threshold" = input$lfc_threshold,
+            "test_method" = input$chooseTest,
+            "correction_method" = input$chooseTestCorrection
+          ), "Volcano")
+        if (check == "No Result yet"){
+          output$Volcano_Info <- renderText("PCA computed.")
+        } else if (check == "Result exists"){
+          output$Volcano_Info <- renderText(
+            "Volcano plot was already computed, no need to click the Button again."
+          )
+        } else if (check == "Overwrite"){
+          output$Volcano_Info <- renderText(
+            "Volcano plot overwritten with different parameters."
+          )
+        }
         print(input$sample_annotation_types_cmp)
         ctrl_samples_idx <- which(
           colData(data$data)[,input$sample_annotation_types_cmp] %in% input$Groups2Compare_ref
@@ -159,7 +180,8 @@ volcano_Server <- function(id, data, params, updates){
             "Choose another preprocessing, as there are negative values!"
             )
           req(FALSE)
-        }else{
+        }
+        if(check == "Overwrite" || check == "No Result yet"){
           if(params$PreProcessing_Procedure == "ln" | params$PreProcessing_Procedure == "log10" ){
             print("Data was logged already => delog, take FC and log ?!")
                if(params$PreProcessing_Procedure == "ln"){
@@ -176,8 +198,8 @@ volcano_Server <- function(id, data, params, updates){
           }
           print(dim(data2Volcano))
           # If "none" for test correction is selected
-          # we decided to always show a corrected plot 
-          
+          # we decided to always show a corrected plot
+
           if(input$chooseTestCorrection == "None"){
             VolcanoPlot_df_default <- Volcano_Plot(
               data = data2Volcano,
@@ -193,7 +215,7 @@ volcano_Server <- function(id, data, params, updates){
           }else{
             VolcanoPlot_df_default <- NULL
           }
-          
+
           VolcanoPlot_df <- Volcano_Plot(
             data = data2Volcano,
             ctrl_samples_idx = ctrl_samples_idx,
@@ -205,27 +227,72 @@ volcano_Server <- function(id, data, params, updates){
             annotation_add = input$VOLCANO_anno_tooltip,
             annoData = rowData(data$data)
             )
-          
+        }
+        else if (check == "Result exists"){
+          VolcanoPlot_df <- res_tmp[["Volcano"]]$df
+          VolcanoPlot_df_default <- res_tmp[["Volcano"]]$df_default
+        }
 
-          # assign res_temp
-          res_tmp[["Volcano"]] <<- VolcanoPlot_df
-          # assign par_temp
-          par_tmp[["Volcano"]] <<- list(
-            "sample_annotation_types_cmp" = input$sample_annotation_types_cmp,
-            "Groups2Compare_ref" = input$Groups2Compare_ref,
-            "Groups2Compare_treat" = input$Groups2Compare_treat,
-            "psig_threhsold" = input$psig_threhsold,
-            "lfc_threshold" = input$lfc_threshold
-          )
-          colorScheme <- c("#cf0e5b","#939596")
-          names(colorScheme) <- c("significant","non-significant")
-          alphaScheme <- c(0.8,0.1)
-          names(alphaScheme) <- c("change"," ")
 
-          VolcanoPlot <- ggplot(
-            VolcanoPlot_df,
-            aes(label=probename,tooltip=annotation_add)
+        # assign res_temp
+        res_tmp[["Volcano"]]$df <<- VolcanoPlot_df
+        res_tmp[["Volcano"]]$df_default <<- VolcanoPlot_df_default
+        # assign par_temp
+        par_tmp[["Volcano"]] <<- list(
+          "sample_annotation_types_cmp" = input$sample_annotation_types_cmp,
+          "Groups2Compare_ref" = input$Groups2Compare_ref,
+          "Groups2Compare_treat" = input$Groups2Compare_treat,
+          "psig_threhsold" = input$psig_threhsold,
+          "lfc_threshold" = input$lfc_threshold,
+          "test_method" = input$chooseTest,
+          "correction_method" = input$chooseTestCorrection
+        )
+        colorScheme <- c("#cf0e5b","#939596")
+        names(colorScheme) <- c("significant","non-significant")
+        alphaScheme <- c(0.8,0.1)
+        names(alphaScheme) <- c("change"," ")
+
+        VolcanoPlot <- ggplot(
+          VolcanoPlot_df,
+          aes(label=probename,tooltip=annotation_add)
+          ) +
+          geom_point(aes(
+            x = LFC,
+            y = -log10(p_adj),
+            colour = threshold,
+            alpha = threshold_fc)) +
+          geom_hline(
+            yintercept = -log10(input$psig_threhsold),
+            color="lightgrey"
             ) +
+          geom_vline(
+            xintercept = c(-input$lfc_threshold,input$lfc_threshold),
+            color="lightgrey"
+            ) +
+          scale_color_manual(values=colorScheme, name="")+
+          scale_alpha_manual(values=alphaScheme, name="")+
+          xlab("Log FoldChange")+
+          ylab("-log10(p-value)")+
+          theme_bw()+
+          ggtitle(label=ifelse(is.null(VolcanoPlot_df_default),
+                               "corrected pVals on y-Axis",
+                               "Uncorrected pVals on y-Axis"))
+
+        plotPosition <- "Volcano_Plot_final"
+        scenario <- 9
+        scenario_Volcano <- scenario
+
+        output[[plotPosition]] <- renderPlotly({ggplotly(
+          VolcanoPlot,
+          tooltip = ifelse(!is.null(input$VOLCANO_anno_tooltip),"tooltip","all"),
+          legendgroup="color"
+        )})
+
+        if(!is.null(VolcanoPlot_df_default)){
+          VolcanoPlot_default <- ggplot(
+            VolcanoPlot_df_default,
+            aes(label=probename,tooltip=annotation_add)
+          ) +
             geom_point(aes(
               x = LFC,
               y = -log10(p_adj),
@@ -234,202 +301,164 @@ volcano_Server <- function(id, data, params, updates){
             geom_hline(
               yintercept = -log10(input$psig_threhsold),
               color="lightgrey"
-              ) +
+            ) +
             geom_vline(
               xintercept = c(-input$lfc_threshold,input$lfc_threshold),
               color="lightgrey"
-              ) +
+            ) +
             scale_color_manual(values=colorScheme, name="")+
             scale_alpha_manual(values=alphaScheme, name="")+
             xlab("Log FoldChange")+
             ylab("-log10(p-value)")+
             theme_bw()+
-            ggtitle(label=ifelse(is.null(VolcanoPlot_df_default),
-                                 "corrected pVals on y-Axis",
-                                 "Uncorrected pVals on y-Axis"))
+            theme(legend.position = "none")+
+            ggtitle("BH-corrected p-Vals on y Axis")
 
-          plotPosition <- "Volcano_Plot_final"
-          scenario <- 9
-          scenario_Volcano <- scenario
+          plotPosition <- "Volcano_Plot_final_default"
+
 
           output[[plotPosition]] <- renderPlotly({ggplotly(
-            VolcanoPlot,
+            VolcanoPlot_default,
             tooltip = ifelse(!is.null(input$VOLCANO_anno_tooltip),"tooltip","all"),
             legendgroup="color"
           )})
-          
-          if(!is.null(VolcanoPlot_df_default)){
-            VolcanoPlot_default <- ggplot(
-              VolcanoPlot_df_default,
-              aes(label=probename,tooltip=annotation_add)
-            ) +
-              geom_point(aes(
-                x = LFC,
-                y = -log10(p_adj),
-                colour = threshold,
-                alpha = threshold_fc)) +
-              geom_hline(
-                yintercept = -log10(input$psig_threhsold),
-                color="lightgrey"
-              ) +
-              geom_vline(
-                xintercept = c(-input$lfc_threshold,input$lfc_threshold),
-                color="lightgrey"
-              ) +
-              scale_color_manual(values=colorScheme, name="")+
-              scale_alpha_manual(values=alphaScheme, name="")+
-              xlab("Log FoldChange")+
-              ylab("-log10(p-value)")+
-              theme_bw()+ 
-              theme(legend.position = "none")+
-              ggtitle("BH-corrected p-Vals on y Axis")
-            
-            plotPosition <- "Volcano_Plot_final_default"
-
-            
-            output[[plotPosition]] <- renderPlotly({ggplotly(
-              VolcanoPlot_default,
-              tooltip = ifelse(!is.null(input$VOLCANO_anno_tooltip),"tooltip","all"),
-              legendgroup="color"
-            )})
-          }else{
-            plotPosition <- "Volcano_Plot_final_default"
-            
-            
-            output[[plotPosition]] <- NULL
-          }
+        }else{
+          plotPosition <- "Volcano_Plot_final_default"
 
 
-          # LFC Table is VolcanoPlot_df but only the columns LFC, rawpvalue, p_adj, probename
-          LFCTable <- VolcanoPlot_df[,c("LFC","rawpvalue","p_adj","probename")]
-          # add annotation to Table
-          LFCTable <- merge(
-            LFCTable,
-            rowData(data$data),
-            by=0,
-            all.x=TRUE,
-            all.y=F
-          )
-          rownames(LFCTable) <- LFCTable$Row.names
-          volcano_reactive$LFCTable <- as.data.frame(
-            LFCTable[order(LFCTable$p_adj,decreasing = T),]
-          )
-          volcano_reactive$VolcanoPlot <- VolcanoPlot
+          output[[plotPosition]] <- NULL
+        }
 
-          output$getR_Code_Volcano <- downloadHandler(
-            filename = function(){
-              paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
-            },
-            content = function(file){
-              envList <- list(
-                VolcanoPlot_df = VolcanoPlot_df,
-                input = reactiveValuesToList(input),
-                colorScheme = colorScheme,
-                alphaScheme = alphaScheme
-                )
 
-              temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-              dir.create(temp_directory)
-              write(getPlotCode(scenario_Volcano), file.path(temp_directory, "Code.R"))
-              saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
-              zip::zip(
-                zipfile = file,
-                files = dir(temp_directory),
-                root = temp_directory
+        # LFC Table is VolcanoPlot_df but only the columns LFC, rawpvalue, p_adj, probename
+        LFCTable <- VolcanoPlot_df[,c("LFC","rawpvalue","p_adj","probename")]
+        # add annotation to Table
+        LFCTable <- merge(
+          LFCTable,
+          rowData(data$data),
+          by=0,
+          all.x=TRUE,
+          all.y=F
+        )
+        rownames(LFCTable) <- LFCTable$Row.names
+        volcano_reactive$LFCTable <- as.data.frame(
+          LFCTable[order(LFCTable$p_adj,decreasing = T),]
+        )
+        volcano_reactive$VolcanoPlot <- VolcanoPlot
+
+        output$getR_Code_Volcano <- downloadHandler(
+          filename = function(){
+            paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+          },
+          content = function(file){
+            envList <- list(
+              VolcanoPlot_df = VolcanoPlot_df,
+              input = reactiveValuesToList(input),
+              colorScheme = colorScheme,
+              alphaScheme = alphaScheme
               )
-            },
-            contentType = "application/zip"
-          )
 
-          output$SavePlot_Volcano <- downloadHandler(
-            filename = function() { paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="") },
-            content = function(file){
+            temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+            dir.create(temp_directory)
+            write(getPlotCode(scenario_Volcano), file.path(temp_directory, "Code.R"))
+            saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
+            zip::zip(
+              zipfile = file,
+              files = dir(temp_directory),
+              root = temp_directory
+            )
+          },
+          contentType = "application/zip"
+        )
+
+        output$SavePlot_Volcano <- downloadHandler(
+          filename = function() { paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="") },
+          content = function(file){
+            ggsave(
+              filename = file,
+              plot = volcano_reactive$VolcanoPlot,
+              device = gsub("\\.","",input$file_ext_Volcano)
+              )
+            on.exit({
+              tmp_filename <- paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="")))
               ggsave(
-                filename = file,
+                filename = tmp_filename,
                 plot = volcano_reactive$VolcanoPlot,
                 device = gsub("\\.","",input$file_ext_Volcano)
                 )
-              on.exit({
-                tmp_filename <- paste0(getwd(),"/www/",paste(paste("VOLCANO_",Sys.time(),input$file_ext_Volcano,sep="")))
-                ggsave(
-                  filename = tmp_filename,
-                  plot = volcano_reactive$VolcanoPlot,
-                  device = gsub("\\.","",input$file_ext_Volcano)
-                  )
 
-                # Add Log Messages
-                fun_LogIt(message = "## VOLCANO")
-                fun_LogIt(message = paste0(
-                  "**VOLCANO** - Underlying Volcano Comparison: ",
-                  input$sample_annotation_types_cmp,": ",
-                  input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",
-                  input$Groups2Compare_treat
-                ))
-                fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
+              # Add Log Messages
+              fun_LogIt(message = "## VOLCANO")
+              fun_LogIt(message = paste0(
+                "**VOLCANO** - Underlying Volcano Comparison: ",
+                input$sample_annotation_types_cmp,": ",
+                input$Groups2Compare_ref," vs ", input$sample_annotation_types_cmp,": ",
+                input$Groups2Compare_treat
+              ))
+              fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
 
-                fun_LogIt(message = paste0(
-                  "**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"
-                ))
-                fun_LogIt(
-                  message = head(
-                    volcano_reactive$LFCTable[order(volcano_reactive$LFCTable$p_adj,decreasing = T),],10
-                  ),
-                  tableSaved=T
-                )
-              })
-            }
+              fun_LogIt(message = paste0(
+                "**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"
+              ))
+              fun_LogIt(
+                message = head(
+                  volcano_reactive$LFCTable[order(volcano_reactive$LFCTable$p_adj,decreasing = T),],10
+                ),
+                tableSaved=T
+              )
+            })
+          }
 
+        )
+
+        output[["Volcano_table_final"]] <-DT::renderDataTable({DT::datatable(
+          {volcano_reactive$LFCTable},
+          extensions = 'Buttons',
+          options = list(
+            paging = TRUE,
+            searching = TRUE,
+            fixedColumns = TRUE,
+            autoWidth = TRUE,
+            ordering = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'excel')
+          ),
+          class = "display"
+        )})
+        DE_UP <- subset(
+          volcano_reactive$LFCTable,
+          subset = (p_adj<input$psig_threhsold & LFC>=input$lfc_threshold)
+          )
+        DE_DOWN <- subset(
+          volcano_reactive$LFCTable,
+          subset = p_adj<input$psig_threhsold & LFC<=input$lfc_threshold
           )
 
-          output[["Volcano_table_final"]] <-DT::renderDataTable({DT::datatable(
-            {volcano_reactive$LFCTable},
-            extensions = 'Buttons',
-            options = list(
-              paging = TRUE,
-              searching = TRUE,
-              fixedColumns = TRUE,
-              autoWidth = TRUE,
-              ordering = TRUE,
-              dom = 'Bfrtip',
-              buttons = c('copy', 'csv', 'excel')
-            ),
-            class = "display"
-          )})
-          DE_UP <- subset(
-            volcano_reactive$LFCTable,
-            subset = (p_adj<input$psig_threhsold & LFC>=input$lfc_threshold)
-            )
-          DE_DOWN <- subset(
-            volcano_reactive$LFCTable,
-            subset = p_adj<input$psig_threhsold & LFC<=input$lfc_threshold
-            )
-
-          DE_UP <- data.frame(
-            Entities = (DE_UP[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),
-            status= rep("up",nrow(DE_UP))
-            )
-          DE_Down <- data.frame(
-            Entities = (DE_DOWN[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),
-            status= rep("down",nrow(DE_DOWN))
-            )
-
-          #Use annotation selected in plot also for the output of the names
-
-          DE_total <<- rbind(DE_UP,DE_Down)
-          output$SaveDE_List <- downloadHandler(
-            filename = function() {
-              paste0(
-                "DE_Genes ",
-                input$sample_annotation_types_cmp, ": ", input$Groups2Compare_treat,
-                " vs. ",
-                input$Groups2Compare_ref,
-                "_", Sys.time(), ".csv")
-              },
-            content = function(file){
-              write.csv(DE_total,file = file)
-            }
+        DE_UP <- data.frame(
+          Entities = (DE_UP[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),
+          status= rep("up",nrow(DE_UP))
           )
-        }
+        DE_Down <- data.frame(
+          Entities = (DE_DOWN[,ifelse(!is.null(input$VOLCANO_anno_tooltip),input$VOLCANO_anno_tooltip,1)]),
+          status= rep("down",nrow(DE_DOWN))
+          )
+
+        #Use annotation selected in plot also for the output of the names
+
+        DE_total <<- rbind(DE_UP,DE_Down)
+        output$SaveDE_List <- downloadHandler(
+          filename = function() {
+            paste0(
+              "DE_Genes ",
+              input$sample_annotation_types_cmp, ": ", input$Groups2Compare_treat,
+              " vs. ",
+              input$Groups2Compare_ref,
+              "_", Sys.time(), ".csv")
+            },
+          content = function(file){
+            write.csv(DE_total,file = file)
+          }
+        )
       })
 
       ## Create gene list----

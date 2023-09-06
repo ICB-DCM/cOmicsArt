@@ -40,6 +40,7 @@ volcano_main_panel <- function(ns){
     tabsetPanel(
       tabPanel(
         title = "Volcano_Plot",
+        textOutput(outputId = ns("Volcano_Info"), container = pre),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
