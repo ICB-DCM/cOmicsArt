@@ -89,31 +89,34 @@ ui <- shiny::fluidPage(
          color: black
       }
       .tabbable > .nav > li[class=active] > a {
-          background-color: #90DBF4; color:black
+          background-color: #7a7e80; color:black
       }
       #sidebar_data_selection {
-        background-color: #90DBF4;
+        background-color: #EC001447;
       }
       #sidebar_pre_processing {
-        background-color: #8EECF5;
+        background-color: #FD8D3347;
       }
-      #sidebar_pca {
-        background-color: #F1C0E8;
+      #sidebar_sampleCorrelation {
+        background-color: #FFD33547;
       }
       #sidebar_significance_analysis {
-          background-color: #FDE4CF;
+          background-color: #70BF4F47;
+      }
+      #sidebar_pca {
+        background-color: #3897F147;
       }
       #sidebar_volcano_plot {
-        background-color: #FFCFD2;
+        background-color: #A208BA47;
       }
       #sidebar_heatmap {
-        background-color: #F1C0E8;
+        background-color: #EC001447;
       }
       #sidebar_single_gene_visualisation {
-          background-color: #B9FBC0;
+          background-color: #FD8D3347;
       }
       #sidebar_enrichment_analysis {
-          background-color: #CFBAF0;
+          background-color: #FFD33547;
       }
   "))
   ),
@@ -151,11 +154,15 @@ ui <- shiny::fluidPage(
     "element",
     label = "PrideMonth?",
     choices = c(0, 1),
-    selected = ifelse(format(as.POSIXct(Sys.time()), "%m") == "06", 1, 0)
+    selected = ifelse(format(as.POSIXct(Sys.time()), "%m") == "07", 1, 0)
   )),
   conditionalPanel(
     condition = "input.element == 0",
-    div(id = "TitleID_normal",titlePanel("ShinyOmics")),
+    div(
+      id = "TitleID_normal",
+      column(width=1, tags$img(src = "Logo_cOmicsArt_clear.png", height="100%", width="100%")),
+      h1(HTML('<span style="color:#EC0014">c</span><span style="color:#FD8D33">O</span><span style="color:#3897F1">m</span><span style="color:#FFD335">i</span><span style="color:#A208BA">c</span><span style="color:#EF0089">s</span><span style="color:#EC0014">A</span><span style="color:#FD8D33">r</span><span style="color:#3897F1">t</span>'))
+    ),
   ),
   conditionalPanel(
     condition = "input.element == 1",
@@ -198,10 +205,15 @@ ui <- shiny::fluidPage(
     })),
   conditionalPanel(
     condition = "input.element_02 == 0",
-    div(
-      id = "foot_normal",
-      absolutePanel("Brought to you by Lea Seep & Paul Jonas Jost", bottom = 0, left = 10, fixed = TRUE)
-    )
+    absolutePanel("Brought to you by Lea Seep & Paul Jonas Jost",
+                         bottom = 0, left = 10, fixed = TRUE)
+    ## TODO Discuss this placement
+    # div(
+    #   id = "foot_normal",
+    #   absolutePanel(column(width=1, tags$img(src = "Logo_cOmicsArt_clear.png", height="100%", width="100%")),
+    #                 h5(HTML("Brought to you by Lea Seep & Paul Jonas Jost")),
+    #                         bottom = 0, left = 10, fixed = TRUE)
+    # )
   ),
   conditionalPanel(
     condition = "input.element_02 == 1",

@@ -369,7 +369,6 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
-    browser()
     if(!isTruthy(input$data_preDone) & !FLAG_TEST_DATA_SELECTED()){
       # Include here, that the sample anno can be replaced by metadatasheet
       # potentially this will be extended to all of the fields
@@ -481,7 +480,6 @@ server <- function(input,output,session){
                              )
       #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
     }
-    browser()
     # TODO SumExp only needed hence more restructuring needed
     res_tmp[['data_original']] <<- data_input[[paste0(input$omicType,"_SumExp")]]
     # Make a copy, to leave original data untouched
@@ -530,7 +528,6 @@ server <- function(input,output,session){
     isTruthy(res_tmp$data)
     # Row
     output$providedRowAnnotationTypes_ui=renderUI({
-      browser()
       req(data_input_shiny())
       shinyWidgets::virtualSelectInput(
         inputId = "providedRowAnnotationTypes",
