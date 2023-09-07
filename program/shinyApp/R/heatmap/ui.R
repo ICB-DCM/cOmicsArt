@@ -56,6 +56,7 @@ heatmap_sidebar<- function(ns){
 heatmap_main <- function(ns){
   mainPanel(
     id = "main_heatmap",
+    textOutput(outputId = ns("Heatmap_Info"), container = pre),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("100%"),
       plotOutput(

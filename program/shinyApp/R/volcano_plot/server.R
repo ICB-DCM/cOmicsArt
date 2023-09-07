@@ -149,7 +149,7 @@ volcano_Server <- function(id, data, params, updates){
             "correction_method" = input$chooseTestCorrection
           ), "Volcano")
         if (check == "No Result yet"){
-          output$Volcano_Info <- renderText("PCA computed.")
+          output$Volcano_Info <- renderText("Volcano Plot computed.")
         } else if (check == "Result exists"){
           output$Volcano_Info <- renderText(
             "Volcano plot was already computed, no need to click the Button again."
