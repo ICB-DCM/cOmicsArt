@@ -705,6 +705,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       observeEvent(input$enrichmentGO,{
         ea_reactives$ea_info <- "Enrichment is running..."
         print("Start Enrichment")
+        browser()
         fun_LogIt("## ENRICHMENT")
         req(geneSetChoice())
         ea_reactives$tmp_genes <- geneSetChoice()
@@ -769,12 +770,14 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           req(ea_reactives$can_start == TRUE)
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
             ea_reactives$enrichment_results <- gene_set_enrichment(
-              input,
-              output,
               ea_reactives$tmp_genes,
               data$data,
               ea_reactives$enrichments2do,
-              input$test_correction
+              input$test_correction,
+              input$sample_annotation_types_cmp_GSEA,
+              input$Groups2Compare_ref_GSEA,
+              input$Groups2Compare_treat_GSEA,
+              input$ValueToAttach
             )
           }else{
             ea_reactives$enrichment_results <- over_representation_analysis(
