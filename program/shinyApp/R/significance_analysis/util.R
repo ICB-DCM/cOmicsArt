@@ -248,6 +248,15 @@ significance_analysis <- function(
   # introduce a running parameter alongside the loop for the name
   comp_name <- 1
   for(contrast in contrasts){
+    # skip if already there
+    if(identical(
+      list(test_method = method, test_correction = correction),
+      par_tmp$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]
+    )){
+      print("Results exists, skipping calculations.")
+      sig_results[[names(contrasts)[comp_name]]] <- res_tmp$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]
+      next
+    }
     # get the samples for the comparison
     idx <- rownames(samples[samples[contrast_level] == contrast[[1]],, drop = FALSE])
     idy <- rownames(samples[samples[contrast_level] == contrast[[2]],, drop = FALSE])
@@ -267,6 +276,12 @@ significance_analysis <- function(
       stringsAsFactors = FALSE
     )
     sig_results[[names(contrasts)[comp_name]]] <- res
+    # fill res_tmp, par_tmp
+    res_tmp$SigAna[[contrast_level]][[names(contrasts)[comp_name]]] <<- res
+    par_tmp$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]  <<- list(
+      test_method = method,
+      test_correction = correction
+    )
     comp_name <- comp_name + 1
   }
   return(sig_results)
