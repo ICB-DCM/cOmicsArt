@@ -87,7 +87,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     data = result,
     extensions = 'Buttons',
     filter = 'top',
-    rownames = FALSE,
+    rownames = T,
     colnames = c('Gene' = 1),
     options = list(
       paging = TRUE,
@@ -95,7 +95,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       fixedColumns = TRUE,
       autoWidth = TRUE,
       ordering = TRUE,
-      order = list(list(2, 'asc'), list(1, 'asc')),  # 2=padj, 1=pvalue
+      # order = list(list(4, 'asc'), list(1, 'asc')),  # 2=padj, 1=pvalue
       dom = 'Bfrtip',
       lengthMenu = c(10, 25, 50, 100, -1),
       buttons = c('pageLength', 'copy', 'csv', 'excel')
@@ -228,7 +228,11 @@ significance_analysis <- function(
     tryCatch(
       {
         results <- test_function(x, y)
-        return(results$p.value)
+        return(list(
+          "pvalue" = results$p.value,
+          "baseMean" = results$estimate[[2]],
+          "stat" = results$statistic
+        ))
       },
       error = function(e) {
         cat(
@@ -255,6 +259,7 @@ significance_analysis <- function(
     )){
       print("Results exists, skipping calculations.")
       sig_results[[names(contrasts)[comp_name]]] <- res_tmp$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]
+      comp_name <- comp_name + 1
       next
     }
     # get the samples for the comparison
@@ -268,13 +273,13 @@ significance_analysis <- function(
       grp1 = idx,
       grp2 = idy
     )
+    res <- as.data.frame(do.call(rbind, res))
     # create a dataframe with the results
-    res <- data.frame(
-      gene = rownames(df),
-      pvalue = res,
-      padj = p.adjust(res, method = correction),
-      stringsAsFactors = FALSE
-    )
+    res$padj <- p.adjust(res$pvalue, method = correction)
+    res <- transform(res, pvalue=as.numeric(pvalue),
+                     baseMean=as.numeric(baseMean), stat=as.numeric(stat))
+    browser()
+
     sig_results[[names(contrasts)[comp_name]]] <- res
     # fill res_tmp, par_tmp
     res_tmp$SigAna[[contrast_level]][[names(contrasts)[comp_name]]] <<- res
@@ -282,7 +287,6 @@ significance_analysis <- function(
       test_method = method,
       test_correction = correction
     )
-    comp_name <- comp_name + 1
   }
   return(sig_results)
 }

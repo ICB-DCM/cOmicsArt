@@ -71,7 +71,7 @@ Volcano_Plot <- function(
   
   Ctrl_mean <- apply(df[,ctrl_samples_idx],1,mean)
   # check whether there are 0's in Ctrl mean
-  if(any(Ctrl_mean < 0)){
+  if(any(Ctrl_mean <= 0)){
     warning("NAs will be produced due to impossible division by 0")
   }
   
