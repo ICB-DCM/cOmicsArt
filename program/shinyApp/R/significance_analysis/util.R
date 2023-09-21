@@ -71,11 +71,20 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     inputId = targetPanel,
     tabPanel(
       title = title,
-      # summary of the results
-      h4(paste("Summary of the results comparing ", contrast[1], " and ", contrast[2])),
-      htmlOutput(outputId = ns(paste(contrast[1], contrast[2], "summary", sep = "_")), container = pre),
-      # create table with results, that allows filtering
-      DT::dataTableOutput(outputId = ns(paste(contrast[1], contrast[2], "table", sep = "_")))
+      tabsetPanel(
+        # Table
+        tabPanel(
+          title = "Table",
+          # summary of the results
+          h4(paste("Summary of the results comparing ", contrast[1], " and ", contrast[2])),
+          htmlOutput(outputId = ns(paste(contrast[1], contrast[2], "summary", sep = "_")), container = pre),
+          # create table with results, that allows filtering
+          DT::dataTableOutput(outputId = ns(paste(contrast[1], contrast[2], "table", sep = "_")))
+        ),
+        tabPanel(
+          title = "Volcano"
+        )
+      )
     )
   )
   # server part of tabPanel
