@@ -95,7 +95,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       fixedColumns = TRUE,
       autoWidth = TRUE,
       ordering = TRUE,
-      # order = list(list(4, 'asc'), list(1, 'asc')),  # 2=padj, 1=pvalue
+      order = list(list(4, 'asc'), list(5, 'asc')),  # 2=padj, 1=pvalue
       dom = 'Bfrtip',
       lengthMenu = c(10, 25, 50, 100, -1),
       buttons = c('pageLength', 'copy', 'csv', 'excel')
@@ -231,6 +231,7 @@ significance_analysis <- function(
         return(list(
           "pvalue" = results$p.value,
           "baseMean" = results$estimate[[2]],
+          "treatMean" = results$estimate[[1]],
           "stat" = results$statistic
         ))
       },
@@ -274,11 +275,24 @@ significance_analysis <- function(
       grp2 = idy
     )
     res <- as.data.frame(do.call(rbind, res))
+    # turn columns to numerics again
+    res <- transform(
+      res, 
+      baseMean=as.numeric(baseMean),
+      treatMean=as.numeric(treatMean),
+      pvalue=as.numeric(pvalue),
+      stat=as.numeric(stat)
+    )
+    means <- subset(res, select = c(baseMean,treatMean))
+    # drop mean of treatment
+    res <- subset(res, select = -c(treatMean))
     # create a dataframe with the results
     res$padj <- p.adjust(res$pvalue, method = correction)
+    res$log2FoldChange <- getLFC(means)
     res <- transform(res, pvalue=as.numeric(pvalue),
                      baseMean=as.numeric(baseMean), stat=as.numeric(stat))
-    browser()
+
+
 
     sig_results[[names(contrasts)[comp_name]]] <- res
     # fill res_tmp, par_tmp
@@ -319,4 +333,46 @@ map_intersects_for_highlight <- function(highlights, plot, overlap_list){
     querie_names[[i_querie]] <- mapping[querie_names_pre[[i_querie]]]
   }
   return(querie_names)
+}
+
+
+getLFC <- function(means){
+  # define function to calculate LFC in case of ln or log10 preprocessing
+  # and all other cases
+  lfc_per_gene <- function(df){
+    df$LFC <- log2(df$treatMean)-log2(df$baseMean)
+    # NA, Inf, -Inf and NaN values will bet set to NA
+    # NA if the means are NA
+    df$LFC[is.nan(df$LFC)] <- NA  # NaN if both means 0
+    # Inf if baseMean==0, -Inf if treatMean==0
+    df$LFC[is.infinite(df$LFC)] <- NA
+    # print the rownames of NA values
+    cat(
+      "For the following genes, no meaningfull log fold change can be calculated:\n",
+      rownames(df[is.na(df$LFC),]),
+      "\nThis is caused by either one of the mean values being 0 or by NAs in the testing."
+    )
+    return (df$LFC)
+  }
+  lfc_per_gene_log <- function(df, log_base){
+    df$LFC <- log2(log_base**(df$treatMean-df$baseMean))
+    # NA, Inf, -Inf and NaN values will bet set to NA
+    # NA if the means are NA
+    df$LFC[is.nan(df$LFC)] <- NA  # NaN if both means 0
+    # Inf if baseMean==0, -Inf if treatMean==0
+    df$LFC[is.infinite(df$LFC)] <- NA
+    # print the rownames of NA values
+    cat(
+      "For the following genes, no meaningfull log fold change can be calculated:\n",
+      rownames(df[is.na(df$LFC),]),
+      "\nThis is caused by either one of the mean values being 0 or by NAs in the testing."
+    )
+  }
+  if(par_tmp$PreProcessing_Procedure == "log10"){
+    lfc_per_gene_log(means, log_base = 10)
+  }else if(par_tmp$PreProcessing_Procedure == "ln"){
+    lfc_per_gene_log(means, log_base = exp(1))
+  }else{
+    lfc_per_gene(means)
+  }
 }
