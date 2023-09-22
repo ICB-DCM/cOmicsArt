@@ -85,7 +85,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           title = "Volcano",
           splitLayout(
             style = "border: 1px solid silver:",
-            cellWidths = c("70%", "30%"),
+            cellWidths = c("40%", "60%"),
             plotlyOutput(
               outputId = ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))
             ) %>% withSpinner(type = 8),
@@ -299,6 +299,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       scale_color_manual(values=colorScheme2, name="") +
       xlab("Log FoldChange") +
       ylab("-log10(p-value)") +
+      theme(legend.position = "none") +
       ggtitle(label="Corrected p-Values")
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot,
@@ -321,7 +322,8 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           color="lightgrey"
       ) +
       scale_color_manual(values=colorScheme2, name="") +
-      theme(legend.position = "none") +
+      xlab("Log FoldChange") +
+      ylab("-log10(p-value)") +
       ggtitle(label="Uncorrected p-Values")
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
