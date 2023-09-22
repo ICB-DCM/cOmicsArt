@@ -256,7 +256,6 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     sig_ana_reactive$th_lfc <- ifelse(is.null(input[[lfc_th]]), 1, input[[lfc_th]])
     # plot volcano plot
     data4Volcano <- result
-    browser()
     data4Volcano$probename <- rownames(data4Volcano)
     data4Volcano$threshold <- ifelse(data4Volcano$padj>sig_ana_reactive$th_psig,"non-significant","significant")
     data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>sig_ana_reactive$th_psig,"non-significant","significant")
@@ -646,6 +645,7 @@ getLFC <- function(means){
       rownames(df[is.na(df$LFC),]),
       "\nThis is caused by either one of the mean values being 0 or by NAs in the testing."
     )
+    return (df$LFC)
   }
   if(par_tmp$PreProcessing_Procedure == "log10"){
     lfc_per_gene_log(means, log_base = 10)
