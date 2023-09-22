@@ -2369,9 +2369,9 @@
     },
     "reactome.db": {
       "Package": "reactome.db",
-      "Version": "1.79.0",
+      "Version": "1.81.0",
       "Source": "Bioconductor",
-      "Hash": "c49af5007e0eae86f4f70bc14546f808",
+      "Hash": "788808715f5a69a5266f036e395935ce",
       "Requirements": [
         "AnnotationDbi"
       ]
