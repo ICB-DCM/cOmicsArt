@@ -60,7 +60,6 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
   hideTab(inputId = "tabsetPanel1", target = "Significance Analysis")
   hideTab(inputId = "tabsetPanel1", target = "PCA")
-  hideTab(inputId = "tabsetPanel1", target = "Volcano Plot")
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
@@ -772,13 +771,6 @@ server <- function(input,output,session){
     updateTabsetPanel(
       session = session,
       inputId = "tabsetPanel1",
-      selected = "Volcano Plot"
-      )
-  })
-  observeEvent(input$NextPanel4,{
-    updateTabsetPanel(
-      session = session,
-      inputId = "tabsetPanel1",
       selected = "Heatmap"
       )
   })
@@ -961,7 +953,6 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1", target = "Sample Correlation")
     showTab(inputId = "tabsetPanel1", target = "Significance Analysis")
     showTab(inputId = "tabsetPanel1", target = "PCA")
-    showTab(inputId = "tabsetPanel1", target = "Volcano Plot")
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
     showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
@@ -973,7 +964,6 @@ server <- function(input,output,session){
       
       shinyjs::click("SignificanceAnalysis-refreshUI",asis = T)
       shinyjs::click("single_gene_visualisation-refreshUI",asis = T)
-      shinyjs::click("Volcano-refreshUI",asis = T)
       paste0(addWarning,
              "The data has the dimensions of: ",
              paste0(dim(res_tmp$data),collapse = ", "),
@@ -1054,13 +1044,6 @@ server <- function(input,output,session){
     data = res_tmp,
     params = par_tmp,
     reactive(input$row_selection),
-    reactive(updating$count)
-    )
-  # Volcano plots ----
-  volcano_Server(
-    id = "Volcano",
-    data = res_tmp,
-    params = par_tmp,
     reactive(updating$count)
     )
   # Heatmap ----
