@@ -37,6 +37,7 @@ library(msigdbr)
 library(tidyr)
 library(kableExtra)
 library(readxl)
+# library(gridExtra)  # TODO: needs to be added to renv
 # library(svglite)
 
 source("R/C.R")
