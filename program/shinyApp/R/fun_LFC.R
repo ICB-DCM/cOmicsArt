@@ -1,5 +1,5 @@
 # get LFC
-getLFC <- function(
+getLFCs <- function(
   data,
   ctrl_samples_idx,
   comparison_samples_idx,
