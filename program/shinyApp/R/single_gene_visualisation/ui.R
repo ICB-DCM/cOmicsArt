@@ -1,7 +1,7 @@
 single_gene_visualisation_sidebar_ui<- function(ns){
   sidebarPanel(
     id = "sidebar_single_gene_visualisation",
-    uiOutput(outputId = ns("type_of_data_gene_ui")),
+    uiOutput(outputId = ns("type_of_data_gene_ui")) %>% helper(type = "markdown", content = "SingleGene_Options"),
     uiOutput(outputId = ns("type_of_visualitsation_ui")),
     uiOutput(outputId = ns("Select_GeneAnno_ui")),
     uiOutput(outputId = ns("Select_Gene_ui")),
@@ -17,7 +17,7 @@ single_gene_visualisation_sidebar_ui<- function(ns){
       label = "Refresh"
     )),
     hr(style = "border-top: 1px solid #858585;"),
-    uiOutput(outputId = ns("accross_condition_ui"))
+    uiOutput(outputId = ns("accross_condition_ui")) %>% helper(type = "markdown", content = "SingleGene_Select")
   )
 }
 
@@ -31,7 +31,7 @@ single_gene_visualisation_main_ui <- function(ns){
       NULL
     ),
     h5(HTML("Note, that you only see boxplots if you have more than 3 samples per group")),
-    uiOutput(outputId = ns("chooseComparisons_ui")),
+    uiOutput(outputId = ns("chooseComparisons_ui")) %>% helper(type = "markdown", content = "SingleGene_Comparisons"),
     splitLayout(
       style = "border: 1px solid silver:",
       cellWidths = c("70%", "30%"),
@@ -40,7 +40,7 @@ single_gene_visualisation_main_ui <- function(ns){
         inputId = ns("only2Report_SingleEntities"),
         label = "Send only to Report",
         class = "btn-info"
-      ),
+      ) %>% helper(type = "markdown", content = "SingleGene_Download"),
     ),
     splitLayout(
       style = "border: 1px solid silver:",

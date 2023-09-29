@@ -100,7 +100,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
             h5("Volcano plot padj"),
-            h5("Both Volcano plots"),
+            h5("Both Volcano plots") %>% helper(type = "markdown", content = "SigAna_VolcanoDownloads"),
             h5("Volcano plot pvalue")
           ),
           splitLayout(

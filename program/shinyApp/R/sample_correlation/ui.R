@@ -1,7 +1,7 @@
 sampleCorrelation_sidebar_panel <- function(ns){
   sidebarPanel(
     id = "sidebar_sampleCorrelation",
-    h4("Sample Correlation"),
+    h4("Sample Correlation") %>% helper(type = "markdown", content = "SampleCorr_Choices"),
     selectInput(
       inputId = ns("corrMethod"),
       label = "Choose the correlation method",
@@ -38,7 +38,7 @@ sampleCorrelation_main_panel <- function(ns){
       inputId = ns("only2Report_SampleCorrelation"),
       label = "Send only to Report",
       class = "btn-info"
-    ),
+    ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
   ),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
