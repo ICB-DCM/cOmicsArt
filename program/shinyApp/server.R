@@ -30,9 +30,12 @@ server <- function(input,output,session){
   if(dir.exists("www")){
     setwd("www")
     print(list.files())
-    file.remove(list.files(path=".") %>%
-                  setdiff(list.files(path=".", pattern = ".csv")) %>%
-                  setdiff(list.files(path=".", pattern = ".RDS")))
+    file.remove(
+      list.files(path=".") %>%
+        setdiff(list.files(path=".", pattern = ".csv")) %>%
+        setdiff(list.files(path=".", pattern = ".RDS")) %>%
+        setdiff(list.files(path=".", pattern = ".png"))
+    )
     print("Removed old Report files for fresh start")
     setwd("..")
   }
