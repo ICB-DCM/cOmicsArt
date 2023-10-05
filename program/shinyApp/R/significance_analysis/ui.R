@@ -43,6 +43,15 @@ significance_analysis_main_ui <- function(ns){
         uiOutput(outputId = ns("chooseVisualization_ui")),
         # UI to choose what genes to llok at (e.g. significant, upregulated, downregulated)
         uiOutput(outputId = ns("chooseGenesToLookAt_ui")),
+        hr(style = "border-top: 1px solid #000000;"),
+        # UI to choose intersections to highlight
+        uiOutput(outputId = ns("chooseIntersections_ui")),
+        # Download highlighted intersections as table
+        downloadButton(
+            outputId = ns("downloadIntersections"),
+            label = "Download Intersections",
+            class = "btn-info"
+        ),
         # Download and Report UI
         splitLayout(
           style = "border: 1px solid silver:",

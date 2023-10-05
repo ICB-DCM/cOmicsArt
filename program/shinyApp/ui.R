@@ -37,6 +37,8 @@ library(msigdbr)
 library(tidyr)
 library(kableExtra)
 library(readxl)
+library(ggvenn)
+library(ComplexUpset)
 # library(svglite)
 
 source("R/C.R")
