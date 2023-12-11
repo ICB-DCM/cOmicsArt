@@ -1,6 +1,7 @@
 significance_analysis_sidebar_ui<- function(ns){
   sidebarPanel(
     id = "sidebar_significance_analysis",
+    h5(" ") %>% helper(type = "markdown", content = "SigAna_Choices"),
     # UI to choose type of comparison
     uiOutput(outputId = ns("type_of_comparison_ui")),
     # UI to choose comparisons
@@ -38,6 +39,11 @@ significance_analysis_main_ui <- function(ns){
         # UI for visualization Plot
         plotOutput(outputId = ns("Significant_Plot_final")),
         # UI to select comparisons to visualize
+        splitLayout(  # Only used for questionmark
+            cellWidths = c("26%", "74%"),
+            h4("Visualization Choices") %>% helper(type = "markdown", content = "SigAna_Vis"),
+            NULL
+        ),
         uiOutput(outputId = ns("chooseComparisonsToVisualize_ui")),
         # UI to choose visualization method
         uiOutput(outputId = ns("chooseVisualization_ui")),
@@ -51,7 +57,7 @@ significance_analysis_main_ui <- function(ns){
             outputId = ns("downloadIntersections"),
             label = "Download Intersections",
             class = "btn-info"
-        ),
+        ) %>% helper(type = "markdown", content = "SigAna_Intersections"),
         # Download and Report UI
         splitLayout(
           style = "border: 1px solid silver:",
@@ -61,7 +67,7 @@ significance_analysis_main_ui <- function(ns){
             inputId = ns("only2Report_Sig"),
             label = "Send only to Report",
             class = "btn-info"
-          )
+          ) %>% helper(type = "markdown", content = "SigAna_Downloads")
         ),
         splitLayout(
           style = "border: 1px solid silver:",

@@ -146,7 +146,25 @@ pca_Server <- function(id, data, params, row_select, updates){
       session$userData$clicks_observer <- observeEvent(input$Do_PCA,{
         req(input$Do_PCA > pca_reactives$counter)
         pca_reactives$counter <- input$Do_PCA
-        pca_reactives$calculate <- 1
+        check <- check_calculations(list(
+          dummy = "dummy",
+          sample_selection_pca = input$sample_selection_pca,
+          SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca
+        ), "PCA")
+        if (check == "No Result yet"){
+          output$PCA_Info <- renderText("PCA computed.")
+          pca_reactives$calculate <- 1
+        } else if (check == "Result exists"){
+          output$PCA_Info <- renderText(
+            "PCA was already computed, no need to click the Button again."
+          )
+          pca_reactives$calculate <- -1
+        } else if (check == "Overwrite"){
+          output$PCA_Info <- renderText(
+            "PCA result overwritten with different parameters."
+          )
+          pca_reactives$calculate <- 1
+        }
       })
 
       observeEvent(toListen2PCA(),{
@@ -166,7 +184,7 @@ pca_Server <- function(id, data, params, row_select, updates){
           input$PreProcessing_Procedure
         )
         print(customTitle)
-        # only calculate PCA, Scrre and Loadings if the counter is 1
+        # only calculate PCA, Score and Loadings if the counter is >= 0
         if(pca_reactives$calculate >= 0){
           # update the data if needed
           # TODO check if the follwoing still needed as update is now done on 1st server level
@@ -180,8 +198,8 @@ pca_Server <- function(id, data, params, row_select, updates){
             )
           }
           pca_reactives$current_updates <- updates()
-          # set the counter to 0 to prevent any further plotting
-          pca_reactives$calculate <- 0
+          # set the counter to -1 to prevent any further plotting
+          pca_reactives$calculate <- -1
           print("Calculate PCA")
           # PCA
           pca <- prcomp(
@@ -300,12 +318,16 @@ pca_Server <- function(id, data, params, row_select, updates){
           pca_reactives$var_explained_df <- var_explained_df
           pca_reactives$LoadingsDF <- LoadingsDF
           pca_reactives$df_loadings <- df_loadings
+
           # assign res_temp
-          res_tmp["PCA"] <<- list(pca)
+          res_tmp[["PCA"]] <<- list(pca)
           # assign par_temp as empty list
-          par_tmp["PCA"] <<- list(
+          par_tmp[["PCA"]] <<- list(
             # add a dummy parameter to avoid error
-            dummy = "dummy"
+            dummy = "dummy",
+            sample_selection_pca = input$sample_selection_pca,
+            SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca
+
           )
         } else {
           # otherwise read the reactive values

@@ -678,7 +678,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             ctrl_samples_idx <- which(colData(data$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
             comparison_samples_idx <- which(colData(data$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
 
-            Data2Plot <- getLFC(
+            Data2Plot <- getLFCs(
               assays(data$data)$raw,
               ctrl_samples_idx,
               comparison_samples_idx
@@ -770,11 +770,14 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
             ea_reactives$enrichment_results <- gene_set_enrichment(
               input,
-              output,
               ea_reactives$tmp_genes,
               data$data,
               ea_reactives$enrichments2do,
-              input$test_correction
+              input$test_correction,
+              input$sample_annotation_types_cmp_GSEA,
+              input$Groups2Compare_ref_GSEA,
+              input$Groups2Compare_treat_GSEA,
+              input$ValueToAttach
             )
           }else{
             ea_reactives$enrichment_results <- over_representation_analysis(

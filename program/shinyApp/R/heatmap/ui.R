@@ -4,9 +4,9 @@ heatmap_sidebar<- function(ns){
     #########################################
     # Heatmap
     #########################################
-    uiOutput(outputId = ns("row_selection_options_ui")),
+    uiOutput(outputId = ns("row_selection_options_ui")) %>% helper(type = "markdown", content = "Heatmap_Options"),
     uiOutput(outputId = ns("LFC_toHeatmap_ui")),
-    h5("Further row selection (LFC based)"),
+    h5("Further row selection (LFC based)") %>% helper(type = "markdown", content = "Heatmap_FurtherOptions"),
     uiOutput(outputId = ns("TopK_ui")),
     switchInput(
       inputId = ns("Selection_show_LFC"),
@@ -24,7 +24,7 @@ heatmap_sidebar<- function(ns){
       icon(name = "fas fa-laptop-code")
     ),
     hr(style = "border-top: 1px solid #000000;"),
-    h5("Aesthetics"),
+    h5("Aesthetics") %>% helper(type = "markdown", content = "Heatmap_Aesthetics"),
     switchInput(
       inputId = ns("Aesthetics_show"),
       label = "show options",
@@ -37,7 +37,7 @@ heatmap_sidebar<- function(ns){
     uiOutput(outputId = ns("cluster_cols_ui")),
     uiOutput(outputId = ns("cluster_rows_ui")),
     hr(style = "border-top: 1px solid #858585;"),
-    h5("Further row selection (annotation based)"),
+    h5("Further row selection (annotation based)") %>% helper(type = "markdown", content = "Heatmap_RowAnnoBased"),
     helpText("Note: This only shows options if 'rowAnno_based' is selected for 'Row selection' (top of the sidebar)"),
     switchInput(
       inputId = ns("Selection_show_annoBased"),
@@ -56,6 +56,7 @@ heatmap_sidebar<- function(ns){
 heatmap_main <- function(ns){
   mainPanel(
     id = "main_heatmap",
+    textOutput(outputId = ns("Heatmap_Info"), container = pre),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("100%"),
       plotOutput(
@@ -82,7 +83,7 @@ heatmap_main <- function(ns){
         inputId = ns("only2Report_Heatmap"),
         label = "Send only to Report",
         class = "btn-info"
-      ),
+      ) %>% helper(type = "markdown", content = "Heatmap_Download"),
     ),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),

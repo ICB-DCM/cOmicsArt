@@ -3,7 +3,7 @@ pre_processing_sidebar_panel <- sidebarPanel(
   #########################################
   # Do Center & scaling + potential other pre-processing stuff
   #########################################
-  h5("Pre-Processing Procedures"),  # this could be enhanced with personalized procedures
+  # this could be enhanced with personalized procedures
   radioButtons(
     inputId = "PreProcessing_Procedure",
     label = "Pre-Processing Procedures",
@@ -12,9 +12,9 @@ pre_processing_sidebar_panel <- sidebarPanel(
       "log10", "pareto_scaling", "ln"
     ),
     selected = "none"
-  ),
-  uiOutput(outputId = "DESeq_formula_main_ui"),
-  uiOutput(outputId = "DESeq_formula_sub_ui"),
+  ) %>% helper(type = "markdown", content = "PreProcessing_Procedures"),
+  uiOutput(outputId = "DESeq_formula_main_ui") %>% helper(type = "markdown", content = "PreProcessing_DESeqMain"),
+  uiOutput(outputId = "DESeq_formula_sub_ui") %>% helper(type = "markdown", content = "PreProcessing_DESeqSub"),
   switchInput(
       inputId = "DESeq_show_advanced",
       label = "Advanced formula options for DESeq2",

@@ -39,6 +39,7 @@ library(kableExtra)
 library(readxl)
 library(ggvenn)
 library(ComplexUpset)
+library(gridExtra)  # TODO: needs to be added to renv
 # library(svglite)
 
 source("R/C.R")
@@ -49,7 +50,6 @@ source("R/module_DownloadReport.R",local=T)
 source("R/data_selection/ui.R",local=T)
 source("R/pre_processing/ui.R",local=T)
 source("R/pca/ui.R",local=T)
-source("R/volcano_plot/ui.R",local=T)
 source("R/heatmap/ui.R",local=T)
 source("R/single_gene_visualisation/ui.R",local=T)
 source("R/enrichment_analysis/ui.R",local=T)
@@ -189,7 +189,6 @@ ui <- shiny::fluidPage(
     sample_correlation_panel <- sampleCorrelation_UI("sample_correlation"),
     significance_analysis_panel <- significance_analysis_UI("SignificanceAnalysis"),
     pca_panel <- pca_UI("PCA"),
-    volcano_plot_panel <- volcano_UI("Volcano"),
     heatmap_panel <- heatmap_UI("Heatmap"),
     single_gene_visualisation_panel <- single_gene_visualisation_UI("single_gene_visualisation"),
     enrichment_analysis_tab_panel <- enrichment_analysis_UI("EnrichmentAnalysis")

@@ -223,9 +223,18 @@ significance_analysis_server <- function(id, data, params, updates){
           for (i in 1:length(newList)) {
             contrasts[[i]] <- unlist(strsplit(x = input$comparisons[i],split = ":"))
           }
+
           # get the results for each contrast and put it all in a big results object
           sig_results <<- list()
           for (i in 1:length(contrasts)) {
+            if(identical(
+              list(test_method = "Wald", test_correction = PADJUST_METHOD[[input$test_correction]]),
+              par_tmp$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
+            )){
+              print("Results exists, skipping calculations.")
+              sig_results[[input$comparisons[i]]] <<- res_tmp$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
+              next
+            }
             sig_results[[input$comparisons[i]]] <<- DESeq2::results(
               dds,
               contrast = c(
@@ -234,6 +243,12 @@ significance_analysis_server <- function(id, data, params, updates){
                 contrasts[[i]][2]
               ),
               pAdjustMethod = PADJUST_METHOD[[input$test_correction]]
+            )
+            # fill in res_tmp, par_tmp
+            res_tmp$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- sig_results[[input$comparisons[i]]]
+            par_tmp$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- list(
+              test_method = "Wald",
+              test_correction = PADJUST_METHOD[[input$test_correction]]
             )
             ### put in here browser if use of `script_getSigToExcel`
           }
@@ -335,28 +350,16 @@ significance_analysis_server <- function(id, data, params, updates){
           chosenVizSet <- input$comparisons_to_visualize
         }
         for (i in 1:length(chosenVizSet)) {
-          if(params$PreProcessing_Procedure == "vst_DESeq"){
-            to_add_tmp <- rownames(
-              filter_significant_result(
-                result = sig_results[[chosenVizSet[i]]],
-                alpha = input$significance_level,
-                filter_type = input$sig_to_look_at
-              )
-            )
-            # only add if the result is not empty
-            if(length(to_add_tmp) > 0){
-              res2plot[[chosenVizSet[i]]] <- to_add_tmp
-            }
-          }else{
-            to_add_tmp <- filter_significant_result(
+          to_add_tmp <- rownames(
+            filter_significant_result(
               result = sig_results[[chosenVizSet[i]]],
               alpha = input$significance_level,
               filter_type = input$sig_to_look_at
-            )$gene
-            # only add if the result is not empty
-            if(length(to_add_tmp) > 0){
-              res2plot[[chosenVizSet[i]]] <- to_add_tmp
-            }
+            )
+          )
+          # only add if the result is not empty
+          if(length(to_add_tmp) > 0){
+            res2plot[[chosenVizSet[i]]] <- to_add_tmp
           }
         }
         # check that you have more than one comparison
@@ -373,6 +376,7 @@ significance_analysis_server <- function(id, data, params, updates){
           output$Significant_Plot_final <- renderPlot({})
           return(NULL)
         }
+
         # plot the results
         if(input$visualization_method == "UpSetR plot"){
           sig_ana_reactive$overlap_list <- prepare_upset_plot(res2plot=res2plot)

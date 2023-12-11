@@ -224,8 +224,7 @@ heatmap_server <- function(id, data, params, updates){
         print("Heatmap on selected Data")
         # Value need to be setted in case there is nothing to plot to avoid crash
         scenario <- 0
-        ### atm raw data plotted
-        data2Plot <- data$data
+
         colorTheme <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", 
                         "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
         customTitleHeatmap <- paste0(
@@ -237,6 +236,9 @@ heatmap_server <- function(id, data, params, updates){
           "-preprocessing: ",
           input$PreProcessing_Procedure
           )
+
+        ### atm raw data plotted
+        data2Plot <- data$data
 
         print(customTitleHeatmap)
         mycolors <- list()
@@ -252,7 +254,6 @@ heatmap_server <- function(id, data, params, updates){
         myColor_fill <- colorRampPalette(c("blue", "white", "firebrick"))(paletteLength)
         
         ##### Do PreSelection of input to Heatmap to show
-        #
         print(input$row_selection_options)
         # selection based on row Annotation:
         if(!(any(input$row_selection_options == "all"))){
@@ -262,7 +263,6 @@ heatmap_server <- function(id, data, params, updates){
             #   additionalInput_row_anno="all"
             #   additionalInput_row_anno_factor=NA
             # }else{
-              print("We should be here")
               print(input$row_anno_options_heatmap)
               additionalInput_row_anno <- ifelse(any(input$row_selection_options == "rowAnno_based"),"yip",NA)
               if(!is.na(additionalInput_row_anno)){
@@ -270,7 +270,7 @@ heatmap_server <- function(id, data, params, updates){
                 print(additionalInput_row_anno)
               }
               additionalInput_row_anno_factor <- input$row_anno_options_heatmap
-            #} # check if this is working if yes delete lines
+            #} # check if this is working if yes delete lines # @leaseep, is this checked
           }else{
             additionalInput_row_anno <- ifelse(any(input$row_selection_options == "rowAnno_based"),input$anno_options_heatmap,NA)
             additionalInput_row_anno_factor <- ifelse(any(input$row_selection_options == "rowAnno_based"),c(input$row_anno_options_heatmap),NA)
@@ -327,97 +327,184 @@ heatmap_server <- function(id, data, params, updates){
         }
         
         print(paste0("plot LFC's?",input$LFC_toHeatmap))
-        # Dependent to plot raw data or LFC
-        if(input$LFC_toHeatmap){
-          ctrl_samples_idx <- which(
-            colData(data$data)[,input$sample_annotation_types_cmp_heatmap]%in%input$Groups2Compare_ref_heatmap
-            )
-          comparison_samples_idx <- which(
-            colData(data$data)[,input$sample_annotation_types_cmp_heatmap]%in%input$Groups2Compare_treat_heatmap
-            )
-          if(length(comparison_samples_idx) <=1 | 
-             length(ctrl_samples_idx)<=1){
-            output$Options_selected_out_3 <- renderText("Choose variable with at least two samples per condition!")
-            doThis_flag <- F
-          }
-          if(input$PreProcessing_Procedure == "simpleCenterScaling"|
-             any(assay(data$data))< 0){
-            # TODO: there must be a nicer way to do this then as.data.frame(assay(data$data))
-            print("Remember do not use normal center + scaling (negative Values!)")
-            output$Options_selected_out_3 <- renderText("Choose another preprocessing, as there are negative values!")
-
-          }else if(doThis_flag){
-            print(dim(selectedData_processed()[[omicType()]]$Matrix))
-            Data2Plot <- getLFC(
-              data = as.data.frame(assay(data$data)),
-              ctrl_samples_idx = ctrl_samples_idx,
-              comparison_samples_idx = comparison_samples_idx
-              )
-            
-            ## do pheatmap
-            #remove anything non sig
-            Data2Plot <- Data2Plot[Data2Plot$p_adj<0.05,]
-            # use floor and ceiling to deal with even/odd length pallettelengths
-            myBreaks <- c(seq(min(Data2Plot$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
-                          seq(max(Data2Plot$LFC)/paletteLength, max(Data2Plot$LFC), length.out=floor(paletteLength/2)))
-            
-            scenario <- 10
-            annotation_col <- rowData(data2Plot)[,input$row_anno_options,drop=F]
-            heatmap_plot <- pheatmap(
-              t(Data2Plot[,"LFC",drop=F]),
-              main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
-              show_rownames = ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
-              show_colnames = TRUE,
-              cluster_cols = input$cluster_cols,
-              cluster_rows = FALSE, 
-              scale=ifelse(input$rowWiseScaled,"row","none"),
-              annotation_col = annotation_col,
-              silent = F,
-              breaks = myBreaks,
-              color = myColor_fill
-            )
-          }
-        }else if(doThis_flag){
-          if(any(is.na(data2HandOver))){
-            idx_of_nas <- which(apply(data2HandOver,1,is.na)) # why do we produce Nas?
-            print(idx_of_nas)
-            if(length(idx_of_nas)>0){
-              data2HandOver <- data2HandOver[-idx_of_nas,] 
-            }
-
-            annotation_col <- colData(data$data)[-idx_of_nas,input$anno_options,drop=F]
-            annotation_row <- rowData(data$data)[-idx_of_nas,input$row_anno_options,drop=F]
-            # convert both to data.frame
-            annotation_col <- as.data.frame(annotation_col)
-            annotation_row <- as.data.frame(annotation_row)
-          }else{
-            annotation_col <- colData(data$data)[,input$anno_options,drop=F]
-            annotation_row <- rowData(data$data)[,input$row_anno_options,drop=F]
-            # convert both to data.frame
-            annotation_col <- as.data.frame(annotation_col)
-            annotation_row <- as.data.frame(annotation_row)
-          }
-          clusterRowspossible <- ifelse(nrow(as.matrix(data2HandOver))>1,input$cluster_rows,F)
-          print(input$anno_options)
-          print(input$row_label_options)
-          #row_label_options
-          scenario <- 11
-          heatmap_plot<-pheatmap(
-            as.matrix(data2HandOver),
-            main = customTitleHeatmap,
-            show_rownames = ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
-            labels_row = rowData(data$data)[rownames(data2HandOver),input$row_label_options],
-            show_colnames = TRUE,
-            cluster_cols = input$cluster_cols,
-            cluster_rows = clusterRowspossible,
-            scale=ifelse(input$rowWiseScaled,"row","none"),
-            annotation_col = annotation_col,
-            annotation_row = annotation_row,
-            annotation_colors = mycolors,
-            silent = F
+        # Dependent to plot raw data or LFC if calculation is needed
+        calculate <- 1
+        # check whether we have to calculate
+        check <- check_calculations(list(
+          anno_options = input$anno_options,
+          row_anno_options = input$row_anno_options,
+          row_label_options = input$row_label_options,
+          cluster_rows = input$cluster_rows,
+          cluster_cols = input$cluster_cols,
+          LFCToHeatmap = input$LFC_toHeatmap,  # decider for scenario
+          row_selection_options = input$row_selection_options,
+          rowWiseScaled = input$rowWiseScaled,
+          sample_annotation_types_cmp_heatmap = input$sample_annotation_types_cmp_heatmap,
+          Groups2Compare_ref_heatmap = input$Groups2Compare_ref_heatmap,
+          Groups2Compare_ctrl_heatmap = input$Groups2Compare_ctrl_heatmap,
+          anno_options_heatmap = input$anno_options_heatmap,
+          row_anno_options_heatmap = input$row_anno_options_heatmap), "Heatmap")
+        if (check == "No Result yet"){
+          output$Heatmap_Info <- renderText("Heatmap computed.")
+        } else if (check == "Result exists"){
+          output$Heatmap_Info <- renderText(
+            "Heatmap was already computed, no need to click the Button again."
+          )
+          calculate <- 0
+        } else if (check == "Overwrite"){
+          output$Heatmap_Info <- renderText(
+            "Heatmap overwritten with different parameters."
           )
         }
-        
+        if(calculate == 1){
+          if(input$LFC_toHeatmap){
+            ctrl_samples_idx <- which(
+              colData(data$data)[,input$sample_annotation_types_cmp_heatmap]%in%input$Groups2Compare_ref_heatmap
+              )
+            comparison_samples_idx <- which(
+              colData(data$data)[,input$sample_annotation_types_cmp_heatmap]%in%input$Groups2Compare_treat_heatmap
+              )
+            if(length(comparison_samples_idx) <=1 |
+               length(ctrl_samples_idx)<=1){
+              output$Options_selected_out_3 <- renderText("Choose variable with at least two samples per condition!")
+              doThis_flag <- F
+            }
+            if(input$PreProcessing_Procedure == "simpleCenterScaling"|
+               any(assay(data$data))< 0){
+              # TODO: there must be a nicer way to do this then as.data.frame(assay(data$data))
+              print("Remember do not use normal center + scaling (negative Values!)")
+              output$Options_selected_out_3 <- renderText("Choose another preprocessing, as there are negative values!")
+
+            }else if(doThis_flag){
+              print(dim(selectedData_processed()[[omicType()]]$Matrix))
+              Data2Plot <- getLFC(
+                data = as.data.frame(assay(data$data)),
+                ctrl_samples_idx = ctrl_samples_idx,
+                comparison_samples_idx = comparison_samples_idx
+                )
+
+              ## do pheatmap
+              #remove anything non sig
+              Data2Plot <- Data2Plot[Data2Plot$p_adj<0.05,]
+              # use floor and ceiling to deal with even/odd length pallettelengths
+              myBreaks <- c(seq(min(Data2Plot$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
+                            seq(max(Data2Plot$LFC)/paletteLength, max(Data2Plot$LFC), length.out=floor(paletteLength/2)))
+
+              scenario <- 10
+              annotation_col <- rowData(data2Plot)[,input$row_anno_options,drop=F]
+              heatmap_plot <- pheatmap(
+                t(Data2Plot[,"LFC",drop=F]),
+                main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
+                show_rownames = ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
+                show_colnames = TRUE,
+                cluster_cols = input$cluster_cols,
+                cluster_rows = FALSE,
+                scale=ifelse(input$rowWiseScaled,"row","none"),
+                annotation_col = annotation_col,
+                silent = F,
+                breaks = myBreaks,
+                color = myColor_fill
+              )
+            }
+          }else if(doThis_flag){
+            if(any(is.na(data2HandOver))){
+              idx_of_nas <- which(apply(data2HandOver,1,is.na)) # why do we produce Nas?
+              print(idx_of_nas)
+              if(length(idx_of_nas)>0){
+                data2HandOver <- data2HandOver[-idx_of_nas,]
+              }
+
+              annotation_col <- colData(data$data)[-idx_of_nas,input$anno_options,drop=F]
+              annotation_row <- rowData(data$data)[-idx_of_nas,input$row_anno_options,drop=F]
+              # convert both to data.frame
+              annotation_col <- as.data.frame(annotation_col)
+              annotation_row <- as.data.frame(annotation_row)
+            }else{
+              annotation_col <- colData(data$data)[,input$anno_options,drop=F]
+              annotation_row <- rowData(data$data)[,input$row_anno_options,drop=F]
+              # convert both to data.frame
+              annotation_col <- as.data.frame(annotation_col)
+              annotation_row <- as.data.frame(annotation_row)
+            }
+            clusterRowspossible <- ifelse(nrow(as.matrix(data2HandOver))>1,input$cluster_rows,F)
+            print(input$anno_options)
+            print(input$row_label_options)
+            #row_label_options
+            scenario <- 11
+            heatmap_plot <- pheatmap(
+              as.matrix(data2HandOver),
+              main = customTitleHeatmap,
+              show_rownames = ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
+              labels_row = rowData(data$data)[rownames(data2HandOver),input$row_label_options],
+              show_colnames = TRUE,
+              cluster_cols = input$cluster_cols,
+              cluster_rows = clusterRowspossible,
+              scale=ifelse(input$rowWiseScaled,"row","none"),
+              annotation_col = annotation_col,
+              annotation_row = annotation_row,
+              annotation_colors = mycolors,
+              silent = F
+            )
+          }
+        } else {
+          print("Plotting saved result")
+          if(input$LFC_toHeatmap){
+            myBreaks <- c(seq(min(res_tmp$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
+                            seq(max(res_tmp$Heatmap$LFC)/paletteLength, max(res_tmp$Heatmap$LFC), length.out=floor(paletteLength/2)))
+            annotation_col <- rowData(data2Plot)[,input$row_anno_options,drop=F]
+
+            scenario <- 10
+            heatmap_plot <- pheatmap(
+                t(res_tmp$Heatmap[,"LFC",drop=F]),
+                main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
+                show_rownames = ifelse(nrow(res_tmp$Heatmap)<=25,TRUE,FALSE),
+                show_colnames = TRUE,
+                cluster_cols = input$cluster_cols,
+                cluster_rows = FALSE,
+                scale=ifelse(input$rowWiseScaled,"row","none"),
+                annotation_col = annotation_col,
+                silent = F,
+                breaks = myBreaks,
+                color = myColor_fill
+              )
+          } else {
+            clusterRowspossible <- ifelse(nrow(as.matrix(res_tmp$Heatmap))>1,input$cluster_rows,F)
+            if(any(is.na(res_tmp$Heatmap))){
+              idx_of_nas <- which(apply(res_tmp$Heatmap,1,is.na)) # why do we produce Nas?
+              print(idx_of_nas)
+              if(length(idx_of_nas)>0){
+                res_tmp$Heatmap <- res_tmp$Heatmap[-idx_of_nas,]
+              }
+
+              annotation_col <- colData(data$data)[-idx_of_nas,input$anno_options,drop=F]
+              annotation_row <- rowData(data$data)[-idx_of_nas,input$row_anno_options,drop=F]
+              # convert both to data.frame
+              annotation_col <- as.data.frame(annotation_col)
+              annotation_row <- as.data.frame(annotation_row)
+            }else{
+              annotation_col <- colData(data$data)[,input$anno_options,drop=F]
+              annotation_row <- rowData(data$data)[,input$row_anno_options,drop=F]
+              # convert both to data.frame
+              annotation_col <- as.data.frame(annotation_col)
+              annotation_row <- as.data.frame(annotation_row)
+            }
+            scenario <- 11
+            heatmap_plot <- pheatmap(
+              as.matrix(res_tmp$Heatmap),
+              main = customTitleHeatmap,
+              show_rownames = ifelse(nrow(res_tmp$Heatmap)<=input$row_label_no,TRUE,FALSE),
+              labels_row = rowData(data$data)[rownames(data2HandOver),input$row_label_options],
+              show_colnames = TRUE,
+              cluster_cols = input$cluster_cols,
+              cluster_rows = clusterRowspossible,
+              scale=ifelse(input$rowWiseScaled,"row","none"),
+              annotation_col = annotation_col,
+              annotation_row = annotation_row,
+              annotation_colors = mycolors,
+              silent = F
+            )
+          }
+        }
         heatmap_scenario <- scenario
         output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
         
@@ -440,9 +527,9 @@ heatmap_server <- function(id, data, params, updates){
 
         # res_tmp gets data2HandOver or Data2Plot depending on scenario
         if(scenario == 10){
-          res_tmp["Heatmap"] <<- Data2Plot
+          res_tmp[["Heatmap"]] <<- Data2Plot
         }else if(scenario == 11){
-          res_tmp["Heatmap"] <<- data2HandOver
+          res_tmp[["Heatmap"]] <<- data2HandOver
         }
         # par_tmp gets the parameters used for the heatmap
         par_tmp[["Heatmap"]] <<- list(
@@ -451,13 +538,12 @@ heatmap_server <- function(id, data, params, updates){
           row_label_options = input$row_label_options,
           cluster_rows = input$cluster_rows,
           cluster_cols = input$cluster_cols,
-          LFCToHeatmap = input$LFC_toHeatmap,
+          LFCToHeatmap = input$LFC_toHeatmap,  # decider for scenario
           row_selection_options = input$row_selection_options,
           rowWiseScaled = input$rowWiseScaled,
           sample_annotation_types_cmp_heatmap = input$sample_annotation_types_cmp_heatmap,
           Groups2Compare_ref_heatmap = input$Groups2Compare_ref_heatmap,
           Groups2Compare_ctrl_heatmap = input$Groups2Compare_ctrl_heatmap,
-          TopK = input$TopK,
           anno_options_heatmap = input$anno_options_heatmap,
           row_anno_options_heatmap = input$row_anno_options_heatmap
         )
