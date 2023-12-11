@@ -30,7 +30,7 @@ significance_analysis_sidebar_ui<- function(ns){
 significance_analysis_main_ui <- function(ns){
   mainPanel(
     id = "main_significance_analysis",
-    # informative text, whether ana lysis was done or not
+    # informative text, whether analysis was done or not
     htmlOutput(outputId = ns("significance_analysis_info"), container = pre),
     tabsetPanel(
       id = ns("significance_analysis_results"),

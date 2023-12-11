@@ -209,7 +209,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       fixedColumns = TRUE,
       autoWidth = TRUE,
       ordering = TRUE,
-      order = list(list(4, 'asc'), list(5, 'asc')),  # 2=padj, 1=pvalue
+      order = list(list(4, 'asc'), list(5, 'asc')),  # 4=padj, 5=pvalue
       dom = 'Bfrtip',
       lengthMenu = c(10, 25, 50, 100, -1),
       buttons = c('pageLength', 'copy', 'csv', 'excel')
@@ -297,8 +297,9 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         ) +
       scale_color_manual(values=colorScheme2, name="") +
       xlab("Log FoldChange") +
-      ylab("-log10(p-value)") +
+      ylab("-log10(p_adj-value)") +
       theme(legend.position = "none") +
+      theme_bw()+
       ggtitle(label="Corrected p-Values")
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot,
@@ -323,6 +324,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       scale_color_manual(values=colorScheme2, name="") +
       xlab("Log FoldChange") +
       ylab("-log10(p-value)") +
+      theme_bw()+
       ggtitle(label="Uncorrected p-Values")
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
