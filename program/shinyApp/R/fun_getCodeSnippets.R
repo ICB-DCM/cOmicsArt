@@ -524,8 +524,14 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
 
 ## Sample Correlation plot ----
   if(numberOfScenario == 18){
-    stringtosave = 'SampleCorrelationPlot <- pheatmap(
-    mat = res_tmp$SampleCorr, 
+    stringtosave = 'annotationDF <- colData(res_tmp$data)[,par_tmp$SampleCorr$SampleAnnotationChoice,drop = F]
+    cormat <- cor(
+      x = as.matrix(assay(res_tmp$data)),
+      method = par_tmp$SampleCorr$corrMethod
+    )
+
+    SampleCorrelationPlot <- pheatmap(
+    mat = cormat, #res_tmp$SampleCorr
     annotation_row = par_tmp$SampleCorr$annotationDF,
     main = par_tmp$SampleCorr$customTitleSampleCorrelation,
     annotation_colors = par_tmp$SampleCorr$anno_colors
