@@ -399,6 +399,12 @@ significance_analysis_server <- function(id, data, params, updates){
             print(sig_ana_reactive$plot_last)
         })
         sig_ana_reactive$results_for_plot <- res2plot
+        
+        ## This exports all reactive Values
+        tmp <- getUserReactiveValues(input)
+        par_tmp$SignificanceAnalysis[names(tmp)] <<- tmp
+        res_tmp["SignificanceAnalysis"] <<- list(res2plot)
+        
       })
       # if we want to change the highlighting
       observeEvent(input$intersection_high,{
@@ -478,19 +484,19 @@ significance_analysis_server <- function(id, data, params, updates){
 
       # Download and Report Section
       # download R Code for further plotting
-      output$getR_Code <- downloadHandler(
+      output$getR_Code_Sig <- downloadHandler(
+       
         filename = function(){
           paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
         },
         content = function(file){
           envList <- list(
-            sig_results = sig_results,
-            input = reactiveValuesToList(input),
-            res2plot = sig_ana_reactive$results_for_plot
+            res_tmp = res_tmp,
+            par_tmp = par_tmp
           )
-          if(params$PreProcessing_Procedure == "vst_DESeq"){
-            envList$dds <- data$DESeq_obj
-          }
+          # if(params$PreProcessing_Procedure == "vst_DESeq"){
+          #   envList$dds <- data$DESeq_obj
+          # }
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
 

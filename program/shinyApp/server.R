@@ -652,6 +652,7 @@ server <- function(input,output,session){
   selectedData <- reactive({
     shiny::req(input$row_selection, input$sample_selection)
     par_tmp[["row_selection"]] <<- input$row_selection
+    par_tmp[["providedRowAnnotationTypes"]] <<- input$providedRowAnnotationTypes
     print("Alright do Row selection")
     selected <- c()
 
@@ -690,6 +691,7 @@ server <- function(input,output,session){
 
     # Column Selection
     samples_selected <- c()
+    par_tmp[["col_selection"]] <<- input$sample_selection
     if(any(input$sample_selection == "all")){
       samples_selected <- colnames(assay(res_tmp$data_original))
     }else{
@@ -907,6 +909,7 @@ server <- function(input,output,session){
         assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "ln"){
+        #TODO check if 0 then do ln (+1)
         processedData <- as.data.frame(log(
           as.data.frame(assay(res_tmp$data))
           ))

@@ -66,3 +66,16 @@ read_file <- function(filename, check.names=T){
     return(df)
   }
 }
+
+getUserReactiveValues <- function(data = input){
+  # data must be shinys specific Input List of reactive Values
+  tmp <- isolate(reactiveValuesToList(data))
+  to_include <- unlist(lapply(tmp,function(x){
+    if("shinyActionButtonValue" %in%  class(x)){
+      FALSE
+    }else{
+      TRUE
+    }
+  }))
+  return(tmp[to_include])
+}
