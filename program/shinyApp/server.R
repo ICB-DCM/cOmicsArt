@@ -197,8 +197,8 @@ server <- function(input,output,session){
         selectInput(
           inputId = "AddGeneSymbols_organism",
           label = "Which Organisms?",
-          choices = c("hsapiens","mus_musculus"),
-          selected = "hsapiens"
+          choices = listDatasets(useEnsembl(biomart = "genes"))[,"description"],
+          selected = "Mouse genes (GRCm39)"
           )
       })
     }else{
@@ -455,22 +455,37 @@ server <- function(input,output,session){
         message = paste0("**DataInput** - chosen Organism: ",input$AddGeneSymbols_organism)
         )
       print("Add gene annotation")
-      
-      if(input$AddGeneSymbols_organism == "hsapiens"){
-        ensembl <- readRDS("data/ENSEMBL_Human_05_07_22")
-      }else{
-        ensembl <- readRDS("data/ENSEMBL_Mouse_05_07_22")
-      }
+      # 
+      # if(input$AddGeneSymbols_organism == "hsapiens"){
+      #   ensembl <- readRDS("data/ENSEMBL_Human_05_07_22")
+      # }else{
+      #   ensembl <- readRDS("data/ENSEMBL_Mouse_05_07_22")
+      # }
+      output$debug <- renderText({"<font color=\"#00851d\"><b>Added gene annotation</b></font>"})
+      datasets_avail <- listDatasets(useEnsembl(biomart = "genes"))
+      ensembl <- 
+        useEnsembl(biomart ="ensembl",
+                   dataset = datasets_avail[datasets_avail$description==input$AddGeneSymbols_organism,"dataset"]
+                   )
       
       out <- getBM(
         attributes = c("ensembl_gene_id", "gene_biotype","external_gene_name"),
         values = rownames(data_input$annotation_rows),
         mart = ensembl
         )
+      
+      # Make user aware if potentially wrong organism used
+      
       out <- out[base::match(rownames(data_input$annotation_rows), out$ensembl_gene_id),]
       
-      data_input$annotation_rows$gene_type <- out$gene_biotype
-      data_input$annotation_rows$GeneName <- out$external_gene_name
+      if(all(is.na(out$ensembl_gene_id))){
+        # Most likely wrong organism used
+        output$debug <- renderText({"<font color=\"#ab020a\"><b>You have most likely chosen the wrong organism! No annotation was added</b></font>"})
+      }else{
+        data_input$annotation_rows$gene_type <- out$gene_biotype
+        data_input$annotation_rows$GeneName <- out$external_gene_name
+      }
+
     }
 
     if(!any(class(data_input) == "SummarizedExperiment") & !any(grepl('SumExp',names(data_input))) ){
