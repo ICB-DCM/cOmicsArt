@@ -364,7 +364,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
   }
 
   
-# Volcano ----
+  ## Volcano ----
   if (numberOfScenario == 9) {
     stringtosave='VolcanoPlot <- ggplot(res_tmp$Volcano,
     aes(label=probename,tooltip=annotation_add)) +
@@ -384,7 +384,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
     theme_bw()'
   }
   
-# Heatmap ----
+  ## Heatmap ----
 if(numberOfScenario >=10  & numberOfScenario <= 11){
   prequel_stringtosave <- '
 colorTheme <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c","#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
@@ -437,7 +437,7 @@ stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave)
 
 
 
-# Single Gene Visualisation ----
+## Single Gene Visualisation ----
 if(numberOfScenario %in% c(12,13)){
   if(par_tmp$SingleEntVis$type_of_data_gene == "preprocessed"){
     prequel_stringtosave <- '#get IDX to data
@@ -486,7 +486,7 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
   theme_bw()+
   geom_hline(yintercept = mean(res_tmp$SingleEntVis[,colnames(res_tmp$SingleEntVis)[-ncol(res_tmp$SingleEntVis)]]), linetype = 2)+ # Add horizontal line at base mean
   #stat_compare_means(method = "anova")+        # Add global annova p-value
-  stat_compare_means(comparisons = xy.list,
+  stat_compare_means(comparisons = par_tmp$SingleEntVis$chooseComparisons_list,
                      method = par_tmp$SingleEntVis$testMethod,
                      label = "p.signif",
                      hide.ns = TRUE)'
@@ -522,7 +522,7 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
     stringtosave='REACTOME_Plot=clusterProfiler::dotplot(EnrichmentRes_RACTOME)'
   }
 
-# Sample Correlation plot ----
+## Sample Correlation plot ----
   if(numberOfScenario == 18){
     stringtosave = 'SampleCorrelationPlot <- pheatmap(
     mat = res_tmp$SampleCorr, 
@@ -531,12 +531,12 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
     annotation_colors = par_tmp$SampleCorr$anno_colors
     )'
   }
-# Significance Analysis -----
-## Venn Diagram ----
+## Significance Analysis -----
+### Venn Diagram ----
   if(numberOfScenario == 20){
     stringtosave <- 'VennDiagramm <- ggVennDiagram::ggVennDiagram(res_tmp$SignificanceAnalysis)'
   }
-## Upset plot ----
+### Upset plot ----
   if(numberOfScenario == 21){
     stringtosave <- 'UpSetR::upset(fromList(res_tmp$SignificanceAnalysis))'
   }

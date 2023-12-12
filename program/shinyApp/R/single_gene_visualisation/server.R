@@ -268,7 +268,7 @@ single_gene_visualisation_server <- function(id, data, params, updates){
           tmp <- getUserReactiveValues(input)
           par_tmp$SingleEntVis[names(tmp)] <<- tmp
           par_tmp$SingleEntVis$testMethod <<- testMethod
-          browser()
+          par_tmp$SingleEntVis$chooseComparisons_list <<- xy.list
           
         }else{
           customTitle_boxplot <- "NoBoxplot"
