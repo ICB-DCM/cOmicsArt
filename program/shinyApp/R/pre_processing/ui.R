@@ -53,7 +53,7 @@ pre_processing_panel <- tabPanel(
   title = "Pre-processing",
   id = "pre_processing_panel",
   fluid = T,
-  h4("Data Pre-processing") %>% helper(type = "markdown", content = "PreProcessing_help"),
+  h4("Data Pre-processing"),  # %>% helper(type = "markdown", content = "PreProcessing_help"),
   pre_processing_sidebar_panel,
   pre_processing_main_panel
 )
