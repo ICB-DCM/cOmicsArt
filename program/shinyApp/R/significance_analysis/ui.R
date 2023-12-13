@@ -51,13 +51,14 @@ significance_analysis_main_ui <- function(ns){
         uiOutput(outputId = ns("chooseGenesToLookAt_ui")),
         hr(style = "border-top: 1px solid #000000;"),
         # UI to choose intersections to highlight
+        h5(" ") %>% helper(type = "markdown", content = "SigAna_Intersections"),
         uiOutput(outputId = ns("chooseIntersections_ui")),
         # Download highlighted intersections as table
         downloadButton(
             outputId = ns("downloadIntersections"),
             label = "Download Intersections",
             class = "btn-info"
-        ) %>% helper(type = "markdown", content = "SigAna_Intersections"),
+        ),
         # Download and Report UI
         splitLayout(
           style = "border: 1px solid silver:",
@@ -67,7 +68,7 @@ significance_analysis_main_ui <- function(ns){
             inputId = ns("only2Report_Sig"),
             label = "Send only to Report",
             class = "btn-info"
-          ) %>% helper(type = "markdown", content = "SigAna_Downloads")
+          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads")
         ),
         splitLayout(
           style = "border: 1px solid silver:",
