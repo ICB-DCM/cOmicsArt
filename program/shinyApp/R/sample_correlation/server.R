@@ -48,7 +48,14 @@ sample_correlation_server <- function(id, data, params, updates){
           # check value of input$Do_SampleCorrelation
           annotationDF <- colData(data$data)[,input$SampleAnnotationChoice,drop = F]
           check <- check_calculations(
-            list(corrMethod = input$corrMethod),
+            list(
+              corrMethod = input$corrMethod,
+              data_info = list(
+                rows = length(rownames(data$data)),
+                cols = length(colnames(data$data)),
+                preprocessing = par_tmp$PreProcessing_Procedure
+              )
+            ),
             "SampleCorrelation"
           )
           if (check == "No Result yet"){
@@ -118,7 +125,12 @@ sample_correlation_server <- function(id, data, params, updates){
           res_tmp[["SampleCorrelation"]] <<- cormat
           # assign par_temp["SampleCorrelation"]
           par_tmp[["SampleCorrelation"]] <<- list(
-            corrMethod = input$corrMethod
+            corrMethod = input$corrMethod,
+            data_info = list(
+              rows = length(rownames(data$data)),
+              cols = length(colnames(data$data)),
+              preprocessing = par_tmp$PreProcessing_Procedure
+            )
           )
 
           sampleCorrelation_scenario <- 18
@@ -140,16 +152,13 @@ sample_correlation_server <- function(id, data, params, updates){
 
         # assign res_temp["SampleCorrelation"]
         res_tmp[["SampleCorr"]] <<- cormat
-        # assign par_temp["SampleCorrelation"] 
+        # assign par_temp["SampleCorrelation"]
 
-        
         output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
-        
-        # Longer names causes issues for saving 
+        # Longer names causes issues for saving
         if(nchar(customTitleSampleCorrelation) >= 250){
           customTitleSampleCorrelation <- "SampleCorrelation"
         }
-        
         # par_tmp[["SampleCorr"]] <<- list(
         #   customTitleSampleCorrelation = customTitleSampleCorrelation,
         #   SampleCorrelationPlot_final = SampleCorrelationPlot_final,
@@ -158,14 +167,11 @@ sample_correlation_server <- function(id, data, params, updates){
         #   anno_colors = anno_colors,
         #   sampleCorrelation_scenario = sampleCorrelation_scenario
         # )
-        
         tmp <- getUserReactiveValues(input)
         par_tmp$SampleCorr[names(tmp)] <<- tmp
         par_tmp$SampleCorr$customTitleSampleCorrelation <<- customTitleSampleCorrelation
         par_tmp$SampleCorr$annotationDF <<- as.data.frame(annotationDF)
         par_tmp$SampleCorr$anno_colors <<- anno_colors
-        
-
         }
       })
 
