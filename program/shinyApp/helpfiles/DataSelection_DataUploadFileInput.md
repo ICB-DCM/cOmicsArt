@@ -6,7 +6,7 @@ With `Data upload` you can upload your data to the server via explicit csv files
 The files must be in the following format:<br>
 1. data-matrix (.csv) <br>
   - contains the actual data, e.g. counts<br>
-  - must have the samples (e.g. mouse 1) in the columns and the **unique** naming as 
+  - must have the samples (e.g. mouse 1) in the columns and a **unique** naming as 
     column name<br>
   - must have the entities (e.g. genes) in the rows and a **unique** rowname (e.g. 
     ENSEMBL ID)<br>
