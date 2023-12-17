@@ -92,7 +92,12 @@ ea_sidebar <- function(ns){
       inputId = ns("enrichmentGO"),
       label = "Do enrichment analysis"
     ),
-    uiOutput(outputId = ns("KeggPathwayID_ui"))
+    uiOutput(outputId = ns("KeggPathwayID_ui")),
+    # Button to refresh the UI
+    hidden(actionButton(
+      inputId = ns("refreshUI"),
+      label = "Refresh UI"
+    ))
   )
 }
 

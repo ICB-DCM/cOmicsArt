@@ -158,7 +158,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
     function(input,output,session){
       ea_reactives <- reactiveValues(
         ea_info = "Choose between ORA or GSEA!",
-        can_start = FALSE
+        can_start = FALSE,
+        data = NULL
       )
       ns <- session$ns
       ## initialize result as NULL
@@ -422,6 +423,10 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           ea_reactives$ea_info
         )
       )
+      # refresh the UI/data if needed
+      observeEvent(input$refreshUI, {
+        ea_reactives$data <- update_data(data, 0, 0)$data
+      })
       # UI to choose test correction
       output$AdjustmentMethod_ui <- renderUI({
         selectInput(
@@ -451,34 +456,43 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
             output$sample_annotation_types_cmp_GSEA_ui <- renderUI({
               req(data_input_shiny())
+              if(is.null(ea_reactives$data)){
+                ea_reactives$data <- data$data
+              }
               selectInput(
                 inputId = ns("sample_annotation_types_cmp_GSEA"),
                 label = "Choose type for LFC-based ordering",
-                choices = c(colnames(colData(data$data))),
+                choices = c(colnames(colData(ea_reactives$data))),
                 multiple = F,
-                selected = c(colnames(colData(data$data)))[1]
+                selected = c(colnames(colData(ea_reactives$data)))[1]
               )
             })
             output$Groups2Compare_ref_GSEA_ui <- renderUI({
               req(data_input_shiny())
               req(input$sample_annotation_types_cmp_GSEA)
+              if(is.null(ea_reactives$data)){
+                ea_reactives$data <- data$data
+              }
               selectInput(
                 inputId = ns("Groups2Compare_ref_GSEA"),
                 label = "Choose reference of log2 FoldChange",
-                choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_GSEA]),
+                choices = unique(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA]),
                 multiple = F ,
-                selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_GSEA])[1]
+                selected = unique(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA])[1]
               )
             })
             output$Groups2Compare_treat_GSEA_ui <- renderUI({
               req(data_input_shiny())
               req(input$sample_annotation_types_cmp_GSEA)
+              if(is.null(ea_reactives$data)){
+                ea_reactives$data <- data$data
+              }
               selectInput(
                 inputId = ns("Groups2Compare_treat_GSEA"),
                 label = "Choose treatment group of log2 FoldChange",
-                choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_GSEA]),
+                choices = unique(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA]),
                 multiple = F ,
-                selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_GSEA])[2]
+                selected = unique(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA])[2]
               )
             })
             # Choose Sets to do gene set enrichment for
@@ -675,11 +689,11 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
             #takes all genes after preprocessing
             #get LFC
-            ctrl_samples_idx <- which(colData(data$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
-            comparison_samples_idx <- which(colData(data$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
+            ctrl_samples_idx <- which(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
+            comparison_samples_idx <- which(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
 
             Data2Plot <- getLFCs(
-              assays(data$data)$raw,
+              assays(ea_reactives$data)$raw,
               ctrl_samples_idx,
               comparison_samples_idx
             )
@@ -708,9 +722,10 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         fun_LogIt("## ENRICHMENT")
         req(geneSetChoice())
         ea_reactives$tmp_genes <- geneSetChoice()
+        browser()
         # Check whether the necessary annotation is available
-        anno_results <- check_annotation_enrichment_analysis(data$data)
-        data$data <- anno_results$new_data
+        anno_results <- check_annotation_enrichment_analysis(ea_reactives$data)
+        ea_reactives$data <- anno_results$new_data
         ea_reactives$can_start <- anno_results$can_start
         if(anno_results$no_ann){
           showModal(modalDialog(
@@ -728,8 +743,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           ))
         }else if(anno_results$can_start == FALSE){
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            data$data <- translate_genes_ea(
-              data = data$data,
+            ea_reactives$data <- translate_genes_ea(
+              data = ea_reactives$data,
               annotation_results = anno_results,
               input = input
             )
@@ -739,7 +754,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               input = input,
               geneSetChoice = ea_reactives$tmp_genes,
               geneSet2Enrich = input$GeneSet2Enrich,
-              data = data$data
+              data = ea_reactives$data
             )
           }
           ea_reactives$can_start <- TRUE
@@ -749,8 +764,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           anno_results$base_annotation <- input$AnnotationSelection
           removeModal()
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            data$data <<- translate_genes_ea(
-              data = data$data,
+            ea_reactives$data <- translate_genes_ea(
+              data = ea_reactives$data,
               annotation_results = anno_results,
               input = input
             )
@@ -771,7 +786,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             ea_reactives$enrichment_results <- gene_set_enrichment(
               input,
               ea_reactives$tmp_genes,
-              data$data,
+              ea_reactives$data,
               ea_reactives$enrichments2do,
               input$test_correction,
               input$sample_annotation_types_cmp_GSEA,
@@ -784,7 +799,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               input,
               output,
               ea_reactives$tmp_genes,
-              data$data,
+              ea_reactives$data,
               ea_reactives$enrichments2do,
               input$test_correction
             )
@@ -814,7 +829,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             selectInput(
               inputId = ns("sample_anno_types_KEGG"),
               label = "Choose type for LFC overlay",
-              choices = c(colnames(colData(data$data))),
+              choices = c(colnames(colData(ea_reactives$data))),
               multiple = F ,
               selected = NULL
             )
@@ -824,9 +839,9 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             selectInput(
               inputId = ns("ComparisonOptionsCRTL"),
               label = "Choose reference of log2 FoldChange",
-              choices = unique(colData(data$data)[,input$sample_anno_types_KEGG]),
+              choices = unique(colData(ea_reactives$data)[,input$sample_anno_types_KEGG]),
               multiple = F ,
-              selected = unique(colData(data$data)$sample_table[,input$sample_anno_types_KEGG])[1]
+              selected = unique(colData(ea_reactives$data)$sample_table[,input$sample_anno_types_KEGG])[1]
             )
           })
           output$ComparisonOptionsCOMP_ui <- renderUI({
@@ -834,9 +849,9 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             selectInput(
               inputId = ns("ComparisonOptionsCOMP"),
               label = "Choose treatment group of log2 FoldChange",
-              choices = unique(colData(data$data)[,input$sample_anno_types_KEGG]),
+              choices = unique(colData(ea_reactives$data)[,input$sample_anno_types_KEGG]),
               multiple = F ,
-              selected = unique(colData(data$data)[,input$sample_anno_types_KEGG])[2]
+              selected = unique(colData(ea_reactives$data)[,input$sample_anno_types_KEGG])[2]
             )
           })
           output$psig_KEGG_ui <- renderUI({
@@ -869,9 +884,9 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         ## reduce dataset to selected genes
 
         if(input$plotOnTopOption == "LFC"){
-          Data2PlotOnTop <- data$data[geneSetChoice(),,drop=F]
-          ctrl_samples_idx <- which(colData(data$data)[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCRTL)
-          comparison_samples_idx <- which(colData(data$data)[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCOMP)
+          Data2PlotOnTop <- ea_reactives$data[geneSetChoice(),,drop=F]
+          ctrl_samples_idx <- which(colData(ea_reactives$data)[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCRTL)
+          comparison_samples_idx <- which(colData(ea_reactives$data)[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCOMP)
           if(length(comparison_samples_idx) <= 1 | length(ctrl_samples_idx) <= 1){
             ea_reactives$ea_info <- "Choose variable with at least two samples per condition!"
             req(FALSE)

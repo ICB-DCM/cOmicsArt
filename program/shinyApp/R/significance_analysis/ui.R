@@ -21,7 +21,7 @@ significance_analysis_sidebar_ui<- function(ns){
     hidden(actionButton(
       inputId = ns("refreshUI"),
       label = "Refresh UI"
-      )),
+    )),
     hr(style = "border-top: 1px solid #858585;")
   )
 }

@@ -970,6 +970,7 @@ server <- function(input,output,session){
       
       shinyjs::click("SignificanceAnalysis-refreshUI",asis = T)
       shinyjs::click("single_gene_visualisation-refreshUI",asis = T)
+      shinyjs::click("EnrichmentAnalysis-refreshUI",asis = T)
       paste0(addWarning,
              "The data has the dimensions of: ",
              paste0(dim(res_tmp$data),collapse = ", "),
