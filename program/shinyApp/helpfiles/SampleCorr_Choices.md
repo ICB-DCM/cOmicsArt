@@ -4,7 +4,7 @@
 ***
 ### Correlation method
 
-Choose **One** of the following methods
+Choose **one** of the following methods
 
 **Pearson Correlation**
 

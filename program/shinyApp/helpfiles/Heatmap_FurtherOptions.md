@@ -13,7 +13,7 @@
 **2. Choose Reference of log2 FoldChange:**
 
 - **Description:**
-  - Specify the reference group for log fold changes in the heatmap.
+  - Specify the reference group for log2 fold changes in the heatmap.
 
 - **Options:**
   - Dropdown menu labeled "Choose reference of log2 FoldChange."
@@ -22,7 +22,7 @@
 **3. Choose Treatment Group of log2 FoldChange:**
 
 - **Description:**
-  - Specify the treatment group for log fold changes in the heatmap.
+  - Specify the treatment group for log2 fold changes in the heatmap.
 
 - **Options:**
   - Dropdown menu labeled "Choose treatment group of log2 FoldChange."
@@ -31,7 +31,7 @@
 **4. Adjusted p-value Threshold:**
 
 - **Description:**
-  - Set the threshold for adjusted p-values to filter significant log fold changes.
+  - Set the threshold for adjusted p-values to filter significant log2 fold changes.
 
 - **Options:**
   - Numeric input labeled "adj. p-value threshold."
