@@ -513,45 +513,59 @@ heatmap_server <- function(id, data, params, updates){
         if(nchar(Heatmap_customTitleHeatmap) >= 250){
           Heatmap_customTitleHeatmap <- "Heatmap"
         }
-      # Heatmap_heatmap_plot <- heatmap_plot
-      Heatmap_row_anno_options_heatmap <- input$row_anno_options_heatmap
-      Heatmap_TopK <- input$TopK
-      Heatmap_row_selection_options <- input$row_selection_options
-      Heatmap_anno_options <- input$anno_options
-      Heatmap_row_anno_options <- input$row_anno_options
-      Heatmap_cluster_rows <- input$cluster_rows
-      Heatmap_LFC_toHeatmap <- input$LFC_toHeatmap
-      Heatmap_sample_annotation_types_cmp_heatmap <- input$sample_annotation_types_cmp_heatmap
-      Heatmap_Groups2Compare_ref_heatmap <- input$Groups2Compare_ref_heatmap
-      Heatmap_Groups2Compare_ctrl_heatmap <- input$Groups2Compare_ctrl_heatmap
+        Heatmap_heatmap_plot <- heatmap_plot
+        Heatmap_row_anno_options_heatmap <- input$row_anno_options_heatmap
+        Heatmap_TopK <- input$TopK
+        Heatmap_row_selection_options <- input$row_selection_options
+        Heatmap_anno_options <- input$anno_options
+        Heatmap_row_anno_options <- input$row_anno_options
+        Heatmap_cluster_rows <- input$cluster_rows
+        Heatmap_LFC_toHeatmap <- input$LFC_toHeatmap
+        Heatmap_sample_annotation_types_cmp_heatmap <- input$sample_annotation_types_cmp_heatmap
+        Heatmap_Groups2Compare_ref_heatmap <- input$Groups2Compare_ref_heatmap
+        Heatmap_Groups2Compare_ctrl_heatmap <- input$Groups2Compare_ctrl_heatmap
 
         # res_tmp gets data2HandOver or Data2Plot depending on scenario
-        browser()
         if(scenario == 10){
-
-          res_tmp["Heatmap"] <<- list(Data2Plot)
+          res_tmp[["Heatmap"]] <<- Data2Plot
         }else if(scenario == 11){
-          res_tmp["Heatmap"] <<- list(data2HandOver)
-          par_tmp$Heatmap[["mycolors"]] <<- mycolors
-          par_tmp$Heatmap[["annotation_col"]] <<- annotation_col
-          par_tmp$Heatmap[["annotation_row"]] <<- annotation_row
+          res_tmp[["Heatmap"]] <<- data2HandOver
         }
-
-        tmp <- getUserReactiveValues(input)
-        par_tmp$Heatmap[names(tmp)] <<- tmp
-        par_tmp$Heatmap["customTitleHeatmap"] <<- Heatmap_customTitleHeatmap
-        
-
+        # par_tmp gets the parameters used for the heatmap
+        par_tmp[["Heatmap"]] <<- list(
+          anno_options = input$anno_options,
+          row_anno_options = input$row_anno_options,
+          row_label_options = input$row_label_options,
+          cluster_rows = input$cluster_rows,
+          cluster_cols = input$cluster_cols,
+          LFCToHeatmap = input$LFC_toHeatmap,  # decider for scenario
+          row_selection_options = input$row_selection_options,
+          rowWiseScaled = input$rowWiseScaled,
+          sample_annotation_types_cmp_heatmap = input$sample_annotation_types_cmp_heatmap,
+          Groups2Compare_ref_heatmap = input$Groups2Compare_ref_heatmap,
+          Groups2Compare_ctrl_heatmap = input$Groups2Compare_ctrl_heatmap,
+          anno_options_heatmap = input$anno_options_heatmap,
+          row_anno_options_heatmap = input$row_anno_options_heatmap
+        )
         
         output$getR_Code_Heatmap <- downloadHandler(
           filename = function(){
             paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
           },
           content = function(file){
-            envList <- list(
-              res_tmp = res_tmp,
-              par_tmp = par_tmp
-            )
+            envList=list(
+              Data2Plot = ifelse(exists("Data2Plot"),Data2Plot,NA),
+              data2HandOver = ifelse(exists("data2HandOver"),data2HandOver,NA),
+              selectedData_processed_df = ifelse(exists("selectedData_processed_df"),selectedData_processed_df,NA),
+              clusterRowspossible = ifelse(exists("clusterRowspossible"),clusterRowspossible,NA),
+              annotation_col = annotation_col,
+              annotation_row = ifelse(exists("annotation_row"),annotation_row,NA),
+              mycolors = ifelse(exists("mycolors"),mycolors,NA),
+              customTitleHeatmap = customTitleHeatmap,
+              input = reactiveValuesToList(input),
+              myBreaks = ifelse(exists("myBreaks"),myBreaks,NA),
+              myColor_fill = ifelse(exists("myColor_fill"),myColor_fill,NA)
+              )
             
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
