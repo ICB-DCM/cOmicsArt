@@ -1,13 +1,13 @@
 entitieSelection <- function(
-  data,
-  type,
-  TopK2Show = NA,
-  additionalInput_row_anno = NA,
-  additionalInput_row_anno_factor = NA,
-  additionalInput_sample_annotation_types = NA,
-  additionalInput_ctrl_idx = NA,
-  additionalInput_cmp_idx = NA,
-  psig_threhsold = NA
+    data,
+    type,
+    TopK2Show = NA,
+    additionalInput_row_anno = NA,
+    additionalInput_row_anno_factor = NA,
+    additionalInput_sample_annotation_types = NA,
+    additionalInput_ctrl_idx = NA,
+    additionalInput_cmp_idx = NA,
+    psig_threhsold = NA
 ){
   # to cover: c("TopK","significant_LFC","LFC_onlySig","rowAnno_based")
   filtered_data <- data$Matrix
@@ -22,8 +22,8 @@ entitieSelection <- function(
   print("Entitie Selection new?")
   #print(additionalInput_row_anno)
   if(any(type == "rowAnno_based") & 
-  !(any(is.na(additionalInput_row_anno))) & 
-  !any(is.na(additionalInput_row_anno_factor))){
+     !(any(is.na(additionalInput_row_anno))) & 
+     !any(is.na(additionalInput_row_anno_factor))){
     # Note here this only what to show, LFCs and more importantly multiple test correction will be done on the entire set (without the row anno based selection!!)
     if(any(additionalInput_row_anno_factor == "all")){
       filtered_data <- filtered_data
@@ -56,27 +56,27 @@ entitieSelection <- function(
       }
     }
     if(any(type == "LFC_onlySig")){
-     ctrl_samples_idx <- which(
-       data$sample_table[,additionalInput_sample_annotation_types] %in% additionalInput_ctrl_idx
-     )
-     comparison_samples_idx <- which(
-       data$sample_table[,additionalInput_sample_annotation_types]%in%additionalInput_cmp_idx
-     )
-     LFC_output <- getLFC(
-       data = data$Matrix,
-       ctrl_samples_idx = ctrl_samples_idx,
-       comparison_samples_idx = comparison_samples_idx
-     )
-     if(!(any(LFC_output$p_adj<psig_threhsold))){
-       warning("No single entry left! Maybe adjust psig_threhsold_heatmap (but do not put it arbitraly high!)")
-       filtered_data <- NULL
-     }else{
-       filtered_data <- filtered_data[rownames(LFC_output)[which(LFC_output$p_adj<psig_threhsold)],,drop=F]
-       filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$LFC,decreasing = F)],,drop=F]
-       filtered_data <- filtered_data[complete.cases(filtered_data), ]
-       orderMakesSense_flag <- T
-     }
-   }
+      ctrl_samples_idx <- which(
+        data$sample_table[,additionalInput_sample_annotation_types] %in% additionalInput_ctrl_idx
+      )
+      comparison_samples_idx <- which(
+        data$sample_table[,additionalInput_sample_annotation_types]%in%additionalInput_cmp_idx
+      )
+      LFC_output <- getLFC(
+        data = data$Matrix,
+        ctrl_samples_idx = ctrl_samples_idx,
+        comparison_samples_idx = comparison_samples_idx
+      )
+      if(!(any(LFC_output$p_adj<psig_threhsold))){
+        warning("No single entry left! Maybe adjust psig_threhsold_heatmap (but do not put it arbitraly high!)")
+        filtered_data <- NULL
+      }else{
+        filtered_data <- filtered_data[rownames(LFC_output)[which(LFC_output$p_adj<psig_threhsold)],,drop=F]
+        filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$LFC,decreasing = F)],,drop=F]
+        filtered_data <- filtered_data[complete.cases(filtered_data), ]
+        orderMakesSense_flag <- T
+      }
+    }
   }
   
   if(any(type == "TopK")){
