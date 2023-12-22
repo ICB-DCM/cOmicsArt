@@ -436,101 +436,141 @@ if(any(par_tmp$Heatmap$row_selection_options=="all")){
 }else{
 # Note entitieSelection is a custom function
 #TODO its source code file should be provided along!
-entitieSelection <- function(
-  data,
-  type,
-  TopK2Show = NA,
-  additionalInput_row_anno = NA,
-  additionalInput_row_anno_factor = NA,
-  additionalInput_sample_annotation_types = NA,
-  additionalInput_ctrl_idx = NA,
-  additionalInput_cmp_idx = NA,
-  psig_threhsold = NA
-){
+entitieSelection=function(data,
+                          type,
+                          TopK2Show=NA,
+                          additionalInput_row_anno=NA,
+                          additionalInput_row_anno_factor=NA,
+                          additionalInput_sample_annotation_types=NA,
+                          additionalInput_ctrl_idx=NA,
+                          additionalInput_cmp_idx=NA,
+                          psig_threhsold=NA){
   # to cover: c("TopK","significant_LFC","LFC_onlySig","rowAnno_based")
-  filtered_data <- data$Matrix
-  # drop any NAs in data frame (find cause for this!!)
-  if(any(is.na(filtered_data))){
-    print("NAs where found!!")
-    filtered_data <- filtered_data[complete.cases(filtered_data), ]
-    data$annotation_rows <- data$annotation_rows[rownames(filtered_data),]
-  }
-  
-  orderMakesSense_flag <- FALSE
-  print("Entitie Selection new?")
+  filtered_data=assay(data)
+  orderMakesSense_flag=FALSE
+  print("Entitie Selection")
   #print(additionalInput_row_anno)
-  if(any(type == "rowAnno_based") & 
-  !(any(is.na(additionalInput_row_anno))) & 
-  !any(is.na(additionalInput_row_anno_factor))){
+  if(any(type=="rowAnno_based") & !(any(is.na(additionalInput_row_anno) &is.na(additionalInput_row_anno_factor))) & !any(additionalInput_row_anno_factor=="all")){
     # Note here this only what to show, LFCs and more importantly multiple test correction will be done on the entire set (without the row anno based selection!!)
-    if(any(additionalInput_row_anno_factor == "all")){
-      filtered_data <- filtered_data
+    if(any(additionalInput_row_anno_factor=="all")){
+      filtered_data = filtered_data
     }else{
-      filtered_data <- filtered_data[which(data$annotation_rows[,additionalInput_row_anno]%in%additionalInput_row_anno_factor),]
+      filtered_data = filtered_data[which(data$annotation_rows[,additionalInput_row_anno] %in% additionalInput_row_anno_factor),]
     }
   }
   if(!(is.na(additionalInput_sample_annotation_types)) & !(is.na(additionalInput_ctrl_idx)) & !(is.na(additionalInput_cmp_idx))){
-    if(any(type == "significant_LFC")){
+    if(any(type=="significant_LFC")){
       # sort based on significance
       # need LFCs
       # is reachable from here? selectedData_processed()[[input$omicType]]$sample_table
-      ctrl_samples_idx <- which(
-        data$sample_table[,additionalInput_sample_annotation_types] %in% additionalInput_ctrl_idx
-      )
-      comparison_samples_idx <- which(
-        data$sample_table[,additionalInput_sample_annotation_types] %in% additionalInput_cmp_idx
-      )
-      if(length(ctrl_samples_idx) <= 1 | length(comparison_samples_idx) <= 1){
+      ctrl_samples_idx <- which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_ctrl_idx)
+      comparison_samples_idx <- which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_cmp_idx)
+      if((length(ctrl_samples_idx) <= 1) | (length(comparison_samples_idx) <= 1)){
         warning("LFC makes no sense just having a single sample per conidition, which is here the case!")
-        filtered_data <- NULL
+        filtered_data=NULL
       }else{
-        LFC_output <- getLFC(
-          data = filtered_data,
-          ctrl_samples_idx = ctrl_samples_idx,
-          comparison_samples_idx = comparison_samples_idx
-        )
-        filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$p_adj,decreasing = F)],,drop=F]
-        orderMakesSense_flag <- T
+        LFC_output=getLFC(filtered_data,ctrl_samples_idx,comparison_samples_idx)
+        filtered_data=filtered_data[rownames(LFC_output)[order(LFC_output$p_adj,decreasing = F)],,drop=F]
+        orderMakesSense_flag=T
       }
+      
     }
-    if(any(type == "LFC_onlySig")){
-     ctrl_samples_idx <- which(
-       data$sample_table[,additionalInput_sample_annotation_types] %in% additionalInput_ctrl_idx
-     )
-     comparison_samples_idx <- which(
-       data$sample_table[,additionalInput_sample_annotation_types]%in%additionalInput_cmp_idx
-     )
-     LFC_output <- getLFC(
-       data = data$Matrix,
-       ctrl_samples_idx = ctrl_samples_idx,
-       comparison_samples_idx = comparison_samples_idx
-     )
-     if(!(any(LFC_output$p_adj<psig_threhsold))){
-       warning("No single entry left! Maybe adjust psig_threhsold_heatmap (but do not put it arbitraly high!)")
-       filtered_data <- NULL
-     }else{
-       filtered_data <- filtered_data[rownames(LFC_output)[which(LFC_output$p_adj<psig_threhsold)],,drop=F]
-       filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$LFC,decreasing = F)],,drop=F]
-       filtered_data <- filtered_data[complete.cases(filtered_data), ]
-       orderMakesSense_flag <- T
-     }
-   }
+    if(any(type=="LFC_onlySig")){
+      ctrl_samples_idx<-which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_ctrl_idx)
+      comparison_samples_idx<-which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_cmp_idx)
+      LFC_output=getLFC(filtered_data,ctrl_samples_idx,comparison_samples_idx)
+      if(!(any(LFC_output$p_adj<psig_threhsold))){
+        warning("No single entry left! Maybe adjust psig_threhsold_heatmap (but do not put it arbitraly high!)")
+        #req(FALSE) -> can we speak from here to output$debug?
+        filtered_data=NULL
+      }else{
+        filtered_data=filtered_data[rownames(LFC_output)[which(LFC_output$p_adj<psig_threhsold)],,drop=F]
+        filtered_data=filtered_data[rownames(LFC_output)[order(LFC_output$LFC,decreasing = F)],,drop=F]
+        orderMakesSense_flag=T
+      }
+      
+    }
   }
   
-  if(any(type == "TopK")){
+  if(any(type=="TopK")){
     if(orderMakesSense_flag){
       #assumes the data to be sorted somehow
-      if(nrow(filtered_data) > TopK2Show){
-        filtered_data <- filtered_data[c(1:TopK2Show),,drop=F]
+      if(nrow(filtered_data)>TopK2Show){
+        filtered_data=filtered_data[c(1:TopK2Show),,drop=F]
       }else{
-        filtered_data <- filtered_data
+        filtered_data=filtered_data
       }
     }else{
-      filtered_data <- NULL
+      filtered_data=NULL
     }
+    
   }
+  
+  
+  
   return(filtered_data)
+                          }
+
+# get LFC
+getLFC <- function(
+  data,
+  ctrl_samples_idx,
+  comparison_samples_idx,
+  completeOutput = FALSE
+){
+  df <- as.data.frame(data)
+  # Todo by @Lea: discuss and finalize how to handle this. constant row are not removed but small noise is added should in here a check if all 0 rows?
+  ttest_raw <- function(df, grp1, grp2) {
+    x <- df[grp1]
+    y <- df[grp2]
+    x <- as.numeric(x)
+    y <- as.numeric(y)
+    results <- t.test(x, y)
+    return(results$p.value)
+  }
+  #remove constant rows
+  removedAsConst_1 <- which(apply(df[,ctrl_samples_idx],1,sd) < 1e-6)
+  df[removedAsConst_1,ctrl_samples_idx] <- df[removedAsConst_1,ctrl_samples_idx] + t(apply(df[removedAsConst_1,ctrl_samples_idx],1,function(x){
+    rnorm(
+      n = length(x),
+      mean = 0,
+      sd=0.0000001
+    )}))
+  
+  removedAsConst_2 <- which(apply(df[,comparison_samples_idx],1,sd) < 1e-6)
+  df[removedAsConst_2,comparison_samples_idx] <- df[removedAsConst_2,comparison_samples_idx] + t(apply(df[removedAsConst_2,comparison_samples_idx],1,function(x){
+    rnorm(
+      n = length(x),
+      mean = 0,
+      sd=0.0000001
+    )}))
+  
+  
+  rawpvalue <- apply(df, 1, ttest_raw, grp1 = ctrl_samples_idx, grp2 = comparison_samples_idx)
+  
+  p_adj <- p.adjust(rawpvalue, method = "fdr")
+  
+  Ctrl_mean <- apply(df[,ctrl_samples_idx],1,mean)
+  Cmp_mean <- apply(df[,comparison_samples_idx],1,mean)
+  
+  FC <- Cmp_mean/Ctrl_mean
+  
+  LFC <- log2(FC)
+  
+  # Data 2 Plot
+  results <- cbind(LFC, rawpvalue,p_adj)
+  results <- as.data.frame(results)
+  results$probename <- rownames(results)
+  if(completeOutput){
+    # report results table + inital values that where used to calculate (mostly
+    # for sainity checks)
+    colnames(df)[ctrl_samples_idx]=paste0(colnames(df)[ctrl_samples_idx],"_ctrl")
+    colnames(df)[comparison_samples_idx]=paste0(colnames(df)[comparison_samples_idx],"_cmp")
+    results=cbind(results,df[rownames(df),])
+  }
+  return(results)
 }
+
 
   data2HandOver <- entitieSelection(
     res_tmp$data,
@@ -553,11 +593,9 @@ if(is.null(data2HandOver)){
 }
 '
   
-  if(numberOfScenario==10){
+  if(numberOfScenario == 10){
     stringtosave <- '
 annotation_col <- rowData(res_tmp$data)[,par_tmp$Heatmap$row_anno_options,drop=F]
-myBreaks <- c(seq(min(res_tmp$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
-  seq(max(res_tmp$Heatmap$LFC)/paletteLength, max(res_tmp$Heatmap$LFC), length.out=floor(paletteLength/2)))  
 
 ctrl_samples_idx <- which(
     colData(res_tmp$data)[,par_tmp$Heatmap$sample_annotation_types_cmp_heatmap]%in%par_tmp$Heatmap$Groups2Compare_ref_heatmap
@@ -570,28 +608,23 @@ if(length(comparison_samples_idx) <=1 | length(ctrl_samples_idx) <=1){
   doThis_flag <- F
 }
 
-if(par_tmp$PreProcessing_Procedure == "simpleCenterScaling"| any(assay(res_tmp$data))< 0){
+if(par_tmp$PreProcessing_Procedure == "simpleCenterScaling"| any(data2HandOver)< 0){
   print("Remember do not use normal center + scaling (negative Values!)")
 }else if(doThis_flag){
   Data2Plot <- getLFC(
-    data = as.data.frame(assay(res_tmp$data)),
+    data = as.data.frame(data2HandOver),
     ctrl_samples_idx = ctrl_samples_idx,
     comparison_samples_idx = comparison_samples_idx
   )
               
-#remove anything non sig
-Data2Plot <- Data2Plot[Data2Plot$p_adj<0.05,]
-# use floor and ceiling to deal with even/odd length pallettelengths
-myBreaks <- c(seq(min(Data2Plot$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
-              seq(max(Data2Plot$LFC)/paletteLength, max(Data2Plot$LFC), length.out=floor(paletteLength/2)))    
-
 if(par_tmp$LFC_toHeatmap){
   myBreaks <- c(seq(min(res_tmp$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
                 seq(max(res_tmp$Heatmap$LFC)/paletteLength, max(res_tmp$Heatmap$LFC), length.out=floor(paletteLength/2)))
   annotation_col <- rowData(Data2Plot)[,par_tmp$row_anno_options,drop=F]
 }
-#Data2Plot ?
-heatmap_plot <- pheatmap((t(res_tmp$Heatmap[,"LFC",drop=F])),
+
+
+heatmap_plot <- pheatmap((t(Data2Plot[,"LFC",drop=F])),
   main="Heatmap - LFC",
   show_rownames=ifelse(nrow((assay(res_tmp$data))<=25,TRUE,FALSE),
   show_colnames=TRUE,
@@ -606,7 +639,7 @@ heatmap_plot <- pheatmap((t(res_tmp$Heatmap[,"LFC",drop=F])),
   breaks = myBreaks,
   color = myColor_fill)'
   }
-  if(numberOfScenario==11){
+  if(numberOfScenario == 11){
     stringtosave <- '
 annotation_col <- colData(res_tmp$data)[,par_tmp$Heatmap$anno_options,drop=F]
 annotation_row <- rowData(res_tmp$data)[,par_tmp$Heatmap$row_anno_options,drop=F]
@@ -618,8 +651,8 @@ clusterRowspossible <- ifelse(nrow(as.matrix(assay(res_tmp$data)))>1,par_tmp$Hea
 
 heatmap_plot <- pheatmap(as.matrix(res_tmp$Heatmap),
   main="Heatmap",
-  show_rownames=ifelse(nrow((assay(res_tmp$data))<=par_tmp$Heatmap$row_label_no,TRUE,FALSE),
-  labels_row = rowData(res_tmp$data)[rownames((assay(res_tmp$data)),par_tmp$Heatmap$row_label_options],
+  show_rownames=ifelse(nrow((assay(res_tmp$data)))<=par_tmp$Heatmap$row_label_no,TRUE,FALSE),
+  labels_row = rowData(res_tmp$data)[rownames(assay(res_tmp$data)),par_tmp$Heatmap$row_label_options],
   show_colnames=TRUE,
   cluster_cols = par_tmp$Heatmap$cluster_cols,
   cluster_rows = clusterRowspossible,
