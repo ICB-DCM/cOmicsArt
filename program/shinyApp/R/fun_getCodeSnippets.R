@@ -617,24 +617,24 @@ if(par_tmp$PreProcessing_Procedure == "simpleCenterScaling"| any(data2HandOver)<
     comparison_samples_idx = comparison_samples_idx
   )
               
-if(par_tmp$LFC_toHeatmap){
+if(par_tmp$Heatmap$LFC_toHeatmap){
   myBreaks <- c(seq(min(res_tmp$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
                 seq(max(res_tmp$Heatmap$LFC)/paletteLength, max(res_tmp$Heatmap$LFC), length.out=floor(paletteLength/2)))
-  annotation_col <- rowData(Data2Plot)[,par_tmp$row_anno_options,drop=F]
+  annotation_col <- rowData(res_tmp$data)[rownames(Data2Plot),par_tmp$Heatmap$row_anno_options,drop=F]
 }
 
 
 heatmap_plot <- pheatmap((t(Data2Plot[,"LFC",drop=F])),
   main="Heatmap - LFC",
-  show_rownames=ifelse(nrow((assay(res_tmp$data))<=25,TRUE,FALSE),
+  show_rownames=ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
   show_colnames=TRUE,
   cluster_cols = par_tmp$Heatmap$cluster_cols,
   cluster_rows = FALSE, # par_tmp$Heatmap$cluster_rows,
   scale=ifelse(par_tmp$Heatmap$rowWiseScaled,"row","none"),
   # cutree_cols = 4,
   #fontsize = font.size,
-  annotation_col = res_tmp$data[[par_tmp$Heatmap$omicType]]$annotation_rows[,par_tmp$Heatmap$row_anno_options,drop=F],
-  #annotation_row = res_tmp$data[[par_tmp$Heatmap$omicType]]$annotation_rows[,par_tmp$Heatmap$row_anno_options,drop=F],
+  annotation_col = annotation_col,
+
   silent = F,
   breaks = myBreaks,
   color = myColor_fill)'
