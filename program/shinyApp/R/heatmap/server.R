@@ -330,20 +330,22 @@ heatmap_server <- function(id, data, params, updates){
         # Dependent to plot raw data or LFC if calculation is needed
         calculate <- 1
         # check whether we have to calculate
-        check <- check_calculations(list(
-          anno_options = input$anno_options,
-          row_anno_options = input$row_anno_options,
-          row_label_options = input$row_label_options,
-          cluster_rows = input$cluster_rows,
-          cluster_cols = input$cluster_cols,
-          LFCToHeatmap = input$LFC_toHeatmap,  # decider for scenario
-          row_selection_options = input$row_selection_options,
-          rowWiseScaled = input$rowWiseScaled,
-          sample_annotation_types_cmp_heatmap = input$sample_annotation_types_cmp_heatmap,
-          Groups2Compare_ref_heatmap = input$Groups2Compare_ref_heatmap,
-          Groups2Compare_ctrl_heatmap = input$Groups2Compare_ctrl_heatmap,
-          anno_options_heatmap = input$anno_options_heatmap,
-          row_anno_options_heatmap = input$row_anno_options_heatmap), "Heatmap")
+        # Does not find funtion
+        # check <- check_calculations(list(
+        #   anno_options = input$anno_options,
+        #   row_anno_options = input$row_anno_options,
+        #   row_label_options = input$row_label_options,
+        #   cluster_rows = input$cluster_rows,
+        #   cluster_cols = input$cluster_cols,
+        #   LFCToHeatmap = input$LFC_toHeatmap,  # decider for scenario
+        #   row_selection_options = input$row_selection_options,
+        #   rowWiseScaled = input$rowWiseScaled,
+        #   sample_annotation_types_cmp_heatmap = input$sample_annotation_types_cmp_heatmap,
+        #   Groups2Compare_ref_heatmap = input$Groups2Compare_ref_heatmap,
+        #   Groups2Compare_ctrl_heatmap = input$Groups2Compare_ctrl_heatmap,
+        #   anno_options_heatmap = input$anno_options_heatmap,
+        #   row_anno_options_heatmap = input$row_anno_options_heatmap), "Heatmap")
+        check <- "No Result yet"
         if (check == "No Result yet"){
           output$Heatmap_Info <- renderText("Heatmap computed.")
         } else if (check == "Result exists"){
@@ -371,7 +373,7 @@ heatmap_server <- function(id, data, params, updates){
             }
             if(input$PreProcessing_Procedure == "simpleCenterScaling"|
                any(assay(data$data))< 0){
-              # TODO: there must be a nicer way to do this then as.data.frame(assay(data$data))
+              
               print("Remember do not use normal center + scaling (negative Values!)")
               output$Options_selected_out_3 <- renderText("Choose another preprocessing, as there are negative values!")
               
@@ -513,17 +515,17 @@ heatmap_server <- function(id, data, params, updates){
         if(nchar(Heatmap_customTitleHeatmap) >= 250){
           Heatmap_customTitleHeatmap <- "Heatmap"
         }
-        Heatmap_heatmap_plot <- heatmap_plot
-        Heatmap_row_anno_options_heatmap <- input$row_anno_options_heatmap
-        Heatmap_TopK <- input$TopK
-        Heatmap_row_selection_options <- input$row_selection_options
-        Heatmap_anno_options <- input$anno_options
-        Heatmap_row_anno_options <- input$row_anno_options
-        Heatmap_cluster_rows <- input$cluster_rows
-        Heatmap_LFC_toHeatmap <- input$LFC_toHeatmap
-        Heatmap_sample_annotation_types_cmp_heatmap <- input$sample_annotation_types_cmp_heatmap
-        Heatmap_Groups2Compare_ref_heatmap <- input$Groups2Compare_ref_heatmap
-        Heatmap_Groups2Compare_ctrl_heatmap <- input$Groups2Compare_ctrl_heatmap
+        # Heatmap_heatmap_plot <- heatmap_plot
+        # Heatmap_row_anno_options_heatmap <- input$row_anno_options_heatmap
+        # Heatmap_TopK <- input$TopK
+        # Heatmap_row_selection_options <- input$row_selection_options
+        # Heatmap_anno_options <- input$anno_options
+        # Heatmap_row_anno_options <- input$row_anno_options
+        # Heatmap_cluster_rows <- input$cluster_rows
+        # Heatmap_LFC_toHeatmap <- input$LFC_toHeatmap
+        # Heatmap_sample_annotation_types_cmp_heatmap <- input$sample_annotation_types_cmp_heatmap
+        # Heatmap_Groups2Compare_ref_heatmap <- input$Groups2Compare_ref_heatmap
+        # Heatmap_Groups2Compare_ctrl_heatmap <- input$Groups2Compare_ctrl_heatmap
         
         # res_tmp gets data2HandOver or Data2Plot depending on scenario
         if(scenario == 10){
@@ -532,21 +534,10 @@ heatmap_server <- function(id, data, params, updates){
           res_tmp[["Heatmap"]] <<- data2HandOver
         }
         # par_tmp gets the parameters used for the heatmap
-        par_tmp[["Heatmap"]] <<- list(
-          anno_options = input$anno_options,
-          row_anno_options = input$row_anno_options,
-          row_label_options = input$row_label_options,
-          cluster_rows = input$cluster_rows,
-          cluster_cols = input$cluster_cols,
-          LFCToHeatmap = input$LFC_toHeatmap,  # decider for scenario
-          row_selection_options = input$row_selection_options,
-          rowWiseScaled = input$rowWiseScaled,
-          sample_annotation_types_cmp_heatmap = input$sample_annotation_types_cmp_heatmap,
-          Groups2Compare_ref_heatmap = input$Groups2Compare_ref_heatmap,
-          Groups2Compare_ctrl_heatmap = input$Groups2Compare_ctrl_heatmap,
-          anno_options_heatmap = input$anno_options_heatmap,
-          row_anno_options_heatmap = input$row_anno_options_heatmap
-        )
+        ## This exports all reactive Values in the PCA namespace 
+        tmp <- getUserReactiveValues(input)
+        par_tmp$Heatmap[names(tmp)] <<- tmp
+        
         
         output$getR_Code_Heatmap <- downloadHandler(
           filename = function(){
@@ -554,23 +545,16 @@ heatmap_server <- function(id, data, params, updates){
           },
           content = function(file){
             envList=list(
-              Data2Plot = ifelse(exists("Data2Plot"),Data2Plot,NA),
-              data2HandOver = ifelse(exists("data2HandOver"),data2HandOver,NA),
-              selectedData_processed_df = ifelse(exists("selectedData_processed_df"),selectedData_processed_df,NA),
-              clusterRowspossible = ifelse(exists("clusterRowspossible"),clusterRowspossible,NA),
-              annotation_col = annotation_col,
-              annotation_row = ifelse(exists("annotation_row"),annotation_row,NA),
-              mycolors = ifelse(exists("mycolors"),mycolors,NA),
-              customTitleHeatmap = customTitleHeatmap,
-              input = reactiveValuesToList(input),
-              myBreaks = ifelse(exists("myBreaks"),myBreaks,NA),
-              myColor_fill = ifelse(exists("myColor_fill"),myColor_fill,NA)
+              res_tmp=res_tmp,
+              par_tmp=par_tmp
             )
             
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
             
             write(getPlotCode(heatmap_scenario), file.path(temp_directory, "Code.R"))
+            
+            
             
             saveRDS(envList, file.path(temp_directory, "Data.RDS"))
             zip::zip(
