@@ -106,28 +106,30 @@ heatmap_server <- function(id, data, params, updates){
               inputId = ns("sample_annotation_types_cmp_heatmap"),
               label = "Choose type for LFC-based ordering",
               choices = c(colnames(colData(data$data))),
-              multiple = F,
-              selected = c(colnames(colData(data$data)))[1]
+              multiple = F
+             # selected = c(colnames(colData(data$data)))[1]
             )
           })
           output$Groups2Compare_ref_heatmap_ui <- renderUI({
             req(data_input_shiny())
+            req(input$sample_annotation_types_cmp_heatmap)
             selectInput(
               inputId = ns("Groups2Compare_ref_heatmap"),
               label = "Choose reference of log2 FoldChange",
-              choices = unique(rowData(data$data)[,input$sample_annotation_types_cmp_heatmap]),
+              choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap]),
               multiple = F ,
-              selected = unique(rowData(data$data)[,input$sample_annotation_types_cmp_heatmap])[1]
+              selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap])[1]
             )
           })
           output$Groups2Compare_treat_heatmap_ui <- renderUI({
             req(data_input_shiny())
+            req(input$sample_annotation_types_cmp_heatmap)
             selectInput(
               inputId = ns("Groups2Compare_treat_heatmap"),
               label = "Choose treatment group of log2 FoldChange",
-              choices = unique(rowData(data$data)[,input$sample_annotation_types_cmp_heatmap]),
+              choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap]),
               multiple = F ,
-              selected = unique(rowData(data$data)[,input$sample_annotation_types_cmp_heatmap])[2]
+              selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap])[2]
             )
           })
           output$psig_threhsold_heatmap_ui <- renderUI({
