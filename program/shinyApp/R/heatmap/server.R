@@ -362,6 +362,7 @@ heatmap_server <- function(id, data, params, updates){
         }
         if(calculate == 1){
           if(input$LFC_toHeatmap){
+            browser()
             ctrl_samples_idx <- which(
               colData(data$data)[,input$sample_annotation_types_cmp_heatmap]%in%input$Groups2Compare_ref_heatmap
             )
@@ -373,29 +374,29 @@ heatmap_server <- function(id, data, params, updates){
               output$Options_selected_out_3 <- renderText("Choose variable with at least two samples per condition!")
               doThis_flag <- F
             }
-            if(input$PreProcessing_Procedure == "simpleCenterScaling"|
+            if(par_tmp$PreProcessing_Procedure == "simpleCenterScaling"|
                any(assay(data$data))< 0){
               
               print("Remember do not use normal center + scaling (negative Values!)")
               output$Options_selected_out_3 <- renderText("Choose another preprocessing, as there are negative values!")
               
             }else if(doThis_flag){
-              print(dim(selectedData_processed()[[omicType()]]$Matrix))
+              #Takes user-specified choices from additional LFC Inputs 
+              # put does not plot values but the LFC itself
               Data2Plot <- getLFC(
-                data = as.data.frame(assay(data$data)),
+                data = as.data.frame(data2HandOver),
                 ctrl_samples_idx = ctrl_samples_idx,
                 comparison_samples_idx = comparison_samples_idx
               )
               
               ## do pheatmap
-              #remove anything non sig
-              Data2Plot <- Data2Plot[Data2Plot$p_adj<0.05,]
+
               # use floor and ceiling to deal with even/odd length pallettelengths
               myBreaks <- c(seq(min(Data2Plot$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
                             seq(max(Data2Plot$LFC)/paletteLength, max(Data2Plot$LFC), length.out=floor(paletteLength/2)))
               
               scenario <- 10
-              annotation_col <- rowData(data2Plot)[,input$row_anno_options,drop=F]
+              annotation_col <- as.data.frame(rowData(data2Plot)[rownames(Data2Plot),input$row_anno_options,drop=F])
               heatmap_plot <- pheatmap(
                 t(Data2Plot[,"LFC",drop=F]),
                 main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
@@ -405,8 +406,9 @@ heatmap_server <- function(id, data, params, updates){
                 cluster_rows = FALSE,
                 scale=ifelse(input$rowWiseScaled,"row","none"),
                 annotation_col = annotation_col,
+               # annotation_colors = mycolors,
                 silent = F,
-                breaks = myBreaks,
+              #  breaks = myBreaks,
                 color = myColor_fill
               )
             }
