@@ -71,8 +71,8 @@ data_selection_main_panel <- mainPanel(
         id = "advanced",
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-          uiOutput(outputId = "data_matrix1_ui") %>% helper(type = "markdown", content = "DataSelection_Matrix"),
-          uiOutput(outputId = "data_sample_anno1_ui") %>% helper(type = "markdown", content = "DataSelection_SampleAnno")
+          uiOutput(outputId = "data_matrix1_ui"),  # %>% helper(type = "markdown", content = "DataSelection_Matrix"),
+          uiOutput(outputId = "data_sample_anno1_ui"),  # %>% helper(type = "markdown", content = "DataSelection_SampleAnno")
         ),
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
@@ -92,31 +92,32 @@ data_selection_main_panel <- mainPanel(
       ) %>% helper(type = "markdown", content = "DataSelection_compilation_help"),
       htmlOutput(outputId = "debug", container = pre),
       HTML(text = "<br>"),
-      HTML(text = "<br>")),
-      tabPanel(
-        title = "Upload visual inspection",
-        helpText("If you have uploaded your data, you might want to visually check the tables to confirm the correct data format. If you notice irregualarities you will need to correct the input data - this cannot be done in ShinyOmics, See the help on how your data is expected."),
-        actionButton(
-          inputId = "DoVisualDataInspection",
-          label = "Upload data for visual inspection"
-        ) %>% helper(type = "markdown", content = "DataSelection_UploadInspection"),
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          DT::dataTableOutput("DataMatrix_VI"),
-          htmlOutput(outputId = "DataMatrix_VI_Info", container = pre)
-        ),
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          DT::dataTableOutput("SampleMatrix_VI"),
-          htmlOutput(outputId = "SampleMatrix_VI_Info", container = pre)
-        ),
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          DT::dataTableOutput("EntitieMatrix_VI"),
-          htmlOutput(outputId = "EntitieMatrix_VI_Info", container = pre)
-        ),
-        htmlOutput(outputId = "OverallChecks", container = pre)
-      )
+      HTML(text = "<br>")
+    ),
+    tabPanel(
+      title = "Upload visual inspection",
+      helpText("If you have uploaded your data, you might want to visually check the tables to confirm the correct data format. If you notice irregualarities you will need to correct the input data - this cannot be done in ShinyOmics, See the help on how your data is expected."),
+      actionButton(
+        inputId = "DoVisualDataInspection",
+        label = "Upload data for visual inspection"
+      ) %>% helper(type = "markdown", content = "DataSelection_UploadInspection"),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        DT::dataTableOutput("DataMatrix_VI"),
+        htmlOutput(outputId = "DataMatrix_VI_Info", container = pre)
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        DT::dataTableOutput("SampleMatrix_VI"),
+        htmlOutput(outputId = "SampleMatrix_VI_Info", container = pre)
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        DT::dataTableOutput("EntitieMatrix_VI"),
+        htmlOutput(outputId = "EntitieMatrix_VI_Info", container = pre)
+      ),
+      htmlOutput(outputId = "OverallChecks", container = pre)
+    )
   )
 )
 

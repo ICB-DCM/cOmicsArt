@@ -74,6 +74,12 @@ credentials <- data.frame(
 
 
 ui <- shiny::fluidPage(
+  # JS to reset input values
+  tags$script("
+    Shiny.addCustomMessageHandler('resetValue', function(variableName) {
+      Shiny.onInputChange(variableName, null);
+    });
+  "),
   tags$head(
     ##########
     # Styling Setting

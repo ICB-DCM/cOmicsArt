@@ -12,14 +12,13 @@ getPlotCode <- function(
   }else{
     if(!(length(par_tmp$row_selection) == 1 & any(par_tmp$row_selection == "High Values+IQR"))){
     stringSelection <- 'selected <- c()
-  selected <- unique(
-    c(selected,rownames(rowData(res_tmp$data_original))[
-    which(rowData(res_tmp$data_original)
-    [,par_tmp$providedRowAnnotationTypes]%in%par_tmp$row_selection)
-    ]
+selected <- unique(
+  c(selected,rownames(rowData(res_tmp$data_original))[
+  which(rowData(res_tmp$data_original)
+  [,par_tmp$providedRowAnnotationTypes]%in%par_tmp$row_selection)]
     )
-    )
-    '
+  )
+  '
   }
   if(any(par_tmp$row_selection == "High Values+IQR") ){
     stringSelection <- 'toKeep <- filter_rna(
@@ -385,51 +384,284 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
   }
   
   ## Heatmap ----
-if(numberOfScenario >=10  & numberOfScenario <= 11){
+if(numberOfScenario >= 10  & numberOfScenario <= 11){
   prequel_stringtosave <- '
 colorTheme <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c","#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
 paletteLength <- 25
 myColor_fill <- colorRampPalette(c("blue", "white", "firebrick"))(paletteLength)
-
-  '
   
-  if(numberOfScenario==10){
+# select and caluculate Heatmap input depending on users input - 
+# check par_tmp$Heatmap for selected options or change accrodingly to what you desire
+mycolors <- list()
+if(length(par_tmp$Heatmap$anno_options) == 1){
+  if(length(unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])) <= 8){
+    names(colorTheme) <- unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])
+    colorTheme <- colorTheme[!is.na(names(colorTheme))]
+    mycolors[[par_tmp$Heatmap$anno_options]] <- colorTheme
+  }
+}
+
+        
+# Do PreSelection of input to Heatmap to show
+
+# selection based on row Annotation:
+if(!(any(par_tmp$Heatmap$row_selection_options == "all"))){
+  if(any(par_tmp$Heatmap$row_selection_options == "rowAnno_based")){
+    additionalInput_row_anno <- ifelse(any(par_tmp$Heatmap$row_selection_options == "rowAnno_based"),"yip",NA)
+    if(!is.na(additionalInput_row_anno)){
+      additionalInput_row_anno <- par_tmp$Heatmap$anno_options_heatmap
+    }
+    additionalInput_row_anno_factor <- par_tmp$Heatmap$row_anno_options_heatmap
+  }else{
+    additionalInput_row_anno <- ifelse(any(par_tmp$Heatmap$row_selection_options == "rowAnno_based"),par_tmp$Heatmap$anno_options_heatmap,NA)
+    additionalInput_row_anno_factor <- ifelse(any(par_tmp$Heatmap$row_selection_options == "rowAnno_based"),c(par_tmp$Heatmap$row_anno_options_heatmap),NA)
+  }
+}else{
+  additionalInput_row_anno <- "all"
+  additionalInput_row_anno_factor <- NA
+}
+   
+#Selection and/or ordering based on LFC
+additionalInput_sample_annotation_types <- ifelse(is.null(par_tmp$Heatmap$sample_annotation_types_cmp_heatmap),NA,par_tmp$Heatmap$sample_annotation_types_cmp_heatmap)
+additionalInput_ctrl_idx <- ifelse(is.null(par_tmp$Heatmap$Groups2Compare_ref_heatmap),NA,par_tmp$Heatmap$Groups2Compare_ref_heatmap)
+additionalInput_cmp_idx <- ifelse(is.null(par_tmp$Heatmap$Groups2Compare_treat_heatmap),NA,par_tmp$Heatmap$Groups2Compare_treat_heatmap)
+psig_threhsold <- ifelse(is.null(par_tmp$Heatmap$psig_threhsold_heatmap),NA,par_tmp$Heatmap$psig_threhsold_heatmap)
+
+# select TopK (if there is an ordering)
+TopK2Show <- ifelse(any(par_tmp$Heatmap$row_selection_options=="TopK"),par_tmp$Heatmap$TopK,NA)
+        
+if(any(par_tmp$Heatmap$row_selection_options=="all")){
+  print("No entitie selection")
+  data2HandOver <- as.data.frame(assay(res_tmp$data))
+}else{
+# Note entitieSelection is a custom function
+#TODO its source code file should be provided along!
+entitieSelection=function(data,
+                          type,
+                          TopK2Show=NA,
+                          additionalInput_row_anno=NA,
+                          additionalInput_row_anno_factor=NA,
+                          additionalInput_sample_annotation_types=NA,
+                          additionalInput_ctrl_idx=NA,
+                          additionalInput_cmp_idx=NA,
+                          psig_threhsold=NA){
+  # to cover: c("TopK","significant_LFC","LFC_onlySig","rowAnno_based")
+  filtered_data=assay(data)
+  orderMakesSense_flag=FALSE
+  print("Entitie Selection")
+  #print(additionalInput_row_anno)
+  if(any(type=="rowAnno_based") & !(any(is.na(additionalInput_row_anno) &is.na(additionalInput_row_anno_factor))) & !any(additionalInput_row_anno_factor=="all")){
+    # Note here this only what to show, LFCs and more importantly multiple test correction will be done on the entire set (without the row anno based selection!!)
+    if(any(additionalInput_row_anno_factor=="all")){
+      filtered_data = filtered_data
+    }else{
+      filtered_data = filtered_data[which(data$annotation_rows[,additionalInput_row_anno] %in% additionalInput_row_anno_factor),]
+    }
+  }
+  if(!(is.na(additionalInput_sample_annotation_types)) & !(is.na(additionalInput_ctrl_idx)) & !(is.na(additionalInput_cmp_idx))){
+    if(any(type=="significant_LFC")){
+      # sort based on significance
+      # need LFCs
+      # is reachable from here? selectedData_processed()[[input$omicType]]$sample_table
+      ctrl_samples_idx <- which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_ctrl_idx)
+      comparison_samples_idx <- which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_cmp_idx)
+      if((length(ctrl_samples_idx) <= 1) | (length(comparison_samples_idx) <= 1)){
+        warning("LFC makes no sense just having a single sample per conidition, which is here the case!")
+        filtered_data=NULL
+      }else{
+        LFC_output=getLFC(filtered_data,ctrl_samples_idx,comparison_samples_idx)
+        filtered_data=filtered_data[rownames(LFC_output)[order(LFC_output$p_adj,decreasing = F)],,drop=F]
+        orderMakesSense_flag=T
+      }
+      
+    }
+    if(any(type=="LFC_onlySig")){
+      ctrl_samples_idx<-which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_ctrl_idx)
+      comparison_samples_idx<-which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_cmp_idx)
+      LFC_output=getLFC(filtered_data,ctrl_samples_idx,comparison_samples_idx)
+      if(!(any(LFC_output$p_adj<psig_threhsold))){
+        warning("No single entry left! Maybe adjust psig_threhsold_heatmap (but do not put it arbitraly high!)")
+        #req(FALSE) -> can we speak from here to output$debug?
+        filtered_data=NULL
+      }else{
+        filtered_data=filtered_data[rownames(LFC_output)[which(LFC_output$p_adj<psig_threhsold)],,drop=F]
+        filtered_data=filtered_data[rownames(LFC_output)[order(LFC_output$LFC,decreasing = F)],,drop=F]
+        orderMakesSense_flag=T
+      }
+      
+    }
+  }
+  
+  if(any(type=="TopK")){
+    if(orderMakesSense_flag){
+      #assumes the data to be sorted somehow
+      if(nrow(filtered_data)>TopK2Show){
+        filtered_data=filtered_data[c(1:TopK2Show),,drop=F]
+      }else{
+        filtered_data=filtered_data
+      }
+    }else{
+      filtered_data=NULL
+    }
+    
+  }
+  
+  
+  
+  return(filtered_data)
+                          }
+
+# get LFC
+getLFC <- function(
+  data,
+  ctrl_samples_idx,
+  comparison_samples_idx,
+  completeOutput = FALSE
+){
+  df <- as.data.frame(data)
+  # Todo by @Lea: discuss and finalize how to handle this. constant row are not removed but small noise is added should in here a check if all 0 rows?
+  ttest_raw <- function(df, grp1, grp2) {
+    x <- df[grp1]
+    y <- df[grp2]
+    x <- as.numeric(x)
+    y <- as.numeric(y)
+    results <- t.test(x, y)
+    return(results$p.value)
+  }
+  #remove constant rows
+  removedAsConst_1 <- which(apply(df[,ctrl_samples_idx],1,sd) < 1e-6)
+  df[removedAsConst_1,ctrl_samples_idx] <- df[removedAsConst_1,ctrl_samples_idx] + t(apply(df[removedAsConst_1,ctrl_samples_idx],1,function(x){
+    rnorm(
+      n = length(x),
+      mean = 0,
+      sd=0.0000001
+    )}))
+  
+  removedAsConst_2 <- which(apply(df[,comparison_samples_idx],1,sd) < 1e-6)
+  df[removedAsConst_2,comparison_samples_idx] <- df[removedAsConst_2,comparison_samples_idx] + t(apply(df[removedAsConst_2,comparison_samples_idx],1,function(x){
+    rnorm(
+      n = length(x),
+      mean = 0,
+      sd=0.0000001
+    )}))
+  
+  
+  rawpvalue <- apply(df, 1, ttest_raw, grp1 = ctrl_samples_idx, grp2 = comparison_samples_idx)
+  
+  p_adj <- p.adjust(rawpvalue, method = "fdr")
+  
+  Ctrl_mean <- apply(df[,ctrl_samples_idx],1,mean)
+  Cmp_mean <- apply(df[,comparison_samples_idx],1,mean)
+  
+  FC <- Cmp_mean/Ctrl_mean
+  
+  LFC <- log2(FC)
+  
+  # Data 2 Plot
+  results <- cbind(LFC, rawpvalue,p_adj)
+  results <- as.data.frame(results)
+  results$probename <- rownames(results)
+  if(completeOutput){
+    # report results table + inital values that where used to calculate (mostly
+    # for sainity checks)
+    colnames(df)[ctrl_samples_idx]=paste0(colnames(df)[ctrl_samples_idx],"_ctrl")
+    colnames(df)[comparison_samples_idx]=paste0(colnames(df)[comparison_samples_idx],"_cmp")
+    results=cbind(results,df[rownames(df),])
+  }
+  return(results)
+}
+
+
+  data2HandOver <- entitieSelection(
+    res_tmp$data,
+    type = par_tmp$Heatmap$row_selection_options,
+    additionalInput_row_anno = additionalInput_row_anno,
+    additionalInput_row_anno_factor = additionalInput_row_anno_factor,
+    additionalInput_sample_annotation_types = additionalInput_sample_annotation_types,
+    additionalInput_ctrl_idx = additionalInput_ctrl_idx,
+    additionalInput_cmp_idx = additionalInput_cmp_idx,
+    psig_threhsold = psig_threhsold,
+    TopK2Show = TopK2Show
+  )
+}
+        
+doThis_flag <- T
+if(is.null(data2HandOver)){
+  print("Nothing is left,e.g. no significant Terms or TopK is used but no inherent order of the data")
+  heatmap_plot <- NULL
+  doThis_flag <- F
+}
+'
+  
+  if(numberOfScenario == 10){
     stringtosave <- '
 annotation_col <- rowData(res_tmp$data)[,par_tmp$Heatmap$row_anno_options,drop=F]
-myBreaks <- c(seq(min(res_tmp$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
-seq(max(res_tmp$Heatmap$LFC)/paletteLength, max(res_tmp$Heatmap$LFC), length.out=floor(paletteLength/2)))  
-    
-heatmap_plot <- pheatmap((t(res_tmp$Heatmap[,"LFC",drop=F])),
-  main=gsub("^Heatmap","Heatmap_LFC",par_tmp$Heatmap$customTitleHeatmap),
-  show_rownames=ifelse(nrow(res_tmp$Heatmap)<=25,TRUE,FALSE),
+
+ctrl_samples_idx <- which(
+    colData(res_tmp$data)[,par_tmp$Heatmap$sample_annotation_types_cmp_heatmap]%in%par_tmp$Heatmap$Groups2Compare_ref_heatmap
+    )
+comparison_samples_idx <- which(
+  colData(res_tmp$data)[,par_tmp$Heatmap$sample_annotation_types_cmp_heatmap]%in%par_tmp$Heatmap$Groups2Compare_treat_heatmap
+)
+if(length(comparison_samples_idx) <=1 | length(ctrl_samples_idx) <=1){
+  print("Choose variable with at least two samples per condition!")
+  doThis_flag <- F
+}
+
+if(par_tmp$PreProcessing_Procedure == "simpleCenterScaling"| any(data2HandOver)< 0){
+  print("Remember do not use normal center + scaling (negative Values!)")
+}else if(doThis_flag){
+  Data2Plot <- getLFC(
+    data = as.data.frame(data2HandOver),
+    ctrl_samples_idx = ctrl_samples_idx,
+    comparison_samples_idx = comparison_samples_idx
+  )
+              
+if(par_tmp$Heatmap$LFC_toHeatmap){
+  myBreaks <- c(seq(min(res_tmp$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
+                seq(max(res_tmp$Heatmap$LFC)/paletteLength, max(res_tmp$Heatmap$LFC), length.out=floor(paletteLength/2)))
+  annotation_col <- rowData(res_tmp$data)[rownames(Data2Plot),par_tmp$Heatmap$row_anno_options,drop=F]
+}
+
+
+heatmap_plot <- pheatmap((t(Data2Plot[,"LFC",drop=F])),
+  main="Heatmap - LFC",
+  show_rownames=ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
   show_colnames=TRUE,
   cluster_cols = par_tmp$Heatmap$cluster_cols,
   cluster_rows = FALSE, # par_tmp$Heatmap$cluster_rows,
   scale=ifelse(par_tmp$Heatmap$rowWiseScaled,"row","none"),
   # cutree_cols = 4,
   #fontsize = font.size,
-  annotation_col = res_tmp$data[[par_tmp$Heatmap$omicType]]$annotation_rows[,par_tmp$Heatmap$row_anno_options,drop=F],
-  #annotation_row = res_tmp$data[[par_tmp$Heatmap$omicType]]$annotation_rows[,par_tmp$Heatmap$row_anno_options,drop=F],
+  annotation_col = annotation_col,
+
   silent = F,
   breaks = myBreaks,
   color = myColor_fill)'
   }
-  if(numberOfScenario==11){
+  if(numberOfScenario == 11){
     stringtosave <- '
-clusterRowspossible <- ifelse(nrow(as.matrix(res_tmp$Heatmap))>1,par_tmp$Heatmap$cluster_rows,F)
+annotation_col <- colData(res_tmp$data)[,par_tmp$Heatmap$anno_options,drop=F]
+annotation_row <- rowData(res_tmp$data)[,par_tmp$Heatmap$row_anno_options,drop=F]
+# convert both to data.frame
+annotation_col <- as.data.frame(annotation_col)
+annotation_row <- as.data.frame(annotation_row)
+
+clusterRowspossible <- ifelse(nrow(as.matrix(assay(res_tmp$data)))>1,par_tmp$Heatmap$cluster_rows,F)
+
 heatmap_plot <- pheatmap(as.matrix(res_tmp$Heatmap),
-main=par_tmp$Heatmap$customTitleHeatmap,
-  show_rownames=ifelse(nrow(res_tmp$Heatmap)<=par_tmp$Heatmap$row_label_no,TRUE,FALSE),
-  labels_row = rowData(res_tmp$data)[rownames(res_tmp$Heatmap),par_tmp$Heatmap$row_label_options],
+  main="Heatmap",
+  show_rownames=ifelse(nrow((assay(res_tmp$data)))<=par_tmp$Heatmap$row_label_no,TRUE,FALSE),
+  labels_row = rowData(res_tmp$data)[rownames(assay(res_tmp$data)),par_tmp$Heatmap$row_label_options],
   show_colnames=TRUE,
   cluster_cols = par_tmp$Heatmap$cluster_cols,
   cluster_rows = clusterRowspossible,
   scale=ifelse(par_tmp$Heatmap$rowWiseScaled,"row","none"),
   # cutree_cols = 4,
   #fontsize = font.size,
-  annotation_col = par_tmp$Heatmap$annotation_col,
-  annotation_row =par_tmp$Heatmap$annotation_row,
-  annotation_colors = par_tmp$Heatmap$mycolors,
+  annotation_col = annotation_col,
+  annotation_row =annotation_row,
+  annotation_colors = mycolors,
   silent = F)'
   }
 stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave)
@@ -525,17 +757,17 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
 ## Sample Correlation plot ----
   if(numberOfScenario == 18){
     stringtosave = 'annotationDF <- colData(res_tmp$data)[,par_tmp$SampleCorr$SampleAnnotationChoice,drop = F]
-    cormat <- cor(
-      x = as.matrix(assay(res_tmp$data)),
-      method = par_tmp$SampleCorr$corrMethod
-    )
+cormat <- cor(
+  x = as.matrix(assay(res_tmp$data)),
+  method = par_tmp$SampleCorr$corrMethod
+)
 
-    SampleCorrelationPlot <- pheatmap(
-    mat = cormat, #res_tmp$SampleCorr
-    annotation_row = par_tmp$SampleCorr$annotationDF,
-    main = par_tmp$SampleCorr$customTitleSampleCorrelation,
-    annotation_colors = par_tmp$SampleCorr$anno_colors
-    )'
+SampleCorrelationPlot <- pheatmap(
+mat = cormat, #res_tmp$SampleCorr
+annotation_row = par_tmp$SampleCorr$annotationDF,
+main = par_tmp$SampleCorr$customTitleSampleCorrelation,
+annotation_colors = par_tmp$SampleCorr$anno_colors
+)'
   }
 ## Significance Analysis -----
 ### Venn Diagram ----
@@ -546,6 +778,8 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
   if(numberOfScenario == 21){
     stringtosave <- 'UpSetR::upset(fromList(res_tmp$SignificanceAnalysis))'
   }
+
+### Volcano ----
 
 
 

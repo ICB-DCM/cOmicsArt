@@ -149,31 +149,9 @@ sample_correlation_server <- function(id, data, params, updates){
             anno_colors = anno_colors,
             sampleCorrelation_scenario = sampleCorrelation_scenario
           )
-
-        # assign res_temp["SampleCorrelation"]
-        res_tmp[["SampleCorr"]] <<- cormat
-        # assign par_temp["SampleCorrelation"]
-
-        output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
-        # Longer names causes issues for saving
-        if(nchar(customTitleSampleCorrelation) >= 250){
-          customTitleSampleCorrelation <- "SampleCorrelation"
-        }
-        # par_tmp[["SampleCorr"]] <<- list(
-        #   customTitleSampleCorrelation = customTitleSampleCorrelation,
-        #   SampleCorrelationPlot_final = SampleCorrelationPlot_final,
-        #   cormat = cormat,
-        #   annotationDF = annotationDF,
-        #   anno_colors = anno_colors,
-        #   sampleCorrelation_scenario = sampleCorrelation_scenario
-        # )
-        tmp <- getUserReactiveValues(input)
-        par_tmp$SampleCorr[names(tmp)] <<- tmp
-        par_tmp$SampleCorr$customTitleSampleCorrelation <<- customTitleSampleCorrelation
-        par_tmp$SampleCorr$annotationDF <<- as.data.frame(annotationDF)
-        par_tmp$SampleCorr$anno_colors <<- anno_colors
         }
       })
+      #test
 
       
       # Download Section ----
@@ -181,24 +159,18 @@ sample_correlation_server <- function(id, data, params, updates){
         filename = function(){
           paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
         },
-        # content = function(file){
-        #   envList = list(
-        #     cormat = ifelse(exists("cormat"),par_tmp[["SampleCorr"]]$cormat,NA),
-        #     annotationDF = ifelse(exists("annotationDF"),par_tmp[["SampleCorr"]]$annotationDF,NA),
-        #     customTitleSampleCorrelation = ifelse(exists("customTitleSampleCorrelation"),par_tmp[["SampleCorr"]]$customTitleSampleCorrelation,NA),
-        #     anno_colors = ifelse(exists("anno_colors"),par_tmp[["SampleCorr"]]$anno_colors,NA)
-        #   )
-       
-          content = function(file){
-            envList <- list(
-              res_tmp = res_tmp,
-              par_tmp = par_tmp
-            )
+        content = function(file){
+          envList = list(
+            cormat = ifelse(exists("cormat"),par_tmp[["SampleCorr"]]$cormat,NA),
+            annotationDF = ifelse(exists("annotationDF"),par_tmp[["SampleCorr"]]$annotationDF,NA),
+            customTitleSampleCorrelation = ifelse(exists("customTitleSampleCorrelation"),par_tmp[["SampleCorr"]]$customTitleSampleCorrelation,NA),
+            anno_colors = ifelse(exists("anno_colors"),par_tmp[["SampleCorr"]]$anno_colors,NA)
+          )
           
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
-          sampleCorrelation_scenario <- 18
-          write(getPlotCode(sampleCorrelation_scenario), file.path(temp_directory, "Code.R"))
+
+          write(getPlotCode(par_tmp[["SampleCorr"]]$sampleCorrelation_scenario), file.path(temp_directory, "Code.R"))
           
           saveRDS(envList, file.path(temp_directory, "Data.RDS"))
           zip::zip(
