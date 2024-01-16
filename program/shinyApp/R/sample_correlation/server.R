@@ -48,7 +48,14 @@ sample_correlation_server <- function(id, data, params, updates){
           # check value of input$Do_SampleCorrelation
           annotationDF <- colData(data$data)[,input$SampleAnnotationChoice,drop = F]
           check <- check_calculations(
-            list(corrMethod = input$corrMethod),
+            list(
+              corrMethod = input$corrMethod,
+              data_info = list(
+                rows = length(rownames(data$data)),
+                cols = length(colnames(data$data)),
+                preprocessing = par_tmp$PreProcessing_Procedure
+              )
+            ),
             "SampleCorrelation"
           )
           if (check == "No Result yet"){
@@ -118,7 +125,12 @@ sample_correlation_server <- function(id, data, params, updates){
           res_tmp[["SampleCorrelation"]] <<- cormat
           # assign par_temp["SampleCorrelation"]
           par_tmp[["SampleCorrelation"]] <<- list(
-            corrMethod = input$corrMethod
+            corrMethod = input$corrMethod,
+            data_info = list(
+              rows = length(rownames(data$data)),
+              cols = length(colnames(data$data)),
+              preprocessing = par_tmp$PreProcessing_Procedure
+            )
           )
 
           sampleCorrelation_scenario <- 18
@@ -157,7 +169,7 @@ sample_correlation_server <- function(id, data, params, updates){
           
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
-          
+
           write(getPlotCode(par_tmp[["SampleCorr"]]$sampleCorrelation_scenario), file.path(temp_directory, "Code.R"))
           
           saveRDS(envList, file.path(temp_directory, "Data.RDS"))
