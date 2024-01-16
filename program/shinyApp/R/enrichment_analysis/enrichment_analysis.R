@@ -49,7 +49,7 @@ gene_set_enrichment <- function(
 
   if(enrichments2do$KEGG){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$KEGG ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$KEGG ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -64,15 +64,15 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$KEGG <<- EnrichmentRes_Kegg
-      par_tmp$EA[[comp_type]][[contrast]]$KEGG <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$KEGG <<- EnrichmentRes_Kegg
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$KEGG <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_Kegg <- res_tmp$EA[[comp_type]][[contrast]]$KEGG
+      EnrichmentRes_Kegg <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$KEGG
     }
   }
   if(enrichments2do$GO){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$GO ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO ))
     ){
       EnrichmentRes_GO <- clusterProfiler::gseGO(
         gene = geneSetChoice,
@@ -85,16 +85,16 @@ gene_set_enrichment <- function(
         OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"),
         pAdjustMethod = "none"  # TODO: discuss
       )
-      res_tmp$EA[[comp_type]][[contrast]]$GO <<- EnrichmentRes_GO
-      par_tmp$EA[[comp_type]][[contrast]]$GO <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO <<- EnrichmentRes_GO
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_GO <- res_tmp$EA[[comp_type]][[contrast]]$GO
+      EnrichmentRes_GO <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO
     }
   }
   # Hallmarks
   if(enrichments2do$Hallmarks){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$Hallmarks ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$Hallmarks ))
     ){
       Hallmarkset <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -108,16 +108,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$Hallmarks <<- EnrichmentRes_Hallmarks
-      par_tmp$EA[[comp_type]][[contrast]]$Hallmarks <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$Hallmarks <<- EnrichmentRes_Hallmarks
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$Hallmarks <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_Hallmarks <- res_tmp$EA[[comp_type]][[contrast]]$Hallmarks
+      EnrichmentRes_Hallmarks <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$Hallmarks
     }
   }
   # C1
   if(enrichments2do$C1){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$C1 ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C1 ))
     ){
       C1set <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -131,17 +131,17 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$C1 <<- EnrichmentRes_C1
-      par_tmp$EA[[comp_type]][[contrast]]$C1 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C1 <<- EnrichmentRes_C1
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C1 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_C1 <- res_tmp$EA[[comp_type]][[contrast]]$C1
+      EnrichmentRes_C1 <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C1
     }
       
   }
   # C2
   if(enrichments2do$C2){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$C2 ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C2 ))
     ){
       C2set <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -155,16 +155,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$C2 <<- EnrichmentRes_C2
-      par_tmp$EA[[comp_type]][[contrast]]$C2 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C2 <<- EnrichmentRes_C2
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C2 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_C2 <- res_tmp$EA[[comp_type]][[contrast]]$C2
+      EnrichmentRes_C2 <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C2
     }
   }
   # C3
   if(enrichments2do$C3){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$C3 ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C3 ))
     ){
       C3set <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -178,16 +178,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$C3 <<- EnrichmentRes_C3
-      par_tmp$EA[[comp_type]][[contrast]]$C3 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C3 <<- EnrichmentRes_C3
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C3 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_C3 <- res_tmp$EA[[comp_type]][[contrast]]$C3
+      EnrichmentRes_C3 <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C3
     }
   }
   # C4
   if(enrichments2do$C4){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$C4 ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C4 ))
     ){
       C4set <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -201,16 +201,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$C4 <<- EnrichmentRes_C4
-      par_tmp$EA[[comp_type]][[contrast]]$C4 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C4 <<- EnrichmentRes_C4
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C4 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_C4 <- res_tmp$EA[[comp_type]][[contrast]]$C4
+      EnrichmentRes_C4 <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C4
     }
   }
   # C5
   if(enrichments2do$C5){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$C5 ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C5 ))
     ){
       C5set <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -224,16 +224,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$C5 <<- EnrichmentRes_C5
-      par_tmp$EA[[comp_type]][[contrast]]$C5 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C5 <<- EnrichmentRes_C5
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C5 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_C5 <- res_tmp$EA[[comp_type]][[contrast]]$C5
+      EnrichmentRes_C5 <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C5
     }
   }
   # C6
   if(enrichments2do$C6){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$C6 ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C6 ))
     ){
       C6set <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -247,16 +247,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$C6 <<- EnrichmentRes_C6
-      par_tmp$EA[[comp_type]][[contrast]]$C6 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C6 <<- EnrichmentRes_C6
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C6 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_C6 <- res_tmp$EA[[comp_type]][[contrast]]$C6
+      EnrichmentRes_C6 <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C6
     }
   }
   # C7
   if(enrichments2do$C7){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$C7 ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C7 ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -270,16 +270,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$C7 <<- EnrichmentRes_C7
-      par_tmp$EA[[comp_type]][[contrast]]$C7 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C7 <<- EnrichmentRes_C7
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C7 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_C7 <- res_tmp$EA[[comp_type]][[contrast]]$C7
+      EnrichmentRes_C7 <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C7
     }
   }
   # C8
   if(enrichments2do$C8){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$C8 ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C8 ))
     ){
       C8set <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -293,16 +293,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$C8 <<- EnrichmentRes_C8
-      par_tmp$EA[[comp_type]][[contrast]]$C8 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C8 <<- EnrichmentRes_C8
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C8 <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_C8 <- res_tmp$EA[[comp_type]][[contrast]]$C8
+      EnrichmentRes_C8 <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$C8
     }
   }
   # C2 subset CGP
   if(enrichments2do$CGP){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$CGP ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CGP ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -317,16 +317,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$CGP <<- EnrichmentRes_CGP
-      par_tmp$EA[[comp_type]][[contrast]]$CGP <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CGP <<- EnrichmentRes_CGP
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CGP <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_CGP <- res_tmp$EA[[comp_type]][[contrast]]$CGP
+      EnrichmentRes_CGP <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CGP
     }
   }
   # C2 subset CP
   if(enrichments2do$CP){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$CP ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CP ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -341,16 +341,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$CP <<- EnrichmentRes_CP
-      par_tmp$EA[[comp_type]][[contrast]]$CP <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CP <<- EnrichmentRes_CP
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CP <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_CP <- res_tmp$EA[[comp_type]][[contrast]]$CP
+      EnrichmentRes_CP <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CP
     }
   }
   # C2:CP subset BIOCARTA
   if(enrichments2do$BIOCARTA){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$BIOCARTA ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$BIOCARTA ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -365,16 +365,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$BIOCARTA <<- EnrichmentRes_BIOCARTA
-      par_tmp$EA[[comp_type]][[contrast]]$BIOCARTA <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$BIOCARTA <<- EnrichmentRes_BIOCARTA
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$BIOCARTA <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_BIOCARTA <- res_tmp$EA[[comp_type]][[contrast]]$BIOCARTA
+      EnrichmentRes_BIOCARTA <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$BIOCARTA
     }
   }
   # C2:CP subset PID
   if(enrichments2do$PID){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$PID ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$PID ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -389,16 +389,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$PID <<- EnrichmentRes_PID
-      par_tmp$EA[[comp_type]][[contrast]]$PID <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$PID <<- EnrichmentRes_PID
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$PID <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_PID <- res_tmp$EA[[comp_type]][[contrast]]$PID
+      EnrichmentRes_PID <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$PID
     }
   }
   # C2:CP subset REACTOME
   if(enrichments2do$REACTOME){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$REACTOME ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$REACTOME ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -413,16 +413,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$REACTOME <<- EnrichmentRes_REACTOME
-      par_tmp$EA[[comp_type]][[contrast]]$REACTOME <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$REACTOME <<- EnrichmentRes_REACTOME
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$REACTOME <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_REACTOME <- res_tmp$EA[[comp_type]][[contrast]]$REACTOME
+      EnrichmentRes_REACTOME <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$REACTOME
     }
   }
   # C2:CP subset WIKIPATHWAYS
   if(enrichments2do$WIKIPATHWAYS){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$WIKIPATHWAYS ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$WIKIPATHWAYS ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -437,16 +437,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$WIKIPATHWAYS <<- EnrichmentRes_WIKIPATHWAYS
-      par_tmp$EA[[comp_type]][[contrast]]$WIKIPATHWAYS <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$WIKIPATHWAYS <<- EnrichmentRes_WIKIPATHWAYS
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$WIKIPATHWAYS <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_WIKIPATHWAYS <- res_tmp$EA[[comp_type]][[contrast]]$WIKIPATHWAYS
+      EnrichmentRes_WIKIPATHWAYS <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$WIKIPATHWAYS
     }
   }
   # C3 subset MIR:MIRDB
   if(enrichments2do$MIRDB){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$MIRDB ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$MIRDB ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -461,16 +461,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$MIRDB <<- EnrichmentRes_MIRDB
-      par_tmp$EA[[comp_type]][[contrast]]$MIRDB <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$MIRDB <<- EnrichmentRes_MIRDB
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$MIRDB <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_MIRDB <- res_tmp$EA[[comp_type]][[contrast]]$MIRDB
+      EnrichmentRes_MIRDB <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$MIRDB
     }
   }
   # C3 subset MIR:MIR_Legacy
   if(enrichments2do$MIR_Legacy){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$MIR_Legacy ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$MIR_Legacy ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -485,16 +485,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$MIR_Legacy <<- EnrichmentRes_MIR_Legacy
-      par_tmp$EA[[comp_type]][[contrast]]$MIR_Legacy <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$MIR_Legacy <<- EnrichmentRes_MIR_Legacy
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$MIR_Legacy <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_MIR_Legacy <- res_tmp$EA[[comp_type]][[contrast]]$MIR_Legacy
+      EnrichmentRes_MIR_Legacy <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$MIR_Legacy
     }
   }
   # C3 subset TFT:GTRD
   if(enrichments2do$GTRD){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$GTRD ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GTRD ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -509,16 +509,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$GTRD <<- EnrichmentRes_GTRD
-      par_tmp$EA[[comp_type]][[contrast]]$GTRD <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GTRD <<- EnrichmentRes_GTRD
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GTRD <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_GTRD <- res_tmp$EA[[comp_type]][[contrast]]$GTRD
+      EnrichmentRes_GTRD <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GTRD
     }
   }
   # C3 subset TFT:TFT_Legacy
   if(enrichments2do$TFT_Legacy){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$TFT_Legacy ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$TFT_Legacy ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -533,16 +533,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$TFT_Legacy <<- EnrichmentRes_TFT_Legacy
-      par_tmp$EA[[comp_type]][[contrast]]$TFT_Legacy <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$TFT_Legacy <<- EnrichmentRes_TFT_Legacy
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$TFT_Legacy <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_TFT_Legacy <- res_tmp$EA[[comp_type]][[contrast]]$TFT_Legacy
+      EnrichmentRes_TFT_Legacy <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$TFT_Legacy
     }
   }
   # C4 subset CGN
   if(enrichments2do$CGN){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$CGN ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CGN ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -557,16 +557,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$CGN <<- EnrichmentRes_CGN
-      par_tmp$EA[[comp_type]][[contrast]]$CGN <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CGN <<- EnrichmentRes_CGN
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CGN <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_CGN <- res_tmp$EA[[comp_type]][[contrast]]$CGN
+      EnrichmentRes_CGN <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CGN
     }
   }
   # C4 subset CM
   if(enrichments2do$CM){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$CM ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CM ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -581,16 +581,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$CM <<- EnrichmentRes_CM
-      par_tmp$EA[[comp_type]][[contrast]]$CM <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CM <<- EnrichmentRes_CM
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CM <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_CM <- res_tmp$EA[[comp_type]][[contrast]]$CM
+      EnrichmentRes_CM <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$CM
     }
   }
   # C5 subset GO BP
   if(enrichments2do$GO_BP){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$GO_BP ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO_BP ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -605,16 +605,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$GO_BP <<- EnrichmentRes_GO_BP
-      par_tmp$EA[[comp_type]][[contrast]]$GO_BP <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO_BP <<- EnrichmentRes_GO_BP
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO_BP <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_GO_BP <- res_tmp$EA[[comp_type]][[contrast]]$GO_BP
+      EnrichmentRes_GO_BP <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO_BP
     }
   }
   # C5 subset GO CC
   if(enrichments2do$GO_CC){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$GO_CC ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO_CC ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -629,16 +629,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$GO_CC <<- EnrichmentRes_GO_CC
-      par_tmp$EA[[comp_type]][[contrast]]$GO_CC <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO_CC <<- EnrichmentRes_GO_CC
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO_CC <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_GO_CC <- res_tmp$EA[[comp_type]][[contrast]]$GO_CC
+      EnrichmentRes_GO_CC <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO_CC
     }
   }
   # C5 subset GO MF
   if(enrichments2do$GO_MF){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$GO_MF ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO_MF ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -653,16 +653,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$GO_MF <<- EnrichmentRes_GO_MF
-      par_tmp$EA[[comp_type]][[contrast]]$GO_MF <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO_MF <<- EnrichmentRes_GO_MF
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO_MF <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_GO_MF <- res_tmp$EA[[comp_type]][[contrast]]$GO_MF
+      EnrichmentRes_GO_MF <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$GO_MF
     }
   }
   # C5 subset HPO
   if(enrichments2do$HPO){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$HPO ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$HPO ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -677,16 +677,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$HPO <<- EnrichmentRes_HPO
-      par_tmp$EA[[comp_type]][[contrast]]$HPO <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$HPO <<- EnrichmentRes_HPO
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$HPO <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_HPO <- res_tmp$EA[[comp_type]][[contrast]]$HPO
+      EnrichmentRes_HPO <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$HPO
     }
   }
   # C7 subset IMMUNESIGDB
   if(enrichments2do$IMMUNESIGDB){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$IMMUNESIGDB ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$IMMUNESIGDB ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -701,16 +701,16 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$IMMUNESIGDB <<- EnrichmentRes_IMMUNESIGDB
-      par_tmp$EA[[comp_type]][[contrast]]$IMMUNESIGDB <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$IMMUNESIGDB <<- EnrichmentRes_IMMUNESIGDB
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$IMMUNESIGDB <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_IMMUNESIGDB <- res_tmp$EA[[comp_type]][[contrast]]$IMMUNESIGDB
+      EnrichmentRes_IMMUNESIGDB <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$IMMUNESIGDB
     }
   }
   # C7 subset VAX
   if(enrichments2do$VAX){
     if(
-      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp$EA[[comp_type]][[contrast]]$VAX ))
+      !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$VAX ))
     ){
       genesets4ea <- msigdbr(
         species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
@@ -725,10 +725,10 @@ gene_set_enrichment <- function(
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         pvalueCutoff = 1
       )
-      res_tmp$EA[[comp_type]][[contrast]]$VAX <<- EnrichmentRes_VAX
-      par_tmp$EA[[comp_type]][[contrast]]$VAX <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
+      res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$VAX <<- EnrichmentRes_VAX
+      par_tmp[[session_key]]$EA[[comp_type]][[contrast]]$VAX <<- list("adjustMethod"=adjustMethod, "sort"=sorting)
     }else{
-      EnrichmentRes_VAX <- res_tmp$EA[[comp_type]][[contrast]]$VAX
+      EnrichmentRes_VAX <- res_tmp[[session_key]]$EA[[comp_type]][[contrast]]$VAX
     }
       
   }

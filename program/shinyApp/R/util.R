@@ -4,7 +4,7 @@
 update_data <- function(data, updates, current_updates){
   # for stability reasons, data is ALWAYS pulled here
   print("Updating data...")
-  data <- res_tmp
+  data <- res_tmp[[session_key]]
   return(data)
 }
 
@@ -32,7 +32,7 @@ update_params <- function(params, updates, current_updates){
   # could force to always update
   if (updates() > current_updates & current_updates > 0){
     print("Updating parameters...")
-    params <- par_tmp
+    params <- par_tmp[[session_key]]
   }
   return(params)
 }

@@ -374,7 +374,7 @@ heatmap_server <- function(id, data, params, updates){
               output$Options_selected_out_3 <- renderText("Choose variable with at least two samples per condition!")
               doThis_flag <- F
             }
-            if(par_tmp$PreProcessing_Procedure == "simpleCenterScaling"|
+            if(par_tmp[[session_key]]$PreProcessing_Procedure == "simpleCenterScaling"|
                any(assay(data$data))< 0){
               
               print("Remember do not use normal center + scaling (negative Values!)")
@@ -455,15 +455,15 @@ heatmap_server <- function(id, data, params, updates){
         } else {
           print("Plotting saved result")
           if(input$LFC_toHeatmap){
-            myBreaks <- c(seq(min(res_tmp$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
-                            seq(max(res_tmp$Heatmap$LFC)/paletteLength, max(res_tmp$Heatmap$LFC), length.out=floor(paletteLength/2)))
+            myBreaks <- c(seq(min(res_tmp[[session_key]]$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
+                            seq(max(res_tmp[[session_key]]$Heatmap$LFC)/paletteLength, max(res_tmp[[session_key]]$Heatmap$LFC), length.out=floor(paletteLength/2)))
             annotation_col <- rowData(data2Plot)[,input$row_anno_options,drop=F]
 
             scenario <- 10
             heatmap_plot <- pheatmap(
-                t(res_tmp$Heatmap[,"LFC",drop=F]),
+                t(res_tmp[[session_key]]$Heatmap[,"LFC",drop=F]),
                 main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
-                show_rownames = ifelse(nrow(res_tmp$Heatmap)<=25,TRUE,FALSE),
+                show_rownames = ifelse(nrow(res_tmp[[session_key]]$Heatmap)<=25,TRUE,FALSE),
                 show_colnames = TRUE,
                 cluster_cols = input$cluster_cols,
                 cluster_rows = FALSE,
@@ -474,12 +474,12 @@ heatmap_server <- function(id, data, params, updates){
                 color = myColor_fill
               )
           } else {
-            clusterRowspossible <- ifelse(nrow(as.matrix(res_tmp$Heatmap))>1,input$cluster_rows,F)
-            if(any(is.na(res_tmp$Heatmap))){
-              idx_of_nas <- which(apply(res_tmp$Heatmap,1,is.na)) # why do we produce Nas?
+            clusterRowspossible <- ifelse(nrow(as.matrix(res_tmp[[session_key]]$Heatmap))>1,input$cluster_rows,F)
+            if(any(is.na(res_tmp[[session_key]]$Heatmap))){
+              idx_of_nas <- which(apply(res_tmp[[session_key]]$Heatmap,1,is.na)) # why do we produce Nas?
               print(idx_of_nas)
               if(length(idx_of_nas)>0){
-                res_tmp$Heatmap <- res_tmp$Heatmap[-idx_of_nas,]
+                res_tmp[[session_key]]$Heatmap <- res_tmp[[session_key]]$Heatmap[-idx_of_nas,]
               }
 
               annotation_col <- colData(data$data)[-idx_of_nas,input$anno_options,drop=F]
@@ -496,9 +496,9 @@ heatmap_server <- function(id, data, params, updates){
             }
             scenario <- 11
             heatmap_plot <- pheatmap(
-              as.matrix(res_tmp$Heatmap),
+              as.matrix(res_tmp[[session_key]]$Heatmap),
               main = customTitleHeatmap,
-              show_rownames = ifelse(nrow(res_tmp$Heatmap)<=input$row_label_no,TRUE,FALSE),
+              show_rownames = ifelse(nrow(res_tmp[[session_key]]$Heatmap)<=input$row_label_no,TRUE,FALSE),
               labels_row = rowData(data$data)[rownames(data2HandOver),input$row_label_options],
               show_colnames = TRUE,
               cluster_cols = input$cluster_cols,
@@ -533,16 +533,16 @@ heatmap_server <- function(id, data, params, updates){
         # Heatmap_Groups2Compare_ctrl_heatmap <- input$Groups2Compare_ctrl_heatmap
         
 
-        # res_tmp gets data2HandOver or Data2Plot depending on scenario
+        # res_tmp[[session_key]] gets data2HandOver or Data2Plot depending on scenario
         if(scenario == 10){
-          res_tmp[["Heatmap"]] <<- Data2Plot
+          res_tmp[[session_key]][["Heatmap"]] <<- Data2Plot
         }else if(scenario == 11){
-          res_tmp[["Heatmap"]] <<- data2HandOver
+          res_tmp[[session_key]][["Heatmap"]] <<- data2HandOver
         }
-        # par_tmp gets the parameters used for the heatmap
+        # par_tmp[[session_key]] gets the parameters used for the heatmap
         ## This exports all reactive Values in the PCA namespace 
         tmp <- getUserReactiveValues(input)
-        par_tmp$Heatmap[names(tmp)] <<- tmp
+        par_tmp[[session_key]]$Heatmap[names(tmp)] <<- tmp
         
         
         output$getR_Code_Heatmap <- downloadHandler(
@@ -552,8 +552,8 @@ heatmap_server <- function(id, data, params, updates){
           content = function(file){
             envList=list(
 
-              res_tmp=res_tmp,
-              par_tmp=par_tmp
+              res_tmp[[session_key]]=res_tmp[[session_key]],
+              par_tmp[[session_key]]=par_tmp[[session_key]]
             )
             
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))

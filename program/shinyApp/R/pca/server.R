@@ -320,9 +320,9 @@ pca_Server <- function(id, data, params, row_select, updates){
           pca_reactives$df_loadings <- df_loadings
 
           # assign res_temp
-          res_tmp[["PCA"]] <<- list(pca)
+          res_tmp[[session_key]][["PCA"]] <<- list(pca)
           # assign par_temp as empty list
-          par_tmp[["PCA"]] <<- list(
+          par_tmp[[session_key]][["PCA"]] <<- list(
             # add a dummy parameter to avoid error
             dummy = "dummy",
             sample_selection_pca = input$sample_selection_pca,
