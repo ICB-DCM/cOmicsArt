@@ -71,8 +71,8 @@ data_selection_main_panel <- mainPanel(
         id = "advanced",
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-          uiOutput(outputId = "data_matrix1_ui") %>% helper(type = "markdown", content = "DataSelection_Matrix"),
-          uiOutput(outputId = "data_sample_anno1_ui") %>% helper(type = "markdown", content = "DataSelection_SampleAnno")
+          uiOutput(outputId = "data_matrix1_ui"),  # %>% helper(type = "markdown", content = "DataSelection_Matrix"),
+          uiOutput(outputId = "data_sample_anno1_ui"),  # %>% helper(type = "markdown", content = "DataSelection_SampleAnno")
         ),
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),

@@ -31,7 +31,7 @@ single_gene_visualisation_main_ui <- function(ns){
       NULL
     ),
     h5(HTML("Note, that you only see boxplots if you have more than 3 samples per group")),
-    uiOutput(outputId = ns("chooseComparisons_ui")) %>% helper(type = "markdown", content = "SingleGene_Comparisons"),
+    uiOutput(outputId = ns("chooseComparisons_ui")),
     splitLayout(
       style = "border: 1px solid silver:",
       cellWidths = c("70%", "30%"),
@@ -40,7 +40,7 @@ single_gene_visualisation_main_ui <- function(ns){
         inputId = ns("only2Report_SingleEntities"),
         label = "Send only to Report",
         class = "btn-info"
-      ) %>% helper(type = "markdown", content = "SingleGene_Download"),
+      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
     ),
     splitLayout(
       style = "border: 1px solid silver:",
