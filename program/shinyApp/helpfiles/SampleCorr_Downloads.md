@@ -16,7 +16,7 @@ the plot.
 
 Here we generate the relevant R code for you to reproduce the plot starting from data 
 selection up to the `ggplot` commands. Relevant data is downloaded together with the 
-code in a zip-Folder to enable running the code locally. This is a splendid choice if 
+code in a zip-folder to enable running the code locally. This is a nice choice if 
 you either **want to learn coding** and understand what was done, or if you want to 
 **individualize your plot** beyond the standard options we provide.
 

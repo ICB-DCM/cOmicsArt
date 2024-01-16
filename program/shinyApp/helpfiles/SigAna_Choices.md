@@ -45,8 +45,7 @@
   - Select the method for correcting p-values to account for multiple testing.
 
 - **Options:**
-  - Choose from various correction methods. For a bit more information on multiple 
-    testing correction, [read here](https://en.wikipedia.org/wiki/Multiple_comparisons_problem).
+  - Choose from various correction methods:
 
     **1. None:**
     
@@ -95,4 +94,6 @@
     - **Description:**
       - Controls the expected proportion of falsely rejected null hypotheses.
       - More liberal than family-wise error rate methods.
+
+  - For a bit more information on multiple testing correction, [read here](https://en.wikipedia.org/wiki/Multiple_comparisons_problem).
 

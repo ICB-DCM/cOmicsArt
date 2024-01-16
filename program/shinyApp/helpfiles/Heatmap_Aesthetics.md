@@ -34,7 +34,7 @@
   - Default value is set to TRUE (enabled).
 
 - **Note:**
-  - Clustering allows to see patterns in the data.
+  - Clustering allows to see patterns in the data. As the clustering is data-driven only and overlap with any of your defined categories (e.g., treated and untreated) indicates a data signal to able to distinguish your groups.
 
 **6. Row-Wise Scaling:**
 

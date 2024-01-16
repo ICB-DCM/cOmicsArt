@@ -1,7 +1,7 @@
 ## Choosing groups for comparison
 
 ---
-This options lets you specify how group the samples based on the annotation categories 
+This option lets you specify how to group the samples based on the annotation categories 
 provided in the sample annotation file. This only has an effect if you have chosen 
 `boxplots_withTesting` as the visualization style.
 
