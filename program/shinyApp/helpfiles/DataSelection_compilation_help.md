@@ -4,5 +4,5 @@
 
 Click this button to **download an R object** that contains all the data you have uploaded.
 Can be used to upload the data again later at `Data Upload via file input` &rarr; 
-`Load precompiled data`. In this way you can save time and not always have to upload three datafiles.
+`Load precompiled data`.
 

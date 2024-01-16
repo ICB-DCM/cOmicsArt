@@ -69,6 +69,9 @@ methods](https://en.wikipedia.org/wiki/Correlation_coefficient).
 **Application:**
 - Select the correlation method based on the nature of the data and the relationships you want to capture.
 
+**Note:**
+- These correlation methods provide insights into different aspects of relationships between variables. Understanding their characteristics helps in choosing the most appropriate method for a given analysis.
+
 ***
 
 ### Color Annotation

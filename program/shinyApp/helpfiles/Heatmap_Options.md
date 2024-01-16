@@ -1,3 +1,4 @@
+Certainly! Here's an updated description for the row selection options in the heatmap:
 
 ---
 
@@ -11,10 +12,10 @@
 - **Options**
   - _all_: Display all rows in the heatmap.
   - _TopK_: Show the top K rows based on the specified criteria. If rows are ordered, 
-    it displays the top K, hence if K = 10 you selected the Top 10; otherwise, it shows all rows. **Only makes sense in 
+    it displays the top K; otherwise, it shows all rows. **Only makes sense in 
     conjunction with "significant_LFC" or "LFC_onlySig" row selection methods.**
   - _significant_LFC_: Display rows sorted based on the significance of log fold changes. Requires specifying control and comparison groups.
-  - _LFC_onlySig_: Display rows with significant log fold changes based on a specified significance threshold. Then ordered after log2 Fold changes. Requires specifying control and comparison groups.
+  - _LFC_onlySig_: Display rows with significant log fold changes based on a specified significance threshold. Requires specifying control and comparison groups.
   - _rowAnno_based_: Customize row selection based on additional row annotation factors. Select specific factors for tailored row display.
 
 **2. Show Log Fold Changes:**

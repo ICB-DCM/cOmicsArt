@@ -40,7 +40,7 @@
     - Internally a `DESeq object` is created, which is used for the downstream 
       analysis. The vst transformation is used for visualizations such as the PCA.
     - The formulas supported are only simple ones for now. For a more complex 
-      analysis, we suggest to write your own script. For this, you can perform within the App your analysis (e.g. PCA) and download R Code and data. Within the provided script you then may change the DESeq formula at the appropriate position and rerun the entire code to update respective data and retrieve new analysis results.
+      analysis, we suggest to write your own script.
 
 - **Scaling 0-1:**
   - The data is scaled to fit within the range of 0 to 1.

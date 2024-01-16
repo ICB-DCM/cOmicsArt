@@ -8,7 +8,7 @@
   
 - **Options:**
   - Dropdown menu labeled "Choose Data to use."
-  - Choose either "raw" or "preprocessed".
+  - Choose either "raw" or "preprocessed."
 
 **2. Choose Visualization Style:**
 
