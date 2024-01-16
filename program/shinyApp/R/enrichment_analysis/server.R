@@ -722,7 +722,6 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         fun_LogIt("## ENRICHMENT")
         req(geneSetChoice())
         ea_reactives$tmp_genes <- geneSetChoice()
-        browser()
         # Check whether the necessary annotation is available
         anno_results <- check_annotation_enrichment_analysis(ea_reactives$data)
         ea_reactives$data <- anno_results$new_data
