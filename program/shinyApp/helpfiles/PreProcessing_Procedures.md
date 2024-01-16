@@ -7,7 +7,8 @@
 
 **Step 2: Data Filtering (Optional)**
 
-- If the selected preprocessing procedure is "filterOnly," additional filtering steps are applied based on the data type (Transcriptomics or Metabolomics).
+- If the selected preprocessing procedure is not `None`, additional filtering steps are 
+  applied based on the data type (Transcriptomics or Metabolomics).
 - Low-abundance entities are filtered out based on specified criteria.
 
 **Step 3: Data Transformation**
@@ -51,17 +52,13 @@
 
 - **Logarithm Base 10 (log10):**
   - The base-10 logarithm of each data point is calculated.
-  - Special consideration is given to handling zero values to avoid undefined results.
-  - If any zero values are present, a small constant is added before applying the logarithm.
+  - Special consideration is given to handling zero values to avoid undefined 
+    results: If any zero values are present, +1 is added to all values before applying
+    the logarithm.
 
 - **Pareto Scaling:**
   - Pareto scaling emphasizes the importance of small values by dividing each data point by the square root of its standard deviation.
   - This method is suitable for datasets with a wide range of values.
-
-**Step 4: Additional Checks and Warnings**
-
-- Checks for the presence of NA values after preprocessing.
-- Display of warnings and additional information based on the preprocessing steps.
 
 ---
 
