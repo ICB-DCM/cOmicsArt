@@ -320,8 +320,9 @@ pca_Server <- function(id, data, params, row_select, updates){
           pca_reactives$df_loadings <- df_loadings
 
           # assign res_temp
-          res_tmp[["PCA"]] <<- list(pca)
+          res_tmp[["PCA"]] <<- pca
           # assign par_temp as empty list
+          ## TODO I think this can be removed
           par_tmp[["PCA"]] <<- list(
             # add a dummy parameter to avoid error
             dummy = "dummy",
@@ -477,20 +478,21 @@ pca_Server <- function(id, data, params, row_select, updates){
         global_Vars$PCA_coloring <- input$coloring_options
         global_Vars$PCA_noLoadings <- ifelse(input$Show_loadings == "Yes",length(TopK),0)
 
+        tmp <- getUserReactiveValues(input)
+        par_tmp$PCA[names(tmp)] <<- tmp
+        par_tmp$PCA$colorTheme <<- colorTheme
+
+        
         output$getR_Code_PCA <- downloadHandler(
           filename = function(){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
-            envList<-list(
-              pcaData = pcaData,
-              input = reactiveValuesToList(input),
-              global_ID = pcaData$global_ID,
-              chosenAnno = pcaData$chosenAnno,
-              percentVar = percentVar,
-              customTitle = customTitle,
-              colorTheme = colorTheme
-              )
+            envList <- list(
+              res_tmp = res_tmp,
+              par_tmp = par_tmp
+            )
+            
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
             write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
@@ -558,12 +560,18 @@ pca_Server <- function(id, data, params, row_select, updates){
           global_Vars$Scree_customTitle <- "ScreePlot"
         }
         
+        tmp <- getUserReactiveValues(input)
+        par_tmp$PCA[names(tmp)] <<- tmp
+        
         output$getR_Code_Scree_Plot <- downloadHandler(
           filename = function(){
             paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
           },
           content = function(file){
-            envList=list(var_explained_df=var_explained_df)
+            envList <- list(
+              res_tmp = res_tmp,
+              par_tmp = par_tmp
+            )
 
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
@@ -625,13 +633,18 @@ pca_Server <- function(id, data, params, row_select, updates){
         global_Vars$Loadings_file_ext_Loadings <- input$file_ext_Loadings
         global_Vars$Loadings_plotOut <- plotOut
 
+        tmp <- getUserReactiveValues(input)
+        par_tmp$PCA[names(tmp)] <<- tmp
+        
         output$getR_Code_Loadings <- downloadHandler(
           filename = function(){
             paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
           },
           content = function(file){
-            envList=list(LoadingsDF = LoadingsDF,
-                         input = reactiveValuesToList(input))
+            envList <- list(
+              res_tmp = res_tmp,
+              par_tmp = par_tmp
+            )
 
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
@@ -695,7 +708,7 @@ pca_Server <- function(id, data, params, row_select, updates){
           ) +
           labs(x = "PCs", y = "entity", fill = "Loading") +
           theme_bw(base_size = 15)
-        scenario <- 19
+        scenario <- 8.1
         #Loading_scenario <- scenario
         output[["PCA_Loadings_matrix_plot"]] <- renderPlot({LoadingsMatrix})
         
@@ -703,13 +716,18 @@ pca_Server <- function(id, data, params, row_select, updates){
         global_Vars$filterValue <- input$filterValue
         global_Vars$LoadingsMatrix_plot <- LoadingsMatrix
         
+        tmp <- getUserReactiveValues(input)
+        par_tmp$PCA[names(tmp)] <<- tmp
+        
         output$getR_Code_Loadings_matrix <- downloadHandler(
           filename = function(){
             paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
           },
           content = function(file){
-            envList = list(LoadingsDF = df_loadings,
-                         input = reactiveValuesToList(input))
+            envList <- list(
+              res_tmp = res_tmp,
+              par_tmp = par_tmp
+            )
             
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)

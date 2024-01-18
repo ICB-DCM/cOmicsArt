@@ -21,6 +21,9 @@ library(ggpubr)
 library(rstudioapi)
 library(SummarizedExperiment)
 library(pheatmap)
+
+# make sure environment is empty
+
 # if not run in RStudio  you need to specify the directory fo the file yourself!
 
 if(Sys.getenv('RSTUDIO')==1){
