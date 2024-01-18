@@ -19,10 +19,18 @@ CODE_DOWNLOAD_PREFACE <<- "# ShinyOmics R Code Download\n# Load necassary packag
 library(ggplot2)
 library(ggpubr)
 library(rstudioapi)
+library(SummarizedExperiment)
+library(pheatmap)
 # if not run in RStudio  you need to specify the directory fo the file yourself!
 
-direcoty_of_files=dirname(rstudioapi::getSourceEditorContext()$path)
-envList=readRDS(paste0(direcoty_of_files,'/','Data.rds'))  
+if(Sys.getenv('RSTUDIO')==1){
+  direcoty_of_files=dirname(rstudioapi::getSourceEditorContext()$path)
+  envList=readRDS(paste0(direcoty_of_files,'/','Data.rds'))  
+}else{
+  # assuming to be in the correct directory (where Code lies)
+  envList=readRDS('Data.rds')
+}
+
 
 list2env(envList,envir = globalenv()) 
 # loads the varaibles directly into global env

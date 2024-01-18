@@ -1,16 +1,17 @@
 
 getPlotCode <- function(
     numberOfScenario,
-    preProcessing_Snippet = par_tmp$PreProcessing_Procedure,
+    PreProcessing_Procedure = par_tmp$PreProcessing_Procedure,
     row_selection = par_tmp$row_selection,
-    col_selection = par_tmp$col_selection) {
+    col_selection = par_tmp$sample_selection,
+    omic_type = par_tmp$omic_type) {
   #TODO  change all data download to par_tmp and res_tmp
  # Selection ----
-  if(any(par_tmp$row_selection == "all")){
+  if(any(row_selection == "all")){
     stringSelection <- 'selected <- rownames(rowData(res_tmp$data_original))
     '
   }else{
-    if(!(length(par_tmp$row_selection) == 1 & any(par_tmp$row_selection == "High Values+IQR"))){
+    if(!(length(row_selection) == 1 & any(row_selection == "High Values+IQR"))){
     stringSelection <- 'selected <- c()
 selected <- unique(
   c(selected,rownames(rowData(res_tmp$data_original))[
@@ -20,14 +21,14 @@ selected <- unique(
   )
   '
   }
-  if(any(par_tmp$row_selection == "High Values+IQR") ){
+  if(any(row_selection == "High Values+IQR") ){
     stringSelection <- 'toKeep <- filter_rna(
     rna = assay(res_tmp$data_original),
     prop = par_tmp$propensityChoiceUser
     )
     filteredIQR_Expr <- assay(res_tmp$data_original)[toKeep,]
     '
-    if(length(par_tmp$row_selection) == 1){
+    if(length(row_selection) == 1){
       stringSelection <- paste0(stringSelection,
                                 'selected <- rownames(filteredIQR_Expr)')
     }else{
@@ -40,7 +41,7 @@ selected <- unique(
   }
   }
 
-  if(par_tmp$col_selection == "all"){
+  if(any(col_selection == "all")){
     stringSelection <- paste0(stringSelection,"\n",
                               'samples_selected <- colnames(assay(res_tmp$data_original))
                               ')
@@ -56,25 +57,25 @@ selected <- unique(
   }
  # Preprocessing ----
 
-  if(par_tmp$PreProcessing_Procedure != "none"){
-    if(par_tmp$PreProcessing_Procedure == "filter_only"){
-      if(par_tmp$omic_type == "Transcriptomics"){
+  if(PreProcessing_Procedure != "none"){
+    if(PreProcessing_Procedure == "filter_only"){
+      if(omic_type == "Transcriptomics"){
         stringPreProcessing <- 'processedData <- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]'
       }
-      if(par_tmp$omic_type == "Metabolomics"){
+      if(omic_type == "Metabolomics"){
         stringPreProcessing <- 'processedData <- tmp_data_selected[which(apply(assay(tmp_data_selected),1,median)!=0),]'
       }
       prequel_stringPreProcessing <- c("")
     }else{
-      if(par_tmp$omic_type == "Transcriptomics"){
+      if(omic_type == "Transcriptomics"){
         prequel_stringPreProcessing <- 'res_tmp$data <- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]'
       }
-      if(par_tmp$omic_type == "Metabolomics"){
+      if(omic_type == "Metabolomics"){
         prequel_stringPreProcessing <- 'res_tmp$data <- tmp_data_selected[which(apply(assay(tmp_data_selected),1,median)!=0),]'
       }
     }
     
-    if(par_tmp$PreProcessing_Procedure == "simpleCenterScaling"){
+    if(PreProcessing_Procedure == "simpleCenterScaling"){
         stringPreProcessing <- 'processedData <- as.data.frame(t(
     scale(
       x = as.data.frame(t(as.data.frame(assay(res_tmp$data)))),
@@ -86,7 +87,7 @@ selected <- unique(
     assay(res_tmp$data) <- as.data.frame(processedData)
     '
       }
-    if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
+    if(PreProcessing_Procedure == "vst_DESeq"){
         stringPreProcessing <- 'dds <- DESeq2::DESeqDataSetFromMatrix(
           countData = assay(res_tmp$data),
           colData = colData(res_tmp$data),
@@ -101,7 +102,7 @@ selected <- unique(
       assay(res_tmp$data) <- as.data.frame(assay(dds_vst))
       '
       }
-    if(input$PreProcessing_Procedure == "Scaling_0_1"){
+    if(PreProcessing_Procedure == "Scaling_0_1"){
       stringPreProcessing <- 'processedData <- as.data.frame(t(
       apply(assay(res_tmp$data),1,function(x){
       (x - min(x))/(max(x) - min(x))
@@ -110,14 +111,14 @@ selected <- unique(
       assay(res_tmp$data) <- as.data.frame(processedData)
       '
     }
-    if(input$PreProcessing_Procedure == "ln"){
+    if(PreProcessing_Procedure == "ln"){
       stringPreProcessing <- 'processedData <- as.data.frame(log(
         as.data.frame(assay(res_tmp$data))
       ))
       assay(res_tmp$data) <- as.data.frame(processedData)
       '
     }
-    if(input$PreProcessing_Procedure == "log10"){
+    if(PreProcessing_Procedure == "log10"){
       stringPreProcessing <- 'processedData <- as.data.frame(assay(res_tmp$data))
       if(any(processedData==0)){
         processedData <- as.data.frame(log10(
@@ -127,7 +128,7 @@ selected <- unique(
       }'
     }
     
-    if(input$PreProcessing_Procedure == "pareto_scaling"){
+    if(PreProcessing_Procedure == "pareto_scaling"){
       stringPreProcessing <- 'processedData <- as.data.frame(assay(res_tmp$data))
       centered <- as.data.frame(t(
         apply(processedData, 1, function(x){x - mean(x)})
@@ -145,7 +146,7 @@ selected <- unique(
   }
     
 
-# Plot Code ----
+## Plot Code ----
   ## PCA ----
   if(numberOfScenario >= 1 & numberOfScenario < 9){
     # Calculate all necessary intermediate data sets
@@ -363,7 +364,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
   }
 
   
-  ## Volcano ----
+  ### Volcano ----
   if (numberOfScenario == 9) {
     stringtosave='VolcanoPlot <- ggplot(res_tmp$Volcano,
     aes(label=probename,tooltip=annotation_add)) +
