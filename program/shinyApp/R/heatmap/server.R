@@ -219,9 +219,10 @@ heatmap_server <- function(id, data, params, updates){
           input$anno_options,
           input$row_label_options
         )
+        browser()
         req(selectedData_processed())
         # update the data if needed
-        data <- update_data(data, updates, heatmap_reactives$current_updates)
+        data <- update_data(data, session_key)
         heatmap_reactives$current_updates <- updates()
         print("Heatmap on selected Data")
         # Value need to be setted in case there is nothing to plot to avoid crash
@@ -550,8 +551,7 @@ heatmap_server <- function(id, data, params, updates){
             paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
           },
           content = function(file){
-            envList=list(
-
+            envList<-list(
               res_tmp[[session_key]]=res_tmp[[session_key]],
               par_tmp[[session_key]]=par_tmp[[session_key]]
             )

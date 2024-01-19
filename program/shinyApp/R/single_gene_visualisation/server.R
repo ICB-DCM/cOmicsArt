@@ -16,8 +16,8 @@ single_gene_visualisation_server <- function(id, data, params, updates){
       # Refresh UI /Data
       observeEvent(input$refreshUI,{
         print("Refresh UI Single Gene")
-        data <- update_data(data, updates, single_Gene_vis$current_updates)
-        params <- update_params(params, updates, single_Gene_vis$current_updates)
+        data <- update_data(data, session_key)
+        params <- update_params(params, session_key)
         single_Gene_vis$current_updates <- updates()
         
         ## Ui section ----
@@ -129,7 +129,7 @@ single_gene_visualisation_server <- function(id, data, params, updates){
         print(input$Select_Gene)
         if(single_Gene_vis$calculate == 1){
           # update the data if needed
-          data <- update_data(data, updates, single_Gene_vis$current_updates)
+          data <- update_data(data, session_key)
           single_Gene_vis$current_updates <- updates()
           # set the counter to 0 to prevent any further plotting
           single_Gene_vis$calculate <- 0

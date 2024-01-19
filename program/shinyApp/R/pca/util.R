@@ -1,4 +1,4 @@
-check_calculations <- function(current_parameters, module){
+check_calculations <- function(current_parameters, module, session_key){
   if (is.null(res_tmp[[session_key]][[module]])){  # chec whether result is existent
     return("No Result yet")
   }

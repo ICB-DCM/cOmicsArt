@@ -150,7 +150,7 @@ pca_Server <- function(id, data, params, row_select, updates){
           dummy = "dummy",
           sample_selection_pca = input$sample_selection_pca,
           SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca
-        ), "PCA")
+        ), "PCA", session_key)
         if (check == "No Result yet"){
           output$PCA_Info <- renderText("PCA computed.")
           pca_reactives$calculate <- 1
@@ -188,7 +188,7 @@ pca_Server <- function(id, data, params, row_select, updates){
         if(pca_reactives$calculate >= 0){
           # update the data if needed
           # TODO check if the follwoing still needed as update is now done on 1st server level
-          data2plot <- update_data(data, updates, pca_reactives$current_updates)
+          data2plot <- update_data(data, session_key)
           # select the neccesary data
           if(input$data_selection_pca){
             data2plot <- select_data(

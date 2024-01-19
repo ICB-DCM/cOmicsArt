@@ -181,8 +181,8 @@ significance_analysis_server <- function(id, data, params, updates){
       )
       # refresh the UI/data if needed
       observeEvent(input$refreshUI, {
-        data <- update_data(data, updates, sig_ana_reactive$current_updates)
-        params <- update_params(params, updates, sig_ana_reactive$current_updates)
+        data <- update_data(data, session_key)
+        params <- update_params(params, session_key)
         sig_ana_reactive$current_updates <- updates()
         sig_ana_reactive$coldata <- colData(data$data)
       })
@@ -201,7 +201,7 @@ significance_analysis_server <- function(id, data, params, updates){
         }
         print("Start the Significance Analysis")
         # update the data if needed
-        data <- update_data(data, updates, sig_ana_reactive$current_updates)
+        data <- update_data(data, session_key)
         sig_ana_reactive$current_updates <- updates()
         sig_ana_reactive$coldata <- colData(data$data)
         # delete old panels

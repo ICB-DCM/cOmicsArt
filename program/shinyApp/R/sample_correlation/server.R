@@ -40,7 +40,7 @@ sample_correlation_server <- function(id, data, params, updates){
         
         if(sample_corr_reactive$calculate == 1){
           # update the data if needed
-          data <- update_data(data, updates, sample_corr_reactive$current_updates)
+          data <- update_data(data, session_key)
           sample_corr_reactive$current_updates <- updates()
           # set the counter to 0 to prevent any further plotting
           sample_corr_reactive$calculate <- 0
@@ -56,7 +56,7 @@ sample_correlation_server <- function(id, data, params, updates){
                 preprocessing = par_tmp[[session_key]]$PreProcessing_Procedure
               )
             ),
-            "SampleCorrelation"
+            "SampleCorrelation", session_key
           )
           if (check == "No Result yet"){
             output$SampleCorr_Info <- renderText(
