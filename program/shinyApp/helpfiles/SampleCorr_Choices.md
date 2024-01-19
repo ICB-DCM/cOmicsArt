@@ -4,7 +4,11 @@
 ***
 ### Correlation method
 
-Choose **one** of the following methods
+Choose **one** of the following correlation methods. These correlation methods provide 
+insights into different aspects of relationships between variables. Understanding 
+their characteristics helps in choosing the most appropriate method for a given 
+analysis. For a brief overview on the methods, see [this article on correlation 
+methods](https://en.wikipedia.org/wiki/Correlation_coefficient).
 
 **Pearson Correlation**
 
