@@ -451,144 +451,8 @@ if(any(par_tmp$Heatmap$row_selection_options=="all")){
   print("No entitie selection")
   data2HandOver <- as.data.frame(assay(res_tmp$data))
 }else{
-# Note entitieSelection is a custom function
-#TODO its source code file should be provided along!
-entitieSelection=function(data,
-                          type,
-                          TopK2Show=NA,
-                          additionalInput_row_anno=NA,
-                          additionalInput_row_anno_factor=NA,
-                          additionalInput_sample_annotation_types=NA,
-                          additionalInput_ctrl_idx=NA,
-                          additionalInput_cmp_idx=NA,
-                          psig_threhsold=NA){
-  # to cover: c("TopK","significant_LFC","LFC_onlySig","rowAnno_based")
-  filtered_data=assay(data)
-  orderMakesSense_flag=FALSE
-  print("Entitie Selection")
-  #print(additionalInput_row_anno)
-  if(any(type=="rowAnno_based") & !(any(is.na(additionalInput_row_anno) &is.na(additionalInput_row_anno_factor))) & !any(additionalInput_row_anno_factor=="all")){
-    # Note here this only what to show, LFCs and more importantly multiple test correction will be done on the entire set (without the row anno based selection!!)
-    if(any(additionalInput_row_anno_factor=="all")){
-      filtered_data = filtered_data
-    }else{
-      filtered_data = filtered_data[which(data$annotation_rows[,additionalInput_row_anno] %in% additionalInput_row_anno_factor),]
-    }
-  }
-  if(!(is.na(additionalInput_sample_annotation_types)) & !(is.na(additionalInput_ctrl_idx)) & !(is.na(additionalInput_cmp_idx))){
-    if(any(type=="significant_LFC")){
-      # sort based on significance
-      # need LFCs
-      # is reachable from here? selectedData_processed()[[input$omicType]]$sample_table
-      ctrl_samples_idx <- which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_ctrl_idx)
-      comparison_samples_idx <- which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_cmp_idx)
-      if((length(ctrl_samples_idx) <= 1) | (length(comparison_samples_idx) <= 1)){
-        warning("LFC makes no sense just having a single sample per conidition, which is here the case!")
-        filtered_data=NULL
-      }else{
-        LFC_output=getLFC(filtered_data,ctrl_samples_idx,comparison_samples_idx)
-        filtered_data=filtered_data[rownames(LFC_output)[order(LFC_output$p_adj,decreasing = F)],,drop=F]
-        orderMakesSense_flag=T
-      }
-      
-    }
-    if(any(type=="LFC_onlySig")){
-      ctrl_samples_idx<-which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_ctrl_idx)
-      comparison_samples_idx<-which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_cmp_idx)
-      LFC_output=getLFC(filtered_data,ctrl_samples_idx,comparison_samples_idx)
-      if(!(any(LFC_output$p_adj<psig_threhsold))){
-        warning("No single entry left! Maybe adjust psig_threhsold_heatmap (but do not put it arbitraly high!)")
-        #req(FALSE) -> can we speak from here to output$debug?
-        filtered_data=NULL
-      }else{
-        filtered_data=filtered_data[rownames(LFC_output)[which(LFC_output$p_adj<psig_threhsold)],,drop=F]
-        filtered_data=filtered_data[rownames(LFC_output)[order(LFC_output$LFC,decreasing = F)],,drop=F]
-        orderMakesSense_flag=T
-      }
-      
-    }
-  }
-  
-  if(any(type=="TopK")){
-    if(orderMakesSense_flag){
-      #assumes the data to be sorted somehow
-      if(nrow(filtered_data)>TopK2Show){
-        filtered_data=filtered_data[c(1:TopK2Show),,drop=F]
-      }else{
-        filtered_data=filtered_data
-      }
-    }else{
-      filtered_data=NULL
-    }
-    
-  }
-  
-  
-  
-  return(filtered_data)
-                          }
 
-# get LFC
-getLFC <- function(
-  data,
-  ctrl_samples_idx,
-  comparison_samples_idx,
-  completeOutput = FALSE
-){
-  df <- as.data.frame(data)
-  # Todo by @Lea: discuss and finalize how to handle this. constant row are not removed but small noise is added should in here a check if all 0 rows?
-  ttest_raw <- function(df, grp1, grp2) {
-    x <- df[grp1]
-    y <- df[grp2]
-    x <- as.numeric(x)
-    y <- as.numeric(y)
-    results <- t.test(x, y)
-    return(results$p.value)
-  }
-  #remove constant rows
-  removedAsConst_1 <- which(apply(df[,ctrl_samples_idx],1,sd) < 1e-6)
-  df[removedAsConst_1,ctrl_samples_idx] <- df[removedAsConst_1,ctrl_samples_idx] + t(apply(df[removedAsConst_1,ctrl_samples_idx],1,function(x){
-    rnorm(
-      n = length(x),
-      mean = 0,
-      sd=0.0000001
-    )}))
-  
-  removedAsConst_2 <- which(apply(df[,comparison_samples_idx],1,sd) < 1e-6)
-  df[removedAsConst_2,comparison_samples_idx] <- df[removedAsConst_2,comparison_samples_idx] + t(apply(df[removedAsConst_2,comparison_samples_idx],1,function(x){
-    rnorm(
-      n = length(x),
-      mean = 0,
-      sd=0.0000001
-    )}))
-  
-  
-  rawpvalue <- apply(df, 1, ttest_raw, grp1 = ctrl_samples_idx, grp2 = comparison_samples_idx)
-  
-  p_adj <- p.adjust(rawpvalue, method = "fdr")
-  
-  Ctrl_mean <- apply(df[,ctrl_samples_idx],1,mean)
-  Cmp_mean <- apply(df[,comparison_samples_idx],1,mean)
-  
-  FC <- Cmp_mean/Ctrl_mean
-  
-  LFC <- log2(FC)
-  
-  # Data 2 Plot
-  results <- cbind(LFC, rawpvalue,p_adj)
-  results <- as.data.frame(results)
-  results$probename <- rownames(results)
-  if(completeOutput){
-    # report results table + inital values that where used to calculate (mostly
-    # for sainity checks)
-    colnames(df)[ctrl_samples_idx]=paste0(colnames(df)[ctrl_samples_idx],"_ctrl")
-    colnames(df)[comparison_samples_idx]=paste0(colnames(df)[comparison_samples_idx],"_cmp")
-    results=cbind(results,df[rownames(df),])
-  }
-  return(results)
-}
-
-
+  # Note entitieSelection and getLFCs is a custom function - source code in utils.R
   data2HandOver <- entitieSelection(
     res_tmp$data,
     type = par_tmp$Heatmap$row_selection_options,
@@ -723,8 +587,8 @@ GeneData$anno <- as.factor(GeneData$anno)
 
   if (numberOfScenario == 12) {
     stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
-P_boxplots <- ggplot(res_tmp$SingleEntVis, 
-  aes(y=res_tmp$SingleEntVis[,colnames(res_tmp$SingleEntVis)[-ncol(res_tmp$SingleEntVis)]],
+P_boxplots <- ggplot(GeneData, 
+  aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],
       x=anno,
       fill=anno))+
   geom_boxplot()+ # unable if less then 4 samples in all groups to get the same plot as in the App
@@ -733,12 +597,12 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
   xlab(par_tmp$SingleEntVis$Select_Gene)+
   ylab(par_tmp$SingleEntVis$type_of_data_gene)+
   theme_bw()+
-  geom_hline(yintercept = mean(res_tmp$SingleEntVis[,colnames(res_tmp$SingleEntVis)[-ncol(res_tmp$SingleEntVis)]]), linetype = 2)+ # Add horizontal line at base mean
+  geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
   #stat_compare_means(method = "anova")+        # Add global annova p-value
   stat_compare_means(comparisons = par_tmp$SingleEntVis$chooseComparisons_list,
                      method = par_tmp$SingleEntVis$testMethod,
                      label = "p.signif",
-                     hide.ns = TRUE)'
+                     hide.ns = F)'
   }
   if (numberOfScenario == 13) {
     stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
@@ -753,7 +617,7 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
   ylab(par_tmp$SingleEntVis$type_of_data_gene)+
   theme_bw()'
   }
-  stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave)
+  stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave,"\n","lapply(ls(pattern='boxplots'), get)")
 }
  
   ## TODO ensure this remains working with new output from Enrichment, needs a potential update!
@@ -787,20 +651,188 @@ annotation_colors = par_tmp$SampleCorr$anno_colors
 )'
   }
 ## Significance Analysis -----
-### Venn Diagram ----
-  if(numberOfScenario == 20){
-    stringtosave <- 'VennDiagramm <- ggVennDiagram::ggVennDiagram(res_tmp$SignificanceAnalysis)'
+
+if(numberOfScenario >= 20 & numberOfScenario < 22){
+  # Calculate all necessary intermediate data sets
+  prequel_stringtosave <- '
+if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
+  dds <- data$DESeq_obj
+  
+  # rewind the comparisons again
+  newList <- par_tmp$SigAna$comparisons
+  contrasts <- vector("list", length(par_tmp$SigAna$comparisons))
+  for (i in 1:length(newList)) {
+    contrasts[[i]] <- unlist(strsplit(x = par_tmp$SigAna$comparisons[i],split = ":"))
   }
-### Upset plot ----
-  if(numberOfScenario == 21){
-    stringtosave <- 'UpSetR::upset(fromList(res_tmp$SignificanceAnalysis))'
+
+  # get the results for each contrast and put it all in a big results object
+  sig_results <<- list()
+  for (i in 1:length(contrasts)) {
+    if(identical(
+      list(test_method = "Wald", test_correction = PADJUST_METHOD[[par_tmp$SigAna$test_correction]]),
+      par_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]]
+    )){
+      print("Results exists, skipping calculations.")
+      sig_results[[par_tmp$SigAna$comparisons[i]]] <<- res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]]
+      next
+    }
+    sig_results[[par_tmp$SigAna$comparisons[i]]] <<- DESeq2::results(
+      dds,
+      contrast = c(
+        par_tmp$SigAna$sample_annotation_types_cmp,
+        contrasts[[i]][1],
+        contrasts[[i]][2]
+      ),
+      pAdjustMethod = PADJUST_METHOD[[par_tmp$SigAna$test_correction]]
+    )
+    # fill in res_tmp, par_tmp
+    res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <<- sig_results[[par_tmp$SigAna$comparisons[i]]]
+    par_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <<- list(
+      test_method = "Wald",
+      test_correction = PADJUST_METHOD[[par_tmp$SigAna$test_correction]]
+    )
   }
+  }else{  
+    # all other methods require manual testing
+    # rewind the comparisons again
+    newList <- par_tmp$SigAna$comparisons
+    contrasts <- vector("list", length(par_tmp$SigAna$comparisons))
+    contrasts_all <- list()
+    for (i in 1:length(newList)) {
+      contrasts[[i]] <- unlist(strsplit(x = par_tmp$SigAna$comparisons[i],split = ":"))
+      contrasts_all <- append(contrasts_all, contrasts[[i]])
+    }
+    # make all contrasts unique
+    contrasts_all <- unique(unlist(contrasts_all))
+    # name the contrasts with the comparison names
+    names(contrasts) <- par_tmp$SigAna$comparisons
+    # get names of columns we want to choose:
+    index_comparisons <- which(
+      colData(res_tmp$data)[,par_tmp$SigAna$sample_annotation_types_cmp] %in% contrasts_all
+    )
+    samples_selected <- colData(res_tmp$data)[index_comparisons,]
+    # get the data
+    data_selected <- as.matrix(assay(res_tmp$data))[,index_comparisons]
+    sig_results <- significance_analysis(
+      df = as.data.frame(data_selected),
+      samples = as.data.frame(samples_selected),
+      contrasts = contrasts,
+      method = par_tmp$SigAna$test_method,
+      correction = PADJUST_METHOD[[par_tmp$SigAna$test_correction]],
+      contrast_level = par_tmp$SigAna$sample_annotation_types_cmp
+    )
+  }
+  
+  if(any(par_tmp$SigAna$comparisons_to_visualize == "all")){
+          # show all comparisons if no more than 4
+          if(length(par_tmp$SigAna$comparisons)<5){
+            chosenVizSet <- par_tmp$SigAna$comparisons
+          }else{
 
-### Volcano ----
+            chosenVizSet <-  par_tmp$SigAna$comparisons[c(1,2)]
+            sig_ana_reactive$info_text <- "Note: Although you choose all to visualize only first 2 comparisons are shown to avoid unwanted computational overhead, 
+            as you got more than 4 comparisons. Please choose precisely the comparisons for visualisation."
+          }
+        }else{
+          chosenVizSet <- par_tmp$SigAna$comparisons_to_visualize
+        }
+        for (i in 1:length(chosenVizSet)) {
+          to_add_tmp <- rownames(
+            filter_significant_result(
+              result = sig_results[[chosenVizSet[i]]],
+              alpha = par_tmp$SigAna$significance_level,
+              filter_type = par_tmp$SigAna$sig_to_look_at
+            )
+          )
+          # only add if the result is not empty
+          if(length(to_add_tmp) > 0){
+            res2plot[[chosenVizSet[i]]] <- to_add_tmp
+          }
+        }
+        # check that you have more than one comparison
+        if(length(res2plot) <= 1){
+          sig_ana_reactive$info_text <- "You either have no significant results or only significant results in one comparison."
+          # if current plots to llok at are adjusted pvalues, suggest to look at raw pvalues
+            if(input$sig_to_look_at == "Significant"){
+                sig_ana_reactive$info_text <- paste0(
+                sig_ana_reactive$info_text,
+                "\nYou tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level."
+                )
+            }
+          # clear the plot
+          output$Significant_Plot_final <- renderPlot({})
+          return(NULL)
+        }
+  
+  '
 
+  ### Venn Diagram ----
+    if(numberOfScenario == 20){
+      stringtosave <- '          sig_ana_reactive$plot_last <- ggvenn::ggvenn(
+            res2plot, fill_color=c("#44af69", "#f8333c", "#fcab10", "#2b9eb3"),
+            set_name_size = 3
+          )
+      observeEvent(input$intersection_high,{
+        querie_names_all <- map_intersects_for_highlight(
+          highlights=sig_ana_reactive$intersect_names,
+          plot=sig_ana_reactive$plot_last,
+          overlap_list=sig_ana_reactive$overlap_list
+        )
+        querie_names <- map_intersects_for_highlight(
+          highlights=input$intersection_high,
+          plot=sig_ana_reactive$plot_last,
+          overlap_list=sig_ana_reactive$overlap_list
+        )
+        queries <- vector("list", length(querie_names_all))
+        for(i_querie in seq_along(sig_ana_reactive$intersect_names)){
+          if(sig_ana_reactive$intersect_names[[i_querie]] %in% input$intersection_high){
+            queries[[i_querie]] <- upset_query(
+              intersect=colnames(sig_ana_reactive$overlap_list)[querie_names_all[[i_querie]]],
+              color="red",
+              fill="red"
+            )
+          } else{
+            queries[[i_querie]] <- upset_query(
+              intersect=colnames(sig_ana_reactive$overlap_list)[querie_names_all[[i_querie]]],
+              color="#595959",
+      fill="#595959"
+      )
+}
+}
+sig_ana_reactive$plot_last <- ComplexUpset::upset(
+  sig_ana_reactive$overlap_list,
+  colnames(sig_ana_reactive$overlap_list),
+  themes=list(default=theme()),
+  queries=queries
+)
+})
+      '
+    }
+  ### Upset plot ----
+    if(numberOfScenario == 21){
+      stringtosave <- '
+                sig_ana_reactive$overlap_list <- prepare_upset_plot(res2plot=res2plot)
+          sig_ana_reactive$plot_last <- ComplexUpset::upset(
+            sig_ana_reactive$overlap_list,
+            colnames(sig_ana_reactive$overlap_list),
+            themes=list(default=theme())
+          )
+          sig_ana_reactive$intersect_names <-  ggplot_build(
+            sig_ana_reactive$plot_last
+          )$layout$panel_params[[1]]$x$get_labels()
+      
+      UpSetR::upset(fromList(res_tmp$SignificanceAnalysis))'
+    }
+  
+  ### Volcano ----
+  if(numberOfScenario == 22){
+    stringtosave <- ''
+  }
+  
+  stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave,"\n","lapply(ls(pattern='plot'), get)")
+  
 
-
-
+}
 
   if(numberOfScenario == 0){
     stringtosave <- '# No_code_yet'

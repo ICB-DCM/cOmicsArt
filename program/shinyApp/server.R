@@ -658,8 +658,13 @@ server <- function(input,output,session){
   ## Do Selection ----  
   selectedData <- reactive({
     shiny::req(input$row_selection, input$sample_selection)
+    #TODOD could this be replaced by also 
+    #tmp <- getUserReactiveValues(input)
+    #par_tmp[names(tmp)] <<- tmp
+    
     par_tmp[["row_selection"]] <<- input$row_selection
     par_tmp[["sample_selection"]] <<- input$sample_selection
+    par_tmp[["providedRowAnnotationTypes"]] <<- input$providedRowAnnotationTypes
     print("Alright do Row selection")
     selected <- c()
 
@@ -1071,7 +1076,6 @@ server <- function(input,output,session){
       params = par_tmp,
       reactive(updating$count)
     )
-
 
   # Enrichment Analysis ----
   enrichment_analysis_Server(

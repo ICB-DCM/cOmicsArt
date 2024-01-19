@@ -10,9 +10,7 @@ single_gene_visualisation_server <- function(id, data, params, updates){
       )
       
       ns <- session$ns
-      
 
-   
       # Refresh UI /Data
       observeEvent(input$refreshUI,{
         print("Refresh UI Single Gene")
@@ -258,14 +256,14 @@ single_gene_visualisation_server <- function(id, data, params, updates){
           #SingleEnt_P_boxplots <- P_boxplots
           
           # DO not know if necassary to track in par_tmp (if not global var needed)
-          par_tmp[["SingleEntVis"]] <<- list(
-            SingleEnt_customTitle_boxplot = SingleEnt_customTitle_boxplot,
-            SingleEnt_Select_Gene = input$Select_Gene,
-            SingleEnt_type_of_data_gene = input$type_of_data_gene,
-            SingleEnt_accross_condition = input$accross_condition,
-            SingleEnt_testMethod = testMethod,
-            SingleEnt_GeneData_anno = GeneData$anno
-          )
+          
+          tmp <- getUserReactiveValues(input)
+          par_tmp$SingleEntVis[names(tmp)] <<- tmp
+          
+          par_tmp[["SingleEntVis"]]$SingleEnt_customTitle_boxplot <<- SingleEnt_customTitle_boxplot
+          par_tmp[["SingleEntVis"]]$testMethod <<- testMethod
+          par_tmp[["SingleEntVis"]]$chooseComparisons_list <<- xy.list
+
         }else{
           customTitle_boxplot <- "NoBoxplot"
         }
@@ -279,12 +277,8 @@ single_gene_visualisation_server <- function(id, data, params, updates){
           },
           content = function(file){
             envList=list(
-              GeneData = GeneData,
-              xy.list=ifelse(exists("xy.list"),xy.list,NA),
-              testMethod=ifelse(exists("testMethod"),testMethod,NA),
-              input=reactiveValuesToList(input),
-              myBreaks=ifelse(exists("myBreaks"),myBreaks,NA),
-              myColor_fill=ifelse(exists("myColor_fill"),myColor_fill,NA)
+              res_tmp = res_tmp,
+              par_tmp = par_tmp
               )
             
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))

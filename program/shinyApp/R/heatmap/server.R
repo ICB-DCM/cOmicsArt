@@ -383,7 +383,7 @@ heatmap_server <- function(id, data, params, updates){
             }else if(doThis_flag){
               #Takes user-specified choices from additional LFC Inputs 
               # put does not plot values but the LFC itself
-              Data2Plot <- getLFC(
+              Data2Plot <- getLFCs(
                 data = as.data.frame(data2HandOver),
                 ctrl_samples_idx = ctrl_samples_idx,
                 comparison_samples_idx = comparison_samples_idx
@@ -551,7 +551,6 @@ heatmap_server <- function(id, data, params, updates){
           },
           content = function(file){
             envList=list(
-
               res_tmp=res_tmp,
               par_tmp=par_tmp
             )
@@ -560,10 +559,18 @@ heatmap_server <- function(id, data, params, updates){
             dir.create(temp_directory)
             
             write(getPlotCode(heatmap_scenario), file.path(temp_directory, "Code.R"))
-            
-            
-            
+
             saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+
+            # also save entitie Selection function
+            #TODO
+            # Needs an extra sourcing to have in correct env - potential fix sourceing module specific functions within module
+            # instead of sourcing all - or having them all gloablly source (like general utils)
+            source("R/heatmap/fun_entitieSelection.R")
+            source("R/fun_LFC.R")
+            save.function.from.env(wanted = c("entitieSelection","getLFCs"), 
+                                   file = file.path(temp_directory, "utils.R"))
+            
             zip::zip(
               zipfile = file,
               files = dir(temp_directory),

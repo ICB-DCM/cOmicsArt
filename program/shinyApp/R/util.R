@@ -63,3 +63,36 @@ read_file <- function(filename, check.names=T){
     return(df)
   }
 }
+
+save.function.from.env <- function(wanted,file="utils.R")
+{
+  # This function will go through all your defined functions 
+  # and find wanted function
+  funs <- Filter(is.function, sapply(ls( ".GlobalEnv"), get))
+  funs <- funs[names(funs) %in% wanted]
+  
+  # Let's
+  for(i in seq_along(funs))
+  {
+    cat( # number the function we are about to add
+      paste("\n" , "#------ Function number ", i , "-----------------------------------" ,"\n"),
+      append = T, file = file
+    )
+    cat(    # print the function into the file
+      paste(names(funs)[i] , "<-", paste(capture.output(funs[[i]]), collapse = "\n"), collapse = "\n"),
+      append = T, file = file
+    )
+    cat(
+      paste("\n" , "#-----------------------------------------" ,"\n"),
+      append = T, file = file
+    )
+  }
+  cat( # writing at the end of the file how many new functions where added to it
+    paste("# A total of ", length(funs), " Functions where written into utils"),
+    append = T, file = file
+  )
+  print(paste("A total of ", length(funs), " Functions where written into utils"))
+}
+
+
+
