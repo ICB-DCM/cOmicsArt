@@ -185,6 +185,7 @@ ui <- shiny::fluidPage(
     helpText("Metabolon Help", align = "center") %>% helper(type = "markdown", content = "Metabolon_help", size = "l", colour = "blue", style = "position: relative;top: -18px;left: 15px;; zoom: 200%;"),
     NULL
   ),
+
   tabsetPanel(
     id = "tabsetPanel1",
     ################################################################################
@@ -241,6 +242,12 @@ ui <- shiny::fluidPage(
         bottom = 0, left = 10, fixed = TRUE,style = "background-color: #a9d96a;"
       )
     )
+  ),
+  # Pannel displaying the current session id
+  absolutePanel(
+    # text output needs to be defined in server
+    textOutput("session_id"),
+    bottom = 0, right = 10, fixed = TRUE
   )
   
 )

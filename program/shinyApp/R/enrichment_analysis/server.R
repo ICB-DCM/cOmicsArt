@@ -791,9 +791,9 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           }
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
           # res_temp Zuweisung
-          res_tmp[[session_key]]["Enrichment"] <<- ea_reactives$enrichment_results
+          res_tmp[[session$token]]["Enrichment"] <<- ea_reactives$enrichment_results
           # par_temp Zuweisung
-          par_tmp[[session_key]]["Enrichment"] <<- list(
+          par_tmp[[session$token]]["Enrichment"] <<- list(
             "ValueToAttach" = input$ValueToAttach,
             "GeneSet2Enrich" = input$GeneSet2Enrich,
             "Groups2Compare_ref_GSEA" = input$Groups2Compare_ref_GSEA,

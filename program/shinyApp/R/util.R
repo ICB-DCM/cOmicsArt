@@ -1,10 +1,10 @@
 ### general utility functions will be defined here
 
 
-update_data <- function(data, session_key){
+update_data <- function(session_id){
   # for stability reasons, data is ALWAYS pulled here
   print("Updating data...")
-  data <- res_tmp[[session_key]]
+  data <- res_tmp[[session_id]]
   return(data)
 }
 
@@ -27,11 +27,11 @@ select_data <- function(data, selected_samples, sample_type){
 }
 
 
-update_params <- function(params, session_key){
+update_params <- function(session_id){
   # update parameter if updates is larger than current_updates
   # could force to always update
   print("Updating parameters...")
-  params <- par_tmp[[session_key]]
+  params <- par_tmp[[session_id]]
   return(params)
 }
 

@@ -1,9 +1,9 @@
-check_calculations <- function(current_parameters, module, session_key){
-  if (is.null(res_tmp[[session_key]][[module]])){  # chec whether result is existent
+check_calculations <- function(current_parameters, module){
+  if (is.null(res_tmp[[session$token]][[module]])){  # chec whether result is existent
     return("No Result yet")
   }
   # check whether all parameters are identical to the current existing result
-  if (identical(par_tmp[[session_key]][[module]], current_parameters)){
+  if (identical(par_tmp[[session$token]][[module]], current_parameters)){
     return("Result exists")
   }
   # The remaining case is an existing result with other parameters,
