@@ -1,8 +1,6 @@
 server <- function(input,output,session){
   source("R/SourceAll.R",local=T)
   source("R/util.R")
-
-  global_Vars <<- reactiveValues() # OUTDATED?
   
   # getCurrentVersion(updateDESCRIPTION=T) # Where to Place this ? So it does not always get 'updated'?
   # Can we add this somehow as necassary to every new release?

@@ -13,7 +13,12 @@ pca_Server <- function(id, data, params, row_select, updates){
         df_out_r = NULL,
         var_explained_df = NULL,
         LoadingsDF = NULL,
-        df_loadings = NULL
+        df_loadings = NULL,
+        Scree_customTitle = NULL,
+        # reactive values for the plots
+        PCA_plot = NULL,
+        Scree_plot = NULL,
+        Loadings_plot = NULL
       )
       ns <- session$ns
 
@@ -468,14 +473,12 @@ pca_Server <- function(id, data, params, row_select, updates){
           })
         
         print(input$only2Report_pca)
-        global_Vars$PCA_plot <- pca_plot_final # somehow does not update ? or just return the latest?
+        pca_reactives$PCA_plot <- pca_plot_final # somehow does not update ? or just return the latest?
         # customTitle <- customTitle
         # Longer names causes issues for saving 
         if(nchar(customTitle) >= 250){
           customTitle <- "PCA"
         }
-        global_Vars$PCA_coloring <- input$coloring_options
-        global_Vars$PCA_noLoadings <- ifelse(input$Show_loadings == "Yes",length(TopK),0)
 
         output$getR_Code_PCA <- downloadHandler(
           filename = function(){
@@ -551,11 +554,11 @@ pca_Server <- function(id, data, params, row_select, updates){
           ggplotly(scree_plot, tooltip = "Var", legendgroup = "color")
           })
 
-        global_Vars$Scree_plot <- scree_plot
-        global_Vars$Scree_customTitle <- customTitle
+        pca_reactives$Scree_plot <- scree_plot
+        pca_reactives$Scree_customTitle <- customTitle
         # Longer names causes issues for saving 
-        if(nchar(global_Vars$Scree_customTitle) >= 250){
-          global_Vars$Scree_customTitle <- "ScreePlot"
+        if(nchar(pca_reactives$Scree_customTitle) >= 250){
+          pca_reactives$Scree_customTitle <- "ScreePlot"
         }
         
         output$getR_Code_Scree_Plot <- downloadHandler(
@@ -582,7 +585,7 @@ pca_Server <- function(id, data, params, row_select, updates){
 
         output$SavePlot_Scree <- downloadHandler(
           filename = function() {
-            paste(global_Vars$Scree_customTitle,Sys.time(),input$file_ext_Scree,sep="")
+            paste(pca_reactives$Scree_customTitle,Sys.time(),input$file_ext_Scree,sep="")
             },
 
           content = function(file){
@@ -591,7 +594,7 @@ pca_Server <- function(id, data, params, row_select, updates){
               tmp_filename=paste0(
                 getwd(),
                 "/www/",
-                paste("Scree",global_Vars$Scree_customTitle,Sys.time(),input$file_ext_Scree,sep="")
+                paste("Scree",pca_reactives$Scree_customTitle,Sys.time(),input$file_ext_Scree,sep="")
                 )
               ggsave(tmp_filename,plot=scree_plot,device = gsub("\\.","",input$file_ext_Scree))
 
@@ -619,11 +622,10 @@ pca_Server <- function(id, data, params, row_select, updates){
         Loading_scenario <- scenario
         output[["PCA_Loadings_plot"]] <- renderPlot({plotOut})
 
-        global_Vars$Loadings_x_axis <- input$x_axis_selection
-        global_Vars$Loadings_bottomSlider <- input$bottomSlider
-        global_Vars$Loadings_topSlider <- input$topSlider
-        global_Vars$Loadings_file_ext_Loadings <- input$file_ext_Loadings
-        global_Vars$Loadings_plotOut <- plotOut
+        pca_reactives$Loadings_x_axis <- input$x_axis_selection
+        pca_reactives$Loadings_bottomSlider <- input$bottomSlider
+        pca_reactives$Loadings_topSlider <- input$topSlider
+        pca_reactives$Loadings_plot <- plotOut
 
         output$getR_Code_Loadings <- downloadHandler(
           filename = function(){
@@ -699,10 +701,6 @@ pca_Server <- function(id, data, params, row_select, updates){
         #Loading_scenario <- scenario
         output[["PCA_Loadings_matrix_plot"]] <- renderPlot({LoadingsMatrix})
         
-        global_Vars$nPCAs_to_look_at <- input$nPCAs_to_look_at
-        global_Vars$filterValue <- input$filterValue
-        global_Vars$LoadingsMatrix_plot <- LoadingsMatrix
-        
         output$getR_Code_Loadings_matrix <- downloadHandler(
           filename = function(){
             paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
@@ -766,7 +764,7 @@ pca_Server <- function(id, data, params, row_select, updates){
           TEST <- paste0(getwd(),"/www/",paste(customTitle, Sys.time(),".png",sep=""))
           ggsave(
             TEST,
-            plot = global_Vars$PCA_plot,
+            plot = pca_reactives$PCA_plot,
             device = "png"
             )
           # Add Log Messages
@@ -789,11 +787,11 @@ pca_Server <- function(id, data, params, row_select, updates){
         tmp_filename <- paste0(
           getwd(),
           "/www/",
-          paste("Scree",global_Vars$Scree_customTitle,Sys.time(),".png",sep="")
+          paste("Scree",pca_reactives$Scree_customTitle,Sys.time(),".png",sep="")
           )
         ggsave(
           tmp_filename,
-          plot=global_Vars$Scree_plot,
+          plot=pca_reactives$Scree_plot,
           device = "png"
           )
 
@@ -815,14 +813,14 @@ pca_Server <- function(id, data, params, row_select, updates){
           )
         ggsave(
           tmp_filename,
-          plot = global_Vars$Loadings_plotOut,
+          plot = pca_reactives$Loadings_plot,
           device = "png"
           )
 
         # Add Log Messages
         fun_LogIt(message = "### PCA Loadings")
-        fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",global_Vars$Loadings_x_axis))
-        fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",global_Vars$Loadings_topSlider," and the lowest ",global_Vars$Loadings_bottomSlider," Loadings"))
+        fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",pca_reactives$Loadings_x_axis))
+        fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",pca_reactives$Loadings_topSlider," and the lowest ",pca_reactives$Loadings_bottomSlider," Loadings"))
         fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
 
         removeNotification(notificationID)
