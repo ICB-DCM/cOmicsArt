@@ -11,15 +11,16 @@ over_representation_analysis <- function(
 
   if(!isTruthy(input$UniverseOfGene)){
     universeSelected_tranlsated <- NULL
-  }else{
-    if(input$UniverseOfGene == "default"){
-      universeSelected_tranlsated <- NULL
-    }
-  }
-  # TODO: workaround and is needed?
-  if(input$UniverseOfGene == "allPresentGenes_before_pre_process"){
+  } else if(input$UniverseOfGene == "default"){
+    universeSelected_tranlsated <- NULL
+  } else {
+    # TODO: only works with ENSEMBL IDs at the moment
     req(data_input_shiny())
-    universeSelected <- rownames(data)
+    if(input$UniverseOfGene == "after_pre_process"){
+      universeSelected <- rownames(data$data)
+    } else if(input$UniverseOfGene == "before_pre_process"){
+      universeSelected <- rownames(data$data_original)
+    }
     # Note if transcripts are used this will be ignored for enrichment analysis
     universeSelected <- unique(gsub("\\..*$","",universeSelected))
     print(paste0("Universe genes untranslated: ",length(universeSelected)))
@@ -27,7 +28,8 @@ over_representation_analysis <- function(
       universeSelected,
       fromType = "ENSEMBL",
       toType = "ENTREZID",
-      OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+      OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db")
+    )$ENTREZID
     print(paste0(
       "Universe genes translated (hence actually used): ",
       length(universeSelected_tranlsated)

@@ -173,6 +173,7 @@ pca_Server <- function(id, data, params, row_select, updates){
         req(input$coloring_options)
         req(data$data)
         req(input$Do_PCA[1] > 0)
+        browser()
 
         print("PCA analysis on pre-selected data")
         customTitle <- paste0(
