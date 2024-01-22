@@ -72,6 +72,7 @@ over_representation_analysis <- function(
         gene = geneSetChoice,
         organism = input$OrganismChoice,
         pvalueCutoff = 0.05,
+        pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         universe = universeSelected_tranlsated
       )
       res_tmp$OA$KEGG <<- EnrichmentRes_KEGG
@@ -85,8 +86,9 @@ over_representation_analysis <- function(
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp$OA$GO ))){
       EnrichmentRes_GO <- clusterProfiler::enrichGO(
         gene = geneSetChoice,
-        ont = input$ontologyForGO,
+        ont = "ALL",
         pvalueCutoff = 0.05,
+        pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db")
       )
       res_tmp$OA$GO <<- EnrichmentRes_GO
@@ -101,6 +103,7 @@ over_representation_analysis <- function(
       EnrichmentRes_REACTOME <- ReactomePA::enrichPathway(
         gene = geneSetChoice,
         pvalueCutoff = 0.05,
+        pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         organism = ifelse(input$OrganismChoice == "hsa","human","mouse"),
         universe = universeSelected_tranlsated,
         readable = T
