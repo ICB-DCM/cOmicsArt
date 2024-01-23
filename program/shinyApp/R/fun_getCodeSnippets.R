@@ -380,26 +380,6 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
   }
 
   
-  ### Volcano ----
-  if (numberOfScenario == 9) {
-    stringtosave='VolcanoPlot <- ggplot(res_tmp$Volcano,
-    aes(label=probename,tooltip=annotation_add)) +
-    geom_point(aes(x = LFC,y = -log10(p_adj),colour = threshold,alpha = threshold_fc)) +
-    geom_hline(
-      yintercept = -log10(par_tmp$Volcano$psig_threhsold),
-      color="lightgrey"
-    ) +
-    geom_vline(
-      xintercept = c(-par_tmp$Volcano$lfc_threshold,par_tmp$Volcano$lfc_threshold),
-      color="lightgrey"
-    ) +
-    scale_color_manual(values=par_tmp$Volcano$colorScheme, name="")+
-    scale_alpha_manual(values=par_tmp$Volcano$alphaScheme, name="")+
-    xlab("Log FoldChange")+
-    ylab("-log10(p-value)")+
-    theme_bw()'
-  }
-  
   ## Heatmap ----
 if(numberOfScenario >= 10  & numberOfScenario <= 11){
   prequel_stringtosave <- '
