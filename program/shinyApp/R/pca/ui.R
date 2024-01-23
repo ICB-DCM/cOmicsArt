@@ -50,7 +50,7 @@ pca_main_panel <- function(ns){
           actionButton(
             inputId = ns("only2Report_pca"),
             label = "Send only to Report"
-          ) %>% helper(type = "markdown", content = "PCA_Downloads")
+          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads")
         ),
         splitLayout(
           style = "border: 1px solid silver:",
@@ -124,7 +124,7 @@ pca_main_panel <- function(ns){
             inputId = ns("only2Report_Loadings"),
             label = "Send only to Report",
             class = "btn-info"
-          ) %>% helper(type = "markdown", content = "PCA_LoadingsDownload")
+          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads")
         ),
         splitLayout(
           style = "border: 1px solid silver:",
@@ -186,7 +186,7 @@ pca_main_panel <- function(ns){
             inputId = ns("only2Report_Loadings_matrix"),
             label = "Send only to Report",
             class = "btn-info"
-          ) %>% helper(type = "markdown", content = "PCA_LoadingsMatrixDownload")
+          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads")
         ),
         splitLayout(
           style = "border: 1px solid silver:",
@@ -236,7 +236,7 @@ pca_main_panel <- function(ns){
             inputId = ns("only2Report_Scree_Plot"),
             label = "Send only to Report",
             class = "btn-info"
-          ) %>% helper(type = "markdown", content = "PCA_ScreeDownload")
+          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads")
         ),
         splitLayout(
           style = "border: 1px solid silver:",

@@ -115,7 +115,6 @@ server <- function(input,output,session){
 ## Ui Section ----
 
   observeEvent(input$Reset,{
-    print("Jip")
     FLAG_TEST_DATA_SELECTED(FALSE)
     output$debug <- renderText("<font color=\"#00851d\"><b>Reset successful</b></font>")
     shinyjs::reset(id="data_matrix1")
@@ -123,9 +122,28 @@ server <- function(input,output,session){
     shinyjs::reset(id="data_row_anno1")
     shinyjs::reset(id="data_preDone")
     shinyjs::reset(id="metadataInput")
+    # set input values to actual zero
+    session$sendCustomMessage(type = "resetValue", message = "data_matrix1")
+    session$sendCustomMessage(type = "resetValue", message = "data_sample_anno1")
+    session$sendCustomMessage(type = "resetValue", message = "data_row_anno1")
+    session$sendCustomMessage(type = "resetValue", message = "data_preDone")
+    session$sendCustomMessage(type = "resetValue", message = "metadataInput")
   })
   
   observeEvent(input$EasyTestForUser,{
+    # reset all data inputs except FLAG_TEST_DATA_SELECTED
+    # MAYBE TODO: would be nice if we could just click reset here. Somehow not working.
+    shinyjs::reset(id="data_matrix1")
+    shinyjs::reset(id="data_sample_anno1")
+    shinyjs::reset(id="data_row_anno1")
+    shinyjs::reset(id="data_preDone")
+    shinyjs::reset(id="metadataInput")
+    # set input values to actual zero
+    session$sendCustomMessage(type = "resetValue", message = "data_matrix1")
+    session$sendCustomMessage(type = "resetValue", message = "data_sample_anno1")
+    session$sendCustomMessage(type = "resetValue", message = "data_row_anno1")
+    session$sendCustomMessage(type = "resetValue", message = "data_preDone")
+    session$sendCustomMessage(type = "resetValue", message = "metadataInput")
     FLAG_TEST_DATA_SELECTED(TRUE)
     shinyjs::click("refresh1")
   })
@@ -325,9 +343,6 @@ server <- function(input,output,session){
   })
   
 ## Do Upload ----
-  
-  data_input <- list()
-  data_output <- list()
   observeEvent(input$refresh1,{
     par_tmp['omic_type'] <<- input$omicType
     fun_LogIt(message = "## DataInput {.tabset .tabset-fade}")
@@ -371,59 +386,59 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
-    if(!isTruthy(input$data_preDone) & !FLAG_TEST_DATA_SELECTED()){
-      # Include here, that the sample anno can be replaced by metadatasheet
-      # potentially this will be extended to all of the fields
-      shiny::req(input$data_matrix1,input$data_row_anno1)
-      
-      if(isTruthy(input$data_sample_anno1)){
-        data_input<- list(
-          type = as.character(input$omicType),
-          Matrix = read_file(input$data_matrix1$datapath, check.names=T),
-          sample_table = read_file(input$data_sample_anno1$datapath, check.names=T),
-          annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
-          )
-        
-        # check if only 1 col in anno row, 
-        # add dummy col to ensure R does not turn it into a vector
-        if(ncol(data_input$annotation_rows) < 2){
-          print("Added dummy column to annotation row")
-          data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
-        }
-        
-      }else if(isTruthy(input$metadataInput)){
-        tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
-        test_data_upload <- function(){
-          tryCatch(
-          {
-            data_input <- list(
-              type = as.character(input$omicType),
-              Matrix = read_file(
-                input$data_matrix1$datapath, check.names=T
-                )[,rownames(tmp_sampleTable)],
-              sample_table = tmp_sampleTable,
-              annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
-              )
-            return(data_input)
-          },
-          error=function(cond){
-            print("Error! Names From SampleTable and Matrix do not fit")
-            output$debug=renderText({
-              "<font color=\"#FF0000\"><b>Your Sample Names from the Metadata Sheet and from your Matrix do not match!! Data cannot be loaded</b></font>"
-              })
-            reset('metadataInput')
-            return(NULL)
-          }
-        )
-        }
-        data_input <- test_data_upload()
+    # initialize empty data_input object
+    data_input <- list()
+    if(isTruthy(input$data_preDone)){   # precompiled data upload
+      uploadedFile <- readRDS(
+        file = input$data_preDone$datapath
+      )
+      if(any(names(uploadedFile)%in% input$omicType)){
+        # This is a file precompiled before 14.March.2023
+        data_input <- uploadedFile[[input$omicType]]
+      }else{
+        data_input[[paste0(input$omicType,"_SumExp")]] <- uploadedFile
       }
-      
-      ## TODO Include here possible Data Checks
-    
-    }else if(FLAG_TEST_DATA_SELECTED() & !isTruthy(input$data_preDone)){
+    } else if(isTruthy(input$metadataInput)){  # Metadata upload
+      tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
+      test_data_upload <- function(){
+        tryCatch(
+        {
+          data_input <- list(
+            type = as.character(input$omicType),
+            Matrix = read_file(
+              input$data_matrix1$datapath, check.names=T
+              )[,rownames(tmp_sampleTable)],
+            sample_table = tmp_sampleTable,
+            annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
+            )
+          return(data_input)
+        },
+        error=function(cond){
+          print("Error! Names From SampleTable and Matrix do not fit")
+          output$debug <- renderText({
+            "<font color=\"#FF0000\"><b>Your Sample Names from the Metadata Sheet and from your Matrix do not match!! Data cannot be loaded</b></font>"
+            })
+          reset('metadataInput')
+          return(NULL)
+        }
+      )
+      }
+      data_input <- test_data_upload()
+    }else if(isTruthy(input$data_sample_anno1)){  # Try upload via file input
+      data_input <- list(
+        type = as.character(input$omicType),
+        Matrix = read_file(input$data_matrix1$datapath, check.names=T),
+        sample_table = read_file(input$data_sample_anno1$datapath, check.names=T),
+        annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
+      )
+      # check if only 1 col in anno row,
+      # add dummy col to ensure R does not turn it into a vector
+      if(ncol(data_input$annotation_rows) < 2){
+        print("Added dummy column to annotation row")
+        data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
+      }
+    } else if(FLAG_TEST_DATA_SELECTED()){  # Upload test data
       #TODO change test data to also not rely on 'Transcriptomics'
-
       data_input <- readRDS(
         file = "www/Transcriptomics_only_precompiled-LS.RDS"
       )[[input$omicType]]
@@ -431,19 +446,11 @@ server <- function(input,output,session){
       fun_LogIt(
         message = paste0("**DataInput** - Test Data set used")
       )
-    
-      }else{
-        uploadedFile <- readRDS(
-          file = input$data_preDone$datapath
-      )
-
-      if(any(names(uploadedFile)%in% input$omicType)){
-        # This is an file precompiled before 14.March.2023
-        data_input <- uploadedFile[[input$omicType]]
-      }else{
-        data_input[[paste0(input$omicType,"_SumExp")]] <- uploadedFile
-      }
-
+    } else {  # Meaningfull error message as info
+      output$debug <- renderText({
+          "<font color=\"#FF0000\"><b>Upload failed, please check your input.</b></font>"
+          })
+      return(NULL)
     }
     ### Added here gene annotation if asked for 
     if(input$AddGeneSymbols & 
@@ -652,7 +659,6 @@ server <- function(input,output,session){
   selectedData <- reactive({
     shiny::req(input$row_selection, input$sample_selection)
     par_tmp[["row_selection"]] <<- input$row_selection
-    par_tmp[["providedRowAnnotationTypes"]] <<- input$providedRowAnnotationTypes
     print("Alright do Row selection")
     selected <- c()
 
@@ -691,7 +697,6 @@ server <- function(input,output,session){
 
     # Column Selection
     samples_selected <- c()
-    par_tmp[["col_selection"]] <<- input$sample_selection
     if(any(input$sample_selection == "all")){
       samples_selected <- colnames(assay(res_tmp$data_original))
     }else{
@@ -909,7 +914,6 @@ server <- function(input,output,session){
         assay(res_tmp$data) <<- as.data.frame(processedData)
       }
       if(input$PreProcessing_Procedure == "ln"){
-        #TODO check if 0 then do ln (+1)
         processedData <- as.data.frame(log(
           as.data.frame(assay(res_tmp$data))
           ))

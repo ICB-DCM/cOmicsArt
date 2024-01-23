@@ -20,7 +20,7 @@ geneset_panel_UI <- function(
             inputId = ns("only2Report"),
             label = "Send only to Report",
             class = "btn-info"
-          ) %>% helper(type = "markdown", content = "EA_Download")
+          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads")
         ),
         splitLayout(
           style = "border: 1px solid silver:",

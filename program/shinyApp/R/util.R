@@ -2,8 +2,7 @@
 
 
 update_data <- function(data, updates, current_updates){
-  # update data if updates is larger than current_updates
-  # could force to always update
+  # for stability reasons, data is ALWAYS pulled here
   print("Updating data...")
   data <- res_tmp
   return(data)
