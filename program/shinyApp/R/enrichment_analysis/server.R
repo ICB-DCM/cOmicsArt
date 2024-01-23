@@ -417,7 +417,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       # observer for Info text
       observe(
         shinyjs::html(
-          id = 'EnrichmentInfo',
+          id = 'EnrichmentFailure',
           ea_reactives$ea_info
         )
       )
