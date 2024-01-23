@@ -130,11 +130,12 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
               label = "Get underlying R code and data",
               icon = icon("code")
             ),
-            downloadButton(
-              outputId = ns("getR_Code_Volcano_both"),
-              label = "Get underlying R code and data",
-              icon = icon("code")
-            ),
+            NULL,
+            # downloadButton(
+            #   outputId = ns("getR_Code_Volcano_both"),
+            #   label = "Get underlying R code and data",
+            #   icon = icon("code")
+            # ),
             downloadButton(
               outputId = ns("getR_Code_Volcano_raw"),
               label = "Get underlying R code and data",

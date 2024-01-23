@@ -652,7 +652,7 @@ annotation_colors = par_tmp$SampleCorr$anno_colors
   }
 ## Significance Analysis -----
 
-if(numberOfScenario >= 20 & numberOfScenario < 22){
+if(numberOfScenario >= 20 & numberOfScenario < 24){
   # Calculate all necessary intermediate data sets
   prequel_stringtosave <- '
   # Test correction list
@@ -770,7 +770,6 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
             if(par_tmp$SigAna$sig_to_look_at == "Significant"){
                 print("You tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level.")
             }
-          return(NULL)
         }
   
   '
@@ -839,13 +838,88 @@ Upset_plot <- ComplexUpset::upset(
   }
   
   ### Volcano ----
-  if(numberOfScenario == 22){
-    stringtosave <- ''
+  # option of both unnecessary 
+  if(numberOfScenario >= 22 & numberOfScenario <= 23 ){
+    stringtosave_1 <- '
+    # plot volcano plot
+    data4Volcano <- sig_results[[chosenVizSet[i]]]
+    par_name <- gsub(":","_",chosenVizSet[i])
+    data4Volcano$probename <- rownames(data4Volcano)
+    data4Volcano$threshold <- ifelse(data4Volcano$padj>par_tmp$SigAna[paste0(par_name,"_psig_th")],"non-significant","significant")
+    data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>par_tmp$SigAna[paste0(par_name,"_psig_th")],"non-significant","significant")
+    data4Volcano$threshold_fc <- ifelse(
+      data4Volcano$log2FoldChange>par_tmp$SigAna[paste0(par_name,"_lfc_th")],
+      "up-regulated",
+      ifelse(
+        data4Volcano$log2FoldChange<(-1*as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),
+        "down-regulated", " "
+      )
+    )
+    data4Volcano$combined <- paste0(data4Volcano$threshold," + ",data4Volcano$threshold_fc)
+    data4Volcano$combined_raw <- paste0(data4Volcano$threshold_raw," + ",data4Volcano$threshold_fc)
+    colorScheme2 <- c("#cf0e5bCD", "#0e5bcfCD", "#939596CD","#cf0e5b1A", "#0e5bcf1A", "#9395961A")
+    names(colorScheme2) <- c(
+      "significant + up-regulated", "significant + down-regulated", "significant +  ",
+      "non-significant + up-regulated", "non-significant + down-regulated", "non-significant +  "
+    )
+
+    # remove NA values
+   data4Volcano <- data4Volcano[complete.cases(data4Volcano),]
+
+    '
+    if(numberOfScenario == 22){
+      stringtosave_2 <- 'Volcano_plot <- ggplot(
+      data4Volcano,
+      aes(label=probename)
+    ) +
+      geom_point(aes(
+        x = log2FoldChange,
+        y = -log10(padj),
+        colour = combined
+      )) +
+      geom_hline(
+        yintercept = -1*(log10(as.numeric(par_tmp$SigAna[paste0(par_name,"_psig_th")]))),
+        color="lightgrey"
+        ) +
+      geom_vline(
+        xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),par_tmp$SigAna[paste0(par_name,"_lfc_th")]),
+        color="lightgrey"
+        ) +
+      scale_color_manual(values=colorScheme2, name="") +
+      xlab("Log FoldChange") +
+      ylab("-log10(p_adj-value)") +
+      theme(legend.position = "none") +
+      theme_bw()+
+      ggtitle(label="Corrected p-Values")'
+    }
+    if(numberOfScenario == 23){
+      stringtosave_2 <- 'Volcano_plot <- ggplot(
+      sig_ana_reactive$data4Volcano,
+      aes(label=probename)
+    ) +
+      geom_point(aes(
+          x = log2FoldChange,
+          y = -log10(pvalue),
+          colour = combined_raw)) +
+      geom_hline(
+          yintercept = -1*(log10(as.numeric(par_tmp$SigAna[paste0(par_name,"_psig_th")]))),
+          color="lightgrey"
+      ) +
+      geom_vline(
+          xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),par_tmp$SigAna[paste0(par_name,"_lfc_th")]),
+          color="lightgrey"
+      ) +
+      scale_color_manual(values=colorScheme2, name="") +
+      xlab("Log FoldChange") +
+      ylab("-log10(p-value)") +
+      ggtitle(label="Uncorrected p-Values")
+      '
+    }
+    stringtosave <- paste0(stringtosave_1,"\n",stringtosave_2)
   }
   
   stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave,"\n","lapply(ls(pattern='plot'), get)")
   
-
 }
 
   if(numberOfScenario == 0){

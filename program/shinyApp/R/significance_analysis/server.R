@@ -471,7 +471,103 @@ significance_analysis_server <- function(id, data, params, updates){
           write.csv(tosave, file, row.names = FALSE)
         }
       )
-
+      
+      
+      output$getR_Code_Volcano <- downloadHandler(
+        
+        filename = function(){
+          paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+        },
+        content = function(file){
+          tmp <- getUserReactiveValues(input)
+          par_tmp$SigAna[names(tmp)] <<- tmp
+          
+          envList <- list(
+            res_tmp = res_tmp,
+            par_tmp = par_tmp
+          )
+          
+          if(params$PreProcessing_Procedure == "vst_DESeq"){
+            envList$dds <- data$DESeq_obj
+          }
+          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+          dir.create(temp_directory)
+          
+          write(
+            getPlotCode(22),
+            file.path(temp_directory, "Code.R")
+          )
+          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+          
+          #TODO
+          # Needs an extra sourcing to have in correct env - potential fix sourceing module specific functions within module
+          # instead of sourcing all - or having them all gloablly source (like general utils)
+          source("R/significance_analysis/util.R")
+          source("R/SourceAll.R")
+          
+          save.function.from.env(wanted = c("significance_analysis",
+                                            "filter_significant_result",
+                                            "getLFC",
+                                            "map_intersects_for_highlight",
+                                            "prepare_upset_plot",
+                                            "filter_rna"), 
+                                file = file.path(temp_directory, "utils.R"))
+          zip::zip(
+            zipfile = file,
+            files = dir(temp_directory),
+            root = temp_directory
+          )
+        },
+        contentType = "application/zip"
+      )
+      
+      output$getR_Code_Volcano_raw <- downloadHandler(
+        
+        filename = function(){
+          paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+        },
+        content = function(file){
+          tmp <- getUserReactiveValues(input)
+          par_tmp$SigAna[names(tmp)] <<- tmp
+          
+          envList <- list(
+            res_tmp = res_tmp,
+            par_tmp = par_tmp
+          )
+          
+          if(params$PreProcessing_Procedure == "vst_DESeq"){
+            envList$dds <- data$DESeq_obj
+          }
+          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+          dir.create(temp_directory)
+          
+          write(
+            getPlotCode(23),
+            file.path(temp_directory, "Code.R")
+          )
+          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+          
+          #TODO
+          # Needs an extra sourcing to have in correct env - potential fix sourceing module specific functions within module
+          # instead of sourcing all - or having them all gloablly source (like general utils)
+          source("R/significance_analysis/util.R")
+          source("R/SourceAll.R")
+          
+          save.function.from.env(wanted = c("significance_analysis",
+                                            "filter_significant_result",
+                                            "getLFC",
+                                            "map_intersects_for_highlight",
+                                            "prepare_upset_plot",
+                                            "filter_rna"), 
+                                 file = file.path(temp_directory, "utils.R"))
+          zip::zip(
+            zipfile = file,
+            files = dir(temp_directory),
+            root = temp_directory
+          )
+        },
+        contentType = "application/zip"
+      )
 
       # Download and Report Section
       # TODO discuss placement! if here visit choices do not get updated
