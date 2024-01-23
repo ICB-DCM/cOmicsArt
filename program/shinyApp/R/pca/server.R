@@ -177,7 +177,7 @@ pca_Server <- function(id, data, params, row_select, updates){
         print("PCA analysis on pre-selected data")
         customTitle <- paste0(
           "PCA - ", params$omic_type, "-",
-          paste0("entities:",row_select(),collapse = "_"),  # TODO: make row_select obsolete
+          paste0("entities:",row_select(),collapse = "_"),
           "-samples",
           ifelse(any(input$sample_selection != "all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),"")
           , "-preprocessing: ",
