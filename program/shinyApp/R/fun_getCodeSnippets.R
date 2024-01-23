@@ -655,6 +655,20 @@ annotation_colors = par_tmp$SampleCorr$anno_colors
 if(numberOfScenario >= 20 & numberOfScenario < 22){
   # Calculate all necessary intermediate data sets
   prequel_stringtosave <- '
+  # Test correction list
+PADJUST_METHOD <<- list(
+  "None" = "none",
+  "Bonferroni" = "bonferroni",
+  "Benjamini-Hochberg" = "BH",
+  "Benjamini Yekutieli" = "BY",
+  "Holm" = "holm",
+  "Hommel" = "hommel",
+  "Hochberg" = "hochberg",
+  "FDR" = "BH"
+)
+# get the results
+res2plot <- list()
+
 if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
   dds <- data$DESeq_obj
   
@@ -730,8 +744,8 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
           }else{
 
             chosenVizSet <-  par_tmp$SigAna$comparisons[c(1,2)]
-            sig_ana_reactive$info_text <- "Note: Although you choose all to visualize only first 2 comparisons are shown to avoid unwanted computational overhead, 
-            as you got more than 4 comparisons. Please choose precisely the comparisons for visualisation."
+            print("Note: Although you choose all to visualize only first 2 comparisons are shown to avoid unwanted computational overhead, 
+            as you got more than 4 comparisons. Please choose precisely the comparisons for visualisation.")
           }
         }else{
           chosenVizSet <- par_tmp$SigAna$comparisons_to_visualize
@@ -751,16 +765,11 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
         }
         # check that you have more than one comparison
         if(length(res2plot) <= 1){
-          sig_ana_reactive$info_text <- "You either have no significant results or only significant results in one comparison."
+          print("You either have no significant results or only significant results in one comparison.")
           # if current plots to llok at are adjusted pvalues, suggest to look at raw pvalues
-            if(input$sig_to_look_at == "Significant"){
-                sig_ana_reactive$info_text <- paste0(
-                sig_ana_reactive$info_text,
-                "\nYou tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level."
-                )
+            if(par_tmp$SigAna$sig_to_look_at == "Significant"){
+                print("You tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level.")
             }
-          # clear the plot
-          output$Significant_Plot_final <- renderPlot({})
           return(NULL)
         }
   
@@ -768,61 +777,66 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
 
   ### Venn Diagram ----
     if(numberOfScenario == 20){
-      stringtosave <- '          sig_ana_reactive$plot_last <- ggvenn::ggvenn(
-            res2plot, fill_color=c("#44af69", "#f8333c", "#fcab10", "#2b9eb3"),
+      stringtosave <- '          
+      Venn_plot <- ggvenn::ggvenn(
+            res2plot, 
+            fill_color=c("#44af69", "#f8333c", "#fcab10", "#2b9eb3"),
             set_name_size = 3
           )
-      observeEvent(input$intersection_high,{
+      '
+    }
+
+  ### UpSet Plot ----
+  if(numberOfScenario == 21){
+    stringtosave <- '
+              overlap_list <- prepare_upset_plot(res2plot=res2plot)
+          Upset_plot <- ComplexUpset::upset(
+            overlap_list,
+            colnames(overlap_list),
+            themes=list(default=theme())
+          )
+          intersect_names <-  ggplot_build(
+            Upset_plot
+          )$layout$panel_params[[1]]$x$get_labels()
+    
+          # if we want to change the highlighting
+    if(!is.null(par_tmp$SigAna$intersection_high)){
         querie_names_all <- map_intersects_for_highlight(
-          highlights=sig_ana_reactive$intersect_names,
-          plot=sig_ana_reactive$plot_last,
-          overlap_list=sig_ana_reactive$overlap_list
+          highlights=intersect_names,
+          plot=Upset_plot,
+          overlap_list=overlap_list
         )
         querie_names <- map_intersects_for_highlight(
-          highlights=input$intersection_high,
-          plot=sig_ana_reactive$plot_last,
-          overlap_list=sig_ana_reactive$overlap_list
+          highlights=par_tmp$SigAna$intersection_high,
+          plot=Upset_plot,
+          overlap_list=overlap_list
         )
         queries <- vector("list", length(querie_names_all))
-        for(i_querie in seq_along(sig_ana_reactive$intersect_names)){
-          if(sig_ana_reactive$intersect_names[[i_querie]] %in% input$intersection_high){
+        for(i_querie in seq_along(intersect_names)){
+          if(intersect_names[[i_querie]] %in% par_tmp$SigAna$intersection_high){
             queries[[i_querie]] <- upset_query(
-              intersect=colnames(sig_ana_reactive$overlap_list)[querie_names_all[[i_querie]]],
+              intersect=colnames(overlap_list)[querie_names_all[[i_querie]]],
               color="red",
               fill="red"
             )
-          } else{
+          }else{
             queries[[i_querie]] <- upset_query(
-              intersect=colnames(sig_ana_reactive$overlap_list)[querie_names_all[[i_querie]]],
+              intersect=colnames(overlap_list)[querie_names_all[[i_querie]]],
               color="#595959",
-      fill="#595959"
-      )
+    fill="#595959"
+    )
 }
 }
-sig_ana_reactive$plot_last <- ComplexUpset::upset(
-  sig_ana_reactive$overlap_list,
-  colnames(sig_ana_reactive$overlap_list),
+Upset_plot <- ComplexUpset::upset(
+  overlap_list,
+  colnames(overlap_list),
   themes=list(default=theme()),
   queries=queries
 )
-})
-      '
-    }
-  ### Upset plot ----
-    if(numberOfScenario == 21){
-      stringtosave <- '
-                sig_ana_reactive$overlap_list <- prepare_upset_plot(res2plot=res2plot)
-          sig_ana_reactive$plot_last <- ComplexUpset::upset(
-            sig_ana_reactive$overlap_list,
-            colnames(sig_ana_reactive$overlap_list),
-            themes=list(default=theme())
-          )
-          sig_ana_reactive$intersect_names <-  ggplot_build(
-            sig_ana_reactive$plot_last
-          )$layout$panel_params[[1]]$x$get_labels()
-      
-      UpSetR::upset(fromList(res_tmp$SignificanceAnalysis))'
-    }
+}
+ 
+    '
+  }
   
   ### Volcano ----
   if(numberOfScenario == 22){

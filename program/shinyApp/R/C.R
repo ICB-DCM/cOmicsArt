@@ -17,10 +17,12 @@ PADJUST_METHOD <<- list(
 
 CODE_DOWNLOAD_PREFACE <<- "# ShinyOmics R Code Download\n# Load necassary packages (if errors please install respective packages)
 library(ggplot2)
+library(ggvenn)
 library(ggpubr)
 library(rstudioapi)
 library(SummarizedExperiment)
 library(pheatmap)
+library(ComplexUpset)
 
 # make sure environment is empty
 

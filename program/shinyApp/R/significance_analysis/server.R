@@ -188,6 +188,9 @@ significance_analysis_server <- function(id, data, params, updates){
       })
       # Analysis initial info
       observeEvent(input$significanceGo,{
+        # also here to ensure to get sidepanel Inputs
+        tmp <- getUserReactiveValues(input)
+        par_tmp$SigAna[names(tmp)] <<- tmp
         # shinyjs::html(id = 'significance_analysis_info', "Analysis is running...")
         sig_ana_reactive$info_text <- "Analysis is running..."
         # start the analysis
@@ -318,13 +321,7 @@ significance_analysis_server <- function(id, data, params, updates){
           input$sig_to_look_at,
           sig_ana_reactive$update_plot_post_ana > 0
         )
-        # assign scenario=20 for Venn Diagram and scenario=21 for UpSetR
-        if(input$visualization_method == "Venn Diagram"){
-          sig_ana_reactive$scenario <- 20
-        }
-        else{
-          sig_ana_reactive$scenario <- 21
-        }
+
         # get the results
         res2plot <- list()
         # check that you have more than one comparison
@@ -477,28 +474,70 @@ significance_analysis_server <- function(id, data, params, updates){
 
 
       # Download and Report Section
+      # TODO discuss placement! if here visit choices do not get updated
+      # for now placed in download section to avoid issues
       # download R Code for further plotting
-      output$getR_Code <- downloadHandler(
+      # tmp <- getUserReactiveValues(input)
+      # par_tmp$SigAna[names(tmp)] <<- tmp
+      
+      output$getR_Code_Sig <- downloadHandler(
+
         filename = function(){
           paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
         },
         content = function(file){
+          tmp <- getUserReactiveValues(input)
+          par_tmp$SigAna[names(tmp)] <<- tmp
+          
+          # assign scenario=20 for Venn Diagram and scenario=21 for UpSetR
+          if(input$visualization_method == "Venn Diagram"){
+            sig_ana_reactive$scenario <- 20
+          }else{
+            sig_ana_reactive$scenario <- 21
+          }
+          
           envList <- list(
-            sig_results = sig_results,
-            input = reactiveValuesToList(input),
-            res2plot = sig_ana_reactive$results_for_plot
+            res_tmp = res_tmp,
+            par_tmp = par_tmp
           )
+          
           if(params$PreProcessing_Procedure == "vst_DESeq"){
             envList$dds <- data$DESeq_obj
           }
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
+          
 
           write(
             getPlotCode(sig_ana_reactive$scenario),  # 20 for Venn diagram, 21 for UpSetR
             file.path(temp_directory, "Code.R")
           )
           saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+          
+          #TODO
+          # Needs an extra sourcing to have in correct env - potential fix sourceing module specific functions within module
+          # instead of sourcing all - or having them all gloablly source (like general utils)
+          source("R/significance_analysis/util.R")
+          source("R/SourceAll.R")
+
+          save.function.from.env(wanted = c("significance_analysis",
+                                            "filter_significant_result",
+                                            "getLFC",
+                                            "map_intersects_for_highlight",
+                                            "prepare_upset_plot",
+                                             "filter_rna"), 
+ # TODO How to handle constants? load into utils? (Issue : all constant not necassarily needed) - two type of constant scripts?
+ # for ow constant copy pasted into code snippet
+ 
+ # TODO [Lea] - filter_rna this needs to be always downloaded if IQR chosen for selection. 
+ # Should be added always - Idea:
+ # upon an Rcode downloade - zip folder created based on selection and preprocessing
+ # then user prompted choise of possible downloads for further bits
+ # but this would need to be triggered above modules
+ # or once hit after preprocessing temp folder created with first bit then added
+ # depending on analyses down - pop up based what is present in res_tmp (for this scenarios should be added to par_tmp!)
+                                 file = file.path(temp_directory, "utils.R"))
+          
           zip::zip(
             zipfile = file,
             files = dir(temp_directory),
