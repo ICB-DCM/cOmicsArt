@@ -548,8 +548,8 @@ significance_analysis_server <- function(id, data, params, updates){
           saveRDS(envList, file.path(temp_directory, "Data.RDS"))
           
           #TODO
-          # Needs an extra sourcing to have in correct env - potential fix sourceing module specific functions within module
-          # instead of sourcing all - or having them all gloablly source (like general utils)
+          # Needs an extra sourcing to have in correct env - potential fix sourcing module specific functions within module
+          # instead of sourcing all - or having them all globablly source (like general utils)
           source("R/significance_analysis/util.R")
           source("R/SourceAll.R")
           
