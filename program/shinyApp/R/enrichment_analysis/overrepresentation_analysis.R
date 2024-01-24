@@ -9,7 +9,7 @@ over_representation_analysis <- function(
   # Overrepresentation analysis
   # no translation needed as already done before.
 
-  if(!isTruthy(input$UniverseOfGene)){
+  if(!is.null(input$UniverseOfGene)){
     universeSelected_tranlsated <- NULL
   }else{
     if(input$UniverseOfGene == "default"){

@@ -23,6 +23,7 @@ library(rstudioapi)
 library(SummarizedExperiment)
 library(pheatmap)
 library(ComplexUpset)
+library(clusterProfiler)
 
 # make sure environment is empty
 

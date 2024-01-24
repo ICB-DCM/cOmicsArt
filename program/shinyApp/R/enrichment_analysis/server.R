@@ -29,9 +29,9 @@ enrichment_analysis_geneset_server <- function(
           hideElement(id = "EnrichmentFailure")
           output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result)})
           if(ea_type == "GeneSetEnrichment"){
-            ea_scenario <- 14
-          }else{
             ea_scenario <- 15
+          }else{
+            ea_scenario <- 14
           }
         }
         else{ # print that no significant result was found
@@ -39,19 +39,32 @@ enrichment_analysis_geneset_server <- function(
           output$EnrichmentFailure <- renderText("No significant result found. For further details check the table.")
           ea_scenario <- 0
         }
+        
         # download R Code for further plotting
         output$getR_Code <- downloadHandler(
           filename = function(){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
-            envList <- list(EnrichmentRes = result)
-            # assign unique name to result for saving later
-            result_name <- paste("EnrichmentRes", id, sep="_")
-            names(envList) <- result_name
-
+          #  tmp <- getUserReactiveValues(input)
+           # par_tmp$Enrichment[names(tmp)] <<- tmp
+              envList <- list(
+                res_tmp = res_tmp,
+                par_tmp = par_tmp
+              )
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
+            
+            # functions needed
+            source("R/SourceAll.R")
+            
+            save.function.from.env(wanted = c("check_annotation_enrichment_analysis",
+                                              "translate_genes_ea",
+                                              "translate_genes_oa",
+                                              "gene_set_enrichment",
+                                              "over_representation_analysis"), 
+                                   file = file.path(temp_directory, "utils.R"))
+
 
             write(getPlotCode(ea_scenario), file.path(temp_directory, "Code.R"))
 
@@ -645,15 +658,15 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       geneSetChoice <- reactive({
         if(isTruthy(input$GeneSet2Enrich)){
           if(input$GeneSet2Enrich == "DE_Genes"){
-            # atm this is not done
+            # TODO add option to send DE genes
             geneSetChoice_tmp <- DE_genelist()
           }
           if(input$GeneSet2Enrich == "ProvidedGeneSet"){
             if(!is.null(input$UploadedGeneSet)){
               Tmp <- read.csv(input$UploadedGeneSet$datapath, header = F)
-              # check take first column as acharacter vector
+              # check take first column as a character vector
               geneSetChoice_tmp <- Tmp$V1
-              ## Here somehow if value next to gene provieded needs to be considered further down
+              ## Here somehow if value next to gene provided needs to be considered further down
               # Check if they start with "ENS.."
               if(!length(which(grepl("ENS.*",geneSetChoice_tmp) == TRUE)) == length(geneSetChoice_tmp)){
                 print("wrong data!")
@@ -708,6 +721,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         fun_LogIt("## ENRICHMENT")
         req(geneSetChoice())
         ea_reactives$tmp_genes <- geneSetChoice()
+        par_tmp$Enrichment$tmp_genes <<- ea_reactives$tmp_genes
+        par_tmp$Enrichment$enrichments2do <<- ea_reactives$enrichments2do
         # Check whether the necessary annotation is available
         anno_results <- check_annotation_enrichment_analysis(data$data)
         data$data <- anno_results$new_data
@@ -779,6 +794,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               input$Groups2Compare_treat_GSEA,
               input$ValueToAttach
             )
+            tmp <- getUserReactiveValues(input)
+            par_tmp$Enrichment[names(tmp)] <<- tmp
           }else{
             ea_reactives$enrichment_results <- over_representation_analysis(
               input,
@@ -788,21 +805,13 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               ea_reactives$enrichments2do,
               input$test_correction
             )
+            tmp <- getUserReactiveValues(input)
+            par_tmp$Enrichment[names(tmp)] <<- tmp
           }
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
           # res_temp Zuweisung
           res_tmp["Enrichment"] <<- ea_reactives$enrichment_results
-          # par_temp Zuweisung
-          par_tmp["Enrichment"] <<- list(
-            "ValueToAttach" = input$ValueToAttach,
-            "GeneSet2Enrich" = input$GeneSet2Enrich,
-            "Groups2Compare_ref_GSEA" = input$Groups2Compare_ref_GSEA,
-            "Groups2Compare_treat_GSEA" = input$Groups2Compare_treat_GSEA,
-            "sample_annotation_types_cmp_GSEA" = input$sample_annotation_types_cmp_GSEA,
-            "ORA_or_GSE" = input$ORA_or_GSE,
-            "OrganismChoice" = input$OrganismChoice,
-            "UniverseOfGene" = input$UniverseOfGene
-          )
+
         })
       })
 
