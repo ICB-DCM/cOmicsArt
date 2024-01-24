@@ -220,7 +220,7 @@ heatmap_server <- function(id, data, params, updates){
         )
         req(selectedData_processed())
         # update the data if needed
-        data <- update_data(data, updates, heatmap_reactives$current_updates)
+        data <- update_data(session$token)
         heatmap_reactives$current_updates <- updates()
         print("Heatmap on selected Data")
         # Value need to be setted in case there is nothing to plot to avoid crash
@@ -360,7 +360,6 @@ heatmap_server <- function(id, data, params, updates){
         }
         if(calculate == 1){
           if(input$LFC_toHeatmap){
-            browser()
             ctrl_samples_idx <- which(
               colData(data$data)[,input$sample_annotation_types_cmp_heatmap]%in%input$Groups2Compare_ref_heatmap
               )
@@ -372,7 +371,7 @@ heatmap_server <- function(id, data, params, updates){
               output$Options_selected_out_3 <- renderText("Choose variable with at least two samples per condition!")
               doThis_flag <- F
             }
-            if(par_tmp$PreProcessing_Procedure == "simpleCenterScaling"|
+            if(par_tmp[[session$token]]$PreProcessing_Procedure == "simpleCenterScaling"|
                any(assay(data$data))< 0){
               
               print("Remember do not use normal center + scaling (negative Values!)")
@@ -453,15 +452,15 @@ heatmap_server <- function(id, data, params, updates){
         } else {
           print("Plotting saved result")
           if(input$LFC_toHeatmap){
-            myBreaks <- c(seq(min(res_tmp$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
-                            seq(max(res_tmp$Heatmap$LFC)/paletteLength, max(res_tmp$Heatmap$LFC), length.out=floor(paletteLength/2)))
+            myBreaks <- c(seq(min(res_tmp[[session$token]]$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
+                            seq(max(res_tmp[[session$token]]$Heatmap$LFC)/paletteLength, max(res_tmp[[session$token]]$Heatmap$LFC), length.out=floor(paletteLength/2)))
             annotation_col <- rowData(data2Plot)[,input$row_anno_options,drop=F]
 
             scenario <- 10
             heatmap_plot <- pheatmap(
-                t(res_tmp$Heatmap[,"LFC",drop=F]),
+                t(res_tmp[[session$token]]$Heatmap[,"LFC",drop=F]),
                 main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
-                show_rownames = ifelse(nrow(res_tmp$Heatmap)<=25,TRUE,FALSE),
+                show_rownames = ifelse(nrow(res_tmp[[session$token]]$Heatmap)<=25,TRUE,FALSE),
                 show_colnames = TRUE,
                 cluster_cols = input$cluster_cols,
                 cluster_rows = FALSE,
@@ -472,12 +471,12 @@ heatmap_server <- function(id, data, params, updates){
                 color = myColor_fill
               )
           } else {
-            clusterRowspossible <- ifelse(nrow(as.matrix(res_tmp$Heatmap))>1,input$cluster_rows,F)
-            if(any(is.na(res_tmp$Heatmap))){
-              idx_of_nas <- which(apply(res_tmp$Heatmap,1,is.na)) # why do we produce Nas?
+            clusterRowspossible <- ifelse(nrow(as.matrix(res_tmp[[session$token]]$Heatmap))>1,input$cluster_rows,F)
+            if(any(is.na(res_tmp[[session$token]]$Heatmap))){
+              idx_of_nas <- which(apply(res_tmp[[session$token]]$Heatmap,1,is.na)) # why do we produce Nas?
               print(idx_of_nas)
               if(length(idx_of_nas)>0){
-                res_tmp$Heatmap <- res_tmp$Heatmap[-idx_of_nas,]
+                res_tmp[[session$token]]$Heatmap <- res_tmp[[session$token]]$Heatmap[-idx_of_nas,]
               }
 
               annotation_col <- colData(data$data)[-idx_of_nas,input$anno_options,drop=F]
@@ -494,9 +493,9 @@ heatmap_server <- function(id, data, params, updates){
             }
             scenario <- 11
             heatmap_plot <- pheatmap(
-              as.matrix(res_tmp$Heatmap),
+              as.matrix(res_tmp[[session$token]]$Heatmap),
               main = customTitleHeatmap,
-              show_rownames = ifelse(nrow(res_tmp$Heatmap)<=input$row_label_no,TRUE,FALSE),
+              show_rownames = ifelse(nrow(res_tmp[[session$token]]$Heatmap)<=input$row_label_no,TRUE,FALSE),
               labels_row = rowData(data$data)[rownames(data2HandOver),input$row_label_options],
               show_colnames = TRUE,
               cluster_cols = input$cluster_cols,
@@ -531,27 +530,27 @@ heatmap_server <- function(id, data, params, updates){
         # Heatmap_Groups2Compare_ctrl_heatmap <- input$Groups2Compare_ctrl_heatmap
         
 
-        # res_tmp gets data2HandOver or Data2Plot depending on scenario
+        # res_tmp[[session$token]] gets data2HandOver or Data2Plot depending on scenario
         if(scenario == 10){
-          res_tmp[["Heatmap"]] <<- Data2Plot
+          res_tmp[[session$token]][["Heatmap"]] <<- Data2Plot
         }else if(scenario == 11){
-          res_tmp[["Heatmap"]] <<- data2HandOver
+          res_tmp[[session$token]][["Heatmap"]] <<- data2HandOver
         }
-        # par_tmp gets the parameters used for the heatmap
+        # par_tmp[[session$token]] gets the parameters used for the heatmap
         ## This exports all reactive Values in the PCA namespace 
         tmp <- getUserReactiveValues(input)
-        par_tmp$Heatmap[names(tmp)] <<- tmp
+        par_tmp[[session$token]]$Heatmap[names(tmp)] <<- tmp
         
         
         output$getR_Code_Heatmap <- downloadHandler(
           filename = function(){
-            paste("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip", sep = "")
+            paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
-            envList=list(
-
-              res_tmp=res_tmp,
-              par_tmp=par_tmp
+            # TODO: I think these are the completely wrong objects to save here. Needs Check!
+            envList <- list(
+              res_tmp = res_tmp[[session$token]],
+              par_tmp = par_tmp[[session$token]]
             )
             
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
@@ -572,8 +571,8 @@ heatmap_server <- function(id, data, params, updates){
         )
 
         output$SavePlot_Heatmap <- downloadHandler(
-          filename = function() { 
-            paste(Heatmap_customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep="") 
+          filename = function() {
+            paste0(Heatmap_customTitleHeatmap, " ", Sys.time(), input$file_ext_Heatmap)
             },
           content = function(file){
             save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
@@ -581,7 +580,7 @@ heatmap_server <- function(id, data, params, updates){
               tmp_filename <- paste0(
                 getwd(),
                 "/www/",
-                paste(paste(Heatmap_customTitleHeatmap, " ",Sys.time(),input$file_ext_Heatmap,sep=""))
+                paste0(Heatmap_customTitleHeatmap, " ", Sys.time(), input$file_ext_Heatmap)
                 )
               save_pheatmap(
                 heatmap_plot,
@@ -620,8 +619,8 @@ heatmap_server <- function(id, data, params, updates){
         )
         
         output$SaveGeneList_Heatmap <- downloadHandler(
-          filename = function() { 
-            paste("GeneList_",customTitleHeatmap, " ",Sys.time(),".csv",sep="")
+          filename = function() {
+            paste0("GeneList_", customTitleHeatmap, " ", Sys.time(), ".csv")
             },
           
           content = function(file){

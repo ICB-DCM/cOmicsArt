@@ -40,7 +40,7 @@ sample_correlation_server <- function(id, data, params, updates){
         
         if(sample_corr_reactive$calculate == 1){
           # update the data if needed
-          data <- update_data(data, updates, sample_corr_reactive$current_updates)
+          data <- update_data(session$token)
           sample_corr_reactive$current_updates <- updates()
           # set the counter to 0 to prevent any further plotting
           sample_corr_reactive$calculate <- 0
@@ -53,7 +53,7 @@ sample_correlation_server <- function(id, data, params, updates){
               data_info = list(
                 rows = length(rownames(data$data)),
                 cols = length(colnames(data$data)),
-                preprocessing = par_tmp$PreProcessing_Procedure
+                preprocessing = par_tmp[[session$token]]$PreProcessing_Procedure
               )
             ),
             "SampleCorrelation"
@@ -70,7 +70,7 @@ sample_correlation_server <- function(id, data, params, updates){
             output$SampleCorr_Info <- renderText(
               "Correlation Matrix was already computed, no need to click the Button again."
             )
-            cormat <- res_tmp$SampleCorrelation
+            cormat <- res_tmp[[session$token]]$SampleCorrelation
           } else if (check == "Overwrite"){
             output$SampleCorr_Info <- renderText(
               "Correlation Matrix result overwritten with different parameters."
@@ -122,14 +122,14 @@ sample_correlation_server <- function(id, data, params, updates){
             annotation_colors = anno_colors
             )
           # assign res_temp["SampleCorrelation"]
-          res_tmp[["SampleCorrelation"]] <<- cormat
+          res_tmp[[session$token]][["SampleCorrelation"]] <<- cormat
           # assign par_temp["SampleCorrelation"]
-          par_tmp[["SampleCorrelation"]] <<- list(
+          par_tmp[[session$token]][["SampleCorrelation"]] <<- list(
             corrMethod = input$corrMethod,
             data_info = list(
               rows = length(rownames(data$data)),
               cols = length(colnames(data$data)),
-              preprocessing = par_tmp$PreProcessing_Procedure
+              preprocessing = par_tmp[[session$token]]$PreProcessing_Procedure
             )
           )
 
@@ -141,7 +141,7 @@ sample_correlation_server <- function(id, data, params, updates){
             customTitleSampleCorrelation <- "SampleCorrelation"
           }
 
-          par_tmp[["SampleCorr"]] <<- list(
+          par_tmp[[session$token]][["SampleCorr"]] <<- list(
             customTitleSampleCorrelation = customTitleSampleCorrelation,
             SampleCorrelationPlot_final = SampleCorrelationPlot_final,
             cormat = cormat,
@@ -161,16 +161,16 @@ sample_correlation_server <- function(id, data, params, updates){
         },
         content = function(file){
           envList = list(
-            cormat = ifelse(exists("cormat"),par_tmp[["SampleCorr"]]$cormat,NA),
-            annotationDF = ifelse(exists("annotationDF"),par_tmp[["SampleCorr"]]$annotationDF,NA),
-            customTitleSampleCorrelation = ifelse(exists("customTitleSampleCorrelation"),par_tmp[["SampleCorr"]]$customTitleSampleCorrelation,NA),
-            anno_colors = ifelse(exists("anno_colors"),par_tmp[["SampleCorr"]]$anno_colors,NA)
+            cormat = ifelse(exists("cormat"),par_tmp[[session$token]][["SampleCorr"]]$cormat,NA),
+            annotationDF = ifelse(exists("annotationDF"),par_tmp[[session$token]][["SampleCorr"]]$annotationDF,NA),
+            customTitleSampleCorrelation = ifelse(exists("customTitleSampleCorrelation"),par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation,NA),
+            anno_colors = ifelse(exists("anno_colors"),par_tmp[[session$token]][["SampleCorr"]]$anno_colors,NA)
           )
           
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
 
-          write(getPlotCode(par_tmp[["SampleCorr"]]$sampleCorrelation_scenario), file.path(temp_directory, "Code.R"))
+          write(getPlotCode(par_tmp[[session$token]][["SampleCorr"]]$sampleCorrelation_scenario), file.path(temp_directory, "Code.R"))
           
           saveRDS(envList, file.path(temp_directory, "Data.RDS"))
           zip::zip(
@@ -184,18 +184,18 @@ sample_correlation_server <- function(id, data, params, updates){
       
       output$SavePlot_SampleCorrelation <- downloadHandler(
         filename = function() { 
-          paste(par_tmp[["SampleCorr"]]$customTitleSampleCorrelation,Sys.time(),input$file_ext_Heatmap,sep = "") 
+          paste(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation,Sys.time(),input$file_ext_Heatmap,sep = "")
         },
         content = function(file){
-          save_pheatmap(par_tmp[["SampleCorr"]]$SampleCorrelationPlot_final,filename = file,type=gsub("\\.","",input$file_ext_SampleCorrelation))
+          save_pheatmap(par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,filename = file,type=gsub("\\.","",input$file_ext_SampleCorrelation))
           on.exit({
             tmp_filename <- paste0(
               getwd(),
               "/www/",
-              paste(paste(par_tmp[["SampleCorr"]]$customTitleSampleCorrelation,Sys.time(),input$file_ext_SampleCorrelation,sep = ""))
+              paste(paste(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation,Sys.time(),input$file_ext_SampleCorrelation,sep = ""))
             )
             save_pheatmap(
-              par_tmp[["SampleCorr"]]$SampleCorrelationPlot_final,
+              par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,
               filename = tmp_filename,
               type = gsub("\\.","",input$file_ext_SampleCorrelation)
             )
@@ -216,11 +216,11 @@ sample_correlation_server <- function(id, data, params, updates){
         tmp_filename <- paste0(
           getwd(),
           "/www/",
-          paste(paste(par_tmp[["SampleCorr"]]$customTitleSampleCorrelation,Sys.time(),".png",sep = ""))
+          paste(paste(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation,Sys.time(),".png",sep = ""))
         )
         
         save_pheatmap(
-          par_tmp[["SampleCorr"]]$SampleCorrelationPlot_final,
+          par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,
           filename = tmp_filename,
           type = "png"
         )

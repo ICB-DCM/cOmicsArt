@@ -424,7 +424,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       )
       # refresh the UI/data if needed
       observeEvent(input$refreshUI, {
-        ea_reactives$data <- update_data(data, 0, 0)$data
+        ea_reactives$data <- update_data(session$token)$data
       })
       # UI to choose test correction
       output$AdjustmentMethod_ui <- renderUI({
@@ -804,9 +804,9 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           }
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
           # res_temp Zuweisung
-          res_tmp["Enrichment"] <<- ea_reactives$enrichment_results
+          res_tmp[[session$token]]["Enrichment"] <<- ea_reactives$enrichment_results
           # par_temp Zuweisung
-          par_tmp["Enrichment"] <<- list(
+          par_tmp[[session$token]]["Enrichment"] <<- list(
             "ValueToAttach" = input$ValueToAttach,
             "GeneSet2Enrich" = input$GeneSet2Enrich,
             "Groups2Compare_ref_GSEA" = input$Groups2Compare_ref_GSEA,

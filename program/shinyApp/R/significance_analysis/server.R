@@ -180,8 +180,8 @@ significance_analysis_server <- function(id, data, params, updates){
       )
       # refresh the UI/data if needed
       observeEvent(input$refreshUI, {
-        data <- update_data(data, updates, sig_ana_reactive$current_updates)
-        params <- update_params(params, updates, sig_ana_reactive$current_updates)
+        data <- update_data(session$token)
+        params <- update_params(session$token)
         sig_ana_reactive$current_updates <- updates()
         sig_ana_reactive$coldata <- colData(data$data)
       })
@@ -200,7 +200,7 @@ significance_analysis_server <- function(id, data, params, updates){
         }
         print("Start the Significance Analysis")
         # update the data if needed
-        data <- update_data(data, updates, sig_ana_reactive$current_updates)
+        data <- update_data(session$token)
         sig_ana_reactive$current_updates <- updates()
         sig_ana_reactive$coldata <- colData(data$data)
         # delete old panels
@@ -228,10 +228,10 @@ significance_analysis_server <- function(id, data, params, updates){
           for (i in 1:length(contrasts)) {
             if(identical(
               list(test_method = "Wald", test_correction = PADJUST_METHOD[[input$test_correction]]),
-              par_tmp$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
+              par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
             )){
               print("Results exists, skipping calculations.")
-              sig_results[[input$comparisons[i]]] <<- res_tmp$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
+              sig_results[[input$comparisons[i]]] <<- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
               next
             }
             sig_results[[input$comparisons[i]]] <<- DESeq2::results(
@@ -243,9 +243,9 @@ significance_analysis_server <- function(id, data, params, updates){
               ),
               pAdjustMethod = PADJUST_METHOD[[input$test_correction]]
             )
-            # fill in res_tmp, par_tmp
-            res_tmp$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- sig_results[[input$comparisons[i]]]
-            par_tmp$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- list(
+            # fill in res_tmp[[session$token]], par_tmp[[session$token]]
+            res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- sig_results[[input$comparisons[i]]]
+            par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- list(
               test_method = "Wald",
               test_correction = PADJUST_METHOD[[input$test_correction]]
             )

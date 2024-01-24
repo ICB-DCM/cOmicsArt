@@ -811,10 +811,10 @@ significance_analysis <- function(
     # skip if already there
     if(identical(
       list(test_method = method, test_correction = correction),
-      par_tmp$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]
+      par_tmp[[session$token]]$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]
     )){
       print("Results exists, skipping calculations.")
-      sig_results[[names(contrasts)[comp_name]]] <- res_tmp$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]
+      sig_results[[names(contrasts)[comp_name]]] <- res_tmp[[session$token]]$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]
       comp_name <- comp_name + 1
       next
     }
@@ -850,9 +850,9 @@ significance_analysis <- function(
 
 
     sig_results[[names(contrasts)[comp_name]]] <- res
-    # fill res_tmp, par_tmp
-    res_tmp$SigAna[[contrast_level]][[names(contrasts)[comp_name]]] <<- res
-    par_tmp$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]  <<- list(
+    # fill res_tmp[[session$token]], par_tmp[[session$token]]
+    res_tmp[[session$token]]$SigAna[[contrast_level]][[names(contrasts)[comp_name]]] <<- res
+    par_tmp[[session$token]]$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]  <<- list(
       test_method = method,
       test_correction = correction
     )
@@ -925,9 +925,9 @@ getLFC <- function(means){
     )
     return (df$LFC)
   }
-  if(par_tmp$PreProcessing_Procedure == "log10"){
+  if(par_tmp[[session$token]]$PreProcessing_Procedure == "log10"){
     lfc_per_gene_log(means, log_base = 10)
-  }else if(par_tmp$PreProcessing_Procedure == "ln"){
+  }else if(par_tmp[[session$token]]$PreProcessing_Procedure == "ln"){
     lfc_per_gene_log(means, log_base = exp(1))
   }else{
     lfc_per_gene(means)
