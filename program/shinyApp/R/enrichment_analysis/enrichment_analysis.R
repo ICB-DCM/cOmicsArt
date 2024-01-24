@@ -76,14 +76,14 @@ gene_set_enrichment <- function(
     ){
       EnrichmentRes_GO <- clusterProfiler::gseGO(
         gene = geneSetChoice,
-        ont = input$ontologyForGO,
+        ont = "All",
         keyType = "ENTREZID",
         minGSSize = 3,
         maxGSSize = 800,
         pvalueCutoff = 0.05,
         verbose = TRUE,
         OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"),
-        pAdjustMethod = "none"  # TODO: discuss
+        pAdjustMethod = PADJUST_METHOD[[adjustMethod]]
       )
       res_tmp$EA[[comp_type]][[contrast]]$GO <<- EnrichmentRes_GO
       par_tmp$EA[[comp_type]][[contrast]]$GO <<- list("adjustMethod"=adjustMethod, "sort"=sorting)

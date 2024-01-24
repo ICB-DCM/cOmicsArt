@@ -68,7 +68,6 @@ significance_analysis_server <- function(id, data, params, updates){
       # UI to choose test method
       output$chooseTest_ui <- renderUI({
         if(params$PreProcessing_Procedure == "vst_DESeq"){
-          # TODO: can we have a box that looks the same as an input?
           renderText(
             expr = "DESeq is using a Wald test statistic.\nWe are using the same here.",
             outputArgs = list(container = pre)
@@ -214,7 +213,7 @@ significance_analysis_server <- function(id, data, params, updates){
           }
         }
         # if preproccesing method was DESeq2, then use DESeq2 for testing
-        if(params$PreProcessing_Procedure == "vst_DESeq"){  # TODO: rename method to "DESeq"
+        if(params$PreProcessing_Procedure == "vst_DESeq"){
           dds <- data$DESeq_obj
 
           # rewind the comparisons again
