@@ -546,8 +546,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               label = "Select an Universe for enrichment (default is clusterProfilers default",
               choices = c(
                 "default",
-                "allPresentGenes_after_pre_process",
-                "allPresentGenes_before_pre_process"
+                "after_pre_process",
+                "before_pre_process"
               ),
               selected = "default"
             )
@@ -797,7 +797,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               input,
               output,
               ea_reactives$tmp_genes,
-              ea_reactives$data,
+              data,
               ea_reactives$enrichments2do,
               input$test_correction
             )
