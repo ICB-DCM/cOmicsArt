@@ -2,8 +2,6 @@ server <- function(input,output,session){
   source("R/SourceAll.R",local=T)
   source("R/util.R")
 
-  global_Vars <<- reactiveValues() # OUTDATED?
-
   # fill session_if textOutput with current session$token
   output$session_id <- renderText({
       paste0("Current session: ", session$token)
@@ -1002,6 +1000,7 @@ server <- function(input,output,session){
       
       shinyjs::click("SignificanceAnalysis-refreshUI",asis = T)
       shinyjs::click("single_gene_visualisation-refreshUI",asis = T)
+      shinyjs::click("EnrichmentAnalysis-refreshUI",asis = T)
       paste0(addWarning,
              "The data has the dimensions of: ",
              paste0(dim(res_tmp[[session$token]]$data),collapse = ", "),

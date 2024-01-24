@@ -2,7 +2,7 @@
 
 ***
 
-Here you can upload you `Metasatasheet` to easily upload all data at once in 
+Here you can upload you `Meta Data Sheet` to easily upload all data at once in 
 addition to a very detailed metadata information on the samples. This not only eases 
 the upload but also allows you to investigate the data in much more detail.
 

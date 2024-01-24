@@ -1,6 +1,12 @@
 ## Principal Component Analysis (PCA) Options
 
 ***
+
+A principal component analysis (PCA) is a linear dimensionality reduction technique to 
+visualize clusters within your data. For a small introduction on PCAs, please refer to 
+the CRan package [LearnPCA](https://cran.r-project.org/web/packages/LearnPCA/) or to 
+the wikipedia article on [PCA](https://en.wikipedia.org/wiki/Principal_component_analysis). 
+
 **1. Coloring Options:**
 
 - **Description:**

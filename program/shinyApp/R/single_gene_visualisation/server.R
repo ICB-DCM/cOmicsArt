@@ -205,10 +205,6 @@ single_gene_visualisation_server <- function(id, data, params, updates){
           testMethod <- "t.test"
           scenario <- 13
           if(input$type_of_visualitsation == "boxplots_withTesting"){
-            # TODO add warning to user if there are too many observations to perform test
-            # to explain missing tests in Viz
-            # already a warning in backend
-            
             if(isTruthy(input$chooseComparisons)){
               newList <- input$chooseComparisons
               xy.list <- vector("list", length(newList))
@@ -233,6 +229,17 @@ single_gene_visualisation_server <- function(id, data, params, updates){
             
           }
           boxplot_scenario <- scenario
+          # Warning is called when P_boxplots is rendered. Catch it and print it somewhere
+          tryCatch(
+            print(P_boxplots),
+            error=function(e) e, # Print the error in case of error.
+            warning=function(w){  # We only expect one type of warning
+               shinyjs::html(
+                 id = 'InfoText',
+                 HTML(paste0("<font color='orange'>Warning: ",w$parent$message,"</font>"))
+               )
+            }
+          )
           # add points +geom_point(alpha=0.4,pch=4)
           output$SingleGenePlot <- renderPlot(P_boxplots)
           
