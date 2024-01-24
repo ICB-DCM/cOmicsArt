@@ -85,7 +85,6 @@ server <- function(input,output,session){
       res_tmp[[session$token]] <<- NULL
       par_tmp[[session$token]] <<- NULL
   })
-  browser()
 # Init update Object ----
   # updating is a reative value that counts up whenever data is updated
   # this is used to trigger the update of the servers
