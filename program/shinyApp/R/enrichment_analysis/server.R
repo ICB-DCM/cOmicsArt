@@ -424,7 +424,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       )
       # refresh the UI/data if needed
       observeEvent(input$refreshUI, {
-        ea_reactives$data <- update_data(data, 0, 0)$data
+        ea_reactives$data <- update_data(session$token)$data
       })
       # UI to choose test correction
       output$AdjustmentMethod_ui <- renderUI({
