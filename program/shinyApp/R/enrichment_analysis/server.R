@@ -76,7 +76,6 @@ enrichment_analysis_geneset_server <- function(
               plot = clusterProfiler::dotplot(result, title = ""),
               device = gsub("\\.","",input$file_ext)
             )
-            # TODO : on.exit({Logging_GSEA})
           }
         )
 
@@ -116,7 +115,7 @@ enrichment_analysis_geneset_server <- function(
               nrow(result@result[result@result$p.adjust<0.05,])
             )
           )
-          # TODO: discuss with LEA -> On exit logging the same as this one?
+
           fun_LogIt(
             message = paste0(
               "**", id, " ENRICHMENT** - ![", id, " ENRICHMENT](",tmp_filename,")"
@@ -419,7 +418,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       # observer for Info text
       observe(
         shinyjs::html(
-          id = 'EnrichmentInfo',
+          id = 'EnrichmentFailure',
           ea_reactives$ea_info
         )
       )

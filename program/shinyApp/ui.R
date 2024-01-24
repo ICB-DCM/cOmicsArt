@@ -39,7 +39,7 @@ library(kableExtra)
 library(readxl)
 library(ggvenn)
 library(ComplexUpset)
-library(gridExtra)  # TODO: needs to be added to renv
+library(gridExtra)
 # library(svglite)
 
 source("R/C.R")
@@ -214,13 +214,6 @@ ui <- shiny::fluidPage(
     condition = "input.element_02 == 0",
     absolutePanel("Brought to you by Lea Seep & Paul Jonas Jost",
                          bottom = 0, left = 10, fixed = TRUE)
-    ## TODO Discuss this placement
-    # div(
-    #   id = "foot_normal",
-    #   absolutePanel(column(width=1, tags$img(src = "Logo_cOmicsArt_clear.png", height="100%", width="100%")),
-    #                 h5(HTML("Brought to you by Lea Seep & Paul Jonas Jost")),
-    #                         bottom = 0, left = 10, fixed = TRUE)
-    # )
   ),
   conditionalPanel(
     condition = "input.element_02 == 1",

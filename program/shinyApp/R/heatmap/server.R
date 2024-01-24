@@ -26,8 +26,7 @@ heatmap_server <- function(id, data, params, updates){
               inputId = ns("row_anno_options"),
               label = "Choose the variable to color the rows after (Multiples are possible)",
               choices = c(colnames(rowData(data$data))),
-              multiple = T, # would be cool if true, to be able to merge vars ?!,
-              # TODO: no better way to write this?
+              multiple = T, # would be cool if true, to be able to merge vars ?!
               selected = c(colnames(rowData(data$data)))[length(c(colnames(rowData(data$data))))]
             )
           })
@@ -301,7 +300,6 @@ heatmap_server <- function(id, data, params, updates){
         TopK2Show <- ifelse(any(input$row_selection_options=="TopK"),input$TopK,NA)
         
         if(any(input$row_selection_options=="all")){
-          # TODO: if this does not work, needs to be replaced with data$data$assay
           print("No entitie selection")
           data2HandOver <- as.data.frame(assay(data$data))
         }else{

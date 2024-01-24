@@ -177,7 +177,7 @@ pca_Server <- function(id, data, params, row_select, updates){
         print("PCA analysis on pre-selected data")
         customTitle <- paste0(
           "PCA - ", params$omic_type, "-",
-          paste0("entities:",row_select(),collapse = "_"),  # TODO: make row_select obsolete
+          paste0("entities:",row_select(),collapse = "_"),
           "-samples",
           ifelse(any(input$sample_selection != "all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),"")
           , "-preprocessing: ",
@@ -282,17 +282,16 @@ pca_Server <- function(id, data, params, row_select, updates){
               )
           }
           # Loadings Matrix plot
-          # TODO: If we have less data points than nPCAs_to_look_at,
-          #  we need to adjust the nPCAs_to_look_at
           if(is.null(input$nPCAs_to_look_at)){
             df_loadings <- data.frame(
               entity = row.names(pca$rotation),
               pca$rotation[, 1:2]
             )
           }else{
+            nPCAs_to_look_at <- min(input$nPCAs_to_look_at, ncol(pca$rotation))
             df_loadings <- data.frame(
               entity = row.names(pca$rotation),
-              pca$rotation[, 1:input$nPCAs_to_look_at]
+              pca$rotation[, 1:nPCAs_to_look_at]
             )
           }
 
