@@ -729,7 +729,12 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           showModal(modalDialog(
             title = "No annotation type detected",
             footer = NULL,
-            p("No valid annotation type was detected in your row annotation. Please indicate the type of annotation with which you uploaded your genes."),
+            p(paste0(
+              "No valid annotation type was detected in your row annotation. ",
+              "Please indicate the type of annotation with which you uploaded your genes.\n",
+              "Here are the first 5 rownames of your row annotation: \n",
+              toString(rownames(ea_reactives$data)[1:5])
+            )),
             selectInput(
               inputId = ns("AnnotationSelection"),
               label = "Which annotation are you using?",
@@ -761,21 +766,47 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         observeEvent(input$AMC, {
           anno_results$base_annotation <- input$AnnotationSelection
           removeModal()
-          if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            ea_reactives$data <- translate_genes_ea(
-              data = ea_reactives$data,
-              annotation_results = anno_results,
-              input = input
+          tryCatch(
+            {
+              if(input$ORA_or_GSE == "GeneSetEnrichment"){
+                ea_reactives$data <- translate_genes_ea(
+                  data = ea_reactives$data,
+                  annotation_results = anno_results,
+                  input = input
+                )
+              }else{
+                ea_reactives$tmp_genes <- translate_genes_oa(
+                  annotation_results = anno_results,
+                  input = input,
+                  geneSetChoice = ea_reactives$tmp_genes,
+                  geneSet2Enrich = input$GeneSet2Enrich
+                )
+              }
+              ea_reactives$can_start <- TRUE
+            },
+            error=function(e){
+              show_alert(
+                title = "An error occurred",
+                text = HTML(paste0(
+                  "<font color='red'>Error: ",e$message,"</font><br>",
+                  "It is highly likely that the error is caused by the fact that the ",
+                  "gene names in your data set do not match the gene names in the ",
+                  "annotation you selected. Please check your data set and annotation ",
+                  "and try again (you might have to click twice).<br>",
+                  "Otherwise, please contact the cOmicsArtist Lea and Paul."
+                )),
+                type = "info",
+                position = "top",
+                timerProgressBar = TRUE,
+                width = "30%",
+                closeOnClickOutside = F,
+                showCloseButton = T,
+                html = T
+              )
+              # let the program wait for 5 seconds
+              Sys.sleep(3)
+            }
             )
-          }else{
-            ea_reactives$tmp_genes <<- translate_genes_oa(
-              annotation_results = anno_results,
-              input = input,
-              geneSetChoice = ea_reactives$tmp_genes,
-              geneSet2Enrich = input$GeneSet2Enrich
-            )
-          }
-          ea_reactives$can_start <- TRUE
         })
         # start the analysis if ea_reactives$can_start == TRUE
         observeEvent(ea_reactives$can_start, {
