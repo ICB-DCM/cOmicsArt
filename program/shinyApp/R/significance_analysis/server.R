@@ -68,7 +68,6 @@ significance_analysis_server <- function(id, data, params, updates){
       # UI to choose test method
       output$chooseTest_ui <- renderUI({
         if(params$PreProcessing_Procedure == "vst_DESeq"){
-          # TODO: can we have a box that looks the same as an input?
           renderText(
             expr = "DESeq is using a Wald test statistic.\nWe are using the same here.",
             outputArgs = list(container = pre)
@@ -181,8 +180,8 @@ significance_analysis_server <- function(id, data, params, updates){
       )
       # refresh the UI/data if needed
       observeEvent(input$refreshUI, {
-        data <- update_data(data, updates, sig_ana_reactive$current_updates)
-        params <- update_params(params, updates, sig_ana_reactive$current_updates)
+        data <- update_data(session$token)
+        params <- update_params(session$token)
         sig_ana_reactive$current_updates <- updates()
         sig_ana_reactive$coldata <- colData(data$data)
       })
@@ -190,7 +189,7 @@ significance_analysis_server <- function(id, data, params, updates){
       observeEvent(input$significanceGo,{
         # also here to ensure to get sidepanel Inputs
         tmp <- getUserReactiveValues(input)
-        par_tmp$SigAna[names(tmp)] <<- tmp
+        par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
         # shinyjs::html(id = 'significance_analysis_info', "Analysis is running...")
         sig_ana_reactive$info_text <- "Analysis is running..."
         # start the analysis
@@ -204,7 +203,7 @@ significance_analysis_server <- function(id, data, params, updates){
         }
         print("Start the Significance Analysis")
         # update the data if needed
-        data <- update_data(data, updates, sig_ana_reactive$current_updates)
+        data <- update_data(session$token)
         sig_ana_reactive$current_updates <- updates()
         sig_ana_reactive$coldata <- colData(data$data)
         # delete old panels
@@ -217,7 +216,7 @@ significance_analysis_server <- function(id, data, params, updates){
           }
         }
         # if preproccesing method was DESeq2, then use DESeq2 for testing
-        if(params$PreProcessing_Procedure == "vst_DESeq"){  # TODO: rename method to "DESeq"
+        if(params$PreProcessing_Procedure == "vst_DESeq"){
           dds <- data$DESeq_obj
 
           # rewind the comparisons again
@@ -232,10 +231,10 @@ significance_analysis_server <- function(id, data, params, updates){
           for (i in 1:length(contrasts)) {
             if(identical(
               list(test_method = "Wald", test_correction = PADJUST_METHOD[[input$test_correction]]),
-              par_tmp$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
+              par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
             )){
               print("Results exists, skipping calculations.")
-              sig_results[[input$comparisons[i]]] <<- res_tmp$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
+              sig_results[[input$comparisons[i]]] <<- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
               next
             }
             sig_results[[input$comparisons[i]]] <<- DESeq2::results(
@@ -247,9 +246,9 @@ significance_analysis_server <- function(id, data, params, updates){
               ),
               pAdjustMethod = PADJUST_METHOD[[input$test_correction]]
             )
-            # fill in res_tmp, par_tmp
-            res_tmp$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- sig_results[[input$comparisons[i]]]
-            par_tmp$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- list(
+            # fill in res_tmp[[session$token]], par_tmp[[session$token]]
+            res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- sig_results[[input$comparisons[i]]]
+            par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- list(
               test_method = "Wald",
               test_correction = PADJUST_METHOD[[input$test_correction]]
             )
@@ -480,11 +479,11 @@ significance_analysis_server <- function(id, data, params, updates){
         },
         content = function(file){
           tmp <- getUserReactiveValues(input)
-          par_tmp$SigAna[names(tmp)] <<- tmp
+          par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
           
           envList <- list(
-            res_tmp = res_tmp,
-            par_tmp = par_tmp
+            res_tmp = res_tmp[[session$token]],
+            par_tmp = par_tmp[[session$token]]
           )
           
           if(params$PreProcessing_Procedure == "vst_DESeq"){
@@ -528,11 +527,11 @@ significance_analysis_server <- function(id, data, params, updates){
         },
         content = function(file){
           tmp <- getUserReactiveValues(input)
-          par_tmp$SigAna[names(tmp)] <<- tmp
+          par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
           
           envList <- list(
-            res_tmp = res_tmp,
-            par_tmp = par_tmp
+            res_tmp = res_tmp[[session$token]],
+            par_tmp = par_tmp[[session$token]]
           )
           
           if(params$PreProcessing_Procedure == "vst_DESeq"){
@@ -583,7 +582,7 @@ significance_analysis_server <- function(id, data, params, updates){
         },
         content = function(file){
           tmp <- getUserReactiveValues(input)
-          par_tmp$SigAna[names(tmp)] <<- tmp
+          par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
           
           # assign scenario=20 for Venn Diagram and scenario=21 for UpSetR
           if(input$visualization_method == "Venn Diagram"){
@@ -593,8 +592,8 @@ significance_analysis_server <- function(id, data, params, updates){
           }
           
           envList <- list(
-            res_tmp = res_tmp,
-            par_tmp = par_tmp
+            res_tmp = res_tmp[[session$token]],
+            par_tmp = par_tmp[[session$token]]
           )
           
           if(params$PreProcessing_Procedure == "vst_DESeq"){

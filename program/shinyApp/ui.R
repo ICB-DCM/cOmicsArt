@@ -39,7 +39,7 @@ library(kableExtra)
 library(readxl)
 library(ggvenn)
 library(ComplexUpset)
-library(gridExtra)  # TODO: needs to be added to renv
+library(gridExtra)
 # library(svglite)
 
 source("R/C.R")
@@ -185,6 +185,7 @@ ui <- shiny::fluidPage(
     helpText("Metabolon Help", align = "center") %>% helper(type = "markdown", content = "Metabolon_help", size = "l", colour = "blue", style = "position: relative;top: -18px;left: 15px;; zoom: 200%;"),
     NULL
   ),
+
   tabsetPanel(
     id = "tabsetPanel1",
     ################################################################################
@@ -214,13 +215,6 @@ ui <- shiny::fluidPage(
     condition = "input.element_02 == 0",
     absolutePanel("Brought to you by Lea Seep & Paul Jonas Jost",
                          bottom = 0, left = 10, fixed = TRUE)
-    ## TODO Discuss this placement
-    # div(
-    #   id = "foot_normal",
-    #   absolutePanel(column(width=1, tags$img(src = "Logo_cOmicsArt_clear.png", height="100%", width="100%")),
-    #                 h5(HTML("Brought to you by Lea Seep & Paul Jonas Jost")),
-    #                         bottom = 0, left = 10, fixed = TRUE)
-    # )
   ),
   conditionalPanel(
     condition = "input.element_02 == 1",
@@ -241,6 +235,12 @@ ui <- shiny::fluidPage(
         bottom = 0, left = 10, fixed = TRUE,style = "background-color: #a9d96a;"
       )
     )
+  ),
+  # Pannel displaying the current session id
+  absolutePanel(
+    # text output needs to be defined in server
+    textOutput("session_id"),
+    bottom = 0, right = 10, fixed = TRUE
   )
   
 )

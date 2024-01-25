@@ -1,10 +1,10 @@
 ### general utility functions will be defined here
 
 
-update_data <- function(data, updates, current_updates){
+update_data <- function(session_id){
   # for stability reasons, data is ALWAYS pulled here
   print("Updating data...")
-  data <- res_tmp
+  data <- res_tmp[[session_id]]
   return(data)
 }
 
@@ -27,13 +27,11 @@ select_data <- function(data, selected_samples, sample_type){
 }
 
 
-update_params <- function(params, updates, current_updates){
+update_params <- function(session_id){
   # update parameter if updates is larger than current_updates
   # could force to always update
-  if (updates() > current_updates & current_updates > 0){
-    print("Updating parameters...")
-    params <- par_tmp
-  }
+  print("Updating parameters...")
+  params <- par_tmp[[session_id]]
   return(params)
 }
 
@@ -64,13 +62,26 @@ read_file <- function(filename, check.names=T){
   }
 }
 
+getUserReactiveValues <- function(data = input){
+  # data must be shinys specific Input List of reactive Values
+  tmp <- isolate(reactiveValuesToList(data))
+  to_include <- unlist(lapply(tmp,function(x){
+    if("shinyActionButtonValue" %in%  class(x)){
+      FALSE
+    }else{
+      TRUE
+    }
+  }))
+  return(tmp[to_include])
+}
+
 save.function.from.env <- function(wanted,file="utils.R")
 {
-  # This function will go through all your defined functions 
+  # This function will go through all your defined functions
   # and find wanted function
   funs <- Filter(is.function, sapply(ls( ".GlobalEnv"), get))
   funs <- funs[names(funs) %in% wanted]
-  
+
   # Let's
   for(i in seq_along(funs))
   {

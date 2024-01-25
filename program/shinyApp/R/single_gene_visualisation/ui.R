@@ -28,7 +28,7 @@ single_gene_visualisation_main_ui <- function(ns){
       style = "border: 1px solid silver:",
       cellWidths = c("50%", "50%"),
       plotOutput(outputId = ns("SingleGenePlot")),
-      NULL
+      textOutput(outputId = ns("InfoText"), container = pre)
     ),
     h5(HTML("Note, that you only see boxplots if you have more than 3 samples per group")),
     uiOutput(outputId = ns("chooseComparisons_ui")),

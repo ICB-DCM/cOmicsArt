@@ -1,10 +1,10 @@
 
-getPlotCode <- function(
-    numberOfScenario,
-    PreProcessing_Procedure = par_tmp$PreProcessing_Procedure,
-    row_selection = par_tmp$row_selection,
-    col_selection = par_tmp$sample_selection,
-    omic_type = par_tmp$omic_type) {
+getPlotCode <- function(numberOfScenario) {
+  PreProcessing_Procedure <- par_tmp[[session$token]]$PreProcessing_Procedure
+  row_selection <- par_tmp[[session$token]]$row_selection
+  col_selection <- par_tmp[[session$token]]$sample_selection
+  omic_type <- par_tmp[[session$token]]$omic_type
+
   #TODO  change all data download to par_tmp and res_tmp
  # Selection ----
   if(any(row_selection == "all")){
@@ -58,7 +58,7 @@ selected <- unique(
  # Preprocessing ----
 
   if(PreProcessing_Procedure != "none"){
-    if(PreProcessing_Procedure == "filter_only"){
+    if(PreProcessing_Procedure == "filterOnly"){
       if(omic_type == "Transcriptomics"){
         stringPreProcessing <- 'processedData <- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]'
       }
@@ -532,7 +532,7 @@ stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave)
 
 ## Single Gene Visualisation ----
 if(numberOfScenario %in% c(12,13)){
-  if(par_tmp$SingleEntVis$type_of_data_gene == "preprocessed"){
+  if(par_tmp[[session$token]]$SingleEntVis$type_of_data_gene == "preprocessed"){
     prequel_stringtosave <- '#get IDX to data
 idx_selected <- which(par_tmp$SingleEntVis$Select_Gene == rowData(res_tmp$data)[,par_tmp$SingleEntVis$Select_GeneAnno])
 GeneData <- as.data.frame(t(as.data.frame(assay(res_tmp$data))[idx_selected,,drop=F]))
@@ -546,7 +546,7 @@ if(length(idx_selected)>1){
 }
 GeneData$anno <- as.factor(GeneData$anno)
     '
-  }else if(par_tmp$SingleEntVis$type_of_data_gene == "raw" ){
+  }else if(par_tmp[[session$token]]$SingleEntVis$type_of_data_gene == "raw" ){
     prequel_stringtosave <- '#get IDX to data
 idx_selected <- which(par_tmp$SingleEntVis$Select_Gene == rowData(res_tmp$data_original)[,par_tmp$SingleEntVis$Select_GeneAnno])
 GeneData <- as.data.frame(t(assay(res_tmp$data_original)[idx_selected,,drop=F]))
@@ -617,7 +617,7 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
 
 ## Sample Correlation plot ----
   if(numberOfScenario == 18){
-    stringtosave = 'annotationDF <- colData(res_tmp$data)[,par_tmp$SampleCorr$SampleAnnotationChoice,drop = F]
+    stringtosave <- 'annotationDF <- colData(res_tmp$data)[,par_tmp$SampleCorr$SampleAnnotationChoice,drop = F]
 cormat <- cor(
   x = as.matrix(assay(res_tmp$data)),
   method = par_tmp$SampleCorr$corrMethod
@@ -1047,9 +1047,6 @@ for(i in storageNames){
   return(paste0(CODE_DOWNLOAD_PREFACE,
                 "\n",
                 stringSelection,
-                CODE_DOWNLOAD_SELECTION,
-                "\n",
-                CODE_DOWNLOAD_PREPROCESSING,
                 "\n",
                 stringPreProcessing,
                 "\n",
