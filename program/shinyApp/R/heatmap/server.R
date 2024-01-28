@@ -314,8 +314,10 @@ heatmap_server <- function(id, data, params, updates){
               TopK2Show = TopK2Show
             )
             print(dim(data2HandOver))
-          }, error = function(e){error_modal(e)}
-          )
+          }, error = function(e){
+            error_modal(e)
+            stop()
+          })
         }
         
         doThis_flag <- T
@@ -386,8 +388,10 @@ heatmap_server <- function(id, data, params, updates){
                   ctrl_samples_idx = ctrl_samples_idx,
                   comparison_samples_idx = comparison_samples_idx
                   )
-              }, error = function(e){error_modal(e)}
-              )
+              }, error = function(e){
+                error_modal(e)
+                stop()
+              })
 
               ## do pheatmap
 
@@ -412,7 +416,10 @@ heatmap_server <- function(id, data, params, updates){
                   silent = F,
                   color = myColor_fill
                 )
-              }, error = function(e){error_modal(e)})
+              }, error = function(e){
+                error_modal(e)
+                stop()
+              })
             }
           }else if(doThis_flag){
             if(any(is.na(data2HandOver))){
@@ -456,7 +463,10 @@ heatmap_server <- function(id, data, params, updates){
                 annotation_colors = mycolors,
                 silent = F
               )
-            }, error = function(e){error_modal(e)})
+            }, error = function(e){
+              error_modal(e)
+              stop()
+            })
           }
         } else {
           print("Plotting saved result")
