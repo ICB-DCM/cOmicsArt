@@ -725,7 +725,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         anno_results <- check_annotation_enrichment_analysis(ea_reactives$data)
         ea_reactives$data <- anno_results$new_data
         ea_reactives$can_start <- anno_results$can_start
-        if(anno_results$no_ann){
+        translation_modal <- function(){
           showModal(modalDialog(
             title = "No annotation type detected",
             footer = NULL,
@@ -744,6 +744,9 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             ),
             actionButton(inputId = ns("AMC"), label = "Proceed"),
           ))
+        }
+        if(anno_results$no_ann){
+          translation_modal()
         }else if(anno_results$can_start == FALSE){
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
             ea_reactives$data <- translate_genes_ea(
@@ -762,6 +765,13 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           }
           ea_reactives$can_start <- TRUE
         }
+        # Modal in case translation fails
+        observeEvent(input$translation_again, {
+          # close modal
+          removeModal()
+          # call translation again
+          translation_modal()
+        })
         # close modal on button click
         observeEvent(input$AMC, {
           anno_results$base_annotation <- input$AnnotationSelection
@@ -785,26 +795,21 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               ea_reactives$can_start <- TRUE
             },
             error=function(e){
-              show_alert(
-                title = "An error occurred",
-                text = HTML(paste0(
+              showModal(modalDialog(
+                title = HTML("<font color='red'>An Error occured</font>"),
+                footer = actionButton(
+                  inputId = ns("translation_again"),
+                  label = "Choose another annotation type"
+                ),
+                HTML(paste0(
                   "<font color='red'>Error: ",e$message,"</font><br>",
                   "It is highly likely that the error is caused by the fact that the ",
                   "gene names in your data set do not match the gene names in the ",
                   "annotation you selected. Please check your data set and annotation ",
-                  "and try again (you might have to click twice).<br>",
+                  "and try again.<br>",
                   "Otherwise, please contact the cOmicsArtist Lea and Paul."
-                )),
-                type = "info",
-                position = "top",
-                timerProgressBar = TRUE,
-                width = "30%",
-                closeOnClickOutside = F,
-                showCloseButton = T,
-                html = T
-              )
-              # let the program wait for 5 seconds
-              Sys.sleep(3)
+                ))
+              ))
             }
             )
         })
