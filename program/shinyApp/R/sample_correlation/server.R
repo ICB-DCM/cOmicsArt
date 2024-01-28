@@ -84,7 +84,7 @@ sample_correlation_server <- function(id, data, params, updates){
             }
           }, error = function(e){
             error_modal(e)
-            stop()
+            return(NULL)
           })
 
           customTitleSampleCorrelation <- paste0(

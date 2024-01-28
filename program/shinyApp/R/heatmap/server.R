@@ -316,7 +316,7 @@ heatmap_server <- function(id, data, params, updates){
             print(dim(data2HandOver))
           }, error = function(e){
             error_modal(e)
-            stop()
+            return(NULL)
           })
         }
         
@@ -390,7 +390,7 @@ heatmap_server <- function(id, data, params, updates){
                   )
               }, error = function(e){
                 error_modal(e)
-                stop()
+                return(NULL)
               })
 
               ## do pheatmap
@@ -418,7 +418,7 @@ heatmap_server <- function(id, data, params, updates){
                 )
               }, error = function(e){
                 error_modal(e)
-                stop()
+                return(NULL)
               })
             }
           }else if(doThis_flag){
@@ -465,7 +465,7 @@ heatmap_server <- function(id, data, params, updates){
               )
             }, error = function(e){
               error_modal(e)
-              stop()
+              return(NULL)
             })
           }
         } else {

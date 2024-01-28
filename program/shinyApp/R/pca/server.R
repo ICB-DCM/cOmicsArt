@@ -211,7 +211,7 @@ pca_Server <- function(id, data, params, row_select, updates){
             )
           }, error = function(e){
             error_modal(e)
-            stop()
+            return(NULL)
           })
           # how much variance is explained by each PC
           explVar <- pca$sdev^2/sum(pca$sdev^2)
