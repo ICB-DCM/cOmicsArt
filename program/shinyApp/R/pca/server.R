@@ -6,8 +6,6 @@ pca_Server <- function(id, data, params, row_select, updates){
       pca_reactives <- reactiveValues(
         calculate = 0,
         counter = 0,
-        # ensures Do_PCA is clicked at least once after refresh
-        current_updates = 0,
         percentVar = NULL,
         pcaData = NULL,
         df_out_r = NULL,
@@ -191,8 +189,7 @@ pca_Server <- function(id, data, params, row_select, updates){
         print(customTitle)
         # only calculate PCA, Score and Loadings if the counter is >= 0
         if(pca_reactives$calculate >= 0){
-          # update the data if needed
-          # TODO check if the follwoing still needed as update is now done on 1st server level
+          # update the data
           data2plot <- update_data(session$token)
           # select the neccesary data
           if(input$data_selection_pca){
@@ -202,16 +199,17 @@ pca_Server <- function(id, data, params, row_select, updates){
               input$SampleAnnotationTypes_pca
             )
           }
-          pca_reactives$current_updates <- updates()
           # set the counter to -1 to prevent any further plotting
           pca_reactives$calculate <- -1
           print("Calculate PCA")
-          # PCA
-          pca <- prcomp(
-            x = as.data.frame(t(as.data.frame(assay(data2plot$data)))),
-            center = T,
-            scale. = FALSE
-          )
+          # PCA, for safety measures, wrap in tryCatch
+          tryCatch({
+            pca <- prcomp(
+              x = as.data.frame(t(as.data.frame(assay(data2plot$data)))),
+              center = T,
+              scale. = FALSE
+            )
+          }, error = function(e){error_modal(e)})
           # how much variance is explained by each PC
           explVar <- pca$sdev^2/sum(pca$sdev^2)
           names(explVar) <- colnames(pca$x)
@@ -281,7 +279,7 @@ pca_Server <- function(id, data, params, row_select, updates){
           LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
           if(!is.null(input$EntitieAnno_Loadings)){
             req(data_input_shiny())
-            LoadingsDF$entitie=factor(
+            LoadingsDF$entitie <- factor(
               make.unique(as.character(rowData(data2plot$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
               levels = make.unique(as.character(rowData(data2plot$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
               )
