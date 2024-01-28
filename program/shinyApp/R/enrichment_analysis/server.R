@@ -802,11 +802,11 @@ enrichment_analysis_Server <- function(id, data, params, updates){
                   label = "Choose another annotation type"
                 ),
                 HTML(paste0(
-                  "<font color='red'>Error: ",e$message,"</font><br>",
+                  "<font color='red'>Error: ",e$message,"</font><br><br>",
                   "It is highly likely that the error is caused by the fact that the ",
                   "gene names in your data set do not match the gene names in the ",
                   "annotation you selected. Please check your data set and annotation ",
-                  "and try again.<br>",
+                  "and try again.<br><br>",
                   "Otherwise, please contact the cOmicsArtist Lea and Paul."
                 ))
               ))
