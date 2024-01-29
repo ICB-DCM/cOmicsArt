@@ -9,28 +9,13 @@ translate_genes_ea <- function(data, annotation_results, input){
   }else{
     orgDb <- org.Mm.eg.db::org.Mm.eg.db
   }
-  tryCatch(
-    {
-      rowData(data)[["ENTREZID"]] <- AnnotationDbi::mapIds(
-        orgDb,
-        keys = rowData(data)[[annotation_results$base_annotation]],
-        column = "ENTREZID",
-        keytype = annotation_results$base_annotation
-      )
-      return(data)
-    },
-    error = function(e) {
-      show_toast(
-        title = "You chose the wrong Organism. Please restart the app.",
-        type = "info",
-        position = "top",
-        timerProgressBar = TRUE,
-        width = "30%"
-      )
-      # let the program wait for 5 seconds
-      Sys.sleep(3)
-    }
+  rowData(data)[["ENTREZID"]] <- AnnotationDbi::mapIds(
+    orgDb,
+    keys = rowData(data)[[annotation_results$base_annotation]],
+    column = "ENTREZID",
+    keytype = annotation_results$base_annotation
   )
+  return(data)
 }
 
 # input$GeneSet2Enrich
