@@ -807,7 +807,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
                   "gene names in your data set do not match the gene names in the ",
                   "annotation you selected. Please check your data set and annotation ",
                   "and try again.<br><br>",
-                  "Otherwise, please contact the cOmicsArtist Lea and Paul."
+                  "Otherwise, please contact the cOmicsArtist Lea and Paul ",
+                  "(<a href = 'mailto: cOmicsArtist@outlook.de'>cOmicsArtist@outlook.de</a>)."
                 ))
               ))
             }
