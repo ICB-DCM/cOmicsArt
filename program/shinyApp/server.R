@@ -358,6 +358,7 @@ server <- function(input,output,session){
 ## Do Upload ----
   observeEvent(input$refresh1,{
     par_tmp[[session$token]]['omic_type'] <<- input$omicType
+    par_tmp[[session$token]]['organism'] <<- input$AddGeneSymbols_organism
     fun_LogIt(message = "## DataInput {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
     fun_LogIt(
