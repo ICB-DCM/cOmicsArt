@@ -162,38 +162,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       )
       ns <- session$ns
       ## initialize result as NULL
-      ea_reactives$enrichment_results <- list(
-        "EnrichmentRes_Hallmarks" = NULL,
-        "EnrichmentRes_C1" = NULL,
-        "EnrichmentRes_C2" = NULL,
-        "EnrichmentRes_CGP" = NULL,
-        "EnrichmentRes_CP" = NULL,
-        "EnrichmentRes_BIOCARTA" = NULL,
-        "EnrichmentRes_KEGG" = NULL,
-        "EnrichmentRes_PID" = NULL,
-        "EnrichmentRes_REACTOME" = NULL,
-        "EnrichmentRes_WIKIPATHWAYS" = NULL,
-        "EnrichmentRes_C3" = NULL,
-        "EnrichmentRes_MIRDB" = NULL,
-        "EnrichmentRes_MIR_Legacy" = NULL,
-        "EnrichmentRes_GTRD" = NULL,
-        "EnrichmentRes_TFT_Legacy" = NULL,
-        "EnrichmentRes_C4" = NULL,
-        "EnrichmentRes_CGN" = NULL,
-        "EnrichmentRes_CM" = NULL,
-        "EnrichmentRes_C5" = NULL,
-        "EnrichmentRes_GO" = NULL,
-        "EnrichmentRes_GO_BP" = NULL,
-        "EnrichmentRes_GO_CC" = NULL,
-        "EnrichmentRes_GO_MF" = NULL,
-        "EnrichmentRes_HPO" = NULL,
-        "EnrichmentRes_C6" = NULL,
-        "EnrichmentRes_C7" = NULL,
-        "EnrichmentRes_IMMUNESIGDB" = NULL,
-        "EnrichmentRes_VAX" = NULL,
-        "EnrichmentRes_C8" = NULL,
-        "geneSetChoice_tranlsated" = NULL
-      )
+      ea_reactives$enrichment_results <- ENRICHMENT_RESULT_RESET
+      # TODO: Call this in a loop.
       ## Call Modules
       enrichment_analysis_geneset_server_reactive(
         id = 'KEGG',
@@ -577,71 +547,11 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         }
         })
       # create List to track which enrichements are to do
-      ea_reactives$enrichments2do <- list(
-        "Hallmarks" = F,
-        "C1" = F,
-        "C2" = F,
-        "CGP" = F,
-        "CP" = F,
-        "BIOCARTA" = F,
-        "KEGG" = F,
-        "PID" = F,
-        "REACTOME" = F,
-        "WIKIPATHWAYS" = F,
-        "C3" = F,
-        "MIRDB" = F,
-        "MIR_Legacy" = F,
-        "GTRD" = F,
-        "TFT_Legacy" = F,
-        "C4" = F,
-        "CGN" = F,
-        "CM" = F,
-        "C5" = F,
-        "GO" = F,
-        "GO_BP" = F,
-        "GO_CC" = F,
-        "GO_MF" = F,
-        "HPO" = F,
-        "C6" = F,
-        "C7" = F,
-        "IMMUNESIGDB" = F,
-        "VAX" = F,
-        "C8" = F
-      )
+      ea_reactives$enrichments2do <- GENESETS_RESET
       # change values in list to true if selected
       observeEvent(input$GeneSetChoice, {
         # reset list
-        ea_reactives$enrichments2do <- list(
-          "Hallmarks" = F,
-          "C1" = F,
-          "C2" = F,
-          "CGP" = F,
-          "CP" = F,
-          "BIOCARTA" = F,
-          "KEGG" = F,
-          "PID" = F,
-          "REACTOME" = F,
-          "WIKIPATHWAYS" = F,
-          "C3" = F,
-          "MIRDB" = F,
-          "MIR_Legacy" = F,
-          "GTRD" = F,
-          "TFT_Legacy" = F,
-          "C4" = F,
-          "CGN" = F,
-          "CM" = F,
-          "C5" = F,
-          "GO" = F,
-          "GO_BP" = F,
-          "GO_CC" = F,
-          "GO_MF" = F,
-          "HPO" = F,
-          "C6" = F,
-          "C7" = F,
-          "IMMUNESIGDB" = F,
-          "VAX" = F,
-          "C8" = F
-        )
+        ea_reactives$enrichments2do <- GENESETS_RESET
         for(i in 1:length(input$GeneSetChoice)){
           ea_reactives$enrichments2do[[input$GeneSetChoice[i]]] <- T
         }
