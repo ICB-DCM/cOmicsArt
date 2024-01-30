@@ -106,7 +106,6 @@ heatmap_server <- function(id, data, params, updates){
               label = "Choose type for LFC-based ordering",
               choices = c(colnames(colData(data$data))),
               multiple = F
-             # selected = c(colnames(colData(data$data)))[1]
             )
           })
           output$Groups2Compare_ref_heatmap_ui <- renderUI({
@@ -152,13 +151,13 @@ heatmap_server <- function(id, data, params, updates){
       
       observe({
         if(any(input$row_selection_options == "TopK")){
-          output$TopK_ui <- renderUI({
-            numericInput(inputId = ns("TopK"),
-                         label = "Choose number of top entities to show (order based on p-val (LFC) or rowCount)",
-                         min = 1,
-                         step = 1,
-                         value = 20)
-            })
+          output$TopK_ui <- renderUI({numericInput(
+            inputId = ns("TopK"),
+            label = "Choose number of top entities to show (order based on p-val (LFC) or rowCount)",
+            min = 1,
+            step = 1,
+            value = 20
+          )})
         }else{
           hide(id = "TopK", anim = T)
         }
@@ -175,7 +174,7 @@ heatmap_server <- function(id, data, params, updates){
               label = "Choose the variable to select the rows after (Multiples are not possible)",
               choices = c(colnames(rowData(data$data))),
               selected = colnames(rowData(data$data))[1],
-              multiple = F # would be cool if true, to be able to merge vars ?!,
+              multiple = F
             )
           })
           output$row_anno_options_heatmap_ui <- renderUI({
@@ -236,7 +235,7 @@ heatmap_server <- function(id, data, params, updates){
           ifelse(any(input$sample_selection!="all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),""),
           "-preprocessing: ",
           input$PreProcessing_Procedure
-          )
+        )
 
         ### atm raw data plotted
         data2Plot <- data$data
@@ -259,11 +258,6 @@ heatmap_server <- function(id, data, params, updates){
         # selection based on row Annotation:
         if(!(any(input$row_selection_options == "all"))){
           if(any(input$row_selection_options == "rowAnno_based")){
-            # if(any(input$row_anno_options_heatmap=="SELECT_AN_OPTION")){ #old
-            #   output$Options_selected_out_3=renderText({"If you go with rowAnno_based you must select a varaible to select the rows after! (See Section Further row selection). Now it is defaulting to show all to omit an error"})
-            #   additionalInput_row_anno="all"
-            #   additionalInput_row_anno_factor=NA
-            # }else{
               print(input$row_anno_options_heatmap)
               additionalInput_row_anno <- ifelse(any(input$row_selection_options == "rowAnno_based"),"yip",NA)
               if(!is.na(additionalInput_row_anno)){
@@ -288,9 +282,7 @@ heatmap_server <- function(id, data, params, updates){
         additionalInput_ctrl_idx <- ifelse(isTruthy(input$Groups2Compare_ref_heatmap),input$Groups2Compare_ref_heatmap,NA)
         additionalInput_cmp_idx <- ifelse(isTruthy(input$Groups2Compare_treat_heatmap),input$Groups2Compare_treat_heatmap,NA)
         psig_threhsold <- ifelse(isTruthy(input$psig_threhsold_heatmap),input$psig_threhsold_heatmap,NA)
-        print(paste0("This should not be NA if LFC Settings: ",
-                     additionalInput_sample_annotation_types)
-              )
+        print(paste0("This should not be NA if LFC Settings: ", additionalInput_sample_annotation_types))
         print(paste0("This should not be NA if LFC Settings: ",
                      input$Groups2Compare_ref_heatmap,
                      input$Groups2Compare_treat_heatmap)
@@ -384,7 +376,7 @@ heatmap_server <- function(id, data, params, updates){
                 data = as.data.frame(data2HandOver),
                 ctrl_samples_idx = ctrl_samples_idx,
                 comparison_samples_idx = comparison_samples_idx
-                )
+              )
 
               ## do pheatmap
 
@@ -516,18 +508,6 @@ heatmap_server <- function(id, data, params, updates){
         if(nchar(Heatmap_customTitleHeatmap) >= 250){
           Heatmap_customTitleHeatmap <- "Heatmap"
         }
-
-        # Heatmap_heatmap_plot <- heatmap_plot
-        # Heatmap_row_anno_options_heatmap <- input$row_anno_options_heatmap
-        # Heatmap_TopK <- input$TopK
-        # Heatmap_row_selection_options <- input$row_selection_options
-        # Heatmap_anno_options <- input$anno_options
-        # Heatmap_row_anno_options <- input$row_anno_options
-        # Heatmap_cluster_rows <- input$cluster_rows
-        # Heatmap_LFC_toHeatmap <- input$LFC_toHeatmap
-        # Heatmap_sample_annotation_types_cmp_heatmap <- input$sample_annotation_types_cmp_heatmap
-        # Heatmap_Groups2Compare_ref_heatmap <- input$Groups2Compare_ref_heatmap
-        # Heatmap_Groups2Compare_ctrl_heatmap <- input$Groups2Compare_ctrl_heatmap
         
 
         # res_tmp[[session$token]] gets data2HandOver or Data2Plot depending on scenario
@@ -624,9 +604,9 @@ heatmap_server <- function(id, data, params, updates){
             },
           
           content = function(file){
-            write.csv(heatmap_genelist, file)
+            write.csv(par_tmp[[session$token]]$Heatmap$gene_list, file)
             on.exit({
-              if(FLAG_nonUnique_Heatmap){
+              if(heatmap_reactives$FLAG_nonUnique_Heatmap){
                 showModal(modalDialog(
                   title = "Warning!",
                   "The download includes non-unique entries, hence you will not be able to distinguish the entities uniquely. You might want to change the entry in 'choose the label of rows' for the next download",
@@ -634,14 +614,14 @@ heatmap_server <- function(id, data, params, updates){
                 ))
               }
               fun_LogIt(message = paste0("**HEATMAP** - The corresponding entitie list was saved by the user"))
-              fun_LogIt(message = paste0("**HEATMAP** - Number of entities: ",length(heatmap_genelist)))
+              fun_LogIt(message = paste0("**HEATMAP** - Number of entities: ",length(par_tmp[[session$token]]$Heatmap$gene_list)))
             })
           }
         )
         
         ## adjust the returned names depending on chosen label of rows
         if(is.null(data2HandOver)){
-          FLAG_nonUnique_Heatmap <<- F
+          heatmap_reactives$FLAG_nonUnique_Heatmap <<- F
           NA
         }else{
           mergedData <- merge(
@@ -657,19 +637,14 @@ heatmap_server <- function(id, data, params, updates){
           # heatmap_genelist now consists of the rownames, enabling a 
           # smooth translation in the enrichment case
           if(length(unique(mergedData[,input$row_label_options]))<nrow(mergedData) ){
-            FLAG_nonUnique_Heatmap <<- T
-            heatmap_genelist <<- mergedData[,"Row.names"]
+            heatmap_reactives$FLAG_nonUnique_Heatmap <<- T
+            par_tmp[[session$token]]$Heatmap$gene_list <<- mergedData[,"Row.names"]
           }else{
-            FLAG_nonUnique_Heatmap <<- F
-            heatmap_genelist <<- mergedData[,"Row.names"]
+            heatmap_reactives$FLAG_nonUnique_Heatmap <<- F
+            par_tmp[[session$token]]$Heatmap$gene_list <<- mergedData[,"Row.names"]
           }
         }
       })
-      # observeEvent(input$Do_Heatmap,{
-      #   output$Options_selected_out_3 <- renderText({
-      #     paste0("The number of selected entities: ",length((heatmap_genelist)))
-      #     })
-      # })
       # send only to report
       observeEvent(input$only2Report_Heatmap,{
         notificationID <- showNotification("Saving...",duration = 0)
