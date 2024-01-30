@@ -132,8 +132,8 @@ heatmap_UI <- function(id){
     id = "heatmap",
     fluid = T,
     h4("Heatmap"),
-    heatmap_sidebar <- heatmap_sidebar(ns),
-    heatmap_main <- heatmap_main(ns) 
+    heatmap_sidebar(ns),
+    heatmap_main(ns)
   )
 }
 
