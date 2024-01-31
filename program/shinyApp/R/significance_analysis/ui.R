@@ -2,22 +2,17 @@ significance_analysis_sidebar_ui<- function(ns){
   sidebarPanel(
     id = "sidebar_significance_analysis",
     h5(" ") %>% helper(type = "markdown", content = "SigAna_Choices"),
-    # UI to choose type of comparison
     uiOutput(outputId = ns("type_of_comparison_ui")),
-    # UI to choose comparisons
     uiOutput(outputId = ns("chooseComparisons_ui")),
     # UI to choose test method
     uiOutput(outputId = ns("chooseTest_ui")),
-    # UI to choose significance level
     uiOutput(outputId = ns("chooseSignificanceLevel_ui")),
-    # UI to choose test correction
     uiOutput(outputId = ns("chooseTestCorrection_ui")),
     # Button to start analysis
     actionButton(
       inputId = ns("significanceGo"),
       label = "Get significance analysis"
-      ),
-    # Button to refresh the UI
+    ),
     hidden(actionButton(
       inputId = ns("refreshUI"),
       label = "Refresh UI"
@@ -30,34 +25,31 @@ significance_analysis_sidebar_ui<- function(ns){
 significance_analysis_main_ui <- function(ns){
   mainPanel(
     id = "main_significance_analysis",
-    # informative text, whether analysis was done or not
     htmlOutput(outputId = ns("significance_analysis_info"), container = pre),
     tabsetPanel(
       id = ns("significance_analysis_results"),
       tabPanel(
         title = "Result Visualization",
-        # UI for visualization Plot
         plotOutput(outputId = ns("Significant_Plot_final")),
         # UI to select comparisons to visualize
         splitLayout(  # Only used for questionmark
-            cellWidths = c("26%", "74%"),
-            h4("Visualization Choices") %>% helper(type = "markdown", content = "SigAna_Vis"),
-            NULL
+          cellWidths = c("26%", "74%"),
+          h4("Visualization Choices") %>% helper(type = "markdown", content = "SigAna_Vis"),
+          NULL
         ),
         uiOutput(outputId = ns("chooseComparisonsToVisualize_ui")),
-        # UI to choose visualization method
         uiOutput(outputId = ns("chooseVisualization_ui")),
-        # UI to choose what genes to llok at (e.g. significant, upregulated, downregulated)
+        # Choose what genes to look at (e.g. significant, upregulated, downregulated)
         uiOutput(outputId = ns("chooseGenesToLookAt_ui")),
         hr(style = "border-top: 1px solid #000000;"),
-        # UI to choose intersections to highlight
+        # Choose intersections to highlight
         h5(" ") %>% helper(type = "markdown", content = "SigAna_Intersections"),
         uiOutput(outputId = ns("chooseIntersections_ui")),
         # Download highlighted intersections as table
         downloadButton(
-            outputId = ns("downloadIntersections"),
-            label = "Download Intersections",
-            class = "btn-info"
+          outputId = ns("downloadIntersections"),
+          label = "Download Intersections",
+          class = "btn-info"
         ),
         # Download and Report UI
         splitLayout(
