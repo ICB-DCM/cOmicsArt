@@ -372,7 +372,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       )
       ## Ui section
       output$OrganismChoice_ui <- renderText(paste0(
-        "The organism you chose is ",ea_reactives$organism, "."
+        "The organism you have chosen is ",ea_reactives$organism, "."
       ))
       output$ORA_or_GSE_ui <- renderUI({
         radioButtons(
