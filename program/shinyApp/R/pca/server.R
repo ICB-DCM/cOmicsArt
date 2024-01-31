@@ -500,11 +500,11 @@ pca_Server <- function(id, data, params, row_select){
               device = gsub("\\.","",input$file_ext_plot1)
             )
             on.exit({
-              TEST <- paste0(
+              pca_report_path <- paste0(
                 getwd(), "/www/", customTitle, Sys.time(), input$file_ext_plot1
               )
               ggsave(
-                filename = TEST,
+                filename = pca_report_path,
                 plot = pca_plot_final,
                 device = gsub("\\.","",input$file_ext_plot1)
               )
@@ -513,7 +513,7 @@ pca_Server <- function(id, data, params, row_select){
               fun_LogIt(message = "## PCA")
               fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
               ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print("Args!"))
-              fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
+              fun_LogIt(message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
             })
           }
         )
@@ -739,9 +739,9 @@ pca_Server <- function(id, data, params, row_select){
       observeEvent(input$only2Report_pca,{
           # needs global var ?! do we want that?
           notificationID <- showNotification("Saving...",duration = 0)
-          TEST <- paste0(getwd(), "/www/", customTitle, Sys.time(), ".png")
+          pca_report_path <- paste0(getwd(), "/www/", customTitle, Sys.time(), ".png")
           ggsave(
-            TEST,
+            pca_report_path,
             plot = pca_reactives$PCA_plot,
             device = "png"
           )
@@ -751,7 +751,7 @@ pca_Server <- function(id, data, params, row_select){
             message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options)
             )
           ifelse(input$Show_loadings == "Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
-          fun_LogIt(message = paste0("**PCA** - ![PCA](",TEST,")"))
+          fun_LogIt(message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
           if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
             fun_LogIt(message = "### Personal Notes:")
             fun_LogIt(message = input$NotesPCA)
