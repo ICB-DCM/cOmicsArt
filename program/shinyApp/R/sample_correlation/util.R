@@ -1,8 +1,9 @@
 assign_colors_SampleCorr <- function(annotation_df){
-  # more advanced colors
-  # Identify how many anno colors it is asked for (max 3 atm)
-  # check the levels if more than 8 go for rainbow
-  # more divergent palletes
+  # Assign more complex colors to annotation.
+  # Parameters:
+  #   annotation_df: data.frame with annotation
+  # Returns:
+  #   list with colors for each annotation
   palletteOrder <- c("Paired","Pastel2","Dark2")
   anno_colors <- list()
   for (i in 1:(ncol(annotation_df))) {
