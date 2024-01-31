@@ -6,7 +6,6 @@ geneset_panel_UI <- function(
 
   tabPanel(
     title = id_wo_ns,
-    # textOutput("Info", container = pre),
     tabsetPanel(
       tabPanel(
         title = paste(id_wo_ns, " Enrichment"),
@@ -179,7 +178,7 @@ enrichment_analysis_UI <- function(id){
     # Enrichment
     #########################################
     h4("NOTE THAT THIS ONLY MAKES SENSE FOR TRANSCRIPTOMICS DATA AT THE MOMENT!"),
-    enrichment_analysis_sidebar <- ea_sidebar(ns),
-    enrichment_analysis_main <- ea_main(ns),
+    ea_sidebar(ns),
+    ea_main(ns),
   )
 }
