@@ -589,7 +589,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             }
           }
           if(input$GeneSet2Enrich == "heatmap_genes"){
-            geneSetChoice_tmp <- heatmap_genelist
+            geneSetChoice_tmp <- par_tmp[[session$token]]$Heatmap$gene_list
           }
         }else{
           if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
