@@ -1091,8 +1091,7 @@ server <- function(input,output,session){
   significance_analysis_server(
     id = 'SignificanceAnalysis',
     data = res_tmp[[session$token]],
-    params = par_tmp[[session$token]],
-    reactive(updating$count)
+    params = par_tmp[[session$token]]
   )
   # PCA ----
   pca_Server(

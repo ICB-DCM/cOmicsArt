@@ -1,4 +1,4 @@
-significance_analysis_server <- function(id, data, params, updates){
+significance_analysis_server <- function(id, data, params){
   moduleServer(
     id,
     function(input,output,session){
@@ -9,7 +9,6 @@ significance_analysis_server <- function(id, data, params, updates){
         dds = NULL,
         scenario = 0,
         comparisons_for_plot = "all",
-        current_updates = 0,
         coldata = NULL
       )
       ns <- session$ns
@@ -182,7 +181,6 @@ significance_analysis_server <- function(id, data, params, updates){
       observeEvent(input$refreshUI, {
         data <- update_data(session$token)
         params <- update_params(session$token)
-        sig_ana_reactive$current_updates <- updates()
         sig_ana_reactive$coldata <- colData(data$data)
       })
       # Analysis initial info
@@ -201,7 +199,6 @@ significance_analysis_server <- function(id, data, params, updates){
         print("Start the Significance Analysis")
         # update the data if needed
         data <- update_data(session$token)
-        sig_ana_reactive$current_updates <- updates()
         sig_ana_reactive$coldata <- colData(data$data)
         # delete old panels
         if(!is.null(significance_tabs_to_delete)){
