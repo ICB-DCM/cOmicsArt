@@ -169,8 +169,8 @@ pca_Server <- function(id, data, params, row_select){
           "PCA - ", params$omic_type, "-",
           paste0("entities:",row_select(),collapse = "_"),
           "-samples",
-          ifelse(any(input$sample_selection != "all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),"")
-          , "-preprocessing: ",
+          ifelse(any(input$sample_selection != "all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),""),
+          "-preprocessing: ",
           input$PreProcessing_Procedure
         )
         print(customTitle)
