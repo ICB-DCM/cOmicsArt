@@ -10,7 +10,8 @@ significance_analysis_server <- function(id, data, params){
         scenario = 0,
         comparisons_for_plot = "all",
         coldata = NULL,
-        significance_tabs_to_delete = NULL
+        significance_tabs_to_delete = NULL,
+        sig_results = NULL
       )
       ns <- session$ns
       ## Sidebar UI section
@@ -213,17 +214,17 @@ significance_analysis_server <- function(id, data, params){
             contrasts[[i]] <- unlist(strsplit(x = input$comparisons[i],split = ":"))
           }
           # get the results for each contrast and put it all in a big results object
-          sig_results <<- list()
+          sig_ana_reactive$sig_results <<- list()
           for (i in seq_along(contrasts)) {
             if(identical(
               list(test_method = "Wald", test_correction = PADJUST_METHOD[[input$test_correction]]),
               par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
             )){
               print("Results exists, skipping calculations.")
-              sig_results[[input$comparisons[i]]] <<- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
+              sig_ana_reactive$sig_results[[input$comparisons[i]]] <<- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
               next
             }
-            sig_results[[input$comparisons[i]]] <<- DESeq2::results(
+            sig_ana_reactive$sig_results[[input$comparisons[i]]] <<- DESeq2::results(
               dds,
               contrast = c(
                 input$sample_annotation_types_cmp,
@@ -233,7 +234,7 @@ significance_analysis_server <- function(id, data, params){
               pAdjustMethod = PADJUST_METHOD[[input$test_correction]]
             )
             # fill in res_tmp[[session$token]], par_tmp[[session$token]]
-            res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- sig_results[[input$comparisons[i]]]
+            res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- sig_ana_reactive$sig_results[[input$comparisons[i]]]
             par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- list(
               test_method = "Wald",
               test_correction = PADJUST_METHOD[[input$test_correction]]
@@ -259,7 +260,7 @@ significance_analysis_server <- function(id, data, params){
           samples_selected <- colData(data$data)[index_comparisons,]
           # get the data
           data_selected <- as.matrix(assay(data$data))[,index_comparisons]
-          sig_results <<- significance_analysis(
+          sig_ana_reactive$sig_results <<- significance_analysis(
             df = as.data.frame(data_selected),
             samples = as.data.frame(samples_selected),
             contrasts = contrasts,
@@ -269,11 +270,11 @@ significance_analysis_server <- function(id, data, params){
           )
         }
         # for each result create a tabPanel
-        for (i in 1:length(sig_results)) {
+        for (i in seq_along(sig_ana_reactive$sig_results)) {
           create_new_tab(
             title = input$comparisons[i],
             targetPanel = "significance_analysis_results",
-            result = sig_results[[input$comparisons[i]]],
+            result = sig_ana_reactive$sig_results[[input$comparisons[i]]],
             contrast = contrasts[[i]],
             alpha = input$significance_level,
             ns = ns,
@@ -336,7 +337,7 @@ significance_analysis_server <- function(id, data, params){
         for (i in seq_along(chosenVizSet)) {
           to_add_tmp <- rownames(
             filter_significant_result(
-              result = sig_results[[chosenVizSet[i]]],
+              result = sig_ana_reactive$sig_results[[chosenVizSet[i]]],
               alpha = input$significance_level,
               filter_type = input$sig_to_look_at
             )
@@ -432,7 +433,7 @@ significance_analysis_server <- function(id, data, params){
           )
           intersect_set <- vector("list", length(intersects))
           intersect_name <- vector("list", length(intersects))
-          for(i_inter in 1:length(intersects)){
+          for(i_inter in seq_along(intersects)){
             # select dataframe for only comparisons considered in intersect
             df_inter <- as.data.frame(df[,intersects[[i_inter]]])  # as.data.frame for intersects of size 1
             rownames(df_inter) <- rownames(df)
@@ -461,7 +462,7 @@ significance_analysis_server <- function(id, data, params){
         },
         content = function(file){
           envList <- list(
-            sig_results = sig_results,
+            sig_results = sig_ana_reactive$sig_results,
             input = reactiveValuesToList(input),
             res2plot = sig_ana_reactive$results_for_plot
           )
@@ -536,7 +537,7 @@ significance_analysis_server <- function(id, data, params){
         ))
         # for each comparison, log the number of significant genes before and after correction
         # and the top 5 significant genes
-        for(i in 1:length(input$comparisons_to_visualize)){
+        for(i in seq_along(input$comparisons_to_visualize)){
            fun_LogIt(message = paste("####", input$comparisons_to_visualize[i]))
           # log the number of significant genes after correction
           fun_LogIt(message = paste(
@@ -544,8 +545,8 @@ significance_analysis_server <- function(id, data, params){
             input$comparisons_to_visualize[i],
             "is",
             nrow(
-              sig_results[[input$comparisons_to_visualize[i]]][
-                sig_results[[input$comparisons_to_visualize[i]]]$padj < input$significance_level,
+              sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]][
+                sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]]$padj < input$significance_level,
               ]
             )
           ))
@@ -555,8 +556,8 @@ significance_analysis_server <- function(id, data, params){
             input$comparisons_to_visualize[i],
             "is",
             nrow(
-              sig_results[[input$comparisons_to_visualize[i]]][
-                sig_results[[input$comparisons_to_visualize[i]]]$pvalue < input$significance_level,
+              sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]][
+                sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]]$pvalue < input$significance_level,
               ]
             )
           ))
@@ -564,16 +565,16 @@ significance_analysis_server <- function(id, data, params){
           if(params$PreProcessing_Procedure == "vst_DESeq"){
             # get the top 5 significant genes
             top5 <- head(
-              sig_results[[input$comparisons_to_visualize[i]]]@result[order(
-                sig_results[[input$comparisons_to_visualize[i]]]@result$p.adjust,
+              sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]]@result[order(
+                sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]]@result$p.adjust,
                 decreasing = FALSE
               ),], 5
             )
           } else {
             # get the top 5 significant genes
             top5 <- head(
-              sig_results[[input$comparisons_to_visualize[i]]][order(
-                sig_results[[input$comparisons_to_visualize[i]]]$padj,
+              sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]][order(
+                sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]]$padj,
                 decreasing = FALSE
               ),], 5
             )
