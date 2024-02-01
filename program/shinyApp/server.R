@@ -14,21 +14,15 @@ server <- function(input,output,session){
   options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
 
   observeEvent(input$guide_cicerone_next,{
-    # triggers but guide is deteached
+    # triggers but guide is detached
     if(input$guide_cicerone_next$highlighted == "mainPanel_DataSelection"){
       print("Here will be now automatically data uploaded ")
     }else{
       print("Mööp")
     }
   })
-  
-# Load external Data ----
-  jokesDF <- read.csv("joke-db.csv")
-  jokesDF <- jokesDF[nchar(jokesDF$Joke)>0 & nchar(jokesDF$Joke)<180,]
-  print("Hello Shiny")
-  
-  #### Clean Up
 
+  #### Clean Up
   # create www folder if not present
   if(dir.exists("www")){
     setwd("www")
@@ -42,10 +36,9 @@ server <- function(input,output,session){
     print("Removed old Report files for fresh start")
     setwd("..")
   }
-  
   observe_helpers()
+
 # Guide ----
-  
   observeEvent(input$guide, {
     print("Jip")
     guide$init()$start()
@@ -54,12 +47,6 @@ server <- function(input,output,session){
   
 # Download Report pdf ----
   DownloadReport_server("DownloadTestModule")
-  # To allow Reconnection wiht lost Session, potential
-  # security issue + more than one user issues potentially ?!
-  # Thats why further security
-  # session$allowReconnect(TRUE) 
-  # what if complete new start (should have button for this ?!)
-  # session$allowReconnect("force") # To test locally
   
 # Layout upon Start ----
   hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
@@ -98,15 +85,15 @@ server <- function(input,output,session){
             "Download report", 
             download=NA, 
             target="_blank"
-            ),
+          ),
           actionButton(
             inputId = "Done",
             label = "Done"
-            ),
+          ),
           modalButton('Cancel')
         )
-        )
       )
+    )
   })
   
   observeEvent(input$Done,{
@@ -123,10 +110,11 @@ server <- function(input,output,session){
   
 # Data Upload + checks ----
   print("Data Upload")
+
 ## Set reactiveVals ----
   FLAG_TEST_DATA_SELECTED <- reactiveVal(FALSE)
-## Ui Section ----
 
+## Ui Section ----
   observeEvent(input$Reset,{
     FLAG_TEST_DATA_SELECTED(FALSE)
     output$debug <- renderText("<font color=\"#00851d\"><b>Reset successful</b></font>")
@@ -160,81 +148,67 @@ server <- function(input,output,session){
     FLAG_TEST_DATA_SELECTED(TRUE)
     shinyjs::click("refresh1")
   })
+
+  shinyjs::onclick("toggleAdvanced", shinyjs::toggle(id = "advanced", anim = TRUE))
   
-  shinyjs::onclick("toggleAdvanced",
-                   shinyjs::toggle(id = "advanced", anim = TRUE))
-  
-  output$data_matrix1_ui <- renderUI({
-    shiny::fileInput(
-      inputId = "data_matrix1",
-      label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a></small>'),
-      accept = c(".csv", ".xlsx"),
-      width = "80%")
-  })
-  output$data_sample_anno1_ui <- renderUI({
-    shiny::fileInput(
-      inputId = "data_sample_anno1",
-      label = HTML('Upload sample annotation <br/><small>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv">Download example data</a></small>'),
-      accept = c(".csv", ".xlsx"),
-      width = "80%")
-  })
-  output$data_row_anno1_ui <- renderUI({
-    shiny::fileInput(
-      inputId = "data_row_anno1",
-      label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a></small>'),
-      accept = c(".csv", ".xlsx"),
-      width = "80%")
-  })
-  output$data_preDone_ui <- renderUI({
-    shiny::fileInput(
-      inputId = "data_preDone",
-      label = HTML('Load precompiled data <br/><small>(saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data</a></small>'),
-      accept = ".RDS",
-      width = "80%"
-      )
-  })
+  output$data_matrix1_ui <- renderUI({shiny::fileInput(
+    inputId = "data_matrix1",
+    label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a></small>'),
+    accept = c(".csv", ".xlsx"),
+    width = "80%"
+  ) })
+  output$data_sample_anno1_ui <- renderUI({shiny::fileInput(
+    inputId = "data_sample_anno1",
+    label = HTML('Upload sample annotation <br/><small>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv">Download example data</a></small>'),
+    accept = c(".csv", ".xlsx"),
+    width = "80%"
+  )})
+  output$data_row_anno1_ui <- renderUI({shiny::fileInput(
+    inputId = "data_row_anno1",
+    label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a></small>'),
+    accept = c(".csv", ".xlsx"),
+    width = "80%"
+  )})
+  output$data_preDone_ui <- renderUI({shiny::fileInput(
+    inputId = "data_preDone",
+    label = HTML('Load precompiled data <br/><small>(saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data</a></small>'),
+    accept = ".RDS",
+    width = "80%"
+  )})
   output$SaveInputAsList <- downloadHandler(
    filename = function() {
-      paste(input$omicType,"_only_precompiled", " ",Sys.time(),".RDS",sep = "")},
+     paste0(input$omicType, "_only_precompiled", " ", Sys.time(), ".RDS") },
     content = function(file){
       # TODO Q: What to save here? only original enough?
       saveRDS(
         object = res_tmp[[session$token]]$data_original,
         file = file
-        )
+      )
     }
   )
-  output$metadataInput_ui <- renderUI({
-    shiny::fileInput(
-      inputId = "metadataInput",
-      label = HTML("Upload your Meta Data Sheet <small>(currently replaces sample annotation)</small>"),
-      accept = c(".xlsx"),
-      buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),
-      width = "100%"
-      )
-  })
+  output$metadataInput_ui <- renderUI({shiny::fileInput(
+    inputId = "metadataInput",
+    label = HTML("Upload your Meta Data Sheet <small>(currently replaces sample annotation)</small>"),
+    accept = c(".xlsx"),
+    buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),
+    width = "100%"
+  )})
   
   observeEvent(input$omicType,{
+    output$AddGeneSymbols_ui <- NULL
+    output$AddGeneSymbols_organism_ui <- NULL
     if(input$omicType == "Transcriptomics"){
-      output$AddGeneSymbols_ui=renderUI({
-        checkboxInput(
-          inputId = "AddGeneSymbols",
-          label = "Adding gene Annotation?",
-          value = F
-          )
-        
-      })
-      output$AddGeneSymbols_organism_ui <- renderUI({
-        selectInput(
-          inputId = "AddGeneSymbols_organism",
-          label = "Which Organisms?",
-          choices = listDatasets(useEnsembl(biomart = "genes"))[,"description"],
-          selected = "Mouse genes (GRCm39)"
-          )
-      })
-    }else{
-      output$AddGeneSymbols_ui = NULL
-      output$AddGeneSymbols_organism_ui = NULL
+      output$AddGeneSymbols_ui <- renderUI({checkboxInput(
+        inputId = "AddGeneSymbols",
+        label = "Adding gene Annotation?",
+        value = F
+      )})
+      output$AddGeneSymbols_organism_ui <- renderUI({selectInput(
+        inputId = "AddGeneSymbols_organism",
+        label = "Which Organisms?",
+        choices = listDatasets(useEnsembl(biomart = "genes"))[,"description"],
+        selected = "Mouse genes (GRCm39)"
+      )})
     }
   })
   
@@ -242,116 +216,104 @@ server <- function(input,output,session){
   
   observeEvent(input$DoVisualDataInspection,{
     if(isTruthy(input$data_preDone)){
-      output$DataMatrix_VI_Info=renderText({
+      output$DataMatrix_VI_Info <- renderText({
         "Visual Inspection only for primary data, not for precompiled set possible!"
-        })
+      })
       req(F)
     }
     if(!(isTruthy(input$data_matrix1) & 
          (isTruthy(input$data_sample_anno1)|isTruthy(input$metadataInput)) & 
          isTruthy(input$data_row_anno1))){
-      output$DataMatrix_VI_Info=renderText(
+      output$DataMatrix_VI_Info <- renderText(
         "The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!"
         )
-    }else{
+    } else {
       flag_csv <- F
       tryCatch(
         expr = {
-        Matrix <- read_file(input$data_matrix1$datapath, check.names=T)
-        Matrix2 <- read_file(input$data_matrix1$datapath, check.names=F)
-        flag_csv <- T
-      },
-      error = function(cond){
-        print("Not a real csv file!")
-      }
+          Matrix <- read_file(input$data_matrix1$datapath, check.names=T)
+          Matrix2 <- read_file(input$data_matrix1$datapath, check.names=F)
+          flag_csv <- T
+        },
+        error = function(){
+          print("Not a real csv file!")
+          Matrix <- read.table(input$data_matrix1$datapath,check.names = T)
+          Matrix2 <- read.table(input$data_matrix1$datapath, check.names = F)
+        }
       )
-      if(!flag_csv){
-        Matrix <- read.table(input$data_matrix1$datapath,check.names = T)
-        Matrix2 <- read.table(input$data_matrix1$datapath, check.names = F)
-      }else{
-        Matrix <- read_file(input$data_matrix1$datapath, check.names=T)
-        Matrix2 <- read_file(input$data_matrix1$datapath, check.names=F)
+
+      output$DataMatrix_VI <- DT::renderDataTable({DT::datatable(data = Matrix)})
+      output$DataMatrix_VI_INFO <- renderText({"Matrix:"})
+      if(isTruthy(input$data_sample_anno1)){
+        sample_table <- read_file(input$data_sample_anno1$datapath, check.names=T)
+      } else if(isTruthy(input$metadataInput)){
+        sample_table <- fun_readInSampleTable(input$metadataInput$datapath)
+      } else {
+        sample_table <- data.frame()
       }
 
-      
-     output$DataMatrix_VI <- DT::renderDataTable({
-       DT::datatable(data = Matrix)
-       })
-     output$DataMatrix_VI_INFO <- renderText({"Matrix:"})
-     if(isTruthy(input$data_sample_anno1)){
-       sample_table <- read_file(input$data_sample_anno1$datapath, check.names=T)
-     }else if(isTruthy(input$metadataInput)){
-       sample_table <- fun_readInSampleTable(input$metadataInput$datapath)
-     }else{
-       sample_table <- data.frame()
-     }
-     
-     output$SampleMatrix_VI <- DT::renderDataTable({
-       DT::datatable(data = sample_table)
-       })
-     output$SampleMatrix_VI_INFO <- renderText({"Sample table:"})
-     
-     annotation_rows <- read_file(input$data_row_anno1$datapath, check.names=T)
-     output$EntitieMatrix_VI <- DT::renderDataTable({
-       DT::datatable(data = annotation_rows)
-       })
-     output$EntitieMatrix_VI_INFO <- renderText({"Entitie table:"})
-     
-     ## Do some checking
-     snippetYes <- "<font color=\"#00851d\"><b>Yes</b></font>"
-     snippetNo <-  "<font color=\"#ab020a\"><b>No</b></font>"
-     output$OverallChecks <- renderText({
-       "Some overall Checks are running run...\n
-       Rownames of Matrix are the same as rownames of entitie table ...\n
-       Colnames of Matrix are same as rownames of sample table ... \n
-       Matrix has no na ...\n
-       Sample table no na ...\n
-       Entitie table no na ...\n
-       "
-       })
+      output$SampleMatrix_VI <- DT::renderDataTable({DT::datatable(data = sample_table)})
+      output$SampleMatrix_VI_INFO <- renderText({"Sample table:"})
 
-     check0 <- ifelse(flag_csv,snippetYes,snippetNo)
-     check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
-     check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
-     check3 <- ifelse(any(is.na(Matrix) == T),snippetNo,snippetYes)
-     check4 <- ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes)
-     check5 <- ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes)
-     check6 <- ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo)
-     
-     if(check5 == snippetNo){
-       # Indicate columns with NA
-       colsWithNa <- numeric()
-       for(i in 1:ncol(annotation_rows)){
-         if(any(is.na(annotation_rows[,i]) == T)){
-           colsWithNa <- c(colsWithNa,i)
-         }
-       }
-       check5 <- paste0(snippetNo," Following columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
-     }
-     
-     if(check6 == snippetNo){
-       # add help text
-       check6 <- paste0(
-         snippetNo,
-         "\n\t A syntactically valid name consists of letters, numbers and the dot or underline characters \n
-         and starts with a letter or the dot not followed by a number.\n
-         Therefore '12345' is invalid, 'ID_12345' is valid \n
-         Remember to change the Sample ID everywhere (Matrix & Sample Table")
-     }
-     output$OverallChecks <- renderText({
-       paste0("Some overall Checks are running run ...\n
-       Data Matrix is a real csv (has ',' as separators:): ",check0,"\n
-           Most likely: You had a xlsx and exported to csv but your excel is in german 
-           and / or you use ',' as separators for decimal positions. 
-           Fix: change your decimal separator in Excel and re-export!
-       Rownames of Matrix are the same as rownames of entitie table ",check1,"\n
-       Colnames of Matrix are same as rownames of sample table ",check2," \n
-       Matrix has no na ",check3,"\n
-       Sample table no na ",check4,"\n
-       Entitie table no na ",check5,"\n
-       Sample IDs have valid names ", check6, "\n
-       ")
-     })
+      annotation_rows <- read_file(input$data_row_anno1$datapath, check.names=T)
+      output$EntitieMatrix_VI <- DT::renderDataTable({
+        DT::datatable(data = annotation_rows)
+      })
+      output$EntitieMatrix_VI_INFO <- renderText({"Entitie table:"})
+
+      ## Do some checking
+      snippetYes <- "<font color=\"#00851d\"><b>Yes</b></font>"
+      snippetNo <-  "<font color=\"#ab020a\"><b>No</b></font>"
+
+      check0 <- ifelse(flag_csv,snippetYes,snippetNo)
+      check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
+      check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
+      check3 <- ifelse(any(is.na(Matrix) == T),snippetNo,snippetYes)
+      check4 <- ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes)
+      check5 <- ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes)
+      check6 <- ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo)
+
+      if(check0 == snippetNo){
+        # add help text
+        check0 <- paste0(
+          snippetNo,
+          "\n\tMost likely: You had a xlsx and exported to csv but your excel is in ",
+          "german\n\tand/or you use ',' as separators for decimal positions.\n\t",
+          "Fix: change your decimal separator in Excel and re-export!"
+        )
+      }
+      if(check5 == snippetNo){
+        # Indicate columns with NA
+        colsWithNa <- numeric()
+        for(i in 1:ncol(annotation_rows)){
+           if(any(is.na(annotation_rows[,i]) == T)){
+             colsWithNa <- c(colsWithNa,i)
+           }
+        }
+        check5 <- paste0(snippetNo,"\n\tFollowing columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
+      }
+      if(check6 == snippetNo){
+        # add help text
+        check6 <- paste0(
+          snippetNo,
+          "\n\tA syntactically valid name consists of letters, numbers,\n\t",
+          "the dot or underline characters and starts with a letter.\n\t",
+          "Therefore '12345' is invalid, 'ID_12345' is valid.\n\t",
+          "Remember to change the Sample ID everywhere (Matrix & Sample Table"
+        )
+      }
+      output$OverallChecks <- renderText({
+         paste0(
+           "Some overall Checks have been run:\n",
+           "Data Matrix is a real csv (has ',' as separators:): ",check0,"\n",
+           "Rownames of Matrix are the same as rownames of entitie table ",check1,"\n",
+           "Colnames of Matrix are same as rownames of sample table ",check2," \n",
+           "Matrix has no na ",check3,"\n",
+           "Sample table no na ",check4,"\n",
+           "Entitie table no na ",check5,"\n",
+           "Sample IDs have valid names ", check6, "\n"
+         )
+      })
     }
   })
   

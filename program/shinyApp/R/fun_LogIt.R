@@ -5,7 +5,7 @@ fun_LogIt <- function(
   addPlot = F,
   tableSaved = F,
   Filename = NULL,
-  jokes = jokesDF
+  jokes = JOKES
 ){
   # sophisticated "Where to place log file"
   # how to name it ?
