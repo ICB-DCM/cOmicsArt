@@ -63,6 +63,7 @@ GENESETS_RESET <<- list(
   "VAX" = F,
   "C8" = F
 )
+
 ENRICHMENT_RESULT_RESET <<- list(
   "EnrichmentRes_Hallmarks" = NULL,
   "EnrichmentRes_C1" = NULL,
