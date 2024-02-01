@@ -111,12 +111,11 @@ single_gene_visualisation_server <- function(id, data){
         req(input$singleGeneGo>0)
         print(input$Select_Gene)
         if(single_Gene_vis$calculate == 1){
-          # update the data if needed
+          # update the data
           data <- update_data(session$token)
           # set the counter to 0 to prevent any further plotting
           single_Gene_vis$calculate <- 0
         }
-        
         GeneDataFlag <- F
         # Select data for the gene based on gene Selection & group Selection
         if(input$type_of_data_gene == "preprocessed"){
