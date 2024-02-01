@@ -197,7 +197,7 @@ significance_analysis_server <- function(id, data, params){
         sig_ana_reactive$coldata <- colData(data$data)
         # delete old panels
         if(!is.null(sig_ana_reactive$significance_tabs_to_delete)){
-          for (i in 1:length(sig_ana_reactive$significance_tabs_to_delete)) {
+          for (i in seq_along(sig_ana_reactive$significance_tabs_to_delete)) {
             removeTab(
               inputId = "significance_analysis_results",
               target = sig_ana_reactive$significance_tabs_to_delete[[i]]
