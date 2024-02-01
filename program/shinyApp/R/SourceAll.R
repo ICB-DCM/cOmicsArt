@@ -1,6 +1,5 @@
 source("R/fun_filterRNA.R",local = T)
 source("R/fun_LFC.R",local = T)
-source("R/fun_popupModal.R",local = T)
 source("R/heatmap/fun_entitieSelection.R",local = T)
 source("R/fun_LogIt.R",local = T)
 source("R/fun_readInSampleTable.R",local = T)
