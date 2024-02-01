@@ -177,7 +177,7 @@ server <- function(input,output,session){
   )})
   output$SaveInputAsList <- downloadHandler(
    filename = function() {
-     paste0(input$omicType, "_only_precompiled", " ", Sys.time(), ".RDS") },
+     paste0(input$omic_type, "_only_precompiled", " ", Sys.time(), ".RDS") },
     content = function(file){
       # TODO Q: What to save here? only original enough?
       saveRDS(
@@ -194,7 +194,7 @@ server <- function(input,output,session){
     width = "100%"
   )})
   
-  observeEvent(input$omicType,{
+  observeEvent(input$omic_type,{
     output$AddGeneSymbols_ui <- NULL
     output$AddGeneSymbols_organism_ui <- NULL
     if(input$omicType == "Transcriptomics"){

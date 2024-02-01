@@ -1,8 +1,8 @@
 data_selection_sidebar_panel <- sidebarPanel(
   id = "sidebar_data_selection",
-  div(class = "omicType",
+  div(class = "omic_type",
       selectInput(
-        inputId = "omicType", # RNAorLIPID
+        inputId = "omic_type", # RNAorLIPID
         label = "Omic Type that is uploaded",
         choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
         selected = ""
