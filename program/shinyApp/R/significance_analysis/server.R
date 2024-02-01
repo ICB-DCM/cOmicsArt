@@ -9,7 +9,8 @@ significance_analysis_server <- function(id, data, params){
         dds = NULL,
         scenario = 0,
         comparisons_for_plot = "all",
-        coldata = NULL
+        coldata = NULL,
+        significance_tabs_to_delete = NULL
       )
       ns <- session$ns
       ## Sidebar UI section
@@ -28,7 +29,7 @@ significance_analysis_server <- function(id, data, params){
             multiple = F,
             selected = NULL
           )
-        } else{
+        } else {
           selectInput(
             inputId = ns("sample_annotation_types_cmp"),
             label = "Choose groups to compare",
@@ -37,7 +38,6 @@ significance_analysis_server <- function(id, data, params){
             selected = NULL
           )
         }
-
       })
       # UI to choose comparisons
       output$chooseComparisons_ui <- renderUI({
@@ -46,7 +46,7 @@ significance_analysis_server <- function(id, data, params){
         if(length(annoToSelect) == length(unique(annoToSelect))){
           # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
           helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
-        }else{
+        } else {
           my_comparisons <- subset(expand.grid(rep(list(unique(annoToSelect)),2)), Var1 != Var2)
           xy.list <- vector("list", nrow(my_comparisons))
           for (i in 1:nrow(my_comparisons)) {
@@ -71,7 +71,7 @@ significance_analysis_server <- function(id, data, params){
             expr = "DESeq is using a Wald test statistic.\nWe are using the same here.",
             outputArgs = list(container = pre)
           )
-        }else{
+        } else {
           shinyWidgets::virtualSelectInput(
             search = T,
             showSelectedOptionsFirst = T,
@@ -83,28 +83,24 @@ significance_analysis_server <- function(id, data, params){
         }
       })
       # UI to choose significance level
-      output$chooseSignificanceLevel_ui <- renderUI({
-        sliderInput(
-            inputId = ns("significance_level"),
-            label = "Significance level",
-            min = 0.005,
-            max = 0.1,
-            value = 0.05,
-            step = 0.005
-        )
-      })
+      output$chooseSignificanceLevel_ui <- renderUI({sliderInput(
+        inputId = ns("significance_level"),
+        label = "Significance level",
+        min = 0.005,
+        max = 0.1,
+        value = 0.05,
+        step = 0.005
+      )})
       # UI to choose test correction
-      output$chooseTestCorrection_ui <- renderUI({
-        selectInput(
-            inputId = ns("test_correction"),
-            label = "Test correction",
-            choices = c(
-              "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
-              "Holm", "Hommel", "Hochberg", "FDR"
-            ),
-            selected = "Benjamini-Hochberg"
-        )
-      })
+      output$chooseTestCorrection_ui <- renderUI({selectInput(
+        inputId = ns("test_correction"),
+        label = "Test correction",
+        choices = c(
+          "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
+          "Holm", "Hommel", "Hochberg", "FDR"
+        ),
+        selected = "Benjamini-Hochberg"
+      )})
       # UI to select comparisons to visualize
       output$chooseComparisonsToVisualize_ui <- renderUI({
         req(input$comparisons)
@@ -126,10 +122,10 @@ significance_analysis_server <- function(id, data, params){
           choices <- c("UpSetR plot")
         }
         selectInput(
-            inputId = ns("visualization_method"),
-            label = "Visualization method",
-            choices = choices,
-            selected = input$visualization_method
+          inputId = ns("visualization_method"),
+          label = "Visualization method",
+          choices = choices,
+          selected = input$visualization_method
         )
       })
       # UI to choose what genes to look at (e.g. significant, upregulated, downregulated)
@@ -137,23 +133,23 @@ significance_analysis_server <- function(id, data, params){
         req(input$comparisons_to_visualize)
         # choices dependent on preprocess_method
         if(params$PreProcessing_Procedure == "vst_DESeq"){
-            choices <- c(
-              "Significant",
-              "Upregulated",
-              "Downregulated",
-              "Significant unadjusted"
-            )
+          choices <- c(
+            "Significant",
+            "Upregulated",
+            "Downregulated",
+            "Significant unadjusted"
+          )
         } else {
-            choices <- c(
-              "Significant",
-              "Significant unadjusted"
-            )
+          choices <- c(
+            "Significant",
+            "Significant unadjusted"
+          )
         }
         selectInput(
-            inputId = ns("sig_to_look_at"),
-            label = "Type of significance to look at",
-            choices = choices,
-            selected = input$sig_to_look_at
+          inputId = ns("sig_to_look_at"),
+          label = "Type of significance to look at",
+          choices = choices,
+          selected = input$sig_to_look_at
         )
       })
       # ui to choose intersections to highlight in venn diagram
@@ -163,11 +159,11 @@ significance_analysis_server <- function(id, data, params){
         req(sig_ana_reactive$plot_last)
         choices <- append("None", sig_ana_reactive$intersect_names)
         selectInput(
-            inputId = ns("intersection_high"),
-            label = "Intersections to highlight",
-            choices = choices,
-            multiple = T,
-            selected = input$intersection_high
+          inputId = ns("intersection_high"),
+          label = "Intersections to highlight",
+          choices = choices,
+          multiple = T,
+          selected = input$intersection_high
         )
       })
       # keep updating the info panel while executing
@@ -185,44 +181,40 @@ significance_analysis_server <- function(id, data, params){
       })
       # Analysis initial info
       observeEvent(input$significanceGo,{
-        # shinyjs::html(id = 'significance_analysis_info', "Analysis is running...")
         sig_ana_reactive$info_text <- "Analysis is running..."
-        # start the analysis
         sig_ana_reactive$start_analysis <- sig_ana_reactive$start_analysis + 1
       })
       # Do the analysis
       observeEvent(sig_ana_reactive$start_analysis,{
         req(sig_ana_reactive$start_analysis > 0)
         if(input$significanceGo == 1){
-          significance_tabs_to_delete <<- NULL
+          sig_ana_reactive$significance_tabs_to_delete <- NULL
         }
         print("Start the Significance Analysis")
         # update the data if needed
         data <- update_data(session$token)
         sig_ana_reactive$coldata <- colData(data$data)
         # delete old panels
-        if(!is.null(significance_tabs_to_delete)){
-          for (i in 1:length(significance_tabs_to_delete)) {
+        if(!is.null(sig_ana_reactive$significance_tabs_to_delete)){
+          for (i in 1:length(sig_ana_reactive$significance_tabs_to_delete)) {
             removeTab(
               inputId = "significance_analysis_results",
-              target = significance_tabs_to_delete[[i]]
+              target = sig_ana_reactive$significance_tabs_to_delete[[i]]
             )
           }
         }
         # if preproccesing method was DESeq2, then use DESeq2 for testing
         if(params$PreProcessing_Procedure == "vst_DESeq"){
           dds <- data$DESeq_obj
-
           # rewind the comparisons again
           newList <- input$comparisons
           contrasts <- vector("list", length(input$comparisons))
-          for (i in 1:length(newList)) {
+          for (i in seq_along(newList)) {
             contrasts[[i]] <- unlist(strsplit(x = input$comparisons[i],split = ":"))
           }
-
           # get the results for each contrast and put it all in a big results object
           sig_results <<- list()
-          for (i in 1:length(contrasts)) {
+          for (i in seq_along(contrasts)) {
             if(identical(
               list(test_method = "Wald", test_correction = PADJUST_METHOD[[input$test_correction]]),
               par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
@@ -246,15 +238,13 @@ significance_analysis_server <- function(id, data, params){
               test_method = "Wald",
               test_correction = PADJUST_METHOD[[input$test_correction]]
             )
-            ### put in here browser if use of `script_getSigToExcel`
           }
-        }
-        else{  # all other methods require manual testing
+        } else {  # all other methods require manual testing
           # rewind the comparisons again
           newList <- input$comparisons
           contrasts <- vector("list", length(input$comparisons))
           contrasts_all <- list()
-          for (i in 1:length(newList)) {
+          for (i in seq_along(newList)) {
             contrasts[[i]] <- unlist(strsplit(x = input$comparisons[i],split = ":"))
             contrasts_all <- append(contrasts_all, contrasts[[i]])
           }
@@ -289,7 +279,7 @@ significance_analysis_server <- function(id, data, params){
             ns = ns,
             preprocess_method = params$PreProcessing_Procedure
           )
-          significance_tabs_to_delete[[i]] <<- input$comparisons[i]
+          sig_ana_reactive$significance_tabs_to_delete[[i]] <- input$comparisons[i]
         }
         sig_ana_reactive$info_text <- "Analysis is Done!"
         # update plot
@@ -317,8 +307,7 @@ significance_analysis_server <- function(id, data, params){
         # assign scenario=20 for Venn Diagram and scenario=21 for UpSetR
         if(input$visualization_method == "Venn Diagram"){
           sig_ana_reactive$scenario <- 20
-        }
-        else{
+        } else {
           sig_ana_reactive$scenario <- 21
         }
         # get the results
@@ -334,10 +323,9 @@ significance_analysis_server <- function(id, data, params){
 
         if(any(input$comparisons_to_visualize == "all")){
           # show all comparisons if no more than 4
-          if(length(input$comparisons)<5){
+          if(length(input$comparisons) < 5){
             chosenVizSet <- input$comparisons
-          }else{
-
+          } else {
             chosenVizSet <-  input$comparisons[c(1,2)]
             sig_ana_reactive$info_text <- "Note: Although you choose 'all' to visualize only first 2 comparisons are shown to avoid unwanted computational overhead, 
             as you got more than 4 comparisons. Please choose precisely the comparisons for visualisation."
@@ -345,7 +333,7 @@ significance_analysis_server <- function(id, data, params){
         }else{
           chosenVizSet <- input$comparisons_to_visualize
         }
-        for (i in 1:length(chosenVizSet)) {
+        for (i in seq_along(chosenVizSet)) {
           to_add_tmp <- rownames(
             filter_significant_result(
               result = sig_results[[chosenVizSet[i]]],
@@ -362,12 +350,12 @@ significance_analysis_server <- function(id, data, params){
         if(length(res2plot) <= 1){
           sig_ana_reactive$info_text <- "You either have no significant results or only significant results in one comparison."
           # if current plots to llok at are adjusted pvalues, suggest to look at raw pvalues
-            if(input$sig_to_look_at == "Significant"){
-                sig_ana_reactive$info_text <- paste0(
+          if(input$sig_to_look_at == "Significant"){
+              sig_ana_reactive$info_text <- paste0(
                 sig_ana_reactive$info_text,
                 "\nYou tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level."
-                )
-            }
+              )
+          }
           # clear the plot
           output$Significant_Plot_final <- renderPlot({})
           return(NULL)
@@ -384,7 +372,7 @@ significance_analysis_server <- function(id, data, params){
           sig_ana_reactive$intersect_names <-  ggplot_build(
             sig_ana_reactive$plot_last
           )$layout$panel_params[[1]]$x$get_labels()
-        }else if(input$visualization_method == "Venn diagram"){
+        } else if(input$visualization_method == "Venn diagram"){
           # set colors for each comparison
           sig_ana_reactive$plot_last <- ggvenn::ggvenn(
             res2plot, fill_color=c("#44af69", "#f8333c", "#fcab10", "#2b9eb3"),
@@ -400,11 +388,6 @@ significance_analysis_server <- function(id, data, params){
       observeEvent(input$intersection_high,{
         querie_names_all <- map_intersects_for_highlight(
           highlights=sig_ana_reactive$intersect_names,
-          plot=sig_ana_reactive$plot_last,
-          overlap_list=sig_ana_reactive$overlap_list
-        )
-        querie_names <- map_intersects_for_highlight(
-          highlights=input$intersection_high,
           plot=sig_ana_reactive$plot_last,
           overlap_list=sig_ana_reactive$overlap_list
         )
@@ -470,8 +453,6 @@ significance_analysis_server <- function(id, data, params){
           write.csv(tosave, file, row.names = FALSE)
         }
       )
-
-
       # Download and Report Section
       # download R Code for further plotting
       output$getR_Code <- downloadHandler(
@@ -510,7 +491,6 @@ significance_analysis_server <- function(id, data, params){
           paste0(id, Sys.time(), input$file_ext_Sig)
         },
         content = function(file){
-          print("Plot saving.")
           ggsave(
             filename = file,
             plot = sig_ana_reactive$plot_last,
@@ -536,9 +516,9 @@ significance_analysis_server <- function(id, data, params){
           fun_LogIt(
             message = "- Significance Analysis was performed using DESeq2 pipeline"
           )
-        }else{
+        } else {
           fun_LogIt(message = paste(
-              "- Significance Analysis was performed using", input$test_method
+            "- Significance Analysis was performed using", input$test_method
           ))
         }
         # log the significance level
@@ -563,9 +543,10 @@ significance_analysis_server <- function(id, data, params){
             "- Number of significant genes after correction for",
             input$comparisons_to_visualize[i],
             "is",
-            nrow(sig_results[[input$comparisons_to_visualize[i]]][
-                   sig_results[[input$comparisons_to_visualize[i]]]$padj < input$significance_level,
-                 ]
+            nrow(
+              sig_results[[input$comparisons_to_visualize[i]]][
+                sig_results[[input$comparisons_to_visualize[i]]]$padj < input$significance_level,
+              ]
             )
           ))
           # log the number of significant genes before correction
@@ -573,9 +554,10 @@ significance_analysis_server <- function(id, data, params){
             "- Number of significant genes after correction for",
             input$comparisons_to_visualize[i],
             "is",
-            nrow(sig_results[[input$comparisons_to_visualize[i]]][
-                   sig_results[[input$comparisons_to_visualize[i]]]$pvalue < input$significance_level,
-                 ]
+            nrow(
+              sig_results[[input$comparisons_to_visualize[i]]][
+                sig_results[[input$comparisons_to_visualize[i]]]$pvalue < input$significance_level,
+              ]
             )
           ))
           # log the top 5 significant genes
@@ -587,7 +569,7 @@ significance_analysis_server <- function(id, data, params){
                 decreasing = FALSE
               ),], 5
             )
-          }else{
+          } else {
             # get the top 5 significant genes
             top5 <- head(
               sig_results[[input$comparisons_to_visualize[i]]][order(
@@ -600,8 +582,7 @@ significance_analysis_server <- function(id, data, params){
             "- Top 5 significant genes for",
             input$comparisons_to_visualize[i],
             "are the following:"
-            )
-          )
+          ))
           fun_LogIt(message = knitr::kable(
             top5, format = "html", format.args = list(width = 40)
           ) %>% kableExtra::kable_styling()

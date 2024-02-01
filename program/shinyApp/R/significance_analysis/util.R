@@ -38,9 +38,6 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   # alpha: significance level
   # ns: namespace function
 
-  print("create_new_tab")
-  print(title)
-  print(result)
   # paste together the strings to print
   # total number of genes compared
   total_genes <- length(rownames(result))
