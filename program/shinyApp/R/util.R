@@ -1,5 +1,18 @@
 ### general utility functions will be defined here
 
+# tryCatch modal dialog
+error_modal <- function(e){
+  showModal(modalDialog(
+    title = HTML("<font color='red'>An unknown Error occured</font>"),
+    HTML(paste0(
+      "<font color='red'>Error: ",e$message,"</font><br><br>",
+      "Please check your data set and annotation and try again.<br><br>",
+      "Otherwise, please contact the cOmicsArtist Lea and Paul."
+    )),
+    footer = modalButton("Close")
+  ))
+}
+
 
 update_data <- function(session_id){
   # for stability reasons, data is ALWAYS pulled here

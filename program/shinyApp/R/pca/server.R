@@ -6,7 +6,6 @@ pca_Server <- function(id, data, params, row_select){
       pca_reactives <- reactiveValues(
         calculate = 0,
         counter = 0,
-        # ensures Do_PCA is clicked at least once after refresh
         percentVar = NULL,
         pcaData = NULL,
         df_out_r = NULL,
@@ -189,12 +188,17 @@ pca_Server <- function(id, data, params, row_select){
           # set the counter to -1 to prevent any further plotting
           pca_reactives$calculate <- -1
           print("Calculate PCA")
-          # PCA
-          pca <- prcomp(
-            x = as.data.frame(t(as.data.frame(assay(data2plot$data)))),
-            center = T,
-            scale. = FALSE
-          )
+          # PCA, for safety measures, wrap in tryCatch
+          tryCatch({
+            pca <- prcomp(
+              x = as.data.frame(t(as.data.frame(assay(data2plot$data)))),
+              center = T,
+              scale. = FALSE
+            )
+          }, error = function(e){
+            error_modal(e)
+            return(NULL)
+          })
           # how much variance is explained by each PC
           explVar <- pca$sdev^2/sum(pca$sdev^2)
           names(explVar) <- colnames(pca$x)

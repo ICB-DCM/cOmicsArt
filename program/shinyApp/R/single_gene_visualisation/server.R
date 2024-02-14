@@ -2,13 +2,6 @@ single_gene_visualisation_server <- function(id, data, params, updates){
   moduleServer(
     id,
     function(input,output,session){
-      
-      single_Gene_vis <- reactiveValues(
-        calculate = 0,
-        counter = 0,
-        current_updates = 0
-      )
-      
       ns <- session$ns
       
 
@@ -18,7 +11,6 @@ single_gene_visualisation_server <- function(id, data, params, updates){
         print("Refresh UI Single Gene")
         data <- update_data(session$token)
         params <- update_params(session$token)
-        single_Gene_vis$current_updates <- updates()
         
         ## Ui section ----
         output$type_of_data_gene_ui <- renderUI({
@@ -114,26 +106,14 @@ single_gene_visualisation_server <- function(id, data, params, updates){
           input$chooseComparisons
         )
       })
-      
-      # 
-      # session$userData$clicks_observer <- observeEvent(input$singleGeneGo,{
-      #   req(input$singleGeneGo > single_Gene_vis$counter)
-      #   single_Gene_vis$counter <- input$singleGeneGo
-      #   single_Gene_vis$calculate <- 1
-      # })
 
 
       # Visualize single Gene ----
       observeEvent(toListen(),{
         req(input$singleGeneGo>0)
         print(input$Select_Gene)
-        if(single_Gene_vis$calculate == 1){
-          # update the data if needed
-          data <- update_data(session$token)
-          single_Gene_vis$current_updates <- updates()
-          # set the counter to 0 to prevent any further plotting
-          single_Gene_vis$calculate <- 0
-        }
+        # update the data
+        data <- update_data(session$token)
 
         
         GeneDataFlag = F

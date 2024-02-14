@@ -9,7 +9,6 @@ significance_analysis_server <- function(id, data, params, updates){
         dds = NULL,
         scenario = 0,
         comparisons_for_plot = "all",
-        current_updates = 0,
         coldata = NULL
       )
       ns <- session$ns
@@ -182,7 +181,6 @@ significance_analysis_server <- function(id, data, params, updates){
       observeEvent(input$refreshUI, {
         data <- update_data(session$token)
         params <- update_params(session$token)
-        sig_ana_reactive$current_updates <- updates()
         sig_ana_reactive$coldata <- colData(data$data)
       })
       # Analysis initial info
@@ -201,7 +199,6 @@ significance_analysis_server <- function(id, data, params, updates){
         print("Start the Significance Analysis")
         # update the data if needed
         data <- update_data(session$token)
-        sig_ana_reactive$current_updates <- updates()
         sig_ana_reactive$coldata <- colData(data$data)
         # delete old panels
         if(!is.null(significance_tabs_to_delete)){
@@ -272,14 +269,22 @@ significance_analysis_server <- function(id, data, params, updates){
           samples_selected <- colData(data$data)[index_comparisons,]
           # get the data
           data_selected <- as.matrix(assay(data$data))[,index_comparisons]
-          sig_results <<- significance_analysis(
-            df = as.data.frame(data_selected),
-            samples = as.data.frame(samples_selected),
-            contrasts = contrasts,
-            method = input$test_method,
-            correction = PADJUST_METHOD[[input$test_correction]],
-            contrast_level = input$sample_annotation_types_cmp
-          )
+          # significance analysis saved the result in res_tmp.
+          # as it is a custom function, wrap in tryCatch
+          tryCatch({
+            significance_analysis(
+              df = as.data.frame(data_selected),
+              samples = as.data.frame(samples_selected),
+              contrasts = contrasts,
+              method = input$test_method,
+              correction = PADJUST_METHOD[[input$test_correction]],
+              contrast_level = input$sample_annotation_types_cmp
+            )
+            sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
+          }, error = function(e){
+            error_modal(e)
+            return(NULL)
+          })
         }
         # for each result create a tabPanel
         for (i in 1:length(sig_results)) {
@@ -317,6 +322,8 @@ significance_analysis_server <- function(id, data, params, updates){
           input$sig_to_look_at,
           sig_ana_reactive$update_plot_post_ana > 0
         )
+        # assign significance_results again, for safety measures
+        sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
         # assign scenario=20 for Venn Diagram and scenario=21 for UpSetR
         if(input$visualization_method == "Venn Diagram"){
           sig_ana_reactive$scenario <- 20
@@ -483,7 +490,7 @@ significance_analysis_server <- function(id, data, params, updates){
         },
         content = function(file){
           envList <- list(
-            sig_results = sig_results,
+            sig_results = res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]],
             input = reactiveValuesToList(input),
             res2plot = sig_ana_reactive$results_for_plot
           )
@@ -525,6 +532,8 @@ significance_analysis_server <- function(id, data, params, updates){
       observeEvent(input$only2Report_Sig,{
         notificationID <- showNotification(ui = "Saving...",duration = 0)
         tmp_filename <- paste0(getwd(),"/www/", paste(id,Sys.time(),".png",sep="_"))
+        # assign sig_results again for safety
+        sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
         png(tmp_filename)
         print(sig_ana_reactive$plot_last)
         dev.off()
