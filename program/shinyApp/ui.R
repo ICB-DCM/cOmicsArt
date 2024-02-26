@@ -43,9 +43,7 @@ library(gridExtra)
 # library(svglite)
 
 source("R/C.R")
-
 source("R/module_DownloadReport.R",local=T)
-
 # source the uis for each panel here
 source("R/data_selection/ui.R",local=T)
 source("R/pre_processing/ui.R",local=T)
@@ -56,22 +54,8 @@ source("R/enrichment_analysis/ui.R",local=T)
 source("R/sample_correlation/ui.R",local = T)
 source("R/significance_analysis/ui.R",local=T)
 
-
 options(repos = BiocManager::repositories())
 options(spinner.color = "#1c8a3b", spinner.color.background = "#ffffff", spinner.size = 2)
-########
-# Set Up security
-########
-credentials <- data.frame(
-  user = c("Clivia", "Lea"), # mandatory
-  password = c("Cii@31", "Lea"), # mandatory
-  # start = c("2019-04-15"), # optinal (all others)
-  # expire = c(NA, "2019-12-31"),
-  admin = c(FALSE, TRUE),
-  comment = "Log In to Run secret Shiny",
-  stringsAsFactors = FALSE
-)
-
 
 ui <- shiny::fluidPage(
   # JS to reset input values
@@ -84,7 +68,6 @@ ui <- shiny::fluidPage(
     ##########
     # Styling Setting
     ##########
-    # Note the wrapping of the string in HTML()
     tags$style(HTML("
       body {
         background-color: #f8f7fa;
@@ -193,24 +176,25 @@ ui <- shiny::fluidPage(
     ################################################################################
     data_selection_panel,
     pre_processing_panel,
-    sample_correlation_panel <- sampleCorrelation_UI("sample_correlation"),
-    significance_analysis_panel <- significance_analysis_UI("SignificanceAnalysis"),
-    pca_panel <- pca_UI("PCA"),
-    heatmap_panel <- heatmap_UI("Heatmap"),
-    single_gene_visualisation_panel <- single_gene_visualisation_UI("single_gene_visualisation"),
-    enrichment_analysis_tab_panel <- enrichment_analysis_UI("EnrichmentAnalysis")
+    sampleCorrelation_UI("sample_correlation"),
+    significance_analysis_UI("SignificanceAnalysis"),
+    pca_UI("PCA"),
+    heatmap_UI("Heatmap"),
+    single_gene_visualisation_UI("single_gene_visualisation"),
+    enrichment_analysis_UI("EnrichmentAnalysis")
   ),
   hidden(selectInput(
     "element_02",
-    label = "LeasBirthday",
-    choices = c(0, 1,2),
+    label = "AuthorBirthdays",
+    choices = c(0, 1, 2),
     selected = if(format(as.POSIXct(Sys.time()), "%d-%m") == "22-11"){
-      1
-    }else if(format(as.POSIXct(Sys.time()), "%d-%m") == "19-12"){
-      2
-    }else{
-      0
-    })),
+      1  # Lea's Birthday
+    } else if (format(as.POSIXct(Sys.time()), "%d-%m") == "19-12"){
+      2  # Paul's Birthday
+    } else {
+      0  # No Birthday
+    }
+  )),
   conditionalPanel(
     condition = "input.element_02 == 0",
     absolutePanel("Brought to you by Lea Seep & Paul Jonas Jost",
@@ -242,8 +226,4 @@ ui <- shiny::fluidPage(
     textOutput("session_id"),
     bottom = 0, right = 10, fixed = TRUE
   )
-  
 )
-
-# Wrap your UI with secure_app
-# ui <- secure_app(ui)

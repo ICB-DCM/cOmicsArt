@@ -1,12 +1,12 @@
 ### general utility functions will be defined here
 
-
 update_data <- function(session_id){
   # for stability reasons, data is ALWAYS pulled here
   print("Updating data...")
   data <- res_tmp[[session_id]]
   return(data)
 }
+
 
 select_data <- function(data, selected_samples, sample_type){
   # select data for e.g. pca's or alike
@@ -25,6 +25,7 @@ select_data <- function(data, selected_samples, sample_type){
   return(data)
 }
 
+
 update_params <- function(session_id){
   # update parameter if updates is larger than current_updates
   # could force to always update
@@ -32,6 +33,7 @@ update_params <- function(session_id){
   params <- par_tmp[[session_id]]
   return(params)
 }
+
 
 read_file <- function(filename, check.names=T){
   # reads in the file of either a .csv or a .xlsx filetype
@@ -72,6 +74,7 @@ getUserReactiveValues <- function(data = input){
   return(tmp[to_include])
 }
 
+
 save_pheatmap <- function(x, filename,type = "pdf") {
   # Saves a heatmap to a file in different formats
   stopifnot(!missing(x))
@@ -97,4 +100,20 @@ save_pheatmap <- function(x, filename,type = "pdf") {
     grid::grid.draw(x$gtable)
     dev.off()
   }
+}
+
+
+getCurrentVersion <- function(updateDESCRIPTION = T){
+  # Write function to insert current release absed on CHANGE log to DESCRIPTIOn
+  # Return current version
+  ChangeLog <- readLines("../../CHANGELOG.md")
+  # take the first hit as it is the most recent
+  recentSeries <- which(grepl("series$",ChangeLog))[1]
+  recentVersion <- ChangeLog[recentSeries+4]
+  DESCRIPTION <- readLines("DESCRIPTION")
+  DESCRIPTION_new <- gsub("Version:.*$",paste0("Version: ",recentVersion),DESCRIPTION)
+  writeLines(DESCRIPTION_new,con ="DESCRIPTION" )
+
+  # take the + next line to get version
+  return(recentVersion)
 }
