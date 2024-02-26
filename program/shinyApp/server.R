@@ -754,23 +754,6 @@ server <- function(input,output,session){
       NULL
     }
   })
-  observe({
-    if(input$DESeq_show_advanced){
-      output$DESeq_formula_advanced_ui <- renderUI({
-        req(data_input_shiny())
-        textInput(
-          inputId = "DESeq_formula_advanced",
-          label = "Insert your formula:",
-          value = "",
-          width = NULL,
-          placeholder = NULL
-        )
-      })
-    } else {
-      # hide the advanced UI
-      hide("DESeq_formula_advanced", anim = T)
-    }
-  })
 
   observeEvent(input$NextPanel2,{
     updateTabsetPanel(
