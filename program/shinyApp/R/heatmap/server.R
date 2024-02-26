@@ -372,7 +372,7 @@ heatmap_server <- function(id, data, params, updates){
             }else if(doThis_flag){
               #Takes user-specified choices from additional LFC Inputs 
               # put does not plot values but the LFC itself
-              Data2Plot <- getLFC(
+              Data2Plot <- getLFCs(
                 data = as.data.frame(data2HandOver),
                 ctrl_samples_idx = ctrl_samples_idx,
                 comparison_samples_idx = comparison_samples_idx

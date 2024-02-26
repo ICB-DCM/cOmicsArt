@@ -74,6 +74,35 @@ getUserReactiveValues <- function(data = input){
   return(tmp[to_include])
 }
 
+
+save_pheatmap <- function(x, filename,type = "pdf") {
+  # Saves a heatmap to a file in different formats
+  stopifnot(!missing(x))
+  stopifnot(!missing(filename))
+  if(type == "pdf"){
+    pdf(filename)
+    grid::grid.newpage()
+    grid::grid.draw(x$gtable)
+    dev.off()
+  } else if (type == "png"){
+    png(filename, width=800, height=400)
+    grid::grid.newpage()
+    grid::grid.draw(x$gtable)
+    dev.off()
+  } else if (type == "svg"){
+    svglite::svglite(filename)
+    grid::grid.newpage()
+    grid::grid.draw(x$gtable)
+    dev.off()
+  } else if(type == "tiff"){
+    tiff(filename)
+    grid::grid.newpage()
+    grid::grid.draw(x$gtable)
+    dev.off()
+  }
+}
+
+
 getCurrentVersion <- function(updateDESCRIPTION = T){
   # Write function to insert current release absed on CHANGE log to DESCRIPTIOn
   # Return current version

@@ -835,7 +835,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           if(any(Data2PlotOnTop<0)){
             ea_reactives$ea_info <- "Choose another preprocessing, as there are negative values!"
           }else{
-            Data2Plot <- getLFC(
+            Data2Plot <- getLFCs(
               Data2PlotOnTop,
               ctrl_samples_idx,
               comparison_samples_idx
