@@ -1,6 +1,5 @@
 server <- function(input,output,session){
   source("R/SourceAll.R",local=T)
-  source("R/util.R")
 
   # fill session_if textOutput with current session$token
   output$session_id <- renderText({
