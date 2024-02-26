@@ -30,7 +30,7 @@ entitieSelection <- function(
         warning("LFC makes no sense just having a single sample per conidition, which is here the case!")
         filtered_data <- NULL
       } else{
-        LFC_output <- getLFC(filtered_data, ctrl_samples_idx, comparison_samples_idx)
+        LFC_output <- getLFCs(filtered_data, ctrl_samples_idx, comparison_samples_idx)
         filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$p_adj, decreasing = F)],, drop=F]
         orderMakesSense_flag <- T
       }
@@ -38,7 +38,7 @@ entitieSelection <- function(
     if(any(type=="LFC_onlySig")){
       ctrl_samples_idx<-which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_ctrl_idx)
       comparison_samples_idx<-which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_cmp_idx)
-      LFC_output <- getLFC(filtered_data, ctrl_samples_idx, comparison_samples_idx)
+      LFC_output <- getLFCs(filtered_data, ctrl_samples_idx, comparison_samples_idx)
       if(!(any(LFC_output$p_adj<psig_threhsold))){
         warning("No single entry left! Maybe adjust psig_threhsold_heatmap (but do not put it arbitraly high!)")
         filtered_data <- NULL

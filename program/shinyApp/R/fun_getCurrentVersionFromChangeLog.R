@@ -12,4 +12,3 @@ getCurrentVersion <- function(updateDESCRIPTION = T){
   # take the + next line to get version
   return(recentVersion)
 }
-

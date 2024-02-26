@@ -8,7 +8,6 @@ update_data <- function(session_id){
   return(data)
 }
 
-
 select_data <- function(data, selected_samples, sample_type){
   # select data for e.g. pca's or alike
   samples_selected <- c()
@@ -26,7 +25,6 @@ select_data <- function(data, selected_samples, sample_type){
   return(data)
 }
 
-
 update_params <- function(session_id){
   # update parameter if updates is larger than current_updates
   # could force to always update
@@ -34,7 +32,6 @@ update_params <- function(session_id){
   params <- par_tmp[[session_id]]
   return(params)
 }
-
 
 read_file <- function(filename, check.names=T){
   # reads in the file of either a .csv or a .xlsx filetype
@@ -73,4 +70,31 @@ getUserReactiveValues <- function(data = input){
     }
   }))
   return(tmp[to_include])
+}
+
+save_pheatmap <- function(x, filename,type = "pdf") {
+  # Saves a heatmap to a file in different formats
+  stopifnot(!missing(x))
+  stopifnot(!missing(filename))
+  if(type == "pdf"){
+    pdf(filename)
+    grid::grid.newpage()
+    grid::grid.draw(x$gtable)
+    dev.off()
+  } else if (type == "png"){
+    png(filename, width=800, height=400)
+    grid::grid.newpage()
+    grid::grid.draw(x$gtable)
+    dev.off()
+  } else if (type == "svg"){
+    svglite::svglite(filename)
+    grid::grid.newpage()
+    grid::grid.draw(x$gtable)
+    dev.off()
+  } else if(type == "tiff"){
+    tiff(filename)
+    grid::grid.newpage()
+    grid::grid.draw(x$gtable)
+    dev.off()
+  }
 }
