@@ -1,8 +1,8 @@
 data_selection_sidebar_panel <- sidebarPanel(
   id = "sidebar_data_selection",
-  div(class = "omicType",
+  div(class = "omic_type",
       selectInput(
-        inputId = "omicType", # RNAorLIPID
+        inputId = "omic_type", 
         label = "Omic Type that is uploaded",
         choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
         selected = ""
@@ -13,7 +13,6 @@ data_selection_sidebar_panel <- sidebarPanel(
     uiOutput(outputId = "AddGeneSymbols_ui"),
     uiOutput(outputId = "AddGeneSymbols_organism_ui")
   ),
-  #uiOutput("AddGeneSymbols_organism_ui"),
   actionButton(
     inputId = "refresh1",
     label = "Do"
@@ -29,7 +28,6 @@ data_selection_sidebar_panel <- sidebarPanel(
     uiOutput(outputId = "row_selection_ui"),
     uiOutput(outputId = "propensityChoiceUser_ui")
   ),
-  # Outlier Selection -> for fixed removal pre-processing needs to be redone!
   div(
     class = "SampleSelection",
     h4("Sample selection"),
@@ -62,17 +60,17 @@ data_selection_main_panel <- mainPanel(
         NULL
       ),
       hr(style = "border-top: 2px solid #90DBF4;"),
-      a(id = "toggleAdvanced",
+      a(
+        id = "toggleAdvanced",
         "Data Upload via file input",
         style = "background-color: #90DBF4; color: black; padding: 7px 10px; "
-        ) %>% helper(type = "markdown", content = "DataSelection_DataUploadFileInput"),
-        shinyjs::hidden(
-          div(
+      ) %>% helper(type = "markdown", content = "DataSelection_DataUploadFileInput"),
+      shinyjs::hidden(div(
         id = "advanced",
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-          uiOutput(outputId = "data_matrix1_ui"),  # %>% helper(type = "markdown", content = "DataSelection_Matrix"),
-          uiOutput(outputId = "data_sample_anno1_ui"),  # %>% helper(type = "markdown", content = "DataSelection_SampleAnno")
+          uiOutput(outputId = "data_matrix1_ui"),
+          uiOutput(outputId = "data_sample_anno1_ui"),
         ),
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
@@ -81,8 +79,7 @@ data_selection_main_panel <- mainPanel(
             outputId = "data_preDone_ui"
           ) %>% helper(type = "markdown", content = "DataSelection_SummarizedExp")
         )
-        )
-      ),
+      )),
       hr(style = "border-top: 2px solid #90DBF4;"),
       uiOutput(outputId = "metadataInput_ui") %>% helper(type = "markdown", content = "DataSelection_MetaData"),
       hr(style = "border-top: 2px solid #90DBF4;"),

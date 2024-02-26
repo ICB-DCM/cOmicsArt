@@ -269,7 +269,7 @@ pca_main_panel <- function(ns){
             selected = ".png"
           )
         )
-      )  # %>% helper(type = "markdown", content = "PCA_Tabpanels")
+      )
     )
   )
 }
@@ -279,11 +279,11 @@ pca_UI <- function(id){
   ns <- NS(id)
 
   tabPanel(
-    title = "PCA",  # can be renamed after UMAP is added
+    title = "PCA",
     id = "pca",
     fluid = T,
     h4("PCA"),
-    pca_sidebar <- pca_sidebar_panel(ns),
-    pca_main <- pca_main_panel(ns),
+    pca_sidebar_panel(ns),
+    pca_main_panel(ns),
   )
 }

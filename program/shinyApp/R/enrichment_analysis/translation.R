@@ -3,34 +3,19 @@ translate_genes_ea <- function(data, annotation_results, input){
     # copy rownames with corresponding annotation as columnname
     rowData(data)[[annotation_results$base_annotation]] <- rownames(rowData(data))  # can this be just data?
   }
-  # translate to entrez id
-  if(input$OrganismChoice == "hsa"){
+  # translate to entrez id, currently only Humand and Mouse supported
+  if(par_tmp[[session$token]]['organism'] == "Human genes (GRCh38.p14)"){
     orgDb <- org.Hs.eg.db::org.Hs.eg.db
   }else{
     orgDb <- org.Mm.eg.db::org.Mm.eg.db
   }
-  tryCatch(
-    {
-      rowData(data)[["ENTREZID"]] <- AnnotationDbi::mapIds(
-        orgDb,
-        keys = rowData(data)[[annotation_results$base_annotation]],
-        column = "ENTREZID",
-        keytype = annotation_results$base_annotation
-      )
-      return(data)
-    },
-    error = function(e) {
-      show_toast(
-        title = "You chose the wrong Organism. Please restart the app.",
-        type = "info",
-        position = "top",
-        timerProgressBar = TRUE,
-        width = "30%"
-      )
-      # let the program wait for 5 seconds
-      Sys.sleep(3)
-    }
+  rowData(data)[["ENTREZID"]] <- AnnotationDbi::mapIds(
+    orgDb,
+    keys = rowData(data)[[annotation_results$base_annotation]],
+    column = "ENTREZID",
+    keytype = annotation_results$base_annotation
   )
+  return(data)
 }
 
 # input$GeneSet2Enrich
@@ -41,8 +26,8 @@ translate_genes_oa <- function(
   geneSet2Enrich,
   data
 ){
-  # set OrgDb to organism
-  if(input$OrganismChoice == "hsa"){
+  # translate to entrez id, currently only Humand and Mouse supported
+  if(par_tmp[[session$token]]['organism'] == "Human genes (GRCh38.p14)"){
     orgDb <- org.Hs.eg.db::org.Hs.eg.db
   }else{
     orgDb <- org.Mm.eg.db::org.Mm.eg.db

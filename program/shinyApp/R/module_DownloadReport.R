@@ -11,7 +11,7 @@ DownloadReport_ui <- function(id){
 }
 
 # server ----
-DownloadReport_server<-function(id){
+DownloadReport_server<- function(id){
   moduleServer(
     id,
     function(input,output,session){
@@ -33,7 +33,7 @@ DownloadReport_server<-function(id){
             footer=tagList(
               modalButton(label = 'Return')
             )))
-        }else{
+        } else {
           warning("No Report File yet! Do something first")
           shinyalert(
             title = "Warning",
