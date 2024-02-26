@@ -89,7 +89,7 @@ sampleCorrelation_UI <- function(id){
     id = "sample_correlation",
     fluid = T,
     h4("Sample Correlation"),
-    pca_sidebar <- sampleCorrelation_sidebar_panel(ns),
-    pca_main <- sampleCorrelation_main_panel(ns),
+    sampleCorrelation_sidebar_panel(ns),
+    sampleCorrelation_main_panel(ns),
   )
 }
