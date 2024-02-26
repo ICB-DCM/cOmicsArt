@@ -25,7 +25,7 @@ sample_correlation_server <- function(id, data, params){
         )
       })
       
-      # DO sample Correaltion plot 
+      # Do sample correlation plot 
       toListen2CorrelationPlot <- reactive({list(
         input$Do_SampleCorrelation,
         input$SampleAnnotationChoice
