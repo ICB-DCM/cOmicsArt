@@ -7,7 +7,9 @@ error_modal <- function(e){
     HTML(paste0(
       "<font color='red'>Error: ",e$message,"</font><br><br>",
       "Please check your data set and annotation and try again.<br><br>",
-      "Otherwise, please contact the cOmicsArtist Lea and Paul via cOmicsArtist@outlook.de or open an issue on github describing your problem."
+      "Otherwise, please contact the cOmicsArtist Lea and Paul via cOmicsArtist@outlook.de",
+      "or open an issue on <a href='https://github.com/LeaSeep/OmicShiny'>github</a>",
+      "describing your problem."
     )),
     footer = modalButton("Close")
   ))
