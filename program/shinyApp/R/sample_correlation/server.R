@@ -54,28 +54,34 @@ sample_correlation_server <- function(id, data, params){
             ),
             "SampleCorrelation"
           )
-          if (check == "No Result yet"){
-            output$SampleCorr_Info <- renderText(
-              "Correlation Matrix successfully computed."
-            )
-            cormat <- cor(
-              x = as.matrix(assay(data$data)),
-              method = input$corrMethod
-            )
-          } else if (check == "Result exists"){
-            output$SampleCorr_Info <- renderText(
-              "Correlation Matrix was already computed, no need to click the Button again."
-            )
-            cormat <- res_tmp[[session$token]]$SampleCorrelation
-          } else if (check == "Overwrite"){
-            output$SampleCorr_Info <- renderText(
-              "Correlation Matrix result overwritten with different parameters."
-            )
-            cormat <- cor(
-              x = as.matrix(assay(data$data)),
-              method = input$corrMethod
-            )
-          }
+          # for safety measures, wrap in tryCatch
+          tryCatch({
+            if (check == "No Result yet"){
+              output$SampleCorr_Info <- renderText(
+                "Correlation Matrix successfully computed."
+              )
+              cormat <- cor(
+                x = as.matrix(assay(data$data)),
+                method = input$corrMethod
+              )
+            } else if (check == "Result exists"){
+              output$SampleCorr_Info <- renderText(
+                "Correlation Matrix was already computed, no need to click the Button again."
+              )
+              cormat <- res_tmp[[session$token]]$SampleCorrelation
+            } else if (check == "Overwrite"){
+              output$SampleCorr_Info <- renderText(
+                "Correlation Matrix result overwritten with different parameters."
+              )
+              cormat <- cor(
+                x = as.matrix(assay(data$data)),
+                method = input$corrMethod
+              )
+            }
+          }, error = function(e){
+            error_modal(e)
+            return(NULL)
+          })
 
           customTitleSampleCorrelation <- paste0(
             "Sample Correlation - ",

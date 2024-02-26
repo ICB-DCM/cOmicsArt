@@ -2,11 +2,6 @@ single_gene_visualisation_server <- function(id, data){
   moduleServer(
     id,
     function(input,output,session){
-      single_Gene_vis <- reactiveValues(
-        calculate = 0,
-        counter = 0
-      )
-      
       ns <- session$ns
       # Refresh UI /Data
       observeEvent(input$refreshUI,{
@@ -110,13 +105,11 @@ single_gene_visualisation_server <- function(id, data){
       observeEvent(toListen(),{
         req(input$singleGeneGo>0)
         print(input$Select_Gene)
-        if(single_Gene_vis$calculate == 1){
-          # update the data
-          data <- update_data(session$token)
-          # set the counter to 0 to prevent any further plotting
-          single_Gene_vis$calculate <- 0
-        }
-        GeneDataFlag <- F
+        # update the data
+        data <- update_data(session$token)
+
+        
+        GeneDataFlag = F
         # Select data for the gene based on gene Selection & group Selection
         if(input$type_of_data_gene == "preprocessed"){
           if(input$Select_Gene %in% rowData(data$data)[,input$Select_GeneAnno]){
@@ -267,7 +260,7 @@ single_gene_visualisation_server <- function(id, data){
           },
           contentType = "application/zip"
         )
-        
+
         output$SavePlot_singleGene <- downloadHandler(
           filename = function() {
             paste0(

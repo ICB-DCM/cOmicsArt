@@ -196,7 +196,7 @@ server <- function(input,output,session){
   observeEvent(input$omic_type,{
     output$AddGeneSymbols_ui <- NULL
     output$AddGeneSymbols_organism_ui <- NULL
-    if(input$omicType == "Transcriptomics"){
+    if(input$omic_type == "Transcriptomics"){
       output$AddGeneSymbols_ui <- renderUI({checkboxInput(
         inputId = "AddGeneSymbols",
         label = "Adding gene Annotation?",
@@ -318,7 +318,7 @@ server <- function(input,output,session){
   
 ## Do Upload ----
   observeEvent(input$refresh1,{
-    par_tmp[[session$token]]['omic_type'] <<- input$omicType
+    par_tmp[[session$token]]['omic_type'] <<- input$omic_type
     par_tmp[[session$token]]['organism'] <<- input$AddGeneSymbols_organism
     fun_LogIt(message = "## DataInput {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
@@ -367,11 +367,11 @@ server <- function(input,output,session){
       uploadedFile <- readRDS(
         file = input$data_preDone$datapath
       )
-      if(any(names(uploadedFile)%in% input$omicType)){
+      if(any(names(uploadedFile)%in% input$omic_type)){
         # This is a file precompiled before 14.March.2023
-        data_input <- uploadedFile[[input$omicType]]
+        data_input <- uploadedFile[[input$omic_type]]
       }else{
-        data_input[[paste0(input$omicType,"_SumExp")]] <- uploadedFile
+        data_input[[paste0(input$omic_type,"_SumExp")]] <- uploadedFile
       }
     } else if(isTruthy(input$metadataInput)){  # Metadata upload
       tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
@@ -379,7 +379,7 @@ server <- function(input,output,session){
         tryCatch(
         {
           data_input <- list(
-            type = as.character(input$omicType),
+            type = as.character(input$omic_type),
             Matrix = read_file(
               input$data_matrix1$datapath, check.names=T
               )[,rownames(tmp_sampleTable)],
@@ -401,7 +401,7 @@ server <- function(input,output,session){
       data_input <- test_data_upload()
     }else if(isTruthy(input$data_sample_anno1)){  # Try upload via file input
       data_input <- list(
-        type = as.character(input$omicType),
+        type = as.character(input$omic_type),
         Matrix = read_file(input$data_matrix1$datapath, check.names=T),
         sample_table = read_file(input$data_sample_anno1$datapath, check.names=T),
         annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
@@ -416,7 +416,7 @@ server <- function(input,output,session){
       #TODO change test data to also not rely on 'Transcriptomics'
       data_input <- readRDS(
         file = "www/Transcriptomics_only_precompiled-LS.RDS"
-      )[[input$omicType]]
+      )[[input$omic_type]]
 
       fun_LogIt(
         message = paste0("**DataInput** - Test Data set used")
@@ -429,7 +429,7 @@ server <- function(input,output,session){
     }
     ### Added here gene annotation if asked for 
     if(input$AddGeneSymbols & 
-       input$omicType == "Transcriptomics"){
+       input$omic_type == "Transcriptomics"){
       fun_LogIt(
         message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added"
         )
@@ -472,7 +472,7 @@ server <- function(input,output,session){
 
     if(!any(class(data_input) == "SummarizedExperiment") & !any(grepl('SumExp',names(data_input))) ){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
-      data_input[[paste0(input$omicType,"_SumExp")]]=
+      data_input[[paste0(input$omic_type,"_SumExp")]]=
         SummarizedExperiment(assays  = list(raw = data_input$Matrix),
                              rowData = data_input$annotation_rows[rownames(data_input$Matrix),,drop=F],
                              colData = data_input$sample_table
@@ -480,7 +480,7 @@ server <- function(input,output,session){
       #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
     }
     # TODO SumExp only needed hence more restructuring needed
-    res_tmp[[session$token]][['data_original']] <<- data_input[[paste0(input$omicType,"_SumExp")]]
+    res_tmp[[session$token]][['data_original']] <<- data_input[[paste0(input$omic_type,"_SumExp")]]
     # Make a copy, to leave original data untouched
     res_tmp[[session$token]][['data']] <<- res_tmp[[session$token]]$data_original
     # Count up updating
@@ -754,37 +754,6 @@ server <- function(input,output,session){
       NULL
     }
   })
-  observe({
-    if(input$DESeq_show_advanced){
-      output$DESeq_formula_advanced_ui <- renderUI({
-        req(data_input_shiny())
-        textInput(
-          inputId = "DESeq_formula_advanced",
-          label = "Insert your formula:",
-          value = "",
-          width = NULL,
-          placeholder = NULL
-        )
-      })
-    } else {
-      # hide the advanced UI
-      hide("DESeq_formula_advanced", anim = T)
-    }
-  })
-
-  observeEvent(input$NextPanel2,{
-    updateTabsetPanel(
-      session = session,
-      inputId = "tabsetPanel1",
-      selected = "PCA")
-  })
-  observeEvent(input$NextPanel3,{
-    updateTabsetPanel(
-      session = session,
-      inputId = "tabsetPanel1",
-      selected = "Heatmap"
-      )
-  })
 
 ## Do preprocessing ----  
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
@@ -990,20 +959,6 @@ server <- function(input,output,session){
 
     return("Pre-Processing successfully")
   })
-  
-  ## DO not why this was moved here ? 
-
-  # output$Statisitcs_Data <- renderText({
-  #   browser()
-  #   selectedData_processed()
-  # 
-  #   paste0("The data has the dimensions of: ",
-  #          paste0(dim(res_tmp$data),collapse = ", "),
-  #          "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
-  #          "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
-  #          "<br","See help for details",
-  #          "<br>",ifelse(any(as.data.frame(assay(res_tmp$data))<0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
-  #   })
 
   
 ## Log preprocessing ----

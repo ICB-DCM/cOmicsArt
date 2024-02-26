@@ -3,9 +3,7 @@ heatmap_server <- function(id, data, params, updates){
     id,
     function(input,output,session){
       # Heatmap ----
-      heatmap_reactives <- reactiveValues(
-        current_updates = 0,
-      )
+
       ## UI Section ----
       ns <- session$ns
       observe({
@@ -218,9 +216,8 @@ heatmap_server <- function(id, data, params, updates){
           input$row_label_options
         )
         req(selectedData_processed())
-        # update the data if needed
+        # update the data
         data <- update_data(session$token)
-        heatmap_reactives$current_updates <- updates()
         print("Heatmap on selected Data")
         # Value need to be setted in case there is nothing to plot to avoid crash
         scenario <- 0
@@ -295,18 +292,24 @@ heatmap_server <- function(id, data, params, updates){
           print("No entitie selection")
           data2HandOver <- as.data.frame(assay(data$data))
         }else{
-          data2HandOver <- entitieSelection(
-            data$data,
-            type = input$row_selection_options,
-            additionalInput_row_anno = additionalInput_row_anno,
-            additionalInput_row_anno_factor = additionalInput_row_anno_factor,
-            additionalInput_sample_annotation_types = additionalInput_sample_annotation_types,
-            additionalInput_ctrl_idx = additionalInput_ctrl_idx,
-            additionalInput_cmp_idx = additionalInput_cmp_idx,
-            psig_threhsold = psig_threhsold,
-            TopK2Show = TopK2Show
-          )
-          print(dim(data2HandOver))
+          # entitie selection is a custom function -> wrap it in a tryCatch
+          tryCatch({
+            data2HandOver <- entitieSelection(
+              data$data,
+              type = input$row_selection_options,
+              additionalInput_row_anno = additionalInput_row_anno,
+              additionalInput_row_anno_factor = additionalInput_row_anno_factor,
+              additionalInput_sample_annotation_types = additionalInput_sample_annotation_types,
+              additionalInput_ctrl_idx = additionalInput_ctrl_idx,
+              additionalInput_cmp_idx = additionalInput_cmp_idx,
+              psig_threhsold = psig_threhsold,
+              TopK2Show = TopK2Show
+            )
+            print(dim(data2HandOver))
+          }, error = function(e){
+            error_modal(e)
+            return(NULL)
+          })
         }
         
         doThis_flag <- T
@@ -370,13 +373,17 @@ heatmap_server <- function(id, data, params, updates){
               output$Options_selected_out_3 <- renderText("Choose another preprocessing, as there are negative values!")
 
             }else if(doThis_flag){
-              #Takes user-specified choices from additional LFC Inputs 
-              # put does not plot values but the LFC itself
-              Data2Plot <- getLFCs(
-                data = as.data.frame(data2HandOver),
-                ctrl_samples_idx = ctrl_samples_idx,
-                comparison_samples_idx = comparison_samples_idx
-              )
+              # getLFC is a custom function -> wrap it in a tryCatch
+              tryCatch({
+                  Data2Plot <- getLFC(
+                  data = as.data.frame(data2HandOver),
+                  ctrl_samples_idx = ctrl_samples_idx,
+                  comparison_samples_idx = comparison_samples_idx
+                  )
+              }, error = function(e){
+                error_modal(e)
+                return(NULL)
+              })
 
               ## do pheatmap
 
@@ -386,20 +393,25 @@ heatmap_server <- function(id, data, params, updates){
 
               scenario <- 10
               annotation_col <- as.data.frame(rowData(data2Plot)[rownames(Data2Plot),input$row_anno_options,drop=F])
-              heatmap_plot <- pheatmap(
-                t(Data2Plot[,"LFC",drop=F]),
-                main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
-                show_rownames = ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
-                show_colnames = TRUE,
-                cluster_cols = input$cluster_cols,
-                cluster_rows = FALSE,
-                scale=ifelse(input$rowWiseScaled,"row","none"),
-                annotation_col = annotation_col,
-               # annotation_colors = mycolors,
-                silent = F,
-              #  breaks = myBreaks,
-                color = myColor_fill
-              )
+
+              # for safety measures wrap in tryCatch
+              tryCatch({
+                heatmap_plot <- pheatmap(
+                  t(Data2Plot[,"LFC",drop=F]),
+                  main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
+                  show_rownames = ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
+                  show_colnames = TRUE,
+                  cluster_cols = input$cluster_cols,
+                  cluster_rows = FALSE,
+                  scale=ifelse(input$rowWiseScaled,"row","none"),
+                  annotation_col = annotation_col,
+                  silent = F,
+                  color = myColor_fill
+                )
+              }, error = function(e){
+                error_modal(e)
+                return(NULL)
+              })
             }
           }else if(doThis_flag){
             if(any(is.na(data2HandOver))){
@@ -426,20 +438,27 @@ heatmap_server <- function(id, data, params, updates){
             print(input$row_label_options)
             #row_label_options
             scenario <- 11
-            heatmap_plot <- pheatmap(
-              as.matrix(data2HandOver),
-              main = customTitleHeatmap,
-              show_rownames = ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
-              labels_row = rowData(data$data)[rownames(data2HandOver),input$row_label_options],
-              show_colnames = TRUE,
-              cluster_cols = input$cluster_cols,
-              cluster_rows = clusterRowspossible,
-              scale=ifelse(input$rowWiseScaled,"row","none"),
-              annotation_col = annotation_col,
-              annotation_row = annotation_row,
-              annotation_colors = mycolors,
-              silent = F
-            )
+
+            # for safety measures wrap in tryCatch
+            tryCatch({
+              heatmap_plot <- pheatmap(
+                as.matrix(data2HandOver),
+                main = customTitleHeatmap,
+                show_rownames = ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
+                labels_row = rowData(data$data)[rownames(data2HandOver),input$row_label_options],
+                show_colnames = TRUE,
+                cluster_cols = input$cluster_cols,
+                cluster_rows = clusterRowspossible,
+                scale=ifelse(input$rowWiseScaled,"row","none"),
+                annotation_col = annotation_col,
+                annotation_row = annotation_row,
+                annotation_colors = mycolors,
+                silent = F
+              )
+            }, error = function(e){
+              error_modal(e)
+              return(NULL)
+            })
           }
         } else {
           print("Plotting saved result")
@@ -449,6 +468,7 @@ heatmap_server <- function(id, data, params, updates){
             annotation_col <- rowData(data2Plot)[,input$row_anno_options,drop=F]
 
             scenario <- 10
+            # Plotting saved result -> no need to wrap in tryCatch
             heatmap_plot <- pheatmap(
                 t(res_tmp[[session$token]]$Heatmap[,"LFC",drop=F]),
                 main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
@@ -484,6 +504,7 @@ heatmap_server <- function(id, data, params, updates){
               annotation_row <- as.data.frame(annotation_row)
             }
             scenario <- 11
+            # Plotting saved result -> no need to wrap in tryCatch
             heatmap_plot <- pheatmap(
               as.matrix(res_tmp[[session$token]]$Heatmap),
               main = customTitleHeatmap,
