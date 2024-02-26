@@ -93,7 +93,7 @@ single_gene_visualisation_UI <- function(id){
     #########################################
     # Single Gene Visualisations
     #########################################
-    single_gene_visualisation_sidebar <- single_gene_visualisation_sidebar_ui(ns),
-    single_gene_visualisation_main <- single_gene_visualisation_main_ui(ns)
+    single_gene_visualisation_sidebar_ui(ns),
+    single_gene_visualisation_main_ui(ns)
   )
 }
