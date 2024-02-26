@@ -1,7 +1,7 @@
 # preprocessing procedures
 
 prefiltering <- function(data, omic_type){
-  # Filter out low abundant genes for Metabol- and Transcriptmics.
+  # Filter out low abundant entities for Metabol- and Transcriptomics.
   if(omic_type == "Transcriptomics"){
     print("Remove anything of rowCount <=10")
     return(data[which(rowSums(assay(data)) > 10),])
