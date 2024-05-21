@@ -1,6 +1,5 @@
 server <- function(input,output,session){
   source("R/SourceAll.R",local=T)
-  source("R/util.R")
 
   # fill session_if textOutput with current session$token
   output$session_id <- renderText({
@@ -704,28 +703,6 @@ server <- function(input,output,session){
       selected = "condition"
     )
   })
-  output$DESeq_show_advanced_ui <- renderUI({
-    req(data_input_shiny())
-    req(input$PreProcessing_Procedure == "vst_DESeq")
-    switchInput(
-      inputId = "DESeq_show_advanced",
-      label = "Advanced formula options for DESeq2",
-      inline = T,
-      size = "mini",
-      value = F
-    )
-  })
-  output$DESeq_formula_advanced_ui <- renderUI({
-    req(data_input_shiny())
-    req(input$PreProcessing_Procedure == "vst_DESeq" & input$DESeq_show_advanced)
-    textInput(
-      inputId = "DESeq_formula_advanced",
-      label = "Insert your formula:",
-      value = "",
-      width = NULL,
-      placeholder = NULL
-    )
-  })
 
 ## Do preprocessing ----  
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
@@ -738,7 +715,7 @@ server <- function(input,output,session){
 
     print("Remove all entities which are constant over all samples")
     res_tmp[[session$token]]$data <<- tmp_data_selected[rownames(tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]),]
-    
+
     print(dim(res_tmp[[session$token]]$data))
     # explicitly set rownames to avoid any errors.
     # new object Created for res_tmp[[session$token]]
@@ -776,7 +753,7 @@ server <- function(input,output,session){
       addWarning <- "<font color=\"#000000\"><b>Pre Filtering to remove low abundant entities done if Transcriptomics or Metabolomics was chosen</b></font><br>"
     }
     print(dim(res_tmp[[session$token]]$data))
-    
+
     if(any(is.na(assay(res_tmp[[session$token]]$data)))){
       print("This might be problem due to mismatched Annotation Data?!")
       nrow_before <- nrow(assay(res_tmp[[session$token]]$data))
@@ -856,17 +833,13 @@ server <- function(input,output,session){
   sample_correlation_server(
     id = "sample_correlation",
     data = res_tmp[[session$token]],
-    params = par_tmp[[session$token]],
-    reactive(updating$count)
-    #omic_type = reactive(input$omic_type), # par_tmp$omic_type
-    #row_select = reactive(input$row_selection) #par_tmp$row_selection ? # only for title?
+    params = par_tmp[[session$token]]
   )
   # significance analysis ----
   significance_analysis_server(
     id = 'SignificanceAnalysis',
     data = res_tmp[[session$token]],
-    params = par_tmp[[session$token]],
-    reactive(updating$count)
+    params = par_tmp[[session$token]]
   )
   # PCA ----
   pca_Server(
@@ -884,11 +857,11 @@ server <- function(input,output,session){
     )
   # Single Gene Visualisations ----
   single_gene_visualisation_server(
-      id = 'single_gene_visualisation',
-      data = res_tmp[[session$token]],
-      params = par_tmp[[session$token]],
-      reactive(updating$count)
-    )
+    id = 'single_gene_visualisation',
+    data = res_tmp[[session$token]]
+  )
+
+
   # Enrichment Analysis ----
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
