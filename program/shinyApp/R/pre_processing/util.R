@@ -1,7 +1,27 @@
 # preprocessing procedures
 
+preprocessing <- function(data, omic_type, procedure){
+  if(procedure == "filterOnly"){
+    return(prefiltering(data, omic_type))
+  }
+  if(procedure == "simpleCenterScaling"){
+    return(simple_center_scaling(data, omic_type))
+  }
+  if(procedure %in% c("Scaling_0_1", "pareto_scaling")){
+    return(scaling_normalisation(data, omic_type, procedure))
+  }
+  if(procedure %in% c("log10", "ln")){
+    return(ln_normalisation(data, omic_type, procedure))
+  }
+  if(procedure == "none"){
+    return(data)
+  }
+  # if nothing is chosen, raise an error
+  stop("No valid Preprocessing procedure chosen")
+}
+
 prefiltering <- function(data, omic_type){
-  # Filter out low abundant entities for Metabol- and Transcriptomics.
+  # Filter out low abundant genes for Metabol- and Transcriptmics.
   if(omic_type == "Transcriptomics"){
     print("Remove anything of rowCount <=10")
     return(data[which(rowSums(assay(data)) > 10),])
@@ -15,7 +35,6 @@ prefiltering <- function(data, omic_type){
 
 simple_center_scaling <- function(data, omic_type){
   # Center and scale the data
-  print("Do chosen Preprocessing: simpleCenterScaling")
   # prefilter the data
   data <- prefiltering(data, omic_type)
   # center and scale the data
@@ -31,7 +50,6 @@ simple_center_scaling <- function(data, omic_type){
 
 scaling_normalisation <- function(data, omic_type, scaling_procedure){
   # Center and scale the data
-  print(paste0("Do chosen Preprocessing: ", scaling_procedure))
   # prefilter the data
   data <- prefiltering(data, omic_type)
   # scaling functions
@@ -54,9 +72,9 @@ scaling_normalisation <- function(data, omic_type, scaling_procedure){
 
 ln_normalisation <- function(data, omic_type, logarithm_procedure){
   # Center and scale the data
-  print(paste0("Do chosen Preprocessing: ", logarithm_procedure))
   logarithm <- ifelse(logarithm_procedure == "log10", log10, log)
   # prefilter the data
+  browser()
   data <- prefiltering(data, omic_type)
   # log the data and always add 1 to avoid -Inf
   processedData <- as.data.frame(logarithm(as.data.frame(assay(data)) + 1))
@@ -69,11 +87,9 @@ deseq_processing <- function(
   data, omic_type, formula_main, formula_sub, session_token, advanced_formula = NULL
 ){
   # Center and scale the data
-  print("Do chosen Preprocessing: vst_DESeq")
   # prefilter the data
   data <- prefiltering(data, omic_type)
   # DESeq2
-  par_tmp[[session_token]]["DESeq_advanced"] <<- FALSE
   if(omic_type == "Transcriptomics"){
     design_formula <- paste("~", formula_main)
     # only do this locally
@@ -97,12 +113,6 @@ deseq_processing <- function(
     }
     else{
       par_tmp[[session_token]][["DESeq_factors"]] <<- c(formula_main)
-    }
-    # if advanced formula is used, overwrite the other formula
-    if(!(advanced_formula == "") & startsWith(advanced_formula, "~")){
-      print("Advanced formula used")
-      design_formula <- advanced_formula
-      par_tmp[[session_token]]["DESeq_advanced"] <<- TRUE
     }
     print(design_formula)
     par_tmp[[session_token]]["DESeq_formula"] <<- design_formula
