@@ -704,9 +704,12 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             error=function(e){
               showModal(modalDialog(
                 title = HTML("<font color='red'>An Error occured</font>"),
-                footer = actionButton(
-                  inputId = ns("translation_again"),
-                  label = "Choose another annotation type"
+                footer = tagList(
+                  actionButton(
+                    inputId = ns("translation_again"),
+                    label = "Choose another annotation type"
+                  ),
+                  modalButton("Close")
                 ),
                 HTML(paste0(
                   "<font color='red'>Error: ",e$message,"</font><br><br>",

@@ -74,6 +74,7 @@ ln_normalisation <- function(data, omic_type, logarithm_procedure){
   # Center and scale the data
   logarithm <- ifelse(logarithm_procedure == "log10", log10, log)
   # prefilter the data
+  browser()
   data <- prefiltering(data, omic_type)
   # log the data and always add 1 to avoid -Inf
   processedData <- as.data.frame(logarithm(as.data.frame(assay(data)) + 1))
@@ -89,7 +90,6 @@ deseq_processing <- function(
   # prefilter the data
   data <- prefiltering(data, omic_type)
   # DESeq2
-  par_tmp[[session_token]]["DESeq_advanced"] <<- FALSE
   if(omic_type == "Transcriptomics"){
     design_formula <- paste("~", formula_main)
     # only do this locally
@@ -113,12 +113,6 @@ deseq_processing <- function(
     }
     else{
       par_tmp[[session_token]][["DESeq_factors"]] <<- c(formula_main)
-    }
-    # if advanced formula is used, overwrite the other formula
-    if(!(advanced_formula == "") & startsWith(advanced_formula, "~")){
-      print("Advanced formula used")
-      design_formula <- advanced_formula
-      par_tmp[[session_token]]["DESeq_advanced"] <<- TRUE
     }
     print(design_formula)
     par_tmp[[session_token]]["DESeq_formula"] <<- design_formula
