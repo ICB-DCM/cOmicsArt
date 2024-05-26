@@ -74,7 +74,6 @@ ln_normalisation <- function(data, omic_type, logarithm_procedure){
   # Center and scale the data
   logarithm <- ifelse(logarithm_procedure == "log10", log10, log)
   # prefilter the data
-  browser()
   data <- prefiltering(data, omic_type)
   # log the data and always add 1 to avoid -Inf
   processedData <- as.data.frame(logarithm(as.data.frame(assay(data)) + 1))

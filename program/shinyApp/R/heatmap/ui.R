@@ -83,8 +83,8 @@ heatmap_main <- function(ns){
         inputId = ns("only2Report_Heatmap"),
         label = "Send only to Report",
         class = "btn-info"
-      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
-    ),
+      )
+    ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
       NULL,
