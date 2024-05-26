@@ -44,8 +44,14 @@ significance_analysis_main_ui <- function(ns){
         uiOutput(outputId = ns("chooseGenesToLookAt_ui")),
         hr(style = "border-top: 1px solid #000000;"),
         # Choose intersections to highlight
-        h5(" ") %>% helper(type = "markdown", content = "SigAna_Intersections"),
-        uiOutput(outputId = ns("chooseIntersections_ui")),
+        splitLayout(
+          cellWidths = c("33%", "64%"),
+          cellArgs = list(style = "padding: 5px"),
+        uiOutput(
+          outputId = ns("chooseIntersections_ui")
+        ) %>% helper(type = "markdown", content = "SigAna_Intersections"),
+          NULL
+        ),
         # Download highlighted intersections as table
         downloadButton(
           outputId = ns("downloadIntersections"),
