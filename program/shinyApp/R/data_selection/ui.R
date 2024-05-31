@@ -46,7 +46,7 @@ data_selection_main_panel <- mainPanel(
       br(),
       hr(style = "border-top: 2px solid #90DBF4;"),
       splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("85%", "10%", "5%"),
+        style = "border: 1px solid silver:", cellWidths = c("91%", "9%"),
         actionButton(
           inputId = "EasyTestForUser",
           label = "Start straight away with a test-dataset!",
@@ -56,9 +56,8 @@ data_selection_main_panel <- mainPanel(
         actionButton(
           inputId = "Reset",
           label = "Reset"
-        ) %>% helper(type = "markdown", content = "DataSelection_Reset"),
-        NULL
-      ),
+        )
+      ) %>% helper(type = "markdown", content = "DataSelection_Reset"),
       hr(style = "border-top: 2px solid #90DBF4;"),
       a(
         id = "toggleAdvanced",
@@ -69,11 +68,13 @@ data_selection_main_panel <- mainPanel(
         id = "advanced",
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+          cellArgs = list(style = "padding: 5px"),
           uiOutput(outputId = "data_matrix1_ui"),
           uiOutput(outputId = "data_sample_anno1_ui"),
         ),
         splitLayout(
           style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+          cellArgs = list(style = "padding: 5px"),
           uiOutput(outputId = "data_row_anno1_ui") %>% helper(type = "markdown", content = "DataSelection_RowAnno"),
           uiOutput(
             outputId = "data_preDone_ui"

@@ -34,6 +34,7 @@ significance_analysis_main_ui <- function(ns){
         # UI to select comparisons to visualize
         splitLayout(  # Only used for questionmark
           cellWidths = c("26%", "74%"),
+          cellArgs = list(style = "padding: 5px"),
           h4("Visualization Choices") %>% helper(type = "markdown", content = "SigAna_Vis"),
           NULL
         ),
@@ -43,8 +44,14 @@ significance_analysis_main_ui <- function(ns){
         uiOutput(outputId = ns("chooseGenesToLookAt_ui")),
         hr(style = "border-top: 1px solid #000000;"),
         # Choose intersections to highlight
-        h5(" ") %>% helper(type = "markdown", content = "SigAna_Intersections"),
-        uiOutput(outputId = ns("chooseIntersections_ui")),
+        splitLayout(
+          cellWidths = c("33%", "67%"),
+          cellArgs = list(style = "padding: 5px"),
+        uiOutput(
+          outputId = ns("chooseIntersections_ui")
+        ) %>% helper(type = "markdown", content = "SigAna_Intersections"),
+          NULL
+        ),
         # Download highlighted intersections as table
         downloadButton(
           outputId = ns("downloadIntersections"),
@@ -60,8 +67,8 @@ significance_analysis_main_ui <- function(ns){
             inputId = ns("only2Report_Sig"),
             label = "Send only to Report",
             class = "btn-info"
-          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads")
-        ),
+          )
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
