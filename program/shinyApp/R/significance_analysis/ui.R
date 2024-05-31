@@ -45,7 +45,7 @@ significance_analysis_main_ui <- function(ns){
         hr(style = "border-top: 1px solid #000000;"),
         # Choose intersections to highlight
         splitLayout(
-          cellWidths = c("33%", "64%"),
+          cellWidths = c("33%", "67%"),
           cellArgs = list(style = "padding: 5px"),
         uiOutput(
           outputId = ns("chooseIntersections_ui")
