@@ -133,3 +133,34 @@ getCurrentVersion <- function(updateDESCRIPTION = T){
   # take the + next line to get version
   return(recentVersion)
 }
+
+
+detect_annotation <- function(data) {
+  # check if annotation is in row-annotation
+  if (any(ENTREZ_OPT %in% colnames(rowData(data)))) {
+    anno_col <- ENTREZ_OPT[ENTREZ_OPT %in% colnames(rowData(data))][1]
+    return(list(
+      AnnoType = "entrezgene_id",
+      AnnoCol = anno_col
+    ))
+  }
+  if (any(ENSEMBL_OPT %in% colnames(rowData(data)))) {
+    anno_col <- ENSEMBL_OPT[ENSEMBL_OPT %in% colnames(rowData(data))][1]
+    return(list(
+      AnnoType = "ensembl_gene_id",
+      AnnoCol = anno_col
+    ))
+  }
+  if (any(SYMBOL_OPT %in% colnames(rowData(data)))) {
+    anno_col <- SYMBOL_OPT[SYMBOL_OPT %in% colnames(rowData(data))][1]
+    return(list(
+      AnnoType = "Symbol",
+      AnnoCol = anno_col
+    ))
+  }
+
+  return(list(
+    AnnoType = NULL,
+    AnnoCol = NULL
+  ))
+}

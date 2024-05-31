@@ -99,3 +99,14 @@ ENRICHMENT_RESULT_RESET <<- list(
   "EnrichmentRes_C8" = NULL,
   "geneSetChoice_tranlsated" = NULL
 )
+
+# Allowed Annotations
+ENSEMBL_OPT <<- c(
+  "ensembl", "Ensembl", "ensembl_id", "Ensembl_ID", "Ensemble.ID", "ENSEMBL", "ENS"
+)
+ENTREZ_OPT <<- c(
+  "entrez", "Entrez", "entrez_id", "Entrez_ID", "Entrez_Gene_ID", "ENTREZID", "Entrez.ID"
+)
+SYMBOL_OPT <<- c(
+  "symbol", "Symbol", "gene_symbol", "Gene_Symbol", "Nomenclature", "SYMBOL", "Gene.Symbol"
+)

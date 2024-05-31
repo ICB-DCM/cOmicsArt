@@ -197,11 +197,12 @@ server <- function(input,output,session){
     output$AddGeneSymbols_ui <- NULL
     output$AddGeneSymbols_organism_ui <- NULL
     if(input$omic_type == "Transcriptomics"){
-      output$AddGeneSymbols_ui <- renderUI({checkboxInput(
-        inputId = "AddGeneSymbols",
-        label = "Adding gene Annotation?",
-        value = F
-      )})
+      output$AddGeneSymbols_ui <- renderUI({
+        actionButton(
+          inputId = "AddGeneSymbols",
+          label = "Add Gene Annotation"
+        )
+      })
       output$AddGeneSymbols_organism_ui <- renderUI({selectInput(
         inputId = "AddGeneSymbols_organism",
         label = "Which Organisms?",
@@ -209,6 +210,98 @@ server <- function(input,output,session){
         selected = "Mouse genes (GRCm39)"
       )})
     }
+  })
+
+  observeEvent(input$AddGeneSymbols, {
+    shinyjs::click("refresh1")
+    req(data_input_shiny())
+    req(res_tmp[[session$token]]$data_original)
+    annotation_result <- detect_annotation(res_tmp[[session$token]]$data_original)
+    annotation_name <- annotation_result$AnnoType
+    column_name <- annotation_result$AnnoCol
+
+    showModal(modalDialog(
+      title = "Gene Annotation",
+      HTML(paste0(
+        "We tried to find an appropriate annotation and ",
+        if (is.null(annotation_name)) {
+          "found nothing."
+        } else {
+          paste0("might have found <strong>", annotation_name, "</strong> in <strong>", column_name, "</strong>. Is that correct?")
+        }
+      )),
+      fluidRow(
+        column(6, selectInput(
+          inputId = "annotation_name",
+          label = "Gene Annotation",
+          choices = c("entrezgene_id", "ensembl_gene_id", "Symbol"),
+          selected = annotation_name
+        )),
+        column(6, selectInput(
+          inputId = "annotation_colname",
+          label = "Column Names",
+          choices = colnames(rowData(res_tmp[[session$token]]$data_original)),
+          selected = column_name
+        ))
+      ),
+      footer = tagList(
+        modalButton("Close"),
+        actionButton(
+          inputId = "do_annotation",
+          label = "Do annotation"
+        )
+      )
+    ))
+  })
+
+  observeEvent(input$do_annotation, {
+    # Added gene annotation if asked for
+    if(input$AddGeneSymbols & input$omic_type == "Transcriptomics") {
+      fun_LogIt(
+        message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added"
+      )
+      fun_LogIt(
+        message = paste0("**DataInput** - chosen Organism: ", input$AddGeneSymbols_organism)
+      )
+
+      output$debug <- renderText({"<font color=\"#00851d\"><b>Added gene annotation</b></font>"})
+      datasets_avail <- listDatasets(useEnsembl(biomart = "genes"))
+      ensembl <- useEnsembl(
+        biomart = "ensembl",
+        dataset = datasets_avail[datasets_avail$description == input$AddGeneSymbols_organism, "dataset"]
+      )
+      out <- getBM(
+        attributes = c("ensembl_gene_id", "gene_biotype", "external_gene_name", "entrezgene_id"),
+        filter = input$annotation_name,
+        values = rowData(res_tmp[[session$token]]$data_original)[,input$annotation_colname],
+        mart = ensembl
+      )
+      # Align the rows based on matching annotation
+      match_indices <- match(
+        rowData(res_tmp[[session$token]]$data_original)[,input$annotation_colname], out[,input$annotation_name]
+      )
+      matched_out <- out[match_indices, ]
+
+      if (all(is.na(matched_out$ensembl_gene_id))) {
+        # Most likely wrong organism used
+        output$debug <- renderText({"<font color=\"#ab020a\"><b>You have most likely chosen the wrong organism! No annotation was added</b></font>"})
+      } else {
+        # Initialize new columns in the rowData with NA
+        rowData(res_tmp[[session$token]]$data_original)$ensembl_gene_id <<- NA
+        rowData(res_tmp[[session$token]]$data_original)$gene_biotype <<- NA
+        rowData(res_tmp[[session$token]]$data_original)$external_gene_name <<- NA
+        rowData(res_tmp[[session$token]]$data_original)$entrezgene_id <<- NA
+
+        # Update rowData with matched information
+        matched_rows <- !is.na(match_indices)
+        rowData(res_tmp[[session$token]]$data_original)$ensembl_gene_id[matched_rows] <<- matched_out$ensembl_gene_id[matched_rows]
+        rowData(res_tmp[[session$token]]$data_original)$gene_biotype[matched_rows] <<- matched_out$gene_biotype[matched_rows]
+        rowData(res_tmp[[session$token]]$data_original)$external_gene_name[matched_rows] <<- matched_out$external_gene_name[matched_rows]
+        rowData(res_tmp[[session$token]]$data_original)$entrezgene_id[matched_rows] <<- matched_out$entrezgene_id[matched_rows]
+      }
+    }
+
+    removeModal()
   })
   
 ## Upload visual inspection ----
@@ -424,36 +517,6 @@ server <- function(input,output,session){
         "<font color=\"#FF0000\"><b>Upload failed, please check your input.</b></font>"
       })
       return(NULL)
-    }
-    ### Added here gene annotation if asked for 
-    if(input$AddGeneSymbols & input$omic_type == "Transcriptomics"){
-      fun_LogIt(
-        message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added"
-      )
-      fun_LogIt(
-        message = paste0("**DataInput** - chosen Organism: ",input$AddGeneSymbols_organism)
-      )
-
-      output$debug <- renderText({"<font color=\"#00851d\"><b>Added gene annotation</b></font>"})
-      datasets_avail <- listDatasets(useEnsembl(biomart = "genes"))
-      ensembl <- useEnsembl(
-        biomart ="ensembl",
-        dataset = datasets_avail[datasets_avail$description==input$AddGeneSymbols_organism,"dataset"]
-      )
-      out <- getBM(
-        attributes = c("ensembl_gene_id", "gene_biotype","external_gene_name"),
-        values = rownames(data_input$annotation_rows),
-        mart = ensembl
-      )
-      # Make user aware if potentially wrong organism used
-      out <- out[base::match(rownames(data_input$annotation_rows), out$ensembl_gene_id),]
-      if(all(is.na(out$ensembl_gene_id))){
-        # Most likely wrong organism used
-        output$debug <- renderText({"<font color=\"#ab020a\"><b>You have most likely chosen the wrong organism! No annotation was added</b></font>"})
-      } else {
-        data_input$annotation_rows$gene_type <- out$gene_biotype
-        data_input$annotation_rows$GeneName <- out$external_gene_name
-      }
     }
 
     if(!any(class(data_input) == "SummarizedExperiment") & !any(grepl('SumExp',names(data_input))) ){
@@ -734,7 +797,7 @@ server <- function(input,output,session){
             advanced_formula = ifelse(input$DESeq_show_advanced, input$DESeq_formula_advanced, "")
           )
       } else {
-        res_tmp[[session$token]]$data <- preprocessing(
+        res_tmp[[session$token]]$data <<- preprocessing(
           data = tmp_data_selected,
           omic_type = par_tmp[[session$token]]$omic_type,
           procedure = input$PreProcessing_Procedure

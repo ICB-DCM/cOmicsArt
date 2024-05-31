@@ -10,8 +10,8 @@ data_selection_sidebar_panel <- sidebarPanel(
   ),
   div(
     class = "AddGeneSymbols_ui",
-    uiOutput(outputId = "AddGeneSymbols_ui"),
-    uiOutput(outputId = "AddGeneSymbols_organism_ui")
+    uiOutput(outputId = "AddGeneSymbols_organism_ui"),
+    uiOutput(outputId = "AddGeneSymbols_ui")
   ),
   actionButton(
     inputId = "refresh1",
