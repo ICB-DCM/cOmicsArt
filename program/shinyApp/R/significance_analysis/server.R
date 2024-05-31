@@ -212,17 +212,17 @@ significance_analysis_server <- function(id, data, params){
             contrasts[[i]] <- unlist(strsplit(x = input$comparisons[i],split = ":"))
           }
           # get the results for each contrast and put it all in a big results object
-          sig_ana_reactive$sig_results <<- list()
+          sig_ana_reactive$sig_results <- list()
           for (i in seq_along(contrasts)) {
             if(identical(
               list(test_method = "Wald", test_correction = PADJUST_METHOD[[input$test_correction]]),
               par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
             )){
               print("Results exists, skipping calculations.")
-              sig_ana_reactive$sig_results[[input$comparisons[i]]] <<- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
+              sig_ana_reactive$sig_results[[input$comparisons[i]]] <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
               next
             }
-            sig_ana_reactive$sig_results[[input$comparisons[i]]] <<- DESeq2::results(
+            sig_ana_reactive$sig_results[[input$comparisons[i]]] <- DESeq2::results(
               dds,
               contrast = c(
                 input$sample_annotation_types_cmp,
@@ -269,7 +269,7 @@ significance_analysis_server <- function(id, data, params){
               correction = PADJUST_METHOD[[input$test_correction]],
               contrast_level = input$sample_annotation_types_cmp
             )
-            sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
+            sig_ana_reactive$sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
           }, error = function(e){
             error_modal(e)
             return(NULL)
