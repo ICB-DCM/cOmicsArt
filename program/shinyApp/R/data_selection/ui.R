@@ -15,7 +15,7 @@ data_selection_sidebar_panel <- sidebarPanel(
   ),
   actionButton(
     inputId = "refresh1",
-    label = "Do"
+    label = "Upload new data",
   ),
   div(
     class = "LineToDistinguish",

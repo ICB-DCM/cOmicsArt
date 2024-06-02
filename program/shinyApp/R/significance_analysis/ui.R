@@ -11,7 +11,7 @@ significance_analysis_sidebar_ui<- function(ns){
     # Button to start analysis
     actionButton(
       inputId = ns("significanceGo"),
-      label = "Get significance analysis"
+      label = "Get Significance Analysis"
     ),
     hidden(actionButton(
       inputId = ns("refreshUI"),

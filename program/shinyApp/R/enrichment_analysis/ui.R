@@ -89,7 +89,7 @@ ea_sidebar <- function(ns){
     uiOutput(outputId = ns("UniverseOfGene_ui")),
     actionButton(
       inputId = ns("enrichmentGO"),
-      label = "Do enrichment analysis"
+      label = "Get Enrichment Analysis"
     ),
     uiOutput(outputId = ns("KeggPathwayID_ui")),
     # Button to refresh the UI
