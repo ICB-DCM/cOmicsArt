@@ -111,69 +111,9 @@ server <- function(input,output,session){
   print("Data Upload")
 
 ## Set reactiveVals ----
-  FLAG_TEST_DATA_SELECTED <- reactiveVal(FALSE)
+  uploaded_from <- reactiveVal(NULL)
+  omic_type <- reactiveVal(NULL)
 
-## Ui Section ----
-  observeEvent(input$Reset,{
-    FLAG_TEST_DATA_SELECTED(FALSE)
-    output$debug <- renderText("<font color=\"#00851d\"><b>Reset successful</b></font>")
-    shinyjs::reset(id="data_matrix1")
-    shinyjs::reset(id="data_sample_anno1")
-    shinyjs::reset(id="data_row_anno1")
-    shinyjs::reset(id="data_preDone")
-    shinyjs::reset(id="metadataInput")
-    # set input values to actual zero
-    session$sendCustomMessage(type = "resetValue", message = "data_matrix1")
-    session$sendCustomMessage(type = "resetValue", message = "data_sample_anno1")
-    session$sendCustomMessage(type = "resetValue", message = "data_row_anno1")
-    session$sendCustomMessage(type = "resetValue", message = "data_preDone")
-    session$sendCustomMessage(type = "resetValue", message = "metadataInput")
-  })
-  
-  observeEvent(input$EasyTestForUser,{
-    # reset all data inputs except FLAG_TEST_DATA_SELECTED
-    # MAYBE TODO: would be nice if we could just click reset here. Somehow not working.
-    shinyjs::reset(id="data_matrix1")
-    shinyjs::reset(id="data_sample_anno1")
-    shinyjs::reset(id="data_row_anno1")
-    shinyjs::reset(id="data_preDone")
-    shinyjs::reset(id="metadataInput")
-    # set input values to actual zero
-    session$sendCustomMessage(type = "resetValue", message = "data_matrix1")
-    session$sendCustomMessage(type = "resetValue", message = "data_sample_anno1")
-    session$sendCustomMessage(type = "resetValue", message = "data_row_anno1")
-    session$sendCustomMessage(type = "resetValue", message = "data_preDone")
-    session$sendCustomMessage(type = "resetValue", message = "metadataInput")
-    FLAG_TEST_DATA_SELECTED(TRUE)
-    shinyjs::click("refresh1")
-  })
-
-  shinyjs::onclick("toggleAdvanced", shinyjs::toggle(id = "advanced", anim = TRUE))
-  
-  output$data_matrix1_ui <- renderUI({shiny::fileInput(
-    inputId = "data_matrix1",
-    label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a></small>'),
-    accept = c(".csv", ".xlsx"),
-    width = "80%"
-  ) })
-  output$data_sample_anno1_ui <- renderUI({shiny::fileInput(
-    inputId = "data_sample_anno1",
-    label = HTML('Upload sample annotation <br/><small>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv">Download example data</a></small>'),
-    accept = c(".csv", ".xlsx"),
-    width = "80%"
-  )})
-  output$data_row_anno1_ui <- renderUI({shiny::fileInput(
-    inputId = "data_row_anno1",
-    label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a></small>'),
-    accept = c(".csv", ".xlsx"),
-    width = "80%"
-  )})
-  output$data_preDone_ui <- renderUI({shiny::fileInput(
-    inputId = "data_preDone",
-    label = HTML('Load precompiled data <br/><small>(saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data</a></small>'),
-    accept = ".RDS",
-    width = "80%"
-  )})
   output$SaveInputAsList <- downloadHandler(
    filename = function() {
      paste0(input$omic_type, "_only_precompiled", " ", Sys.time(), ".RDS") },
@@ -185,18 +125,11 @@ server <- function(input,output,session){
       )
     }
   )
-  output$metadataInput_ui <- renderUI({shiny::fileInput(
-    inputId = "metadataInput",
-    label = HTML("Upload your Meta Data Sheet <small>(currently replaces sample annotation)</small>"),
-    accept = c(".xlsx"),
-    buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),
-    width = "100%"
-  )})
   
-  observeEvent(input$omic_type,{
+  observeEvent(omic_type(),{
     output$AddGeneSymbols_ui <- NULL
     output$AddGeneSymbols_organism_ui <- NULL
-    if(input$omic_type == "Transcriptomics"){
+    if(omic_type() == "Transcriptomics"){
       output$AddGeneSymbols_ui <- renderUI({
         actionButton(
           inputId = "AddGeneSymbols",
@@ -213,7 +146,6 @@ server <- function(input,output,session){
   })
 
   observeEvent(input$AddGeneSymbols, {
-    shinyjs::click("refresh1")
     req(data_input_shiny())
     req(res_tmp[[session$token]]$data_original)
     annotation_result <- detect_annotation(res_tmp[[session$token]]$data_original)
@@ -256,7 +188,7 @@ server <- function(input,output,session){
 
   observeEvent(input$do_annotation, {
     # Added gene annotation if asked for
-    if(input$AddGeneSymbols & input$omic_type == "Transcriptomics") {
+    if(input$AddGeneSymbols & input[[paste0("omic_type_", uploaded_from())]] == "Transcriptomics") {
       fun_LogIt(
         message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added"
       )
@@ -305,6 +237,37 @@ server <- function(input,output,session){
   })
   
 ## Upload visual inspection ----
+  observeEvent(input$inspect_data, {
+    showModal(modalDialog(
+      title = "Upload Visual Inspection",
+      helpText("If you have uploaded your data, you might want to visually check the tables to confirm the correct data format. If you notice irregualarities you will need to correct the input data - this cannot be done in ShinyOmics, See the help on how your data is expected."),
+      br(),
+      actionButton(
+        inputId = "DoVisualDataInspection",
+        label = "Upload data for visual inspection"
+      ) %>% helper(type = "markdown", content = "DataSelection_UploadInspection"),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        DT::dataTableOutput("DataMatrix_VI"),
+        htmlOutput(outputId = "DataMatrix_VI_Info", container = pre)
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        DT::dataTableOutput("SampleMatrix_VI"),
+        htmlOutput(outputId = "SampleMatrix_VI_Info", container = pre)
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        DT::dataTableOutput("EntitieMatrix_VI"),
+        htmlOutput(outputId = "EntitieMatrix_VI_Info", container = pre)
+      ),
+      htmlOutput(outputId = "OverallChecks", container = pre),
+      easyClose = TRUE,
+      footer = modalButton("Close"),
+      size = "l", # large modal
+      class = "custom-modal" # custom class for this modal
+    ))
+  })
   
   observeEvent(input$DoVisualDataInspection,{
     if(isTruthy(input$data_preDone)){
@@ -408,29 +371,62 @@ server <- function(input,output,session){
       })
     }
   })
+
+  observeEvent(input$refresh_file_input, {
+    uploaded_from("file_input")
+    shinyjs::click("refresh1")
+  })
+
+  observeEvent(input$refresh_precompiled, {
+    uploaded_from("precompiled")
+    shinyjs::click("refresh1")
+  })
+
+  observeEvent(input$refresh_metadata, {
+    uploaded_from("metadata")
+    shinyjs::click("refresh1")
+  })
+
+  observeEvent(input$EasyTestForUser,{
+    uploaded_from("testdata")
+    shinyjs::click("refresh1")
+  })
   
 ## Do Upload ----
   observeEvent(input$refresh1,{
-    par_tmp[[session$token]]['omic_type'] <<- input$omic_type
+    par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
     par_tmp[[session$token]]['organism'] <<- input$AddGeneSymbols_organism
+    omic_type(input[[paste0("omic_type_", uploaded_from())]])
     fun_LogIt(message = "## DataInput {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
     fun_LogIt(
       message = paste0("**DataInput** - Uploaded Omic Type: ", par_tmp[[session$token]]['omic_type'])
     )
-    if(!(isTruthy(input$data_preDone) |
-         FLAG_TEST_DATA_SELECTED() |
-         (isTruthy(input$data_matrix1) & 
-          isTruthy(input$data_sample_anno1) & 
-          isTruthy(input$data_row_anno1))
+    if(!(
+      # Is Precompiled data used?
+      (isTruthy(input$data_preDone) & uploaded_from() == "precompiled") |
+      # Is File Input used?
+      (isTruthy(input$data_matrix1) &
+        isTruthy(input$data_sample_anno1) &
+        isTruthy(input$data_row_anno1) &
+        uploaded_from() == "file_input"
+      ) |
+      # Is Metadata used?
+      (isTruthy(input$data_matrix_metadata) &
+        isTruthy(input$metadataInput) &
+        isTruthy(input$data_row_anno_metadata) &
+        uploaded_from() == "file_input"
+      ) |
+      # Is Test Data used?
+      uploaded_from() == "testdata"
     )){
       output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
-    } else if (FLAG_TEST_DATA_SELECTED() & !(isTruthy(input$data_preDone))){
+    } else if (uploaded_from() == "testdata"){
       output$debug <- renderText({"The Test Data Set was used"})
     } else {
       show_toast(
-        title = paste0(par_tmp[[session$token]]['omic_type'],"Data Upload"),
-        text = paste0(par_tmp[[session$token]]['omic_type'],"-data upload was successful"),
+        title = paste(par_tmp[[session$token]]['omic_type'],"Data Upload"),
+        text = paste(par_tmp[[session$token]]['omic_type'],"-data upload was successful"),
         position = "top",
         timer = 1500,
         timerProgressBar = T
@@ -460,20 +456,24 @@ server <- function(input,output,session){
   data_input_shiny <- eventReactive(input$refresh1,{
     # initialize empty data_input object
     data_input <- list()
-    if(isTruthy(input$data_preDone)){  # precompiled data upload
-      uploadedFile <- readRDS(file = input$data_preDone$datapath)
-      if(any(names(uploadedFile) %in% input$omic_type)){
-        # This is a file precompiled before 14.March.2023
-        data_input <- uploadedFile[[input$omic_type]]
-      } else {
-        data_input[[paste0(input$omic_type,"_SumExp")]] <- uploadedFile
+    # upload depending on where the button was clicked
+    if(uploaded_from()=="file_input"){
+      data_input <- list(
+        Matrix = read_file(input$data_matrix1$datapath, check.names=T),
+        sample_table = read_file(input$data_sample_anno1$datapath, check.names=T),
+        annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
+      )
+      # check if only 1 col in anno row,
+      # add dummy col to ensure R does not turn it into a vector
+      if(ncol(data_input$annotation_rows) < 2){
+        data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
       }
-    } else if(isTruthy(input$metadataInput)){  # Metadata upload
+    } else if(uploaded_from()=="metadata"){
       tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
       test_data_upload <- function(){
         tryCatch({
           data_input <- list(
-            type = as.character(input$omic_type),
+            type = as.character(input[[paste0("omic_type_", uploaded_from())]]),
             Matrix = read_file(
               input$data_matrix1$datapath, check.names=T
               )[,rownames(tmp_sampleTable)],
@@ -492,27 +492,22 @@ server <- function(input,output,session){
         })
       }
       data_input <- test_data_upload()
-    } else if(isTruthy(input$data_sample_anno1)){  # Try upload via file input
-      data_input <- list(
-        type = as.character(input$omic_type),
-        Matrix = read_file(input$data_matrix1$datapath, check.names=T),
-        sample_table = read_file(input$data_sample_anno1$datapath, check.names=T),
-        annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
-      )
-      # check if only 1 col in anno row,
-      # add dummy col to ensure R does not turn it into a vector
-      if(ncol(data_input$annotation_rows) < 2){
-        data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
+    } else if(uploaded_from()=="precompiled"){
+      uploadedFile <- readRDS(file = input$data_preDone$datapath)
+      if(any(names(uploadedFile) %in% input[[paste0("omic_type_", uploaded_from())]])){
+        # This is a file precompiled before 14.March.2023
+        data_input <- uploadedFile[[input[[paste0("omic_type_", uploaded_from())]]]]
+      } else {
+        data_input[[paste0(input[[paste0("omic_type_", uploaded_from())]],"_SumExp")]] <- uploadedFile
       }
-    } else if(FLAG_TEST_DATA_SELECTED()){  # Upload test data
-      #TODO change test data to also not rely on 'Transcriptomics'
+    } else if(uploaded_from()=="testdata"){
       data_input <- readRDS(
         file = "www/Transcriptomics_only_precompiled-LS.RDS"
-      )[[input$omic_type]]
+      )[[input[[paste0("omic_type_", uploaded_from())]]]]
       fun_LogIt(
         message = paste0("**DataInput** - Test Data set used")
       )
-    } else {  # TODO: Meaningfull error message as info
+    } else {
       output$debug <- renderText({
         "<font color=\"#FF0000\"><b>Upload failed, please check your input.</b></font>"
       })
@@ -521,7 +516,7 @@ server <- function(input,output,session){
 
     if(!any(class(data_input) == "SummarizedExperiment") & !any(grepl('SumExp',names(data_input))) ){
       ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
-      data_input[[paste0(input$omic_type,"_SumExp")]] <- SummarizedExperiment(
+      data_input[[paste0(input[[paste0("omic_type_", uploaded_from())]],"_SumExp")]] <- SummarizedExperiment(
         assays  = list(raw = data_input$Matrix),
         rowData = data_input$annotation_rows[rownames(data_input$Matrix),,drop=F],
         colData = data_input$sample_table
@@ -529,7 +524,7 @@ server <- function(input,output,session){
       #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
     }
     # TODO SumExp only needed hence more restructuring needed
-    res_tmp[[session$token]][['data_original']] <<- data_input[[paste0(input$omic_type,"_SumExp")]]
+    res_tmp[[session$token]][['data_original']] <<- data_input[[paste0(input[[paste0("omic_type_", uploaded_from())]],"_SumExp")]]
     # Make a copy, to leave original data untouched
     res_tmp[[session$token]][['data']] <<- res_tmp[[session$token]]$data_original
     # Count up updating
@@ -645,12 +640,6 @@ server <- function(input,output,session){
         multiple = T
       )
     })
-    output$NextPanel_ui <- renderUI({actionButton(
-      inputId = "NextPanel",
-      label = "Start the Journey",
-      width = "100%",
-      icon = icon("fas fa-angle-double-right")
-    )})
   })
   
 ## Log Selection ----
