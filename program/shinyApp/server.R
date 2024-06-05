@@ -55,6 +55,7 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+  shinyjs::hide("mainPanel_DataSelection")
   
 # Init res_tmp and par_tmp objects if they do not yet exist ----
   if(!exists("res_tmp")){
@@ -232,8 +233,30 @@ server <- function(input,output,session){
         rowData(res_tmp[[session$token]]$data_original)$entrezgene_id[matched_rows] <<- matched_out$entrezgene_id[matched_rows]
       }
     }
-
+    par_tmp[[session$token]]['organism'] <<- input$AddGeneSymbols_organism
     removeModal()
+  })
+
+  # Observer to toggle visibility of the download button and helper
+  observe({
+    if (is.null(uploaded_from())) {
+      shinyjs::hide("SaveInputAsRDS")
+    }
+    req(uploaded_from())
+    if (uploaded_from() == "metadata" || uploaded_from() == "file_input") {
+      shinyjs::show("SaveInputAsRDS")
+    } else {
+      shinyjs::hide("SaveInputAsRDS")
+    }
+  })
+
+  # Observer to toggle visibility of the complete main panel
+  observe({
+      if (input$refresh1 > 0) {
+        shinyjs::show("mainPanel_DataSelection")
+      } else {
+        shinyjs::hide("mainPanel_DataSelection")
+      }
   })
   
 ## Upload visual inspection ----
@@ -394,8 +417,8 @@ server <- function(input,output,session){
   
 ## Do Upload ----
   observeEvent(input$refresh1,{
+    req(data_input_shiny())
     par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
-    par_tmp[[session$token]]['organism'] <<- input$AddGeneSymbols_organism
     omic_type(input[[paste0("omic_type_", uploaded_from())]])
     fun_LogIt(message = "## DataInput {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
@@ -454,6 +477,23 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
+    req(
+      (isTruthy(input$data_preDone) & uploaded_from() == "precompiled") |
+      # Is File Input used?
+      (isTruthy(input$data_matrix1) &
+        isTruthy(input$data_sample_anno1) &
+        isTruthy(input$data_row_anno1) &
+        uploaded_from() == "file_input"
+      ) |
+      # Is Metadata used?
+      (isTruthy(input$data_matrix_metadata) &
+        isTruthy(input$metadataInput) &
+        isTruthy(input$data_row_anno_metadata) &
+        uploaded_from() == "file_input"
+      ) |
+      # Is Test Data used?
+      uploaded_from() == "testdata"
+    )
     # initialize empty data_input object
     data_input <- list()
     # upload depending on where the button was clicked
@@ -515,12 +555,29 @@ server <- function(input,output,session){
     }
 
     if(!any(class(data_input) == "SummarizedExperiment") & !any(grepl('SumExp',names(data_input))) ){
-      ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
-      data_input[[paste0(input[[paste0("omic_type_", uploaded_from())]],"_SumExp")]] <- SummarizedExperiment(
-        assays  = list(raw = data_input$Matrix),
-        rowData = data_input$annotation_rows[rownames(data_input$Matrix),,drop=F],
-        colData = data_input$sample_table
+      summarized_experiment <- tryCatch(
+        expr = {
+          ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
+          sum_exp <- SummarizedExperiment(
+            assays  = list(raw = data_input$Matrix),
+            rowData = data_input$annotation_rows[rownames(data_input$Matrix),,drop=F],
+            colData = data_input$sample_table
+          )
+          sum_exp
+        },
+        error = function(e){
+          print("Error! Uploading via file input failed")
+          output$debug <- renderText({
+            "<font color=\"#FF0000\"><b>Uploading failed</b></font>: The uplaoded files could not be put into a SummarizedExperiment. Try the 'Inspect data' button for potential errors."
+          })
+          NULL
+        }
       )
+      if(is.null(summarized_experiment)){
+        return(NULL)
+      } else {
+        data_input[[paste0(input[[paste0("omic_type_", uploaded_from())]],"_SumExp")]] <- summarized_experiment
+      }
       #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
     }
     # TODO SumExp only needed hence more restructuring needed
