@@ -20,7 +20,7 @@ heatmap_sidebar<- function(ns){
     uiOutput(outputId = ns("psig_threhsold_heatmap_ui")),
     actionButton(
       inputId = ns("Do_Heatmap"),
-      label = "Do Heatmap to display",
+      label = "Get Heatmap",
       icon(name = "fas fa-laptop-code")
     ),
     hr(style = "border-top: 1px solid #000000;"),

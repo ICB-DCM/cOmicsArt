@@ -11,7 +11,7 @@ sampleCorrelation_sidebar_panel <- function(ns){
     uiOutput(outputId = ns("SampleAnnotationChoice_ui")),
     actionButton(
       inputId = ns("Do_SampleCorrelation"),
-      label = "Show sample correlation Plot",
+      label = "Get Sample Correlation",
       icon("fas fa-laptop-code")
     ),
     hr(style = "border-top: 1px solid #000000;")

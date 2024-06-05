@@ -179,6 +179,7 @@ data_selection_main_panel <- mainPanel(
   ))
 )
 
+
 data_selection_panel <- tabPanel(
   title = "Data selection",
   id = "Data_selection",
