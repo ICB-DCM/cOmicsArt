@@ -9,7 +9,7 @@ single_gene_visualisation_sidebar_ui<- function(ns){
 
     actionButton(
       inputId = ns("singleGeneGo"), 
-      label = "Get single gene visualisation"
+      label = "Get Single Gene Visualisation"
       ),
     # hidden Button to refresh the UI
     hidden(actionButton(

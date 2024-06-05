@@ -17,7 +17,7 @@ pre_processing_sidebar_panel <- sidebarPanel(
   uiOutput(outputId = "DESeq_formula_sub_ui") %>% helper(type = "markdown", content = "PreProcessing_DESeqSub"),
   actionButton(
     inputId = "Do_preprocessing",
-    label = "Pre-Process",
+    label = "Get Pre-Processing",
     icon(name = "fas fa-laptop-code")
   ),
   hr(style = "border-top: 1px solid #000000;")

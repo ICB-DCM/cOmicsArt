@@ -18,7 +18,7 @@ pca_sidebar_panel <- function(ns){
     ### start pca ---
     actionButton(
       inputId = ns("Do_PCA"),
-      label = "Perform PCA",
+      label = "Get PCA",
       icon("fas fa-laptop-code")
     ),
     ### further visualizations
