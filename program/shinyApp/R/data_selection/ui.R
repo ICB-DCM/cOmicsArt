@@ -158,10 +158,13 @@ data_selection_main_panel <- mainPanel(
            ))
   ),
   hr(style = "border-top: 1px solid #858585;"),
-  downloadButton(
-    outputId = "SaveInputAsList",
-    label = "Save file input to upload later"
-  ) %>% helper(type = "markdown", content = "DataSelection_compilation_help"),
+  div(
+    id = "SaveInputAsRDS",
+    downloadButton(
+      outputId = "SaveInputAsList",
+      label = "Save file input to upload later"
+    ) %>% helper(type = "markdown", content = "DataSelection_compilation_help")
+  ),
   htmlOutput(outputId = "debug", container = pre),
   br(), br(), br(),
   hr(style = "border-top: 1px solid #858585;"),
