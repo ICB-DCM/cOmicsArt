@@ -17,7 +17,7 @@ data_selection_sidebar_panel <- sidebarPanel(
           label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a></small>'),
           accept = c(".csv", ".xlsx"),
           width = "80%"
-        ),
+        ) %>% helper(type = "markdown", content = "DataSelection_DataUploadFileInput"),
         shiny::fileInput(
           inputId = "data_sample_anno1",
           label = HTML('Upload sample annotation <br/><small>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv">Download example data</a></small>'),
@@ -35,7 +35,7 @@ data_selection_sidebar_panel <- sidebarPanel(
           label = "Inspect data",
           icon = icon('eye'),
           width = "80%",
-        ),
+        ) %>% helper(type = "markdown", content = "DataSelection_UploadInspection"),
         br(), br(), br(),
         actionButton(
           inputId = "refresh_file_input",
@@ -94,20 +94,20 @@ data_selection_sidebar_panel <- sidebarPanel(
           accept = c(".xlsx"),
           buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),
           width = "80%"
-        ),
+        ) %>% helper(type = "markdown", content = "DataSelection_MetaData"),
         shiny::fileInput(
           inputId = "data_row_anno_metadata",
           label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a></small>'),
           accept = c(".csv", ".xlsx"),
           width = "80%"
         ),
-        br(),
+        br(), br(),
         actionButton(
           inputId = "refresh_metadata",
           label = "Upload new data",
-          widht = "80%",
+          width = "80%",
           icon = icon('paper-plane'),
-          style = "color: #fffff; background-color: #90DBF4; border-color: #000000"
+          style = "color: #fffff; background-color: #90DBF4; border-color: #000000",
         ),
         hr(style = "border-top: 1px solid #858585;")
       ),
@@ -152,7 +152,7 @@ data_selection_main_panel <- mainPanel(
            )),
     column(6,
            div(class = "SampleSelection",
-               h4("Sample selection"),
+               h4("Sample selection") %>% helper(type = "markdown", content = "DataSelection_RowSelection"),
                uiOutput("providedSampleAnnotationTypes_ui"),
                uiOutput("sample_selection_ui")
            ))

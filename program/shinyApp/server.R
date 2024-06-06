@@ -253,6 +253,7 @@ server <- function(input,output,session){
   # Observer to toggle visibility of the complete main panel
   observe({
       if (input$refresh1 > 0) {
+        req(data_input_shiny() == "DataUploadSuccesful")
         shinyjs::show("mainPanel_DataSelection")
       } else {
         shinyjs::hide("mainPanel_DataSelection")
