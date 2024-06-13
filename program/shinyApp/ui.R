@@ -82,6 +82,10 @@ ui <- shiny::fluidPage(
       .tabbable > .nav > li[class=active] > a {
           background-color: #7a7e80; color:black
       }
+      .custom-modal .modal-dialog {
+        width: 90%;
+        max-width: 90%;
+      }
       #sidebar_data_selection {
         background-color: #EC001447;
       }
