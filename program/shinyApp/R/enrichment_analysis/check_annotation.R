@@ -1,10 +1,12 @@
 check_annotation_enrichment_analysis <- function(data){
   # allowed annotations
   ensembl_opt <- c(
-    "ensembl", "Ensembl", "ensembl_id", "Ensembl_ID", "Ensemble.ID", "ENSEMBL", "ENS"
+    "ensembl", "Ensembl", "ensembl_id", "Ensembl_ID", "Ensemble.ID", "ENSEMBL", "ENS",
+    "ensembl_gene_id"
   )
   entrez_opt <- c(
-    "entrez", "Entrez", "entrez_id", "Entrez_ID", "Entrez_Gene_ID", "ENTREZID", "Entrez.ID"
+    "entrez", "Entrez", "entrez_id", "Entrez_ID", "Entrez_Gene_ID", "ENTREZID",
+    "Entrez.ID", "entrezgene_id"
   )
   symbol_opt <- c(
     "symbol", "Symbol", "gene_symbol", "Gene_Symbol", "Nomenclature", "SYMBOL", "Gene.Symbol"
