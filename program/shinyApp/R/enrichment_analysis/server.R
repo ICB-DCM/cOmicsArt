@@ -686,8 +686,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             selectInput(
               inputId = ns("AnnotationSelection"),
               label = "Which annotation are you using?",
-              choices = c("ENSEMBL", "ENTREZID", "SYMBOL"),
-              selected="ENTREZID",
+              choices = c("ensembl_gene_id", "external_gene_name", "entrezgene_id"),
+              selected="entrezgene_id",
               multiple = F
             ),
             actionButton(inputId = ns("AMC"), label = "Proceed"),
