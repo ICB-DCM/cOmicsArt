@@ -11,7 +11,7 @@ sampleCorrelation_sidebar_panel <- function(ns){
     uiOutput(outputId = ns("SampleAnnotationChoice_ui")),
     actionButton(
       inputId = ns("Do_SampleCorrelation"),
-      label = "Show sample correlation Plot",
+      label = "Get Sample Correlation",
       icon("fas fa-laptop-code")
     ),
     hr(style = "border-top: 1px solid #000000;")
@@ -38,8 +38,8 @@ sampleCorrelation_main_panel <- function(ns){
       inputId = ns("only2Report_SampleCorrelation"),
       label = "Send only to Report",
       class = "btn-info"
-    ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
-  ),
+    )
+  ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
@@ -89,7 +89,7 @@ sampleCorrelation_UI <- function(id){
     id = "sample_correlation",
     fluid = T,
     h4("Sample Correlation"),
-    pca_sidebar <- sampleCorrelation_sidebar_panel(ns),
-    pca_main <- sampleCorrelation_main_panel(ns),
+    sampleCorrelation_sidebar_panel(ns),
+    sampleCorrelation_main_panel(ns),
   )
 }

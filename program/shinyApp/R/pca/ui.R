@@ -18,7 +18,7 @@ pca_sidebar_panel <- function(ns){
     ### start pca ---
     actionButton(
       inputId = ns("Do_PCA"),
-      label = "Perform PCA",
+      label = "Get PCA",
       icon("fas fa-laptop-code")
     ),
     ### further visualizations
@@ -50,8 +50,8 @@ pca_main_panel <- function(ns){
           actionButton(
             inputId = ns("only2Report_pca"),
             label = "Send only to Report"
-          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads")
-        ),
+          )
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
@@ -124,8 +124,8 @@ pca_main_panel <- function(ns){
             inputId = ns("only2Report_Loadings"),
             label = "Send only to Report",
             class = "btn-info"
-          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads")
-        ),
+          )
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
@@ -186,8 +186,8 @@ pca_main_panel <- function(ns){
             inputId = ns("only2Report_Loadings_matrix"),
             label = "Send only to Report",
             class = "btn-info"
-          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads")
-        ),
+          )
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
@@ -236,8 +236,8 @@ pca_main_panel <- function(ns){
             inputId = ns("only2Report_Scree_Plot"),
             label = "Send only to Report",
             class = "btn-info"
-          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads")
-        ),
+          )
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
@@ -269,7 +269,7 @@ pca_main_panel <- function(ns){
             selected = ".png"
           )
         )
-      )  # %>% helper(type = "markdown", content = "PCA_Tabpanels")
+      )
     )
   )
 }
@@ -279,11 +279,11 @@ pca_UI <- function(id){
   ns <- NS(id)
 
   tabPanel(
-    title = "PCA",  # can be renamed after UMAP is added
+    title = "PCA",
     id = "pca",
     fluid = T,
     h4("PCA"),
-    pca_sidebar <- pca_sidebar_panel(ns),
-    pca_main <- pca_main_panel(ns),
+    pca_sidebar_panel(ns),
+    pca_main_panel(ns),
   )
 }

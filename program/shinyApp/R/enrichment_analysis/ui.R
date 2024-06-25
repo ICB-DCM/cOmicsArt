@@ -6,7 +6,6 @@ geneset_panel_UI <- function(
 
   tabPanel(
     title = id_wo_ns,
-    # textOutput("Info", container = pre),
     tabsetPanel(
       tabPanel(
         title = paste(id_wo_ns, " Enrichment"),
@@ -20,8 +19,8 @@ geneset_panel_UI <- function(
             inputId = ns("only2Report"),
             label = "Send only to Report",
             class = "btn-info"
-          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads")
-        ),
+          )
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
@@ -90,8 +89,9 @@ ea_sidebar <- function(ns){
     uiOutput(outputId = ns("UniverseOfGene_ui")),
     actionButton(
       inputId = ns("enrichmentGO"),
-      label = "Do enrichment analysis"
+      label = "Get Enrichment Analysis"
     ),
+    hr(style = "border-top: 1px solid #000000;"),
     uiOutput(outputId = ns("KeggPathwayID_ui")),
     # Button to refresh the UI
     hidden(actionButton(
@@ -179,7 +179,7 @@ enrichment_analysis_UI <- function(id){
     # Enrichment
     #########################################
     h4("NOTE THAT THIS ONLY MAKES SENSE FOR TRANSCRIPTOMICS DATA AT THE MOMENT!"),
-    enrichment_analysis_sidebar <- ea_sidebar(ns),
-    enrichment_analysis_main <- ea_main(ns),
+    ea_sidebar(ns),
+    ea_main(ns),
   )
 }

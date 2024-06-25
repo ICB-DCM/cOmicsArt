@@ -1,124 +1,185 @@
 data_selection_sidebar_panel <- sidebarPanel(
   id = "sidebar_data_selection",
-  div(class = "omicType",
-      selectInput(
-        inputId = "omicType", # RNAorLIPID
-        label = "Omic Type that is uploaded",
-        choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
-        selected = ""
-      )
-  ),
-  div(
-    class = "AddGeneSymbols_ui",
-    uiOutput(outputId = "AddGeneSymbols_ui"),
-    uiOutput(outputId = "AddGeneSymbols_organism_ui")
-  ),
-  #uiOutput("AddGeneSymbols_organism_ui"),
-  actionButton(
-    inputId = "refresh1",
-    label = "Do"
-  ),
-  div(
-    class = "LineToDistinguish",
-    hr(style = "border-top: 1px solid #000000;")
-  ),
-  div(
-    class = "DataSelection",
-    h4("Row selection - biochemical entities") %>% helper(type = "markdown", content = "DataSelection_RowSelection"),
-    uiOutput(outputId = "providedRowAnnotationTypes_ui"),
-    uiOutput(outputId = "row_selection_ui"),
-    uiOutput(outputId = "propensityChoiceUser_ui")
-  ),
-  # Outlier Selection -> for fixed removal pre-processing needs to be redone!
-  div(
-    class = "SampleSelection",
-    h4("Sample selection"),
-    uiOutput(outputId = "providedSampleAnnotationTypes_ui"),
-    uiOutput(outputId = "sample_selection_ui")),
-    uiOutput(outputId = "NextPanel_ui")
-)
-
-
-data_selection_main_panel <- mainPanel(
-  id = "mainPanel_DataSelection",
-  tabsetPanel(
-    type = "pills",
-    tabPanel(
-      title = "Upload section",
+    tabsetPanel(
+      tabPanel("File Input",
       br(),
-      hr(style = "border-top: 2px solid #90DBF4;"),
-      splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("85%", "10%", "5%"),
+        div(class = "omic_type",
+            selectInput(
+              inputId = "omic_type_file_input",
+              label = "Omic Type that is uploaded",
+              choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
+              selected = "",
+              width = "80%"
+            )
+        ),
+        shiny::fileInput(
+          inputId = "data_matrix1",
+          label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a></small>'),
+          accept = c(".csv", ".xlsx"),
+          width = "80%"
+        ) %>% helper(type = "markdown", content = "DataSelection_DataUploadFileInput"),
+        shiny::fileInput(
+          inputId = "data_sample_anno1",
+          label = HTML('Upload sample annotation <br/><small>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv">Download example data</a></small>'),
+          accept = c(".csv", ".xlsx"),
+          width = "80%"
+        ),
+        shiny::fileInput(
+          inputId = "data_row_anno1",
+          label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a></small>'),
+          accept = c(".csv", ".xlsx"),
+          width = "80%"
+        ),
+        actionButton(
+          inputId = "inspect_data",
+          label = "Inspect data",
+          icon = icon('eye'),
+          width = "80%",
+        ) %>% helper(type = "markdown", content = "DataSelection_UploadInspection"),
+        br(), br(), br(),
+        actionButton(
+          inputId = "refresh_file_input",
+          label = "Upload new data",
+          width = "80%",
+          icon = icon('paper-plane'),
+          style = "color: #fffff; background-color: #90DBF4; border-color: #000000"
+        ),
+        hr(style = "border-top: 1px solid #858585;")
+      ),
+      tabPanel("Precompiled",
+      br(),
+        div(class = "omic_type",
+            selectInput(
+              inputId = "omic_type_precompiled",
+              label = "Omic Type that is uploaded",
+              choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
+              selected = ""
+            )
+        ),
+        shiny::fileInput(
+          inputId = "data_preDone",
+          label = HTML('Load precompiled data <br/><small>(saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data</a></small>'),
+          accept = ".RDS",
+          width = "80%"
+        ),
+        br(), br(),
+        actionButton(
+          inputId = "refresh_precompiled",
+          label = "Upload new data",
+          width = "80%",
+          icon = icon('paper-plane'),
+          style = "color: #fffff; background-color: #90DBF4; border-color: #000000",
+        ),
+        hr(style = "border-top: 1px solid #858585;")
+      ),
+      tabPanel("Metadata",
+      br(),
+        div(class = "omic_type",
+            selectInput(
+              inputId = "omic_type_metadata",
+              label = "Omic Type that is uploaded",
+              choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
+              selected = ""
+            )
+        ),
+        shiny::fileInput(
+          inputId = "data_matrix_metadata",
+          label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a></small>'),
+          accept = c(".csv", ".xlsx"),
+          width = "80%"
+        ),
+        shiny::fileInput(
+          inputId = "metadataInput",
+          label = HTML("Upload your Meta Data Sheet <small>(currently replaces sample annotation)</small>"),
+          accept = c(".xlsx"),
+          buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),
+          width = "80%"
+        ) %>% helper(type = "markdown", content = "DataSelection_MetaData"),
+        shiny::fileInput(
+          inputId = "data_row_anno_metadata",
+          label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a></small>'),
+          accept = c(".csv", ".xlsx"),
+          width = "80%"
+        ),
+        br(), br(),
+        actionButton(
+          inputId = "refresh_metadata",
+          label = "Upload new data",
+          width = "80%",
+          icon = icon('paper-plane'),
+          style = "color: #fffff; background-color: #90DBF4; border-color: #000000",
+        ),
+        hr(style = "border-top: 1px solid #858585;")
+      ),
+      tabPanel("Testdata",
+      br(),
+        div(class = "omic_type",
+            selectInput(
+              inputId = "omic_type_testdata",
+              label = "Omic Type that is uploaded",
+              choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
+              selected = ""
+            )
+        ),
+        br(),
         actionButton(
           inputId = "EasyTestForUser",
           label = "Start straight away with a test-dataset!",
           icon = icon('paper-plane'),
           style = "color: #fffff; background-color: #90DBF4; border-color: #000000"
         ),
-        actionButton(
-          inputId = "Reset",
-          label = "Reset"
-        ) %>% helper(type = "markdown", content = "DataSelection_Reset"),
-        NULL
-      ),
-      hr(style = "border-top: 2px solid #90DBF4;"),
-      a(id = "toggleAdvanced",
-        "Data Upload via file input",
-        style = "background-color: #90DBF4; color: black; padding: 7px 10px; "
-        ) %>% helper(type = "markdown", content = "DataSelection_DataUploadFileInput"),
-        shinyjs::hidden(
-          div(
-        id = "advanced",
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-          uiOutput(outputId = "data_matrix1_ui"),  # %>% helper(type = "markdown", content = "DataSelection_Matrix"),
-          uiOutput(outputId = "data_sample_anno1_ui"),  # %>% helper(type = "markdown", content = "DataSelection_SampleAnno")
-        ),
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-          uiOutput(outputId = "data_row_anno1_ui") %>% helper(type = "markdown", content = "DataSelection_RowAnno"),
-          uiOutput(
-            outputId = "data_preDone_ui"
-          ) %>% helper(type = "markdown", content = "DataSelection_SummarizedExp")
-        )
-        )
-      ),
-      hr(style = "border-top: 2px solid #90DBF4;"),
-      uiOutput(outputId = "metadataInput_ui") %>% helper(type = "markdown", content = "DataSelection_MetaData"),
-      hr(style = "border-top: 2px solid #90DBF4;"),
-      downloadButton(
-        outputId = "SaveInputAsList",
-        label = "Save file input to upload later"
-      ) %>% helper(type = "markdown", content = "DataSelection_compilation_help"),
-      htmlOutput(outputId = "debug", container = pre),
-      HTML(text = "<br>"),
-      HTML(text = "<br>")
-    ),
-    tabPanel(
-      title = "Upload visual inspection",
-      helpText("If you have uploaded your data, you might want to visually check the tables to confirm the correct data format. If you notice irregualarities you will need to correct the input data - this cannot be done in ShinyOmics, See the help on how your data is expected."),
-      actionButton(
-        inputId = "DoVisualDataInspection",
-        label = "Upload data for visual inspection"
-      ) %>% helper(type = "markdown", content = "DataSelection_UploadInspection"),
-      splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-        DT::dataTableOutput("DataMatrix_VI"),
-        htmlOutput(outputId = "DataMatrix_VI_Info", container = pre)
-      ),
-      splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-        DT::dataTableOutput("SampleMatrix_VI"),
-        htmlOutput(outputId = "SampleMatrix_VI_Info", container = pre)
-      ),
-      splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-        DT::dataTableOutput("EntitieMatrix_VI"),
-        htmlOutput(outputId = "EntitieMatrix_VI_Info", container = pre)
-      ),
-      htmlOutput(outputId = "OverallChecks", container = pre)
+        hr(style = "border-top: 1px solid #858585;")
+      )
     )
   )
+
+
+data_selection_main_panel <- mainPanel(
+  id = "mainPanel_DataSelection",
+  div(
+    class = "AddGeneSymbols_ui",
+    uiOutput("AddGeneSymbols_organism_ui"),
+    uiOutput("AddGeneSymbols_ui")
+  ),
+  hr(style = "border-top: 1px solid #858585;"),
+  fluidRow(
+    column(5,
+           div(class = "DataSelection",
+               h4("Row selection - biochemical entities"),
+               uiOutput("providedRowAnnotationTypes_ui"),
+               uiOutput("row_selection_ui"),
+               uiOutput("propensityChoiceUser_ui")
+           )),
+    column(6,
+           div(class = "SampleSelection",
+               h4("Sample selection") %>% helper(type = "markdown", content = "DataSelection_RowSelection"),
+               uiOutput("providedSampleAnnotationTypes_ui"),
+               uiOutput("sample_selection_ui")
+           ))
+  ),
+  hr(style = "border-top: 1px solid #858585;"),
+  div(
+    id = "SaveInputAsRDS",
+    downloadButton(
+      outputId = "SaveInputAsList",
+      label = "Save file input to upload later"
+    ) %>% helper(type = "markdown", content = "DataSelection_compilation_help")
+  ),
+  htmlOutput(outputId = "debug", container = pre),
+  br(), br(), br(),
+  hr(style = "border-top: 1px solid #858585;"),
+  actionButton(
+    inputId = "NextPanel",
+    label = "Start the Journey",
+    width = "100%",
+    icon = icon('rocket'),
+    style = "color: #fffff; background-color: #EC001447; border-color: #000000"
+  ),
+  # hidden button
+  hidden(actionButton(
+    inputId = "refresh1",
+    label = "YOu should not be seeing this"
+  ))
 )
 
 

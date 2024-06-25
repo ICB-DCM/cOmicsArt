@@ -20,7 +20,7 @@ heatmap_sidebar<- function(ns){
     uiOutput(outputId = ns("psig_threhsold_heatmap_ui")),
     actionButton(
       inputId = ns("Do_Heatmap"),
-      label = "Do Heatmap to display",
+      label = "Get Heatmap",
       icon(name = "fas fa-laptop-code")
     ),
     hr(style = "border-top: 1px solid #000000;"),
@@ -83,8 +83,8 @@ heatmap_main <- function(ns){
         inputId = ns("only2Report_Heatmap"),
         label = "Send only to Report",
         class = "btn-info"
-      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
-    ),
+      )
+    ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
       NULL,
@@ -132,8 +132,8 @@ heatmap_UI <- function(id){
     id = "heatmap",
     fluid = T,
     h4("Heatmap"),
-    heatmap_sidebar <- heatmap_sidebar(ns),
-    heatmap_main <- heatmap_main(ns) 
+    heatmap_sidebar(ns),
+    heatmap_main(ns)
   )
 }
 

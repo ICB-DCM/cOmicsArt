@@ -1,5 +1,5 @@
 gene_set_enrichment <- function(
-  input,
+  organism,
   geneSetChoice,
   data,
   enrichments2do,
@@ -46,13 +46,19 @@ gene_set_enrichment <- function(
   EnrichmentRes_IMMUNESIGDB <- NULL
   EnrichmentRes_VAX <- NULL
   EnrichmentRes_C8 <- NULL
+  
+  # set Species
+  species <- "Mus musculus"
+  if(organism == "Human genes (GRCh38.p14)"){
+    species <- "Homo sapiens"
+  }
 
   if(enrichments2do$KEGG){
     if(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$KEGG ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
         subcategory = "CP:KEGG"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -82,7 +88,7 @@ gene_set_enrichment <- function(
         maxGSSize = 800,
         pvalueCutoff = 0.05,
         verbose = TRUE,
-        OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"),
+        OrgDb = ifelse(organism == "Human genes (GRCh38.p14)","org.Hs.eg.db","org.Mm.eg.db"),
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]]
       )
       res_tmp[[session$token]]$EA[[comp_type]][[contrast]]$GO <<- EnrichmentRes_GO
@@ -97,7 +103,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$Hallmarks ))
     ){
       Hallmarkset <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "H",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_Hallmarks <- GSEA(
@@ -120,7 +126,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$C1 ))
     ){
       C1set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C1",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C1 <- GSEA(
@@ -144,7 +150,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$C2 ))
     ){
       C2set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C2 <- GSEA(
@@ -167,7 +173,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$C3 ))
     ){
       C3set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C3",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C3 <- GSEA(
@@ -190,7 +196,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$C4 ))
     ){
       C4set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C4",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C4 <- GSEA(
@@ -213,7 +219,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$C5 ))
     ){
       C5set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C5",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C5 <- GSEA(
@@ -236,7 +242,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$C6 ))
     ){
       C6set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C6",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C6 <- GSEA(
@@ -259,7 +265,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$C7 ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C7"
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C7 <- GSEA(
@@ -282,7 +288,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$C8 ))
     ){
       C8set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C8",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C8 <- GSEA(
@@ -305,7 +311,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$CGP ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
         subcategory = "CGP"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -329,7 +335,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$CP ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
         subcategory = "CP"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -353,7 +359,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$BIOCARTA ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
         subcategory = "CP:BIOCARTA"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -377,7 +383,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$PID ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
         subcategory = "CP:PID"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -401,7 +407,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$REACTOME ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
         subcategory = "CP:REACTOME"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -425,7 +431,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$WIKIPATHWAYS ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
         subcategory = "CP:WIKIPATHWAYS"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -449,7 +455,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$MIRDB ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C3",
         subcategory = "MIR:MIRDB"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -473,7 +479,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$MIR_Legacy ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C3",
         subcategory = "MIR:MIR_Legacy"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -497,7 +503,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$GTRD ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C3",
         subcategory = "TFT:GTRD"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -521,7 +527,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$TFT_Legacy ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C3",
         subcategory = "TFT:TFT_Legacy"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -545,7 +551,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$CGN ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C4",
         subcategory = "CGN"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -569,7 +575,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$CM ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C4",
         subcategory = "CM"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -593,7 +599,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$GO_BP ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C5",
         subcategory = "GO:BP"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -617,7 +623,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$GO_CC ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C5",
         subcategory = "GO:CC"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -641,7 +647,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$GO_MF ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C5",
         subcategory = "GO:MF"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -665,7 +671,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$HPO ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C5",
         subcategory = "HPO"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -689,7 +695,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$IMMUNESIGDB ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C7",
         subcategory = "IMMUNESIGDB"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -713,7 +719,7 @@ gene_set_enrichment <- function(
       !(identical(list("adjustMethod"=adjustMethod, "sort"=sorting),par_tmp[[session$token]]$EA[[comp_type]][[contrast]]$VAX ))
     ){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C7",
         subcategory = "VAX"
       ) %>% dplyr::select(gs_name, entrez_gene)

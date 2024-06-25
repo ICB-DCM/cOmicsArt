@@ -38,9 +38,6 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   # alpha: significance level
   # ns: namespace function
 
-  print("create_new_tab")
-  print(title)
-  print(result)
   # paste together the strings to print
   # total number of genes compared
   total_genes <- length(rownames(result))
@@ -100,9 +97,9 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
             h5("Volcano plot padj"),
-            h5("Both Volcano plots") %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+            h5("Both Volcano plots"),
             h5("Volcano plot pvalue")
-          ),
+          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
           splitLayout(
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
@@ -191,8 +188,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   # reactive values
   sig_ana_reactive <- reactiveValues(
     th_psig = NULL,
-    th_lfc = NULL,
-    very_first_start = NULL
+    th_lfc = NULL
   )
   # print the summary of the results into the table
   output[[ns(paste(contrast[1], contrast[2], "summary", sep = "_"))]] <- renderText(
@@ -240,21 +236,18 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       value = 1.0
       )
   })
-  if(is.null(sig_ana_reactive$very_first_start)){
-    sig_ana_reactive$very_first_start <- TRUE
-  }
   toPlotVolcano <- reactive({
     list(
       input[[psig_th]],
-      input[[lfc_th]],
-      sig_ana_reactive$very_first_start
+      input[[lfc_th]]
     )
   })
   observeEvent(toPlotVolcano(), {
+    req(input[[psig_th]], input[[lfc_th]])
     # workaround, as somehow the input values dont show up unless we change it in the shiny
     # TODO: fix this (@Lea?)
-    sig_ana_reactive$th_psig <- ifelse(is.null(input[[psig_th]]), 0.05, input[[psig_th]])
-    sig_ana_reactive$th_lfc <- ifelse(is.null(input[[lfc_th]]), 1, input[[lfc_th]])
+    sig_ana_reactive$th_psig <- input[[psig_th]]
+    sig_ana_reactive$th_lfc <- input[[lfc_th]]
     # plot volcano plot
     data4Volcano <- result
     data4Volcano$probename <- rownames(data4Volcano)
@@ -300,7 +293,6 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       xlab("Log FoldChange") +
       ylab("-log10(p_adj-value)") +
       theme(legend.position = "none") +
-      theme_bw()+
       ggtitle(label="Corrected p-Values")
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot,
@@ -325,7 +317,6 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       scale_color_manual(values=colorScheme2, name="") +
       xlab("Log FoldChange") +
       ylab("-log10(p-value)") +
-      theme_bw()+
       ggtitle(label="Uncorrected p-Values")
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
@@ -560,8 +551,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   # reactive values
   sig_ana_reactive <- reactiveValues(
     th_psig = NULL,
-    th_lfc = NULL,
-    very_first_start = NULL
+    th_lfc = NULL
   )
   # print the summary of the results
   output[[ns(paste(contrast[1], contrast[2], "summary", sep = "_"))]] <- renderText(
@@ -609,21 +599,16 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       value = 1.0
       )
   })
-  if(is.null(sig_ana_reactive$very_first_start)){
-    sig_ana_reactive$very_first_start <- TRUE
-  }
   toPlotVolcano <- reactive({
     list(
       input[[psig_th]],
-      input[[lfc_th]],
-      sig_ana_reactive$very_first_start
+      input[[lfc_th]]
     )
   })
   observeEvent(toPlotVolcano(), {
-    # workaround, as somehow the input values dont show up unless we change it in the shiny
-    # TODO: fix this (@Lea?)
-    sig_ana_reactive$th_psig <- ifelse(is.null(input[[psig_th]]), 0.05, input[[psig_th]])
-    sig_ana_reactive$th_lfc <- ifelse(is.null(input[[lfc_th]]), 1, input[[lfc_th]])
+    req(input[[psig_th]], input[[lfc_th]])
+    sig_ana_reactive$th_psig <- input[[psig_th]]
+    sig_ana_reactive$th_lfc <- input[[lfc_th]]
     # plot volcano plot
     data4Volcano <- as.data.frame(result)
     data4Volcano$probename <- rownames(data4Volcano)
@@ -667,7 +652,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         ) +
       scale_color_manual(values=colorScheme2, name="") +
       xlab("Log FoldChange") +
-      ylab("-log10(p-value)") +
+      ylab("-log10(p_adj-value)") +
       theme(legend.position = "none") +
       ggtitle(label="Corrected p-Values")
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(

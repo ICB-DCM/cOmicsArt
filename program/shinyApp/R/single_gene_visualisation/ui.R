@@ -9,7 +9,7 @@ single_gene_visualisation_sidebar_ui<- function(ns){
 
     actionButton(
       inputId = ns("singleGeneGo"), 
-      label = "Get single gene visualisation"
+      label = "Get Single Gene Visualisation"
       ),
     # hidden Button to refresh the UI
     hidden(actionButton(
@@ -28,7 +28,7 @@ single_gene_visualisation_main_ui <- function(ns){
       style = "border: 1px solid silver:",
       cellWidths = c("50%", "50%"),
       plotOutput(outputId = ns("SingleGenePlot")),
-      textOutput(outputId = ns("InfoText"), container = pre)
+      textOutput(outputId = ns("InfoText"))
     ),
     h5(HTML("Note, that you only see boxplots if you have more than 3 samples per group")),
     uiOutput(outputId = ns("chooseComparisons_ui")),
@@ -40,8 +40,8 @@ single_gene_visualisation_main_ui <- function(ns){
         inputId = ns("only2Report_SingleEntities"),
         label = "Send only to Report",
         class = "btn-info"
-      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
-    ),
+      )
+    ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
     splitLayout(
       style = "border: 1px solid silver:",
       cellWidths = c("70%", "30%"),
@@ -93,7 +93,7 @@ single_gene_visualisation_UI <- function(id){
     #########################################
     # Single Gene Visualisations
     #########################################
-    single_gene_visualisation_sidebar <- single_gene_visualisation_sidebar_ui(ns),
-    single_gene_visualisation_main <- single_gene_visualisation_main_ui(ns)
+    single_gene_visualisation_sidebar_ui(ns),
+    single_gene_visualisation_main_ui(ns)
   )
 }

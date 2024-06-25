@@ -1,5 +1,20 @@
 ### general utility functions will be defined here
 
+# tryCatch modal dialog
+error_modal <- function(e){
+  showModal(modalDialog(
+    title = HTML("<font color='red'>An unknown Error occured</font>"),
+    HTML(paste0(
+      "<font color='red'>Error: ",e$message,"</font><br><br>",
+      "Please check your data set and annotation and try again.<br><br>",
+      "Otherwise, please contact the cOmicsArtist Lea and Paul via cOmicsArtist@outlook.de",
+      "or open an issue on <a href='https://github.com/LeaSeep/OmicShiny'>github</a>",
+      "describing your problem."
+    )),
+    footer = modalButton("Close")
+  ))
+}
+
 
 update_data <- function(session_id){
   # for stability reasons, data is ALWAYS pulled here
@@ -75,6 +90,7 @@ getUserReactiveValues <- function(data = input){
   return(tmp[to_include])
 }
 
+
 save.function.from.env <- function(wanted,file="utils.R")
 {
   # This function will go through all your defined functions
@@ -106,4 +122,79 @@ save.function.from.env <- function(wanted,file="utils.R")
 }
 
 
+
+
+save_pheatmap <- function(x, filename,type = "pdf") {
+  # Saves a heatmap to a file in different formats
+  stopifnot(!missing(x))
+  stopifnot(!missing(filename))
+  if(type == "pdf"){
+    pdf(filename)
+    grid::grid.newpage()
+    grid::grid.draw(x$gtable)
+    dev.off()
+  } else if (type == "png"){
+    png(filename, width=800, height=400)
+    grid::grid.newpage()
+    grid::grid.draw(x$gtable)
+    dev.off()
+  } else if (type == "svg"){
+    svglite::svglite(filename)
+    grid::grid.newpage()
+    grid::grid.draw(x$gtable)
+    dev.off()
+  } else if(type == "tiff"){
+    tiff(filename)
+    grid::grid.newpage()
+    grid::grid.draw(x$gtable)
+    dev.off()
+  }
+}
+
+
+getCurrentVersion <- function(updateDESCRIPTION = T){
+  # Write function to insert current release absed on CHANGE log to DESCRIPTIOn
+  # Return current version
+  ChangeLog <- readLines("../../CHANGELOG.md")
+  # take the first hit as it is the most recent
+  recentSeries <- which(grepl("series$",ChangeLog))[1]
+  recentVersion <- ChangeLog[recentSeries+4]
+  DESCRIPTION <- readLines("DESCRIPTION")
+  DESCRIPTION_new <- gsub("Version:.*$",paste0("Version: ",recentVersion),DESCRIPTION)
+  writeLines(DESCRIPTION_new,con ="DESCRIPTION" )
+
+  # take the + next line to get version
+  return(recentVersion)
+}
+
+
+detect_annotation <- function(data) {
+  # check if annotation is in row-annotation
+  if (any(ENTREZ_OPT %in% colnames(rowData(data)))) {
+    anno_col <- ENTREZ_OPT[ENTREZ_OPT %in% colnames(rowData(data))][1]
+    return(list(
+      AnnoType = "entrezgene_id",
+      AnnoCol = anno_col
+    ))
+  }
+  if (any(ENSEMBL_OPT %in% colnames(rowData(data)))) {
+    anno_col <- ENSEMBL_OPT[ENSEMBL_OPT %in% colnames(rowData(data))][1]
+    return(list(
+      AnnoType = "ensembl_gene_id",
+      AnnoCol = anno_col
+    ))
+  }
+  if (any(SYMBOL_OPT %in% colnames(rowData(data)))) {
+    anno_col <- SYMBOL_OPT[SYMBOL_OPT %in% colnames(rowData(data))][1]
+    return(list(
+      AnnoType = "Symbol",
+      AnnoCol = anno_col
+    ))
+  }
+
+  return(list(
+    AnnoType = NULL,
+    AnnoCol = NULL
+  ))
+}
 

@@ -1,14 +1,12 @@
 # Guided Tour around the Shiny
 library(cicerone)
 guide <- Cicerone$
-  new( id = "guide")$ # supply id)$
+  new( id = "guide")$
   step(
     el="TitleID_normal",
     title="Welcome",
-    description = "I'm happy to guide you through. If you still have open question please feel free to drop me a message (lea.seep@uni-bonn.de)!"
-
-    )$
-  step(
+    description = "We are happy to guide you through. If you still have open questions please feel free to drop us a message (cOmicsArtist@outlook.de)!"
+  )$step(
     el = "Quit_App", # element to attach the information to
     title = "Let us start easy",
     description = "Here you can end the App right away, if it is already annoying you. It will give you another chance to download the report which is generated automatically during your use of the app"
@@ -28,12 +26,6 @@ guide <- Cicerone$
     title="Sidebar",
     description = "This is the sidebar. In general you can choose options or procedures which results will be displayed in the main Panel."
   )$
-  # step(
-  #   el="[data-value='Data selection']",
-  #   title=" Test",
-  #   description="Test",
-  #   is_id=F
-  # )$
   step(
     el=".omicType",
     title=" Choose your type of Omic",
@@ -49,7 +41,7 @@ guide <- Cicerone$
   step(
     el="refresh1",
     title="Click it",
-    description="With this 'Do' you will really upload the data to the ShinyApp. Make sure you have selected the correct Omic Type and have decided whether you want additional annotation or not. If you change anything above this button make sure to click it again, so that you enfore an update!"
+    description="With this 'Do' you will really upload the data to cOmicsArt. Make sure you have selected the correct Omic Type and have decided whether you want additional annotation or not. If you change anything above this button make sure to click it again, so that you enforce an update!"
   )$
   step(
     el=".DataSelection",
@@ -63,4 +55,3 @@ guide <- Cicerone$
     description="...",
     is_id=F
   )
-

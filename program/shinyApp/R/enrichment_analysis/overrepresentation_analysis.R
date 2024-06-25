@@ -1,6 +1,6 @@
 over_representation_analysis <- function(
   input,
-  output,
+  organism,
   geneSetChoice,
   data,
   enrichments2do,
@@ -9,7 +9,14 @@ over_representation_analysis <- function(
   # Overrepresentation analysis
   # no translation needed as already done before.
 
-  if(!is.null(input$UniverseOfGene)){
+
+  # set Species
+  species <- "Mus musculus"
+  if(organsim == "Human genes (GRCh38.p14)"){
+    species <- "Homo sapiens"
+  }
+
+  if(!isTruthy(input$UniverseOfGene)){
     universeSelected_tranlsated <- NULL
   } else if(input$UniverseOfGene == "default"){
     universeSelected_tranlsated <- NULL
@@ -28,7 +35,7 @@ over_representation_analysis <- function(
       universeSelected,
       fromType = "ENSEMBL",
       toType = "ENTREZID",
-      OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db")
+      OrgDb = ifelse(species == "Homo sapiens","org.Hs.eg.db","org.Mm.eg.db")
     )$ENTREZID
     print(paste0(
       "Universe genes translated (hence actually used): ",
@@ -67,12 +74,13 @@ over_representation_analysis <- function(
   EnrichmentRes_IMMUNESIGDB <- NULL
   EnrichmentRes_VAX <- NULL
   EnrichmentRes_C8 <- NULL
+  
   # KEGG
   if(enrichments2do$KEGG){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$KEGG ))){
       EnrichmentRes_KEGG <- clusterProfiler::enrichKEGG(
         gene = geneSetChoice,
-        organism = input$OrganismChoice,
+        organism = ifelse(species=="Homo sapiens","hsa","mmu"),
         pvalueCutoff = 0.05,
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
         universe = universeSelected_tranlsated
@@ -91,7 +99,7 @@ over_representation_analysis <- function(
         ont = "ALL",
         pvalueCutoff = 0.05,
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
-        OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db")
+        OrgDb = ifelse(species=="Homo sapiens","org.Hs.eg.db","org.Mm.eg.db")
       )
       res_tmp[[session$token]]$OA$GO <<- EnrichmentRes_GO
       par_tmp[[session$token]]$OA$GO  <<- list("Universe"=input$UniverseOfGene)
@@ -106,7 +114,7 @@ over_representation_analysis <- function(
         gene = geneSetChoice,
         pvalueCutoff = 0.05,
         pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
-        organism = ifelse(input$OrganismChoice == "hsa","human","mouse"),
+        organism = ifelse(species=="Homo sapiens","human","mouse"),
         universe = universeSelected_tranlsated,
         readable = T
       )
@@ -120,7 +128,7 @@ over_representation_analysis <- function(
   if(enrichments2do$Hallmarks){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$Hallmarks ))){
       Hallmarkset <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "H",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_Hallmarks <- clusterProfiler::enricher(
@@ -140,7 +148,7 @@ over_representation_analysis <- function(
   if(enrichments2do$C1){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$C1 ))){
       C1set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C1",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C1 <- clusterProfiler::enricher(
@@ -160,7 +168,7 @@ over_representation_analysis <- function(
   if(enrichments2do$C2){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$C2 ))){
       C2set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C2 <- clusterProfiler::enricher(
@@ -180,7 +188,7 @@ over_representation_analysis <- function(
   if(enrichments2do$C3){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$C3 ))){
       C3set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C3",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C3 <- clusterProfiler::enricher(
@@ -200,7 +208,7 @@ over_representation_analysis <- function(
   if(enrichments2do$C4){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$C4 ))){
       C4set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C4",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C4 <- clusterProfiler::enricher(
@@ -220,7 +228,7 @@ over_representation_analysis <- function(
   if(enrichments2do$C5){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$C5 ))){
       C5set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C5",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C5 <- clusterProfiler::enricher(
@@ -240,7 +248,7 @@ over_representation_analysis <- function(
   if(enrichments2do$C6){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$C6 ))){
       C6set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C6",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C6 <- clusterProfiler::enricher(
@@ -260,7 +268,7 @@ over_representation_analysis <- function(
   if(enrichments2do$C7){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$C7 ))){
       C7set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C7",
         subcategory = "IMMUNESIGDB"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -281,7 +289,7 @@ over_representation_analysis <- function(
   if(enrichments2do$C8){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$C8 ))){
       C8set <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C8",
       ) %>% dplyr::select(gs_name, entrez_gene)
       EnrichmentRes_C8 <- clusterProfiler::enricher(
@@ -301,7 +309,7 @@ over_representation_analysis <- function(
   if(enrichments2do$CGP){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$CGP ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
         subcategory = "CGP"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -322,7 +330,7 @@ over_representation_analysis <- function(
   if(enrichments2do$CP){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$CP ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
         subcategory = "CP"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -343,7 +351,7 @@ over_representation_analysis <- function(
   if(enrichments2do$BIOCARTA){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$BIOCARTA ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
         subcategory = "CP:BIOCARTA"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -364,7 +372,7 @@ over_representation_analysis <- function(
   if(enrichments2do$PID){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$PID ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
         subcategory = "CP:PID"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -385,7 +393,7 @@ over_representation_analysis <- function(
   if(enrichments2do$REACTOME){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$REACTOME ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
         subcategory = "CP:REACTOME"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -406,7 +414,7 @@ over_representation_analysis <- function(
   if(enrichments2do$WIKIPATHWAYS){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$WIKIPATHWAYS ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C2",
         subcategory = "CP:WIKIPATHWAYS"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -427,7 +435,7 @@ over_representation_analysis <- function(
   if(enrichments2do$MIRDB){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$MIRDB ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C3",
         subcategory = "MIR:MIRDB"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -448,7 +456,7 @@ over_representation_analysis <- function(
   if(enrichments2do$MIR_Legacy){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$MIR_Legacy ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C3",
         subcategory = "MIR:MIR_Legacy"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -469,7 +477,7 @@ over_representation_analysis <- function(
   if(enrichments2do$GTRD){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$GTRD ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C3",
         subcategory = "TFT:GTRD"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -490,7 +498,7 @@ over_representation_analysis <- function(
   if(enrichments2do$TFT_Legacy){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$TFT_Legacy ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C3",
         subcategory = "TFT:TFT_Legacy"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -511,7 +519,7 @@ over_representation_analysis <- function(
   if(enrichments2do$CGN){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$CGN ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C4",
         subcategory = "CGN"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -532,7 +540,7 @@ over_representation_analysis <- function(
   if(enrichments2do$CM){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$CM ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C4",
         subcategory = "CM"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -553,7 +561,7 @@ over_representation_analysis <- function(
   if(enrichments2do$GO_BP){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$GO_BP ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C5",
         subcategory = "GO:BP"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -574,7 +582,7 @@ over_representation_analysis <- function(
   if(enrichments2do$GO_CC){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$GO_CC ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C5",
         subcategory = "GO:CC"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -595,7 +603,7 @@ over_representation_analysis <- function(
   if(enrichments2do$GO_MF){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$GO_MF ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C5",
         subcategory = "GO:MF"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -616,7 +624,7 @@ over_representation_analysis <- function(
   if(enrichments2do$HPO){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$HPO ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C5",
         subcategory = "HPO"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -637,7 +645,7 @@ over_representation_analysis <- function(
   if(enrichments2do$IMMUNESIGDB){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$IMMUNESIGDB ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C7",
         subcategory = "IMMUNESIGDB"
       ) %>% dplyr::select(gs_name, entrez_gene)
@@ -658,7 +666,7 @@ over_representation_analysis <- function(
   if(enrichments2do$VAX){
 	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$VAX ))){
       genesets4ea <- msigdbr(
-        species = ifelse(input$OrganismChoice == "hsa","Homo sapiens","Mus musculus"),
+        species = species,
         category = "C7",
         subcategory = "VAX"
       ) %>% dplyr::select(gs_name, entrez_gene)
