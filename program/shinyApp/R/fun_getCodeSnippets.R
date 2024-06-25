@@ -44,6 +44,7 @@ selected <- unique(
   if(any(col_selection == "all")){
     stringSelection <- paste0(stringSelection,"\n",
                               'samples_selected <- colnames(assay(res_tmp$data_original))
+                              tmp_data_selected <- res_tmp$data_original[selected,samples_selected]
                               ')
   }else{
     stringSelection <- paste0(stringSelection,
@@ -53,6 +54,7 @@ selected <- unique(
                                 colData(res_tmp$data_original)[,par_tmp$providedSampleAnnotationTypes] %in% par_tmp$sample_selection
                               )]
                               )
+                              tmp_data_selected <- res_tmp$data_original[selected,samples_selected]
                               ')
   }
  # Preprocessing ----
