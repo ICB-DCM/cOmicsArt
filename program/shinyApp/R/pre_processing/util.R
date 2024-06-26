@@ -83,7 +83,7 @@ ln_normalisation <- function(data, omic_type, logarithm_procedure){
 
 
 deseq_processing <- function(
-  data, omic_type, formula_main, formula_sub, session_token, advanced_formula = NULL
+  data, omic_type, formula_main, formula_sub, session_token, batch_correct
 ){
   # Center and scale the data
   # prefilter the data
@@ -125,14 +125,17 @@ deseq_processing <- function(
       )
     
     de_seq_result <- DESeq2::DESeq(dds)
-    res_tmp[[session_token]]$DESeq_obj <<- de_seq_result
+    if (batch_correct){
+      res_tmp[[session_token]]$DESeq_obj_batch_corrected <<- de_seq_result
+    } else {
+      res_tmp[[session_token]]$DESeq_obj <<- de_seq_result
+    }
     dds_vst <- vst(
       object = de_seq_result,
       blind = TRUE
-      )
+    )
     assay(data) <- as.data.frame(assay(dds_vst))
     return(data)
   }
-  addWarning <- "<font color=\"#FF0000\"><b>DESeq makes only sense for transcriptomics data - data treated as if 'filterOnly' was selected!</b></font>"
   return(data)
 }

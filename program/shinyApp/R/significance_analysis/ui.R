@@ -2,6 +2,7 @@ significance_analysis_sidebar_ui<- function(ns){
   sidebarPanel(
     id = "sidebar_significance_analysis",
     h5(" ") %>% helper(type = "markdown", content = "SigAna_Choices"),
+    uiOutput(outputId = ns("UseBatch_ui")),
     uiOutput(outputId = ns("type_of_comparison_ui")),
     uiOutput(outputId = ns("chooseComparisons_ui")),
     # UI to choose test method

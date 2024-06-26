@@ -4,6 +4,7 @@ heatmap_sidebar<- function(ns){
     #########################################
     # Heatmap
     #########################################
+    uiOutput(outputId = ns("UseBatch_ui")),
     uiOutput(outputId = ns("row_selection_options_ui")) %>% helper(type = "markdown", content = "Heatmap_Options"),
     uiOutput(outputId = ns("LFC_toHeatmap_ui")),
     h5("Further row selection (LFC based)") %>% helper(type = "markdown", content = "Heatmap_FurtherOptions"),

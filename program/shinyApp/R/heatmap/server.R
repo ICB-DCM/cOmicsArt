@@ -64,7 +64,16 @@ heatmap_server <- function(id, data, params, updates){
           hide(id = "cluster_rows", anim = T )
         }
       })
-      
+
+      output$UseBatch_ui <- renderUI({
+        req(par_tmp[[session$token]]$BatchColumn != "NULL")
+        selectInput(
+          inputId = ns("UseBatch"),
+          label = "Use batch corrected data?",
+          choices = c("No","Yes"),
+          selected = "No"
+        )
+      })
       
       output$LFC_toHeatmap_ui <-renderUI({
         req(data_input_shiny())
@@ -217,6 +226,7 @@ heatmap_server <- function(id, data, params, updates){
         )
         req(selectedData_processed())
         # update the data
+        useBatch <- ifelse(input$UseBatch == "Yes",T,F)
         data <- update_data(session$token)
         print("Heatmap on selected Data")
         # Value need to be setted in case there is nothing to plot to avoid crash
@@ -234,8 +244,11 @@ heatmap_server <- function(id, data, params, updates){
           input$PreProcessing_Procedure
         )
 
-        ### atm raw data plotted
-        data2Plot <- data$data
+        if(useBatch){
+            data2Plot <- data$data_batch_corrected
+        } else {
+            data2Plot <- data$data
+        }
 
         print(customTitleHeatmap)
         mycolors <- list()
@@ -324,6 +337,7 @@ heatmap_server <- function(id, data, params, updates){
         print(paste0("plot LFC's?",input$LFC_toHeatmap))
         # Dependent to plot raw data or LFC if calculation is needed
         calculate <- 1
+        # TODO: Lea for code snippet?
         # check whether we have to calculate
         # Does not find funtion
         # check <- check_calculations(list(

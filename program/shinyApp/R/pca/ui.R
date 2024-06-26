@@ -6,6 +6,7 @@ pca_sidebar_panel <- function(ns){
     # PCA
     #########################################
     h4("Explorative Analysis") %>% helper(type = "markdown", content = "PCA_Choices"),
+    uiOutput(outputId = ns("UseBatch_ui")),
     ### data selection
     switchInput(
       inputId = ns("data_selection_pca"),

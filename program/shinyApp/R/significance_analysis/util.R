@@ -736,7 +736,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
 
 
 significance_analysis <- function(
-  df, samples, contrasts, method, correction, contrast_level
+  df, samples, contrasts, method, correction, contrast_level, batch_corrected = FALSE
 ){
   # perform significance analysis
   # df: dataframe or matrix with the data
@@ -795,7 +795,7 @@ significance_analysis <- function(
   for(contrast in contrasts){
     # skip if already there
     if(identical(
-      list(test_method = method, test_correction = correction),
+      list(test_method = method, test_correction = correction, batch_corrected=batch_corrected),
       par_tmp[[session$token]]$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]
     )){
       print("Results exists, skipping calculations.")
@@ -839,7 +839,8 @@ significance_analysis <- function(
     res_tmp[[session$token]]$SigAna[[contrast_level]][[names(contrasts)[comp_name]]] <<- res
     par_tmp[[session$token]]$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]  <<- list(
       test_method = method,
-      test_correction = correction
+      test_correction = correction,
+      batch_corrected = batch_corrected
     )
     comp_name <- comp_name + 1
   }

@@ -785,6 +785,20 @@ server <- function(input,output,session){
 # Set Selected Data as Head to allow reiteration of pre-processing
 
 ## UI section ----
+  # Update the batch effect UI based on the available columns
+  output$batch_effect_ui <- renderUI({
+    req(data_input_shiny())
+    column_names <- colnames(colData(res_tmp[[session$token]]$data_original))
+    if (input$PreProcessing_Procedure == "vst_DESeq") {
+      column_names <- column_names[!column_names %in% c(input$DESeq_formula_main, input$DESeq_formula_sub)]
+    }
+    selectInput(
+      inputId = "BatchEffect_Column",
+      label = "Select Batch Effect Column",
+      choices = c("NULL", column_names),
+      selected = "NULL"
+    )
+  })
   output$DESeq_formula_main_ui <- renderUI({
     req(data_input_shiny())
     req(input$PreProcessing_Procedure == "vst_DESeq")
@@ -797,7 +811,7 @@ server <- function(input,output,session){
       choices = c(colnames(colData(tmp_data_selected))),
       multiple = F,
       selected = "condition"
-    )
+    ) %>% helper(type = "markdown", content = "PreProcessing_DESeqMain")
   })
   output$DESeq_formula_sub_ui <- renderUI({
     req(data_input_shiny())
@@ -811,7 +825,7 @@ server <- function(input,output,session){
       choices = c(colnames(colData(tmp_data_selected))),
       multiple = T,
       selected = "condition"
-    )
+    ) %>% helper(type = "markdown", content = "PreProcessing_DESeqSub")
   })
 
 ## Do preprocessing ----  
@@ -830,6 +844,49 @@ server <- function(input,output,session){
     # explicitly set rownames to avoid any errors.
     # new object Created for res_tmp[[session$token]]
     res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data[rownames(res_tmp[[session$token]]$data),]
+    par_tmp[[session$token]]['BatchColumn'] <<- input$BatchEffect_Column
+
+    # Batch correction before preprocessing
+    if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure != "vst_DESeq") {
+      tryCatch({
+        res_tmp[[session$token]]$data_batch_corrected <<- prefiltering(
+          res_tmp[[session$token]]$data,
+          par_tmp[[session$token]]$omic_type
+        )
+        assay(res_tmp[[session$token]]$data_batch_corrected) <<- sva::ComBat(
+          dat = assay(res_tmp[[session$token]]$data_batch_corrected),
+          batch = as.factor(colData(res_tmp[[session$token]]$data_batch_corrected)[,input$BatchEffect_Column])
+        )
+      }, error = function(e){
+        error_modal(
+          e, additional_text = "Batch correction failed. Make sure the batch effect column is correct!"
+        )
+        req(FALSE)
+      })
+    } else if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure == "vst_DESeq"){
+      tryCatch({
+        res_tmp[[session$token]]$data_batch_corrected <<- deseq_processing(
+            data = tmp_data_selected,
+            omic_type = par_tmp[[session$token]]$omic_type,
+            formula_main = input$DESeq_formula_main,
+            formula_sub = c(input$DESeq_formula_sub, input$BatchEffect_Column),
+            session_token = session$token,
+            batch_correct = T
+          )
+      }, error = function(e){
+        error_modal(
+          e, additional_text = paste0(
+            "Batch correction using DESeq failed. Most likely due to linear dependencies ",
+            "in the design matrix (one or more factors informing about another one).",
+            "Make sure the batch effect column is correct and ",
+            "that the design matrix is not singular!"
+            )
+        )
+        req(FALSE)
+      })
+    } else {
+      res_tmp[[session$token]]$data_batch_corrected <<- NULL
+    }
 
     # preprocessing
     print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
@@ -841,7 +898,7 @@ server <- function(input,output,session){
             formula_main = input$DESeq_formula_main,
             formula_sub = input$DESeq_formula_sub,
             session_token = session$token,
-            advanced_formula = ifelse(input$DESeq_show_advanced, input$DESeq_formula_advanced, "")
+            batch_correct = F
           )
       } else {
         res_tmp[[session$token]]$data <<- preprocessing(
@@ -849,6 +906,13 @@ server <- function(input,output,session){
           omic_type = par_tmp[[session$token]]$omic_type,
           procedure = input$PreProcessing_Procedure
         )
+        if (!is.null(res_tmp[[session$token]]$data_batch_corrected)) {
+          res_tmp[[session$token]]$data_batch_corrected <<- preprocessing(
+            data = res_tmp[[session$token]]$data_batch_corrected,
+            omic_type = par_tmp[[session$token]]$omic_type,
+            procedure = input$PreProcessing_Procedure
+          )
+        }
       }
     }, error = function(e){
       error_modal(e)
