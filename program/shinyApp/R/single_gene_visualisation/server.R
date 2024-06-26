@@ -3,6 +3,7 @@ single_gene_visualisation_server <- function(id, data){
     id,
     function(input,output,session){
       ns <- session$ns
+
       # Refresh UI /Data
       observeEvent(input$refreshUI,{
         print("Refresh UI Single Gene")
@@ -225,14 +226,18 @@ single_gene_visualisation_server <- function(id, data){
           }
           # Where to save the plot (needed currently to be global, to be able to be saved)
           res_tmp[[session$token]][["SingleEntVis"]] <<- P_boxplots
-          par_tmp[[session$token]][["SingleEntVis"]] <<- list(
-            SingleEnt_customTitle_boxplot = SingleEnt_customTitle_boxplot,
-            SingleEnt_Select_Gene = input$Select_Gene,
-            SingleEnt_type_of_data_gene = input$type_of_data_gene,
-            SingleEnt_accross_condition = input$accross_condition,
-            SingleEnt_testMethod = testMethod,
-            SingleEnt_GeneData_anno = GeneData$anno
-          )
+
+          #SingleEnt_P_boxplots <- P_boxplots
+          # TODO: Needs to be trimmed down
+          tmp <- getUserReactiveValues(input)
+          par_tmp[[session$token]]$SingleEntVis[names(tmp)] <<- tmp
+
+          par_tmp[[session$token]][["SingleEntVis"]]$SingleEnt_customTitle_boxplot <<- SingleEnt_customTitle_boxplot
+          par_tmp[[session$token]][["SingleEntVis"]]$testMethod <<- testMethod
+          par_tmp[[session$token]][["SingleEntVis"]]$chooseComparisons_list <<- xy.list
+        }else{
+          customTitle_boxplot <- "NoBoxplot"
+
         }
         
         output$getR_Code_SingleEntities <- downloadHandler(
@@ -241,13 +246,12 @@ single_gene_visualisation_server <- function(id, data){
           },
           content = function(file){
             envList <- list(
-              GeneData = GeneData,
-              xy.list=ifelse(exists("xy.list"),xy.list,NA),
-              testMethod=ifelse(exists("testMethod"),testMethod,NA),
-              input=reactiveValuesToList(input),
-              myBreaks=ifelse(exists("myBreaks"),myBreaks,NA),
-              myColor_fill=ifelse(exists("myColor_fill"),myColor_fill,NA)
-            )
+
+              res_tmp = res_tmp[[session$token]],
+              par_tmp = par_tmp[[session$token]]
+              )
+            
+
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
             write(getPlotCode(boxplot_scenario), file.path(temp_directory, "Code.R"))

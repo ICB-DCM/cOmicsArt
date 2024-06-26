@@ -373,6 +373,7 @@ heatmap_server <- function(id, data, params, updates){
               output$Options_selected_out_3 <- renderText("Choose another preprocessing, as there are negative values!")
 
             }else if(doThis_flag){
+
               # getLFC is a custom function -> wrap it in a tryCatch
               tryCatch({
                   Data2Plot <- getLFC(
@@ -384,6 +385,7 @@ heatmap_server <- function(id, data, params, updates){
                 error_modal(e)
                 return(NULL)
               })
+
 
               ## do pheatmap
 
@@ -558,10 +560,18 @@ heatmap_server <- function(id, data, params, updates){
             dir.create(temp_directory)
             
             write(getPlotCode(heatmap_scenario), file.path(temp_directory, "Code.R"))
-            
-            
-            
+
             saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+
+            # also save entitie Selection function
+            #TODO
+            # Needs an extra sourcing to have in correct env - potential fix sourceing module specific functions within module
+            # instead of sourcing all - or having them all gloablly source (like general utils)
+            source("R/heatmap/fun_entitieSelection.R")
+            source("R/fun_LFC.R")
+            save.function.from.env(wanted = c("entitieSelection","getLFCs"),
+                                   file = file.path(temp_directory, "utils.R"))
+
             zip::zip(
               zipfile = file,
               files = dir(temp_directory),
