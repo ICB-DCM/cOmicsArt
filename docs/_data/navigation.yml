@@ -1,0 +1,18 @@
+main:
+  - title: "Welcome"
+    url: "/"
+  - title: "Interface Details"
+    url: "/interface-details/"
+    children:
+      - title: "Pre-processing"
+        url: "/interface-details/pre-processing/"
+      - title: "Sample Preparation"
+        url: "/interface-details/sample-preparation/"
+      - title: "PCA"
+        url: "/interface-details/pca/"
+  - title: "Showcase A"
+    url: "/showcase-a/"
+  - title: "Showcase B"
+    url: "/showcase-b/"
+  - title: "FAQ"
+    url: "/faq/"

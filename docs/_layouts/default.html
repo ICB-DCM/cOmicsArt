@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page.title }}</title>
+  <link rel="stylesheet" href="{{ "/assets/css/style.css" | relative_url }}">
+</head>
+<body>
+  <nav>
+    <ul>
+      {% for item in site.data.navigation.main %}
+        <li>
+          <a href="{{ item.url }}">{{ item.title }}</a>
+          {% if item.children %}
+            <ul>
+              {% for child in item.children %}
+                <li><a href="{{ child.url }}">{{ child.title }}</a></li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </nav>
+  <div>
+    {{ content }}
+  </div>
+</body>
+</html>
