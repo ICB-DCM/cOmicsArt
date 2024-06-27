@@ -384,9 +384,25 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         gene_set_choice = ea_reactives$tmp_genes
       )
       ## Ui section
-      output$OrganismChoice_ui <- renderText(paste0(
-        "The organism you have chosen is ",ea_reactives$organism, "."
-      ))
+      output$OrganismChoice_ui <- renderUI({
+        if (is.null(par_tmp[[session$token]][['organism']])) {
+          selectInput(
+            inputId = ns("organism_choice_ea"),
+            label = "Choose an organism:",
+            choices = c("Mouse genes (GRCm39)", "Human genes (GRCh38.p14)"),
+            selected = "Mouse genes (GRCm39)"
+          )
+        } else if (
+          par_tmp[[session$token]][['organism']] %in% c("Mouse genes (GRCm39)", "Human genes (GRCh38.p14)")
+        ) {
+          paste0("The organism you have chosen is ", ea_reactives$organism, ".")
+        } else {
+          div(
+            style = "color: red;",
+            "Warning: Enrichment analysis currently cannot be done for the given organism."
+          )
+        }
+      })
       output$ORA_or_GSE_ui <- renderUI({
         radioButtons(
           inputId = ns("ORA_or_GSE"),
@@ -404,7 +420,12 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       # refresh the UI/data if needed
       observeEvent(input$refreshUI, {
         ea_reactives$data <- update_data(session$token)$data
-        ea_reactives$organism <- par_tmp[[session$token]]['organism']
+        ea_reactives$organism <- par_tmp[[session$token]][['organism']]
+      })
+      observeEvent(input$organism_choice_ea, {
+        print("!organism choice changed!")
+        par_tmp[[session$token]]['organism'] <<- input$organism_choice_ea
+        ea_reactives$organism <- input$organism_choice_ea
       })
       # UI to choose test correction
       output$AdjustmentMethod_ui <- renderUI({
@@ -611,11 +632,31 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             ctrl_samples_idx <- which(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
             comparison_samples_idx <- which(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
 
-            Data2Plot <- getLFCs(
-              assays(ea_reactives$data)$raw,
-              ctrl_samples_idx,
-              comparison_samples_idx
+            Data2Plot <- tryCatch(
+              {
+                getLFCs(
+                  assays(ea_reactives$data)$raw,
+                  ctrl_samples_idx,
+                  comparison_samples_idx
+                )
+              },
+              error=function(e){
+                showModal(modalDialog(
+                  title = HTML("<font color='red'>An Error occured</font>"),
+                  footer = tagList(
+                    modalButton("Close")
+                  ),
+                  HTML(paste0(
+                    "<font color='red'>Error: ",e$message,"</font><br><br>",
+                    "The Error occured during fold change calculation. ",
+                    "Did you choose the right comparison groups?"
+                  ))
+                ))
+              }
             )
+            if (is.null(Data2Plot)){
+              return(NULL)
+            }
 
             Data2Plot_tmp <- Data2Plot
             if(input$ValueToAttach == "LFC"){
@@ -660,8 +701,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             selectInput(
               inputId = ns("AnnotationSelection"),
               label = "Which annotation are you using?",
-              choices = c("ENSEMBL", "ENTREZID", "SYMBOL"),
-              selected="ENTREZID",
+              choices = c("ensembl_gene_id", "external_gene_name", "entrezgene_id"),
+              selected="entrezgene_id",
               multiple = F
             ),
             actionButton(inputId = ns("AMC"), label = "Proceed"),
@@ -737,7 +778,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
                 ))
               ))
             }
-            )
+          )
         })
         # start the analysis if ea_reactives$can_start == TRUE
         observeEvent(ea_reactives$can_start, {
