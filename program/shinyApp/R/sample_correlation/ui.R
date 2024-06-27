@@ -8,13 +8,13 @@ sampleCorrelation_sidebar_panel <- function(ns){
       choices = c("pearson", "kendall", "spearman"),
       selected = "pearson"
     ),
-    uiOutput(outputId = ns("SampleAnnotationChoice_ui")),
     actionButton(
       inputId = ns("Do_SampleCorrelation"),
       label = "Get Sample Correlation",
       icon("fas fa-laptop-code")
     ),
-    hr(style = "border-top: 1px solid #000000;")
+    hr(style = "border-top: 1px solid #000000;"),
+    uiOutput(outputId = ns("SampleAnnotationChoice_ui"))
   )
 }
 
