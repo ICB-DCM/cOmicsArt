@@ -1,6 +1,6 @@
 ---
-title: "PCA"
+title: "Heatmap"
 layout: default
 parent: Interface Details
-nav_order: 5
+nav_order: 6
 ---

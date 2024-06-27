@@ -1,6 +1,6 @@
 ---
-title: "PCA"
+title: "Significance Analysis"
 layout: default
 parent: Interface Details
-nav_order: 5
+nav_order: 4
 ---

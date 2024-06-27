@@ -1,8 +1,6 @@
 ---
 title: "Pre-processing"
 layout: default
+parent: Interface Details
+nav_order: 2
 ---
-
-# Pre-processing
-
-Information on pre-processing.
