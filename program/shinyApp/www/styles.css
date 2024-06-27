@@ -1,0 +1,41 @@
+body {
+    background-color: #f8f7fa;
+}
+body, label, input, button, select, h4, h3, h2 {
+    color: #3b3b3b;
+}
+.tabbable > .nav > li > a {
+    background-color: #dedede;
+    color: black
+}
+.tabbable > .nav > li[class=active] > a {
+    background-color: #7a7e80; color:black
+}
+.custom-modal .modal-dialog {
+    width: 90%;
+    max-width: 90%;
+}
+#sidebar_data_selection {
+    background-color: #70BF4F47;
+}
+#sidebar_pre_processing {
+    background-color: #3897F147;
+}
+#sidebar_sampleCorrelation {
+    background-color: #A208BA35;
+}
+#sidebar_pca {
+    background-color: #FD8D3347;
+}
+#sidebar_significance_analysis {
+    background-color: #FFD33547;
+}
+#sidebar_heatmap {
+    background-color: #70BF4F47;
+}
+#sidebar_single_gene_visualisation {
+    background-color: #3897F147;
+}
+#sidebar_enrichment_analysis {
+    background-color: #A208BA35;
+}
