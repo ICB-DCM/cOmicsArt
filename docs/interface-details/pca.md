@@ -8,3 +8,5 @@ nav_order: 5
 # Principle Component Analysis (PCA)
 
 # PCA Background
+
+# Reactive options
