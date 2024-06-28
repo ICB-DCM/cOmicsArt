@@ -1,0 +1,24 @@
+/* assets/css/style.css */
+
+body {
+    font-family: 'Open Sans', sans-serif;
+}
+
+/* Customize the header */
+header {
+    display: flex;
+    align-items: center; /* Center items vertically */
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+
+/* Style the logo */
+header .logo img {
+    width: 150px; /* Increase the width */
+    height: auto; /* Maintain aspect ratio */
+}
+
+header h1 {
+    margin: 10;
+    font-size: 2em; /* Increase font size for the title */
+}
