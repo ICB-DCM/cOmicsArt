@@ -21,6 +21,6 @@ jobs:
 
     - name: Test if Shiny app starts
       run: |
-        Rscript -e "shiny::runApp('path_to_your_app_directory', launch.browser = FALSE, port = 3838)"
+        Rscript -e "shiny::runApp('program/shinyApp', launch.browser = FALSE, port = 3838)"
         sleep 10  # Sleep for 10 seconds to ensure the app has time to start
         curl http://localhost:3838
