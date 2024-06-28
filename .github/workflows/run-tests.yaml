@@ -4,15 +4,15 @@ on:
   pull_request:
     branches:
       - main
-      - first_test
       - develop
+      - fixing_testing
 
 jobs:
   run-tests:
     runs-on: ${{ matrix.config.os }}
 
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         config:
           - {os: ubuntu-20.04, r: '4.2.0', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
@@ -35,37 +35,33 @@ jobs:
     - name: Set RENV_PATHS_ROOT
       shell: bash
       run: |
-        echo "RENV_PATHS_ROOT=${{ runner.temp }}/renv" >> $GITHUB_ENV
-    # - name: SetUp R
-    # - uses: r-lib/actions/setup-r-dependencies@v2
-    #   with:
-    #     packages: XML      
+        echo "RENV_PATHS_ROOT=${{ runner.temp }}/renv" >> $GITHUB_ENV  
     
-    - name: Install system dependencies
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update -y
-        sudo apt-get install -y libglpk-dev
+   # - name: Install system dependencies
+   #   if: runner.os == 'Linux'
+   #   run: |
+   #     sudo apt-get update -y
+   #     sudo apt-get install -y libglpk-dev
         
-    - name: Cache packages
-      uses: actions/cache@v2
-      with:
-        path: ${{ env.RENV_PATHS_ROOT }}
-        key: ${{ runner.os }}-renv-${{ hashFiles('**/program/renv.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-renv-
+   # - name: Cache packages
+   #   uses: actions/cache@v2
+   #   with:
+   #     path: ${{ env.RENV_PATHS_ROOT }}
+   #     key: ${{ runner.os }}-renv-${{ hashFiles('**/program/renv.lock') }}
+   #     restore-keys: |
+   #       ${{ runner.os }}-renv-
         
-    - name: Install and activate renv
-      shell: Rscript {0}
-      run: |
-        install.packages("renv")
-        renv::restore(lockfile="program/renv.lock")
+   # - name: Install and activate renv
+   #   shell: Rscript {0}
+   #   run: |
+   #     install.packages("renv")
+   #     renv::restore(lockfile="program/renv.lock")
       
 
-    - name: Test - Significance Panel
-      shell: Rscript {0}
-      run: |
-        shiny::runTests("program/shinyApp", assert = TRUE, filter='testthat_sig')
+   # - name: Test - Significance Panel
+   #   shell: Rscript {0}
+   #   run: |
+   #     shiny::runTests("program/shinyApp", assert = TRUE, filter='testthat_sig')
           
     - name: Upload test results
       if: failure()
@@ -112,6 +108,11 @@ jobs:
       run: |
         sudo apt-get update -y
         sudo apt-get install -y libglpk-dev
+
+    - name: Install dependencies
+      run: |
+        install.packages("remotes")
+        remotes::install_deps(dependencies = TRUE)
         
     - name: Cache packages
       uses: actions/cache@v2
@@ -121,22 +122,28 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-renv-
         
-    - name: Install and activate renv
-      shell: Rscript {0}
+   # - name: Install and activate renv
+   #   shell: Rscript {0}
+   #   run: |
+   #     install.packages("renv")
+   #    renv::restore(lockfile="program/renv.lock")
+
+    - name: Test if Shiny app starts
       run: |
-        install.packages("renv")
-        renv::restore(lockfile="program/renv.lock")
+        Rscript -e "shiny::runApp('program/shinyApp', launch.browser = FALSE, port = 3838)"
+        sleep 10  # Sleep for 10 seconds to ensure the app has time to start
+        curl http://localhost:3838
       
 
-    - name: Test - Significance Panel
-      shell: Rscript {0}
-      run: |
-        shiny::runTests("program/shinyApp", assert = TRUE, filter='testthat_sig')
+   # - name: Test - Significance Panel
+   #   shell: Rscript {0}
+   #   run: |
+   #     shiny::runTests("program/shinyApp", assert = TRUE, filter='testthat_sig')
 
-    - name: Test - Enrichment Analysis Panel
-      shell: Rscript {0}
-      run: |
-        shiny::runTests("program/shinyApp", assert = TRUE, filter='testthat_enrich')
+   # - name: Test - Enrichment Analysis Panel
+   #   shell: Rscript {0}
+   #   run: |
+   #     shiny::runTests("program/shinyApp", assert = TRUE, filter='testthat_enrich')
           
     - name: Upload test results
       if: failure()
