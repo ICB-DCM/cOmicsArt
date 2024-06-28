@@ -16,14 +16,16 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libsqlite3-dev libglu1-mesa-dev default-jdk libmagick++-dev
-
+        sudo apt install curl
+        
     # - name: Cache packages
-    #   uses: actions/cache@v2
-    #   with:
-    #     path: ${{ env.RENV_PATHS_ROOT }}
-    #     key: ${{ runner.os }}-renv-${{ hashFiles('**/renv.lock') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-renv-
+      uses: actions/cache@v2
+      with:
+        path: ${{ env.RENV_PATHS_ROOT }}
+        key: ${{ runner.os }}-renv-${{ hashFiles('**/renv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-renv-
+          
     - uses: r-lib/actions/setup-renv@v2
     
     - name: Restore packages
