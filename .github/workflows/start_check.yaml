@@ -14,7 +14,9 @@ jobs:
     - uses: r-lib/actions/setup-renv@v2
     
     - name: Install system dependencies
-      run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libsqlite3-dev libglu1-mesa-dev default-jdk libmagick++-dev
 
     - name: Cache packages
       uses: actions/cache@v2
@@ -22,9 +24,8 @@ jobs:
         path: ${{ env.RENV_PATHS_ROOT }}
         key: ${{ runner.os }}-renv-${{ hashFiles('**/renv.lock') }}
         restore-keys: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libsqlite3-dev libglu1-mesa-dev default-jdk libmagick++-dev
-    
+          ${{ runner.os }}-renv-
+
     - name: Restore packages
       shell: Rscript {0}
       run: |
