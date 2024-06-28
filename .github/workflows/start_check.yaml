@@ -1,0 +1,25 @@
+name: Test Shiny App Startup
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+
+    - name: Set up R environment
+      uses: r-lib/actions/setup-r@v2
+
+    - name: Install dependencies
+      run: |
+        install.packages("remotes")
+        remotes::install_deps(dependencies = TRUE)
+
+    - name: Test if Shiny app starts
+      run: |
+        Rscript -e "shiny::runApp('path_to_your_app_directory', launch.browser = FALSE, port = 3838)"
+        sleep 10  # Sleep for 10 seconds to ensure the app has time to start
+        curl http://localhost:3838
