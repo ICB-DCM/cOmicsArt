@@ -21,6 +21,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        cd docs/
         bundle install
         bundle exec jekyll build
 
