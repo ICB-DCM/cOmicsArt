@@ -24,3 +24,4 @@ nav_order: 10
 
 For structure reason please ensure that children pages get placed in a folder
 which name is **exactly** the same name as the parent page.
+test
