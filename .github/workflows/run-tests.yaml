@@ -1,6 +1,9 @@
 name: Welcome_To_Shiny_Testing
 
 on:
+  push:
+    branches:
+      - fixing_testing
   pull_request:
     branches:
       - main
