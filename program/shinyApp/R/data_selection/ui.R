@@ -173,7 +173,7 @@ data_selection_main_panel <- mainPanel(
     label = "Start the Journey",
     width = "100%",
     icon = icon('rocket'),
-    style = "color: #fffff; background-color: #EC001447; border-color: #000000"
+    style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
   ),
   # hidden button
   hidden(actionButton(
