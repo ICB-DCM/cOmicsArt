@@ -906,6 +906,8 @@ server <- function(input,output,session){
         "<br","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(res_tmp[[session$token]]$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
+    output$raw_violin_plot <- renderPlot({violin_plot(res_tmp[[session$token]]$data_original, color_by = input$violin_color)})
+    output$preprocessed_violin_plot <- renderPlot({violin_plot(res_tmp[[session$token]]$data, color_by = input$violin_color)})
     return("Pre-Processing successfully")
   })
   
@@ -939,7 +941,18 @@ server <- function(input,output,session){
       )
     )
   })
-  
+
+  # render plots and ui Parts
+  output$violin_plot_color_ui <- renderUI({
+    req(selectedData())
+    selectInput(
+      inputId = "violin_color",
+      label = "Color the violin plot by:",
+      choices = c(colnames(colData(res_tmp[[session$token]]$data_original))),
+      selected = c(colnames(colData(res_tmp[[session$token]]$data_original)))[1],
+      multiple = F
+    )
+  })
   output$debug <- renderText(dim(res_tmp[[session$token]]$data))
 
   # Sample Correlation ----
