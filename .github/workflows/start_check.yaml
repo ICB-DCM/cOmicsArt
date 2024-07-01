@@ -7,8 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RENV_PATHS_ROOT: ~/.cache/R/renv
-      container:
-      image: rstudio/r-base:4.4.1
       
     steps:
     - uses: actions/checkout@v3
