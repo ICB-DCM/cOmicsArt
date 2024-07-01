@@ -59,10 +59,14 @@ sample_correlation_server <- function(id, data, params){
             output$SampleCorr_Info <- renderText(
               "Correlation Matrix successfully computed."
             )
-            cormat <- cor(
-              x = as.matrix(assay(data$data)),
-              method = input$corrMethod
-            )
+            if(input$corrMethod == "kendall"){
+              cormat <- pcaPP::cor.fk(x = as.matrix(assay(data$data)))
+            } else {
+              cormat <- cor(
+                x = as.matrix(assay(data$data)),
+                method = input$corrMethod
+              )
+            }
           } else if (check == "Result exists"){
             output$SampleCorr_Info <- renderText(
               "Correlation Matrix was already computed, reusing."
@@ -72,10 +76,14 @@ sample_correlation_server <- function(id, data, params){
             output$SampleCorr_Info <- renderText(
               "Correlation Matrix result overwritten with different parameters."
             )
-            cormat <- cor(
-              x = as.matrix(assay(data$data)),
-              method = input$corrMethod
-            )
+            if(input$corrMethod == "kendall"){
+              cormat <- pcaPP::cor.fk(x = as.matrix(assay(data$data)))
+            } else {
+              cormat <- cor(
+                x = as.matrix(assay(data$data)),
+                method = input$corrMethod
+              )
+            }
           }
         }, error = function(e){
           error_modal(e)
