@@ -189,15 +189,6 @@ ui <- shiny::fluidPage(
     class = "btn-secondary"
     )
   ),
-  # Guide currently not working
-  # div(
-  #   style = "display:inline-block; float:right",
-  #   actionButton(
-  #   inputId = "guide",
-  #   label = "Guide me!",
-  #   class = "btn-secondary"
-  #   )
-  # ),
   hidden(selectInput(
     "element",
     label = "PrideMonth?",

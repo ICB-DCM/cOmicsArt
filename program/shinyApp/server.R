@@ -12,15 +12,6 @@ server <- function(input,output,session){
 # Security section ----
   options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
 
-  observeEvent(input$guide_cicerone_next,{
-    # triggers but guide is detached
-    if(input$guide_cicerone_next$highlighted == "mainPanel_DataSelection"){
-      print("Here will be now automatically data uploaded ")
-    }else{
-      print("Mööp")
-    }
-  })
-
   #### Clean Up
   # create www folder if not present
   if(dir.exists("www")){
@@ -36,12 +27,6 @@ server <- function(input,output,session){
     setwd("..")
   }
   observe_helpers()
-
-# Guide ----
-  observeEvent(input$guide, {
-    print("Jip")
-    guide$init()$start()
-  })
   
   
 # Download Report pdf ----
