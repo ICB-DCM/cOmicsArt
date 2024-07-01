@@ -10,7 +10,7 @@ gene_set_enrichment <- function(
   sorting
 ){
   # assign the correct names to geneSetChoice
-  names(geneSetChoice) <- rowData(data)[["ENTREZID"]]
+  names(geneSetChoice) <- rowData(data)[["entrezgene_id"]]
   geneSetChoice <- sort(geneSetChoice,decreasing = T)
   # remove duplicate entries (keep the one highest in list)
   geneSetChoice <- geneSetChoice[!duplicated(names(geneSetChoice))]

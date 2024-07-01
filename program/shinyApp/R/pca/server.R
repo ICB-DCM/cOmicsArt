@@ -323,8 +323,9 @@ pca_Server <- function(id, data, params, row_select){
           pca_reactives$df_loadings <- df_loadings
 
           # assign res_temp
-          res_tmp[[session$token]][["PCA"]] <<- list(pca)
+          res_tmp[[session$token]][["PCA"]] <<- pca
           # assign par_temp as empty list
+          ## TODO I think this can be removed
           par_tmp[[session$token]][["PCA"]] <<- list(
             sample_selection_pca = input$sample_selection_pca,
             SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca,
@@ -481,20 +482,23 @@ pca_Server <- function(id, data, params, row_select){
           customTitle <- "PCA"
         }
 
+        tmp <- getUserReactiveValues(input)
+        par_tmp[[session$token]]$PCA[names(tmp)] <<- tmp
+        par_tmp[[session$token]]$PCA$colorTheme <<- colorTheme
+
+
         output$getR_Code_PCA <- downloadHandler(
           filename = function(){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
             envList <- list(
-              pcaData = pcaData,
-              input = reactiveValuesToList(input),
-              global_ID = pcaData$global_ID,
-              chosenAnno = pcaData$chosenAnno,
-              percentVar = percentVar,
-              customTitle = customTitle,
-              colorTheme = colorTheme
+
+              res_tmp = res_tmp[[session$token]],
+              par_tmp = par_tmp[[session$token]]
             )
+
+
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
             write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
@@ -560,12 +564,20 @@ pca_Server <- function(id, data, params, row_select){
           pca_reactives$Scree_customTitle <- "ScreePlot"
         }
         
+        tmp <- getUserReactiveValues(input)
+        par_tmp[[session$token]]$PCA[names(tmp)] <<- tmp
+
         output$getR_Code_Scree_Plot <- downloadHandler(
           filename = function(){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
-            envList <- list(var_explained_df = var_explained_df)
+
+            envList <- list(
+              res_tmp = res_tmp[[session$token]],
+              par_tmp = par_tmp[[session$token]]
+            )
+
 
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
@@ -625,14 +637,19 @@ pca_Server <- function(id, data, params, row_select){
         pca_reactives$Loadings_topSlider <- input$topSlider
         pca_reactives$Loadings_plot <- plotOut
 
+        tmp <- getUserReactiveValues(input)
+        par_tmp[[session$token]]$PCA[names(tmp)] <<- tmp
+
         output$getR_Code_Loadings <- downloadHandler(
           filename = function(){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
             envList <- list(
-              LoadingsDF = LoadingsDF,
-              input = reactiveValuesToList(input)
+
+              res_tmp = res_tmp[[session$token]],
+              par_tmp = par_tmp[[session$token]]
+
             )
 
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
@@ -694,18 +711,23 @@ pca_Server <- function(id, data, params, row_select){
           ) +
           labs(x = "PCs", y = "entity", fill = "Loading") +
           theme_bw(base_size = 15)
-        scenario <- 19
+        scenario <- 8.1
         #Loading_scenario <- scenario
         output[["PCA_Loadings_matrix_plot"]] <- renderPlot({LoadingsMatrix})
-        
+
+        tmp <- getUserReactiveValues(input)
+        par_tmp[[session$token]]$PCA[names(tmp)] <<- tmp
+
         output$getR_Code_Loadings_matrix <- downloadHandler(
           filename = function(){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
             envList <- list(
-              LoadingsDF = df_loadings,
-              input = reactiveValuesToList(input)
+
+              res_tmp = res_tmp[[session$token]],
+              par_tmp = par_tmp[[session$token]]
+
             )
             
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))

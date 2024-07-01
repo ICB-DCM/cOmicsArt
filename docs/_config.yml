@@ -1,0 +1,21 @@
+# _config.yml
+
+title: cOmicsART Documentation
+logo: "/assets/images/Logo_cOmicsArt.svg"  # Update to the new image file path
+description: Here you find all the information you need to use cOmicsART
+#theme: just-the-docs
+remote_theme: just-the-docs/just-the-docs
+
+# Include custom CSS
+just_the_docs:
+  auxiliary_stylesheets:
+    - /assets/css/style.css
+
+# Collections and plugins
+collections:
+  pages:
+    output: true
+    permalink: /:collection/:name/
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag

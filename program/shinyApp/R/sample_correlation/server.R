@@ -137,14 +137,13 @@ sample_correlation_server <- function(id, data, params){
           if(nchar(customTitleSampleCorrelation) >= 250){
             customTitleSampleCorrelation <- "SampleCorrelation"
           }
-          par_tmp[[session$token]][["SampleCorr"]] <<- list(
-            customTitleSampleCorrelation = customTitleSampleCorrelation,
-            SampleCorrelationPlot_final = SampleCorrelationPlot_final,
-            cormat = cormat,
-            annotationDF = annotationDF,
-            anno_colors = anno_colors,
-            sampleCorrelation_scenario = sampleCorrelation_scenario
-          )
+
+          tmp <- getUserReactiveValues(input)
+          par_tmp[[session$token]]$SampleCorr[names(tmp)] <<- tmp
+          par_tmp[[session$token]]$SampleCorr$customTitleSampleCorrelation <<- customTitleSampleCorrelation
+          par_tmp[[session$token]]$SampleCorr$annotationDF <<- as.data.frame(annotationDF)
+          par_tmp[[session$token]]$SampleCorr$anno_colors <<- anno_colors
+
         }
       })
       
@@ -153,16 +152,17 @@ sample_correlation_server <- function(id, data, params){
         filename = function(){ paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")},
         content = function(file){
           envList <- list(
-            cormat = ifelse(exists("cormat"),par_tmp[[session$token]][["SampleCorr"]]$cormat,NA),
-            annotationDF = ifelse(exists("annotationDF"),par_tmp[[session$token]][["SampleCorr"]]$annotationDF,NA),
-            customTitleSampleCorrelation = ifelse(exists("customTitleSampleCorrelation"),par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation,NA),
-            anno_colors = ifelse(exists("anno_colors"),par_tmp[[session$token]][["SampleCorr"]]$anno_colors,NA)
+
+            res_tmp = res_tmp[[session$token]],
+            par_tmp = par_tmp[[session$token]]
+
           )
           
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
+          sampleCorrelation_scenario <- 18
 
-          write(getPlotCode(par_tmp[[session$token]][["SampleCorr"]]$sampleCorrelation_scenario), file.path(temp_directory, "Code.R"))
+          write(getPlotCode(sampleCorrelation_scenario), file.path(temp_directory, "Code.R"))
           
           saveRDS(envList, file.path(temp_directory, "Data.RDS"))
           zip::zip(

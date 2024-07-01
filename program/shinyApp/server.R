@@ -732,6 +732,11 @@ server <- function(input,output,session){
   selectedData <- reactive({
     shiny::req(input$row_selection, input$sample_selection)
     par_tmp[[session$token]][["row_selection"]] <<- input$row_selection
+
+    par_tmp[[session$token]][["sample_selection"]] <<- input$sample_selection
+    par_tmp[[session$token]][["providedRowAnnotationTypes"]] <<- input$providedRowAnnotationTypes
+    print("Alright do Row selection")
+
     selected <- c()
 
     if(any(input$row_selection == "all")){
@@ -1046,7 +1051,6 @@ server <- function(input,output,session){
     id = 'single_gene_visualisation',
     data = res_tmp[[session$token]]
   )
-
 
   # Enrichment Analysis ----
   enrichment_analysis_Server(
