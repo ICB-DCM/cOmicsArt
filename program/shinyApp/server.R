@@ -973,7 +973,6 @@ server <- function(input,output,session){
         "<br","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(res_tmp[[session$token]]$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
-    browser()
     return("Pre-Processing successfully")
   })
   

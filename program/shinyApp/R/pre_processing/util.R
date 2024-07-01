@@ -114,7 +114,6 @@ deseq_processing <- function(
       par_tmp[[session_token]][["DESeq_factors"]] <<- c(formula_main)
     }
     print(design_formula)
-    par_tmp[[session_token]]["DESeq_formula"] <<- design_formula
     # on purpose local
     print(colData(data)[,formula_main])
 
@@ -127,8 +126,10 @@ deseq_processing <- function(
     de_seq_result <- DESeq2::DESeq(dds)
     if (batch_correct){
       res_tmp[[session_token]]$DESeq_obj_batch_corrected <<- de_seq_result
+      par_tmp[[session_token]]["DESeq_formula"] <<- design_formula
     } else {
       res_tmp[[session_token]]$DESeq_obj <<- de_seq_result
+      par_tmp[[session_token]]["DESeq_formula_batch"] <<- design_formula
     }
     dds_vst <- vst(
       object = de_seq_result,
