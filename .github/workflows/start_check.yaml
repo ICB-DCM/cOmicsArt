@@ -58,8 +58,9 @@ jobs:
 
     - name: Test if Shiny app starts
       timeout-minutes: 2
+      shell: Rscript {0}
       run: |
-        install.packages("processx")
+        install.packages('processx')
         library(processx)
         
         execute_shiny_app <- function() {
