@@ -26,8 +26,6 @@ jobs:
       with:
         path: ${{ env.RENV_PATHS_ROOT }}
         key: ${{ runner.os }}-renv-${{ hashFiles('**/renv.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-renv-
 
     - name: Setup renv
       uses: r-lib/actions/setup-renv@v2
