@@ -802,7 +802,7 @@ server <- function(input,output,session){
       choices = c(colnames(colData(tmp_data_selected))),
       multiple = F,
       selected = "condition"
-    )
+    ) %>% helper(type = "markdown", content = "PreProcessing_DESeqMain")
   })
   output$DESeq_formula_sub_ui <- renderUI({
     req(data_input_shiny())

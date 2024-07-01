@@ -157,12 +157,20 @@ significance_analysis_server <- function(id, data, params){
         # require current plot and upset matrix
         req(sig_ana_reactive$plot_last)
         choices <- append("None", sig_ana_reactive$intersect_names)
-        selectInput(
-          inputId = ns("intersection_high"),
-          label = "Intersections to highlight",
-          choices = choices,
-          multiple = T,
-          selected = input$intersection_high
+        div(
+          selectInput(
+            inputId = ns("intersection_high"),
+            label = "Intersections to highlight",
+            choices = choices,
+            multiple = T,
+            selected = input$intersection_high
+          ) %>% helper(type = "markdown", content = "SigAna_Intersections"),
+          # Download highlighted intersections as table
+          downloadButton(
+            outputId = ns("downloadIntersections"),
+            label = "Download Intersections",
+            class = "btn-info"
+          )
         )
       })
       # keep updating the info panel while executing
