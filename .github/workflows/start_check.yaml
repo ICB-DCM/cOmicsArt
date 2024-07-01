@@ -46,3 +46,4 @@ jobs:
       timeout-minutes: 2
       run: |
         Rscript -e "shiny::runApp('program/shinyApp', launch.browser = FALSE, port = 3838)"
+        Rscript -e "shiny::stopApp()"
