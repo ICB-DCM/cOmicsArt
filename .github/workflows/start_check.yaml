@@ -9,7 +9,7 @@ jobs:
       RENV_PATHS_ROOT: ~/.cache/R/renv
       
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
     
     - uses: r-lib/actions/setup-r@v3
       with:
