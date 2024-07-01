@@ -30,7 +30,7 @@ jobs:
           ${{ runner.os }}-renv-
 
     - name: Setup renv
-    - uses: r-lib/actions/setup-renv@v2
+      uses: r-lib/actions/setup-renv@v2
     
 #   - name: Restore packages
 #      shell: Rscript {0}
