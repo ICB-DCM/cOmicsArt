@@ -789,13 +789,16 @@ server <- function(input,output,session){
   output$batch_effect_ui <- renderUI({
     req(data_input_shiny())
     column_names <- colnames(colData(res_tmp[[session$token]]$data_original))
+    filtered_column_names <- column_names[sapply(column_names, function(col) {
+      length(unique(colData(res_tmp[[session$token]]$data_original)[[col]])) < nrow(colData(res_tmp[[session$token]]$data_original))
+    })]
     if (input$PreProcessing_Procedure == "vst_DESeq") {
-      column_names <- column_names[!column_names %in% c(input$DESeq_formula_main, input$DESeq_formula_sub)]
+      filtered_column_names <- filtered_column_names[!filtered_column_names %in% c(input$DESeq_formula_main, input$DESeq_formula_sub)]
     }
     selectInput(
       inputId = "BatchEffect_Column",
       label = "Select Batch Effect Column",
-      choices = c("NULL", column_names),
+      choices = c("NULL", filtered_column_names),
       selected = "NULL"
     )
   })
@@ -965,6 +968,7 @@ server <- function(input,output,session){
         "<br","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(res_tmp[[session$token]]$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
+    browser()
     return("Pre-Processing successfully")
   })
   
