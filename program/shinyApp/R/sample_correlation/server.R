@@ -34,6 +34,7 @@ sample_correlation_server <- function(id, data, params){
       observeEvent(toListen2CorrelationPlot(),{
         req(selectedData_processed())
         req(input$SampleAnnotationChoice)
+        req(input$Do_SampleCorrelation > 0)
         # update the data if needed
         data <- update_data(session$token)
         # set the counter to 0 to prevent any further plotting
