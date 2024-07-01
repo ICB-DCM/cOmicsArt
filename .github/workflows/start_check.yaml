@@ -39,8 +39,8 @@ jobs:
 #        renv::restore()
 
     - name: test specific packages
-        run: |
-          Rscript -e 'install.packages("Rcpp")'
+      run: |
+        Rscript -e 'install.packages("Rcpp")'
           Rscript -e 'install.packages("RcppArmadillo")'
           Rscript -e 'install.packages("DESeq2")'
 
