@@ -995,6 +995,14 @@ server <- function(input,output,session){
         ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),input$PreProcessing_Procedure)
       )
     )
+    if(input$BatchEffect_Column != "NULL"){
+      fun_LogIt(
+        message = paste0(
+          "**PreProcessing** - Batch Effect Correction: ",
+          input$BatchEffect_Column
+        )
+      )
+    }
     fun_LogIt(
       message = paste0(
         "**PreProcessing** - The resulting dimensions are: ",
