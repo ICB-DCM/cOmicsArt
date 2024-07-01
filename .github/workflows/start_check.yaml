@@ -59,5 +59,40 @@ jobs:
     - name: Test if Shiny app starts
       timeout-minutes: 2
       run: |
-        nohup Rscript -e "shiny::runApp('program/shinyApp', launch.browser = FALSE, port = 3838)" &
-        sleep 15
+        install.packages("processx")
+        library(processx)
+        
+        execute_shiny_app <- function() {
+          tryCatch(
+            {
+              # Start the Shiny app in a separate process
+              app_process <- process$new(
+                "Rscript",
+                c("-e", "shiny::runApp('program/shinyApp', launch.browser = FALSE, port = 3838)"),
+                stdout = "|", stderr = "|"
+              )
+              
+              # Wait for a few seconds to allow the app to start
+              Sys.sleep(15)
+              
+              # Check if the process is still running
+              if (app_process$is_alive()) {
+                # Terminate the app if it started successfully
+                app_process$kill()
+                return("Success")
+              } else {
+                # Capture and return the error message if the app failed to start
+                error_message <- app_process$read_error()
+                return(paste("Error:", error_message))
+              }
+            },
+            error = function(e) {
+              return(paste("Error:", e$message))
+            }
+          )
+        }
+        
+        
+        result <- execute_shiny_app()
+        print(result)
+
