@@ -46,7 +46,8 @@ sample_correlation_server <- function(id, data, params){
         
         if(sample_corr_reactive$calculate == 1){
           # update the data if needed
-          useBatch <- ifelse(input$UseBatch == "Yes",T,F)
+          useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
+          browser()
           data <- update_data(session$token)
           if(useBatch){
               data <- data$data_batch_corrected

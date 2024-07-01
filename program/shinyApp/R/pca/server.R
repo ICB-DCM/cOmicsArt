@@ -147,7 +147,7 @@ pca_Server <- function(id, data, params, row_select){
         check <- check_calculations(list(
           sample_selection_pca = input$sample_selection_pca,
           SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca,
-          batch = ifelse(input$UseBatch == "Yes",T,F)
+          batch = ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
         ), "PCA")
         if (check == "No Result yet"){
           output$PCA_Info <- renderText("PCA computed.")
@@ -185,7 +185,7 @@ pca_Server <- function(id, data, params, row_select){
         # only calculate PCA, Score and Loadings if the counter is >= 0
         if(pca_reactives$calculate >= 0){
           # update the data
-          useBatch <- ifelse(input$UseBatch == "Yes",T,F)
+          useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
           data2plot <- update_data(session$token)
           # select the neccesary data
           if(input$data_selection_pca){

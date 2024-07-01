@@ -11,10 +11,14 @@ single_gene_visualisation_server <- function(id, data){
         ## Ui section ----
         output$type_of_data_gene_ui <- renderUI({
           req(data_input_shiny())
+          options = c("raw","preprocessed")
+          if(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes"){
+            options <- c("raw","preprocessed","batch_corrected_preprocessed")
+          }
           selectInput(
             inputId = ns("type_of_data_gene"),
             label = "Choose Data to use (in case of DESeq- vst normalized counts are used)",
-            choices = c("raw","preprocessed", "batch_corrected_preprocessed"),
+            choices = options,
             multiple = F ,
             selected = "preprocessed"
           )

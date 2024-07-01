@@ -200,7 +200,7 @@ significance_analysis_server <- function(id, data, params){
         print("Start the Significance Analysis")
         # update the data if needed
         data <- update_data(session$token)
-        useBatch <- ifelse(input$UseBatch == "Yes",T,F)
+        useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
         if(useBatch){
             data_calculate <- data$data_batch_corrected
         } else {

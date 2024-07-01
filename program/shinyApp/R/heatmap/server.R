@@ -226,7 +226,7 @@ heatmap_server <- function(id, data, params, updates){
         )
         req(selectedData_processed())
         # update the data
-        useBatch <- ifelse(input$UseBatch == "Yes",T,F)
+        useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
         data <- update_data(session$token)
         print("Heatmap on selected Data")
         # Value need to be setted in case there is nothing to plot to avoid crash
