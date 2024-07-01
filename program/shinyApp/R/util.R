@@ -202,7 +202,7 @@ violin_plot <- function(data, color_by){
   # create a violin plot based on the provided summarized experiment. Colors by
   # the provided color_by column and returns the plot
   data_frame <- as.data.frame(assay(data))
-  data_frame <- melt(data_frame, variable.name="Sample", value.name="Counts")
+  data_frame <- reshape2::melt(data_frame, variable.name="Sample", value.name="Counts")
   data_frame <- merge(data_frame, colData(data), by.x = "Sample", by.y = "row.names")
   plot2return <- ggplot(data_frame, aes(x = Sample, y = Counts, fill = data_frame[[color_by]])) +
     geom_violin(trim = T, color = "black") +
