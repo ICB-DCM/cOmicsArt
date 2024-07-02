@@ -91,10 +91,13 @@ server <- function(input,output,session){
     par_tmp[[session$token]] <<- NULL
     # delete the folder with the session token
     if(dir.exists(paste0("www/",session$token))){
-      setwd(paste0("www/",session$token))
-      file.remove(list.files(path="."))
-      setwd("..")
-      dir.remove(paste0("www/",session$token))
+      # Remove the directory and its contents
+      unlink(paste0("www/",session$token), recursive = TRUE)
+      if (!dir.exists(paste0("www/",session$token))) {
+        cat("The directory has been successfully removed.\n")
+      } else {
+        cat("The directory could not be removed.\n")
+      }
     }
   })
 # Init update Object ----
