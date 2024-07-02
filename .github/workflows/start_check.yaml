@@ -62,6 +62,7 @@ jobs:
       timeout-minutes: 2
       shell: Rscript {0}
       run: |
+      run: |
         install.packages('processx')
         library(processx)
         
@@ -71,7 +72,7 @@ jobs:
               # Start the Shiny app in a separate process
               app_process <- process$new(
                 "Rscript",
-                c("-e", "shiny::runApp('program/shinyApppp', launch.browser = FALSE, port = 3838)"),
+                c("-e", "shiny::runApp('program/shinyApp', launch.browser = FALSE, port = 3838)"),
                 stdout = "|", stderr = "|"
               )
               
@@ -97,7 +98,14 @@ jobs:
         
         
         result <- execute_shiny_app()
-        print(result)
+        
+            # Check if the result is "failure"
+        if (result == "Success") {
+          cat("Test passed")
+        } else {
+           cat("Test failed: Output is 'failure'\n")
+          quit(status = 1)
+        }
         
     - name: Save cache
       uses: actions/cache@v3
