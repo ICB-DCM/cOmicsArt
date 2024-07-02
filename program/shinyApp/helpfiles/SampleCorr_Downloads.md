@@ -1,4 +1,4 @@
-### ShinyApp/helpfiles/Downloads.md - Under Development
+## Download Helper
 
 ***
 

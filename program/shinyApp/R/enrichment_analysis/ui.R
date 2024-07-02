@@ -52,16 +52,18 @@ geneset_panel_UI <- function(
             selected = ".pdf"
           )
         ),
-        textAreaInput(
-          inputId = ns("Notes"),
-          label = "Notes:",
-          placeholder = "Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ",
-          width = "1000px"
-        ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
-        tags$div(
-          id = ns("NotesHelper"),
-          helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
-        )
+        splitLayout(
+          style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+          cellArgs = list(style = "padding: 5px"),
+          div(textAreaInput(
+            inputId = ns("Notes"),
+            label = "Notes:",
+            placeholder = NOTES_PlACEHOLDER,
+            width = "1000px"
+          ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
+          helpText(NOTES_HELP)),
+          NULL
+        ),
       ),
       tabPanel(
         title = paste(id_wo_ns, "Enrichment Table"),
