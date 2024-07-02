@@ -120,7 +120,7 @@ server <- function(input,output,session){
       timerProgressBar = FALSE,
       width = "100%"
       )
-    shiny::stopApp()
+    session$close()
   })
   
 # Data Upload + checks ----
