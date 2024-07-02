@@ -3,6 +3,7 @@ single_gene_visualisation_server <- function(id, data){
     id,
     function(input,output,session){
       ns <- session$ns
+      file_path <- paste0("/www/",session$token,"/")
 
       # Refresh UI /Data
       observeEvent(input$refreshUI,{

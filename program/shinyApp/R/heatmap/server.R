@@ -6,6 +6,7 @@ heatmap_server <- function(id, data, params, updates){
 
       ## UI Section ----
       ns <- session$ns
+      file_path <- paste0("/www/",session$token,"/")
       observe({
         if(input$Aesthetics_show){
           output$anno_options_ui <- renderUI({

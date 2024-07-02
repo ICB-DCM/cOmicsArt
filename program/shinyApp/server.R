@@ -25,6 +25,19 @@ server <- function(input,output,session){
   # create www folder if not present
   if(dir.exists("www")){
     setwd("www")
+    # create folder with session tokes as name for all files to be saved inside
+    if(!dir.exists(session$token)){
+      dir.create(session$token)
+      print(paste0("Created folder for session: ",session$token))
+    } else {
+      # remove all files in the folder
+      setwd(session$token)
+      list <- list.files()
+      file.remove(list.files(path="."))
+      print("Removed old files for fresh start")
+      setwd("..")
+    }
+    file_path <- paste0("/www/",session$token,"/")
     print(list.files())
     file.remove(
       list.files(path=".") %>%

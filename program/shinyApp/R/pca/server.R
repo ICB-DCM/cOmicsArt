@@ -19,7 +19,7 @@ pca_Server <- function(id, data, params, row_select){
         Loadings_plot = NULL
       )
       ns <- session$ns
-
+      file_path <- paste0("/www/",session$token,"/")
       ## UI Section ----
       output$x_axis_selection_ui <- renderUI({radioGroupButtons(
         inputId = ns("x_axis_selection"),

@@ -13,6 +13,7 @@ sample_correlation_server <- function(id, data, params){
       })
       
       ns <- session$ns
+      file_path <- paste0("/www/",session$token,"/")
       # UI Section ----
       output$SampleAnnotationChoice_ui <- renderUI({
         req(selectedData_processed())

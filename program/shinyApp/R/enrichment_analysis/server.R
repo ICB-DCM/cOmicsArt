@@ -175,6 +175,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         organism = NULL
       )
       ns <- session$ns
+      file_path <- paste0("/www/",session$token,"/")
       ## initialize result as NULL
       ea_reactives$enrichment_results <- ENRICHMENT_RESULT_RESET
       # TODO: Call this in a loop.

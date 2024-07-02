@@ -12,6 +12,7 @@ significance_analysis_server <- function(id, data, params){
         coldata = NULL
       )
       ns <- session$ns
+      file_path <- paste0("/www/",session$token,"/")
       ## Sidebar UI section
       # UI to choose type of comparison
       output$type_of_comparison_ui <- renderUI({
