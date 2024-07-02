@@ -39,7 +39,7 @@ jobs:
       with:
         path: ${{ env.RENV_PATHS_ROOT }}
         key: ${{ steps.get-version.outputs.os-version }}-${{ steps.get-version.outputs.r-version }}-${{ inputs.cache-version }}-${{ hashFiles('renv.lock') }}
-        restore-keys: ${{ steps.get-version.outputs.os-version }}-${{ steps.get-version.outputs.r-version }}-${{inputs.cache-version }}-
+        restore-keys: ${{ steps.get-version.outputs.os-version }}-${{ steps.get-version.outputs.r-version }}-${{ inputs.cache-version }}-
 
 #    - name: Setup renv
 #      uses: r-lib/actions/setup-renv@v2
