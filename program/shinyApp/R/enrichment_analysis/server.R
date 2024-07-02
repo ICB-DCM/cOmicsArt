@@ -4,6 +4,7 @@ enrichment_analysis_geneset_server <- function(
   moduleServer(
     id,
     function(input,output,session){
+      file_path <- paste0("/www/",session$token,"/")
       if(is.null(result)){
         output$EnrichmentFailure <- renderText("Currently there is no result to display.")
         hideElement(id = "EnrichmentPlot")
@@ -114,7 +115,7 @@ enrichment_analysis_geneset_server <- function(
         # download section
         observeEvent(input$only2Report,{
           notificationID <- showNotification(ui = "Saving...",duration = 0)
-          tmp_filename <- paste0(getwd(),"/www/", paste(id,Sys.time(),".png",sep="_"))
+          tmp_filename <- paste0(getwd(),file_path, paste(id,Sys.time(),".png",sep="_"))
           ggsave(
             filename = tmp_filename,
             plot = clusterProfiler::dotplot(result),device = "png"

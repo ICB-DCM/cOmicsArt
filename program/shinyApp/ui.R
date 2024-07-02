@@ -40,6 +40,7 @@ library(readxl)
 library(ggvenn)
 library(ComplexUpset)
 library(gridExtra)
+library(pcaPP) # requires gfortran. Not sure how to install on server
 # library(svglite)
 
 source("R/C.R")
@@ -189,23 +190,6 @@ ui <- shiny::fluidPage(
     class = "btn-secondary"
     )
   ),
-  div(
-    style = "display:inline-block; float:right",
-    actionButton(
-    inputId = "guide",
-    label = "Guide me!",
-    class = "btn-secondary"
-    )
-  ),
-  div(
-    style = "display:inline-block; float:right",
-    helpText(" ", align = "right") %>% helper(
-      type = "markdown",
-      content = "Inital_help",
-      size = "l",
-      colour = "red",
-      style = "zoom: 600%;")
-  ),
   hidden(selectInput(
     "element",
     label = "PrideMonth?",
@@ -230,7 +214,6 @@ ui <- shiny::fluidPage(
   splitLayout(
     cellWidths = c("75%", "10%", "15%"),
     DownloadReport_ui("DownloadTestModule"),
-    helpText("Metabolon Help", align = "center") %>% helper(type = "markdown", content = "Metabolon_help", size = "l", colour = "blue", style = "position: relative;top: -18px;left: 15px;; zoom: 200%;"),
     NULL
   ),
 
