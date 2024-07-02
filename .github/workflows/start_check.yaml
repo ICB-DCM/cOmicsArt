@@ -62,7 +62,6 @@ jobs:
       timeout-minutes: 2
       shell: Rscript {0}
       run: |
-      run: |
         install.packages('processx')
         library(processx)
         
