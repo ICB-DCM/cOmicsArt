@@ -42,6 +42,7 @@ sample_correlation_server <- function(id, data, params){
         # set the counter to 0 to prevent any further plotting
         sample_corr_reactive$calculate <- 0
 
+
         # check value of input$Do_SampleCorrelation
         annotationDF <- colData(data$data)[,input$SampleAnnotationChoice,drop = F]
         check <- check_calculations(
@@ -123,6 +124,7 @@ sample_correlation_server <- function(id, data, params){
 
         sampleCorrelation_scenario <- 18
         output$SampleCorrelationPlot <- renderPlot({sample_corr_reactive$SampleCorrelationPlot_final})
+
 
         # Longer names causes issues for saving
         if(nchar(customTitleSampleCorrelation) >= 250){

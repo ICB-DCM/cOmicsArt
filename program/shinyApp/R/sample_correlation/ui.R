@@ -14,7 +14,9 @@ sampleCorrelation_sidebar_panel <- function(ns){
       icon("fas fa-laptop-code")
     ),
     hr(style = "border-top: 1px solid #000000;"),
+
     uiOutput(outputId = ns("SampleAnnotationChoice_ui")) %>% helper(type = "markdown", content = "SampleCorr_Color")
+
   )
 }
 
