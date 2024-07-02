@@ -160,7 +160,7 @@ sample_correlation_server <- function(id, data, params){
           paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), input$file_ext_Heatmap)
         },
         content = function(file){
-          save_pheatmap(par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,filename = file,type=gsub("\\.","",input$file_ext_SampleCorrelation))
+          save_pheatmap(sample_corr_reactive$SampleCorrelationPlot_final,filename = file,type=gsub("\\.","",input$file_ext_SampleCorrelation))
           on.exit({
             tmp_filename <- paste0(
               getwd(),
@@ -168,7 +168,7 @@ sample_correlation_server <- function(id, data, params){
               paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), input$file_ext_SampleCorrelation)
             )
             save_pheatmap(
-              par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,
+              sample_corr_reactive$SampleCorrelationPlot_final,
               filename = tmp_filename,
               type = gsub("\\.","",input$file_ext_SampleCorrelation)
             )
@@ -190,15 +190,13 @@ sample_correlation_server <- function(id, data, params){
           file_path,
           paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), ".png")
         )
-        
         save_pheatmap(
-          par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,
+          sample_corr_reactive$SampleCorrelationPlot_final,
           filename = tmp_filename,
           type = "png"
         )
         
         ## Add Log Messages
-        browser()
         fun_LogIt(message = "## SAMPLE CORRELATION")
         fun_LogIt(message = paste0("**SAMPLE CORRELATION** - The correlation method used was: ",input$corrMethod))
         fun_LogIt(message = paste0("**SAMPLE CORRELATION** - The heatmap samples were colored after ",paste(input$SampleAnnotationChoice)))
