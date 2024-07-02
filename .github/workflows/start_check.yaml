@@ -71,7 +71,7 @@ jobs:
               # Start the Shiny app in a separate process
               app_process <- process$new(
                 "Rscript",
-                c("-e", "shiny::runApp('program/shinyApp', launch.browser = FALSE, port = 3838)"),
+                c("-e", "shiny::runApp('program/shinyApppp', launch.browser = FALSE, port = 3838)"),
                 stdout = "|", stderr = "|"
               )
               
