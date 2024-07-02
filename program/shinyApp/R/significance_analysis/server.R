@@ -699,51 +699,56 @@ significance_analysis_server <- function(id, data, params){
         ))
         # for each comparison, log the number of significant genes before and after correction
         # and the top 5 significant genes
-        for(i in seq_along(input$comparisons_to_visualize)){
-           fun_LogIt(message = paste("####", input$comparisons_to_visualize[i]))
+        comparisons <- input$comparisons_to_visualize
+        if ("all" %in% comparisons){
+          comparisons <- sig_ana_reactive$comparisons_for_plot
+        }
+        for(i in seq_along(comparisons)){
+           fun_LogIt(message = paste("####", comparisons[i]))
           # log the number of significant genes after correction
           fun_LogIt(message = paste(
             "- Number of significant genes after correction for",
-            input$comparisons_to_visualize[i],
+            comparisons[i],
             "is",
             nrow(
-              sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]][
-                sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]]$padj < input$significance_level,
+              sig_ana_reactive$sig_results[[comparisons[i]]][
+                sig_ana_reactive$sig_results[[comparisons[i]]]$padj < input$significance_level,
               ]
             )
           ))
           # log the number of significant genes before correction
           fun_LogIt(message = paste(
             "- Number of significant genes after correction for",
-            input$comparisons_to_visualize[i],
+            comparisons[i],
             "is",
             nrow(
-              sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]][
-                sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]]$pvalue < input$significance_level,
+              sig_ana_reactive$sig_results[[comparisons[i]]][
+                sig_ana_reactive$sig_results[[comparisons[i]]]$pvalue < input$significance_level,
               ]
             )
           ))
           # log the top 5 significant genes
+          browser()
           if(params$PreProcessing_Procedure == "vst_DESeq"){
             # get the top 5 significant genes
             top5 <- head(
-              sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]]@result[order(
-                sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]]@result$p.adjust,
+              sig_ana_reactive$sig_results[[comparisons[i]]]@result[order(
+                sig_ana_reactive$sig_results[[comparisons[i]]]@result$p.adjust,
                 decreasing = FALSE
               ),], 5
             )
           } else {
             # get the top 5 significant genes
             top5 <- head(
-              sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]][order(
-                sig_ana_reactive$sig_results[[input$comparisons_to_visualize[i]]]$padj,
+              sig_ana_reactive$sig_results[[comparisons[i]]][order(
+                sig_ana_reactive$sig_results[[comparisons[i]]]$padj,
                 decreasing = FALSE
               ),], 5
             )
           }
           fun_LogIt(message = paste(
             "- Top 5 significant genes for",
-            input$comparisons_to_visualize[i],
+            comparisons[i],
             "are the following:"
           ))
           fun_LogIt(message = knitr::kable(
