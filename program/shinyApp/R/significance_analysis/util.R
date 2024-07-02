@@ -331,9 +331,8 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
   })
   output[[ns("SavePlot_Volcano")]] <- downloadHandler(
-    filename = function() { paste("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]],sep="") },
+    filename = function() {paste0("VOLCANO_", Sys.time(), input[[ns("file_ext_Volcano")]])},
     content = function(file){
-      browser()
       ggsave(
         filename = file,
         plot = sig_ana_reactive$VolcanoPlot,
