@@ -343,11 +343,12 @@ server <- function(input,output,session){
       ## Do some checking
       snippetYes <- "<font color=\"#00851d\"><b>Yes</b></font>"
       snippetNo <-  "<font color=\"#ab020a\"><b>No</b></font>"
+      snippetOrangeNo <- "<font color=\"#FFA500\"><b>No</b></font> But if you use any preprocessing other than `None`, those NAs will be removed"
 
       check0 <- ifelse(flag_csv,snippetYes,snippetNo)
       check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
       check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
-      check3 <- ifelse(any(is.na(Matrix) == T),snippetNo,snippetYes)
+      check3 <- ifelse(any(is.na(Matrix) == T),snippetOrangeNo,snippetYes)
       check4 <- ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes)
       check5 <- ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes)
       check6 <- ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo)
@@ -378,7 +379,7 @@ server <- function(input,output,session){
           "\n\tA syntactically valid name consists of letters, numbers,\n\t",
           "the dot or underline characters and starts with a letter.\n\t",
           "Therefore '12345' is invalid, 'ID_12345' is valid.\n\t",
-          "Remember to change the Sample ID everywhere (Matrix & Sample Table"
+          "Remember to change the Sample ID everywhere (Matrix & Sample Table)."
         )
       }
       output$OverallChecks <- renderText({
