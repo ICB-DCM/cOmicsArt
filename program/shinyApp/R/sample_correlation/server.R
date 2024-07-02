@@ -4,7 +4,8 @@ sample_correlation_server <- function(id, data, params){
     function(input,output,session){
       sample_corr_reactive <- reactiveValues(
         calculate = 0,
-        counter = 0
+        counter = 0,
+        SampleCorrelationPlot_final = NULL
       )
       session$userData$clicks_observer <- observeEvent(input$Do_SampleCorrelation,{
         req(input$Do_SampleCorrelation > sample_corr_reactive$counter)
@@ -94,7 +95,7 @@ sample_correlation_server <- function(id, data, params){
         )
 
         anno_colors <- assign_colors_SampleCorr(annotationDF)
-        SampleCorrelationPlot_final <- pheatmap(
+        sample_corr_reactive$SampleCorrelationPlot_final <- pheatmap(
           mat = cormat,
           annotation_row = as.data.frame(annotationDF),
           main = customTitleSampleCorrelation,
@@ -113,7 +114,7 @@ sample_correlation_server <- function(id, data, params){
         )
 
         sampleCorrelation_scenario <- 18
-        output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
+        output$SampleCorrelationPlot <- renderPlot({sample_corr_reactive$SampleCorrelationPlot_final})
 
         # Longer names causes issues for saving
         if(nchar(customTitleSampleCorrelation) >= 250){
