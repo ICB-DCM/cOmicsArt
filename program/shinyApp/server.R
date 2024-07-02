@@ -16,6 +16,26 @@ server <- function(input,output,session){
   # create www folder if not present
   if(dir.exists("www")){
     setwd("www")
+    # create folder with session tokes as name for all files to be saved inside
+    if(!dir.exists(session$token)){
+      dir.create(session$token)
+      # create REport.md
+        write(
+            paste0(
+            "# ShinyOmics Report (",format(Sys.Date(),'%d/%m/%Y'),")"
+            ),
+            file=paste0(session$token,"/Report.md")
+        )
+      print(paste0("Created folder for session: ",session$token))
+    } else {
+      # remove all files in the folder
+      setwd(session$token)
+      list <- list.files()
+      file.remove(list.files(path="."))
+      print("Removed old files for fresh start")
+      setwd("..")
+    }
+    file_path <- paste0("/www/",session$token,"/")
     print(list.files())
     file.remove(
       list.files(path=".") %>%
@@ -52,8 +72,18 @@ server <- function(input,output,session){
   par_tmp[[session$token]] <<- list()
   # On session end, remove the list from res/par_tmp
   session$onSessionEnded(function() {
-      res_tmp[[session$token]] <<- NULL
-      par_tmp[[session$token]] <<- NULL
+    res_tmp[[session$token]] <<- NULL
+    par_tmp[[session$token]] <<- NULL
+    # delete the folder with the session token
+    if(dir.exists(paste0("www/",session$token))){
+      # Remove the directory and its contents
+      unlink(paste0("www/",session$token), recursive = TRUE)
+      if (!dir.exists(paste0("www/",session$token))) {
+        cat("The directory has been successfully removed.\n")
+      } else {
+        cat("The directory could not be removed.\n")
+      }
+    }
   })
 # Init update Object ----
   # updating is a reative value that counts up whenever data is updated

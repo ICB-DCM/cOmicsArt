@@ -4,7 +4,8 @@ sample_correlation_server <- function(id, data, params){
     function(input,output,session){
       sample_corr_reactive <- reactiveValues(
         calculate = 0,
-        counter = 0
+        counter = 0,
+        SampleCorrelationPlot_final = NULL
       )
       session$userData$clicks_observer <- observeEvent(input$Do_SampleCorrelation,{
         req(input$Do_SampleCorrelation > sample_corr_reactive$counter)
@@ -13,6 +14,7 @@ sample_correlation_server <- function(id, data, params){
       })
       
       ns <- session$ns
+      file_path <- paste0("/www/",session$token,"/")
       # UI Section ----
       output$SampleAnnotationChoice_ui <- renderUI({
         req(selectedData_processed())
@@ -101,7 +103,7 @@ sample_correlation_server <- function(id, data, params){
         )
 
         anno_colors <- assign_colors_SampleCorr(annotationDF)
-        SampleCorrelationPlot_final <- pheatmap(
+        sample_corr_reactive$SampleCorrelationPlot_final <- pheatmap(
           mat = cormat,
           annotation_row = as.data.frame(annotationDF),
           main = customTitleSampleCorrelation,
@@ -120,7 +122,7 @@ sample_correlation_server <- function(id, data, params){
         )
 
         sampleCorrelation_scenario <- 18
-        output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
+        output$SampleCorrelationPlot <- renderPlot({sample_corr_reactive$SampleCorrelationPlot_final})
 
         # Longer names causes issues for saving
         if(nchar(customTitleSampleCorrelation) >= 250){
@@ -166,15 +168,15 @@ sample_correlation_server <- function(id, data, params){
           paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), input$file_ext_Heatmap)
         },
         content = function(file){
-          save_pheatmap(par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,filename = file,type=gsub("\\.","",input$file_ext_SampleCorrelation))
+          save_pheatmap(sample_corr_reactive$SampleCorrelationPlot_final,filename = file,type=gsub("\\.","",input$file_ext_SampleCorrelation))
           on.exit({
             tmp_filename <- paste0(
               getwd(),
-              "/www/",
+              file_path,
               paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), input$file_ext_SampleCorrelation)
             )
             save_pheatmap(
-              par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,
+              sample_corr_reactive$SampleCorrelationPlot_final,
               filename = tmp_filename,
               type = gsub("\\.","",input$file_ext_SampleCorrelation)
             )
@@ -193,12 +195,11 @@ sample_correlation_server <- function(id, data, params){
         notificationID <- showNotification("Saving...",duration = 0)
         tmp_filename <- paste0(
           getwd(),
-          "/www/",
+          file_path,
           paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), ".png")
         )
-        
         save_pheatmap(
-          par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,
+          sample_corr_reactive$SampleCorrelationPlot_final,
           filename = tmp_filename,
           type = "png"
         )

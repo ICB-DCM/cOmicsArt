@@ -16,7 +16,8 @@ DownloadReport_server<- function(id){
     id,
     function(input,output,session){
       observeEvent(input$DownloadReport,{
-        if(file.exists("./www/Report.md")){
+        file_path <- paste0("/www/", session$token, "/")
+        if(file.exists(paste0(".", file_path, "Report.md"))){
           show_toast(
             title = "Generating Report....please wait",
             type = "info",
@@ -25,11 +26,16 @@ DownloadReport_server<- function(id){
             width = "30%"
           )
           rmarkdown::render(
-            input = "./www/Report.md",
+            input = paste0(".", file_path, "Report.md"),
             html_document(toc = TRUE, toc_float = T ,fig_caption = T)
           )
           showModal(modalDialog(
-            tags$h4(a(href="Report.html", "Download report", download=NA, target="_blank")),
+            tags$h4(a(
+              href=paste0(session$token, "/Report.html"),
+              "Download report",
+              download=NA,
+              target="_blank"
+            )),
             footer=tagList(
               modalButton(label = 'Return')
             )))
