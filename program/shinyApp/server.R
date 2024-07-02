@@ -87,8 +87,15 @@ server <- function(input,output,session){
   par_tmp[[session$token]] <<- list()
   # On session end, remove the list from res/par_tmp
   session$onSessionEnded(function() {
-      res_tmp[[session$token]] <<- NULL
-      par_tmp[[session$token]] <<- NULL
+    res_tmp[[session$token]] <<- NULL
+    par_tmp[[session$token]] <<- NULL
+    # delete the folder with the session token
+    if(dir.exists(paste0("www/",session$token))){
+      setwd(paste0("www/",session$token))
+      file.remove(list.files(path="."))
+      setwd("..")
+      dir.remove(paste0("www/",session$token))
+    }
   })
 # Init update Object ----
   # updating is a reative value that counts up whenever data is updated
