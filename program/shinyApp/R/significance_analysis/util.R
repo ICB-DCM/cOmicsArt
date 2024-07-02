@@ -128,11 +128,6 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
               icon = icon("code")
             ),
             NULL,
-            # downloadButton(
-            #   outputId = ns("getR_Code_Volcano_both"),
-            #   label = "Get underlying R code and data",
-            #   icon = icon("code")
-            # ),
             downloadButton(
               outputId = ns("getR_Code_Volcano_raw"),
               label = "Get underlying R code and data",
@@ -338,6 +333,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   output[[ns("SavePlot_Volcano")]] <- downloadHandler(
     filename = function() { paste("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]],sep="") },
     content = function(file){
+      browser()
       ggsave(
         filename = file,
         plot = sig_ana_reactive$VolcanoPlot,
@@ -922,6 +918,9 @@ getLFC <- function(means){
 
 
 log_messages_volcano<- function(plot, table, contrast, file_path){
+  if((is.null(plot)) | (is.null(table))){
+    return()
+  }
   notificationID <- showNotification("Saving...",duration = 0)
 
   tmp_filename <- paste0(
