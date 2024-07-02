@@ -15,6 +15,15 @@ jobs:
       with:
         r-version: 4.2.0
     
+    - name: Restore Renv package cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ env.RENV_PATHS_ROOT }}
+          ./renv/library
+        key: ${{ steps.get-version.outputs.os-version }}-${{ steps.get-version.outputs.r-version }}-${{ inputs.cache-version }}-${{ hashFiles('renv.lock') }}
+        restore-keys: ${{ steps.get-version.outputs.os-version }}-${{ steps.get-version.outputs.r-version }}-${{ inputs.cache-version }}-
+
     - name: Install system dependencies
       run: |
         sudo apt-get update
@@ -25,30 +34,23 @@ jobs:
       shell: Rscript {0}
       run: |
         install.packages("renv")
-        renv::activate()
+        renv::restore()
         
-    - name: Get R and OS version
-      id: get-version
-      run: |
-        cat("##[set-output name=os-version;]", sessionInfo()$running, "\n", sep = "")
-        cat("##[set-output name=r-version;]", R.Version()$version.string, sep = "")
-      shell: Rscript {0}
+    # - name: Get R and OS version
+    #   id: get-version
+    #   run: |
+    #     cat("##[set-output name=os-version;]", sessionInfo()$running, "\n", sep = "")
+    #     cat("##[set-output name=r-version;]", R.Version()$version.string, sep = "")
+    #   shell: Rscript {0}
       
-    - name: Restore Renv package cache
-      uses: actions/cache@v3
-      with:
-        path: ${{ env.RENV_PATHS_ROOT }}
-        key: ${{ steps.get-version.outputs.os-version }}-${{ steps.get-version.outputs.r-version }}-${{ inputs.cache-version }}-${{ hashFiles('renv.lock') }}
-        restore-keys: ${{ steps.get-version.outputs.os-version }}-${{ steps.get-version.outputs.r-version }}-${{ inputs.cache-version }}-
 
 #    - name: Setup renv
 #      uses: r-lib/actions/setup-renv@v2
     
-# - name: Restore packages
-#   shell: Rscript {0}
-#   run: |
-#     if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
-#     renv::restore()
+    # - name: Restore packages
+    #   shell: Rscript {0}
+    #   run: |
+    #     renv::restore()
 
 #    - name: test specific packages
 #      run: |
@@ -96,4 +98,14 @@ jobs:
         
         result <- execute_shiny_app()
         print(result)
+        
+    - name: Save cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.local/share/renv
+          ./renv/library
+        key: ${{ steps.get-version.outputs.os-version }}-${{ steps.get-version.outputs.r-version }}-${{ inputs.cache-version }}-${{ hashFiles('renv.lock') }}
+
+
 
