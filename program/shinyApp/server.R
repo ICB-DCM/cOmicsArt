@@ -28,6 +28,13 @@ server <- function(input,output,session){
     # create folder with session tokes as name for all files to be saved inside
     if(!dir.exists(session$token)){
       dir.create(session$token)
+      # create REport.md
+        write(
+            paste0(
+            "# ShinyOmics Report (",format(Sys.Date(),'%d/%m/%Y'),")"
+            ),
+            file=paste0(session$token,"/Report.md")
+        )
       print(paste0("Created folder for session: ",session$token))
     } else {
       # remove all files in the folder

@@ -662,7 +662,7 @@ significance_analysis_server <- function(id, data, params){
       # Print to report
       observeEvent(input$only2Report_Sig,{
         notificationID <- showNotification(ui = "Saving...",duration = 0)
-        tmp_filename <- paste0(getwd(),"/www/", paste(id,Sys.time(),".png",sep="_"))
+        tmp_filename <- paste0(getwd(),file_path, paste(id,Sys.time(),".png",sep="_"))
         # assign sig_results again for safety
         sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
         png(tmp_filename)

@@ -591,7 +591,7 @@ heatmap_server <- function(id, data, params, updates){
             on.exit({
               tmp_filename <- paste0(
                 getwd(),
-                "/www/",
+                file_path,
                 paste0(Heatmap_customTitleHeatmap, " ", Sys.time(), input$file_ext_Heatmap)
                 )
               save_pheatmap(
@@ -682,7 +682,7 @@ heatmap_server <- function(id, data, params, updates){
         notificationID <- showNotification("Saving...",duration = 0)
         tmp_filename <- paste0(
           getwd(),
-          "/www/",
+          file_path,
           paste(paste0(Heatmap_customTitleHeatmap, Sys.time(), ".png"))
           )
 

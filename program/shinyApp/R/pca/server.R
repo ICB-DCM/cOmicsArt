@@ -509,7 +509,7 @@ pca_Server <- function(id, data, params, row_select){
             )
             on.exit({
               pca_report_path <- paste0(
-                getwd(), "/www/", customTitle, Sys.time(), input$file_ext_plot1
+                getwd(), file_path, customTitle, Sys.time(), input$file_ext_plot1
               )
               ggsave(
                 filename = pca_report_path,
@@ -586,7 +586,7 @@ pca_Server <- function(id, data, params, row_select){
             ggsave(file, plot = scree_plot, device = gsub("\\.","",input$file_ext_Scree))
             on.exit({
               tmp_filename <- paste0(
-                getwd(),"/www/",
+                getwd(),file_path,
                 "Scree", pca_reactives$Scree_customTitle, Sys.time(), input$file_ext_Scree
               )
               ggsave(tmp_filename, plot=scree_plot, device = gsub("\\.","",input$file_ext_Scree))
@@ -662,7 +662,7 @@ pca_Server <- function(id, data, params, row_select){
             )
             on.exit({
               tmp_filename <- paste0(
-                getwd(), "/www/", "LOADINGS_PCA_", Sys.time(), input$file_ext_Loadings
+                getwd(), file_path, "LOADINGS_PCA_", Sys.time(), input$file_ext_Loadings
               )
               ggsave(
                 tmp_filename,
@@ -741,7 +741,7 @@ pca_Server <- function(id, data, params, row_select){
             )
             on.exit({
               tmp_filename <- paste0(
-                getwd(), "/www/",
+                getwd(), file_path,
                 "LOADINGS_Matrix_PCA_", Sys.time(), input$file_ext_Loadings_matrix
               )
               ggsave(
@@ -765,7 +765,7 @@ pca_Server <- function(id, data, params, row_select){
       observeEvent(input$only2Report_pca,{
           # needs global var ?! do we want that?
           notificationID <- showNotification("Saving...",duration = 0)
-          pca_report_path <- paste0(getwd(), "/www/", customTitle, Sys.time(), ".png")
+          pca_report_path <- paste0(getwd(), file_path, customTitle, Sys.time(), ".png")
           ggsave(
             pca_report_path,
             plot = pca_reactives$PCA_plot,
@@ -789,7 +789,7 @@ pca_Server <- function(id, data, params, row_select){
       observeEvent(input$only2Report_Scree_Plot,{
         notificationID <- showNotification("Saving...",duration = 0)
         tmp_filename <- paste0(
-          getwd(), "/www/", "Scree", pca_reactives$Scree_customTitle, Sys.time(), ".png"
+          getwd(), file_path, "Scree", pca_reactives$Scree_customTitle, Sys.time(), ".png"
         )
         ggsave(
           tmp_filename,
@@ -809,7 +809,7 @@ pca_Server <- function(id, data, params, row_select){
       observeEvent(input$only2Report_Loadings,{
         notificationID <- showNotification("Saving...",duration = 0)
         tmp_filename <- paste0(
-          getwd(), "/www/", "LOADINGS_PCA_", Sys.time(), ".png"
+          getwd(), file_path, "LOADINGS_PCA_", Sys.time(), ".png"
         )
         ggsave(
           tmp_filename,
@@ -831,7 +831,7 @@ pca_Server <- function(id, data, params, row_select){
         notificationID <- showNotification("Saving...",duration = 0)
         
         tmp_filename <- paste0(
-            getwd(), "/www/",
+            getwd(), file_path,
             "LOADINGS_Matrix_PCA_", Sys.time(), input$file_ext_Loadings_matrix
           )
         ggsave(
