@@ -41,6 +41,7 @@ library(ggvenn)
 library(ComplexUpset)
 library(gridExtra)
 library(pcaPP) # requires gfortran. Not sure how to install on server
+library(reshape2)
 # library(svglite)
 
 source("R/C.R")
