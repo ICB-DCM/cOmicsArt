@@ -8,13 +8,13 @@ sampleCorrelation_sidebar_panel <- function(ns){
       choices = c("pearson", "kendall", "spearman"),
       selected = "pearson"
     ),
-    uiOutput(outputId = ns("SampleAnnotationChoice_ui")),
     actionButton(
       inputId = ns("Do_SampleCorrelation"),
       label = "Get Sample Correlation",
       icon("fas fa-laptop-code")
     ),
-    hr(style = "border-top: 1px solid #000000;")
+    hr(style = "border-top: 1px solid #000000;"),
+    uiOutput(outputId = ns("SampleAnnotationChoice_ui")) %>% helper(type = "markdown", content = "SampleCorr_Color")
   )
 }
 
@@ -68,15 +68,18 @@ sampleCorrelation_main_panel <- function(ns){
       selected = ".png"
     )
   ),
-  textAreaInput(
-    inputId = ns("NotesSampleCorrelation"),
-    label = "Notes:",
-    placeholder = NOTES_PlACEHOLDER,
-    width = "1000px") %>% helper(
-      type = "markdown", 
-      content = "TakingNotesMD_help"
-    ),
-  helpText(NOTES_HELP)
+  splitLayout(
+    style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+    cellArgs = list(style = "padding: 5px"),
+    div(textAreaInput(
+      inputId = ns("NotesSampleCorrelation"),
+      label = "Notes:",
+      placeholder = NOTES_PlACEHOLDER,
+      width = "1000px"
+    ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
+    helpText(NOTES_HELP)),
+    NULL
+  ),
 )
 }
 
