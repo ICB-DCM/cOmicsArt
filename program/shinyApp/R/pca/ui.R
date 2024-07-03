@@ -84,13 +84,18 @@ pca_main_panel <- function(ns){
             selected = ".png"
           )
         ),
-        textAreaInput(
-          inputId = ns("NotesPCA"),
-          label = "Notes:",
-          placeholder = NOTES_PlACEHOLDER,
-          width = "1000px"
-        )%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-        helpText(NOTES_HELP)
+        splitLayout(
+          style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+          cellArgs = list(style = "padding: 5px"),
+          div(textAreaInput(
+            inputId = ns("NotesPCA"),
+            label = "Notes:",
+            placeholder = NOTES_PlACEHOLDER,
+            width = "1000px"
+          ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
+          helpText(NOTES_HELP)),
+          NULL
+        ),
       ),
       tabPanel(
         title = "PCA_Loadings",

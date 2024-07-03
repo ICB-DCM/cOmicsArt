@@ -48,16 +48,10 @@ significance_analysis_main_ui <- function(ns){
         splitLayout(
           cellWidths = c("33%", "67%"),
           cellArgs = list(style = "padding: 5px"),
-        uiOutput(
-          outputId = ns("chooseIntersections_ui")
-        ) %>% helper(type = "markdown", content = "SigAna_Intersections"),
+          uiOutput(
+            outputId = ns("chooseIntersections_ui")
+          ),
           NULL
-        ),
-        # Download highlighted intersections as table
-        downloadButton(
-          outputId = ns("downloadIntersections"),
-          label = "Download Intersections",
-          class = "btn-info"
         ),
         # Download and Report UI
         splitLayout(

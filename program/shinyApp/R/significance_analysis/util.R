@@ -128,11 +128,6 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
               icon = icon("code")
             ),
             NULL,
-            # downloadButton(
-            #   outputId = ns("getR_Code_Volcano_both"),
-            #   label = "Get underlying R code and data",
-            #   icon = icon("code")
-            # ),
             downloadButton(
               outputId = ns("getR_Code_Volcano_raw"),
               label = "Get underlying R code and data",
@@ -326,17 +321,17 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
 
   # downloadhandlers
   observeEvent(input[[ns("only2Report_Volcano")]],{
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast)
+    log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
   })
   observeEvent(input[[ns("only2Report_Volcano_raw")]],{
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast)
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast)
+    log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
+    log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
   })
   observeEvent(input[[ns("only2Report_Volcano_both")]],{
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast)
+    log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
   })
   output[[ns("SavePlot_Volcano")]] <- downloadHandler(
-    filename = function() { paste("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]],sep="") },
+    filename = function() {paste0("VOLCANO_", Sys.time(), input[[ns("file_ext_Volcano")]])},
     content = function(file){
       ggsave(
         filename = file,
@@ -344,7 +339,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast)
+        log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
       })
     })
   output[[ns("SavePlot_Volcano_raw")]] <- downloadHandler(
@@ -356,7 +351,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         device = gsub("\\.","",input[[ns("file_ext_Volcano_raw")]])
         )
       on.exit({
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast)
+        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
       })
     })
   output[[ns("SavePlot_Volcano_both")]] <- downloadHandler(
@@ -368,8 +363,8 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast)
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast)
+        log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
+        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
       })
     })
 
@@ -687,14 +682,14 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
 
   # downloadhandlers
   observeEvent(input[[ns("only2Report_Volcano")]],{
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast)
+    log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
   })
   observeEvent(input[[ns("only2Report_Volcano_raw")]],{
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast)
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast)
+    log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
+    log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
   })
   observeEvent(input[[ns("only2Report_Volcano_both")]],{
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast)
+    log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
   })
   output[[ns("SavePlot_Volcano")]] <- downloadHandler(
     filename = function() { paste("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]],sep="") },
@@ -705,7 +700,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast)
+        log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
       })
     })
   output[[ns("SavePlot_Volcano_raw")]] <- downloadHandler(
@@ -717,7 +712,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         device = gsub("\\.","",input[[ns("file_ext_Volcano_raw")]])
         )
       on.exit({
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast)
+        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
       })
     })
   output[[ns("SavePlot_Volcano_both")]] <- downloadHandler(
@@ -729,8 +724,8 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast)
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast)
+        log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
+        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
       })
     })
 }
@@ -922,11 +917,14 @@ getLFC <- function(means){
 }
 
 
-log_messages_volcano<- function(plot, table, contrast){
+log_messages_volcano<- function(plot, table, contrast, file_path){
+  if((is.null(plot)) | (is.null(table))){
+    return()
+  }
   notificationID <- showNotification("Saving...",duration = 0)
 
   tmp_filename <- paste0(
-    getwd(),"/www/",paste(paste0("VOLCANO_", Sys.time(), ".png"))
+    getwd(),file_path,paste(paste0("VOLCANO_", Sys.time(), ".png"))
     )
 
   ggsave(tmp_filename, plot=plot, device = "png")

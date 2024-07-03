@@ -13,28 +13,37 @@ pre_processing_sidebar_panel <- sidebarPanel(
     ),
     selected = "none"
   ) %>% helper(type = "markdown", content = "PreProcessing_Procedures"),
-
   uiOutput(outputId = "DESeq_formula_main_ui"),
   uiOutput(outputId = "DESeq_formula_sub_ui"),
-
   uiOutput(outputId = "batch_effect_ui"),
-
   actionButton(
     inputId = "Do_preprocessing",
     label = "Get Pre-Processing",
     icon(name = "fas fa-laptop-code")
   ),
-  hr(style = "border-top: 1px solid #000000;")
+  hr(style = "border-top: 1px solid #000000;"),
+  uiOutput("violin_plot_color_ui")
 )
 
 
 pre_processing_main_panel <- mainPanel(
   id = "mainpanel_pre_processing",
   # Statistics to the data
-  helpText("general statistics to the input data, stuff like dimensions"),
+  helpText("General statistics to the input data, stuff like dimensions"),
   htmlOutput(outputId = "Statisitcs_Data") %>% withSpinner(type = 8),
   HTML(text = "<br>"),
-  HTML(text = "<br>")
+  fluidRow(
+    column(6,
+           h4("Raw Data"),
+           plotOutput("raw_violin_plot"),
+           plotOutput("raw_kde_plot")
+    ),
+    column(6,
+           h4("Pre-processed Data"),
+           plotOutput("preprocessed_violin_plot"),
+           plotOutput("preprocessed_kde_plot")
+    )
+  )
 )
 
 

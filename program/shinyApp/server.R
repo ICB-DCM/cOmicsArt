@@ -12,19 +12,30 @@ server <- function(input,output,session){
 # Security section ----
   options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
 
-  observeEvent(input$guide_cicerone_next,{
-    # triggers but guide is detached
-    if(input$guide_cicerone_next$highlighted == "mainPanel_DataSelection"){
-      print("Here will be now automatically data uploaded ")
-    }else{
-      print("Mööp")
-    }
-  })
-
   #### Clean Up
   # create www folder if not present
   if(dir.exists("www")){
     setwd("www")
+    # create folder with session tokes as name for all files to be saved inside
+    if(!dir.exists(session$token)){
+      dir.create(session$token)
+      # create REport.md
+        write(
+            paste0(
+            "# ShinyOmics Report (",format(Sys.Date(),'%d/%m/%Y'),")"
+            ),
+            file=paste0(session$token,"/Report.md")
+        )
+      print(paste0("Created folder for session: ",session$token))
+    } else {
+      # remove all files in the folder
+      setwd(session$token)
+      list <- list.files()
+      file.remove(list.files(path="."))
+      print("Removed old files for fresh start")
+      setwd("..")
+    }
+    file_path <- paste0("/www/",session$token,"/")
     print(list.files())
     file.remove(
       list.files(path=".") %>%
@@ -36,12 +47,6 @@ server <- function(input,output,session){
     setwd("..")
   }
   observe_helpers()
-
-# Guide ----
-  observeEvent(input$guide, {
-    print("Jip")
-    guide$init()$start()
-  })
   
   
 # Download Report pdf ----
@@ -67,8 +72,18 @@ server <- function(input,output,session){
   par_tmp[[session$token]] <<- list()
   # On session end, remove the list from res/par_tmp
   session$onSessionEnded(function() {
-      res_tmp[[session$token]] <<- NULL
-      par_tmp[[session$token]] <<- NULL
+    res_tmp[[session$token]] <<- NULL
+    par_tmp[[session$token]] <<- NULL
+    # delete the folder with the session token
+    if(dir.exists(paste0("www/",session$token))){
+      # Remove the directory and its contents
+      unlink(paste0("www/",session$token), recursive = TRUE)
+      if (!dir.exists(paste0("www/",session$token))) {
+        cat("The directory has been successfully removed.\n")
+      } else {
+        cat("The directory could not be removed.\n")
+      }
+    }
   })
 # Init update Object ----
   # updating is a reative value that counts up whenever data is updated
@@ -343,11 +358,12 @@ server <- function(input,output,session){
       ## Do some checking
       snippetYes <- "<font color=\"#00851d\"><b>Yes</b></font>"
       snippetNo <-  "<font color=\"#ab020a\"><b>No</b></font>"
+      snippetOrangeNo <- "<font color=\"#FFA500\"><b>No</b></font> But if you use any preprocessing other than `None`, those NAs will be removed"
 
       check0 <- ifelse(flag_csv,snippetYes,snippetNo)
       check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
       check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
-      check3 <- ifelse(any(is.na(Matrix) == T),snippetNo,snippetYes)
+      check3 <- ifelse(any(is.na(Matrix) == T),snippetOrangeNo,snippetYes)
       check4 <- ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes)
       check5 <- ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes)
       check6 <- ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo)
@@ -378,7 +394,7 @@ server <- function(input,output,session){
           "\n\tA syntactically valid name consists of letters, numbers,\n\t",
           "the dot or underline characters and starts with a letter.\n\t",
           "Therefore '12345' is invalid, 'ID_12345' is valid.\n\t",
-          "Remember to change the Sample ID everywhere (Matrix & Sample Table"
+          "Remember to change the Sample ID everywhere (Matrix & Sample Table)."
         )
       }
       output$OverallChecks <- renderText({
@@ -973,6 +989,8 @@ server <- function(input,output,session){
         "<br","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(res_tmp[[session$token]]$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
+    output$raw_violin_plot <- renderPlot({violin_plot(res_tmp[[session$token]]$data_original, color_by = input$violin_color)})
+    output$preprocessed_violin_plot <- renderPlot({violin_plot(res_tmp[[session$token]]$data, color_by = input$violin_color)})
     return("Pre-Processing successfully")
   })
   
@@ -1014,7 +1032,18 @@ server <- function(input,output,session){
       )
     )
   })
-  
+
+  # render plots and ui Parts
+  output$violin_plot_color_ui <- renderUI({
+    req(selectedData())
+    selectInput(
+      inputId = "violin_color",
+      label = "Color the violin plot by:",
+      choices = c(colnames(colData(res_tmp[[session$token]]$data_original))),
+      selected = c(colnames(colData(res_tmp[[session$token]]$data_original)))[1],
+      multiple = F
+    )
+  })
   output$debug <- renderText(dim(res_tmp[[session$token]]$data))
 
   # Sample Correlation ----

@@ -3,9 +3,10 @@ heatmap_server <- function(id, data, params, updates){
     id,
     function(input,output,session){
       # Heatmap ----
-
+      heatmap_reactives <- reactiveValues()
       ## UI Section ----
       ns <- session$ns
+      file_path <- paste0("/www/",session$token,"/")
       observe({
         if(input$Aesthetics_show){
           output$anno_options_ui <- renderUI({
@@ -604,7 +605,7 @@ heatmap_server <- function(id, data, params, updates){
             on.exit({
               tmp_filename <- paste0(
                 getwd(),
-                "/www/",
+                file_path,
                 paste0(Heatmap_customTitleHeatmap, " ", Sys.time(), input$file_ext_Heatmap)
                 )
               save_pheatmap(
@@ -666,7 +667,7 @@ heatmap_server <- function(id, data, params, updates){
         
         ## adjust the returned names depending on chosen label of rows
         if(is.null(data2HandOver)){
-          heatmap_reactives$FLAG_nonUnique_Heatmap <<- F
+          heatmap_reactives$FLAG_nonUnique_Heatmap <- F
           NA
         }else{
           mergedData <- merge(
@@ -682,66 +683,61 @@ heatmap_server <- function(id, data, params, updates){
           # heatmap_genelist now consists of the rownames, enabling a 
           # smooth translation in the enrichment case
           if(length(unique(mergedData[,input$row_label_options]))<nrow(mergedData) ){
-            heatmap_reactives$FLAG_nonUnique_Heatmap <<- T
+            heatmap_reactives$FLAG_nonUnique_Heatmap <- T
             par_tmp[[session$token]]$Heatmap$gene_list <<- mergedData[,"Row.names"]
           }else{
-            heatmap_reactives$FLAG_nonUnique_Heatmap <<- F
+            heatmap_reactives$FLAG_nonUnique_Heatmap <- F
             par_tmp[[session$token]]$Heatmap$gene_list <<- mergedData[,"Row.names"]
           }
         }
-      })
-      # send only to report
-      observeEvent(input$only2Report_Heatmap,{
-        notificationID <- showNotification("Saving...",duration = 0)
-        tmp_filename <- paste0(
-          getwd(),
-          "/www/",
-          paste(paste0(Heatmap_customTitleHeatmap, Sys.time(), ".png"))
-          )
+        # send only to report
+        observeEvent(input$only2Report_Heatmap,{
+          notificationID <- showNotification("Saving...",duration = 0)
+          tmp_filename <- paste0(
+            getwd(),
+            file_path,
+            paste(paste0(Heatmap_customTitleHeatmap, Sys.time(), ".png"))
+            )
 
-        save_pheatmap(
-          Heatmap_heatmap_plot,
-          filename=tmp_filename,
-          type="png"
-          )
-        
-        # Add Log Messages
-        
-        fun_LogIt(message = "## HEATMAP")
-        fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",Heatmap_row_selection_options))
-        if(any(Heatmap_row_selection_options=="rowAnno_based")){
-          fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ", Heatmap_row_anno_options," :",Heatmap_row_anno_options_heatmap))
-        }
-        if(!is.null(Heatmap_TopK)){
-          fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",Heatmap_TopK))
-          fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",Heatmap_row_selection_options))
-          # either based on LFC or on pVal
-        }
-        fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",Heatmap_anno_options))
-        fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",Heatmap_row_anno_options))
-        if(input$cluster_cols == TRUE){
-          fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
-        }
-        if(Heatmap_cluster_rows == TRUE){
-          fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
-        }
-        
-        if(Heatmap_LFC_toHeatmap == TRUE){
-          fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
-          fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",Heatmap_sample_annotation_types_cmp_heatmap,": ",Heatmap_Groups2Compare_ref_heatmap," vs ",Heatmap_Groups2Compare_ctrl_heatmap))
-        }
-        
-        fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
-        
-        if(isTruthy(input$NotesHeatmap) & !(isEmpty(input$NotesHeatmap))){
-          fun_LogIt(message = "### Personal Notes:")
-          fun_LogIt(message = input$NotesHeatmap)
-        }
-        
-        removeNotification(notificationID)
-        showNotification("Saved!",type = "message", duration = 1)
+          save_pheatmap(
+            heatmap_plot,
+            filename=tmp_filename,
+            type="png"
+            )
+          # Add Log Messages
+          fun_LogIt(message = "## HEATMAP")
+          fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",input$row_selection_options))
+          if(any(input$row_selection_options=="rowAnno_based")){
+            fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",input$anno_options_heatmap," :",input$row_anno_options_heatmap))
+          }
+          if(!is.null(input$TopK)){
+            fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",input$TopK))
+            fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",input$row_selection_options))
+            # either based on LFC or on pVal
+          }
+          fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",input$anno_options))
+          fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",input$row_anno_options))
+          if(input$cluster_cols == TRUE){
+            fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
+          }
+          if(input$cluster_rows == TRUE){
+            fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
+          }
+
+          if(input$LFC_toHeatmap == TRUE){
+            fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
+            fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",input$sample_annotation_types_cmp_heatmap,": ",input$Groups2Compare_ref_heatmap," vs ",input$Groups2Compare_ctrl_heatmap))
+          }
+          fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
+          if(isTruthy(input$NotesHeatmap) & !(isEmpty(input$NotesHeatmap))){
+            fun_LogIt(message = "### Personal Notes:")
+            fun_LogIt(message = input$NotesHeatmap)
+          }
+
+          removeNotification(notificationID)
+          showNotification("Saved!",type = "message", duration = 1)
+        })
       })
-      
     }
   )
 }

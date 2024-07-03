@@ -14,15 +14,6 @@ sample_correlation_server <- function(id, data, params){
       
       ns <- session$ns
       # UI Section ----
-      output$UseBatch_ui <- renderUI({
-        req(par_tmp[[session$token]]$BatchColumn != "NULL")
-        selectInput(
-          inputId = ns("UseBatch"),
-          label = "Use batch corrected data?",
-          choices = c("No","Yes"),
-          selected = "No"
-        )
-      })
       output$SampleAnnotationChoice_ui <- renderUI({
         req(selectedData_processed())
         selectInput(
@@ -43,42 +34,42 @@ sample_correlation_server <- function(id, data, params){
       observeEvent(toListen2CorrelationPlot(),{
         req(selectedData_processed())
         req(input$SampleAnnotationChoice)
-        
-        if(sample_corr_reactive$calculate == 1){
-          # update the data if needed
-          useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
-          browser()
-          data <- update_data(session$token)
-          if(useBatch){
-              data <- data$data_batch_corrected
-          } else {
-              data <- data$data
-          }
-          # set the counter to 0 to prevent any further plotting
-          sample_corr_reactive$calculate <- 0
-          
-          # check value of input$Do_SampleCorrelation
-          annotationDF <- colData(data)[,input$SampleAnnotationChoice,drop = F]
-          check <- check_calculations(
-            list(
-              corrMethod = input$corrMethod,
-              data_info = list(
-                rows = length(rownames(data)),
-                cols = length(colnames(data)),
-                preprocessing = par_tmp[[session$token]]$PreProcessing_Procedure,
-                batch = useBatch
-              )
-            ),
-            "SampleCorrelation"
-          )
-          # for safety measures, wrap in tryCatch
-          tryCatch({
-            if (check == "No Result yet"){
-              output$SampleCorr_Info <- renderText(
-                "Correlation Matrix successfully computed."
-              )
+        req(input$Do_SampleCorrelation > 0)
+        # update the data if needed
+        data <- update_data(session$token)
+        if(useBatch){
+            data <- data$data_batch_corrected
+        } else {
+            data <- data$data
+        }
+        # set the counter to 0 to prevent any further plotting
+        sample_corr_reactive$calculate <- 0
+
+
+        # check value of input$Do_SampleCorrelation
+        annotationDF <- colData(data$data)[,input$SampleAnnotationChoice,drop = F]
+        check <- check_calculations(
+          list(
+            corrMethod = input$corrMethod,
+            data_info = list(
+              rows = length(rownames(data$data)),
+              cols = length(colnames(data$data)),
+              preprocessing = par_tmp[[session$token]]$PreProcessing_Procedure
+            )
+          ),
+          "SampleCorrelation"
+        )
+        # for safety measures, wrap in tryCatch
+        tryCatch({
+          if (check == "No Result yet"){
+            output$SampleCorr_Info <- renderText(
+              "Correlation Matrix successfully computed."
+            )
+            if(input$corrMethod == "kendall"){
+              cormat <- pcaPP::cor.fk(x = as.matrix(assay(data$data)))
+            } else {
               cormat <- cor(
-                x = as.matrix(assay(data)),
+                x = as.matrix(assay(data$data)),
                 method = input$corrMethod
               )
             } else if (check == "Result exists"){
@@ -91,7 +82,7 @@ sample_correlation_server <- function(id, data, params){
                 "Correlation Matrix result overwritten with different parameters."
               )
               cormat <- cor(
-                x = as.matrix(assay(data)),
+                x = as.matrix(assay(data$data)),
                 method = input$corrMethod
               )
             }
@@ -123,10 +114,9 @@ sample_correlation_server <- function(id, data, params){
           par_tmp[[session$token]][["SampleCorrelation"]] <<- list(
             corrMethod = input$corrMethod,
             data_info = list(
-              rows = length(rownames(data)),
-              cols = length(colnames(data)),
-              preprocessing = par_tmp[[session$token]]$PreProcessing_Procedure,
-              batch = useBatch
+              rows = length(rownames(data$data)),
+              cols = length(colnames(data$data)),
+              preprocessing = par_tmp[[session$token]]$PreProcessing_Procedure
             )
           )
 
