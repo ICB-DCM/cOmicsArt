@@ -3,8 +3,9 @@ cd program
 git pull
 #git checkout pca_worflow_integrated
 git checkout develop
+git pull
 Rscript -e "library(renv)"
-Rscript -e "renv::init(bioconductor = TRUE)"
+#Rscript -e "renv::init(bioconductor = TRUE)"
 pwd
 #RScript -e "renv::init(bioconductor = TRUE)"
 echo ReInit
