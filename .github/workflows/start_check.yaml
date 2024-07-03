@@ -27,7 +27,7 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libsqlite3-dev libglu1-mesa-dev default-jdk libmagick++-dev
+        sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libsqlite3-dev libglu1-mesa-dev default-jdk libmagick++-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev
         sudo apt install curl
     
     - name: Install and activate renv
