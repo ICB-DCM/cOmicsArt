@@ -14,6 +14,15 @@ sample_correlation_server <- function(id, data, params){
       
       ns <- session$ns
       # UI Section ----
+      output$UseBatch_ui <- renderUI({
+        req(par_tmp[[session$token]]$BatchColumn != "NULL")
+        selectInput(
+          inputId = ns("UseBatch"),
+          label = "Use batch corrected data?",
+          choices = c("No","Yes"),
+          selected = "No"
+        )
+      })
       output$SampleAnnotationChoice_ui <- renderUI({
         req(selectedData_processed())
         selectInput(
@@ -37,6 +46,7 @@ sample_correlation_server <- function(id, data, params){
         req(input$Do_SampleCorrelation > 0)
         # update the data if needed
         data <- update_data(session$token)
+        useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
         if(useBatch){
             data <- data$data_batch_corrected
         } else {
@@ -47,13 +57,13 @@ sample_correlation_server <- function(id, data, params){
 
 
         # check value of input$Do_SampleCorrelation
-        annotationDF <- colData(data$data)[,input$SampleAnnotationChoice,drop = F]
+        annotationDF <- colData(data)[,input$SampleAnnotationChoice,drop = F]
         check <- check_calculations(
           list(
             corrMethod = input$corrMethod,
             data_info = list(
-              rows = length(rownames(data$data)),
-              cols = length(colnames(data$data)),
+              rows = length(rownames(data)),
+              cols = length(colnames(data)),
               preprocessing = par_tmp[[session$token]]$PreProcessing_Procedure
             )
           ),
@@ -66,75 +76,74 @@ sample_correlation_server <- function(id, data, params){
               "Correlation Matrix successfully computed."
             )
             if(input$corrMethod == "kendall"){
-              cormat <- pcaPP::cor.fk(x = as.matrix(assay(data$data)))
+              cormat <- pcaPP::cor.fk(x = as.matrix(assay(data)))
             } else {
               cormat <- cor(
-                x = as.matrix(assay(data$data)),
-                method = input$corrMethod
-              )
-            } else if (check == "Result exists"){
-              output$SampleCorr_Info <- renderText(
-                "Correlation Matrix was already computed, no need to click the Button again."
-              )
-              cormat <- res_tmp[[session$token]]$SampleCorrelation
-            } else if (check == "Overwrite"){
-              output$SampleCorr_Info <- renderText(
-                "Correlation Matrix result overwritten with different parameters."
-              )
-              cormat <- cor(
-                x = as.matrix(assay(data$data)),
+                x = as.matrix(assay(data)),
                 method = input$corrMethod
               )
             }
-          }, error = function(e){
-            error_modal(e)
-            return(NULL)
-          })
-
-          customTitleSampleCorrelation <- paste0(
-            "Sample Correlation - ",
-            params$omic_type,"-",
-            paste0("entities:",params$row_selection,collapse = "_"),
-            "-samples",
-            ifelse(any(params$row_selection != "all"),paste0(" (with: ",paste0(params$row_selection,collapse = ", "),")"),""),
-            "-preprocessing: ",
-            params$PreProcessing_Procedure
-          )
-
-          anno_colors <- assign_colors_SampleCorr(annotationDF)
-          SampleCorrelationPlot_final <- pheatmap(
-            mat = cormat,
-            annotation_row = as.data.frame(annotationDF),
-            main = customTitleSampleCorrelation,
-            annotation_colors = anno_colors
-          )
-          # assign res_temp["SampleCorrelation"]
-          res_tmp[[session$token]][["SampleCorrelation"]] <<- cormat
-          # assign par_temp["SampleCorrelation"]
-          par_tmp[[session$token]][["SampleCorrelation"]] <<- list(
-            corrMethod = input$corrMethod,
-            data_info = list(
-              rows = length(rownames(data$data)),
-              cols = length(colnames(data$data)),
-              preprocessing = par_tmp[[session$token]]$PreProcessing_Procedure
+          } else if (check == "Result exists"){
+            output$SampleCorr_Info <- renderText(
+              "Correlation Matrix was already computed, no need to click the Button again."
             )
-          )
-
-          sampleCorrelation_scenario <- 18
-          output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
-
-          # Longer names causes issues for saving
-          if(nchar(customTitleSampleCorrelation) >= 250){
-            customTitleSampleCorrelation <- "SampleCorrelation"
+            cormat <- res_tmp[[session$token]]$SampleCorrelation
+          } else if (check == "Overwrite"){
+            output$SampleCorr_Info <- renderText(
+              "Correlation Matrix result overwritten with different parameters."
+            )
+            cormat <- cor(
+              x = as.matrix(assay(data)),
+              method = input$corrMethod
+            )
           }
+        }, error = function(e){
+          error_modal(e)
+          return(NULL)
+        })
 
-          tmp <- getUserReactiveValues(input)
-          par_tmp[[session$token]]$SampleCorr[names(tmp)] <<- tmp
-          par_tmp[[session$token]]$SampleCorr$customTitleSampleCorrelation <<- customTitleSampleCorrelation
-          par_tmp[[session$token]]$SampleCorr$annotationDF <<- as.data.frame(annotationDF)
-          par_tmp[[session$token]]$SampleCorr$anno_colors <<- anno_colors
+        customTitleSampleCorrelation <- paste0(
+          "Sample Correlation - ",
+          params$omic_type,"-",
+          paste0("entities:",params$row_selection,collapse = "_"),
+          "-samples",
+          ifelse(any(params$row_selection != "all"),paste0(" (with: ",paste0(params$row_selection,collapse = ", "),")"),""),
+          "-preprocessing: ",
+          params$PreProcessing_Procedure
+        )
 
+        anno_colors <- assign_colors_SampleCorr(annotationDF)
+        SampleCorrelationPlot_final <- pheatmap(
+          mat = cormat,
+          annotation_row = as.data.frame(annotationDF),
+          main = customTitleSampleCorrelation,
+          annotation_colors = anno_colors
+        )
+        # assign res_temp["SampleCorrelation"]
+        res_tmp[[session$token]][["SampleCorrelation"]] <<- cormat
+        # assign par_temp["SampleCorrelation"]
+        par_tmp[[session$token]][["SampleCorrelation"]] <<- list(
+          corrMethod = input$corrMethod,
+          data_info = list(
+            rows = length(rownames(data)),
+            cols = length(colnames(data)),
+            preprocessing = par_tmp[[session$token]]$PreProcessing_Procedure
+          )
+        )
+
+        sampleCorrelation_scenario <- 18
+        output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
+
+        # Longer names causes issues for saving
+        if(nchar(customTitleSampleCorrelation) >= 250){
+          customTitleSampleCorrelation <- "SampleCorrelation"
         }
+
+        tmp <- getUserReactiveValues(input)
+        par_tmp[[session$token]]$SampleCorr[names(tmp)] <<- tmp
+        par_tmp[[session$token]]$SampleCorr$customTitleSampleCorrelation <<- customTitleSampleCorrelation
+        par_tmp[[session$token]]$SampleCorr$annotationDF <<- as.data.frame(annotationDF)
+        par_tmp[[session$token]]$SampleCorr$anno_colors <<- anno_colors
       })
       
       # Download Section ----
