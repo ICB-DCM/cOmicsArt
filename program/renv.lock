@@ -4,23 +4,23 @@
     "Repositories": [
       {
         "Name": "BioCsoft",
-        "URL": "https://bioconductor.org/packages/3.16/bioc"
+        "URL": "https://bioconductor.org/packages/3.15/bioc"
       },
       {
         "Name": "BioCann",
-        "URL": "https://bioconductor.org/packages/3.16/data/annotation"
+        "URL": "https://bioconductor.org/packages/3.15/data/annotation"
       },
       {
         "Name": "BioCexp",
-        "URL": "https://bioconductor.org/packages/3.16/data/experiment"
+        "URL": "https://bioconductor.org/packages/3.15/data/experiment"
       },
       {
         "Name": "BioCworkflows",
-        "URL": "https://bioconductor.org/packages/3.16/workflows"
+        "URL": "https://bioconductor.org/packages/3.15/workflows"
       },
       {
         "Name": "BioCbooks",
-        "URL": "https://bioconductor.org/packages/3.16/books"
+        "URL": "https://bioconductor.org/packages/3.15/books"
       },
       {
         "Name": "CRAN",
@@ -2139,6 +2139,14 @@
         "colorspace"
       ]
     },
+    "mvtnorm": {
+      "Package": "mvtnorm",
+      "Version": "1.2-3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "463b268710930f7bffef33147400966a",
+      "Requirements": []
+    },
     "nlme": {
       "Package": "nlme",
       "Version": "3.1-158",
@@ -2265,6 +2273,16 @@
         "lme4",
         "magrittr",
         "numDeriv"
+      ]
+    },
+    "pcaPP": {
+      "Package": "pcaPP",
+      "Version": "2.0-4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "55e85f05d479f9c8644f94900bbefd56",
+      "Requirements": [
+        "mvtnorm"
       ]
     },
     "pheatmap": {
