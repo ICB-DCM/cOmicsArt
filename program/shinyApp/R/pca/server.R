@@ -694,7 +694,7 @@ pca_Server <- function(id, data, params, row_select){
             colors = c("#277d6a", "white", "orange"),
             limits = c(-max(df_loadings$loading),max(df_loadings$loading))
           ) +
-          labs(x = "PCs", y = "entity", fill = "Loading") +
+          labs(x = "PCs", y = input$EntitieAnno_Loadings_matrix, fill = "Loading") +
           theme_bw(base_size = 15)
         scenario <- 8.1
         #Loading_scenario <- scenario
