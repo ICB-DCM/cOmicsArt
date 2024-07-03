@@ -53,7 +53,8 @@ data_selection_sidebar_panel <- sidebarPanel(
               inputId = "omic_type_precompiled",
               label = "Omic Type that is uploaded",
               choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
-              selected = ""
+              selected = "",
+              width = "80%"
             )
         ),
         shiny::fileInput(
@@ -61,7 +62,7 @@ data_selection_sidebar_panel <- sidebarPanel(
           label = HTML('Load precompiled data <br/><small>(saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data</a></small>'),
           accept = ".RDS",
           width = "80%"
-        ),
+        ) %>% helper(type = "markdown", content = "DataSelection_SummarizedExp"),
         br(), br(),
         actionButton(
           inputId = "refresh_precompiled",
@@ -79,7 +80,8 @@ data_selection_sidebar_panel <- sidebarPanel(
               inputId = "omic_type_metadata",
               label = "Omic Type that is uploaded",
               choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
-              selected = ""
+              selected = "",
+              width = "80%"
             )
         ),
         shiny::fileInput(
@@ -87,14 +89,14 @@ data_selection_sidebar_panel <- sidebarPanel(
           label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a></small>'),
           accept = c(".csv", ".xlsx"),
           width = "80%"
-        ),
+        ) %>% helper(type = "markdown", content = "DataSelection_MetaData"),
         shiny::fileInput(
           inputId = "metadataInput",
           label = HTML("Upload your Meta Data Sheet <small>(currently replaces sample annotation)</small>"),
           accept = c(".xlsx"),
           buttonLabel = list(icon("folder"),"Simply upload your Metadata Sheet!"),
           width = "80%"
-        ) %>% helper(type = "markdown", content = "DataSelection_MetaData"),
+        ),
         shiny::fileInput(
           inputId = "data_row_anno_metadata",
           label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a></small>'),
@@ -118,7 +120,8 @@ data_selection_sidebar_panel <- sidebarPanel(
               inputId = "omic_type_testdata",
               label = "Omic Type that is uploaded",
               choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
-              selected = ""
+              selected = "",
+              width = "80%"
             )
         ),
         br(),
@@ -173,7 +176,7 @@ data_selection_main_panel <- mainPanel(
     label = "Start the Journey",
     width = "100%",
     icon = icon('rocket'),
-    style = "color: #fffff; background-color: #EC001447; border-color: #000000"
+    style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
   ),
   # hidden button
   hidden(actionButton(

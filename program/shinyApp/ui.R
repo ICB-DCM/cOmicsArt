@@ -40,6 +40,8 @@ library(readxl)
 library(ggvenn)
 library(ComplexUpset)
 library(gridExtra)
+library(pcaPP) # requires gfortran. Not sure how to install on server
+library(reshape2)
 # library(svglite)
 
 source("R/C.R")
@@ -87,31 +89,92 @@ ui <- shiny::fluidPage(
         max-width: 90%;
       }
       #sidebar_data_selection {
-        background-color: #EC001447;
-      }
-      #sidebar_pre_processing {
-        background-color: #FD8D3347;
-      }
-      #sidebar_sampleCorrelation {
-        background-color: #FFD33547;
-      }
-      #sidebar_significance_analysis {
           background-color: #70BF4F47;
       }
+      #sidebar_pre_processing {
+          background-color: #3897F147;
+      }
+      #sidebar_sampleCorrelation {
+          background-color: #A208BA35;
+      }
       #sidebar_pca {
-        background-color: #3897F147;
-      }
-      #sidebar_volcano_plot {
-        background-color: #A208BA47;
-      }
-      #sidebar_heatmap {
-        background-color: #EC001447;
-      }
-      #sidebar_single_gene_visualisation {
           background-color: #FD8D3347;
       }
-      #sidebar_enrichment_analysis {
+      #sidebar_significance_analysis {
           background-color: #FFD33547;
+      }
+      #sidebar_heatmap {
+          background-color: #70BF4F47;
+      }
+      #sidebar_single_gene_visualisation {
+          background-color: #3897F147;
+      }
+      #sidebar_enrichment_analysis {
+          background-color: #A208BA35;
+      }
+      .tabbable > .nav > li > a[data-value='Data selection'] {
+         background-color: #70BF4F47 !important; /* Lighter Green */
+         color: black
+      }
+      .tabbable > .nav > li[class=active] > a[data-value='Data selection'] {
+        background-color: #70BF4F !important; /* Strong Green */
+        color: white !important;
+      }
+      .tabbable > .nav > li > a[data-value='Pre-processing'] {
+        background-color: #3897F147 !important; /* Lighter Blue */
+        color: black !important;
+      }
+      .tabbable > .nav > li[class=active] > a[data-value='Pre-processing'] {
+        background-color: #3897F1 !important; /* Strong Blue */
+        color: white !important;
+      }
+      .tabbable > .nav > li > a[data-value='Sample Correlation'] {
+        background-color: #A208BA35 !important; /* Lighter Purple */
+        color: black !important;
+      }
+      .tabbable > .nav > li[class=active] > a[data-value='Sample Correlation'] {
+        background-color: #A208BA !important; /* Strong Purple */
+        color: white !important;
+      }
+      .tabbable > .nav > li > a[data-value='PCA'] {
+        background-color: #FD8D3347 !important; /* Lighter Orange */
+        color: black !important;
+      }
+      .tabbable > .nav > li[class=active] > a[data-value='PCA'] {
+        background-color: #FD8D33 !important; /* Strong Orange */
+        color: white !important;
+      }
+      .tabbable > .nav > li > a[data-value='Significance Analysis'] {
+        background-color: #FFD33547 !important; /* Lighter Yellow */
+        color: black !important;
+      }
+      .tabbable > .nav > li > a[data-value='Heatmap'] {
+        background-color: #70BF4F47 !important; /* Lighter Green */
+        color: black !important;
+      }
+      .tabbable > .nav > li[class=active] > a[data-value='Heatmap'] {
+        background-color: #70BF4F !important; /* Strong Green */
+        color: white !important;
+      }
+      .tabbable > .nav > li > a[data-value='Single Gene Visualisations'] {
+        background-color: #3897F147 !important; /* Lighter Blue */
+        color: black !important;
+      }
+      .tabbable > .nav > li[class=active] > a[data-value='Single Gene Visualisations'] {
+        background-color: #3897F1 !important; /* Strong Blue */
+        color: white !important;
+      }
+      .tabbable > .nav > li > a[data-value='Enrichment Analysis'] {
+        background-color: #FD8D3347 !important; /* Lighter Orange */
+        color: black !important;
+      }
+      .tabbable > .nav > li[class=active] > a[data-value='Enrichment Analysis'] {
+        background-color: #A208BA35 !important; /* Lighter Purple */
+        color: black !important;
+      }
+      .tabbable > .nav > li[class=active] > a[data-value='Significance Analysis'] {
+        background-color: #A208BA !important; /* Strong Purple */
+        color: white !important;
       }
   "))
   ),
@@ -127,23 +190,6 @@ ui <- shiny::fluidPage(
     label = "Quit App",
     class = "btn-secondary"
     )
-  ),
-  div(
-    style = "display:inline-block; float:right",
-    actionButton(
-    inputId = "guide",
-    label = "Guide me!",
-    class = "btn-secondary"
-    )
-  ),
-  div(
-    style = "display:inline-block; float:right",
-    helpText(" ", align = "right") %>% helper(
-      type = "markdown",
-      content = "Inital_help",
-      size = "l",
-      colour = "red",
-      style = "zoom: 600%;")
   ),
   hidden(selectInput(
     "element",
@@ -169,7 +215,6 @@ ui <- shiny::fluidPage(
   splitLayout(
     cellWidths = c("75%", "10%", "15%"),
     DownloadReport_ui("DownloadTestModule"),
-    helpText("Metabolon Help", align = "center") %>% helper(type = "markdown", content = "Metabolon_help", size = "l", colour = "blue", style = "position: relative;top: -18px;left: 15px;; zoom: 200%;"),
     NULL
   ),
 
@@ -181,8 +226,8 @@ ui <- shiny::fluidPage(
     data_selection_panel,
     pre_processing_panel,
     sampleCorrelation_UI("sample_correlation"),
-    significance_analysis_UI("SignificanceAnalysis"),
     pca_UI("PCA"),
+    significance_analysis_UI("SignificanceAnalysis"),
     heatmap_UI("Heatmap"),
     single_gene_visualisation_UI("single_gene_visualisation"),
     enrichment_analysis_UI("EnrichmentAnalysis")

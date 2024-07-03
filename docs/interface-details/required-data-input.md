@@ -5,6 +5,7 @@ parent: Interface Details
 nav_order: 1
 ---
 
+
 # The Very Start 🚀
 To start your own analysis, you need to pass the first hurdle - Uploading your data. (Note: If you want to check out what the app is capable of, you might want to use the Test data. For detailed instructions, check out [Interface Details](interface-details/selection.md)).
 
@@ -73,3 +74,4 @@ Once you have uploaded your three data tables to the app, you can click on 'save
 
 ### 🏆 [Advanced] RDS-Structure
 *** to come ***
+

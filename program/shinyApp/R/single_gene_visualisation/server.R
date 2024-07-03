@@ -3,6 +3,7 @@ single_gene_visualisation_server <- function(id, data){
     id,
     function(input,output,session){
       ns <- session$ns
+      file_path <- paste0("/www/",session$token,"/")
 
       # Refresh UI /Data
       observeEvent(input$refreshUI,{
@@ -282,7 +283,7 @@ single_gene_visualisation_server <- function(id, data){
             on.exit({
               tmp_filename <- paste0(
                 getwd(),
-                "/www/",
+                file_path,
                 paste0(
                   par_tmp[[session$token]]$SingleEntVis$SingleEnt_customTitle_boxplot,
                   " ", Sys.time(), input$file_ext_singleGene
@@ -314,7 +315,7 @@ single_gene_visualisation_server <- function(id, data){
         notificationID <- showNotification("Saving...",duration = 0)
         tmp_filename <- paste0(
           getwd(),
-          "/www/",
+          file_path,
           paste0(
             par_tmp[[session$token]]$SingleEntVis$SingleEnt_customTitle_boxplot,
             " ", Sys.time(), ".png"

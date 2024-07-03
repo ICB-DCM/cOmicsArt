@@ -1,8 +1,6 @@
-### ShinyApp/helpfiles/SampleCorr_Choices.md - Under Development
-
+## Correlation method
 
 ***
-### Correlation method
 
 Choose **one** of the following correlation methods. These correlation methods provide 
 insights into different aspects of relationships between variables. Understanding 
@@ -71,12 +69,3 @@ methods](https://en.wikipedia.org/wiki/Correlation_coefficient).
 
 **Note:**
 - These correlation methods provide insights into different aspects of relationships between variables. Understanding their characteristics helps in choosing the most appropriate method for a given analysis.
-
-***
-
-### Color Annotation
-
-You can choose **Multiple** options. Each option is a column from the `sample 
-annotation table`. The clustered samples will be colored on the right side by your 
-choices. This allows an easy overview on the resulting clusters and eases pattern finding.
-

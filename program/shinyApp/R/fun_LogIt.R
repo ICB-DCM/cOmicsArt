@@ -8,7 +8,8 @@ fun_LogIt <- function(
   jokes = JOKES
 ){
   # sophisticated "Where to place log file"
-  LogfileName <- "www/Report.md"  # DO NOT CHANGE THE NAME!
+  file_path <- paste0("www/", session$token)
+  LogfileName <- paste0(file_path, "/Report.md")  # DO NOT CHANGE THE NAME!
   line <- message
   workingDir <- getwd()
   if(!is.null(Filename) & !(file.exists(paste0(workingDir,"/",Filename)))){
