@@ -7,10 +7,8 @@ nav_exclude: true
 # Welcome to   <span style="color:#EC0014"> c</span><span style="color:#FD8D33">O</span><span style="color:#3897F1">m</span><span style="color:#FFD335">i</span><span style="color:#A208BA">c</span><span style="color:#EF0089">s</span><span style="color:#EC0014">A</span><span style="color:#FD8D33">r</span><span style="color:#3897F1">t</span> Documentation 🎨
 
 
-![Example Image](/OmicShiny/assets/images/cOmicsCat.png)
-![Example Image](./OmicShiny/assets/images/cOmicsCat.png)
-
-
+![A comic about a cat finding cOmicsART](/OmicShiny/assets/images/cOmicsCat.png)
+*Image generated using DALL-E by OpenAI. Adjusted by Lea Seep*
 
 If you are looking for the web app, please visit: 🌐 [cOmicsART Web App](https://shiny.iaas.uni-bonn.de/OmicShiny/)
 
