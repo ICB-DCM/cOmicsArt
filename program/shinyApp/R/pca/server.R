@@ -72,6 +72,29 @@ pca_Server <- function(id, data, params, row_select){
           step = 1
         )
       })
+      # output$topSlider_ui <- renderUI({
+      #   req(data_input_shiny())
+      #   browser()
+      #   sliderInput(
+      #     inputId = ns("topSlider"),
+      #     label = "Top k positive Loadings",
+      #     min = 1,
+      #     max = length(c(rownames(rowData(data$data)))),
+      #     value = 3,
+      #     step = 1
+      #   )
+      # })
+      # output$bottomSlider_ui <- renderUI({
+      #   req(data_input_shiny())
+      #   sliderInput(
+      #     inputId = ns("bottomSlider"),
+      #     label = "Top k negative Loadings",
+      #     min = 1,
+      #     max = length(c(rownames(rowData(data$data)))),
+      #     value = 3,
+      #     step = 1
+      #   )
+      # })
       
       ## Data Selection UI ---
       observe({
