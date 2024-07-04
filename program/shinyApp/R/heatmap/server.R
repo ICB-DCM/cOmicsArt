@@ -413,8 +413,11 @@ heatmap_server <- function(id, data, params, updates){
 
               # for safety measures wrap in tryCatch
               tryCatch({
+                heatmap_data <- t(Data2Plot[,"LFC",drop=F])
+                # absolute maximum value
+                max_val <- max(abs(heatmap_data), na.rm = T)
                 heatmap_plot <- pheatmap(
-                  t(Data2Plot[,"LFC",drop=F]),
+                  heatmap_data,
                   main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
                   show_rownames = ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
                   show_colnames = TRUE,
@@ -423,7 +426,8 @@ heatmap_server <- function(id, data, params, updates){
                   scale=ifelse(input$rowWiseScaled,"row","none"),
                   annotation_col = annotation_col,
                   silent = F,
-                  color = myColor_fill
+                  color = myColor_fill,
+                  breaks = seq(-max_val, max_val, length.out = 100)
                 )
               }, error = function(e){
                 error_modal(e)
@@ -458,8 +462,11 @@ heatmap_server <- function(id, data, params, updates){
 
             # for safety measures wrap in tryCatch
             tryCatch({
+              heatmap_data <- as.matrix(data2HandOver)
+              # absolute maximum value
+              max_val <- max(abs(heatmap_data), na.rm = T)
               heatmap_plot <- pheatmap(
-                as.matrix(data2HandOver),
+                heatmap_data,
                 main = customTitleHeatmap,
                 show_rownames = ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
                 labels_row = rowData(data$data)[rownames(data2HandOver),input$row_label_options],
@@ -470,7 +477,8 @@ heatmap_server <- function(id, data, params, updates){
                 annotation_col = annotation_col,
                 annotation_row = annotation_row,
                 annotation_colors = mycolors,
-                silent = F
+                silent = F,
+                breaks = seq(-max_val, max_val, length.out = 100)
               )
             }, error = function(e){
               error_modal(e)
@@ -486,8 +494,11 @@ heatmap_server <- function(id, data, params, updates){
 
             scenario <- 10
             # Plotting saved result -> no need to wrap in tryCatch
+            heatmap_data <- t(res_tmp[[session$token]]$Heatmap[,"LFC",drop=F])
+            # absolute maximum value
+            max_val <- max(abs(heatmap_data), na.rm = T)
             heatmap_plot <- pheatmap(
-                t(res_tmp[[session$token]]$Heatmap[,"LFC",drop=F]),
+                heatmap_data,
                 main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
                 show_rownames = ifelse(nrow(res_tmp[[session$token]]$Heatmap)<=25,TRUE,FALSE),
                 show_colnames = TRUE,
@@ -497,7 +508,8 @@ heatmap_server <- function(id, data, params, updates){
                 annotation_col = annotation_col,
                 silent = F,
                 breaks = myBreaks,
-                color = myColor_fill
+                color = myColor_fill,
+                breaks = seq(-max_val, max_val, length.out = 100)
               )
           } else {
             clusterRowspossible <- ifelse(nrow(as.matrix(res_tmp[[session$token]]$Heatmap))>1,input$cluster_rows,F)
@@ -522,8 +534,11 @@ heatmap_server <- function(id, data, params, updates){
             }
             scenario <- 11
             # Plotting saved result -> no need to wrap in tryCatch
+            heatmap_data <- as.matrix(res_tmp[[session$token]]$Heatmap)
+            # absolute maximum value
+            max_val <- max(abs(heatmap_data), na.rm = T)
             heatmap_plot <- pheatmap(
-              as.matrix(res_tmp[[session$token]]$Heatmap),
+              heatmap_data,
               main = customTitleHeatmap,
               show_rownames = ifelse(nrow(res_tmp[[session$token]]$Heatmap)<=input$row_label_no,TRUE,FALSE),
               labels_row = rowData(data$data)[rownames(data2HandOver),input$row_label_options],
@@ -534,7 +549,8 @@ heatmap_server <- function(id, data, params, updates){
               annotation_col = annotation_col,
               annotation_row = annotation_row,
               annotation_colors = mycolors,
-              silent = F
+              silent = F,
+              breaks = seq(-max_val, max_val, length.out = 100)
             )
           }
         }
