@@ -202,76 +202,90 @@
     
     "relUrl": "/interface-details/required-data-input.html"
   },"29": {
-    "doc": "Sample correlation",
-    "title": "Sample correlation",
-    "content": " ",
+    "doc": "Sample Correlation",
+    "title": "Sample Correlation",
+    "content": "The Sample Correlation tab is divided into two main sections: the side panel and the main panel. ",
     "url": "/OmicShiny/interface-details/sample-correlation.html",
     
     "relUrl": "/interface-details/sample-correlation.html"
   },"30": {
+    "doc": "Sample Correlation",
+    "title": "Side Panel",
+    "content": "In the side panel, you have the following options: . | Choose the correlation method: You can select from Pearson, Spearman, or Kendall correlation methods. | Understanding Correlation Methods provides a detailed explanation of each method. | When to use: . | Pearson: Use this when you assume a linear relationship between your variables and both variables are normally distributed. | Spearman: Use this when your data is not normally distributed or you have ordinal variables. | Kendall: Use this when you have small sample sizes or need to handle ties in your data. | . | . | Get Sample Correlation: Clicking this button will generate the heatmap in the main panel based on the selected correlation method. | Choose the color annotation for the samples: Below the horizontal line, you can choose different options to color the rows. These options come from the sample annotations provided initially. This can help to potentially explain clustering behavior observed in the heatmap. More details on these options can be found under Required Data Input or Showcase A. | . ",
+    "url": "/OmicShiny/interface-details/sample-correlation.html#side-panel",
+    
+    "relUrl": "/interface-details/sample-correlation.html#side-panel"
+  },"31": {
+    "doc": "Sample Correlation",
+    "title": "Main Panel",
+    "content": "The main panel displays the correlation heatmap. Here are some key points: . | Information Display: At the top of the main panel, some information is displayed regarding the computation of the correlation matrix. | Heatmap Visualization: The heatmap provides a visual representation of the sample correlation based on the selected method and coloring option. | Download Options: The visualization can be downloaded directly in common formats (e.g., PNG, TIFF, PDF) or sent to the report. You can also download the underlying R code and data. For more information, check out Interface Details. | Non-Interactive Plot: Note that this plot is not interactive. | . Other Notes . | Question Marks: The displayed question marks provide quick and immediate help. However, since you are reading this documentation, you found the extensive version. Hope it helped! | Clustering Behavior: Observing the clustering in the heatmap can give insights into the relationships between different samples based on the selected annotation. | . ",
+    "url": "/OmicShiny/interface-details/sample-correlation.html#main-panel",
+    
+    "relUrl": "/interface-details/sample-correlation.html#main-panel"
+  },"32": {
     "doc": "Data Selection",
     "title": "Data Selection",
     "content": " ",
     "url": "/OmicShiny/interface-details/selection.html",
     
     "relUrl": "/interface-details/selection.html"
-  },"31": {
+  },"33": {
     "doc": "Showcase A",
     "title": "Showcase A",
     "content": "Details about Showcase A. ",
     "url": "/OmicShiny/showcases/showcase-a.html",
     
     "relUrl": "/showcases/showcase-a.html"
-  },"32": {
+  },"34": {
     "doc": "Showcase A",
     "title": "Showcase B",
     "content": "Details about Showcase B. ",
     "url": "/OmicShiny/showcases/showcase-b.html#showcase-b",
     
     "relUrl": "/showcases/showcase-b.html#showcase-b"
-  },"33": {
+  },"35": {
     "doc": "Showcase A",
     "title": "Showcase A",
     "content": " ",
     "url": "/OmicShiny/showcases/showcase-b.html",
     
     "relUrl": "/showcases/showcase-b.html"
-  },"34": {
+  },"36": {
     "doc": "Showcases",
     "title": "Showcases Overview",
     "content": "In this section, you will find two showcases, each utilizing different datasets to illustrate various features and functionalities of the App. | Data Input Showcase: This example demonstrates how to work with data inputs, emphasizing different aspects of data manipulation within the App. | . =&gt; Go to the Showcase A . | Rearrange results and Specialized Analysis: This showcase highlights how to summarize produced results in a publication-like manner and further expand upon them with specialized analyses. | . =&gt; Go to the Showcase B test . ",
     "url": "/OmicShiny/showcases.html#showcases-overview",
     
     "relUrl": "/showcases.html#showcases-overview"
-  },"35": {
+  },"37": {
     "doc": "Showcases",
     "title": "Showcases",
     "content": " ",
     "url": "/OmicShiny/showcases.html",
     
     "relUrl": "/showcases.html"
-  },"36": {
+  },"38": {
     "doc": "Significance Analysis",
     "title": "Significance Analysis",
     "content": " ",
     "url": "/OmicShiny/interface-details/significance-analysis.html",
     
     "relUrl": "/interface-details/significance-analysis.html"
-  },"37": {
+  },"39": {
     "doc": "Single Gene Visualisations",
     "title": "Single Gene Visualisations",
     "content": " ",
     "url": "/OmicShiny/interface-details/single-gene-visualisations.html",
     
     "relUrl": "/interface-details/single-gene-visualisations.html"
-  },"38": {
+  },"40": {
     "doc": "Welcome to cOmicsART",
     "title": "Welcome to  cOmicsArt Documentation 🎨",
     "content": "Image generated using DALL-E by OpenAI. Adjusted by Lea Seep . If you are looking for the web app, please visit: 🌐 cOmicsART Web App . Otherwise, you can navigate through the documentation using the sidebar on the left. If you’re searching for something specific, try using the search bar at the top. 🔍 It can search through the entire documentation and guide you to the relevant section. Have fun exploring! 🎉 . Quick Links to Get You Started: . | 📚 Want to know the required data and format? Visit Interface Details. | 🔧 Need to run the app locally? Check out the Installation Guide. | 💡 Looking for customization inspiration? Explore our Customization Examples. | 📊 Want to know more about the significance analysis? Visit Significance Analysis | . ",
     "url": "/OmicShiny/welcome.html#welcome-to--comicsart-documentation-",
     
     "relUrl": "/welcome.html#welcome-to--comicsart-documentation-"
-  },"39": {
+  },"41": {
     "doc": "Welcome to cOmicsART",
     "title": "Welcome to cOmicsART",
     "content": " ",
