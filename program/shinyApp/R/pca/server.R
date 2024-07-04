@@ -224,87 +224,107 @@ pca_Server <- function(id, data, params, row_select){
 
           # Define data for plotting
           pcaData <- data.frame(pca$x,colData(data2plot))
+          pca_reactives$pcaData <- pcaData
+          pca_reactives$percentVar <- percentVar
+          pca_reactives$data2plot <- data2plot
 
-          df_out_r <- NULL
-          if(input$Show_loadings == "Yes"){
-            df_out <- pca$x
-            df_out_r <- as.data.frame(pca$rotation)
-            df_out_r$feature <- row.names(df_out_r)
-
-            # Get 5 best loadings
-            TopK <- rownames(df_out_r)[order(
-              sqrt(
-                (df_out_r[,input$x_axis_selection])^2+(df_out_r[,input$y_axis_selection])^2
-              ),
-              decreasing = T
-            )[1:5]]
-            df_out_r$feature[!df_out_r$feature %in% TopK] <- ""
-
-            mult <- min(
-              (max(df_out[,input$y_axis_selection]) - min(df_out[,input$y_axis_selection])/(max(df_out_r[,input$y_axis_selection])-min(df_out_r[,input$y_axis_selection]))),
-              (max(df_out[,input$x_axis_selection]) - min(df_out[,input$x_axis_selection])/(max(df_out_r[,input$x_axis_selection])-min(df_out_r[,input$x_axis_selection])))
-            )
-
-            df_out_r <- transform(
-              df_out_r,
-              v1 = 1.2 * mult * (get(input$x_axis_selection)),
-              v2 = 1.2 * mult * (get(input$y_axis_selection))
-            )
-            df_out_r$global_ID <- rownames(df_out_r)
-            df_out_r$chosenAnno <- rownames(df_out_r)
-            if(!is.null(input$EntitieAnno_Loadings)){
-              req(data_input_shiny())
-              df_out_r$chosenAnno <- factor(
-                make.unique(as.character(rowData(data2plot)[rownames(df_out_r),input$EntitieAnno_Loadings])),
-                levels = make.unique(as.character(rowData(data2plot)[rownames(df_out_r),input$EntitieAnno_Loadings]))
-              )
-            }
-          }
-          # Scree Plot calculations
-          var_explained_df <- data.frame(
-            PC = paste0("PC", seq_len(ncol(pca$x))),
-            var_explained = (pca$sdev)^2/sum((pca$sdev)^2)
+          # assign res_temp
+          res_tmp[[session$token]][["PCA"]] <<- pca
+          # assign par_temp as empty list
+          par_tmp[[session$token]][["PCA"]] <<- list(
+            sample_selection_pca = input$sample_selection_pca,
+            SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca
           )
-          var_explained_df$Var <- paste0(round(var_explained_df$var_explained,4)*100,"%")
-          var_explained_df$PC <- factor(var_explained_df$PC,levels = paste0("PC", seq_len(ncol(pca$x))))
-          # Loadings calculations
-          LoadingsDF <- data.frame(
-            entitie = rownames(pca$rotation),
-            Loading = pca$rotation[,input$x_axis_selection]
+        } else {
+          # otherwise read the reactive values
+          percentVar <- pca_reactives$percentVar
+          pcaData <- pca_reactives$pcaData
+          pca <- res_tmp[[session$token]][["PCA"]]
+          data2plot <- pca_reactives$data2plot
+        }
+
+
+
+        df_out_r <- NULL
+        if(input$Show_loadings == "Yes"){
+          df_out <- pca$x
+          df_out_r <- as.data.frame(pca$rotation)
+          df_out_r$feature <- row.names(df_out_r)
+
+          # Get 5 best loadings
+          TopK <- rownames(df_out_r)[order(
+            sqrt(
+              (df_out_r[,input$x_axis_selection])^2+(df_out_r[,input$y_axis_selection])^2
+            ),
+            decreasing = T
+          )[1:5]]
+          df_out_r$feature[!df_out_r$feature %in% TopK] <- ""
+
+          mult <- min(
+            (max(df_out[,input$y_axis_selection]) - min(df_out[,input$y_axis_selection])/(max(df_out_r[,input$y_axis_selection])-min(df_out_r[,input$y_axis_selection]))),
+            (max(df_out[,input$x_axis_selection]) - min(df_out[,input$x_axis_selection])/(max(df_out_r[,input$x_axis_selection])-min(df_out_r[,input$x_axis_selection])))
           )
-          #LoadingsDF$Loading=scale(LoadingsDF$Loading)
-          LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
-          LoadingsDF <- rbind(
-            LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - input$bottomSlider),],
-            LoadingsDF[input$topSlider:1,]
+
+          df_out_r <- transform(
+            df_out_r,
+            v1 = 1.2 * mult * (get(input$x_axis_selection)),
+            v2 = 1.2 * mult * (get(input$y_axis_selection))
           )
-          LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
+          df_out_r$global_ID <- rownames(df_out_r)
+          df_out_r$chosenAnno <- rownames(df_out_r)
           if(!is.null(input$EntitieAnno_Loadings)){
             req(data_input_shiny())
-            LoadingsDF$entitie <- factor(
-              make.unique(as.character(rowData(data2plot)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
-              levels = make.unique(as.character(rowData(data2plot)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+            df_out_r$chosenAnno <- factor(
+              make.unique(as.character(rowData(data2plot)[rownames(df_out_r),input$EntitieAnno_Loadings])),
+              levels = make.unique(as.character(rowData(data2plot)[rownames(df_out_r),input$EntitieAnno_Loadings]))
             )
           }
-          # Loadings Matrix plot
-          if(is.null(input$nPCAs_to_look_at)){
-            df_loadings <- data.frame(
-              entity = row.names(pca$rotation),
-              pca$rotation[, 1:2]
-            )
-          } else{
-            nPCAs_to_look_at <- min(input$nPCAs_to_look_at, ncol(pca$rotation))
-            df_loadings <- data.frame(
-              entity = row.names(pca$rotation),
-              pca$rotation[, 1:nPCAs_to_look_at]
-            )
-          }
+        }
+        # Scree Plot calculations
+        var_explained_df <- data.frame(
+          PC = paste0("PC", seq_len(ncol(pca$x))),
+          var_explained = (pca$sdev)^2/sum((pca$sdev)^2)
+        )
+        var_explained_df$Var <- paste0(round(var_explained_df$var_explained,4)*100,"%")
+        var_explained_df$PC <- factor(var_explained_df$PC,levels = paste0("PC", seq_len(ncol(pca$x))))
+        # Loadings calculations
+        LoadingsDF <- data.frame(
+          entitie = rownames(pca$rotation),
+          Loading = pca$rotation[,input$x_axis_selection]
+        )
+        #LoadingsDF$Loading=scale(LoadingsDF$Loading)
+        LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
+        LoadingsDF <- rbind(
+          LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - input$bottomSlider),],
+          LoadingsDF[input$topSlider:1,]
+        )
+        LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
+        if(!is.null(input$EntitieAnno_Loadings)){
+          req(data_input_shiny())
+          LoadingsDF$entitie <- factor(
+            make.unique(as.character(rowData(data2plot)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
+            levels = make.unique(as.character(rowData(data2plot)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+          )
+        }
+        # Loadings Matrix plot
+        if(is.null(input$nPCAs_to_look_at)){
+          df_loadings <- data.frame(
+            entity = row.names(pca$rotation),
+            pca$rotation[, 1:2]
+          )
+        } else{
+          nPCAs_to_look_at <- min(input$nPCAs_to_look_at, ncol(pca$rotation))
+          df_loadings <- data.frame(
+            entity = row.names(pca$rotation),
+            pca$rotation[, 1:nPCAs_to_look_at]
+          )
+        }
 
-          df_loadings_filtered <- as.matrix(df_loadings[,-1]) >= abs(input$filterValue)
-          entitiesToInclude <- apply(df_loadings_filtered, 1, any)
+        df_loadings_filtered <- as.matrix(df_loadings[,-1]) >= abs(input$filterValue)
+        entitiesToInclude <- apply(df_loadings_filtered, 1, any)
 
-          df_loadings <- df_loadings[entitiesToInclude,] %>%
-            tidyr::gather(key = "PC", value = "loading", -entity)
+        df_loadings <- df_loadings[entitiesToInclude,] %>%
+          tidyr::gather(key = "PC", value = "loading", -entity)
 
           if(!is.null(input$EntitieAnno_Loadings_matrix)){
             req(data_input_shiny())
@@ -315,32 +335,6 @@ pca_Server <- function(id, data, params, row_select){
           } else{
             df_loadings$chosenAnno <- df_loadings$entity
           }
-          # overwrite all reactive values with the current results
-          pca_reactives$percentVar <- percentVar
-          pca_reactives$pcaData <- pcaData
-          pca_reactives$df_out_r <- df_out_r
-          pca_reactives$var_explained_df <- var_explained_df
-          pca_reactives$LoadingsDF <- LoadingsDF
-          pca_reactives$df_loadings <- df_loadings
-
-          # assign res_temp
-          res_tmp[[session$token]][["PCA"]] <<- pca
-          # assign par_temp as empty list
-          ## TODO I think this can be removed
-          par_tmp[[session$token]][["PCA"]] <<- list(
-            sample_selection_pca = input$sample_selection_pca,
-            SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca,
-            UseBatch = useBatch
-          )
-        } else {
-          # otherwise read the reactive values
-          percentVar <- pca_reactives$percentVar
-          pcaData <- pca_reactives$pcaData
-          df_out_r <- pca_reactives$df_out_r
-          var_explained_df <- pca_reactives$var_explained_df
-          LoadingsDF <- pca_reactives$LoadingsDF
-          df_loadings <- pca_reactives$df_loadings
-        }
 
         # Coloring Options
         print(input$coloring_options)
@@ -710,7 +704,7 @@ pca_Server <- function(id, data, params, row_select){
             colors = c("#277d6a", "white", "orange"),
             limits = c(-max(df_loadings$loading),max(df_loadings$loading))
           ) +
-          labs(x = "PCs", y = "entity", fill = "Loading") +
+          labs(x = "PCs", y = input$EntitieAnno_Loadings_matrix, fill = "Loading") +
           theme_bw(base_size = 15)
         scenario <- 8.1
         #Loading_scenario <- scenario
