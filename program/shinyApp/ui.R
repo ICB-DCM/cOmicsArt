@@ -218,6 +218,11 @@ ui <- shiny::fluidPage(
     DownloadReport_ui("DownloadTestModule"),
     NULL
   ),
+  splitLayout(
+    cellWidths = c("75%", "10%", "15%"),
+    tags$a(href = "https://leaseep.github.io/OmicShiny/", "Go To Documentation", target = "_blank"),
+    NULL
+  ),
 
   tabsetPanel(
     id = "tabsetPanel1",
