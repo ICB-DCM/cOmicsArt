@@ -798,7 +798,6 @@ server <- function(input,output,session){
     }
     # Data set selection
     res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data_original[selected,samples_selected]
-    tmp_data_selected <<- res_tmp[[session$token]]$data_original[selected,samples_selected]
     return("Selection Success")
   })
   
@@ -832,7 +831,7 @@ server <- function(input,output,session){
         "Choose main factor for desing formula in DESeq pipeline ",
         "(App might crash if your factor as only 1 sample per level)"
       ),
-      choices = c(colnames(colData(tmp_data_selected))),
+      choices = c(colnames(colData(res_tmp[[session$token]]$data))),
       multiple = F,
       selected = "condition"
     ) %>% helper(type = "markdown", content = "PreProcessing_DESeqMain")
@@ -846,7 +845,7 @@ server <- function(input,output,session){
         "Choose other factors to account for",
         "(App might crash if your factor as only 1 sample per level)"
       ),
-      choices = c(colnames(colData(tmp_data_selected))),
+      choices = c(colnames(colData(res_tmp[[session$token]]$data))),
       multiple = T,
       selected = "condition"
     ) %>% helper(type = "markdown", content = "PreProcessing_DESeqSub")
@@ -862,7 +861,7 @@ server <- function(input,output,session){
     par_tmp[[session$token]]['PreProcessing_Procedure'] <<- input$PreProcessing_Procedure
 
     print("Remove all entities which are constant over all samples")
-    res_tmp[[session$token]]$data <<- tmp_data_selected[rownames(tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]),]
+    res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data[rownames(res_tmp[[session$token]]$data[which(apply(assay(res_tmp[[session$token]]$data),1,sd) != 0),]),]
 
     print(dim(res_tmp[[session$token]]$data))
     # explicitly set rownames to avoid any errors.
@@ -917,7 +916,7 @@ server <- function(input,output,session){
     tryCatch({
       if(input$PreProcessing_Procedure == "vst_DESeq"){
         res_tmp[[session$token]]$data <<- deseq_processing(
-            data = tmp_data_selected,
+            data = res_tmp[[session$token]]$data,
             omic_type = par_tmp[[session$token]]$omic_type,
             formula_main = input$DESeq_formula_main,
             formula_sub = input$DESeq_formula_sub,
@@ -926,7 +925,7 @@ server <- function(input,output,session){
           )
       } else {
         res_tmp[[session$token]]$data <<- preprocessing(
-          data = tmp_data_selected,
+          data = res_tmp[[session$token]]$data,
           omic_type = par_tmp[[session$token]]$omic_type,
           procedure = input$PreProcessing_Procedure
         )
