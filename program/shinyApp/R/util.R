@@ -1,15 +1,24 @@
 ### general utility functions will be defined here
 
 # tryCatch modal dialog
-error_modal <- function(e){
+error_modal <- function(e, additional_text = NULL){
+  if (is.null(e$message)){
+    e$message <- "An unknown error occured"
+  }
+  if (is.null(additional_text)){
+    additional_text <- "Please check your data set and annotation and try again.<br><br>"
+  }
+  additional_text <- paste0(
+    additional_text,
+    "<br><br>Otherwise, please contact the cOmicsArtist Lea and Paul via cOmicsArtist@outlook.de",
+    "or open an issue on <a href='https://github.com/LeaSeep/OmicShiny'>github</a> ",
+    "describing your problem."
+  )
   showModal(modalDialog(
     title = HTML("<font color='red'>An unknown Error occured</font>"),
     HTML(paste0(
       "<font color='red'>Error: ",e$message,"</font><br><br>",
-      "Please check your data set and annotation and try again.<br><br>",
-      "Otherwise, please contact the cOmicsArtist Lea and Paul via cOmicsArtist@outlook.de",
-      "or open an issue on <a href='https://github.com/LeaSeep/OmicShiny'>github</a>",
-      "describing your problem."
+      additional_text
     )),
     footer = modalButton("Close")
   ))
@@ -24,20 +33,25 @@ update_data <- function(session_id){
 }
 
 
-select_data <- function(data, selected_samples, sample_type){
+select_data <- function(data, selected_samples, sample_type, useBatch = F){
   # select data for e.g. pca's or alike
+  if(useBatch){
+    data_entry <- "data_batch_corrected"
+  } else {
+    data_entry <- "data"
+  }
   samples_selected <- c()
   if(any(selected_samples == "all")){
-    samples_selected <- colnames(assay(data$data))
+    samples_selected <- colnames(assay(data[[data_entry]]))
   }else{
     samples_selected <- c(
       samples_selected,
-      rownames(colData(data$data))[which(
-        colData(data$data)[,sample_type] %in% selected_samples
+      rownames(colData(data[[data_entry]]))[which(
+        colData(data[[data_entry]])[,sample_type] %in% selected_samples
         )]
       )
   }
-  data$data <- data$data[,samples_selected]
+  data[[data_entry]] <- data[[data_entry]][,samples_selected]
   return(data)
 }
 
@@ -124,7 +138,7 @@ save.function.from.env <- function(wanted,file="utils.R")
 
 
 
-save_pheatmap <- function(x, filename,type = "pdf") {
+save_pheatmap <- function(x, filename, type = "pdf") {
   # Saves a heatmap to a file in different formats
   stopifnot(!missing(x))
   stopifnot(!missing(filename))
@@ -198,3 +212,20 @@ detect_annotation <- function(data) {
   ))
 }
 
+violin_plot <- function(data, color_by){
+  # create a violin plot based on the provided summarized experiment. Colors by
+  # the provided color_by column and returns the plot
+  data_frame <- as.data.frame(assay(data))
+  data_frame <- reshape2::melt(data_frame, variable.name="Sample", value.name="Counts")
+  data_frame <- merge(data_frame, colData(data), by.x = "Sample", by.y = "row.names")
+  plot2return <- ggplot(data_frame, aes(x = Sample, y = Counts, fill = data_frame[[color_by]])) +
+    geom_violin(trim = T, color = "black") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    labs(title = "Count distribution per sample",
+         x = "Sample",
+         y = "Counts",
+         fill = color_by
+    )
+  return(plot2return)
+}

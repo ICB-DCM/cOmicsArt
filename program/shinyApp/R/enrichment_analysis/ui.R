@@ -79,6 +79,7 @@ ea_sidebar <- function(ns){
     id = "sidebar_enrichment_analysis",
     uiOutput(outputId = ns("OrganismChoice_ui")) %>% helper(type = "markdown", content = "EA_Options"),
     uiOutput(outputId = ns("ORA_or_GSE_ui")),
+    uiOutput(outputId = ns("UseBatch_ui")),
     uiOutput(outputId = ns("ValueToAttach_ui")),
     uiOutput(outputId = ns("sample_annotation_types_cmp_GSEA_ui")),
     uiOutput(outputId = ns("Groups2Compare_ref_GSEA_ui")),

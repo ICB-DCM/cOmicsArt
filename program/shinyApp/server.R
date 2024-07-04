@@ -120,7 +120,7 @@ server <- function(input,output,session){
       timerProgressBar = FALSE,
       width = "100%"
       )
-    shiny::stopApp()
+    session$close()
   })
   
 # Data Upload + checks ----
@@ -798,7 +798,6 @@ server <- function(input,output,session){
     }
     # Data set selection
     res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data_original[selected,samples_selected]
-    tmp_data_selected <<- res_tmp[[session$token]]$data_original[selected,samples_selected]
     return("Selection Success")
   })
   
@@ -806,6 +805,23 @@ server <- function(input,output,session){
 # Set Selected Data as Head to allow reiteration of pre-processing
 
 ## UI section ----
+  # Update the batch effect UI based on the available columns
+  output$batch_effect_ui <- renderUI({
+    req(data_input_shiny())
+    column_names <- colnames(colData(res_tmp[[session$token]]$data_original))
+    filtered_column_names <- column_names[sapply(column_names, function(col) {
+      length(unique(colData(res_tmp[[session$token]]$data_original)[[col]])) < nrow(colData(res_tmp[[session$token]]$data_original))
+    })]
+    if (input$PreProcessing_Procedure == "vst_DESeq") {
+      filtered_column_names <- filtered_column_names[!filtered_column_names %in% c(input$DESeq_formula_main, input$DESeq_formula_sub)]
+    }
+    selectInput(
+      inputId = "BatchEffect_Column",
+      label = "Select Batch Effect Column",
+      choices = c("NULL", filtered_column_names),
+      selected = "NULL"
+    )
+  })
   output$DESeq_formula_main_ui <- renderUI({
     req(data_input_shiny())
     req(input$PreProcessing_Procedure == "vst_DESeq")
@@ -815,7 +831,7 @@ server <- function(input,output,session){
         "Choose main factor for desing formula in DESeq pipeline ",
         "(App might crash if your factor as only 1 sample per level)"
       ),
-      choices = c(colnames(colData(tmp_data_selected))),
+      choices = c(colnames(colData(res_tmp[[session$token]]$data))),
       multiple = F,
       selected = "condition"
     ) %>% helper(type = "markdown", content = "PreProcessing_DESeqMain")
@@ -829,10 +845,10 @@ server <- function(input,output,session){
         "Choose other factors to account for",
         "(App might crash if your factor as only 1 sample per level)"
       ),
-      choices = c(colnames(colData(tmp_data_selected))),
+      choices = c(colnames(colData(res_tmp[[session$token]]$data))),
       multiple = T,
       selected = "condition"
-    )
+    ) %>% helper(type = "markdown", content = "PreProcessing_DESeqSub")
   })
 
 ## Do preprocessing ----  
@@ -845,31 +861,81 @@ server <- function(input,output,session){
     par_tmp[[session$token]]['PreProcessing_Procedure'] <<- input$PreProcessing_Procedure
 
     print("Remove all entities which are constant over all samples")
-    res_tmp[[session$token]]$data <<- tmp_data_selected[rownames(tmp_data_selected[which(apply(assay(tmp_data_selected),1,sd) != 0),]),]
+    res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data[rownames(res_tmp[[session$token]]$data[which(apply(assay(res_tmp[[session$token]]$data),1,sd) != 0),]),]
 
     print(dim(res_tmp[[session$token]]$data))
     # explicitly set rownames to avoid any errors.
     # new object Created for res_tmp[[session$token]]
     res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data[rownames(res_tmp[[session$token]]$data),]
+    par_tmp[[session$token]]['BatchColumn'] <<- input$BatchEffect_Column
+
+    # Batch correction before preprocessing
+    if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure != "vst_DESeq") {
+      tryCatch({
+        res_tmp[[session$token]]$data_batch_corrected <<- prefiltering(
+          res_tmp[[session$token]]$data,
+          par_tmp[[session$token]]$omic_type
+        )
+        assay(res_tmp[[session$token]]$data_batch_corrected) <<- sva::ComBat(
+          dat = assay(res_tmp[[session$token]]$data_batch_corrected),
+          batch = as.factor(colData(res_tmp[[session$token]]$data_batch_corrected)[,input$BatchEffect_Column])
+        )
+      }, error = function(e){
+        error_modal(
+          e, additional_text = "Batch correction failed. Make sure the batch effect column is correct!"
+        )
+        req(FALSE)
+      })
+    } else if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure == "vst_DESeq"){
+      tryCatch({
+        res_tmp[[session$token]]$data_batch_corrected <<- deseq_processing(
+            data = tmp_data_selected,
+            omic_type = par_tmp[[session$token]]$omic_type,
+            formula_main = input$DESeq_formula_main,
+            formula_sub = c(input$DESeq_formula_sub, input$BatchEffect_Column),
+            session_token = session$token,
+            batch_correct = T
+          )
+      }, error = function(e){
+        error_modal(
+          e, additional_text = paste0(
+            "Batch correction using DESeq failed. Most likely due to linear dependencies ",
+            "in the design matrix (one or more factors informing about another one).",
+            "Make sure the batch effect column is correct and ",
+            "that the design matrix is not singular!"
+            )
+        )
+        req(FALSE)
+      })
+    } else {
+      res_tmp[[session$token]]$data_batch_corrected <<- NULL
+    }
 
     # preprocessing
     print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
     tryCatch({
       if(input$PreProcessing_Procedure == "vst_DESeq"){
         res_tmp[[session$token]]$data <<- deseq_processing(
-            data = tmp_data_selected,
+            data = res_tmp[[session$token]]$data,
             omic_type = par_tmp[[session$token]]$omic_type,
             formula_main = input$DESeq_formula_main,
             formula_sub = input$DESeq_formula_sub,
             session_token = session$token,
-            advanced_formula = ifelse(input$DESeq_show_advanced, input$DESeq_formula_advanced, "")
+            batch_correct = F
           )
       } else {
         res_tmp[[session$token]]$data <<- preprocessing(
-          data = tmp_data_selected,
+          data = res_tmp[[session$token]]$data,
           omic_type = par_tmp[[session$token]]$omic_type,
           procedure = input$PreProcessing_Procedure
         )
+        if (!is.null(res_tmp[[session$token]]$data_batch_corrected)) {
+          res_tmp[[session$token]]$data_batch_corrected <<- preprocessing(
+            data = res_tmp[[session$token]]$data_batch_corrected,
+            omic_type = par_tmp[[session$token]]$omic_type,
+            procedure = input$PreProcessing_Procedure
+          )
+        }
       }
     }, error = function(e){
       error_modal(e)
@@ -922,6 +988,8 @@ server <- function(input,output,session){
         "<br","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(res_tmp[[session$token]]$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
+    output$raw_violin_plot <- renderPlot({violin_plot(res_tmp[[session$token]]$data_original, color_by = input$violin_color)})
+    output$preprocessed_violin_plot <- renderPlot({violin_plot(res_tmp[[session$token]]$data, color_by = input$violin_color)})
     return("Pre-Processing successfully")
   })
   
@@ -948,6 +1016,14 @@ server <- function(input,output,session){
         ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),input$PreProcessing_Procedure)
       )
     )
+    if(input$BatchEffect_Column != "NULL"){
+      fun_LogIt(
+        message = paste0(
+          "**PreProcessing** - Batch Effect Correction: ",
+          input$BatchEffect_Column
+        )
+      )
+    }
     fun_LogIt(
       message = paste0(
         "**PreProcessing** - The resulting dimensions are: ",
@@ -955,7 +1031,18 @@ server <- function(input,output,session){
       )
     )
   })
-  
+
+  # render plots and ui Parts
+  output$violin_plot_color_ui <- renderUI({
+    req(selectedData())
+    selectInput(
+      inputId = "violin_color",
+      label = "Color the violin plot by:",
+      choices = c(colnames(colData(res_tmp[[session$token]]$data_original))),
+      selected = c(colnames(colData(res_tmp[[session$token]]$data_original)))[1],
+      multiple = F
+    )
+  })
   output$debug <- renderText(dim(res_tmp[[session$token]]$data))
 
   # Sample Correlation ----

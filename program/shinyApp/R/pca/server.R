@@ -22,6 +22,15 @@ pca_Server <- function(id, data, params, row_select){
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
       ## UI Section ----
+      output$UseBatch_ui <- renderUI({
+        req(par_tmp[[session$token]]$BatchColumn != "NULL")
+        selectInput(
+          inputId = ns("UseBatch"),
+          label = "Use batch corrected data?",
+          choices = c("No","Yes"),
+          selected = "No"
+        )
+      })
       output$x_axis_selection_ui <- renderUI({radioGroupButtons(
         inputId = ns("x_axis_selection"),
         label = "PC for x-Axis",
@@ -137,9 +146,9 @@ pca_Server <- function(id, data, params, row_select){
         req(input$Do_PCA > pca_reactives$counter)
         pca_reactives$counter <- input$Do_PCA
         check <- check_calculations(list(
-          dummy = "dummy",
           sample_selection_pca = input$sample_selection_pca,
-          SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca
+          SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca,
+          batch = ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
         ), "PCA")
         if (check == "No Result yet"){
           output$PCA_Info <- renderText("PCA computed.")
@@ -177,14 +186,21 @@ pca_Server <- function(id, data, params, row_select){
         # only calculate PCA, Score and Loadings if the counter is >= 0
         if(pca_reactives$calculate >= 0){
           # update the data
+          useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
           data2plot <- update_data(session$token)
           # select the neccesary data
           if(input$data_selection_pca){
             data2plot <- select_data(
               data2plot,
               input$sample_selection_pca,
-              input$SampleAnnotationTypes_pca
+              input$SampleAnnotationTypes_pca,
+              useBatch
             )
+          }
+          if(useBatch){
+              data2plot <- data2plot$data_batch_corrected
+          } else {
+              data2plot <- data2plot$data
           }
           # set the counter to -1 to prevent any further plotting
           pca_reactives$calculate <- -1
@@ -192,7 +208,7 @@ pca_Server <- function(id, data, params, row_select){
           # PCA, for safety measures, wrap in tryCatch
           tryCatch({
             pca <- prcomp(
-              x = as.data.frame(t(as.data.frame(assay(data2plot$data)))),
+              x = as.data.frame(t(as.data.frame(assay(data2plot)))),
               center = T,
               scale. = FALSE
             )
@@ -311,13 +327,40 @@ pca_Server <- function(id, data, params, row_select){
         df_loadings <- df_loadings[entitiesToInclude,] %>%
           tidyr::gather(key = "PC", value = "loading", -entity)
 
-        if(!is.null(input$EntitieAnno_Loadings_matrix)){
-          df_loadings$chosenAnno <- factor(
-            make.unique(as.character(rowData(data2plot$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix])),
-            levels = make.unique(as.character(rowData(data2plot$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix]))
+          if(!is.null(input$EntitieAnno_Loadings_matrix)){
+            req(data_input_shiny())
+            df_loadings$chosenAnno <- factor(
+              make.unique(as.character(rowData(data2plot$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix])),
+              levels = make.unique(as.character(rowData(data2plot$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix]))
+            )
+          } else{
+            df_loadings$chosenAnno <- df_loadings$entity
+          }
+          # overwrite all reactive values with the current results
+          pca_reactives$percentVar <- percentVar
+          pca_reactives$pcaData <- pcaData
+          pca_reactives$df_out_r <- df_out_r
+          pca_reactives$var_explained_df <- var_explained_df
+          pca_reactives$LoadingsDF <- LoadingsDF
+          pca_reactives$df_loadings <- df_loadings
+
+          # assign res_temp
+          res_tmp[[session$token]][["PCA"]] <<- pca
+          # assign par_temp as empty list
+          ## TODO I think this can be removed
+          par_tmp[[session$token]][["PCA"]] <<- list(
+            sample_selection_pca = input$sample_selection_pca,
+            SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca
+
           )
-        } else{
-          df_loadings$chosenAnno <- df_loadings$entity
+        } else {
+          # otherwise read the reactive values
+          percentVar <- pca_reactives$percentVar
+          pcaData <- pca_reactives$pcaData
+          df_out_r <- pca_reactives$df_out_r
+          var_explained_df <- pca_reactives$var_explained_df
+          LoadingsDF <- pca_reactives$LoadingsDF
+          df_loadings <- pca_reactives$df_loadings
         }
 
         # Coloring Options

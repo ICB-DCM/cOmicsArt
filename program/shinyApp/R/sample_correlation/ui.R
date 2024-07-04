@@ -2,6 +2,7 @@ sampleCorrelation_sidebar_panel <- function(ns){
   sidebarPanel(
     id = "sidebar_sampleCorrelation",
     h4("Sample Correlation") %>% helper(type = "markdown", content = "SampleCorr_Choices"),
+    uiOutput(outputId = ns("UseBatch_ui")),
     selectInput(
       inputId = ns("corrMethod"),
       label = "Choose the correlation method",
@@ -14,7 +15,9 @@ sampleCorrelation_sidebar_panel <- function(ns){
       icon("fas fa-laptop-code")
     ),
     hr(style = "border-top: 1px solid #000000;"),
+
     uiOutput(outputId = ns("SampleAnnotationChoice_ui")) %>% helper(type = "markdown", content = "SampleCorr_Color")
+
   )
 }
 

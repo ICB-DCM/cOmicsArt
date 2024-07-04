@@ -14,7 +14,15 @@ significance_analysis_server <- function(id, data, params){
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
       ## Sidebar UI section
-      # UI to choose type of comparison
+      output$UseBatch_ui <- renderUI({
+        req(par_tmp[[session$token]]$BatchColumn != "NULL")
+        selectInput(
+          inputId = ns("UseBatch"),
+          label = "Use batch corrected data?",
+          choices = c("No","Yes"),
+          selected = "No"
+        )
+      })
       output$type_of_comparison_ui <- renderUI({
         req(data_input_shiny())
         if(is.null(sig_ana_reactive$coldata)){
@@ -207,7 +215,13 @@ significance_analysis_server <- function(id, data, params){
         print("Start the Significance Analysis")
         # update the data if needed
         data <- update_data(session$token)
-        sig_ana_reactive$coldata <- colData(data$data)
+        useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
+        if(useBatch){
+            data_calculate <- data$data_batch_corrected
+        } else {
+            data_calculate <- data$data
+        }
+        sig_ana_reactive$coldata <- colData(data_calculate)
         # delete old panels
         if(!is.null(sig_ana_reactive$significance_tabs_to_delete)){
           for (i in seq_along(sig_ana_reactive$significance_tabs_to_delete)) {
@@ -219,7 +233,11 @@ significance_analysis_server <- function(id, data, params){
         }
         # if preproccesing method was DESeq2, then use DESeq2 for testing
         if(params$PreProcessing_Procedure == "vst_DESeq"){
-          dds <- data$DESeq_obj
+          if (useBatch){
+            dds <- data$DESeq_obj_batch_corrected
+          } else {
+            dds <- data$DESeq_obj
+          }
           # rewind the comparisons again
           newList <- input$comparisons
           contrasts <- vector("list", length(input$comparisons))
@@ -230,7 +248,11 @@ significance_analysis_server <- function(id, data, params){
           sig_ana_reactive$sig_results <- list()
           for (i in seq_along(contrasts)) {
             if(identical(
-              list(test_method = "Wald", test_correction = PADJUST_METHOD[[input$test_correction]]),
+              list(
+                test_method = "Wald",
+                test_correction = PADJUST_METHOD[[input$test_correction]],
+                batch_corrected = useBatch
+              ),
               par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
             )){
               print("Results exists, skipping calculations.")
@@ -250,7 +272,8 @@ significance_analysis_server <- function(id, data, params){
             res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- sig_ana_reactive$sig_results[[input$comparisons[i]]]
             par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- list(
               test_method = "Wald",
-              test_correction = PADJUST_METHOD[[input$test_correction]]
+              test_correction = PADJUST_METHOD[[input$test_correction]],
+              batch_corrected = useBatch
             )
           }
         } else {  # all other methods require manual testing
@@ -268,11 +291,11 @@ significance_analysis_server <- function(id, data, params){
           names(contrasts) <- input$comparisons
           # get names of columns we want to choose:
           index_comparisons <- which(
-            colData(data$data)[,input$sample_annotation_types_cmp] %in% contrasts_all
+            colData(data_calculate)[,input$sample_annotation_types_cmp] %in% contrasts_all
           )
-          samples_selected <- colData(data$data)[index_comparisons,]
+          samples_selected <- colData(data_calculate)[index_comparisons,]
           # get the data
-          data_selected <- as.matrix(assay(data$data))[,index_comparisons]
+          data_selected <- as.matrix(assay(data_calculate))[,index_comparisons]
           # significance analysis saved the result in res_tmp.
           # as it is a custom function, wrap in tryCatch
           tryCatch({
@@ -282,7 +305,8 @@ significance_analysis_server <- function(id, data, params){
               contrasts = contrasts,
               method = input$test_method,
               correction = PADJUST_METHOD[[input$test_correction]],
-              contrast_level = input$sample_annotation_types_cmp
+              contrast_level = input$sample_annotation_types_cmp,
+              batch_corrected = useBatch
             )
             sig_ana_reactive$sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
           }, error = function(e){
@@ -353,7 +377,7 @@ significance_analysis_server <- function(id, data, params){
             chosenVizSet <- input$comparisons
           } else {
             chosenVizSet <-  input$comparisons[c(1,2)]
-            sig_ana_reactive$info_text <- "Note: Although you choose 'all' to visualize only first 2 comparisons are shown to avoid unwanted computational overhead, 
+            sig_ana_reactive$info_text <- "Note: Although you choose 'all' to visualize only first 2 comparisons are shown to avoid unwanted computational overhead,
             as you got more than 4 comparisons. Please choose precisely the comparisons for visualisation."
           }
         }else{
@@ -679,7 +703,7 @@ significance_analysis_server <- function(id, data, params){
         fun_LogIt(message = "### SIGNIFICANCE ANALYSIS")
         fun_LogIt(message = paste(
           "- Significance Analysis was performed on",
-          length(data$data),
+          length(data_calculate),
           "entities"
         ))
         # log which tests were performed
