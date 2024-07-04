@@ -6,6 +6,8 @@ nav_order: 2
 ---
 
 # Interface Details
+![A comic about a cat finding cOmicsART](/OmicShiny/assets/images/cOmicsOctopus.png)
+*Image generated using DALL-E by OpenAI. Adjusted by Lea Seep*
 
 If you need tab-specific information, navigate to the respective documentation using the left sidebar.
 
