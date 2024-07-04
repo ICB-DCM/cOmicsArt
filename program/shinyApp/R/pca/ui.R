@@ -106,20 +106,22 @@ pca_main_panel <- function(ns){
           textOutput(outputId = ns("Loadings_plot_Options_selected_out"), container = pre)
         ),
         uiOutput(outputId = ns("EntitieAnno_Loadings_ui")),
+        # uiOutput(outputId = ns("topSlider_ui")),
+        # uiOutput(outputId = ns("bottomSlider_ui")),
         sliderInput(
           inputId = ns("topSlider"),
           label = "Top k positive Loadings",
           min = 1,
-          max = 25,
-          value = 10,
+          max = 10,
+          value = 4,
           step = 1
         ),
         sliderInput(
           inputId = ns("bottomSlider"),
           label = "Top k negative Loadings",
           min = 1,
-          max = 25,
-          value = 10,
+          max = 10,
+          value = 4,
           step = 1
         ),
         splitLayout(
