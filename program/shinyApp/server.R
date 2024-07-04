@@ -155,7 +155,7 @@ server <- function(input,output,session){
       output$AddGeneSymbols_organism_ui <- renderUI({selectInput(
         inputId = "AddGeneSymbols_organism",
         label = "Which Organisms?",
-        choices = listDatasets(useEnsembl(biomart = "genes"))[,"description"],
+        choices = "Mouse genes (GRCm39)" ,#listDatasets(useEnsembl(biomart = "genes"))[,"description"],
         selected = "Mouse genes (GRCm39)"
       )})
     }
