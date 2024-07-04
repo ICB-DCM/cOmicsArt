@@ -2,7 +2,7 @@ echo Starting Shiny
 cd program
 git pull
 #git checkout pca_worflow_integrated
-git checkout develop
+git checkout exercsie_branch
 git pull
 Rscript -e "library(renv)"
 #Rscript -e "renv::init(bioconductor = TRUE)"
