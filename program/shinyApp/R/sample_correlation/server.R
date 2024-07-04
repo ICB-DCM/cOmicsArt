@@ -4,8 +4,7 @@ sample_correlation_server <- function(id, data, params){
     function(input,output,session){
       sample_corr_reactive <- reactiveValues(
         calculate = 0,
-        counter = 0,
-        SampleCorrelationPlot_final = NULL
+        counter = 0
       )
       session$userData$clicks_observer <- observeEvent(input$Do_SampleCorrelation,{
         req(input$Do_SampleCorrelation > sample_corr_reactive$counter)
@@ -14,8 +13,16 @@ sample_correlation_server <- function(id, data, params){
       })
       
       ns <- session$ns
-      file_path <- paste0("/www/",session$token,"/")
       # UI Section ----
+      output$UseBatch_ui <- renderUI({
+        req(par_tmp[[session$token]]$BatchColumn != "NULL")
+        selectInput(
+          inputId = ns("UseBatch"),
+          label = "Use batch corrected data?",
+          choices = c("No","Yes"),
+          selected = "No"
+        )
+      })
       output$SampleAnnotationChoice_ui <- renderUI({
         req(selectedData_processed())
         selectInput(
@@ -39,18 +46,24 @@ sample_correlation_server <- function(id, data, params){
         req(input$Do_SampleCorrelation > 0)
         # update the data if needed
         data <- update_data(session$token)
+        useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
+        if(useBatch){
+            data <- data$data_batch_corrected
+        } else {
+            data <- data$data
+        }
         # set the counter to 0 to prevent any further plotting
         sample_corr_reactive$calculate <- 0
 
 
         # check value of input$Do_SampleCorrelation
-        annotationDF <- colData(data$data)[,input$SampleAnnotationChoice,drop = F]
+        annotationDF <- colData(data)[,input$SampleAnnotationChoice,drop = F]
         check <- check_calculations(
           list(
             corrMethod = input$corrMethod,
             data_info = list(
-              rows = length(rownames(data$data)),
-              cols = length(colnames(data$data)),
+              rows = length(rownames(data)),
+              cols = length(colnames(data)),
               preprocessing = par_tmp[[session$token]]$PreProcessing_Procedure
             )
           ),
@@ -63,30 +76,26 @@ sample_correlation_server <- function(id, data, params){
               "Correlation Matrix successfully computed."
             )
             if(input$corrMethod == "kendall"){
-              cormat <- pcaPP::cor.fk(x = as.matrix(assay(data$data)))
+              cormat <- pcaPP::cor.fk(x = as.matrix(assay(data)))
             } else {
               cormat <- cor(
-                x = as.matrix(assay(data$data)),
+                x = as.matrix(assay(data)),
                 method = input$corrMethod
               )
             }
           } else if (check == "Result exists"){
             output$SampleCorr_Info <- renderText(
-              "Correlation Matrix was already computed, reusing."
+              "Correlation Matrix was already computed, no need to click the Button again."
             )
             cormat <- res_tmp[[session$token]]$SampleCorrelation
           } else if (check == "Overwrite"){
             output$SampleCorr_Info <- renderText(
               "Correlation Matrix result overwritten with different parameters."
             )
-            if(input$corrMethod == "kendall"){
-              cormat <- pcaPP::cor.fk(x = as.matrix(assay(data$data)))
-            } else {
-              cormat <- cor(
-                x = as.matrix(assay(data$data)),
-                method = input$corrMethod
-              )
-            }
+            cormat <- cor(
+              x = as.matrix(assay(data)),
+              method = input$corrMethod
+            )
           }
         }, error = function(e){
           error_modal(e)
@@ -104,7 +113,7 @@ sample_correlation_server <- function(id, data, params){
         )
 
         anno_colors <- assign_colors_SampleCorr(annotationDF)
-        sample_corr_reactive$SampleCorrelationPlot_final <- pheatmap(
+        SampleCorrelationPlot_final <- pheatmap(
           mat = cormat,
           annotation_row = as.data.frame(annotationDF),
           main = customTitleSampleCorrelation,
@@ -116,15 +125,14 @@ sample_correlation_server <- function(id, data, params){
         par_tmp[[session$token]][["SampleCorrelation"]] <<- list(
           corrMethod = input$corrMethod,
           data_info = list(
-            rows = length(rownames(data$data)),
-            cols = length(colnames(data$data)),
+            rows = length(rownames(data)),
+            cols = length(colnames(data)),
             preprocessing = par_tmp[[session$token]]$PreProcessing_Procedure
           )
         )
 
         sampleCorrelation_scenario <- 18
-        output$SampleCorrelationPlot <- renderPlot({sample_corr_reactive$SampleCorrelationPlot_final})
-
+        output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
 
         # Longer names causes issues for saving
         if(nchar(customTitleSampleCorrelation) >= 250){
@@ -170,15 +178,15 @@ sample_correlation_server <- function(id, data, params){
           paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), input$file_ext_Heatmap)
         },
         content = function(file){
-          save_pheatmap(sample_corr_reactive$SampleCorrelationPlot_final,filename = file,type=gsub("\\.","",input$file_ext_SampleCorrelation))
+          save_pheatmap(par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,filename = file,type=gsub("\\.","",input$file_ext_SampleCorrelation))
           on.exit({
             tmp_filename <- paste0(
               getwd(),
-              file_path,
+              "/www/",
               paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), input$file_ext_SampleCorrelation)
             )
             save_pheatmap(
-              sample_corr_reactive$SampleCorrelationPlot_final,
+              par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,
               filename = tmp_filename,
               type = gsub("\\.","",input$file_ext_SampleCorrelation)
             )
@@ -197,11 +205,12 @@ sample_correlation_server <- function(id, data, params){
         notificationID <- showNotification("Saving...",duration = 0)
         tmp_filename <- paste0(
           getwd(),
-          file_path,
+          "/www/",
           paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), ".png")
         )
+        
         save_pheatmap(
-          sample_corr_reactive$SampleCorrelationPlot_final,
+          par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,
           filename = tmp_filename,
           type = "png"
         )

@@ -13,10 +13,14 @@ single_gene_visualisation_server <- function(id, data){
         ## Ui section ----
         output$type_of_data_gene_ui <- renderUI({
           req(data_input_shiny())
+          options <- c("raw","preprocessed")
+          if(par_tmp[[session$token]]$BatchColumn != "NULL"){
+            options <- c("raw","preprocessed","batch_corrected_preprocessed")
+          }
           selectInput(
             inputId = ns("type_of_data_gene"),
             label = "Choose Data to use (in case of DESeq- vst normalized counts are used)",
-            choices = c("raw","preprocessed"),
+            choices = options,
             multiple = F ,
             selected = "preprocessed"
           )
@@ -122,7 +126,6 @@ single_gene_visualisation_server <- function(id, data){
             GeneData$anno <- colData(data$data)[,input$accross_condition]
             GeneDataFlag <- T
           } else {
-            print("different Gene")
             GeneDataFlag <- F
           }
           
@@ -136,7 +139,16 @@ single_gene_visualisation_server <- function(id, data){
             # select to selection of processed data
             annoToSelect <- unique(c(colData(data$data)[,input$accross_condition]))
             GeneData <- subset(GeneData, anno %in% annoToSelect)
-            #print(data$data_original)
+            GeneDataFlag <- T
+          } else {
+            GeneDataFlag <- F
+          }
+        } else if(input$type_of_data_gene == "batch_corrected_preprocessed"){
+          if(input$Select_Gene %in% rowData(data$data_batch_corrected)[,input$Select_GeneAnno]){
+            #get IDX to data
+            idx_selected <- which(input$Select_Gene == rowData(data$data_batch_corrected)[,input$Select_GeneAnno])
+            GeneData <- as.data.frame(t(as.data.frame(assay(data$data_batch_corrected))[idx_selected,,drop=F]))
+            GeneData$anno <- colData(data$data_batch_corrected)[,input$accross_condition]
             GeneDataFlag <- T
           } else {
             GeneDataFlag <- F
