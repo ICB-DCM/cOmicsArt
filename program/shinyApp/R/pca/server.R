@@ -223,10 +223,10 @@ pca_Server <- function(id, data, params, row_select){
           percentVar <- round(100 * explVar, digits = 1)
 
           # Define data for plotting
-          pcaData <- data.frame(pca$x,colData(data2plot$data))
+          pcaData <- data.frame(pca$x,colData(data2plot))
           pca_reactives$pcaData <- pcaData
           pca_reactives$percentVar <- percentVar
-          pca_reactives$data2plot <- data2plot$data
+          pca_reactives$data2plot <- data2plot
 
           # assign res_temp
           res_tmp[[session$token]][["PCA"]] <<- pca
@@ -240,8 +240,7 @@ pca_Server <- function(id, data, params, row_select){
           percentVar <- pca_reactives$percentVar
           pcaData <- pca_reactives$pcaData
           pca <- res_tmp[[session$token]][["PCA"]]
-          data2plot <- list()
-          data2plot$data <- pca_reactives$data2plot
+          data2plot <- pca_reactives$data2plot
         }
 
 
@@ -276,8 +275,8 @@ pca_Server <- function(id, data, params, row_select){
           if(!is.null(input$EntitieAnno_Loadings)){
             req(data_input_shiny())
             df_out_r$chosenAnno <- factor(
-              make.unique(as.character(rowData(data2plot$data)[rownames(df_out_r),input$EntitieAnno_Loadings])),
-              levels = make.unique(as.character(rowData(data2plot$data)[rownames(df_out_r),input$EntitieAnno_Loadings]))
+              make.unique(as.character(rowData(data2plot)[rownames(df_out_r),input$EntitieAnno_Loadings])),
+              levels = make.unique(as.character(rowData(data2plot)[rownames(df_out_r),input$EntitieAnno_Loadings]))
             )
           }
         }
@@ -303,8 +302,8 @@ pca_Server <- function(id, data, params, row_select){
         if(!is.null(input$EntitieAnno_Loadings)){
           req(data_input_shiny())
           LoadingsDF$entitie <- factor(
-            make.unique(as.character(rowData(data2plot$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
-            levels = make.unique(as.character(rowData(data2plot$data)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+            make.unique(as.character(rowData(data2plot)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
+            levels = make.unique(as.character(rowData(data2plot)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
           )
         }
         # Loadings Matrix plot
@@ -330,38 +329,12 @@ pca_Server <- function(id, data, params, row_select){
           if(!is.null(input$EntitieAnno_Loadings_matrix)){
             req(data_input_shiny())
             df_loadings$chosenAnno <- factor(
-              make.unique(as.character(rowData(data2plot$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix])),
-              levels = make.unique(as.character(rowData(data2plot$data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix]))
+              make.unique(as.character(rowData(data2plot)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix])),
+              levels = make.unique(as.character(rowData(data2plot)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix]))
             )
           } else{
             df_loadings$chosenAnno <- df_loadings$entity
           }
-          # overwrite all reactive values with the current results
-          pca_reactives$percentVar <- percentVar
-          pca_reactives$pcaData <- pcaData
-          pca_reactives$df_out_r <- df_out_r
-          pca_reactives$var_explained_df <- var_explained_df
-          pca_reactives$LoadingsDF <- LoadingsDF
-          pca_reactives$df_loadings <- df_loadings
-
-          # assign res_temp
-          res_tmp[[session$token]][["PCA"]] <<- pca
-          # assign par_temp as empty list
-          ## TODO I think this can be removed
-          par_tmp[[session$token]][["PCA"]] <<- list(
-            sample_selection_pca = input$sample_selection_pca,
-            SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca
-
-          )
-        } else {
-          # otherwise read the reactive values
-          percentVar <- pca_reactives$percentVar
-          pcaData <- pca_reactives$pcaData
-          df_out_r <- pca_reactives$df_out_r
-          var_explained_df <- pca_reactives$var_explained_df
-          LoadingsDF <- pca_reactives$LoadingsDF
-          df_loadings <- pca_reactives$df_loadings
-        }
 
         # Coloring Options
         print(input$coloring_options)
