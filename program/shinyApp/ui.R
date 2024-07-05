@@ -192,26 +192,10 @@ ui <- shiny::fluidPage(
     class = "btn-secondary"
     )
   ),
-  hidden(selectInput(
-    "element",
-    label = "PrideMonth?",
-    choices = c(0, 1),
-    selected = ifelse(format(as.POSIXct(Sys.time()), "%m") == "07", 1, 0)
-  )),
-  conditionalPanel(
-    condition = "input.element == 0",
-    div(
+  div(
       id = "TitleID_normal",
       column(width=1, tags$img(src = "Logo_cOmicsArt_clear.png", height="100%", width="100%")),
       h1(HTML('<span style="color:#EC0014">c</span><span style="color:#FD8D33">O</span><span style="color:#3897F1">m</span><span style="color:#FFD335">i</span><span style="color:#A208BA">c</span><span style="color:#EF0089">s</span><span style="color:#EC0014">A</span><span style="color:#FD8D33">r</span><span style="color:#3897F1">t</span>'))
-    ),
-  ),
-  conditionalPanel(
-    condition = "input.element == 1",
-    div(
-      id = "TitleID_pride",
-      h2(HTML('<span style="color:#E75A5A">S</span><span style="color:#E7AF5A">h</span><span style="color:#CBE75A">i</span><span style="color:#76E75A">n</span><span style="color:#5AE792">y</span><span style="color:#5AE7E7">O</span><span style="color:#5A92E7">m</span><span style="color:#765AE7">i</span><span style="color:#CB5AE7">c</span><span style="color:#E75AAF">s</span>'))
-      ),
   ),
   splitLayout(
     cellWidths = c("75%", "10%", "15%"),
