@@ -220,7 +220,6 @@ single_gene_visualisation_server <- function(id, data){
                )
             }
           )
-          # add points +geom_point(alpha=0.4,pch=4)
           output$SingleGenePlot <- renderPlot(P_boxplots)
         } else {
           output$SingleGenePlot <- renderPlot(ggplot() + theme_void())
@@ -240,14 +239,17 @@ single_gene_visualisation_server <- function(id, data){
           # Where to save the plot (needed currently to be global, to be able to be saved)
           res_tmp[[session$token]][["SingleEntVis"]] <<- P_boxplots
 
-          #SingleEnt_P_boxplots <- P_boxplots
           # TODO: Needs to be trimmed down
           tmp <- getUserReactiveValues(input)
           par_tmp[[session$token]]$SingleEntVis[names(tmp)] <<- tmp
 
           par_tmp[[session$token]][["SingleEntVis"]]$SingleEnt_customTitle_boxplot <<- SingleEnt_customTitle_boxplot
           par_tmp[[session$token]][["SingleEntVis"]]$testMethod <<- testMethod
-          par_tmp[[session$token]][["SingleEntVis"]]$chooseComparisons_list <<- xy.list
+          if(input$type_of_visualitsation == "boxplots_withTesting"){
+            par_tmp[[session$token]][["SingleEntVis"]]$chooseComparisons_list <<- xy.list
+          } else {
+            par_tmp[[session$token]][["SingleEntVis"]]$chooseComparisons_list <<- NULL
+          }
         }else{
           customTitle_boxplot <- "NoBoxplot"
 
