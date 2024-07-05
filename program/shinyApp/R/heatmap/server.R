@@ -393,7 +393,7 @@ heatmap_server <- function(id, data, params, updates){
 
               # getLFC is a custom function -> wrap it in a tryCatch
               tryCatch({
-                  Data2Plot <- getLFC(
+                  Data2Plot <- getLFCs(
                   data = as.data.frame(data2HandOver),
                   ctrl_samples_idx = ctrl_samples_idx,
                   comparison_samples_idx = comparison_samples_idx
