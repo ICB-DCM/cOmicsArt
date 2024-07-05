@@ -3,7 +3,9 @@ heatmap_server <- function(id, data, params, updates){
     id,
     function(input,output,session){
       # Heatmap ----
-      heatmap_reactives <- reactiveValues()
+      heatmap_reactives <- reactiveValues(
+        customTitle = NULL
+      )
       ## UI Section ----
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
@@ -391,7 +393,7 @@ heatmap_server <- function(id, data, params, updates){
 
               # getLFC is a custom function -> wrap it in a tryCatch
               tryCatch({
-                  Data2Plot <- getLFC(
+                  Data2Plot <- getLFCs(
                   data = as.data.frame(data2HandOver),
                   ctrl_samples_idx = ctrl_samples_idx,
                   comparison_samples_idx = comparison_samples_idx
@@ -401,20 +403,21 @@ heatmap_server <- function(id, data, params, updates){
                 return(NULL)
               })
 
-
-              ## do pheatmap
-
-              # use floor and ceiling to deal with even/odd length pallettelengths
-              myBreaks <- c(seq(min(Data2Plot$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
-                            seq(max(Data2Plot$LFC)/paletteLength, max(Data2Plot$LFC), length.out=floor(paletteLength/2)))
-
               scenario <- 10
               annotation_col <- as.data.frame(rowData(data2Plot)[rownames(Data2Plot),input$row_anno_options,drop=F])
 
               # for safety measures wrap in tryCatch
               tryCatch({
+                heatmap_data <- t(Data2Plot[,"LFC",drop=F])
+                # absolute maximum value
+                max_val <- max(abs(heatmap_data), na.rm = T)
+                breakings <- seq(-max_val, max_val, length.out = 101)
+                if (input$rowWiseScaled){
+                  max_val <- 1
+                  breakings <- NA
+                }
                 heatmap_plot <- pheatmap(
-                  t(Data2Plot[,"LFC",drop=F]),
+                  heatmap_data,
                   main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
                   show_rownames = ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
                   show_colnames = TRUE,
@@ -423,7 +426,8 @@ heatmap_server <- function(id, data, params, updates){
                   scale=ifelse(input$rowWiseScaled,"row","none"),
                   annotation_col = annotation_col,
                   silent = F,
-                  color = myColor_fill
+                  color = myColor_fill,
+                  breaks = breakings
                 )
               }, error = function(e){
                 error_modal(e)
@@ -458,8 +462,16 @@ heatmap_server <- function(id, data, params, updates){
 
             # for safety measures wrap in tryCatch
             tryCatch({
+              heatmap_data <- as.matrix(data2HandOver)
+              # absolute maximum value
+              max_val <- max(abs(heatmap_data), na.rm = T)
+              breakings <- seq(-max_val, max_val, length.out = 101)
+              if (input$rowWiseScaled){
+                max_val <- 1
+                breakings <- NA
+              }
               heatmap_plot <- pheatmap(
-                as.matrix(data2HandOver),
+                heatmap_data,
                 main = customTitleHeatmap,
                 show_rownames = ifelse(nrow(data2HandOver)<=input$row_label_no,TRUE,FALSE),
                 labels_row = rowData(data$data)[rownames(data2HandOver),input$row_label_options],
@@ -470,7 +482,8 @@ heatmap_server <- function(id, data, params, updates){
                 annotation_col = annotation_col,
                 annotation_row = annotation_row,
                 annotation_colors = mycolors,
-                silent = F
+                silent = F,
+                breaks = breakings
               )
             }, error = function(e){
               error_modal(e)
@@ -480,14 +493,20 @@ heatmap_server <- function(id, data, params, updates){
         } else {
           print("Plotting saved result")
           if(input$LFC_toHeatmap){
-            myBreaks <- c(seq(min(res_tmp[[session$token]]$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
-                            seq(max(res_tmp[[session$token]]$Heatmap$LFC)/paletteLength, max(res_tmp[[session$token]]$Heatmap$LFC), length.out=floor(paletteLength/2)))
             annotation_col <- rowData(data2Plot)[,input$row_anno_options,drop=F]
 
             scenario <- 10
             # Plotting saved result -> no need to wrap in tryCatch
+            heatmap_data <- t(res_tmp[[session$token]]$Heatmap[,"LFC",drop=F])
+            # absolute maximum value
+            max_val <- max(abs(heatmap_data), na.rm = T)
+            breakings <- seq(-max_val, max_val, length.out = 101)
+            if (input$rowWiseScaled){
+              max_val <- 1
+              breakings <- NA
+            }
             heatmap_plot <- pheatmap(
-                t(res_tmp[[session$token]]$Heatmap[,"LFC",drop=F]),
+                heatmap_data,
                 main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
                 show_rownames = ifelse(nrow(res_tmp[[session$token]]$Heatmap)<=25,TRUE,FALSE),
                 show_colnames = TRUE,
@@ -496,8 +515,8 @@ heatmap_server <- function(id, data, params, updates){
                 scale=ifelse(input$rowWiseScaled,"row","none"),
                 annotation_col = annotation_col,
                 silent = F,
-                breaks = myBreaks,
-                color = myColor_fill
+                color = myColor_fill,
+                breaks = breakings
               )
           } else {
             clusterRowspossible <- ifelse(nrow(as.matrix(res_tmp[[session$token]]$Heatmap))>1,input$cluster_rows,F)
@@ -522,8 +541,16 @@ heatmap_server <- function(id, data, params, updates){
             }
             scenario <- 11
             # Plotting saved result -> no need to wrap in tryCatch
+            heatmap_data <- as.matrix(res_tmp[[session$token]]$Heatmap)
+            # absolute maximum value
+            max_val <- max(abs(heatmap_data), na.rm = T)
+            breakings <- seq(-max_val, max_val, length.out = 101)
+            if (input$rowWiseScaled){
+              max_val <- 1
+              breakings <- NA
+            }
             heatmap_plot <- pheatmap(
-              as.matrix(res_tmp[[session$token]]$Heatmap),
+              heatmap_data,
               main = customTitleHeatmap,
               show_rownames = ifelse(nrow(res_tmp[[session$token]]$Heatmap)<=input$row_label_no,TRUE,FALSE),
               labels_row = rowData(data$data)[rownames(data2HandOver),input$row_label_options],
@@ -534,26 +561,21 @@ heatmap_server <- function(id, data, params, updates){
               annotation_col = annotation_col,
               annotation_row = annotation_row,
               annotation_colors = mycolors,
-              silent = F
+              silent = F,
+              breaks = breakings
             )
           }
         }
         heatmap_scenario <- scenario
         output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
         
-        Heatmap_customTitleHeatmap <- customTitleHeatmap
+        heatmap_reactives$customTitle <- customTitleHeatmap
         # Longer names causes issues for saving 
-        if(nchar(Heatmap_customTitleHeatmap) >= 250){
-          Heatmap_customTitleHeatmap <- "Heatmap"
+        if(nchar(heatmap_reactives$customTitle) >= 250){
+          heatmap_reactives$customTitle <- "Heatmap"
         }
-        
 
-        # res_tmp[[session$token]] gets data2HandOver or Data2Plot depending on scenario
-        if(scenario == 10){
-          res_tmp[[session$token]][["Heatmap"]] <<- Data2Plot
-        }else if(scenario == 11){
-          res_tmp[[session$token]][["Heatmap"]] <<- data2HandOver
-        }
+        res_tmp[[session$token]][["Heatmap"]] <<- heatmap_plot
         # par_tmp[[session$token]] gets the parameters used for the heatmap
         ## This exports all reactive Values in the PCA namespace 
         tmp <- getUserReactiveValues(input)
@@ -598,7 +620,7 @@ heatmap_server <- function(id, data, params, updates){
 
         output$SavePlot_Heatmap <- downloadHandler(
           filename = function() {
-            paste0(Heatmap_customTitleHeatmap, " ", Sys.time(), input$file_ext_Heatmap)
+            paste0(heatmap_reactives$customTitle, " ", Sys.time(), input$file_ext_Heatmap)
             },
           content = function(file){
             save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
@@ -606,7 +628,7 @@ heatmap_server <- function(id, data, params, updates){
               tmp_filename <- paste0(
                 getwd(),
                 file_path,
-                paste0(Heatmap_customTitleHeatmap, " ", Sys.time(), input$file_ext_Heatmap)
+                paste0(heatmap_reactives$customTitle, " ", Sys.time(), input$file_ext_Heatmap)
                 )
               save_pheatmap(
                 heatmap_plot,
@@ -690,53 +712,53 @@ heatmap_server <- function(id, data, params, updates){
             par_tmp[[session$token]]$Heatmap$gene_list <<- mergedData[,"Row.names"]
           }
         }
-        # send only to report
-        observeEvent(input$only2Report_Heatmap,{
-          notificationID <- showNotification("Saving...",duration = 0)
-          tmp_filename <- paste0(
-            getwd(),
-            file_path,
-            paste(paste0(Heatmap_customTitleHeatmap, Sys.time(), ".png"))
-            )
+      })
+      # send only to report
+      observeEvent(input$only2Report_Heatmap,{
+        notificationID <- showNotification("Saving...",duration = 0)
+        tmp_filename <- paste0(
+          getwd(),
+          file_path,
+          paste(paste0(heatmap_reactives$customTitle, Sys.time(), ".png"))
+          )
 
-          save_pheatmap(
-            heatmap_plot,
-            filename=tmp_filename,
-            type="png"
-            )
-          # Add Log Messages
-          fun_LogIt(message = "## HEATMAP")
-          fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",input$row_selection_options))
-          if(any(input$row_selection_options=="rowAnno_based")){
-            fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",input$anno_options_heatmap," :",input$row_anno_options_heatmap))
-          }
-          if(!is.null(input$TopK)){
-            fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",input$TopK))
-            fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",input$row_selection_options))
-            # either based on LFC or on pVal
-          }
-          fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",input$anno_options))
-          fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",input$row_anno_options))
-          if(input$cluster_cols == TRUE){
-            fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
-          }
-          if(input$cluster_rows == TRUE){
-            fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
-          }
+        save_pheatmap(
+          res_tmp[[session$token]][["Heatmap"]],
+          filename=tmp_filename,
+          type="png"
+          )
+        # Add Log Messages
+        fun_LogIt(message = "## HEATMAP")
+        fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",isolate(input$row_selection_options)))
+        if(any(isolate(input$row_selection_options)=="rowAnno_based")){
+          fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",isolate(input$anno_options_heatmap)," :",isolate(input$row_anno_options_heatmap)))
+        }
+        if(!is.null(isolate(input$TopK))){
+          fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",isolate(input$TopK)))
+          fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",isolate(input$row_selection_options)))
+          # either based on LFC or on pVal
+        }
+        fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",isolate(input$anno_options)))
+        fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",isolate(input$row_anno_options)))
+        if(isolate(input$cluster_cols) == TRUE){
+          fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
+        }
+        if(isolate(input$cluster_rows) == TRUE){
+          fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
+        }
 
-          if(input$LFC_toHeatmap == TRUE){
-            fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
-            fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",input$sample_annotation_types_cmp_heatmap,": ",input$Groups2Compare_ref_heatmap," vs ",input$Groups2Compare_ctrl_heatmap))
-          }
-          fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
-          if(isTruthy(input$NotesHeatmap) & !(isEmpty(input$NotesHeatmap))){
-            fun_LogIt(message = "### Personal Notes:")
-            fun_LogIt(message = input$NotesHeatmap)
-          }
+        if(isolate(input$LFC_toHeatmap) == TRUE){
+          fun_LogIt(message = paste0("**HEATMAP** - The values shown are the the Log Fold Changes "))
+          fun_LogIt(message = paste0("**HEATMAP** - Calculated between ",isolate(input$sample_annotation_types_cmp_heatmap),": ",isolate(input$Groups2Compare_ref_heatmap)," vs ",isolate(input$Groups2Compare_ctrl_heatmap)))
+        }
+        fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
+        if(isTruthy(isolate(input$NotesHeatmap)) & !(isEmpty(isolate(input$NotesHeatmap)))){
+          fun_LogIt(message = "### Personal Notes:")
+          fun_LogIt(message = isolate(input$NotesHeatmap))
+        }
 
-          removeNotification(notificationID)
-          showNotification("Saved!",type = "message", duration = 1)
-        })
+        removeNotification(notificationID)
+        showNotification("Saved!",type = "message", duration = 1)
       })
     }
   )
