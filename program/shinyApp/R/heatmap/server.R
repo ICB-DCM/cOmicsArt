@@ -403,13 +403,6 @@ heatmap_server <- function(id, data, params, updates){
                 return(NULL)
               })
 
-
-              ## do pheatmap
-
-              # use floor and ceiling to deal with even/odd length pallettelengths
-              myBreaks <- c(seq(min(Data2Plot$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
-                            seq(max(Data2Plot$LFC)/paletteLength, max(Data2Plot$LFC), length.out=floor(paletteLength/2)))
-
               scenario <- 10
               annotation_col <- as.data.frame(rowData(data2Plot)[rownames(Data2Plot),input$row_anno_options,drop=F])
 
@@ -418,6 +411,11 @@ heatmap_server <- function(id, data, params, updates){
                 heatmap_data <- t(Data2Plot[,"LFC",drop=F])
                 # absolute maximum value
                 max_val <- max(abs(heatmap_data), na.rm = T)
+                breakings <- seq(-max_val, max_val, length.out = 101)
+                if (input$rowWiseScaled){
+                  max_val <- 1
+                  breakings <- NA
+                }
                 heatmap_plot <- pheatmap(
                   heatmap_data,
                   main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
@@ -429,7 +427,7 @@ heatmap_server <- function(id, data, params, updates){
                   annotation_col = annotation_col,
                   silent = F,
                   color = myColor_fill,
-                  breaks = seq(-max_val, max_val, length.out = 100)
+                  breaks = breakings
                 )
               }, error = function(e){
                 error_modal(e)
@@ -467,6 +465,11 @@ heatmap_server <- function(id, data, params, updates){
               heatmap_data <- as.matrix(data2HandOver)
               # absolute maximum value
               max_val <- max(abs(heatmap_data), na.rm = T)
+              breakings <- seq(-max_val, max_val, length.out = 101)
+              if (input$rowWiseScaled){
+                max_val <- 1
+                breakings <- NA
+              }
               heatmap_plot <- pheatmap(
                 heatmap_data,
                 main = customTitleHeatmap,
@@ -480,7 +483,7 @@ heatmap_server <- function(id, data, params, updates){
                 annotation_row = annotation_row,
                 annotation_colors = mycolors,
                 silent = F,
-                breaks = seq(-max_val, max_val, length.out = 100)
+                breaks = breakings
               )
             }, error = function(e){
               error_modal(e)
@@ -490,8 +493,6 @@ heatmap_server <- function(id, data, params, updates){
         } else {
           print("Plotting saved result")
           if(input$LFC_toHeatmap){
-            myBreaks <- c(seq(min(res_tmp[[session$token]]$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
-                            seq(max(res_tmp[[session$token]]$Heatmap$LFC)/paletteLength, max(res_tmp[[session$token]]$Heatmap$LFC), length.out=floor(paletteLength/2)))
             annotation_col <- rowData(data2Plot)[,input$row_anno_options,drop=F]
 
             scenario <- 10
@@ -499,6 +500,11 @@ heatmap_server <- function(id, data, params, updates){
             heatmap_data <- t(res_tmp[[session$token]]$Heatmap[,"LFC",drop=F])
             # absolute maximum value
             max_val <- max(abs(heatmap_data), na.rm = T)
+            breakings <- seq(-max_val, max_val, length.out = 101)
+            if (input$rowWiseScaled){
+              max_val <- 1
+              breakings <- NA
+            }
             heatmap_plot <- pheatmap(
                 heatmap_data,
                 main = gsub("^Heatmap","Heatmap_LFC",customTitleHeatmap),
@@ -509,9 +515,8 @@ heatmap_server <- function(id, data, params, updates){
                 scale=ifelse(input$rowWiseScaled,"row","none"),
                 annotation_col = annotation_col,
                 silent = F,
-                breaks = myBreaks,
                 color = myColor_fill,
-                breaks = seq(-max_val, max_val, length.out = 100)
+                breaks = breakings
               )
           } else {
             clusterRowspossible <- ifelse(nrow(as.matrix(res_tmp[[session$token]]$Heatmap))>1,input$cluster_rows,F)
@@ -539,6 +544,11 @@ heatmap_server <- function(id, data, params, updates){
             heatmap_data <- as.matrix(res_tmp[[session$token]]$Heatmap)
             # absolute maximum value
             max_val <- max(abs(heatmap_data), na.rm = T)
+            breakings <- seq(-max_val, max_val, length.out = 101)
+            if (input$rowWiseScaled){
+              max_val <- 1
+              breakings <- NA
+            }
             heatmap_plot <- pheatmap(
               heatmap_data,
               main = customTitleHeatmap,
@@ -552,7 +562,7 @@ heatmap_server <- function(id, data, params, updates){
               annotation_row = annotation_row,
               annotation_colors = mycolors,
               silent = F,
-              breaks = seq(-max_val, max_val, length.out = 100)
+              breaks = breakings
             )
           }
         }
