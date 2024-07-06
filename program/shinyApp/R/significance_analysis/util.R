@@ -85,7 +85,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
             cellWidths = c("40%", "60%"),
             plotlyOutput(
               outputId = ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))
-            ) %>% withSpinner(type = 8),
+            ),
             plotlyOutput(
               outputId = ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))
             )
@@ -444,7 +444,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
             cellWidths = c("40%", "60%"),
             plotlyOutput(
               outputId = ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))
-            ) %>% withSpinner(type = 8),
+            ),
             plotlyOutput(
               outputId = ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))
             )

@@ -30,9 +30,7 @@ sampleCorrelation_main_panel <- function(ns){
     style = "border: 1px solid silver:", cellWidths = c("100%"),
     plotOutput(
       outputId = ns("SampleCorrelationPlot")
-    ) %>% withSpinner(
-      type = 8,
-      color = getOption("spinner.color", default = "#b8cee0"))
+    )
   ),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),

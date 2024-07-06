@@ -165,7 +165,7 @@ ea_main <- function(ns){
           label = "Adjust Height",
           min = 400, max = 1500, step = 20, value = 640
         ),
-        imageOutput(outputId = ns("KeggPathwayOutput_img")) %>% withSpinner(type = 8)
+        imageOutput(outputId = ns("KeggPathwayOutput_img"))
       )
     )
   )
