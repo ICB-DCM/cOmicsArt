@@ -7,9 +7,14 @@ nav_order: 4
 
 # Showcases Overview
 
-In this section, you will find two showcases, each utilizing different datasets to illustrate various features and functionalities of the App.
+![A comic about a cat finding cOmicsART](/OmicShiny/assets/images/cOmicsUnicorn.png)
+*Image generated using DALL-E by OpenAI. Adjusted by Lea Seep*
 
-1.  **Data Input Showcase**: This example demonstrates how to work with data inputs, emphasizing different aspects of data manipulation within the App.
+In this section, you will find two showcases, each utilizing different datasets to illustrate various features and functionalities of the App.
+We want to show here what is possible with the app and how you can use it to your advantage. We hope to give you some inspiration or workflow snippets that you can use in your own analysis.
+So lean back and enjoy the show(cases)! 🍿
+
+1.  **Data Input Showcase**: This example demonstrates how to work with data inputs, and utilizing all functions within cOmicsART. It emphasizes how one can work in iterative, explorative manners to gain insights from the data. This includes the use of data selection, the addition of metadata based on first analysis results, the use of the report to ensure complete reproducibility as well as the discussion ground for further potential steps.
 
 =\> Go to the [Showcase A](showcases/showcase-a.md)
 
