@@ -142,6 +142,7 @@ sample_correlation_server <- function(id, data, params){
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$SampleCorr[names(tmp)] <<- tmp
         par_tmp[[session$token]]$SampleCorr$customTitleSampleCorrelation <<- customTitleSampleCorrelation
+        par_tmp[[session$token]]$SampleCorr$SampleCorrelationPlot_final <<- SampleCorrelationPlot_final,
         par_tmp[[session$token]]$SampleCorr$annotationDF <<- as.data.frame(annotationDF)
         par_tmp[[session$token]]$SampleCorr$anno_colors <<- anno_colors
       })
