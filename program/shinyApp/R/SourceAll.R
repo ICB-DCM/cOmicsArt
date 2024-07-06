@@ -1,3 +1,4 @@
+source("R/version.R",local = T)
 source("R/C.R",local = T)
 source("R/fun_filterRNA.R",local = T)
 source("R/fun_LFC.R",local = T)

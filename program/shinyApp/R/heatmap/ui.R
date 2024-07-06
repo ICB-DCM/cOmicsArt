@@ -62,7 +62,7 @@ heatmap_main <- function(ns){
       style = "border: 1px solid silver:", cellWidths = c("100%"),
       plotOutput(
         outputId = ns("HeatmapPlot")
-      ) %>% withSpinner(type=8,color = getOption("spinner.color", default = "#b8cee0"))
+      )
     ),
     textOutput(outputId = ns("Options_selected_out_3"), container = pre),
     uiOutput(outputId = ns("row_label_options_ui")),

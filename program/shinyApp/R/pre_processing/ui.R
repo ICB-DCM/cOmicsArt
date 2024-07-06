@@ -30,7 +30,7 @@ pre_processing_main_panel <- mainPanel(
   id = "mainpanel_pre_processing",
   # Statistics to the data
   helpText("General statistics to the input data, stuff like dimensions"),
-  htmlOutput(outputId = "Statisitcs_Data") %>% withSpinner(type = 8),
+  htmlOutput(outputId = "Statisitcs_Data"),
   HTML(text = "<br>"),
   fluidRow(
     column(6,
