@@ -161,15 +161,23 @@ data_selection_main_panel <- mainPanel(
            ))
   ),
   hr(style = "border-top: 1px solid #858585;"),
-  div(
-    id = "SaveInputAsRDS",
-    downloadButton(
-      outputId = "SaveInputAsList",
-      label = "Save file input to upload later"
-    ) %>% helper(type = "markdown", content = "DataSelection_compilation_help")
-  ),
+  # div(
+  #   id = "SaveInputAsRDS",
+  #   downloadButton(
+  #     outputId = "SaveInputAsList",
+  #     label = "Save file input to upload later"
+  #   ) %>% helper(type = "markdown", content = "DataSelection_compilation_help")
+  # ),
   htmlOutput(outputId = "debug", container = pre),
-  br(), br(), br(),
+  br(),
+  # TODO: actually fill this button with some sense.
+  actionButton(
+    inputId = "SaveRDS",
+    label = "Save as Precompiled Data",
+    icon = icon('minimize'),
+    width = "50%",
+  ),
+  br(),
   hr(style = "border-top: 1px solid #858585;"),
   actionButton(
     inputId = "NextPanel",

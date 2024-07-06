@@ -369,14 +369,14 @@ server <- function(input,output,session){
       ## Do some checking
       snippetYes <- "<font color=\"#00851d\"><b>Yes</b></font>"
       snippetNo <-  "<font color=\"#ab020a\"><b>No</b></font>"
-      snippetOrangeNo <- "<font color=\"#FFA500\"><b>No</b></font> But if you use any preprocessing other than `None`, those NAs will be removed"
+      snippetOrangeNo <- "<font color=\"#FFA500\"><b>No</b></font>"
 
       check0 <- ifelse(flag_csv,snippetYes,snippetNo)
       check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
       check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
       check3 <- ifelse(any(is.na(Matrix) == T),snippetOrangeNo,snippetYes)
       check4 <- ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes)
-      check5 <- ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes)
+      check5 <- ifelse(any(is.na(annotation_rows) == T),snippetOrangeNo,snippetYes)
       check6 <- ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo)
 
       if(check0 == snippetNo){
@@ -388,7 +388,10 @@ server <- function(input,output,session){
           "Fix: change your decimal separator in Excel and re-export!"
         )
       }
-      if(check5 == snippetNo){
+      if (check3 == snippetOrangeNo){
+        check3 <- paste0(snippetOrangeNo,"\n\tBut if you use any preprocessing other than `None`, those NAs will be removed")
+      }
+      if(check5 == snippetOrangeNo){
         # Indicate columns with NA
         colsWithNa <- numeric()
         for(i in 1:ncol(annotation_rows)){
@@ -396,7 +399,7 @@ server <- function(input,output,session){
              colsWithNa <- c(colsWithNa,i)
            }
         }
-        check5 <- paste0(snippetNo,"\n\tFollowing columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
+        check5 <- paste0(snippetOrangeNo,"\n\tFollowing columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
       }
       if(check6 == snippetNo){
         # add help text
