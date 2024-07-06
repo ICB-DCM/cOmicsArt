@@ -18,7 +18,7 @@ entitieSelection <- function(
     if(any(additionalInput_row_anno_factor=="all")){
       filtered_data <- filtered_data
     } else{
-      filtered_data <- filtered_data[which(data$annotation_rows[, additionalInput_row_anno] %in% additionalInput_row_anno_factor),]
+      filtered_data <- filtered_data[which(rowData(data)[, additionalInput_row_anno] %in% additionalInput_row_anno_factor),]
     }
   }
   if(!(is.na(additionalInput_sample_annotation_types)) & !(is.na(additionalInput_ctrl_idx)) & !(is.na(additionalInput_cmp_idx))){
