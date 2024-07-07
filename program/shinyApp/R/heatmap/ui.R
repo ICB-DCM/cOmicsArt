@@ -5,7 +5,15 @@ heatmap_sidebar<- function(ns){
     # Heatmap
     #########################################
     uiOutput(outputId = ns("UseBatch_ui")),
-    uiOutput(outputId = ns("row_selection_options_ui")) %>% helper(type = "markdown", content = "Heatmap_Options"),
+    selectInput(
+      inputId = ns("row_selection_options"),
+      label = "Select Entities to show",
+      choices = c("all", "Select based on Annotation", "Top K"),
+    # TODO: needs to be incoporated or deleted
+    # "TopK","significant_LFC","LFC_onlySig","rowAnno_based"),
+      multiple = F,
+      selected = "all"
+    ) %>% helper(type = "markdown", content = "Heatmap_Options"),
     uiOutput(outputId = ns("LFC_toHeatmap_ui")),
     h5("Further row selection (LFC based)") %>% helper(type = "markdown", content = "Heatmap_FurtherOptions"),
     uiOutput(outputId = ns("TopK_ui")),
@@ -19,6 +27,17 @@ heatmap_sidebar<- function(ns){
     uiOutput(outputId = ns("Groups2Compare_ref_heatmap_ui")),
     uiOutput(outputId = ns("Groups2Compare_treat_heatmap_ui")),
     uiOutput(outputId = ns("psig_threhsold_heatmap_ui")),
+    h5("Further row selection (annotation based)") %>% helper(type = "markdown", content = "Heatmap_RowAnnoBased"),
+    helpText("Note: This only shows options if 'rowAnno_based' is selected for 'Row selection' (top of the sidebar)"),
+    switchInput(
+      inputId = ns("Selection_show_annoBased"),
+      label = "show options (annotation-related)",
+      inline = T,
+      size = "mini",
+      value = F
+    ),
+    uiOutput(outputId = ns("anno_options_heatmap_ui")),
+    uiOutput(outputId = ns("row_anno_options_heatmap_ui")),
     actionButton(
       inputId = ns("Do_Heatmap"),
       label = "Get Heatmap",
@@ -36,21 +55,7 @@ heatmap_sidebar<- function(ns){
     uiOutput(outputId = ns("row_anno_options_ui")),
     uiOutput(outputId = ns("rowWiseScaled_ui")),
     uiOutput(outputId = ns("cluster_cols_ui")),
-    uiOutput(outputId = ns("cluster_rows_ui")),
-    hr(style = "border-top: 1px solid #858585;"),
-    h5("Further row selection (annotation based)") %>% helper(type = "markdown", content = "Heatmap_RowAnnoBased"),
-    helpText("Note: This only shows options if 'rowAnno_based' is selected for 'Row selection' (top of the sidebar)"),
-    switchInput(
-      inputId = ns("Selection_show_annoBased"),
-      label = "show options (annotation-related)",
-      inline = T,
-      size = "mini",
-      value = F
-    ),
-    uiOutput(outputId = ns("rowAnno_based_ui")),
-    uiOutput(outputId = ns("row_anno_factor_ui")),
-    uiOutput(outputId = ns("anno_options_heatmap_ui")),
-    uiOutput(outputId = ns("row_anno_options_heatmap_ui"))
+    uiOutput(outputId = ns("cluster_rows_ui"))
   )
 }
 
@@ -140,4 +145,3 @@ heatmap_UI <- function(id){
     heatmap_main(ns)
   )
 }
-

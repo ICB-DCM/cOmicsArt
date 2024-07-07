@@ -87,16 +87,6 @@ heatmap_server <- function(id, data, params, updates){
           width = "20%"
           )
       })
-      output$row_selection_options_ui <- renderUI({
-        req(data_input_shiny())
-        selectInput(
-          inputId = ns("row_selection_options"),
-          label = "Row selection",
-          choices = c("all","TopK","significant_LFC","LFC_onlySig","rowAnno_based"),
-          multiple = T, 
-          selected = "all"
-        )
-      })
       
       output$rowWiseScaled_ui <- renderUI({
         req(data_input_shiny())
@@ -174,8 +164,7 @@ heatmap_server <- function(id, data, params, updates){
       })
 
       observe({
-        if(input$Selection_show_annoBased & 
-           any(input$row_selection_options == "rowAnno_based")){
+        if(any(input$row_selection_options == "rowAnno_based")){
           
           output$anno_options_heatmap_ui <- renderUI({
             req(selectedData_processed())
@@ -222,7 +211,6 @@ heatmap_server <- function(id, data, params, updates){
       observeEvent(toListen2Heatmap(),{
         req(input$Do_Heatmap[1]>0)
         req(
-          params["omic_type"],
           input$row_selection_options,
           input$anno_options,
           input$row_label_options
@@ -239,7 +227,6 @@ heatmap_server <- function(id, data, params, updates){
                         "#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
         customTitleHeatmap <- paste0(
           "Heatmap - ",
-          params["omic_type"],"-",
           paste0("entities:",input$row_selection,collapse = "_"),
           "-samples",
           ifelse(any(input$sample_selection!="all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),""),
