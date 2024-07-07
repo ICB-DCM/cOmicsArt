@@ -70,7 +70,7 @@ heatmap_server <- function(id, data, params, updates){
           selected = "No"
         )
       })
-      
+
       output$rowWiseScaled_ui <- renderUI({
         req(data_input_shiny())
         checkboxInput(
@@ -248,7 +248,6 @@ heatmap_server <- function(id, data, params, updates){
           print("No entitie selection")
           data2HandOver <- as.data.frame(assay(data$data))
         }else{
-          # entitie selection is a custom function -> wrap it in a tryCatch
           tryCatch({
             data2HandOver <- entitieSelection(
               data$data,
@@ -339,10 +338,11 @@ heatmap_server <- function(id, data, params, updates){
               heatmap_data <- as.matrix(data2HandOver)
               # absolute maximum value
               max_val <- max(abs(heatmap_data), na.rm = T)
-              breakings <- seq(-max_val, max_val, length.out = 101)
-              if (input$rowWiseScaled){
+              if (input$rowWiseScaled | max_val == Inf | max_val == -Inf){
                 max_val <- 1
                 breakings <- NA
+              } else {
+                breakings <- seq(-max_val, max_val, length.out = 101)
               }
               heatmap_plot <- pheatmap(
                 heatmap_data,
@@ -391,10 +391,11 @@ heatmap_server <- function(id, data, params, updates){
           heatmap_data <- as.matrix(res_tmp[[session$token]]$Heatmap)
           # absolute maximum value
           max_val <- max(abs(heatmap_data), na.rm = T)
-          breakings <- seq(-max_val, max_val, length.out = 101)
-          if (input$rowWiseScaled){
+          if (input$rowWiseScaled | max_val == Inf | max_val == -Inf){
             max_val <- 1
             breakings <- NA
+          } else {
+            breakings <- seq(-max_val, max_val, length.out = 101)
           }
           heatmap_plot <- pheatmap(
             heatmap_data,

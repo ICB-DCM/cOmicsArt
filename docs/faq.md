@@ -6,6 +6,9 @@ nav_order: 7
 
 # Frequently Asked Questions (FAQ)
 
+![A comic about a cat finding cOmicsART](/OmicShiny/assets/images/cOmicsGiraffe.png)
+*Image generated using DALL-E by OpenAI. Adjusted by Lea Seep*
+
 <style>
 .question {
   cursor: pointer;
