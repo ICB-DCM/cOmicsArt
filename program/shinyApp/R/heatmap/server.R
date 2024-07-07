@@ -308,7 +308,6 @@ heatmap_server <- function(id, data, params, updates){
           print("No entitie selection")
           data2HandOver <- as.data.frame(assay(data$data))
         }else{
-          # entitie selection is a custom function -> wrap it in a tryCatch
           tryCatch({
             data2HandOver <- entitieSelection(
               data$data,
@@ -390,8 +389,6 @@ heatmap_server <- function(id, data, params, updates){
               output$Options_selected_out_3 <- renderText("Choose another preprocessing, as there are negative values!")
 
             }else if(doThis_flag){
-
-              # getLFC is a custom function -> wrap it in a tryCatch
               tryCatch({
                   Data2Plot <- getLFCs(
                   data = as.data.frame(data2HandOver),
@@ -411,10 +408,11 @@ heatmap_server <- function(id, data, params, updates){
                 heatmap_data <- t(Data2Plot[,"LFC",drop=F])
                 # absolute maximum value
                 max_val <- max(abs(heatmap_data), na.rm = T)
-                breakings <- seq(-max_val, max_val, length.out = 101)
-                if (input$rowWiseScaled){
+                if (input$rowWiseScaled | max_val == Inf | max_val == -Inf){
                   max_val <- 1
                   breakings <- NA
+                } else {
+                  breakings <- seq(-max_val, max_val, length.out = 101)
                 }
                 heatmap_plot <- pheatmap(
                   heatmap_data,
@@ -465,10 +463,11 @@ heatmap_server <- function(id, data, params, updates){
               heatmap_data <- as.matrix(data2HandOver)
               # absolute maximum value
               max_val <- max(abs(heatmap_data), na.rm = T)
-              breakings <- seq(-max_val, max_val, length.out = 101)
-              if (input$rowWiseScaled){
+              if (input$rowWiseScaled | max_val == Inf | max_val == -Inf){
                 max_val <- 1
                 breakings <- NA
+              } else {
+                breakings <- seq(-max_val, max_val, length.out = 101)
               }
               heatmap_plot <- pheatmap(
                 heatmap_data,
@@ -500,10 +499,11 @@ heatmap_server <- function(id, data, params, updates){
             heatmap_data <- t(res_tmp[[session$token]]$Heatmap[,"LFC",drop=F])
             # absolute maximum value
             max_val <- max(abs(heatmap_data), na.rm = T)
-            breakings <- seq(-max_val, max_val, length.out = 101)
-            if (input$rowWiseScaled){
+            if (input$rowWiseScaled | max_val == Inf | max_val == -Inf){
               max_val <- 1
               breakings <- NA
+            } else {
+              breakings <- seq(-max_val, max_val, length.out = 101)
             }
             heatmap_plot <- pheatmap(
                 heatmap_data,
@@ -544,10 +544,11 @@ heatmap_server <- function(id, data, params, updates){
             heatmap_data <- as.matrix(res_tmp[[session$token]]$Heatmap)
             # absolute maximum value
             max_val <- max(abs(heatmap_data), na.rm = T)
-            breakings <- seq(-max_val, max_val, length.out = 101)
-            if (input$rowWiseScaled){
+            if (input$rowWiseScaled | max_val == Inf | max_val == -Inf){
               max_val <- 1
               breakings <- NA
+            } else {
+              breakings <- seq(-max_val, max_val, length.out = 101)
             }
             heatmap_plot <- pheatmap(
               heatmap_data,
