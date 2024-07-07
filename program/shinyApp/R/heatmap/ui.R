@@ -14,7 +14,6 @@ heatmap_sidebar<- function(ns){
       multiple = F,
       selected = "all"
     ) %>% helper(type = "markdown", content = "Heatmap_Options"),
-    uiOutput(outputId = ns("LFC_toHeatmap_ui")),
     h5("Further row selection (LFC based)") %>% helper(type = "markdown", content = "Heatmap_FurtherOptions"),
     conditionalPanel(
       condition = "input.row_selection_options == 'Top K'",

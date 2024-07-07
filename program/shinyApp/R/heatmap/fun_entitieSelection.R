@@ -9,11 +9,10 @@ entitieSelection <- function(
   additionalInput_cmp_idx=NA,
   psig_threhsold=NA
 ){
-  # to cover: c("TopK","significant_LFC","LFC_onlySig","rowAnno_based")
   filtered_data <- assay(data)
   orderMakesSense_flag <- FALSE
   print("Entitie Selection")
-  if(any(type=="rowAnno_based") & !(any(is.na(additionalInput_row_anno) &is.na(additionalInput_row_anno_factor))) & !any(additionalInput_row_anno_factor=="all")){
+  if(any(type=="Select based on Annotation") & !(any(is.na(additionalInput_row_anno) &is.na(additionalInput_row_anno_factor))) & !any(additionalInput_row_anno_factor=="all")){
     # Note here this only what to show, LFCs and more importantly multiple test correction will be done on the entire set (without the row anno based selection!!)
     if(any(additionalInput_row_anno_factor=="all")){
       filtered_data <- filtered_data
