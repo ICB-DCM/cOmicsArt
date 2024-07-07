@@ -16,28 +16,38 @@ heatmap_sidebar<- function(ns){
     ) %>% helper(type = "markdown", content = "Heatmap_Options"),
     uiOutput(outputId = ns("LFC_toHeatmap_ui")),
     h5("Further row selection (LFC based)") %>% helper(type = "markdown", content = "Heatmap_FurtherOptions"),
-    uiOutput(outputId = ns("TopK_ui")),
+    conditionalPanel(
+      condition = "input.row_selection_options == 'Top K'",
+      numericInput(
+        inputId = ns("TopK"),
+        label = "Choose number of top entities to show (order based on p-val (LFC) or rowCount)",
+        min = 1,
+        step = 1,
+        value = 20
+      ),
+      ns = ns
+    ),
     switchInput(
       inputId = ns("Selection_show_LFC"),
       label = "show options (LFC-related)",
       inline = T,
       size = "mini"
     ),
-    uiOutput(outputId = ns("sample_annotation_types_cmp_heatmap_ui")),
-    uiOutput(outputId = ns("Groups2Compare_ref_heatmap_ui")),
-    uiOutput(outputId = ns("Groups2Compare_treat_heatmap_ui")),
-    uiOutput(outputId = ns("psig_threhsold_heatmap_ui")),
-    h5("Further row selection (annotation based)") %>% helper(type = "markdown", content = "Heatmap_RowAnnoBased"),
-    helpText("Note: This only shows options if 'rowAnno_based' is selected for 'Row selection' (top of the sidebar)"),
-    switchInput(
-      inputId = ns("Selection_show_annoBased"),
-      label = "show options (annotation-related)",
-      inline = T,
-      size = "mini",
-      value = F
+    conditionalPanel(
+      condition = "input.Selection_show_LFC== true",
+      uiOutput(outputId = ns("sample_annotation_types_cmp_heatmap_ui")),
+      uiOutput(outputId = ns("Groups2Compare_ref_heatmap_ui")),
+      uiOutput(outputId = ns("Groups2Compare_treat_heatmap_ui")),
+      uiOutput(outputId = ns("psig_threhsold_heatmap_ui")),
+      ns = ns
     ),
-    uiOutput(outputId = ns("anno_options_heatmap_ui")),
-    uiOutput(outputId = ns("row_anno_options_heatmap_ui")),
+    conditionalPanel(
+      condition = "input.row_selection_options == 'Select based on Annotation'",
+      h5("Further row selection (annotation based)") %>% helper(type = "markdown", content = "Heatmap_RowAnnoBased"),
+      uiOutput(outputId = ns("anno_options_heatmap_ui")),
+      uiOutput(outputId = ns("row_anno_options_heatmap_ui")),
+      ns = ns
+    ),
     actionButton(
       inputId = ns("Do_Heatmap"),
       label = "Get Heatmap",
@@ -52,13 +62,15 @@ heatmap_sidebar<- function(ns){
       value = T
     ),
     conditionalPanel(
-      condition = "input.Aesthetics_show",
+      condition = "input.Aesthetics_show == true",
       uiOutput(outputId = ns("anno_options_ui")),
       uiOutput(outputId = ns("row_anno_options_ui")),
       uiOutput(outputId = ns("row_label_options_ui")),
       uiOutput(outputId = ns("cluster_cols_ui")),
-      uiOutput(outputId = ns("cluster_rows_ui"))
-    )
+      uiOutput(outputId = ns("cluster_rows_ui")),
+      ns = ns
+    ),
+    uiOutput(outputId = ns("rowWiseScaled_ui")),
   )
 }
 

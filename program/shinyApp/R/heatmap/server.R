@@ -10,6 +10,7 @@ heatmap_server <- function(id, data, params, updates){
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
 
+      ### Aesthetic Settings
       output$anno_options_ui <- renderUI({
         req(data_input_shiny())
         selectInput(
@@ -88,103 +89,73 @@ heatmap_server <- function(id, data, params, updates){
           value = FALSE
           )
       })
-      
-      observe({
-        if(input$Selection_show_LFC){
-          output$sample_annotation_types_cmp_heatmap_ui <- renderUI({
-            req(data_input_shiny())
-            selectInput(
-              inputId = ns("sample_annotation_types_cmp_heatmap"),
-              label = "Choose type for LFC-based ordering",
-              choices = c(colnames(colData(data$data))),
-              multiple = F
-            )
-          })
-          output$Groups2Compare_ref_heatmap_ui <- renderUI({
-            req(data_input_shiny())
-            req(input$sample_annotation_types_cmp_heatmap)
-            selectInput(
-              inputId = ns("Groups2Compare_ref_heatmap"),
-              label = "Choose reference of log2 FoldChange",
-              choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap]),
-              multiple = F ,
-              selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap])[1]
-            )
-          })
-          output$Groups2Compare_treat_heatmap_ui <- renderUI({
-            req(data_input_shiny())
-            req(input$sample_annotation_types_cmp_heatmap)
-            selectInput(
-              inputId = ns("Groups2Compare_treat_heatmap"),
-              label = "Choose treatment group of log2 FoldChange",
-              choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap]),
-              multiple = F ,
-              selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap])[2]
-            )
-          })
-          output$psig_threhsold_heatmap_ui <- renderUI({
-            req(data_input_shiny())
-            numericInput(
-              inputId = ns("psig_threhsold_heatmap"),
-              label = "adj. p-value threshold",
-              min = 0, 
-              max = 0.1, 
-              step = 0.01,
-              value = 0.05
-              )
-          })
-        }else{
-          hide(id = "sample_annotation_types_cmp_heatmap",anim=T)
-          hide(id = "Groups2Compare_ref_heatmap",anim=T)
-          hide(id = "Groups2Compare_treat_heatmap",anim=T)
-          hide(id = "psig_threhsold_heatmap",anim=T)
-        }
+
+      output$sample_annotation_types_cmp_heatmap_ui <- renderUI({
+        req(data_input_shiny())
+        selectInput(
+          inputId = ns("sample_annotation_types_cmp_heatmap"),
+          label = "Choose type for LFC-based ordering",
+          choices = c(colnames(colData(data$data))),
+          multiple = F
+        )
       })
-      
-      observe({
-        if(any(input$row_selection_options == "TopK")){
-          output$TopK_ui <- renderUI({numericInput(
-            inputId = ns("TopK"),
-            label = "Choose number of top entities to show (order based on p-val (LFC) or rowCount)",
-            min = 1,
-            step = 1,
-            value = 20
-          )})
-        }else{
-          hide(id = "TopK", anim = T)
-        }
+      output$Groups2Compare_ref_heatmap_ui <- renderUI({
+        req(data_input_shiny())
+        req(input$sample_annotation_types_cmp_heatmap)
+        selectInput(
+          inputId = ns("Groups2Compare_ref_heatmap"),
+          label = "Choose reference of log2 FoldChange",
+          choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap]),
+          multiple = F ,
+          selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap])[1]
+        )
+      })
+      output$Groups2Compare_treat_heatmap_ui <- renderUI({
+        req(data_input_shiny())
+        req(input$sample_annotation_types_cmp_heatmap)
+        selectInput(
+          inputId = ns("Groups2Compare_treat_heatmap"),
+          label = "Choose treatment group of log2 FoldChange",
+          choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap]),
+          multiple = F ,
+          selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap])[2]
+        )
+      })
+      output$psig_threhsold_heatmap_ui <- renderUI({
+        req(data_input_shiny())
+        numericInput(
+          inputId = ns("psig_threhsold_heatmap"),
+          label = "adj. p-value threshold",
+          min = 0,
+          max = 0.1,
+          step = 0.01,
+          value = 0.05
+          )
       })
 
-      observe({
-        if(any(input$row_selection_options == "rowAnno_based")){
-          
-          output$anno_options_heatmap_ui <- renderUI({
-            req(selectedData_processed())
-            selectInput(
-              inputId = ns("anno_options_heatmap"),
-              label = "Choose the variable to select the rows after (Multiples are not possible)",
-              choices = c(colnames(rowData(data$data))),
-              selected = colnames(rowData(data$data))[1],
-              multiple = F
-            )
-          })
-          output$row_anno_options_heatmap_ui <- renderUI({
-            req(selectedData_processed())
-            shinyWidgets::virtualSelectInput(
-              search = T,
-              showSelectedOptionsFirst = T,
-              inputId = ns("row_anno_options_heatmap"),
-              label = "Which entities to use?",
-              choices = c("all",unique(rowData(data$data)[,input$anno_options_heatmap])),
-              selected = "all",
-              multiple = T
-            )
-          })
-        }else{
-          hide(id = "anno_options_heatmap",anim = T)
-          hide(id = "row_anno_options_heatmap",anim = T)
-        }
+      output$anno_options_heatmap_ui <- renderUI({
+        req(selectedData_processed())
+        selectInput(
+          inputId = ns("anno_options_heatmap"),
+          label = "Choose the variable to select the rows after (Multiples are not possible)",
+          choices = c(colnames(rowData(data$data))),
+          selected = colnames(rowData(data$data))[1],
+          multiple = F
+        )
       })
+      output$row_anno_options_heatmap_ui <- renderUI({
+        req(selectedData_processed())
+        shinyWidgets::virtualSelectInput(
+          search = T,
+          showSelectedOptionsFirst = T,
+          inputId = ns("row_anno_options_heatmap"),
+          label = "Which entities to use?",
+          choices = c("all",unique(rowData(data$data)[,input$anno_options_heatmap])),
+          selected = "all",
+          multiple = T
+        )
+      })
+
 
       ## Do Heatmap
       toListen2Heatmap <- reactive({
