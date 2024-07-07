@@ -51,11 +51,14 @@ heatmap_sidebar<- function(ns){
       size = "mini", 
       value = T
     ),
-    uiOutput(outputId = ns("anno_options_ui")),
-    uiOutput(outputId = ns("row_anno_options_ui")),
-    uiOutput(outputId = ns("rowWiseScaled_ui")),
-    uiOutput(outputId = ns("cluster_cols_ui")),
-    uiOutput(outputId = ns("cluster_rows_ui"))
+    conditionalPanel(
+      condition = "input.Aesthetics_show",
+      uiOutput(outputId = ns("anno_options_ui")),
+      uiOutput(outputId = ns("row_anno_options_ui")),
+      uiOutput(outputId = ns("row_label_options_ui")),
+      uiOutput(outputId = ns("cluster_cols_ui")),
+      uiOutput(outputId = ns("cluster_rows_ui"))
+    )
   )
 }
 

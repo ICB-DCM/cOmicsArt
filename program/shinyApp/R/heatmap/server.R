@@ -9,63 +9,55 @@ heatmap_server <- function(id, data, params, updates){
       ## UI Section ----
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
-      observe({
-        if(input$Aesthetics_show){
-          output$anno_options_ui <- renderUI({
-            req(data_input_shiny())
-            selectInput(
-              inputId = ns("anno_options"),
-              label = "Choose the variable to color the samples after (Multiples are possible)",
-              choices = c(colnames(colData(data$data))),
-              multiple = T , # would be cool if true, to be able to merge vars ?!,
-              selected= c(colnames(colData(data$data)))[1]
-            )
-          })
-          output$row_anno_options_ui <- renderUI({
-            req(data_input_shiny())
-            selectInput(
-              inputId = ns("row_anno_options"),
-              label = "Choose the variable to color the rows after (Multiples are possible)",
-              choices = c(colnames(rowData(data$data))),
-              multiple = T, # would be cool if true, to be able to merge vars ?!
-              selected = c(colnames(rowData(data$data)))[length(c(colnames(rowData(data$data))))]
-            )
-          })
-          output$row_label_options_ui <- renderUI({
-            req(data_input_shiny())
-            req(input$row_anno_options)
-            selectInput(
-              inputId = ns("row_label_options"),
-              label = "Choose the label of rows",
-              choices = c(colnames(rowData(data$data))),
-              multiple = F, # would be cool if true, to be able to merge vars ?!,
-              selected=input$row_anno_options
-            )
-          })
-          output$cluster_cols_ui <- renderUI({
-            req(data_input_shiny())
-            checkboxInput(
-              inputId = ns("cluster_cols"),
-              label="Column Clustering?",
-              value = TRUE,
-              width = "20%"
-              )
-          })
-          output$cluster_rows_ui <- renderUI({
-            req(data_input_shiny())
-            checkboxInput(
-              inputId = ns("cluster_rows"),
-              label="Row Clustering?",
-              value = TRUE,
-              width = "20%"
-              )
-          })
-        }else{
-          hide(id = "anno_options",anim = T)
-          hide(id = "row_anno_options",anim = T)
-          hide(id = "cluster_cols", anim = T)
-          hide(id = "cluster_rows", anim = T )
-        }
+
+      output$anno_options_ui <- renderUI({
+        req(data_input_shiny())
+        selectInput(
+          inputId = ns("anno_options"),
+          label = "Choose the variable to color the samples after (Multiples are possible)",
+          choices = c(colnames(colData(data$data))),
+          multiple = T , # would be cool if true, to be able to merge vars ?!,
+          selected= c(colnames(colData(data$data)))[1]
+        )
+      })
+      output$row_anno_options_ui <- renderUI({
+        req(data_input_shiny())
+        selectInput(
+          inputId = ns("row_anno_options"),
+          label = "Choose the variable to color the rows after (Multiples are possible)",
+          choices = c(colnames(rowData(data$data))),
+          multiple = T, # would be cool if true, to be able to merge vars ?!
+          selected = c(colnames(rowData(data$data)))[length(c(colnames(rowData(data$data))))]
+        )
+      })
+      output$row_label_options_ui <- renderUI({
+        req(data_input_shiny())
+        req(input$row_anno_options)
+        selectInput(
+          inputId = ns("row_label_options"),
+          label = "Choose the label of rows",
+          choices = c(colnames(rowData(data$data))),
+          multiple = F, # would be cool if true, to be able to merge vars ?!,
+          selected=input$row_anno_options
+        )
+      })
+      output$cluster_cols_ui <- renderUI({
+        req(data_input_shiny())
+        checkboxInput(
+          inputId = ns("cluster_cols"),
+          label="Column Clustering?",
+          value = TRUE,
+          width = "20%"
+          )
+      })
+      output$cluster_rows_ui <- renderUI({
+        req(data_input_shiny())
+        checkboxInput(
+          inputId = ns("cluster_rows"),
+          label="Row Clustering?",
+          value = TRUE,
+          width = "20%"
+          )
       })
 
       output$UseBatch_ui <- renderUI({
