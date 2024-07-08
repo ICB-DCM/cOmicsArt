@@ -14,16 +14,9 @@ heatmap_sidebar<- function(ns){
       multiple = F,
       selected = "all"
     ) %>% helper(type = "markdown", content = "Heatmap_Options"),
-    h5("Further row selection (LFC based)") %>% helper(type = "markdown", content = "Heatmap_FurtherOptions"),
     conditionalPanel(
       condition = "input.row_selection_options == 'Top K'",
-      numericInput(
-        inputId = ns("TopK"),
-        label = "Choose number of top entities to show (order based on p-val (LFC) or rowCount)",
-        min = 1,
-        step = 1,
-        value = 20
-      ),
+      h5("Further row selection (LFC based)") %>% helper(type = "markdown", content = "Heatmap_FurtherOptions"),
       selectInput(
         inputId = ns("TopK_order"),
         label = "Order based on",
@@ -32,6 +25,13 @@ heatmap_sidebar<- function(ns){
           "LogFoldChange and Significant", "absolute LogFoldChange and Significant"
         ),
         selected = "LogFoldChange"
+      ),
+      numericInput(
+        inputId = ns("TopK"),
+        label = "Choose number of top entities to show (order based on p-val (LFC) or rowCount)",
+        min = 1,
+        step = 1,
+        value = 20
       ),
       uiOutput(outputId = ns("sample_annotation_types_cmp_heatmap_ui")),
       uiOutput(outputId = ns("Groups2Compare_ref_heatmap_ui")),
