@@ -46,6 +46,12 @@ Common issues are: Not exactly the same row or columnnames, missing values, wron
   </div>
 </div>
 
+<div class="question" onclick="toggleAnswer('q5')">5. I have selected gene_type as annotation but there are abbreviations used I do not know.</div>
+  <div id="q5" class="answer">
+This is most likely after you used our Gene Annotation to annotate your supplied IDs. We use in the background information recieved from the Ensembl database and therefore also their abbreviations. You can look them up [here](https://www.ensembl.org/info/genome/genebuild/biotypes.html)
+</div>
+</div>
+
 <script>
 function toggleAnswer(id) {
   var answer = document.getElementById(id);
