@@ -24,16 +24,15 @@ heatmap_sidebar<- function(ns){
         step = 1,
         value = 20
       ),
-      ns = ns
-    ),
-    switchInput(
-      inputId = ns("Selection_show_LFC"),
-      label = "show options (LFC-related)",
-      inline = T,
-      size = "mini"
-    ),
-    conditionalPanel(
-      condition = "input.Selection_show_LFC== true",
+      selectInput(
+        inputId = ns("TopK_order"),
+        label = "Order based on",
+        choices = c(
+          "LogFoldChange", "absolute LogFoldChange",
+          "LogFoldChange and Significant", "absolute LogFoldChange and Significant"
+        ),
+        selected = "LogFoldChange"
+      ),
       uiOutput(outputId = ns("sample_annotation_types_cmp_heatmap_ui")),
       uiOutput(outputId = ns("Groups2Compare_ref_heatmap_ui")),
       uiOutput(outputId = ns("Groups2Compare_treat_heatmap_ui")),
