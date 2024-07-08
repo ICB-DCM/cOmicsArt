@@ -37,7 +37,14 @@ heatmap_sidebar<- function(ns){
       uiOutput(outputId = ns("sample_annotation_types_cmp_heatmap_ui")),
       uiOutput(outputId = ns("Groups2Compare_ref_heatmap_ui")),
       uiOutput(outputId = ns("Groups2Compare_treat_heatmap_ui")),
-      uiOutput(outputId = ns("psig_threhsold_heatmap_ui")),
+      numericInput(
+        inputId = ns("psig_threhsold_heatmap"),
+        label = "adj. p-value threshold",
+        min = 0,
+        max = 0.1,
+        step = 0.01,
+        value = 0.05
+      ),
       ns = ns
     ),
     conditionalPanel(
@@ -65,11 +72,30 @@ heatmap_sidebar<- function(ns){
       uiOutput(outputId = ns("anno_options_ui")),
       uiOutput(outputId = ns("row_anno_options_ui")),
       uiOutput(outputId = ns("row_label_options_ui")),
-      uiOutput(outputId = ns("cluster_cols_ui")),
-      uiOutput(outputId = ns("cluster_rows_ui")),
+      checkboxInput(
+        inputId = ns("cluster_rows"),
+        label="Row Clustering?",
+        value = TRUE,
+        width = "20%"
+      ),
+      checkboxInput(
+        inputId = ns("cluster_cols"),
+        label="Column Clustering?",
+        value = TRUE,
+        width = "20%"
+      ),
       ns = ns
     ),
-    uiOutput(outputId = ns("rowWiseScaled_ui")),
+    checkboxInput(
+      inputId = ns("rowWiseScaled"),
+      label = "row-wise scaling?",
+      value = FALSE
+    ),
+    # hidden Button to refresh the UI
+    hidden(actionButton(
+      inputId = ns("refreshUI"),
+      label = "Refresh"
+    )),
   )
 }
 

@@ -10,142 +10,105 @@ heatmap_server <- function(id, data, params, updates){
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
 
-      ### Aesthetic Settings
-      output$anno_options_ui <- renderUI({
-        req(data_input_shiny())
-        selectInput(
-          inputId = ns("anno_options"),
-          label = "Choose the variable to color the samples after (Multiples are possible)",
-          choices = c(colnames(colData(data$data))),
-          multiple = T , # would be cool if true, to be able to merge vars ?!,
-          selected= c(colnames(colData(data$data)))[1]
-        )
-      })
-      output$row_anno_options_ui <- renderUI({
-        req(data_input_shiny())
-        selectInput(
-          inputId = ns("row_anno_options"),
-          label = "Choose the variable to color the rows after (Multiples are possible)",
-          choices = c(colnames(rowData(data$data))),
-          multiple = T, # would be cool if true, to be able to merge vars ?!
-          selected = c(colnames(rowData(data$data)))[length(c(colnames(rowData(data$data))))]
-        )
-      })
-      output$row_label_options_ui <- renderUI({
-        req(data_input_shiny())
-        req(input$row_anno_options)
-        selectInput(
-          inputId = ns("row_label_options"),
-          label = "Choose the label of rows",
-          choices = c(colnames(rowData(data$data))),
-          multiple = F, # would be cool if true, to be able to merge vars ?!,
-          selected=input$row_anno_options
-        )
-      })
-      output$cluster_cols_ui <- renderUI({
-        req(data_input_shiny())
-        checkboxInput(
-          inputId = ns("cluster_cols"),
-          label="Column Clustering?",
-          value = TRUE,
-          width = "20%"
+      observeEvent(input$refreshUI, {
+        print("Refreshing UI Heatmap")
+        data <- update_data(session$token)
+
+        ### Aesthetic Settings
+        output$anno_options_ui <- renderUI({
+          req(data_input_shiny())
+          selectInput(
+            inputId = ns("anno_options"),
+            label = "Choose the variable to color the samples after (Multiples are possible)",
+            choices = c(colnames(colData(data$data))),
+            multiple = T , # would be cool if true, to be able to merge vars ?!,
+            selected= c(colnames(colData(data$data)))[1]
           )
-      })
-      output$cluster_rows_ui <- renderUI({
-        req(data_input_shiny())
-        checkboxInput(
-          inputId = ns("cluster_rows"),
-          label="Row Clustering?",
-          value = TRUE,
-          width = "20%"
+        })
+        output$row_anno_options_ui <- renderUI({
+          req(data_input_shiny())
+          selectInput(
+            inputId = ns("row_anno_options"),
+            label = "Choose the variable to color the rows after (Multiples are possible)",
+            choices = c(colnames(rowData(data$data))),
+            multiple = T, # would be cool if true, to be able to merge vars ?!
+            selected = c(colnames(rowData(data$data)))[length(c(colnames(rowData(data$data))))]
           )
-      })
-
-      output$UseBatch_ui <- renderUI({
-        req(par_tmp[[session$token]]$BatchColumn != "NULL")
-        selectInput(
-          inputId = ns("UseBatch"),
-          label = "Use batch corrected data?",
-          choices = c("No","Yes"),
-          selected = "No"
-        )
-      })
-
-      output$rowWiseScaled_ui <- renderUI({
-        req(data_input_shiny())
-        checkboxInput(
-          inputId = ns("rowWiseScaled"),
-          label = "row-wise scaling?",
-          value = FALSE
+        })
+        output$row_label_options_ui <- renderUI({
+          req(data_input_shiny())
+          req(input$row_anno_options)
+          selectInput(
+            inputId = ns("row_label_options"),
+            label = "Choose the label of rows",
+            choices = c(colnames(rowData(data$data))),
+            multiple = F, # would be cool if true, to be able to merge vars ?!,
+            selected=input$row_anno_options
           )
-      })
-
-      output$sample_annotation_types_cmp_heatmap_ui <- renderUI({
-        req(data_input_shiny())
-        selectInput(
-          inputId = ns("sample_annotation_types_cmp_heatmap"),
-          label = "Choose type for LFC-based ordering",
-          choices = c(colnames(colData(data$data))),
-          multiple = F
-        )
-      })
-      output$Groups2Compare_ref_heatmap_ui <- renderUI({
-        req(data_input_shiny())
-        req(input$sample_annotation_types_cmp_heatmap)
-        selectInput(
-          inputId = ns("Groups2Compare_ref_heatmap"),
-          label = "Choose reference of log2 FoldChange",
-          choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap]),
-          multiple = F ,
-          selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap])[1]
-        )
-      })
-      output$Groups2Compare_treat_heatmap_ui <- renderUI({
-        req(data_input_shiny())
-        req(input$sample_annotation_types_cmp_heatmap)
-        selectInput(
-          inputId = ns("Groups2Compare_treat_heatmap"),
-          label = "Choose treatment group of log2 FoldChange",
-          choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap]),
-          multiple = F ,
-          selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap])[2]
-        )
-      })
-      output$psig_threhsold_heatmap_ui <- renderUI({
-        req(data_input_shiny())
-        numericInput(
-          inputId = ns("psig_threhsold_heatmap"),
-          label = "adj. p-value threshold",
-          min = 0,
-          max = 0.1,
-          step = 0.01,
-          value = 0.05
+        })
+        output$UseBatch_ui <- renderUI({
+          req(par_tmp[[session$token]]$BatchColumn != "NULL")
+          selectInput(
+            inputId = ns("UseBatch"),
+            label = "Use batch corrected data?",
+            choices = c("No","Yes"),
+            selected = "No"
           )
+        })
+        output$sample_annotation_types_cmp_heatmap_ui <- renderUI({
+          req(data_input_shiny())
+          selectInput(
+            inputId = ns("sample_annotation_types_cmp_heatmap"),
+            label = "Choose type for LFC-based ordering",
+            choices = c(colnames(colData(data$data))),
+            multiple = F
+          )
+        })
+        output$Groups2Compare_ref_heatmap_ui <- renderUI({
+          req(data_input_shiny())
+          req(input$sample_annotation_types_cmp_heatmap)
+          selectInput(
+            inputId = ns("Groups2Compare_ref_heatmap"),
+            label = "Choose reference of log2 FoldChange",
+            choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap]),
+            multiple = F ,
+            selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap])[1]
+          )
+        })
+        output$Groups2Compare_treat_heatmap_ui <- renderUI({
+          req(data_input_shiny())
+          req(input$sample_annotation_types_cmp_heatmap)
+          selectInput(
+            inputId = ns("Groups2Compare_treat_heatmap"),
+            label = "Choose treatment group of log2 FoldChange",
+            choices = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap]),
+            multiple = F ,
+            selected = unique(colData(data$data)[,input$sample_annotation_types_cmp_heatmap])[2]
+          )
+        })
+        output$anno_options_heatmap_ui <- renderUI({
+          req(selectedData_processed())
+          selectInput(
+            inputId = ns("anno_options_heatmap"),
+            label = "Choose the variable to select the rows after (Multiples are not possible)",
+            choices = c(colnames(rowData(data$data))),
+            selected = colnames(rowData(data$data))[1],
+            multiple = F
+          )
+        })
+        output$row_anno_options_heatmap_ui <- renderUI({
+          req(selectedData_processed())
+          shinyWidgets::virtualSelectInput(
+            search = T,
+            showSelectedOptionsFirst = T,
+            inputId = ns("row_anno_options_heatmap"),
+            label = "Which entities to use?",
+            choices = c("all",unique(rowData(data$data)[,input$anno_options_heatmap])),
+            selected = "all",
+            multiple = T
+          )
+        })
       })
-
-      output$anno_options_heatmap_ui <- renderUI({
-        req(selectedData_processed())
-        selectInput(
-          inputId = ns("anno_options_heatmap"),
-          label = "Choose the variable to select the rows after (Multiples are not possible)",
-          choices = c(colnames(rowData(data$data))),
-          selected = colnames(rowData(data$data))[1],
-          multiple = F
-        )
-      })
-      output$row_anno_options_heatmap_ui <- renderUI({
-        req(selectedData_processed())
-        shinyWidgets::virtualSelectInput(
-          search = T,
-          showSelectedOptionsFirst = T,
-          inputId = ns("row_anno_options_heatmap"),
-          label = "Which entities to use?",
-          choices = c("all",unique(rowData(data$data)[,input$anno_options_heatmap])),
-          selected = "all",
-          multiple = T
-        )
-      })
-
 
       ## Do Heatmap
       toListen2Heatmap <- reactive({
@@ -218,7 +181,6 @@ heatmap_server <- function(id, data, params, updates){
                 print(additionalInput_row_anno)
               }
               additionalInput_row_anno_factor <- input$row_anno_options_heatmap
-            #} # check if this is working if yes delete lines # @leaseep, is this checked
           }else{
             additionalInput_row_anno <- ifelse(any(input$row_selection_options == "Select based on Annotation"),input$anno_options_heatmap,NA)
             additionalInput_row_anno_factor <- ifelse(any(input$row_selection_options == "Select based on Annotation"),c(input$row_anno_options_heatmap),NA)
@@ -250,7 +212,7 @@ heatmap_server <- function(id, data, params, updates){
         }else{
           tryCatch({
             data2HandOver <- entitieSelection(
-              data$data,
+              data2Plot,
               type = input$row_selection_options,
               additionalInput_row_anno = additionalInput_row_anno,
               additionalInput_row_anno_factor = additionalInput_row_anno_factor,
