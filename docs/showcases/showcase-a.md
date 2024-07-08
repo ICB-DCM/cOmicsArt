@@ -68,8 +68,23 @@ As this reduced dataset show that the main variance within the data can be poten
 
 ### Significance Analysis
 We switch to the Significance analysis tab. We want to compare the treatment groups, precisely HSD vs NSD taken the latter as control. This is important to interpret the direction of up and down regulated but does not change anything about the significance. As we have chosen to the DESeq2 pipeline cOmicsART automatically choose the same test the pipeline is using to avoid mistakes.
-We obtain 49 genes (0.74% of the entire set) with significant changes between the conditions. The majority (34 genes) are signficiantly upregulated (14 fown regulated) with a chosen signficiance level of 0.05 (after Benjamini-hochberg multiple testing correction). The most significant gene is ENSMUSG00000044786(ZFP36). To get an overiview of actual effect sizes (fold changes) we subselect within the shown table to show only the significant genes by clicking into the respective padj column in the table (where 'all' stands). Here we can adjust the sliding bar to select only genes with a padj value in the determined range. A quick ceck at the bottom of the table confirms we only select the 49 entries. We then sort the log2Fold changes by clicking on the little grey up and down arrows.
-The Log2Foldchange -range goes from -0.33
+We obtain 49 genes (0.74% of the entire set) with significant changes between the conditions. The majority (34 genes) are signficiantly upregulated (14 down regulated) with a chosen signficiance level of 0.05 (after Benjamini-hochberg multiple testing correction). The most significant gene is ENSMUSG00000044786 (ZFP36). To get an overview of actual effect sizes (fold changes) we subselect within the shown table to show only the significant genes by clicking into the respective padj column in the table (where 'all' stands). Here we can adjust the sliding bar to select only genes with a padj value in the determined range. A quick check at the bottom of the table confirms we only select the 49 entries. We then sort the log2Fold changes by clicking on the little grey up and down arrows.
+The Log2Foldchange-range goes from -0.33 and 1.06. Switching to the visual representation of the table we can go to the tab volcano. Setting a Log FC threshold of 0.5 we can see that 10 genes remain. The set is ENSMUSG00000044786 (Zfb36), ENSMUSG00000052684 (Jun), ENSMUSG00000053560 (Ier2), ENSMUSG00000020423 (Btg2), ENSMUSG00000052837 (JunB), ENSMUSG00000021250 (Fos), ENSMUSG00000038418 (Egr1), ENSMUSG00000021123 (Rdh12), ENSMUSG00000031431(TSC22D3), ENSMUSG00000024190 (Dusp1).
+
+### Set analysis - Heatmap & Enrichment Analysis
+To obtain a nice visual representation, we switch to the heatmap panel and select for the row-selection rowAnno_based - which means that we can select data based on their rowannoation hence for example precisely their ID we just identified.
+The resulting heatmap, after row-wise -scaling show a distinct separation of the treatments, whereby the sample NSD_5 clusters closes to the HSD samples and from them closes to HSD_1. We save the set of genes to a csv file by clicking Save genes shown in Heatmap as list. To further characterise the set we can perform an enrichment analysis. We switch to the Enrichment Analysis tab and select the gene set we just identified. As we have a set of genes we first perform an Over-representation analysis uploading the identified set of genes. We choose the set to test as KEGG, HALLMARK, GO_BP (biological process) and Immunesigdb.
+
+** Remainder missing as app crashes **
+Further Idea:
+- discuss the results of the enrichment analysis
+- add annotation to the heatmap (identified in Stats analysis on IQR + high value)
+- add annotation on protein coding only
+- some how mark a third group 
+
+# Final Summary
+- summarise what we have observed
+- highlight potential follow up analysis
 
 
 
