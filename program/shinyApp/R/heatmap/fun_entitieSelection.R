@@ -18,6 +18,9 @@ entitieSelection <- function(
       filtered_data <- NULL
       return(filtered_data)
     }
+    if(any(additionalInput_row_anno_factor=="all")){
+      return(filtered_data)
+    }
     filtered_data <- filtered_data[which(rowData(data)[, additionalInput_row_anno] %in% additionalInput_row_anno_factor),]
     return(filtered_data)
   }
