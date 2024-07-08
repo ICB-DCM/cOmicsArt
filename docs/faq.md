@@ -50,7 +50,7 @@ Common issues are: Not exactly the same row or columnnames, missing values, wron
   <div id="q5" class="answer">
 This is most likely after you used our Gene Annotation to annotate your supplied IDs. We use in the background information recieved from the Ensembl database and therefore also their abbreviations. You can look them up [here](https://www.ensembl.org/info/genome/genebuild/biotypes.html)
 </div>
-</div>
+
 
 <script>
 function toggleAnswer(id) {
