@@ -144,10 +144,8 @@ heatmap_server <- function(id, data, params, updates){
         customTitleHeatmap <- paste0(
           "Heatmap - ",
           paste0("entities:",input$row_selection,collapse = "_"),
-          "-samples",
-          ifelse(any(input$sample_selection!="all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),""),
           "-preprocessing: ",
-          input$PreProcessing_Procedure
+          par_tmp[[session$token]]['PreProcessing_Procedure']
         )
 
         if(useBatch){
@@ -155,40 +153,30 @@ heatmap_server <- function(id, data, params, updates){
         } else {
             data2Plot <- data$data
         }
-
         print(customTitleHeatmap)
-        mycolors <- list()
-        if(length(input$anno_options) == 1){
-          if(length(unique(colData(data2Plot)[,input$anno_options])) <= 8){
-            names(colorTheme) <- unique(colData(data2Plot)[,input$anno_options])
-            colorTheme <- colorTheme[!is.na(names(colorTheme))]
-            mycolors[[input$anno_options]] <- colorTheme
-          }
-        }
+        # mycolors <- list()
+        # if(length(input$anno_options) == 1){
+        #   if(length(unique(colData(data2Plot)[,input$anno_options])) <= 8){
+        #     names(colorTheme) <- unique(colData(data2Plot)[,input$anno_options])
+        #     colorTheme <- colorTheme[!is.na(names(colorTheme))]
+        #     mycolors[[input$anno_options]] <- colorTheme
+        #   }
+        # }
         # colors to fill in the tiles
+
         paletteLength <- 25
         myColor_fill <- colorRampPalette(c("blue", "white", "firebrick"))(paletteLength)
         
         ##### Do PreSelection of input to Heatmap to show
         print(input$row_selection_options)
         # selection based on row Annotation:
-        if(!(any(input$row_selection_options == "all"))){
-          if(any(input$row_selection_options == "Select based on Annotation")){
-              print(input$row_anno_options_heatmap)
-              additionalInput_row_anno <- ifelse(any(input$row_selection_options == "Select based on Annotation"),"yip",NA)
-              if(!is.na(additionalInput_row_anno)){
-                additionalInput_row_anno <- input$anno_options_heatmap
-                print(additionalInput_row_anno)
-              }
-              additionalInput_row_anno_factor <- input$row_anno_options_heatmap
-          }else{
-            additionalInput_row_anno <- ifelse(any(input$row_selection_options == "Select based on Annotation"),input$anno_options_heatmap,NA)
-            additionalInput_row_anno_factor <- ifelse(any(input$row_selection_options == "Select based on Annotation"),c(input$row_anno_options_heatmap),NA)
-          }
-        }else{
-          additionalInput_row_anno <- "all"
-          additionalInput_row_anno_factor <- NA
+        additionalInput_row_anno <- NA
+        additionalInput_row_anno_factor <- NA
+        if(input$row_selection_options == "Select based on Annotation"){
+          additionalInput_row_anno <- input$anno_options_heatmap
+          additionalInput_row_anno_factor <- input$row_anno_options_heatmap
         }
+        TopK2Show <- ifelse(input$row_selection_options=="TopK",input$TopK,NA)
         
         print(additionalInput_row_anno_factor)
         
@@ -198,18 +186,16 @@ heatmap_server <- function(id, data, params, updates){
         additionalInput_cmp_idx <- ifelse(isTruthy(input$Groups2Compare_treat_heatmap),input$Groups2Compare_treat_heatmap,NA)
         psig_threhsold <- ifelse(isTruthy(input$psig_threhsold_heatmap),input$psig_threhsold_heatmap,NA)
         print(paste0("This should not be NA if LFC Settings: ", additionalInput_sample_annotation_types))
-        print(paste0("This should not be NA if LFC Settings: ",
-                     input$Groups2Compare_ref_heatmap,
-                     input$Groups2Compare_treat_heatmap)
-              )
+        print(paste0(
+          "This should not be NA if LFC Settings: ",
+          input$Groups2Compare_ref_heatmap,
+          input$Groups2Compare_treat_heatmap
+        ))
         
-        # select TopK (if there is an ordering)
-        TopK2Show <- ifelse(any(input$row_selection_options=="TopK"),input$TopK,NA)
-        
-        if(any(input$row_selection_options=="all")){
+        if(input$row_selection_options=="all"){
           print("No entitie selection")
           data2HandOver <- as.data.frame(assay(data$data))
-        }else{
+        } else {
           tryCatch({
             data2HandOver <- entitieSelection(
               data2Plot,
@@ -317,7 +303,7 @@ heatmap_server <- function(id, data, params, updates){
                 scale=ifelse(input$rowWiseScaled,"row","none"),
                 annotation_col = annotation_col,
                 annotation_row = annotation_row,
-                annotation_colors = mycolors,
+                # annotation_colors = mycolors,
                 silent = F,
                 breaks = breakings
               )
@@ -370,7 +356,7 @@ heatmap_server <- function(id, data, params, updates){
             scale=ifelse(input$rowWiseScaled,"row","none"),
             annotation_col = annotation_col,
             annotation_row = annotation_row,
-            annotation_colors = mycolors,
+            # annotation_colors = mycolors,
             silent = F,
             breaks = breakings
           )
