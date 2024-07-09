@@ -215,8 +215,88 @@ heatmap_server <- function(id, data, params, updates){
         req(!is.null(heatmap_plot))
         heatmap_scenario <- scenario
         output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
-        # TODO: add res_tmp and par_tmp
-        # TODO: add calculation check
+        res_tmp[[session$token]][["Heatmap"]] <<- heatmap_plot
+        tmp <- getUserReactiveValues(input)
+        par_tmp[[session$token]]$Heatmap[names(tmp)] <<- tmp
+
+
+        output$getR_Code_Heatmap <- downloadHandler(
+          filename = function(){
+            paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+          },
+          content = function(file){
+            envList <- list(
+              res_tmp = res_tmp[[session$token]],
+              par_tmp = par_tmp[[session$token]]
+            )
+
+            temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+            dir.create(temp_directory)
+
+            write(getPlotCode(heatmap_scenario), file.path(temp_directory, "Code.R"))
+
+            saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+
+            # also save entitie Selection function
+            # TODO:
+            # Needs an extra sourcing to have in correct env - potential fix sourceing module specific functions within module
+            # instead of sourcing all - or having them all gloablly source (like general utils)
+            source("R/heatmap/fun_entitieSelection.R")
+            source("R/fun_LFC.R")
+            save.function.from.env(wanted = c("entitieSelection","getLFCs"),
+                                   file = file.path(temp_directory, "utils.R"))
+
+            zip::zip(
+              zipfile = file,
+              files = dir(temp_directory),
+              root = temp_directory
+            )
+          },
+          contentType = "application/zip"
+        )
+
+        output$SavePlot_Heatmap <- downloadHandler(
+          filename = function() {
+            paste0(heatmap_reactives$customTitle, " ", Sys.time(), input$file_ext_Heatmap)
+          },
+          content = function(file){
+            save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
+            on.exit({
+              tmp_filename <- paste0(
+                getwd(),
+                file_path,
+                paste0(heatmap_reactives$customTitle, " ", Sys.time(), input$file_ext_Heatmap)
+              )
+              save_pheatmap(
+                heatmap_plot,
+                filename = tmp_filename,
+                type = gsub("\\.","",input$file_ext_Heatmap)
+              )
+
+              # Add Log Messages
+              fun_LogIt(message = "## HEATMAP")
+              fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",input$row_selection_options))
+              if(input$row_selection_options=="rowAnno_based"){
+                fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",input$anno_options_heatmap," :",input$row_anno_options_heatmap))
+              }
+              if(!is.null(input$TopK)){
+                fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",input$TopK))
+                fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",input$row_selection_options))
+                # either based on LFC or on pVal
+              }
+              fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",input$anno_options))
+              fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",input$row_anno_options))
+              if(input$cluster_cols == TRUE){
+                fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
+              }
+              if(input$cluster_rows == TRUE){
+                fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
+              }
+              fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
+            })
+          }
+        )
+        # TODO: add calculation check, leave for now as it would probably be very complicated.
       })
       # send only to report
       observeEvent(input$only2Report_Heatmap,{
