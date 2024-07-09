@@ -215,7 +215,8 @@ heatmap_server <- function(id, data, params, updates){
         req(!is.null(heatmap_plot))
         heatmap_scenario <- scenario
         output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
-        res_tmp[[session$token]][["Heatmap"]] <<- heatmap_plot
+        res_tmp[[session$token]][["Heatmap"]]$data <<- heatmap_data
+        res_tmp[[session$token]][["Heatmap"]]$plot <<- heatmap_plot
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$Heatmap[names(tmp)] <<- tmp
 
@@ -305,10 +306,9 @@ heatmap_server <- function(id, data, params, updates){
           getwd(),
           file_path,
           paste(paste0(heatmap_reactives$customTitle, Sys.time(), ".png"))
-          )
-
+        )
         save_pheatmap(
-          res_tmp[[session$token]][["Heatmap"]],
+          res_tmp[[session$token]][["Heatmap"]]$plot,
           filename=tmp_filename,
           type="png"
           )

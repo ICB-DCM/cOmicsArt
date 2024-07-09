@@ -426,130 +426,69 @@ if(length(par_tmp$Heatmap$anno_options) == 1){
 
         
 # Do PreSelection of input to Heatmap to show
-
-# selection based on row Annotation:
-if(!(any(par_tmp$Heatmap$row_selection_options == "all"))){
-  if(any(par_tmp$Heatmap$row_selection_options == "rowAnno_based")){
-    additionalInput_row_anno <- ifelse(any(par_tmp$Heatmap$row_selection_options == "rowAnno_based"),"yip",NA)
-    if(!is.na(additionalInput_row_anno)){
-      additionalInput_row_anno <- par_tmp$Heatmap$anno_options_heatmap
-    }
-    additionalInput_row_anno_factor <- par_tmp$Heatmap$row_anno_options_heatmap
-  }else{
-    additionalInput_row_anno <- ifelse(any(par_tmp$Heatmap$row_selection_options == "rowAnno_based"),par_tmp$Heatmap$anno_options_heatmap,NA)
-    additionalInput_row_anno_factor <- ifelse(any(par_tmp$Heatmap$row_selection_options == "rowAnno_based"),c(par_tmp$Heatmap$row_anno_options_heatmap),NA)
-  }
-}else{
-  additionalInput_row_anno <- "all"
-  additionalInput_row_anno_factor <- NA
-}
-   
-#Selection and/or ordering based on LFC
-additionalInput_sample_annotation_types <- ifelse(is.null(par_tmp$Heatmap$sample_annotation_types_cmp_heatmap),NA,par_tmp$Heatmap$sample_annotation_types_cmp_heatmap)
-additionalInput_ctrl_idx <- ifelse(is.null(par_tmp$Heatmap$Groups2Compare_ref_heatmap),NA,par_tmp$Heatmap$Groups2Compare_ref_heatmap)
-additionalInput_cmp_idx <- ifelse(is.null(par_tmp$Heatmap$Groups2Compare_treat_heatmap),NA,par_tmp$Heatmap$Groups2Compare_treat_heatmap)
-psig_threhsold <- ifelse(is.null(par_tmp$Heatmap$psig_threhsold_heatmap),NA,par_tmp$Heatmap$psig_threhsold_heatmap)
-
-# select TopK (if there is an ordering)
-TopK2Show <- ifelse(any(par_tmp$Heatmap$row_selection_options=="TopK"),par_tmp$Heatmap$TopK,NA)
-        
-if(any(par_tmp$Heatmap$row_selection_options=="all")){
-  print("No entitie selection")
-  data2HandOver <- as.data.frame(assay(res_tmp$data))
-}else{
-
+if(par_tmp$Heatmap$row_selection_options != "all"){
   # Note entitieSelection and getLFCs is a custom function - source code in utils.R
-  data2HandOver <- entitieSelection(
+  data2plot <- entitieSelection(
     res_tmp$data,
     type = par_tmp$Heatmap$row_selection_options,
-    additionalInput_row_anno = additionalInput_row_anno,
-    additionalInput_row_anno_factor = additionalInput_row_anno_factor,
-    additionalInput_sample_annotation_types = additionalInput_sample_annotation_types,
-    additionalInput_ctrl_idx = additionalInput_ctrl_idx,
-    additionalInput_cmp_idx = additionalInput_cmp_idx,
-    psig_threhsold = psig_threhsold,
-    TopK2Show = TopK2Show
+    TopK2Show = par_tmp$Heatmap$TopK,
+    TopKOrder = par_tmp$Heatmap$TopK_order,
+    additionalInput_row_anno = par_tmp$Heatmap$anno_options_heatmap,
+    additionalInput_row_anno_factor = par_tmp$Heatmap$row_anno_options_heatmap,
+    additionalInput_sample_annotation_types = par_tmp$Heatmap$sample_annotation_types_cmp_heatmap,
+    additionalInput_ctrl_idx = par_tmp$Heatmap$Groups2Compare_ref_heatmap,
+    additionalInput_cmp_idx = par_tmp$Heatmap$Groups2Compare_treat_heatmap,
+    psig_threhsold = par_tmp$Heatmap$psig_threhsold_heatmap
   )
+} else {
+  data2plot <- assay(res_tmp$data)
 }
         
 doThis_flag <- T
-if(is.null(data2HandOver)){
+if(is.null(data2plot)){
   print("Nothing is left,e.g. no significant Terms or TopK is used but no inherent order of the data")
   heatmap_plot <- NULL
   doThis_flag <- F
 }
 '
-  
-  if(numberOfScenario == 10){
-    stringtosave <- '
-annotation_col <- rowData(res_tmp$data)[,par_tmp$Heatmap$row_anno_options,drop=F]
 
-ctrl_samples_idx <- which(
-    colData(res_tmp$data)[,par_tmp$Heatmap$sample_annotation_types_cmp_heatmap]%in%par_tmp$Heatmap$Groups2Compare_ref_heatmap
-    )
-comparison_samples_idx <- which(
-  colData(res_tmp$data)[,par_tmp$Heatmap$sample_annotation_types_cmp_heatmap]%in%par_tmp$Heatmap$Groups2Compare_treat_heatmap
-)
-if(length(comparison_samples_idx) <=1 | length(ctrl_samples_idx) <=1){
-  print("Choose variable with at least two samples per condition!")
-  doThis_flag <- F
-}
-
-if(par_tmp$PreProcessing_Procedure == "simpleCenterScaling"| any(data2HandOver)< 0){
-  print("Remember do not use normal center + scaling (negative Values!)")
-}else if(doThis_flag){
-  Data2Plot <- getLFC(
-    data = as.data.frame(data2HandOver),
-    ctrl_samples_idx = ctrl_samples_idx,
-    comparison_samples_idx = comparison_samples_idx
-  )
-              
-if(par_tmp$Heatmap$LFC_toHeatmap){
-  myBreaks <- c(seq(min(res_tmp$Heatmap$LFC), 0, length.out=ceiling(paletteLength/2) + 1),
-                seq(max(res_tmp$Heatmap$LFC)/paletteLength, max(res_tmp$Heatmap$LFC), length.out=floor(paletteLength/2)))
-  annotation_col <- rowData(res_tmp$data)[rownames(Data2Plot),par_tmp$Heatmap$row_anno_options,drop=F]
-}
-
-
-heatmap_plot <- pheatmap((t(Data2Plot[,"LFC",drop=F])),
-  main="Heatmap - LFC",
-  show_rownames=ifelse(nrow(Data2Plot)<=25,TRUE,FALSE),
-  show_colnames=TRUE,
-  cluster_cols = par_tmp$Heatmap$cluster_cols,
-  cluster_rows = FALSE, # par_tmp$Heatmap$cluster_rows,
-  scale=ifelse(par_tmp$Heatmap$rowWiseScaled,"row","none"),
-  # cutree_cols = 4,
-  #fontsize = font.size,
-  annotation_col = annotation_col,
-
-  silent = F,
-  breaks = myBreaks,
-  color = myColor_fill)'
-  }
   if(numberOfScenario == 11){
     stringtosave <- '
-annotation_col <- colData(res_tmp$data)[,par_tmp$Heatmap$anno_options,drop=F]
-annotation_row <- rowData(res_tmp$data)[,par_tmp$Heatmap$row_anno_options,drop=F]
-# convert both to data.frame
+annotation_col <- colData(res_tmp$data)[, par_tmp$Heatmap$anno_options, drop = F]
+annotation_row <- rowData(res_tmp$data)[, par_tmp$Heatmap$row_anno_options, drop = F]
 annotation_col <- as.data.frame(annotation_col)
 annotation_row <- as.data.frame(annotation_row)
 
-clusterRowspossible <- ifelse(nrow(as.matrix(assay(res_tmp$data)))>1,par_tmp$Heatmap$cluster_rows,F)
-
-heatmap_plot <- pheatmap(as.matrix(res_tmp$Heatmap),
-  main="Heatmap",
-  show_rownames=ifelse(nrow((assay(res_tmp$data)))<=par_tmp$Heatmap$row_label_no,TRUE,FALSE),
-  labels_row = rowData(res_tmp$data)[rownames(assay(res_tmp$data)),par_tmp$Heatmap$row_label_options],
-  show_colnames=TRUE,
-  cluster_cols = par_tmp$Heatmap$cluster_cols,
-  cluster_rows = clusterRowspossible,
-  scale=ifelse(par_tmp$Heatmap$rowWiseScaled,"row","none"),
-  # cutree_cols = 4,
-  #fontsize = font.size,
-  annotation_col = annotation_col,
-  annotation_row =annotation_row,
-  annotation_colors = mycolors,
-  silent = F)'
+# Potential Clustering
+cluster_rows <- FALSE
+cluster_cols <- FALSE
+if(par_tmp$Heatmap$cluster_rows){
+  cluster_rows <- hclust(dist(data2plot), method = "complete")
+}
+if(par_tmp$Heatmap$cluster_cols){
+  cluster_cols <- hclust(dist(t(data2plot)), method = "complete")
+}
+heatmap_data <- as.matrix(data2plot)
+max_val <- max(abs(heatmap_data), na.rm = T)
+if (par_tmp$Heatmap$rowWiseScaled | max_val == Inf | max_val == -Inf) {
+    breakings <- NA
+} else {
+    breakings <- seq(-max_val, max_val, length.out = 101)
+}
+heatmap_plot <- pheatmap(
+    heatmap_data,
+    main = "Heatmap",
+    show_rownames = ifelse(nrow(data2plot) <= par_tmp$Heatmap$row_label_no, TRUE, FALSE),
+    labels_row = rowData(res_tmp$data)[rownames(data2plot), par_tmp$Heatmap$row_label_options],
+    show_colnames = TRUE,
+    cluster_cols = cluster_cols,
+    cluster_rows = cluster_rows,
+    scale = ifelse(par_tmp$Heatmap$rowWiseScaled, "row", "none"),
+    annotation_col = annotation_col,
+    annotation_row = annotation_row,
+    silent = F,
+    breaks = breakings
+)'
   }
 stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave)
 }
