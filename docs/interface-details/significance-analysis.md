@@ -15,7 +15,8 @@ In the side panel, you have the following options:
 
 - **Choose groups to compare**: This allows you to select the groups you want to compare.
 - **Select your desired comparisons**: Here you input the specific comparisons you 
-  want to make. You enter the groups in the format `Treatment:Control`.
+  want to make. You enter the groups in the format `Treatment:Control`. Multiple 
+  comparison pairs can be entered at once.
 - **Test method**: You can select the statistical test method to use. You can choose 
   between [T-test](https://en.wikipedia.org/wiki/Student%27s_t-test), [Wilcoxon Rank 
   Sum Test]((https://en.wikipedia.org/wiki/Mann–Whitney_U_test), and [Welch's T-test](https://en.wikipedia.org/wiki/Welch%27s_t-test). 
