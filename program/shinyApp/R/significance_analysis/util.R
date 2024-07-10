@@ -93,6 +93,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           hr(style = "border-top: 1px solid #000000;"),
           uiOutput(outputId = ns(paste(contrast[1], contrast[2], "psig_th_ui", sep = "_"))),
           uiOutput(outputId = ns(paste(contrast[1], contrast[2], "lfc_th_ui", sep = "_"))),
+          uiOutput(outputId = ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_"))),
           splitLayout(
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
@@ -211,6 +212,16 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
 
   psig_th <- ns(paste(contrast[1], contrast[2], "psig_th", sep = "_"))
   lfc_th <- ns(paste(contrast[1], contrast[2], "lfc_th", sep = "_"))
+  Volcano_anno_tooltip <- ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip", sep = "_"))
+  output[[ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_"))]] <- renderUI({
+    selectInput(
+    inputId = Volcano_anno_tooltip,
+    label = "Select the anno to be shown at tooltip",
+    choices = colnames(rowData(res_tmp[[session$token]]$data)),
+    selected = colnames(rowData(res_tmp[[session$token]]$data))[1],
+    multiple = F
+    )
+  })
   output[[ns(paste(contrast[1], contrast[2], "psig_th_ui", sep = "_"))]] <- renderUI({
     numericInput(
       inputId = ns(paste(contrast[1], contrast[2], "psig_th", sep = "_")),
@@ -234,15 +245,17 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   toPlotVolcano <- reactive({
     list(
       input[[psig_th]],
-      input[[lfc_th]]
+      input[[lfc_th]],
+      input[[Volcano_anno_tooltip]]
     )
   })
   observeEvent(toPlotVolcano(), {
-    req(input[[psig_th]], input[[lfc_th]])
+    req(input[[psig_th]], input[[lfc_th]], input[[Volcano_anno_tooltip]])
     # workaround, as somehow the input values dont show up unless we change it in the shiny
     # TODO: fix this (@Lea?)
     sig_ana_reactive$th_psig <- input[[psig_th]]
     sig_ana_reactive$th_lfc <- input[[lfc_th]]
+    sig_ana_reactive$Volcano_anno_tooltip <- input[[Volcano_anno_tooltip]]
     # plot volcano plot
     data4Volcano <- result
     data4Volcano$probename <- rownames(data4Volcano)
@@ -266,10 +279,10 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
 
     # remove NA values
     sig_ana_reactive$data4Volcano <- data4Volcano[complete.cases(data4Volcano),]
-
+    sig_ana_reactive$data4Volcano$chosenAnno <- rowData(res_tmp[[session$token]]$data)[rownames(sig_ana_reactive$data4Volcano),input[[Volcano_anno_tooltip]]]
     sig_ana_reactive$VolcanoPlot <- ggplot(
       sig_ana_reactive$data4Volcano,
-      aes(label=probename)
+      aes(label=chosenAnno)
     ) +
       geom_point(aes(
         x = log2FoldChange,
@@ -295,7 +308,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     )})
     sig_ana_reactive$VolcanoPlot_raw <- ggplot(
       sig_ana_reactive$data4Volcano,
-      aes(label=probename)
+      aes(label=chosenAnno)
     ) +
       geom_point(aes(
           x = log2FoldChange,
@@ -452,6 +465,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
           hr(style = "border-top: 1px solid #000000;"),
           uiOutput(outputId = ns(paste(contrast[1], contrast[2], "psig_th_ui", sep = "_"))),
           uiOutput(outputId = ns(paste(contrast[1], contrast[2], "lfc_th_ui", sep = "_"))),
+          uiOutput(outputId = ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_"))),
           splitLayout(
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
@@ -546,7 +560,8 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   # reactive values
   sig_ana_reactive <- reactiveValues(
     th_psig = NULL,
-    th_lfc = NULL
+    th_lfc = NULL,
+    Volcano_anno_tooltip = NULL
   )
   # print the summary of the results
   output[[ns(paste(contrast[1], contrast[2], "summary", sep = "_"))]] <- renderText(
@@ -604,6 +619,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     req(input[[psig_th]], input[[lfc_th]])
     sig_ana_reactive$th_psig <- input[[psig_th]]
     sig_ana_reactive$th_lfc <- input[[lfc_th]]
+    sig_ana_reactive$annotip <- input[[Volcano_anno_tooltip]]
     # plot volcano plot
     data4Volcano <- as.data.frame(result)
     data4Volcano$probename <- rownames(data4Volcano)
@@ -627,10 +643,11 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
 
     # remove NA values
     sig_ana_reactive$data4Volcano <- data4Volcano[complete.cases(data4Volcano),]
-
+    sig_ana_reactive$data4Volcano$chosenAnno <- rowData(res_tmp[[session$token]]$data)[rownames(sig_ana_reactive$data4Volcano),input[[Volcano_anno_tooltip]]]
+    
     sig_ana_reactive$VolcanoPlot <- ggplot(
       sig_ana_reactive$data4Volcano,
-      aes(label=probename)
+      aes(label=chosenAnno)
     ) +
       geom_point(aes(
         x = log2FoldChange,
@@ -652,11 +669,12 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       ggtitle(label="Corrected p-Values")
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot,
+      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
       legendgroup="color"
     )})
     sig_ana_reactive$VolcanoPlot_raw <- ggplot(
       sig_ana_reactive$data4Volcano,
-      aes(label=probename)
+      aes(label=chosenAnno)
     ) +
       geom_point(aes(
           x = log2FoldChange,
@@ -676,6 +694,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       ggtitle(label="Uncorrected p-Values")
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
+      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
       legendgroup="color"
     )})
   })
