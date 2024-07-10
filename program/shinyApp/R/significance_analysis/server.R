@@ -792,9 +792,9 @@ significance_analysis_server <- function(id, data, params){
         fun_LogIt(message = paste0(
           "**Overview Plot** - ![Significance Analysis](",tmp_filename,")"
         ))
-        if(isTruthy(input$Notes) & !(isEmpty(input$Notes))){
+        if(isTruthy(input$NotesSigAna) & !(isEmpty(input$NotesSigAna))){
           fun_LogIt(message = "### Personal Notes:")
-          fun_LogIt(message = input$Notes)
+          fun_LogIt(message = input$NotesSigAna)
         }
         removeNotification(notificationID)
         showNotification(ui = "Saved!",type = "message", duration = 1)

@@ -809,6 +809,8 @@ server <- function(input,output,session){
     }
     # Data set selection
     res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data_original[selected,samples_selected]
+    par_tmp[[session$token]][['samples_selected']] <<- samples_selected
+    par_tmp[[session$token]][['entities_selected']] <<- selected
     return("Selection Success")
   })
   
@@ -1000,8 +1002,15 @@ server <- function(input,output,session){
         "<br","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(res_tmp[[session$token]]$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
-    output$raw_violin_plot <- renderPlot({violin_plot(res_tmp[[session$token]]$data_original, color_by = input$violin_color)})
-    output$preprocessed_violin_plot <- renderPlot({violin_plot(res_tmp[[session$token]]$data, color_by = input$violin_color)})
+    output$raw_violin_plot <- renderPlot({
+      browser()
+      violin_plot(res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
+                  color_by = input$violin_color)
+      })
+    output$preprocessed_violin_plot <- renderPlot({
+      violin_plot(res_tmp[[session$token]]$data, 
+                  color_by = input$violin_color)
+      })
     return("Pre-Processing successfully")
   })
   
