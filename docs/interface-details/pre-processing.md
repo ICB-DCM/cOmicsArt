@@ -17,11 +17,12 @@ In the side panel, you have the following options:
   - Options: none, filterOnly, vst_DESeq, simpleCenterScaling, Scaling_0_1, log10, pareto_scaling, ln
   - vst_DESeq also requires the selection of a design formula.
 
-- **Select Batch Effect Column**: Choose a batch effect column if applicable.
+- **Select Batch Effect Column**: Choose a batch effect if applicable. Possible 
+  choices are taken from the sample annotation columns.
 
 - **Get Pre-Processing**: Clicking this button will apply the selected pre-processing procedure to the data.
 
-- **Color the violin plot by**: Choose a variable to color the violin plots.
+- **Color the violin plot by**: Choose a variable to color the violin plots. The options are taken from the sample annotation columns.
 
 ## Main Panel
 
