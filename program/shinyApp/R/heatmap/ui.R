@@ -5,20 +5,54 @@ heatmap_sidebar<- function(ns){
     # Heatmap
     #########################################
     uiOutput(outputId = ns("UseBatch_ui")),
-    uiOutput(outputId = ns("row_selection_options_ui")) %>% helper(type = "markdown", content = "Heatmap_Options"),
-    uiOutput(outputId = ns("LFC_toHeatmap_ui")),
-    h5("Further row selection (LFC based)") %>% helper(type = "markdown", content = "Heatmap_FurtherOptions"),
-    uiOutput(outputId = ns("TopK_ui")),
-    switchInput(
-      inputId = ns("Selection_show_LFC"),
-      label = "show options (LFC-related)",
-      inline = T,
-      size = "mini"
+    selectInput(
+      inputId = ns("row_selection_options"),
+      label = "Select Entities to show",
+      choices = c("all", "Select based on Annotation", "Top K"),
+    # TODO: needs to be incoporated or deleted
+    # "TopK","significant_LFC","LFC_onlySig","rowAnno_based"),
+      multiple = F,
+      selected = "all"
+    ) %>% helper(type = "markdown", content = "Heatmap_Options"),
+    conditionalPanel(
+      condition = "input.row_selection_options == 'Top K'",
+      h5("Further row selection (LFC based)") %>% helper(type = "markdown", content = "Heatmap_FurtherOptions"),
+      selectInput(
+        inputId = ns("TopK_order"),
+        label = "Order based on",
+        choices = c(
+          "LogFoldChange", "absolute LogFoldChange",
+          "LogFoldChange and Significant", "absolute LogFoldChange and Significant"
+        ),
+        selected = "LogFoldChange"
+      ),
+      numericInput(
+        inputId = ns("TopK"),
+        label = "Choose number of top entities to show (order based on p-val (LFC) or rowCount)",
+        min = 1,
+        step = 1,
+        value = 20
+      ),
+      uiOutput(outputId = ns("sample_annotation_types_cmp_heatmap_ui")),
+      uiOutput(outputId = ns("Groups2Compare_ref_heatmap_ui")),
+      uiOutput(outputId = ns("Groups2Compare_treat_heatmap_ui")),
+      numericInput(
+        inputId = ns("psig_threhsold_heatmap"),
+        label = "adj. p-value threshold",
+        min = 0,
+        max = 0.1,
+        step = 0.01,
+        value = 0.05
+      ),
+      ns = ns
     ),
-    uiOutput(outputId = ns("sample_annotation_types_cmp_heatmap_ui")),
-    uiOutput(outputId = ns("Groups2Compare_ref_heatmap_ui")),
-    uiOutput(outputId = ns("Groups2Compare_treat_heatmap_ui")),
-    uiOutput(outputId = ns("psig_threhsold_heatmap_ui")),
+    conditionalPanel(
+      condition = "input.row_selection_options == 'Select based on Annotation'",
+      h5("Further row selection (annotation based)") %>% helper(type = "markdown", content = "Heatmap_RowAnnoBased"),
+      uiOutput(outputId = ns("anno_options_heatmap_ui")),
+      uiOutput(outputId = ns("row_anno_options_heatmap_ui")),
+      ns = ns
+    ),
     actionButton(
       inputId = ns("Do_Heatmap"),
       label = "Get Heatmap",
@@ -32,25 +66,35 @@ heatmap_sidebar<- function(ns){
       size = "mini", 
       value = T
     ),
-    uiOutput(outputId = ns("anno_options_ui")),
-    uiOutput(outputId = ns("row_anno_options_ui")),
-    uiOutput(outputId = ns("rowWiseScaled_ui")),
-    uiOutput(outputId = ns("cluster_cols_ui")),
-    uiOutput(outputId = ns("cluster_rows_ui")),
-    hr(style = "border-top: 1px solid #858585;"),
-    h5("Further row selection (annotation based)") %>% helper(type = "markdown", content = "Heatmap_RowAnnoBased"),
-    helpText("Note: This only shows options if 'rowAnno_based' is selected for 'Row selection' (top of the sidebar)"),
-    switchInput(
-      inputId = ns("Selection_show_annoBased"),
-      label = "show options (annotation-related)",
-      inline = T,
-      size = "mini",
-      value = F
+    conditionalPanel(
+      condition = "input.Aesthetics_show == true",
+      uiOutput(outputId = ns("anno_options_ui")),
+      uiOutput(outputId = ns("row_anno_options_ui")),
+      uiOutput(outputId = ns("row_label_options_ui")),
+      checkboxInput(
+        inputId = ns("cluster_rows"),
+        label="Row Clustering?",
+        value = TRUE,
+        width = "20%"
+      ),
+      checkboxInput(
+        inputId = ns("cluster_cols"),
+        label="Column Clustering?",
+        value = TRUE,
+        width = "20%"
+      ),
+      ns = ns
     ),
-    uiOutput(outputId = ns("rowAnno_based_ui")),
-    uiOutput(outputId = ns("row_anno_factor_ui")),
-    uiOutput(outputId = ns("anno_options_heatmap_ui")),
-    uiOutput(outputId = ns("row_anno_options_heatmap_ui"))
+    checkboxInput(
+      inputId = ns("rowWiseScaled"),
+      label = "row-wise scaling?",
+      value = FALSE
+    ),
+    # hidden Button to refresh the UI
+    hidden(actionButton(
+      inputId = ns("refreshUI"),
+      label = "Refresh"
+    )),
   )
 }
 
@@ -140,4 +184,3 @@ heatmap_UI <- function(id){
     heatmap_main(ns)
   )
 }
-
