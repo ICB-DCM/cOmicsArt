@@ -20,7 +20,7 @@ heatmap_server <- function(id, data, params, updates){
           selectInput(
             inputId = ns("anno_options"),
             label = "Choose the variable to color the samples after (Multiples are possible)",
-            choices = c(colnames(colData(data$data))),
+            choices = c(colnames(colData(data$data)), "None"),
             multiple = T , # would be cool if true, to be able to merge vars ?!,
             selected= c(colnames(colData(data$data)))[1]
           )
@@ -30,20 +30,18 @@ heatmap_server <- function(id, data, params, updates){
           selectInput(
             inputId = ns("row_anno_options"),
             label = "Choose the variable to color the rows after (Multiples are possible)",
-            choices = c(colnames(rowData(data$data))),
+            choices = c(colnames(rowData(data$data)), "None"),
             multiple = T, # would be cool if true, to be able to merge vars ?!
             selected = c(colnames(rowData(data$data)))[length(c(colnames(rowData(data$data))))]
           )
         })
         output$row_label_options_ui <- renderUI({
           req(data_input_shiny())
-          req(input$row_anno_options)
           selectInput(
             inputId = ns("row_label_options"),
             label = "Choose the label of rows",
             choices = c(colnames(rowData(data$data))),
-            multiple = F, # would be cool if true, to be able to merge vars ?!,
-            selected=input$row_anno_options
+            multiple = F,
           )
         })
         output$UseBatch_ui <- renderUI({
@@ -167,12 +165,51 @@ heatmap_server <- function(id, data, params, updates){
         } else {
           data2plot <- assay(data)
         }
+
+        proceed_with_heatmap <- reactiveVal(FALSE)
+        # Check for data rows and show modal if necessary
+        if (nrow(data2plot) > 100) {
+          showModal(modalDialog(
+            title = "Warning",
+            "The dataset has more than 100 rows. This may cause a high runtime. Do you want to continue?",
+            footer = tagList(
+              modalButton("Cancel"),
+              actionButton(ns("continue_heatmap"), "Continue")
+            )
+          ))
+
+          observeEvent(input$continue_heatmap, {
+            proceed_with_heatmap(TRUE)
+            removeModal()
+          })
+
+          observeEvent(input$cancel_heatmap, {
+            proceed_with_heatmap(FALSE)
+            removeModal()
+          })
+
+          req(proceed_with_heatmap())
+        } else {
+          proceed_with_heatmap(TRUE)
+        }
+
+        req(proceed_with_heatmap())
+
         # TODO: add a error modal in case data is aleady zero (or add in entitie selection)
-        req(!is.null(data2plot))
-        annotation_col <- colData(data)[, input$anno_options, drop = F]
-        annotation_row <- rowData(data)[, input$row_anno_options, drop = F]
-        annotation_col <- as.data.frame(annotation_col)
-        annotation_row <- as.data.frame(annotation_row)
+        req(
+          !is.null(data2plot),
+          nrow(data2plot) > 1 | !(input$cluster_rows),
+        )
+        annotation_col <- NA
+        annotation_row <- NA
+        if(input$anno_options != "None"){
+          annotation_col <- colData(data)[, input$anno_options, drop = F]
+          annotation_col <- as.data.frame(annotation_col)
+        }
+        if(input$row_anno_options != "None"){
+          annotation_row <- rowData(data)[, input$row_anno_options, drop = F]
+          annotation_row <- as.data.frame(annotation_row)
+        }
 
         # Potential Clustering
         cluster_rows <- FALSE
