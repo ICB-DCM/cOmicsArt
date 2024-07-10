@@ -126,7 +126,7 @@ heatmap_server <- function(id, data, params, updates){
 
       observeEvent(input$SaveGeneList_Heatmap, {
         # Save the gene list to res_tmp separately when asked
-        res_tmp[[session$token]][["Heatmap"]]$geneList <<- rownames(res_tmp[[session$token]][["Heatmap"]]$data)
+        res_tmp[[session$token]][["Heatmap"]]$gene_list <<- rownames(res_tmp[[session$token]][["Heatmap"]]$data)
       })
 
       observeEvent(toListen2Heatmap(),{
@@ -191,7 +191,6 @@ heatmap_server <- function(id, data, params, updates){
 
         # Heatmap
         scenario <- 11
-        browser()
         tryCatch({
           heatmap_data <- as.matrix(data2plot)
           max_val <- max(abs(heatmap_data), na.rm = T)

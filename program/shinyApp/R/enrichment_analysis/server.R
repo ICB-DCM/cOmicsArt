@@ -624,7 +624,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             }
           }
           if(input$GeneSet2Enrich == "heatmap_genes"){
-            geneSetChoice_tmp <- par_tmp[[session$token]]$Heatmap$gene_list
+            geneSetChoice_tmp <- res_tmp[[session$token]]$Heatmap$gene_list
           }
         }else{
           if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
@@ -753,7 +753,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
                   annotation_results = anno_results,
                   input = input,
                   geneSetChoice = ea_reactives$tmp_genes,
-                  geneSet2Enrich = input$GeneSet2Enrich
+                  geneSet2Enrich = input$GeneSet2Enrich,
+                  data = ea_reactives$data
                 )
               }
               ea_reactives$can_start <- TRUE
@@ -799,13 +800,14 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             tmp <- getUserReactiveValues(input)
             par_tmp[[session$token]]$Enrichment[names(tmp)] <<- tmp
           }else{
+            ea_reactives$tmp_genes <- rowData(data$data)[ea_reactives$tmp_genes,"entrezgene_id"]
             ea_reactives$enrichment_results <- over_representation_analysis(
-              input,
-              ea_reactives$organism,
-              ea_reactives$tmp_genes,
-              data,
-              ea_reactives$enrichments2do,
-              input$test_correction
+              input = input,
+              organism = ea_reactives$organism,
+              geneSetChoice = ea_reactives$tmp_genes,
+              data = data,
+              enrichments2do = ea_reactives$enrichments2do,
+              adjustMethod = input$test_correction
             )
             tmp <- getUserReactiveValues(input)
             par_tmp[[session$token]]$Enrichment[names(tmp)] <<- tmp
@@ -813,7 +815,6 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
           # res_temp Zuweisung
           res_tmp[[session$token]]["Enrichment"] <<- ea_reactives$enrichment_results
-
         })
       })
 
