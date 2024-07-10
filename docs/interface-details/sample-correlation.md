@@ -1,7 +1,7 @@
 ---
 title: "Sample Correlation"
 layout: default
-parent: "Interface Details"
+parent: Interface Details
 nav_order: 3
 ---
 
