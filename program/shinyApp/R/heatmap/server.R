@@ -204,14 +204,16 @@ heatmap_server <- function(id, data, params, updates){
         req(
           !is.null(data2plot),
           nrow(data2plot) > 1 | !(input$cluster_rows),
+          input$anno_options,
+          input$row_anno_options
         )
         annotation_col <- NA
         annotation_row <- NA
-        if(input$anno_options != "None"){
+        if(!("None" %in% input$anno_options)){
           annotation_col <- colData(data)[, input$anno_options, drop = F]
           annotation_col <- as.data.frame(annotation_col)
         }
-        if(input$row_anno_options != "None"){
+        if(!("None" %in% input$row_anno_options)){
           annotation_row <- rowData(data)[, input$row_anno_options, drop = F]
           annotation_row <- as.data.frame(annotation_row)
         }
@@ -254,55 +256,7 @@ heatmap_server <- function(id, data, params, updates){
           error_modal(e)
           return(NULL)
         })
-        req(!is.null(heatmap_plot))
-        } else {
-          data2plot <- assay(data)
-        }
-        # TODO: add a error modal in case data is aleady zero (or add in entitie selection)
-        req(!is.null(data2plot))
-        annotation_col <- colData(data)[, input$anno_options, drop = F]
-        annotation_row <- rowData(data)[, input$row_anno_options, drop = F]
-        annotation_col <- as.data.frame(annotation_col)
-        annotation_row <- as.data.frame(annotation_row)
 
-        # Potential Clustering
-        cluster_rows <- FALSE
-        cluster_cols <- FALSE
-        if(input$cluster_rows){
-          cluster_rows <- hclust(dist(data2plot), method = "complete")
-        }
-        if(input$cluster_cols){
-          cluster_cols <- hclust(dist(t(data2plot)), method = "complete")
-        }
-
-        # Heatmap
-        scenario <- 11
-        tryCatch({
-          heatmap_data <- as.matrix(data2plot)
-          max_val <- max(abs(heatmap_data), na.rm = T)
-          if (input$rowWiseScaled | max_val == Inf | max_val == -Inf) {
-              breakings <- NA
-          } else {
-              breakings <- seq(-max_val, max_val, length.out = 101)
-          }
-          heatmap_plot <- pheatmap(
-              heatmap_data,
-              main = customTitleHeatmap,
-              show_rownames = ifelse(nrow(data2plot) <= input$row_label_no, TRUE, FALSE),
-              labels_row = rowData(data)[rownames(data2plot), input$row_label_options],
-              show_colnames = TRUE,
-              cluster_cols = cluster_cols,
-              cluster_rows = cluster_rows,
-              scale = ifelse(input$rowWiseScaled, "row", "none"),
-              annotation_col = annotation_col,
-              annotation_row = annotation_row,
-              silent = F,
-              breaks = breakings
-          )
-        }, error = function(e) {
-          error_modal(e)
-          return(NULL)
-        })
         req(!is.null(heatmap_plot))
         heatmap_scenario <- scenario
         output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
