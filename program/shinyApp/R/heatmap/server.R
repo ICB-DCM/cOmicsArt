@@ -192,78 +192,79 @@ heatmap_server <- function(id, data, params, updates){
             proceed_with_heatmap(FALSE)
             removeModal()
           })
-
-          req(proceed_with_heatmap())
         } else {
           proceed_with_heatmap(TRUE)
         }
 
-        req(proceed_with_heatmap())
-
-        # TODO: add a error modal in case data is aleady zero (or add in entitie selection)
-        req(
-          !is.null(data2plot),
-          nrow(data2plot) > 1 | !(input$cluster_rows),
-          input$anno_options,
-          input$row_anno_options
-        )
-        annotation_col <- NA
-        annotation_row <- NA
-        if(!("None" %in% input$anno_options)){
-          annotation_col <- colData(data)[, input$anno_options, drop = F]
-          annotation_col <- as.data.frame(annotation_col)
-        }
-        if(!("None" %in% input$row_anno_options)){
-          annotation_row <- rowData(data)[, input$row_anno_options, drop = F]
-          annotation_row <- as.data.frame(annotation_row)
-        }
-
-        # Potential Clustering
-        cluster_rows <- FALSE
-        cluster_cols <- FALSE
-        if(input$cluster_rows){
-          cluster_rows <- hclust(dist(data2plot), method = "complete")
-        }
-        if(input$cluster_cols){
-          cluster_cols <- hclust(dist(t(data2plot)), method = "complete")
-        }
-
-        # Heatmap
-        scenario <- 11
-        tryCatch({
-          heatmap_data <- as.matrix(data2plot)
-          max_val <- max(abs(heatmap_data), na.rm = T)
-          if (input$rowWiseScaled | max_val == Inf | max_val == -Inf) {
-              breakings <- NA
-          } else {
-              breakings <- seq(-max_val, max_val, length.out = 101)
-          }
-          heatmap_plot <- pheatmap(
-              heatmap_data,
-              main = customTitleHeatmap,
-              show_rownames = ifelse(nrow(data2plot) <= input$row_label_no, TRUE, FALSE),
-              labels_row = rowData(data)[rownames(data2plot), input$row_label_options],
-              show_colnames = TRUE,
-              cluster_cols = cluster_cols,
-              cluster_rows = cluster_rows,
-              scale = ifelse(input$rowWiseScaled, "row", "none"),
-              annotation_col = annotation_col,
-              annotation_row = annotation_row,
-              silent = F,
-              breaks = breakings
+        observeEvent(proceed_with_heatmap(), {
+          req(proceed_with_heatmap())
+          print("We are doing stuff")
+          # TODO: add an error modal in case data is already zero (or add in entity selection)
+          req(
+            !is.null(data2plot),
+            nrow(data2plot) > 1 | !(input$cluster_rows),
+            input$anno_options,
+            input$row_anno_options
           )
-        }, error = function(e) {
-          error_modal(e)
-          return(NULL)
-        })
+          print("We are doing stuff, believe me...")
+          annotation_col <- NA
+          annotation_row <- NA
+          if(!("None" %in% input$anno_options)){
+            annotation_col <- colData(data)[, input$anno_options, drop = F]
+            annotation_col <- as.data.frame(annotation_col)
+          }
+          if(!("None" %in% input$row_anno_options)){
+            annotation_row <- rowData(data)[, input$row_anno_options, drop = F]
+            annotation_row <- as.data.frame(annotation_row)
+          }
 
-        req(!is.null(heatmap_plot))
-        heatmap_scenario <- scenario
-        output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
-        res_tmp[[session$token]][["Heatmap"]]$data <<- heatmap_data
-        res_tmp[[session$token]][["Heatmap"]]$plot <<- heatmap_plot
-        tmp <- getUserReactiveValues(input)
-        par_tmp[[session$token]]$Heatmap[names(tmp)] <<- tmp
+          # Potential Clustering
+          cluster_rows <- FALSE
+          cluster_cols <- FALSE
+          if(input$cluster_rows){
+            cluster_rows <- hclust(dist(data2plot), method = "complete")
+          }
+          if(input$cluster_cols){
+            cluster_cols <- hclust(dist(t(data2plot)), method = "complete")
+          }
+
+          # Heatmap
+          scenario <- 11
+          tryCatch({
+            heatmap_data <- as.matrix(data2plot)
+            max_val <- max(abs(heatmap_data), na.rm = T)
+            if (input$rowWiseScaled | max_val == Inf | max_val == -Inf) {
+                breakings <- NA
+            } else {
+                breakings <- seq(-max_val, max_val, length.out = 101)
+            }
+            heatmap_plot <- pheatmap(
+                heatmap_data,
+                main = customTitleHeatmap,
+                show_rownames = ifelse(nrow(data2plot) <= input$row_label_no, TRUE, FALSE),
+                labels_row = rowData(data)[rownames(data2plot), input$row_label_options],
+                show_colnames = TRUE,
+                cluster_cols = cluster_cols,
+                cluster_rows = cluster_rows,
+                scale = ifelse(input$rowWiseScaled, "row", "none"),
+                annotation_col = annotation_col,
+                annotation_row = annotation_row,
+                silent = F,
+                breaks = breakings
+            )
+          }, error = function(e) {
+            error_modal(e)
+            return(NULL)
+          })
+
+          req(!is.null(heatmap_plot))
+          heatmap_scenario <- scenario
+          output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
+          res_tmp[[session$token]][["Heatmap"]]$data <<- heatmap_data
+          res_tmp[[session$token]][["Heatmap"]]$plot <<- heatmap_plot
+          tmp <- getUserReactiveValues(input)
+          par_tmp[[session$token]]$Heatmap[names(tmp)] <<- tmp
+        })
 
 
         output$getR_Code_Heatmap <- downloadHandler(
