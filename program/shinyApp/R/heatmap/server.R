@@ -22,7 +22,7 @@ heatmap_server <- function(id, data, params, updates){
             label = "Choose the variable to color the samples after (Multiples are possible)",
             choices = c(colnames(colData(data$data)), "None"),
             multiple = T , # would be cool if true, to be able to merge vars ?!,
-            selected= c(colnames(colData(data$data)))[1]
+            selected= "None"
           )
         })
         output$row_anno_options_ui <- renderUI({
@@ -32,7 +32,7 @@ heatmap_server <- function(id, data, params, updates){
             label = "Choose the variable to color the rows after (Multiples are possible)",
             choices = c(colnames(rowData(data$data)), "None"),
             multiple = T, # would be cool if true, to be able to merge vars ?!
-            selected = c(colnames(rowData(data$data)))[length(c(colnames(rowData(data$data))))]
+            selected = "None"
           )
         })
         output$row_label_options_ui <- renderUI({
