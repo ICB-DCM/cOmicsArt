@@ -198,7 +198,6 @@ heatmap_server <- function(id, data, params, updates){
 
         observeEvent(proceed_with_heatmap(), {
           req(proceed_with_heatmap())
-          print("We are doing stuff")
           # TODO: add an error modal in case data is already zero (or add in entity selection)
           req(
             !is.null(data2plot),
@@ -206,7 +205,6 @@ heatmap_server <- function(id, data, params, updates){
             input$anno_options,
             input$row_anno_options
           )
-          print("We are doing stuff, believe me...")
           annotation_col <- NA
           annotation_row <- NA
           if(!("None" %in% input$anno_options)){

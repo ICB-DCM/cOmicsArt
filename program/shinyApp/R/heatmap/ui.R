@@ -119,7 +119,7 @@ heatmap_main <- function(ns){
     ),
     actionButton(
       inputId = ns("SaveGeneList_Heatmap"),
-      label = "Save genes shown in Heatmap as list",
+      label = "Save genes shown in Heatmap for OA",
       icon = icon('seedling'),
       style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
     ),
