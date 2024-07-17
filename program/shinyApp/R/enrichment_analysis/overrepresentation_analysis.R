@@ -9,10 +9,9 @@ over_representation_analysis <- function(
   # Overrepresentation analysis
   # no translation needed as already done before.
 
-
   # set Species
   species <- "Mus musculus"
-  if(organsim == "Human genes (GRCh38.p14)"){
+  if(organism == "Human genes (GRCh38.p14)"){
     species <- "Homo sapiens"
   }
 
@@ -126,23 +125,19 @@ over_representation_analysis <- function(
   }
   # Hallmarks
   if(enrichments2do$Hallmarks){
-	if(!(identical(list("Universe"=input$UniverseOfGene),par_tmp[[session$token]]$OA$Hallmarks ))){
-      Hallmarkset <- msigdbr(
-        species = species,
-        category = "H",
-      ) %>% dplyr::select(gs_name, entrez_gene)
-      EnrichmentRes_Hallmarks <- clusterProfiler::enricher(
-        gene = geneSetChoice,
-        pvalueCutoff = 0.05,
-        pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
-        universe = universeSelected_tranlsated,
-        TERM2GENE = Hallmarkset
-      )
-      res_tmp[[session$token]]$OA$Hallmarks <<- EnrichmentRes_Hallmarks
-      par_tmp[[session$token]]$OA$Hallmarks  <<- list("Universe"=input$UniverseOfGene)
-	}else{
-      EnrichmentRes_Hallmarks <- res_tmp[[session$token]]$OA$Hallmarks
-	}
+    Hallmarkset <- msigdbr(
+      species = species,
+      category = "H",
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_Hallmarks <- clusterProfiler::enricher(
+      gene = geneSetChoice,
+      pvalueCutoff = 0.05,
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      universe = universeSelected_tranlsated,
+      TERM2GENE = Hallmarkset
+    )
+    res_tmp[[session$token]]$OA$Hallmarks <<- EnrichmentRes_Hallmarks
+    par_tmp[[session$token]]$OA$Hallmarks  <<- list("Universe"=input$UniverseOfGene)
   }
   # C1
   if(enrichments2do$C1){

@@ -117,9 +117,11 @@ heatmap_main <- function(ns){
       step = 1, 
       value = 25
     ),
-    downloadButton(
-      outputId = ns("SaveGeneList_Heatmap"),
-      label = "Save genes shown in Heatmap as list"
+    actionButton(
+      inputId = ns("SaveGeneList_Heatmap"),
+      label = "Save genes shown in Heatmap for OA within Enrichment Analysis tab",
+      icon = icon('seedling'),
+      style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
     ),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
