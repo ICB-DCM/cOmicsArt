@@ -994,6 +994,7 @@ server <- function(input,output,session){
       shinyjs::click("EnrichmentAnalysis-refreshUI",asis = T)
       shinyjs::click("Heatmap-refreshUI",asis = T)
       shinyjs::click("PCA-refreshUI",asis = T)
+      shinyjs::click("sample_correlation-refreshUI",asis = T)
       paste0(
         addWarning,
         "The data has the dimensions of: ",

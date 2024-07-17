@@ -14,24 +14,29 @@ sample_correlation_server <- function(id, data, params){
       
       ns <- session$ns
       # UI Section ----
-      output$UseBatch_ui <- renderUI({
-        req(par_tmp[[session$token]]$BatchColumn != "NULL")
-        selectInput(
-          inputId = ns("UseBatch"),
-          label = "Use batch corrected data?",
-          choices = c("No","Yes"),
-          selected = "No"
-        )
-      })
-      output$SampleAnnotationChoice_ui <- renderUI({
-        req(selectedData_processed())
-        selectInput(
-          inputId = ns("SampleAnnotationChoice"),
-          label = "Choose the color annotation for the samples",
-          choices = colnames(colData(data$data)),
-          multiple = T,
-          selected = colnames(colData(data$data))[1]
-        )
+      observeEvent(input$refreshUI, {
+        print("Refreshing UI Sample Correlation")
+        data <- update_data(session$token)
+
+        output$UseBatch_ui <- renderUI({
+          req(par_tmp[[session$token]]$BatchColumn != "NULL")
+          selectInput(
+            inputId = ns("UseBatch"),
+            label = "Use batch corrected data?",
+            choices = c("No","Yes"),
+            selected = "No"
+          )
+        })
+        output$SampleAnnotationChoice_ui <- renderUI({
+          req(selectedData_processed())
+          selectInput(
+            inputId = ns("SampleAnnotationChoice"),
+            label = "Choose the color annotation for the samples",
+            choices = colnames(colData(data$data)),
+            multiple = T,
+            selected = colnames(colData(data$data))[1]
+          )
+        })
       })
       
       # Do sample correlation plot 
