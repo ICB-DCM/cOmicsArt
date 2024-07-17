@@ -13,8 +13,14 @@ significance_analysis_server <- function(id, data, params){
       )
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
+
       ## Sidebar UI section
-      output$UseBatch_ui <- renderUI({
+      observeEvent(input$refreshUI, {
+        print("Refreshing UI Heatmap")
+        data <- update_data(session$token)
+        params <- update_params(session$token)
+
+        output$UseBatch_ui <- renderUI({
         req(par_tmp[[session$token]]$BatchColumn != "NULL")
         selectInput(
           inputId = ns("UseBatch"),
@@ -22,165 +28,147 @@ significance_analysis_server <- function(id, data, params){
           choices = c("No","Yes"),
           selected = "No"
         )
-      })
-      output$type_of_comparison_ui <- renderUI({
-        req(data_input_shiny())
-        if(is.null(sig_ana_reactive$coldata)){
-          sig_ana_reactive$coldata <- colData(data$data)
-        }
-        req(sig_ana_reactive$coldata)
-        if(params$PreProcessing_Procedure == "vst_DESeq"){
+        })
+        output$type_of_comparison_ui <- renderUI({
+          req(data_input_shiny())
+          if(is.null(sig_ana_reactive$coldata)){
+            sig_ana_reactive$coldata <- colData(data$data)
+          }
+          req(sig_ana_reactive$coldata)
+          if(params$PreProcessing_Procedure == "vst_DESeq"){
+            selectInput(
+              inputId = ns("sample_annotation_types_cmp"),
+              label = "Choose groups to compare",
+              choices = params$DESeq_factors,
+              multiple = F,
+              selected = NULL
+            )
+          } else {
+            selectInput(
+              inputId = ns("sample_annotation_types_cmp"),
+              label = "Choose groups to compare",
+              choices = c(colnames(sig_ana_reactive$coldata)),
+              multiple = F ,
+              selected = NULL
+            )
+          }
+        })
+        # UI to choose comparisons
+        output$chooseComparisons_ui <- renderUI({
+          req(input$sample_annotation_types_cmp)
+          annoToSelect <- sig_ana_reactive$coldata[,input$sample_annotation_types_cmp]
+          if(length(annoToSelect) == length(unique(annoToSelect))){
+            # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
+            helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
+          } else {
+            my_comparisons <- subset(expand.grid(rep(list(unique(annoToSelect)),2)), Var1 != Var2)
+            xy.list <- vector("list", nrow(my_comparisons))
+            for (i in 1:nrow(my_comparisons)) {
+              xy.list[[i]] <- c(
+                as.character(my_comparisons[i,1]),
+                as.character(my_comparisons[i,2])
+              )
+            }
+            selectInput(
+              inputId = ns("comparisons"),
+              label = "Select your desired comparisons. Notation is Treatment:Control",
+              choices = sapply(xy.list, paste, collapse=":"),
+              multiple = T,
+              selected = sapply(xy.list, paste, collapse=":")[1]
+            )
+          }
+        })
+        # UI to choose test method
+        output$chooseTest_ui <- renderUI({
+          if(params$PreProcessing_Procedure == "vst_DESeq"){
+            renderText(
+              expr = "DESeq is using a Wald test statistic.\nWe are using the same here.",
+              outputArgs = list(container = pre)
+            )
+          } else {
+            shinyWidgets::virtualSelectInput(
+              search = T,
+              showSelectedOptionsFirst = T,
+              inputId = ns("test_method"),
+              label = "Test method",
+              choices = c("Wilcoxon rank sum test", "T-Test", "Welch-Test"),
+              selected = "T-Test"
+            )
+          }
+        })
+        # UI to select comparisons to visualize
+        output$chooseComparisonsToVisualize_ui <- renderUI({
+          req(input$comparisons)
           selectInput(
-            inputId = ns("sample_annotation_types_cmp"),
-            label = "Choose groups to compare",
-            choices = params$DESeq_factors,
-            multiple = F,
-            selected = NULL
+            inputId = ns("comparisons_to_visualize"),
+            label = "Select your desired comparisons to visualize",
+            choices = c("all",sig_ana_reactive$comparisons_for_plot),
+            multiple = T,
+            selected = "all"
           )
-        } else {
+        })
+        # UI to choose visualization method
+        output$chooseVisualization_ui <- renderUI({
+          req(input$comparisons_to_visualize)
+          # only if the number of comparisons is less than 5, have Venn diagram as option
+          if(length(input$comparisons_to_visualize) < 5){
+            choices <- c("UpSetR plot", "Venn diagram")
+          } else {
+            choices <- c("UpSetR plot")
+          }
           selectInput(
-            inputId = ns("sample_annotation_types_cmp"),
-            label = "Choose groups to compare",
-            choices = c(colnames(sig_ana_reactive$coldata)),
-            multiple = F ,
-            selected = NULL
+            inputId = ns("visualization_method"),
+            label = "Visualization method",
+            choices = choices,
+            selected = input$visualization_method
           )
-        }
-      })
-      # UI to choose comparisons
-      output$chooseComparisons_ui <- renderUI({
-        req(input$sample_annotation_types_cmp)
-        annoToSelect <- sig_ana_reactive$coldata[,input$sample_annotation_types_cmp]
-        if(length(annoToSelect) == length(unique(annoToSelect))){
-          # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
-          helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
-        } else {
-          my_comparisons <- subset(expand.grid(rep(list(unique(annoToSelect)),2)), Var1 != Var2)
-          xy.list <- vector("list", nrow(my_comparisons))
-          for (i in 1:nrow(my_comparisons)) {
-            xy.list[[i]] <- c(
-              as.character(my_comparisons[i,1]),
-              as.character(my_comparisons[i,2])
+        })
+        # UI to choose what genes to look at (e.g. significant, upregulated, downregulated)
+        output$chooseGenesToLookAt_ui <- renderUI({
+          req(input$comparisons_to_visualize)
+          # choices dependent on preprocess_method
+          if(params$PreProcessing_Procedure == "vst_DESeq"){
+            choices <- c(
+              "Significant",
+              "Upregulated",
+              "Downregulated",
+              "Significant unadjusted"
+            )
+          } else {
+            choices <- c(
+              "Significant",
+              "Significant unadjusted"
             )
           }
           selectInput(
-            inputId = ns("comparisons"),
-            label = "Select your desired comparisons. Notation is Treatment:Control",
-            choices = sapply(xy.list, paste, collapse=":"),
-            multiple = T,
-            selected = sapply(xy.list, paste, collapse=":")[1]
-          )
-        }
-      })
-      # UI to choose test method
-      output$chooseTest_ui <- renderUI({
-        if(params$PreProcessing_Procedure == "vst_DESeq"){
-          renderText(
-            expr = "DESeq is using a Wald test statistic.\nWe are using the same here.",
-            outputArgs = list(container = pre)
-          )
-        } else {
-          shinyWidgets::virtualSelectInput(
-            search = T,
-            showSelectedOptionsFirst = T,
-            inputId = ns("test_method"),
-            label = "Test method",
-            choices = c("Wilcoxon rank sum test", "T-Test", "Welch-Test"),
-            selected = "T-Test"
-          )
-        }
-      })
-      # UI to choose significance level
-      output$chooseSignificanceLevel_ui <- renderUI({sliderInput(
-        inputId = ns("significance_level"),
-        label = "Significance level",
-        min = 0.005,
-        max = 0.1,
-        value = 0.05,
-        step = 0.005
-      )})
-      # UI to choose test correction
-      output$chooseTestCorrection_ui <- renderUI({selectInput(
-        inputId = ns("test_correction"),
-        label = "Test correction",
-        choices = c(
-          "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
-          "Holm", "Hommel", "Hochberg", "FDR"
-        ),
-        selected = "Benjamini-Hochberg"
-      )})
-      # UI to select comparisons to visualize
-      output$chooseComparisonsToVisualize_ui <- renderUI({
-        req(input$comparisons)
-        selectInput(
-          inputId = ns("comparisons_to_visualize"),
-          label = "Select your desired comparisons to visualize",
-          choices = c("all",sig_ana_reactive$comparisons_for_plot),
-          multiple = T,
-          selected = "all"
-        )
-      })
-      # UI to choose visualization method
-      output$chooseVisualization_ui <- renderUI({
-        req(input$comparisons_to_visualize)
-        # only if the number of comparisons is less than 5, have Venn diagram as option
-        if(length(input$comparisons_to_visualize) < 5){
-          choices <- c("UpSetR plot", "Venn diagram")
-        } else {
-          choices <- c("UpSetR plot")
-        }
-        selectInput(
-          inputId = ns("visualization_method"),
-          label = "Visualization method",
-          choices = choices,
-          selected = input$visualization_method
-        )
-      })
-      # UI to choose what genes to look at (e.g. significant, upregulated, downregulated)
-      output$chooseGenesToLookAt_ui <- renderUI({
-        req(input$comparisons_to_visualize)
-        # choices dependent on preprocess_method
-        if(params$PreProcessing_Procedure == "vst_DESeq"){
-          choices <- c(
-            "Significant",
-            "Upregulated",
-            "Downregulated",
-            "Significant unadjusted"
-          )
-        } else {
-          choices <- c(
-            "Significant",
-            "Significant unadjusted"
-          )
-        }
-        selectInput(
-          inputId = ns("sig_to_look_at"),
-          label = "Type of significance to look at",
-          choices = choices,
-          selected = input$sig_to_look_at
-        )
-      })
-      # ui to choose intersections to highlight in venn diagram
-      output$chooseIntersections_ui <- renderUI({
-        req(input$visualization_method=="UpSetR plot")
-        # require current plot and upset matrix
-        req(sig_ana_reactive$plot_last)
-        choices <- append("None", sig_ana_reactive$intersect_names)
-        div(
-          selectInput(
-            inputId = ns("intersection_high"),
-            label = "Intersections to highlight",
+            inputId = ns("sig_to_look_at"),
+            label = "Type of significance to look at",
             choices = choices,
-            multiple = T,
-            selected = input$intersection_high
-          ) %>% helper(type = "markdown", content = "SigAna_Intersections"),
-          # Download highlighted intersections as table
-          downloadButton(
-            outputId = ns("downloadIntersections"),
-            label = "Download Intersections",
-            class = "btn-info"
+            selected = input$sig_to_look_at
           )
-        )
+        })
+        # ui to choose intersections to highlight in venn diagram
+        output$chooseIntersections_ui <- renderUI({
+          req(input$visualization_method=="UpSetR plot")
+          # require current plot and upset matrix
+          req(sig_ana_reactive$plot_last)
+          choices <- append("None", sig_ana_reactive$intersect_names)
+          div(
+            selectInput(
+              inputId = ns("intersection_high"),
+              label = "Intersections to highlight",
+              choices = choices,
+              multiple = T,
+              selected = input$intersection_high
+            ) %>% helper(type = "markdown", content = "SigAna_Intersections"),
+            # Download highlighted intersections as table
+            downloadButton(
+              outputId = ns("downloadIntersections"),
+              label = "Download Intersections",
+              class = "btn-info"
+            )
+          )
+        })
       })
       # keep updating the info panel while executing
       observe(
