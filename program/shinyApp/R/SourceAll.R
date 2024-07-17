@@ -1,4 +1,5 @@
 source("R/version.R",local = T)
+source("R/util.R", local = T)
 source("R/C.R",local = T)
 source("R/fun_filterRNA.R",local = T)
 source("R/fun_LFC.R",local = T)
@@ -21,5 +22,5 @@ source("R/sample_correlation/util.R", local = T)
 source("R/significance_analysis/server.R", local = T)
 source("R/significance_analysis/util.R", local = T)
 source("R/pre_processing/util.R", local = T)
-source("R/util.R", local = T)
+
 
