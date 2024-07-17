@@ -25,11 +25,34 @@ pca_sidebar_panel <- function(ns){
     ### further visualizations
     hr(style = "border-top: 1px solid #000000;"),
     uiOutput(outputId = ns("coloring_options_ui")),
-    uiOutput(outputId = ns("x_axis_selection_ui")),
-    uiOutput(outputId = ns("y_axis_selection_ui")),
-    uiOutput(outputId = ns("Show_loadings_ui")),
+    radioGroupButtons(
+      inputId = ns("x_axis_selection"),
+      label = "PC for x-Axis",
+      choices = c("PC1","PC2", "PC3", "PC4"),
+      direction = "vertical",
+      selected = "PC1"
+    ),
+    radioGroupButtons(
+      inputId = ns("y_axis_selection"),
+      label = "PC for y-Axis",
+      choices = c("PC1","PC2", "PC3", "PC4"),
+      direction = "vertical",
+      selected = "PC2"
+    ),
+    radioGroupButtons(
+      inputId = ns("Show_loadings"),
+      label = "Plot Loadings on top? (currently top 5)",
+      choices = c("Yes","No"),
+      direction = "horizontal",
+      selected = "No"
+    ),
     helpText("Note: if you would like to change the annotation of the indicated loading vectors please select an option the the tab Loadings"),
-    hr(style = "border-top: 1px dashed #000000;")
+    hr(style = "border-top: 1px dashed #000000;"),
+    # hidden Button to refresh the UI
+    hidden(actionButton(
+      inputId = ns("refreshUI"),
+      label = "Refresh"
+    ))
   )
 }
 
