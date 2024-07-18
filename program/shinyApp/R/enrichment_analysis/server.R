@@ -539,7 +539,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
                 "heatmap_genes"
               ),
               multiple = F,
-              selected = input$GeneSet2Enrich
+              selected = NULL # if nothing selected does trigger?
             )
           })
           output$UniverseOfGene_ui <- renderUI({
@@ -598,7 +598,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       })
       ## Do enrichment ----
       geneSetChoice <- reactive({
-        if(isTruthy(input$GeneSet2Enrich)){
+
+        if(isTruthy(input$GeneSet2Enrich) & input$ORA_or_GSE == "OverRepresentation_Analysis" ){
           if(input$GeneSet2Enrich == "DE_Genes"){
             # TODO add option to send DE genes
             geneSetChoice_tmp <- DE_genelist()
@@ -629,7 +630,6 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         }else{
           if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs" | input$ValueToAttach == "statistic_value"){
             #takes all genes after preprocessing
-            browser()
             #get LFC
             ctrl_samples_idx <- which(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
             comparison_samples_idx <- which(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
@@ -661,7 +661,6 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             }
 
             Data2Plot_tmp <- Data2Plot
-            browser()
             if(input$ValueToAttach == "LFC"){
               geneSetChoice_tmp <- Data2Plot_tmp$LFC
             }else if(input$ValueToAttach == "statistic_value"){
