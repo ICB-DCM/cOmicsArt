@@ -61,6 +61,8 @@ options(repos = BiocManager::repositories())
 options(spinner.color = "#1c8a3b", spinner.color.background = "#ffffff", spinner.size = 2)
 
 ui <- shiny::fluidPage(
+  # Loading Bars?
+  useWaitress(),
   # JS to reset input values
   tags$script("
     Shiny.addCustomMessageHandler('resetValue', function(variableName) {
