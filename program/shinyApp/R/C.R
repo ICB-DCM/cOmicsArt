@@ -134,5 +134,6 @@ SYMBOL_OPT <<- c(
 if(format(Sys.Date(), "%d") == "01"){
   EnsemblUpdateCheck()
 }else{
+  ensembl_objects <- readRDS("www/EnsemblObjects.rds")
   loadedVersion <<- ensembl_objects
 }
