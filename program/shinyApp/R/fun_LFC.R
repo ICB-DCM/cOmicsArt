@@ -12,17 +12,24 @@ getLFCs <- function(
     y <- df[grp2]
     x <- as.numeric(x)
     y <- as.numeric(y)
-    tryCatch(
-      results <- t.test(y, x),
-      error = function(e) {
+    results <- NULL
+    tryCatch({
+      results <- t.test(y, x)
+      results <- list(p.value = results$p.value, statistic = unname(results$statistic))
+    },
+      
+    error = function(e) {
         results <- list(p.value = NA, statistic = NA)
-      }
+        }
     )
     
-    return(unlist(results[c("p.value","statistic")]))
+    if(is.null(results)){
+      results <- list(p.value = NA, statistic = NA)
+    }
+
+    return(unlist(results))
   }
   
-
   rawpvalue_stat <- apply(df, 1, ttest_raw, grp1 = ctrl_samples_idx, grp2 = comparison_samples_idx)
   
   p_adj <- p.adjust(rawpvalue_stat["p.value",], method = "fdr")

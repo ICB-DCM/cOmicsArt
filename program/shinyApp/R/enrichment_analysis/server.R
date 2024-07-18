@@ -664,7 +664,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             if(input$ValueToAttach == "LFC"){
               geneSetChoice_tmp <- Data2Plot_tmp$LFC
             }else if(input$ValueToAttach == "statistic_value"){
-              geneSetChoice_tmp <- Data2Plot_tmp$statistic.t
+              geneSetChoice_tmp <- Data2Plot_tmp$statistic
             }
             else if(input$ValueToAttach == "LFC_abs"){
               geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
