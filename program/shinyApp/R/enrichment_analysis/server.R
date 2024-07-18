@@ -539,7 +539,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
                 "heatmap_genes"
               ),
               multiple = F,
-              selected = NULL # if nothing selected does trigger?
+              selected = input$GeneSet2Enrich
             )
           })
           output$UniverseOfGene_ui <- renderUI({
