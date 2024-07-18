@@ -130,6 +130,7 @@ SYMBOL_OPT <<- c(
 # Defines a constant - tries one the first every month to update
 # there might be a better check on this but we do not want it upon every start as it can take some time
 
+# Note that this will still need internet connection as it accessing data via API
 if(format(Sys.Date(), "%d") == "01"){
   EnsemblUpdateCheck()
 }else{
