@@ -13,7 +13,7 @@ getLFCs <- function(
     x <- as.numeric(x)
     y <- as.numeric(y)
     tryCatch(
-      results <- t.test(x, y),
+      results <- t.test(y, x),
       error = function(e) {
         results <- list(p.value = NA, statistic = NA)
       }
