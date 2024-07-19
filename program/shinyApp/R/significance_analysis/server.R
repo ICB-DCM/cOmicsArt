@@ -201,14 +201,19 @@ significance_analysis_server <- function(id, data, params){
         # also here to ensure to get sidepanel Inputs
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
-        # shinyjs::html(id = 'significance_analysis_info', "Analysis is running...")
-
         sig_ana_reactive$info_text <- "Analysis is running..."
         sig_ana_reactive$start_analysis <- sig_ana_reactive$start_analysis + 1
       })
       # Do the analysis
       observeEvent(sig_ana_reactive$start_analysis,{
         req(sig_ana_reactive$start_analysis > 0)
+        waiter <- Waiter$new(
+          id=ns("significance_analysis_results"),
+          html = LOADING_SCREEN,
+          color="#70BF4F47",
+          hide_on_render=F
+        )
+        waiter$show()
         if(input$significanceGo == 1){
           sig_ana_reactive$significance_tabs_to_delete <- NULL
         }
@@ -331,6 +336,7 @@ significance_analysis_server <- function(id, data, params){
         # update plot
         sig_ana_reactive$update_plot_post_ana <- sig_ana_reactive$update_plot_post_ana + 1
         sig_ana_reactive$comparisons_for_plot <- input$comparisons
+        waiter$hide()
       })
       # update the plot whenever the user changes the visualization method
       # or the comparisons to visualize

@@ -62,7 +62,8 @@ options(spinner.color = "#1c8a3b", spinner.color.background = "#ffffff", spinner
 
 ui <- shiny::fluidPage(
   # Loading Bars?
-  useWaitress(),
+  # useWaitress(),
+  useWaiter(),
   # JS to reset input values
   tags$script("
     Shiny.addCustomMessageHandler('resetValue', function(variableName) {

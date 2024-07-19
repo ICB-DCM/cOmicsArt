@@ -679,6 +679,12 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       })
       observeEvent(input$enrichmentGO,{
         ea_reactives$ea_info <- "Enrichment is running..."
+        waiter <- Waiter$new(
+          id=ns("EnrichmentTabs"),
+          html = LOADING_SCREEN,
+          color="#70BF4F47"
+        )
+        waiter$show()
         print("Start Enrichment")
         fun_LogIt("## ENRICHMENT")
         req(geneSetChoice())
@@ -812,6 +818,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             tmp <- getUserReactiveValues(input)
             par_tmp[[session$token]]$Enrichment[names(tmp)] <<- tmp
           }
+          waiter$hide()
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
           # res_temp Zuweisung
           res_tmp[[session$token]]["Enrichment"] <<- ea_reactives$enrichment_results

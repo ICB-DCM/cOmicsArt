@@ -29,19 +29,22 @@ pre_processing_sidebar_panel <- sidebarPanel(
 pre_processing_main_panel <- mainPanel(
   id = "mainpanel_pre_processing",
   # Statistics to the data
-  helpText("General statistics to the input data, stuff like dimensions"),
-  htmlOutput(outputId = "Statisitcs_Data"),
-  HTML(text = "<br>"),
-  fluidRow(
-    column(6,
-           h4("Raw Data"),
-           plotOutput("raw_violin_plot"),
-           plotOutput("raw_kde_plot")
-    ),
-    column(6,
-           h4("Pre-processed Data"),
-           plotOutput("preprocessed_violin_plot"),
-           plotOutput("preprocessed_kde_plot")
+  div(
+    id="data_summary",
+    helpText("General statistics to the input data, stuff like dimensions"),
+    htmlOutput(outputId = "Statisitcs_Data"),
+    HTML(text = "<br>"),
+    fluidRow(
+      column(6,
+             h4("Raw Data"),
+             plotOutput("raw_violin_plot"),
+             plotOutput("raw_kde_plot")
+      ),
+      column(6,
+             h4("Pre-processed Data"),
+             plotOutput("preprocessed_violin_plot"),
+             plotOutput("preprocessed_kde_plot")
+      )
     )
   )
 )
