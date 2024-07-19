@@ -3,11 +3,12 @@ translate_genes_ea <- function(data, annotation_results, input){
     # copy rownames with corresponding annotation as columnname
     rowData(data)[[annotation_results$base_annotation]] <- rownames(rowData(data))  # can this be just data?
   }
-  datasets_avail <- listDatasets(useEnsembl(biomart = "genes"))
-  ensembl <- useEnsembl(
-    biomart = "ensembl",
-    dataset = datasets_avail[datasets_avail$description == par_tmp[[session$token]]['organism'], "dataset"]
-  )
+  if(par_tmp[[session$token]]['organism'] == "Human genes (GRCh38.p14)"){
+    ensembl_slot <- "hsapiens_gene_ensembl"
+  }else{
+    ensembl_slot <- "mmusculus_gene_ensembl"
+  }
+  ensembl <- loadedVersion[[ensembl_slot]]$ensmbl
   out <- getBM(
     attributes = c("ensembl_gene_id", "gene_biotype", "external_gene_name", "entrezgene_id"),
     filter = annotation_results$base_annotation,
@@ -51,15 +52,12 @@ translate_genes_oa <- function(
   # translate to entrez id, currently only Humand and Mouse supported
   if(par_tmp[[session$token]]['organism'] == "Human genes (GRCh38.p14)"){
     orgDb <- org.Hs.eg.db::org.Hs.eg.db
+    ensembl_slot <- "hsapiens_gene_ensembl"
   }else{
     orgDb <- org.Mm.eg.db::org.Mm.eg.db
+    ensembl_slot <- "mmusculus_gene_ensembl"
   }
-  # load datasets from biomart
-  datasets_avail <- listDatasets(useEnsembl(biomart = "genes"))
-  ensembl <- useEnsembl(
-    biomart = "ensembl",
-    dataset = datasets_avail[datasets_avail$description == par_tmp[[session$token]]['organism'], "dataset"]
-  )
+  ensembl <- loadedVersion[[ensembl_slot]]$ensmbl
   # translation in case genSet2enrich is heatmap_genes
   if(geneSet2Enrich == "heatmap_genes"){
     if(annotation_results$no_ann){
