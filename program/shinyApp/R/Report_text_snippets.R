@@ -244,3 +244,12 @@ snippet_SingleGene <- function(
   
   return(snippet)
 }
+
+snippet_Enrichment <- function(
+    data=res_tmp[[session$token]],
+    params=par_tmp[[session$token]]
+    ){
+  snippet <- c()
+    return(snippet)
+}
+
