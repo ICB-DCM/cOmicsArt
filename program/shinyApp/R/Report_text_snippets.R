@@ -103,7 +103,7 @@ snippet_sampleCorr <- function(
   snippet <- paste0(snippet, "The correlation between samples was calculated using the ", params$correlation_method, " method. ")
   snippet <- paste0(snippet, "The resulting correlation matrix was visualized using the pheatmap package", "(v. ",packageVersion("pheatmap"),") (",print(clean_citation(citation('pheatmap')), style = "text"),"). ")
   snippet <- paste0(snippet, "The correlation matrix was clustered with the complete linkage method using correlation distance. ")
-  retun(snippet)
+  return(snippet)
 }
   
   
