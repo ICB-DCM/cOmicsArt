@@ -43,6 +43,7 @@ library(gridExtra)
 library(sva)
 library(pcaPP) # requires gfortran. Not sure how to install on server
 library(reshape2)
+library(waiter)
 # library(svglite)
 
 source("R/C.R")
