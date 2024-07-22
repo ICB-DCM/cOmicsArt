@@ -1024,9 +1024,10 @@ server <- function(input,output,session){
     } else {
       tmp_logMessage <- "none"
     }
-    fun_LogIt("## Pre Processing")
+    fun_LogIt("## Pre Processing {.tabset .tabset-fade}")
+    fun_LogIt(message = "### Info")
     fun_LogIt(
-      message = "**PreProcessing** - As general remove all entities which are constant over all samples (automatically)"
+      message = "**PreProcessing** - Alaways done: removal of all entities which are constant over all samples"
     )
     fun_LogIt(
       message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage)
@@ -1051,6 +1052,10 @@ server <- function(input,output,session){
         paste0(dim(res_tmp[[session$token]]$data),collapse = ", ")
       )
     )
+    fun_LogIt(message = "### Publication Snippet")
+    fun_LogIt(message = snippet_preprocessing(data=res_tmp[[session$token]],
+                                              params=par_tmp[[session$token]]))
+    fun_LogIt(message = "<br>")
   })
 
   # render plots and ui Parts

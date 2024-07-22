@@ -21,7 +21,6 @@ snippet_dataInput <- function(
   data=res_tmp[[session$token]],
   params=par_tmp[[session$token]]
 ){
-  browser()
   snippet <- 
     paste0("The data was uploaded to cOmicsART (v. ", VERSION,") a webapp to perform explorative and statistical analysis with seamless integration to R (Seep et. al. 2024). ",
            "The webapp is majorly built with the shiny package (v. ",packageVersion("shiny"),") (",print(clean_citation(citation('shiny')), style = "text"),"). ",
@@ -45,7 +44,67 @@ snippet_dataInput <- function(
                paste0("All entities with ",params$providedRowAnnotationTypes," being ",paste(params$row_selection,collapse = ", ")," were selected. ")
              }
            }
+           
            )
   return(snippet)
 }
+
+snippet_preprocessing <- function(
+    data=res_tmp[[session$token]],
+    params=par_tmp[[session$token]]
+){
+browser()
+  # Conditional pre-processing procedure
+  snippet <- c()
+  if (params$PreProcessing_Procedure == "filterOnly") {
+    # Conditional filtering based on omics type
+    if (params$omic_type == "Transcriptomics") {
+      snippet <- paste0(snippet, "The data was cleaned by removing constant entities across all samples and rows with all-zero values. Additionally, entities with total row counts less than or equal to 10 were removed.\n")
+    } else if (params$omic_type == "Metabolomics") {
+      snippet <- paste0(snippet, "The data was cleaned by removing constant entities across all samples and rows with all-zero values. Additionally, entities with a row median of 0 were removed.\n")
+    }else{
+      snippet <- c()
+    }
+  } else if (params$PreProcessing_Procedure == "simpleCenterScaling") {
+    snippet <- paste0(snippet, "The data was centered and scaled. Centering involves subtracting the mean of each entity, and scaling involves dividing by the standard deviation.\n")
+  } else if (params$PreProcessing_Procedure == "vst_DESeq") {
+    snippet <- paste0(snippet, "For the transcriptomics data, DESeq2 was used for normalization and VST transformation applied for visualisation of the normalized data (not for statistical testing)",
+                      "(v. ",packageVersion("DESeq2"),") (",print(clean_citation(citation('DESeq2')), style = "text"),"). ",
+                      "The formula for analysis was ~",
+                      params$DESeq_formula_batch,
+                      ifelse(params$DESeq_formula != "NULL",  params$DESeq_formula, ""),
+                      ".\n")
+  } else if (params$PreProcessing_Procedure == "Scaling_0_1") {
+    snippet <- paste0(snippet, "The data was scaled to fit within the range of 0 to 1. Each entity's values are hence transformed proportionally to ensure a consistent scale.\n")
+  } else if (params$PreProcessing_Procedure == "log10") {
+    snippet <- paste0(snippet, "The base-10 logarithm of each data point was calculated. If a single zero value was present, 1 was added to all points to avoid undefined results.\n")
+  } else if (params$PreProcessing_Procedure == "ln") {
+    snippet <- paste0(snippet, "The natural logarithm of each data point was calculated. If a single zero value was present, 1 was added to all points to avoid undefined results.\n")
+  } else if (params$PreProcessing_Procedure == "pareto_scaling") {
+    snippet <- paste0(snippet, "The data was parteo scaled. Pareto scaling emphasizes the importance of small values by dividing each data point by the square root of its standard deviation.\n")
+  }
+  
+  # Batch effect correction
+  if (!is.null(params$BatchEffect_Column) ) {
+    snippet <- paste0(snippet, "Batch effect correction was applied using the information about: ", params$BatchEffect_Column, ".\n",
+                      "The correction was performed using the ComBat method from the sva package", "(v. ",packageVersion("sva"),") (",print(clean_citation(citation('sva')), style = "text"),"). \n")
+  }
+  
+  # Resulting dimensions
+  snippet <- paste0(snippet, "\nThe resulting dataset had ", dim(data$data)[1], " features and ", dim(data$data)[2], " samples. ")
+  
+  return(snippet)
+}
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
 
