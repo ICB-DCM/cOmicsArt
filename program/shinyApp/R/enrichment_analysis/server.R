@@ -449,7 +449,10 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             selectInput(
               inputId = ns("ValueToAttach"),
               label = "Select the metric to sort the genes after",
-              choices = c("LFC_abs", "LFC","statistic_value"),
+              choices = list(
+                "log fold change (LFC)"="LFC",
+                "absolute LFC"="LFC_abs", 
+                "t-statistic value"="statistic_value"),
               selected = input$ValueToAttach
             )
           })
