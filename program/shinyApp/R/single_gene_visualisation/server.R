@@ -283,7 +283,7 @@ single_gene_visualisation_server <- function(id, data){
         output$SavePlot_singleGene <- downloadHandler(
           filename = function() {
             paste0(
-              par_tmp[[session$token]]$ SingleEntVis$SingleEnt_customTitle_boxplot,
+              par_tmp[[session$token]]$SingleEntVis$SingleEnt_customTitle_boxplot,
               " ", Sys.time(), input$file_ext_singleGene
             )
           },
@@ -308,17 +308,20 @@ single_gene_visualisation_server <- function(id, data){
                 plot = res_tmp[[session$token]]$SingleEntVis,
                 device = gsub("\\.","",input$file_ext_singleGene)
               )
-              fun_LogIt("## Single Entitie")
+              
+              fun_LogIt(message = "## Single Entitie{.tabset .tabset-fade}")
+              fun_LogIt(message = "### Info")
               fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",input$Select_Gene))
               fun_LogIt(message = paste0("**Single Entitie** - Values shown are: ",input$type_of_data_gene, " data input"))
               fun_LogIt(message = paste0("**Single Entitie** - Values are grouped for all levels within: ",input$accross_condition, " (",paste0(levels(GeneData$anno),collapse = ";"),")"))
               fun_LogIt(message = paste0("**Single Entitie** - Test for differences: ",testMethod))
-              if(length(levels(GeneData$anno))>2){
-                fun_LogIt(message = paste0("**Single Entitie** - ANOVA performed, reference group is the overall mean"))
-              }else{
-                fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
-              }
+
+              fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
+
               fun_LogIt(message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")"))
+              fun_LogIt(message = "### Publication Snippet")
+              fun_LogIt(message = snippet_SingleGene(data = res_tmp[[session$token]],
+                                                  params = par_tmp[[session$token]]))
             })
           }
         )
@@ -340,7 +343,9 @@ single_gene_visualisation_server <- function(id, data){
           plot = res_tmp[[session$token]]$SingleEntVis,
           device = "png"
         )
-        fun_LogIt(message = "## Single Entitie")
+
+        fun_LogIt(message = "## Single Entitie{.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
         fun_LogIt(message = paste0(
           "**Single Entitie** - The following single entitie was plotted: ",
           par_tmp[[session$token]]$SingleEntVis$SingleEnt_Select_Gene
@@ -360,22 +365,26 @@ single_gene_visualisation_server <- function(id, data){
           "**Single Entitie** - Test for differences: ",
           par_tmp[[session$token]]$SingleEntVis$SingleEnt_testMethod
         ))
-        if(length(levels(par_tmp[[session$token]]$SingleEntVis$SingleEnt_GeneData_anno))>2){
-          fun_LogIt(
-            message = paste0("**Single Entitie** - ANOVA performed, reference group is the overall mean")
-            )
-        } else {
-          fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
-        }
+        
+        fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
+        
         fun_LogIt(
           message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")")
         )
         
         if(isTruthy(input$NotesSingleEntities) & 
            !(isEmpty(input$NotesSingleEntities))){
-          fun_LogIt(message = "### Personal Notes:")
-          fun_LogIt(message = input$NotesSingleEntities)
+          fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
+          fun_LogIt(message = paste0(
+            "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
+            input$NotesSingleEntities,
+            "</div>"
+          ))
         }
+        
+        fun_LogIt(message = "### Publication Snippet")
+        fun_LogIt(message = snippet_SingleGene(data = res_tmp[[session$token]],
+                                               params = par_tmp[[session$token]]))
         removeNotification(notificationID)
         showNotification("Saved!",type = "message", duration = 1)
       })
