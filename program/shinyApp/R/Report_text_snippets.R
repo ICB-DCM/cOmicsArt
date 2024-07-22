@@ -240,5 +240,7 @@ snippet_SingleGene <- function(
   snippet <- paste0(snippet, "Pairwise tests were performed. The dotted line represents the global mean. ")
   snippet <- paste0(snippet, "Boxplots are only shown if there are more than 3 samples per group. ")
   
+  snippet <- paste0(snippet, "The plot was extended to include and visualize the statistical results with the R packge ggpubr", "(v. ",packageVersion("ggpubr"),") (",print(clean_citation(citation('ggpubr')), style = "text"),"). ")
+  
   return(snippet)
 }
