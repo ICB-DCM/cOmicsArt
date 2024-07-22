@@ -25,6 +25,7 @@ snippet_dataInput <- function(
     paste0("The data was uploaded to cOmicsART (v. ", VERSION,") a webapp to perform explorative and statistical analysis with seamless integration to R (Seep et. al. 2024). ",
            "The webapp is majorly built with the shiny package (v. ",packageVersion("shiny"),") (",print(clean_citation(citation('shiny')), style = "text"),"). ",
            "It is currently running on R (v. ", R.version$major, ".", R.version$minor, ") (", print(clean_citation(citation('base')), style = "text"),"). ",
+           "Unless otherwise stated, all visulaizations were created using the ggplot2 package (v. ",packageVersion("ggplot2"),") (",print(clean_citation(citation('ggplot2')), style = "text"),"). ",
            "The ", params$omic_type ," data was uploaded with the original dimensions of ", dim(data$data_original)[1], " features and ", dim(data$data_original)[2], " samples. ",
            if(params$addedGeneAnno){
              paste0("Gene annotation was added using the ",params$organism ,"mart from Ensembl implemented within the biomaRt package 
@@ -107,7 +108,44 @@ snippet_sampleCorr <- function(
 }
   
   
-  
+snippet_PCA <- function(
+    data=res_tmp[[session$token]],
+    params=par_tmp[[session$token]]
+){
+  #ifelse(input$Show_loadings == "Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
+  snippet <- c()
+  snippet <- paste0(snippet, "Principal component analysis (PCA) was performed on the centered and scaled data, implemented within the stats package (v.",packageVersion("stats"),") (",print(clean_citation(citation('stats')), style = "text"),"). ")
+  snippet <- paste0(snippet,  if(params$PCA$Show_loadings != "No"){"The top 5 loadings were identified based on the largest Euclidean distances spanned by any two loading vectors. "})
+  return(snippet)
+}
+
+snippet_PCAscree <- function(
+    data=res_tmp[[session$token]],
+    params=par_tmp[[session$token]]
+){
+  snippet <- c()
+  snippet <- paste0(snippet, "The scree plot was generated to visualize the proportion of variance explained by each principal component. ")
+  return(snippet)
+}
+
+snippet_PCAloadings <- function(
+    data=res_tmp[[session$token]],
+    params=par_tmp[[session$token]]
+){
+  snippet <- c()
+  snippet <- paste0(snippet, "The top ",params$PCA$topSlider," positive loadings and the top ",params$PCA$bottomSlider," negative loadings were seleceted to assess an entities' impact on the principal components ")
+  return(snippet)
+}
+
+snippet_PCAloadingsMatrix <- function(
+    data=res_tmp[[session$token]],
+    params=par_tmp[[session$token]]
+){
+  snippet <- c()
+  snippet <- paste0(snippet, "The loadings matrix was created by taking all absolute loading values higher than ",params$PCA$filterValue ," into account for the first ",gsub("PC","",params$PCA$x_axis_selection," PCs. "))
+  snippet <- paste0(snippet, "The resulting matrix allows a visual assessment of the impact of each entity accross multiple principal components. ")
+  return(snippet)
+}
   
   
 
