@@ -102,7 +102,7 @@ significance_analysis_server <- function(id, data, params){
       # UI to choose test correction
       output$chooseTestCorrection_ui <- renderUI({selectInput(
         inputId = ns("test_correction"),
-        label = "Test correction",
+        label = "Multiple testing correction",
         choices = c(
           "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
           "Holm", "Hommel", "Hochberg", "FDR"

@@ -13,9 +13,12 @@ single_gene_visualisation_server <- function(id, data){
         ## Ui section ----
         output$type_of_data_gene_ui <- renderUI({
           req(data_input_shiny())
-          options <- c("raw","preprocessed")
+          options <- list("raw data" = "raw",
+                          "pre-processed"="preprocessed")
           if(par_tmp[[session$token]]$BatchColumn != "NULL"){
-            options <- c("raw","preprocessed","batch_corrected_preprocessed")
+            options <- list("raw data" = "raw",
+                            "pre-processed" = "preprocessed",
+                            "batch corrected data" = "batch_corrected_preprocessed")
           }
           selectInput(
             inputId = ns("type_of_data_gene"),
@@ -39,7 +42,9 @@ single_gene_visualisation_server <- function(id, data){
           selectInput(
             inputId = ns("type_of_visualitsation"),
             label = "Choose the style of visualisation",
-            choices = c("boxplots","boxplots_withTesting"),
+            choices = list(
+              "boxplots" = "boxplots",
+              "boxplots with sig. test results" = "boxplots_withTesting"),
             multiple = F ,
             selected = "boxplots_withTesting"
           )

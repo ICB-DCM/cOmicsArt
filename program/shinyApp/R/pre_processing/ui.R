@@ -7,9 +7,15 @@ pre_processing_sidebar_panel <- sidebarPanel(
   radioButtons(
     inputId = "PreProcessing_Procedure",
     label = "Pre-Processing Procedures",
-    choices = c(
-      "none","filterOnly", "vst_DESeq", "simpleCenterScaling", "Scaling_0_1",
-      "log10", "pareto_scaling", "ln"
+    choices = list(
+      "No pre-processing" = "none",
+      "Omic-specific filtering of low abundance" = "filterOnly",
+      "DESeq2 pre-processing (including variance stabilising transformation)" = "vst_DESeq",
+      "centering to 0 and scaling" = "simpleCenterScaling",
+      "scaling values to be within 0 and 1" = "Scaling_0_1",
+      "log10" = "log10",
+      "Pareto scaling (mean-centered and scaled by the square root of the standard deviation)" = "pareto_scaling",
+      "natural logarithm" = "ln"
     ),
     selected = "none"
   ) %>% helper(type = "markdown", content = "PreProcessing_Procedures"),
