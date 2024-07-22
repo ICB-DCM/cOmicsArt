@@ -53,7 +53,6 @@ snippet_preprocessing <- function(
     data=res_tmp[[session$token]],
     params=par_tmp[[session$token]]
 ){
-browser()
   # Conditional pre-processing procedure
   snippet <- c()
   if (params$PreProcessing_Procedure == "filterOnly") {
