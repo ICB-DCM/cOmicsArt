@@ -169,12 +169,60 @@ snippet_SigAna <- function(
   snippet <- paste0(sniipet, "For each comparison, their set of entities of interest ( based on the ",params$SigAna$sig_to_look_at," p-values) were visualized. ")
   snippet <- paste0(snippet, "Note, that multiple testing correction is done for each comparison separately. ")
   
- 
-  
-
   return(snippet)
   
 }
 
+snippet_heatmap <- function(
+    data=res_tmp[[session$token]],
+    params=par_tmp[[session$token]]
+){
+  snippet <- c()
+  # General heatmap construction details
+  if(params$Heatmap$row_selection_options == "all"){
+    snippet <- paste0(snippet, "All entities were used for the heatmap. ")
+  } else if (params$Heatmap$row_selection_options == "Select based on Annotation") {
+    snippet <- paste0(snippet, "The heatmap shows all entities which ",
+                      params$Heatmap$anno_options_heatmap, 
+                      " is part of the set of ",
+                      paste0(params$Heatmap$row_anno_options_heatmap,
+                             collapse = ","),
+                      ". ")
+  } else if (!is.null(params$Heatmap$TopK)) {
+    snippet <- paste0(snippet, "The heatmap was constructed based on the top ", 
+                      params$Heatmap$TopK, " entities. ")
+    snippet <- paste0(snippet, "The order of the entities was determined by ", 
+                      params$Heatmap$TopK_order, ". ")
+    if(grepl("Significant",params$Heatmap$TopK_order)){
+      snippet <- paste0(snippet, 
+                        "An entities was deemed significant with a significance level of",
+                        params$Heatmap$psig_threhsold_heatmap,
+                        ". ")
+    }
+  }
+  
+  # Sample and entity coloring
+  if(params$Heatmap$anno_options == "None"){
+    snippet <- paste0(snippet, "The heatmap samples were colored after ", params$Heatmap$anno_options, ". ")
+  }
+  if(params$Heatmap$row_anno_options == "None"){
+    snippet <- paste0(snippet, "The heatmap entities were colored after ", params$Heatmap$row_anno_options, ". ")
+  }
+  
+  # Clustering details
+  if (params$Heatmap$cluster_cols == TRUE) {
+    snippet <- paste0(snippet, "The columns were clustered based on euclidean-distance with complete-linkage. ")
+  }
+  if (params$Heatmap$cluster_rows == TRUE) {
+    snippet <- paste0(snippet, "The rows were clustered based on euclidean-distance with complete-linkage.  ")
+  }
+  if(params$Heatmap$rowWiseScaled ==TRUE ){
+    snippet <- paste0(snippet, "The rows were scaled to visualise relative difference. ")
+  }
+  snippet <- paste0(snippet, "The heatmap was created using the pheatmap package", "(v. ",packageVersion("pheatmap"),") (",print(clean_citation(citation('pheatmap')), style = "text"),"). ")
+  
+  
+  return(snippet)
+}
 
 
