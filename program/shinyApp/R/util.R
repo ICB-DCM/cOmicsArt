@@ -229,3 +229,53 @@ violin_plot <- function(data, color_by){
     )
   return(plot2return)
 }
+
+# check and potentially update ENSEMB
+EnsemblUpdateCheck <- function(){
+  ## Updating ENSEMBL databases
+
+  # as server often inresponsive we can run this script to update and
+  # within app using the informationy lying in the www folder
+  
+  # currently supported organisms
+  organisms_to_query <- c("Human","Mouse genes")
+  
+  tryCatch({
+    # Attempt to read in the new data completely
+    loadedVersion <<- readRDS("www/EnsemblObjects.RDS")
+    datasets_avail <- listDatasets(useEnsembl(biomart = "genes"))
+    ensembl_objects_new <- list()
+    name_string_new <- c()
+    organsims_matched <- datasets_avail[grepl(paste(organisms_to_query, collapse = "|"), datasets_avail$description),"dataset"]
+    
+    for(i in organsims_matched){
+      version <- datasets_avail[datasets_avail$dataset == i, "version"]
+      name_string_new <- c(name_string_new,version)
+    }
+    
+    VersionString <- paste0(name_string, collapse = "_")
+    
+    if(paste0(unlist(unlist(loadedVersion)[names(unlist(loadedVersion))[grepl("version",names(unlist(loadedVersion)))]],use.names = F), collapse = "_") != VersionString){
+      # new version - try to update
+      for(i in organsims_matched){
+        ensembl_objects_new[[i]] <- 
+          list(ensmbl= useEnsembl(
+            biomart = "ensembl",
+            dataset = i
+          ),
+          version = datasets_avail[datasets_avail$dataset == i, "version"]
+          )
+      }
+      saveRDS(ensembl_objects, file = paste0("www/EnsemblObjects.RDS"))
+      loadedVersion <<- ensembl_objects
+      cat("New version of Ensembl data saved and loaded \n")
+    } else {
+      cat("No new version of Ensembl data available using loaded version \n")
+    }
+    
+  }, error = function(e){
+    # If there is an error, read in the available data
+    cat("Error encountered, using available data. Error message:", e$message, "\n")
+    loadedVersion <<- readRDS("www/EnsemblObjects.RDS")
+  })
+}
