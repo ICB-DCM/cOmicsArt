@@ -95,10 +95,6 @@ snippet_preprocessing <- function(
   return(snippet)
 }
   
-  
-  
-  
-  
 snippet_sampleCorr <- function(
     data=res_tmp[[session$token]],
     params=par_tmp[[session$token]]
