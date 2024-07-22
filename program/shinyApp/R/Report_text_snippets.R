@@ -90,7 +90,7 @@ snippet_preprocessing <- function(
   }
   
   # Resulting dimensions
-  snippet <- paste0(snippet, "\nThe resulting dataset had ", dim(data$data)[1], " features and ", dim(data$data)[2], " samples. ")
+  snippet <- paste0(snippet, "The resulting dataset had ", dim(data$data)[1], " features and ", dim(data$data)[2], " samples. ")
   
   return(snippet)
 }
@@ -99,7 +99,16 @@ snippet_preprocessing <- function(
   
   
   
-  
+snippet_sampleCorr <- function(
+    data=res_tmp[[session$token]],
+    params=par_tmp[[session$token]]
+){
+  snippet <- c()
+  snippet <- paste0(snippet, "The correlation between samples was calculated using the ", params$correlation_method, " method. ")
+  snippet <- paste0(snippet, "The resulting correlation matrix was visualized using the pheatmap package", "(v. ",packageVersion("pheatmap"),") (",print(clean_citation(citation('pheatmap')), style = "text"),"). ")
+  snippet <- paste0(snippet, "The correlation matrix was clustered with the complete linkage method using correlation distance. ")
+  retun(snippet)
+}
   
   
   
