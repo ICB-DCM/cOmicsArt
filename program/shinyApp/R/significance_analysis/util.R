@@ -666,7 +666,8 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       xlab("Log FoldChange") +
       ylab("-log10(p_adj-value)") +
       theme(legend.position = "none") +
-      ggtitle(label="Corrected p-Values")
+      ggtitle(label="Corrected p-Values") +
+      theme_bw()
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot,
       tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
@@ -691,7 +692,8 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       scale_color_manual(values=colorScheme2, name="") +
       xlab("Log FoldChange") +
       ylab("-log10(p-value)") +
-      ggtitle(label="Uncorrected p-Values")
+      ggtitle(label="Uncorrected p-Values")+
+      theme_bw()
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
       tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
@@ -949,18 +951,11 @@ log_messages_volcano<- function(plot, table, contrast, file_path){
   ggsave(tmp_filename, plot=plot, device = "png")
 
   # Add Log Messages
-  fun_LogIt(message = "## VOLCANO")
+  fun_LogIt(message = "### VOLCANO")
   fun_LogIt(message = paste(
     "**VOLCANO** - Underlying Volcano Comparison:", contrast[2],"vs", contrast[2]
   ))
   fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
-
-  fun_LogIt(message = paste0(
-    "**VOLCANO** - The top 10 diff Expressed are the following (sorted by adj. p.val)"
-  ))
-  fun_LogIt(message = paste0(
-    "**VOLCANO** - \n",knitr::kable(head(table[order(table$padj, table$pvalue),],10),format = "html")
-  ))
 
   removeNotification(notificationID)
   showNotification("Saved!",type = "message", duration = 1)

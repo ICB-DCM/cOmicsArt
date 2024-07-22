@@ -700,12 +700,9 @@ significance_analysis_server <- function(id, data, params){
         png(tmp_filename)
         print(sig_ana_reactive$plot_last)
         dev.off()
-        fun_LogIt(message = "### SIGNIFICANCE ANALYSIS")
-        fun_LogIt(message = paste(
-          "- Significance Analysis was performed on",
-          length(data_calculate),
-          "entities"
-        ))
+        
+        fun_LogIt(message = "## Significance analysis {.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
         # log which tests were performed
         if(params$PreProcessing_Procedure == "vst_DESeq"){
           fun_LogIt(
@@ -760,7 +757,6 @@ significance_analysis_server <- function(id, data, params){
             )
           ))
           # log the top 5 significant genes
-          browser()
           if(params$PreProcessing_Procedure == "vst_DESeq"){
             # get the top 5 significant genes
             top5 <- head(
@@ -793,9 +789,19 @@ significance_analysis_server <- function(id, data, params){
           "**Overview Plot** - ![Significance Analysis](",tmp_filename,")"
         ))
         if(isTruthy(input$NotesSigAna) & !(isEmpty(input$NotesSigAna))){
-          fun_LogIt(message = "### Personal Notes:")
-          fun_LogIt(message = input$NotesSigAna)
+          fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
+          fun_LogIt(message = paste0(
+            "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
+            input$NotesSigAna,
+            "</div>"
+          ))
         }
+        
+        fun_LogIt(message = "### Publication Snippet")
+        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
+                                           params = par_tmp[[session$token]]))
+
+        
         removeNotification(notificationID)
         showNotification(ui = "Saved!",type = "message", duration = 1)
       })
