@@ -30,12 +30,14 @@ In the side panel, you have the following options:
     choice here is between logFoldChanges, absolute logFoldChanges or t-statistic value.
     Note, that for the latter no effect size is taken into account. Still, a positive t-statistic value indicates that the gene is upregulated in the treatment group, while a negative value indicates that the gene is downregulated in the treatment group. More information can be found [here](https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideFrame.html?Run_GSEA_Page)
 
+
   - With **Choose type for LFC-based ordering**, **Choose reference of log2 
     FoldChange**, and **Choose treatment group of log2 FoldChange** you can specify 
     which two groups to compare against each other.
 - in case of an overrepresentation analysis you hand over a list of genes, which then 
   will be compared to the geneset of interest, based on a supplied `universe of genes`,
   i.e. a set of all "possible" gene names. Thus your choice are
+
   - **Select a Universe for enrichment (default is [clusterProfilers](https://bioconductor.org/packages/release/bioc/html/clusterProfiler.html)
     default)**: Aside from the default options you can also choose the list of **your 
     own** genes from data, before or after preprocessing.
