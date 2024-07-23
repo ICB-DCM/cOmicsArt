@@ -6,43 +6,45 @@ getLFCs <- function(
   completeOutput = FALSE
 ){
   df <- as.data.frame(data)
-  # Todo by @Lea: discuss and finalize how to handle this. constant row are not removed but small noise is added should in here a check if all 0 rows?
+  # constant rows result in NA p-values
   ttest_raw <- function(df, grp1, grp2) {
     x <- df[grp1]
     y <- df[grp2]
     x <- as.numeric(x)
     y <- as.numeric(y)
-    results <- t.test(x, y)
-    return(results$p.value)
-  }
-  #remove constant rows
-  removedAsConst_1 <- which(apply(df[,ctrl_samples_idx],1,sd) < 1e-6)
-  df[removedAsConst_1,ctrl_samples_idx] <- df[removedAsConst_1,ctrl_samples_idx] + t(apply(df[removedAsConst_1,ctrl_samples_idx],1,function(x){
-    rnorm(
-      n = length(x),
-      mean = 0,
-      sd=0.0000001
+    results <- NULL
+    tryCatch({
+      results <- t.test(y, x)
+      results <- list(p.value = results$p.value, statistic = unname(results$statistic))
+    },
+      
+    error = function(e) {
+        results <- list(p.value = NA, statistic = NA)
+        }
     )
-  }))
-  removedAsConst_2 <- which(apply(df[,comparison_samples_idx],1,sd) < 1e-6)
-  df[removedAsConst_2,comparison_samples_idx] <- df[removedAsConst_2,comparison_samples_idx] + t(apply(df[removedAsConst_2,comparison_samples_idx],1,function(x){
-    rnorm(
-      n = length(x),
-      mean = 0,
-      sd=0.0000001
-    )
-  }))
+    
+    if(is.null(results)){
+      results <- list(p.value = NA, statistic = NA)
+    }
 
-  rawpvalue <- apply(df, 1, ttest_raw, grp1 = ctrl_samples_idx, grp2 = comparison_samples_idx)
+    return(unlist(results))
+  }
   
-  p_adj <- p.adjust(rawpvalue, method = "fdr")
+  rawpvalue_stat <- apply(df, 1, ttest_raw, grp1 = ctrl_samples_idx, grp2 = comparison_samples_idx)
+  
+  p_adj <- p.adjust(rawpvalue_stat["p.value",], method = "fdr")
   Ctrl_mean <- apply(df[,ctrl_samples_idx],1,mean)
   Cmp_mean <- apply(df[,comparison_samples_idx],1,mean)
+  # check if any of those 0
+  # put them to NA =< if they are signficiant but have 0 mean fc cannot be computed but potentially really interesting
+  Ctrl_mean[which(Ctrl_mean == 0)] <- NA
+  Cmp_mean[which(Cmp_mean == 0)] <- NA
+  
   FC <- Cmp_mean/Ctrl_mean
   LFC <- log2(FC)
   
   # Data 2 Plot
-  results <- cbind(LFC, rawpvalue,p_adj)
+  results <- t(rbind(rawpvalue_stat,LFC,p_adj))
   results <- as.data.frame(results)
   results$probename <- rownames(results)
   if(completeOutput){

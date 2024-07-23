@@ -24,10 +24,12 @@ In the side panel, you have the following options:
 - in case of a gene set enrichment analysis, you will have the following options
 
   - **Select the metric to sort the genes after**: Gene set enrichment analysis sort 
-    **all** your gene by some measure and then supplies this ranked list of genes to 
+    **all** your genes by some measure and then supplies this ranked list of genes to 
     an algorithm, that goes through this list and subsequently checks whether the gene 
-    in question belongt to a specified geneset. From this a score is calculated. The 
-    choice here is between logFoldChanges or absolute logFoldChanges.
+    in question belong to a specified geneset. From this a score is calculated. The 
+    choice here is between logFoldChanges, absolute logFoldChanges or t-statistic value.
+    Note, that for the latter no effect size is taken into account. Still, a positive t-statistic value indicates that the gene is upregulated in the treatment group, while a negative value indicates that the gene is downregulated in the treatment group. More information can be found [here](https://www.gsea-msigdb.org/gsea/doc/GSEAUserGuideFrame.html?Run_GSEA_Page)
+
 
   - With **Choose type for LFC-based ordering**, **Choose reference of log2 
     FoldChange**, and **Choose treatment group of log2 FoldChange** you can specify 
@@ -35,7 +37,8 @@ In the side panel, you have the following options:
 - in case of an overrepresentation analysis you hand over a list of genes, which then 
   will be compared to the geneset of interest, based on a supplied `universe of genes`,
   i.e. a set of all "possible" gene names. Thus your choice are
-  - **Select a Universe for enrichment (default is[clusterProfilers](https://bioconductor.org/packages/release/bioc/html/clusterProfiler.html)
+
+  - **Select a Universe for enrichment (default is [clusterProfilers](https://bioconductor.org/packages/release/bioc/html/clusterProfiler.html)
     default)**: Aside from the default options you can also choose the list of **your 
     own** genes from data, before or after preprocessing.
   - **Choose a gene set to hand over to enrich**: either you provide your own set, in 

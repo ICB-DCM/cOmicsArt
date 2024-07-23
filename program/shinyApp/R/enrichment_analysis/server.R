@@ -449,12 +449,15 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             selectInput(
               inputId = ns("ValueToAttach"),
               label = "Select the metric to sort the genes after",
-              choices = c("LFC_abs", "LFC"),
+              choices = list(
+                "log fold change (LFC)"="LFC",
+                "absolute LFC"="LFC_abs", 
+                "t-statistic value"="statistic_value"),
               selected = input$ValueToAttach
             )
           })
           req(input$ValueToAttach)
-          if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
+          if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs" | input$ValueToAttach == "statistic_value"){
             output$sample_annotation_types_cmp_GSEA_ui <- renderUI({
               req(data_input_shiny())
               if(is.null(ea_reactives$data)){
@@ -598,7 +601,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       })
       ## Do enrichment ----
       geneSetChoice <- reactive({
-        if(isTruthy(input$GeneSet2Enrich)){
+
+        if(isTruthy(input$GeneSet2Enrich) & input$ORA_or_GSE == "OverRepresentation_Analysis" ){
           if(input$GeneSet2Enrich == "DE_Genes"){
             # TODO add option to send DE genes
             geneSetChoice_tmp <- DE_genelist()
@@ -627,7 +631,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             geneSetChoice_tmp <- res_tmp[[session$token]]$Heatmap$gene_list
           }
         }else{
-          if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
+          if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs" | input$ValueToAttach == "statistic_value"){
             #takes all genes after preprocessing
             #get LFC
             ctrl_samples_idx <- which(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
@@ -662,6 +666,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             Data2Plot_tmp <- Data2Plot
             if(input$ValueToAttach == "LFC"){
               geneSetChoice_tmp <- Data2Plot_tmp$LFC
+            }else if(input$ValueToAttach == "statistic_value"){
+              geneSetChoice_tmp <- Data2Plot_tmp$statistic
             }
             else if(input$ValueToAttach == "LFC_abs"){
               geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
