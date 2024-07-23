@@ -780,9 +780,13 @@ significance_analysis_server <- function(id, data, params){
             "are the following:"
           ))
           fun_LogIt(message = knitr::kable(
-            top5, format = "html", format.args = list(width = 40)
-          ) %>% kableExtra::kable_styling()
-          )
+            top5,
+            format = "html",
+            escape = FALSE,
+            row.names = FALSE
+          ) %>%
+            kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+            scroll_box(width = "100%", height = "300px"))
           fun_LogIt(message = "\n")
         }
         fun_LogIt(message = paste0(
