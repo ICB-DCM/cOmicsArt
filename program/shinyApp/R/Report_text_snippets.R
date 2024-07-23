@@ -154,7 +154,6 @@ snippet_SigAna <- function(
     params=par_tmp[[session$token]]
 ){
   snippet <- c()
-  browser()
   # Transcriptomics with vst_DESeq
   if (params$omic_type == "Transcriptomics" & params$PreProcessing_Procedure == "vst_DESeq") {
     snippet <- paste0(snippet, "Differential expression analysis was performed using the DESeq2 package (v. ", packageVersion("DESeq2"), ") (", print(clean_citation(citation('DESeq2')), style = "text"), "). ")
