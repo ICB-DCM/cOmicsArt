@@ -369,8 +369,8 @@ heatmap_server <- function(id, data, params, updates){
           fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",
                                      isolate(input$anno_options_heatmap),
                                      " :",
-                                     paste0(isolate(input$row_anno_options_heatmap,
-                                                    collapse = ","))))
+                                     paste0(isolate(input$row_anno_options_heatmap),
+                                                    collapse = ",")))
         }
         if(!is.null(isolate(input$TopK))){
           fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",isolate(input$TopK)))
