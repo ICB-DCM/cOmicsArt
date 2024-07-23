@@ -19,7 +19,7 @@ In the side panel, you have the following options:
   comparison pairs can be entered at once.
 - **Test method**: You can select the statistical test method to use. You can choose 
   between [T-test](https://en.wikipedia.org/wiki/Student%27s_t-test), [Wilcoxon Rank 
-  Sum Test]((https://en.wikipedia.org/wiki/Mann–Whitney_U_test), and [Welch's T-test](https://en.wikipedia.org/wiki/Welch%27s_t-test). 
+  Sum Test](https://en.wikipedia.org/wiki/Mann–Whitney_U_test), and [Welch's T-test](https://en.wikipedia.org/wiki/Welch%27s_t-test). 
   If you used `vst_DESeq` as the [preprocessing method](pre-processing.md), DESeq2 
   will use the [Wald test](https://en.wikipedia.org/wiki/Wald_test).
 

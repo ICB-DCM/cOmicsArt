@@ -17,7 +17,7 @@ significance_analysis_sidebar_ui<- function(ns){
     ),
     selectInput(
       inputId = ns("test_correction"),
-      label = "Test correction",
+      label = "Multiple testing correction",
       choices = c(
         "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
         "Holm", "Hommel", "Hochberg", "FDR"

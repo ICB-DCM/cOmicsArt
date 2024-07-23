@@ -222,13 +222,16 @@ server <- function(input,output,session){
       fun_LogIt(
         message = paste0("**DataInput** - chosen Organism: ", input$AddGeneSymbols_organism)
       )
+      par_tmp[[session$token]]['organism'] <<- input$AddGeneSymbols_organism
 
       output$debug <- renderText({"<font color=\"#00851d\"><b>Added gene annotation</b></font>"})
-      datasets_avail <- listDatasets(useEnsembl(biomart = "genes"))
-      ensembl <- useEnsembl(
-        biomart = "ensembl",
-        dataset = datasets_avail[datasets_avail$description == input$AddGeneSymbols_organism, "dataset"]
-      )
+      if(par_tmp[[session$token]]['organism'] == "Human genes (GRCh38.p14)"){
+        ensembl_slot <- "hsapiens_gene_ensembl"
+      }else{
+        ensembl_slot <- "mmusculus_gene_ensembl"
+      }
+
+      ensembl <- loadedVersion[[ensembl_slot]]$ensmbl
       out <- getBM(
         attributes = c("ensembl_gene_id", "gene_biotype", "external_gene_name", "entrezgene_id"),
         filter = input$annotation_name,
