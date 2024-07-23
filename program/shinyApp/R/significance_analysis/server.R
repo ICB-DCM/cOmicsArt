@@ -784,9 +784,11 @@ significance_analysis_server <- function(id, data, params){
             scroll_box(width = "100%", height = "300px"))
           fun_LogIt(message = "\n")
         }
-        browser()
         fun_LogIt(message = paste0(
-          "**Overview Plot** - Shown are the set comparisons of: ",input$comparisons_to_visualize
+          "**Overview Plot** - Shown are ",input$sig_to_look_at," genes with a p-value < ",
+          input$significance_level,
+          ". The plot shows the intersection of genes that are significant in the comparisons you selected (.",
+          input$comparisons_to_visualize,")."
         ))
         fun_LogIt(message = paste0(
           "**Overview Plot** - ![Significance Analysis](",tmp_filename,")"
