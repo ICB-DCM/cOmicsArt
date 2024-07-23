@@ -82,6 +82,8 @@ snippet_preprocessing <- function(
     snippet <- paste0(snippet, "The natural logarithm of each data point was calculated. If a single zero value was present, 1 was added to all points to avoid undefined results.\n")
   } else if (params$PreProcessing_Procedure == "pareto_scaling") {
     snippet <- paste0(snippet, "The data was parteo scaled. Pareto scaling emphasizes the importance of small values by dividing each data point by the square root of its standard deviation.\n")
+  } else if(params$PreProcessing_Procedure == "None") {
+    snippet <- paste0(snippet, "No additional pre-processing was performed within cOmicsART.\n")
   }
   
   # Batch effect correction
