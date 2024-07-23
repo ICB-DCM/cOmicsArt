@@ -589,6 +589,16 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
 
   psig_th <- ns(paste(contrast[1], contrast[2], "psig_th", sep = "_"))
   lfc_th <- ns(paste(contrast[1], contrast[2], "lfc_th", sep = "_"))
+  Volcano_anno_tooltip <- ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip", sep = "_"))
+  output[[ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_"))]] <- renderUI({
+    selectInput(
+      inputId = Volcano_anno_tooltip,
+      label = "Select the anno to be shown at tooltip",
+      choices = colnames(rowData(res_tmp[[session$token]]$data)),
+      selected = colnames(rowData(res_tmp[[session$token]]$data))[1],
+      multiple = F
+    )
+  })
   output[[ns(paste(contrast[1], contrast[2], "psig_th_ui", sep = "_"))]] <- renderUI({
     numericInput(
       inputId = ns(paste(contrast[1], contrast[2], "psig_th", sep = "_")),
@@ -705,11 +715,11 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   observeEvent(input[[ns("only2Report_Volcano")]],{
     log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
   })
-  observeEvent(input[[ns("only2Report_Volcano_raw")]],{
+  observeEvent(input[[ns("only2Report_Volcano_both")]],{
     log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
     log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
   })
-  observeEvent(input[[ns("only2Report_Volcano_both")]],{
+  observeEvent(input[[ns("only2Report_Volcano_raw")]],{
     log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
   })
   output[[ns("SavePlot_Volcano")]] <- downloadHandler(
