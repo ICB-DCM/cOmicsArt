@@ -719,7 +719,7 @@ significance_analysis_server <- function(id, data, params){
         ))
         # log the test correction method
         fun_LogIt(message = paste(
-          "- p-values were adjusted using", input$correction_method, "correction method"
+          "- p-values were adjusted using", input$test_correction, "correction method"
         ))
         # log which comparisons were performed
         fun_LogIt(message = paste(
@@ -736,13 +736,11 @@ significance_analysis_server <- function(id, data, params){
            fun_LogIt(message = paste("####", comparisons[i]))
           # log the number of significant genes after correction
           fun_LogIt(message = paste(
-            "- Number of significant genes after correction for",
+            "- Number of significant genes before correction for",
             comparisons[i],
             "is",
             nrow(
-              sig_ana_reactive$sig_results[[comparisons[i]]][
-                sig_ana_reactive$sig_results[[comparisons[i]]]$padj < input$significance_level,
-              ]
+              sig_ana_reactive$sig_results[[comparisons[i]]][which(sig_ana_reactive$sig_results[[comparisons[i]]]$pvalue < input$significance_level),]
             )
           ))
           # log the number of significant genes before correction
@@ -751,28 +749,25 @@ significance_analysis_server <- function(id, data, params){
             comparisons[i],
             "is",
             nrow(
-              sig_ana_reactive$sig_results[[comparisons[i]]][
-                sig_ana_reactive$sig_results[[comparisons[i]]]$pvalue < input$significance_level,
-              ]
+              sig_ana_reactive$sig_results[[comparisons[i]]][which(sig_ana_reactive$sig_results[[comparisons[i]]]$padj < input$significance_level),]
             )
           ))
           # log the top 5 significant genes
-          if(params$PreProcessing_Procedure == "vst_DESeq"){
-            # get the top 5 significant genes
+          if(params$PreProcessing_Procedure == "vst_DESeq" & "result" %in% names(sig_ana_reactive$sig_results[[comparisons[i]]])){
             top5 <- head(
-              sig_ana_reactive$sig_results[[comparisons[i]]]@result[order(
-                sig_ana_reactive$sig_results[[comparisons[i]]]@result$p.adjust,
-                decreasing = FALSE
-              ),], 5
-            )
+                sig_ana_reactive$sig_results[[comparisons[i]]]@result[order(
+                  sig_ana_reactive$sig_results[[comparisons[i]]]@result$p.adjust,
+                  decreasing = FALSE
+                ),], 5
+              )
           } else {
             # get the top 5 significant genes
-            top5 <- head(
+            top5 <- as.data.frame(head(
               sig_ana_reactive$sig_results[[comparisons[i]]][order(
                 sig_ana_reactive$sig_results[[comparisons[i]]]$padj,
                 decreasing = FALSE
               ),], 5
-            )
+            ))
           }
           fun_LogIt(message = paste(
             "- Top 5 significant genes for",
@@ -783,12 +778,16 @@ significance_analysis_server <- function(id, data, params){
             top5,
             format = "html",
             escape = FALSE,
-            row.names = FALSE
+            row.names = TRUE
           ) %>%
             kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
             scroll_box(width = "100%", height = "300px"))
           fun_LogIt(message = "\n")
         }
+        browser()
+        fun_LogIt(message = paste0(
+          "**Overview Plot** - Shown are the set comparisons of: ",input$comparisons_to_visualize
+        ))
         fun_LogIt(message = paste0(
           "**Overview Plot** - ![Significance Analysis](",tmp_filename,")"
         ))

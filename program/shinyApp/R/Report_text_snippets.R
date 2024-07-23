@@ -168,7 +168,7 @@ snippet_SigAna <- function(
   snippet <- paste0(snippet, "The significance level was set to ", params$SigAna$significance_level, ". ")
   snippet <- paste0(snippet, "There were a total of ", length(params$SigAna$comparisons), " comparison done, precisely: ", paste0(params$SigAna$comparisons, collapse = ", "), ", ")
   snippet <- paste0(snippet, "from which ", ifelse(params$SigAna$comparisons_to_visualize == "all", "all", paste0(params$SigAna$comparisons_to_visualize, collapse = " and ")), " were visualized within the set comparison. ")
-  snippet <- paste0(sniipet, "For each comparison, their set of entities of interest ( based on the ",params$SigAna$sig_to_look_at," p-values) were visualized. ")
+  snippet <- paste0(snippet, "For each comparison, their set of entities of interest ( based on the ",params$SigAna$sig_to_look_at," p-values) were visualized. ")
   snippet <- paste0(snippet, "Note, that multiple testing correction is done for each comparison separately. ")
   
   return(snippet)
