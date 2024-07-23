@@ -533,7 +533,6 @@ pca_Server <- function(id, data, params, row_select){
               # Add Log Messages
               fun_LogIt(message = "## PCA {.tabset .tabset-fade}")
               fun_LogIt(message = "### Info")
-              browser()
               if(input$SampleAnnotationTypes_pca!="all"){
                 fun_LogIt(
                   message = paste0("**PCA** - The following PCA-plot is based on a selection on: ", input$sample_selection_pca)
