@@ -875,6 +875,8 @@ server <- function(input,output,session){
     print(selectedData())
     addWarning <- ""
     par_tmp[[session$token]]['PreProcessing_Procedure'] <<- input$PreProcessing_Procedure
+    # reset data to the selection that was done
+    res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]]
 
     print("Remove all entities which are constant over all samples")
     res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data[rownames(res_tmp[[session$token]]$data[which(apply(assay(res_tmp[[session$token]]$data),1,sd) != 0),]),]
