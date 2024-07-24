@@ -816,7 +816,6 @@ pca_Server <- function(id, data, params, row_select){
             device = "png"
           )
           # Add Log Messages
-          browser()
           fun_LogIt(message = "## PCA {.tabset .tabset-fade}")
           fun_LogIt(message = "### Info")
           if(input$data_selection_pca){
