@@ -138,3 +138,14 @@ if(format(Sys.Date(), "%d") == "01"){
   ensembl_objects <- readRDS("www/EnsemblObjects.RDS")
   loadedVersion <<- ensembl_objects
 }
+
+# Define the ggplotcustom theme
+custom_theme <<- theme_bw(base_size = 15) + 
+  theme(
+    axis.title = element_text(size = 15),        # Axis labels
+    axis.text = element_text(size = 15),         # Axis tick labels
+    legend.text = element_text(size = 15),       # Legend text
+    legend.title = element_text(size = 15),      # Legend title
+    plot.title = element_text(size = 17, face = "bold")  # Plot title
+  )
+
