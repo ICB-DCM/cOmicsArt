@@ -323,15 +323,15 @@ heatmap_server <- function(id, data, params, updates){
               fun_LogIt(message = "### Info")
               fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",input$row_selection_options))
               if(input$row_selection_options=="rowAnno_based"){
-                fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",input$anno_options_heatmap," :",input$row_anno_options_heatmap))
+                fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",input$anno_options_heatmap," :",paste0(input$row_anno_options_heatmap,collapse = ", ")))
               }
               if(!is.null(input$TopK)){
                 fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",input$TopK))
                 fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",input$row_selection_options))
                 # either based on LFC or on pVal
               }
-              fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",input$anno_options))
-              fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",input$row_anno_options))
+              fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",paste0(input$anno_options, collapse = ", ")))
+              fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",paste0(input$row_anno_options, collapse= ", ")))
               if(input$cluster_cols == TRUE){
                 fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
               }
@@ -377,8 +377,8 @@ heatmap_server <- function(id, data, params, updates){
           fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",isolate(input$row_selection_options)))
           # either based on LFC or on pVal
         }
-        fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",isolate(input$anno_options)))
-        fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",isolate(input$row_anno_options)))
+        fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",paste0(isolate(input$anno_options),collapse = ", ")))
+        fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",paste0(isolate(input$row_anno_options),collapse = ", ")))
         if(isolate(input$cluster_cols) == TRUE){
           fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
         }

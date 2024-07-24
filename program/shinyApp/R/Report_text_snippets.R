@@ -203,11 +203,11 @@ snippet_heatmap <- function(
   }
   
   # Sample and entity coloring
-  if(params$Heatmap$anno_options == "None"){
-    snippet <- paste0(snippet, "The heatmap samples were colored after ", params$Heatmap$anno_options, ". ")
+  if(any(params$Heatmap$anno_options != "None")){
+    snippet <- paste0(snippet, "The heatmap samples were colored after ", paste0(params$Heatmap$anno_options, collapse = ", "), ". ")
   }
-  if(params$Heatmap$row_anno_options == "None"){
-    snippet <- paste0(snippet, "The heatmap entities were colored after ", params$Heatmap$row_anno_options, ". ")
+  if(any(params$Heatmap$row_anno_options != "None")){
+    snippet <- paste0(snippet, "The heatmap entities were colored after ", paste0(params$Heatmap$row_anno_options, collapse = ", "), ". ")
   }
   
   # Clustering details

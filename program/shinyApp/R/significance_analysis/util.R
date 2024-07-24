@@ -344,8 +344,9 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   observeEvent(input[[ns("only2Report_Volcano_both")]],{
     fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
+    log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
+                         sig_ana_reactive$data4Volcano, contrast, file_path)
+    #log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
     fun_LogIt(message = "### Publication Snippet")
     fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                        params = par_tmp[[session$token]]))
@@ -405,8 +406,9 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       on.exit({
         fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
+        log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot), 
+                             sig_ana_reactive$data4Volcano, contrast, file_path)
+#        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
         fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                            params = par_tmp[[session$token]]))
@@ -739,7 +741,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
       tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
-      legendgroup="color"
+      legendgroup = "color"
     )})
   })
 
@@ -756,8 +758,9 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   observeEvent(input[[ns("only2Report_Volcano_both")]],{
     fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
+    log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot)
+                         , sig_ana_reactive$data4Volcano, contrast, file_path)
+   # log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
     fun_LogIt(message = "### Publication Snippet")
     fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                        params = par_tmp[[session$token]]))
@@ -818,8 +821,9 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       on.exit({
         fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
+        log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot)
+                             , sig_ana_reactive$data4Volcano, contrast, file_path)
+        #log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
         fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                            params = par_tmp[[session$token]]))
@@ -1029,7 +1033,7 @@ log_messages_volcano<- function(plot, table, contrast, file_path){
   # Add Log Messages
 
   fun_LogIt(message = paste(
-    "**VOLCANO** - Underlying Volcano Comparison:", contrast[2],"vs", contrast[2]
+    "**VOLCANO** - Underlying Volcano Comparison:", contrast[1],"vs", contrast[2]
   ))
   fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
 
