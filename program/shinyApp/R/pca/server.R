@@ -529,15 +529,16 @@ pca_Server <- function(id, data, params, row_select){
                 plot = pca_plot_final,
                 device = gsub("\\.","",input$file_ext_plot1)
               )
-
               # Add Log Messages
               fun_LogIt(message = "## PCA {.tabset .tabset-fade}")
               fun_LogIt(message = "### Info")
-              if(input$SampleAnnotationTypes_pca!="all"){
-                fun_LogIt(
-                  message = paste0("**PCA** - The following PCA-plot is based on a selection on: ", input$sample_selection_pca)
-                )
-                fun_LogIt(message = "**PCA** - All samples with",input$SampleAnnotationTypes_pca,"being ",paste(input$SampleAnnotationTypes_pca,collapse = ", "),"were selected.")
+              if(input$data_selection_pca){
+                if(input$sample_selection_pca !="all"){
+                  fun_LogIt(
+                    message = paste0("**PCA** - The following PCA-plot is based on a selection on: ", input$sample_selection_pca)
+                  )
+                  fun_LogIt(message = "**PCA** - All samples with",input$SampleAnnotationTypes_pca," being ",paste(input$SampleAnnotationTypes_pca,collapse = ", "),"were selected.")
+                }
               }else{
                 fun_LogIt(message = "**PCA** - The PCA was computed on the entire dataset.")
               }
