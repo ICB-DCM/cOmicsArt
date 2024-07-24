@@ -301,7 +301,8 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       xlab("Log FoldChange") +
       ylab("-log10(p_adj-value)") +
       theme(legend.position = "none") +
-      ggtitle(label="Corrected p-Values")
+      ggtitle(label="Corrected p-Values") +
+      theme_bw()
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot,
       legendgroup="color"
@@ -325,7 +326,8 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       scale_color_manual(values=colorScheme2, name="") +
       xlab("Log FoldChange") +
       ylab("-log10(p-value)") +
-      ggtitle(label="Uncorrected p-Values")
+      ggtitle(label="Uncorrected p-Values") +
+      theme_bw()
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
       legendgroup="color"
