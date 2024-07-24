@@ -1,7 +1,7 @@
 ## log function
 fun_LogIt <- function(
   message = "",
-  funMode = F,
+
   addPlot = F,
   tableSaved = F,
   Filename = NULL,
@@ -25,16 +25,6 @@ fun_LogIt <- function(
     # TODO: would have to check file extension..
     knitr::kable(line, "markdown") %>% cat(., file = LogfileName,append = T)
   }else{
-    if(funMode == T){
-      # extend message with a sampled joke by a certain probability
-      n <- sample(1:10,1)
-      if(n == 6){
-        randJoke <- sample(1:nrow(jokes),1)
-        line <- paste0(
-          line,"\t ","<span style='color:orange;'>",jokes[randJoke,"Joke"],"</span>"
-        )
-      }
-    }
     line <- paste0(line,"\n")
     if(file.exists(LogfileName)){
       write(line, file = LogfileName, append = TRUE)

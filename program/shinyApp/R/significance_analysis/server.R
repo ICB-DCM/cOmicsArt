@@ -417,7 +417,7 @@ significance_analysis_server <- function(id, data, params){
           sig_ana_reactive$plot_last <- ComplexUpset::upset(
             sig_ana_reactive$overlap_list,
             colnames(sig_ana_reactive$overlap_list),
-            themes=list(default=theme())
+            themes=list(default=theme_bw())
           )
           sig_ana_reactive$intersect_names <-  ggplot_build(
             sig_ana_reactive$plot_last
@@ -460,7 +460,7 @@ significance_analysis_server <- function(id, data, params){
         sig_ana_reactive$plot_last <- ComplexUpset::upset(
           sig_ana_reactive$overlap_list,
           colnames(sig_ana_reactive$overlap_list),
-          themes=list(default=theme()),
+          themes=list(default=theme_bw()),
           queries=queries
         )
       })
@@ -700,12 +700,9 @@ significance_analysis_server <- function(id, data, params){
         png(tmp_filename)
         print(sig_ana_reactive$plot_last)
         dev.off()
-        fun_LogIt(message = "### SIGNIFICANCE ANALYSIS")
-        fun_LogIt(message = paste(
-          "- Significance Analysis was performed on",
-          length(data_calculate),
-          "entities"
-        ))
+        
+        fun_LogIt(message = "## Significance analysis {.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
         # log which tests were performed
         if(params$PreProcessing_Procedure == "vst_DESeq"){
           fun_LogIt(
@@ -722,7 +719,7 @@ significance_analysis_server <- function(id, data, params){
         ))
         # log the test correction method
         fun_LogIt(message = paste(
-          "- p-values were adjusted using", input$correction_method, "correction method"
+          "- p-values were adjusted using", input$test_correction, "correction method"
         ))
         # log which comparisons were performed
         fun_LogIt(message = paste(
@@ -739,13 +736,11 @@ significance_analysis_server <- function(id, data, params){
            fun_LogIt(message = paste("####", comparisons[i]))
           # log the number of significant genes after correction
           fun_LogIt(message = paste(
-            "- Number of significant genes after correction for",
+            "- Number of significant genes before correction for",
             comparisons[i],
             "is",
             nrow(
-              sig_ana_reactive$sig_results[[comparisons[i]]][
-                sig_ana_reactive$sig_results[[comparisons[i]]]$padj < input$significance_level,
-              ]
+              sig_ana_reactive$sig_results[[comparisons[i]]][which(sig_ana_reactive$sig_results[[comparisons[i]]]$pvalue < input$significance_level),]
             )
           ))
           # log the number of significant genes before correction
@@ -754,29 +749,25 @@ significance_analysis_server <- function(id, data, params){
             comparisons[i],
             "is",
             nrow(
-              sig_ana_reactive$sig_results[[comparisons[i]]][
-                sig_ana_reactive$sig_results[[comparisons[i]]]$pvalue < input$significance_level,
-              ]
+              sig_ana_reactive$sig_results[[comparisons[i]]][which(sig_ana_reactive$sig_results[[comparisons[i]]]$padj < input$significance_level),]
             )
           ))
           # log the top 5 significant genes
-          browser()
-          if(params$PreProcessing_Procedure == "vst_DESeq"){
-            # get the top 5 significant genes
+          if(params$PreProcessing_Procedure == "vst_DESeq" & "result" %in% names(sig_ana_reactive$sig_results[[comparisons[i]]])){
             top5 <- head(
-              sig_ana_reactive$sig_results[[comparisons[i]]]@result[order(
-                sig_ana_reactive$sig_results[[comparisons[i]]]@result$p.adjust,
-                decreasing = FALSE
-              ),], 5
-            )
+                sig_ana_reactive$sig_results[[comparisons[i]]]@result[order(
+                  sig_ana_reactive$sig_results[[comparisons[i]]]@result$p.adjust,
+                  decreasing = FALSE
+                ),], 5
+              )
           } else {
             # get the top 5 significant genes
-            top5 <- head(
+            top5 <- as.data.frame(head(
               sig_ana_reactive$sig_results[[comparisons[i]]][order(
                 sig_ana_reactive$sig_results[[comparisons[i]]]$padj,
                 decreasing = FALSE
               ),], 5
-            )
+            ))
           }
           fun_LogIt(message = paste(
             "- Top 5 significant genes for",
@@ -784,18 +775,38 @@ significance_analysis_server <- function(id, data, params){
             "are the following:"
           ))
           fun_LogIt(message = knitr::kable(
-            top5, format = "html", format.args = list(width = 40)
-          ) %>% kableExtra::kable_styling()
-          )
+            top5,
+            format = "html",
+            escape = FALSE,
+            row.names = TRUE
+          ) %>%
+            kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+            scroll_box(width = "100%", height = "300px"))
           fun_LogIt(message = "\n")
         }
+        fun_LogIt(message = paste0(
+          "**Overview Plot** - Shown are ",input$sig_to_look_at," genes with a p-value < ",
+          input$significance_level,
+          ". The plot shows the intersection of genes that are significant in the comparisons you selected (.",
+          input$comparisons_to_visualize,")."
+        ))
         fun_LogIt(message = paste0(
           "**Overview Plot** - ![Significance Analysis](",tmp_filename,")"
         ))
         if(isTruthy(input$NotesSigAna) & !(isEmpty(input$NotesSigAna))){
-          fun_LogIt(message = "### Personal Notes:")
-          fun_LogIt(message = input$NotesSigAna)
+          fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
+          fun_LogIt(message = paste0(
+            "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
+            input$NotesSigAna,
+            "</div>"
+          ))
         }
+        
+        fun_LogIt(message = "### Publication Snippet")
+        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
+                                           params = par_tmp[[session$token]]))
+
+        
         removeNotification(notificationID)
         showNotification(ui = "Saved!",type = "message", duration = 1)
       })

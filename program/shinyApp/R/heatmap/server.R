@@ -319,18 +319,19 @@ heatmap_server <- function(id, data, params, updates){
               )
 
               # Add Log Messages
-              fun_LogIt(message = "## HEATMAP")
+              fun_LogIt(message = "## HEATMAP{.tabset .tabset-fade}")
+              fun_LogIt(message = "### Info")
               fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",input$row_selection_options))
               if(input$row_selection_options=="rowAnno_based"){
-                fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",input$anno_options_heatmap," :",input$row_anno_options_heatmap))
+                fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",input$anno_options_heatmap," :",paste0(input$row_anno_options_heatmap,collapse = ", ")))
               }
               if(!is.null(input$TopK)){
                 fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",input$TopK))
                 fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",input$row_selection_options))
                 # either based on LFC or on pVal
               }
-              fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",input$anno_options))
-              fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",input$row_anno_options))
+              fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",paste0(input$anno_options, collapse = ", ")))
+              fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",paste0(input$row_anno_options, collapse= ", ")))
               if(input$cluster_cols == TRUE){
                 fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
               }
@@ -338,6 +339,10 @@ heatmap_server <- function(id, data, params, updates){
                 fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
               }
               fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
+              
+              fun_LogIt(message = "### Publication Snippet")
+              fun_LogIt(message = snippet_heatmap(data = res_tmp[[session$token]],
+                                                   params = par_tmp[[session$token]]))
             })
           }
         )
@@ -357,18 +362,23 @@ heatmap_server <- function(id, data, params, updates){
           type="png"
           )
         # Add Log Messages
-        fun_LogIt(message = "## HEATMAP")
+        fun_LogIt(message = "## HEATMAP{.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
         fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",isolate(input$row_selection_options)))
         if(any(isolate(input$row_selection_options)=="Select based on Annotation")){
-          fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",isolate(input$anno_options_heatmap)," :",isolate(input$row_anno_options_heatmap)))
+          fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",
+                                     isolate(input$anno_options_heatmap),
+                                     " :",
+                                     paste0(isolate(input$row_anno_options_heatmap),
+                                                    collapse = ",")))
         }
         if(!is.null(isolate(input$TopK))){
           fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",isolate(input$TopK)))
           fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",isolate(input$row_selection_options)))
           # either based on LFC or on pVal
         }
-        fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",isolate(input$anno_options)))
-        fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",isolate(input$row_anno_options)))
+        fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",paste0(isolate(input$anno_options),collapse = ", ")))
+        fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",paste0(isolate(input$row_anno_options),collapse = ", ")))
         if(isolate(input$cluster_cols) == TRUE){
           fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
         }
@@ -377,9 +387,16 @@ heatmap_server <- function(id, data, params, updates){
         }
         fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
         if(isTruthy(isolate(input$NotesHeatmap)) & !(isEmpty(isolate(input$NotesHeatmap)))){
-          fun_LogIt(message = "### Personal Notes:")
-          fun_LogIt(message = isolate(input$NotesHeatmap))
+          fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
+          fun_LogIt(message = paste0(
+            "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
+            input$NotesHeatmap,
+            "</div>"
+          ))
         }
+        fun_LogIt(message = "### Publication Snippet")
+        fun_LogIt(message = snippet_heatmap(data = res_tmp[[session$token]],
+                                            params = par_tmp[[session$token]]))
 
         removeNotification(notificationID)
         showNotification("Saved!",type = "message", duration = 1)

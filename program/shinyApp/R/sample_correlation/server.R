@@ -117,7 +117,9 @@ sample_correlation_server <- function(id, data, params){
           mat = cormat,
           annotation_row = as.data.frame(annotationDF),
           main = customTitleSampleCorrelation,
-          annotation_colors = anno_colors
+          annotation_colors = anno_colors,
+          clustering_distance_rows = "correlation",
+          clustering_distance_cols = "correlation"
         )
         # assign res_temp["SampleCorrelation"]
         res_tmp[[session$token]][["SampleCorrelation"]] <<- cormat
@@ -192,10 +194,16 @@ sample_correlation_server <- function(id, data, params){
               type = gsub("\\.","",input$file_ext_SampleCorrelation)
             )
             # Add Log Messages
-            fun_LogIt(message = "## SAMPLE CORRELATION")
-            fun_LogIt(message = paste0("**SAMPLE CORRELATION** - The correlation method used was: ",input$corrMethod))
-            fun_LogIt(message = paste0("**SAMPLE CORRELATION** - The heatmap samples were colored after ",paste(input$SampleAnnotationChoice)))
-            fun_LogIt(message = paste0("**SAMPLE CORRELATION** - ![SAMPLE_CORRELATION](",tmp_filename,")"))
+            fun_LogIt("## Sample correlation {.tabset .tabset-fade}")
+            fun_LogIt(message = "### Info")
+            fun_LogIt(message = paste0("**SampleCorrelation** - The correlation method used was: ",input$corrMethod))
+            fun_LogIt(message = paste0("**SampleCorrelation** - The heatmap samples were colored after ",paste(input$SampleAnnotationChoice)))
+            fun_LogIt(message = paste0("**SampleCorrelation** - The plot was save to the locally. "))
+            fun_LogIt(message = paste0("**SampleCorrelation** - ![SAMPLE_CORRELATION](",tmp_filename,")"))
+            fun_LogIt(message = "### Publication Snippet")
+            fun_LogIt(message = snippet_sampleCorr(data=res_tmp[[session$token]],
+                                                   params=par_tmp[[session$token]]))
+            fun_LogIt(message = "<br>")
           })
           
         }
@@ -217,15 +225,24 @@ sample_correlation_server <- function(id, data, params){
         )
         
         ## Add Log Messages
-        fun_LogIt(message = "## SAMPLE CORRELATION")
-        fun_LogIt(message = paste0("**SAMPLE CORRELATION** - The correlation method used was: ",input$corrMethod))
-        fun_LogIt(message = paste0("**SAMPLE CORRELATION** - The heatmap samples were colored after ",paste(input$SampleAnnotationChoice)))
-        fun_LogIt(message = paste0("**SAMPLE CORRELATION** - ![SAMPLE_CORRELATION](",tmp_filename,")"))
+        fun_LogIt("## Sample correlation {.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
+        fun_LogIt(message = paste0("**SampleCorrelation** - The correlation method used was: ",input$corrMethod))
+        fun_LogIt(message = paste0("**SampleCorrelation** - The heatmap samples were colored after ",paste(input$SampleAnnotationChoice)))
+        fun_LogIt(message = paste0("**SampleCorrelation** - ![SAMPLE_CORRELATION](",tmp_filename,")"))
         
         if(isTruthy(input$NotesSampleCorrelation) & !(isEmpty(input$NotesSampleCorrelation))){
-          fun_LogIt(message = "### Personal Notes:")
-          fun_LogIt(message = input$NotesSampleCorrelation)
+          fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
+          fun_LogIt(message = paste0(
+            "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
+            input$NotesSampleCorrelation,
+            "</div>"
+          ))
         }
+        
+        fun_LogIt(message = "### Publication Snippet")
+        fun_LogIt(message = snippet_sampleCorr(data=res_tmp[[session$token]],
+                                               params=par_tmp[[session$token]]))
         
         removeNotification(notificationID)
         showNotification("Saved!",type = "message", duration = 1)
