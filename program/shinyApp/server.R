@@ -662,7 +662,6 @@ server <- function(input,output,session){
     
     # edit annotation columns such that if na is present in the row annotation,
     # the na gets replaced by the rowname
-    browser()
     for(i in 1:ncol(rowData(res_tmp[[session$token]]$data))){
       if(any(is.na(rowData(res_tmp[[session$token]]$data)[,i]))){
         rowData(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i]),i] <<- rownames(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i])]
