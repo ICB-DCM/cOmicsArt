@@ -262,6 +262,21 @@ server <- function(input,output,session){
         rowData(res_tmp[[session$token]]$data_original)$entrezgene_id[matched_rows] <<- matched_out$entrezgene_id[matched_rows]
       }
     }
+    
+    # edit annotation columns such that if na is present in the row annotation,
+    # the na gets replaced by the rowname
+    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data))){
+      if(any(is.na(rowData(res_tmp[[session$token]]$data)[,i]))){
+        rowData(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i]),i] <<- rownames(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i])]
+      }
+    }
+    
+    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data_original))){
+      if(any(is.na(rowData(res_tmp[[session$token]]$data_original)[,i]))){
+        rowData(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i]),i] <<- rownames(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i])]
+      }
+    }
+    
     par_tmp[[session$token]]['addedGeneAnno'] <<- TRUE
     par_tmp[[session$token]]['organism'] <<- input$AddGeneSymbols_organism
     removeModal()
