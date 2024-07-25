@@ -140,6 +140,7 @@ if(format(Sys.Date(), "%d") == "01"){
 }
 
 # Define the ggplotcustom theme
+library(ggplot2)
 custom_theme <<- theme_bw(base_size = 15) + 
   theme(
     axis.title = element_text(size = 15),        # Axis labels
