@@ -1,3 +1,6 @@
+# Keep here for now. Needs to be replaced i guess at some point.
+library(waiter)
+
 ### Global Constants will be saved here
 NOTES_PlACEHOLDER <<- "Notes you want to take alongside the plot (will be saved in the report) \nYou can use markdown syntax for your notes "
 NOTES_HELP <<- HTML("<a href='https://www.markdownguide.org/cheat-sheet/' target='_blank'>Here you can find a Markdown Cheat Sheet</a> \n

@@ -8,6 +8,7 @@
 
 library(DT)
 library(plotly)
+library(waiter)
 library(shiny, lib.loc = .libPaths()[1])
 library(shinyWidgets)
 library(shinymanager)
@@ -43,7 +44,6 @@ library(gridExtra)
 library(sva)
 library(pcaPP) # requires gfortran. Not sure how to install on server
 library(reshape2)
-library(waiter)
 # library(svglite)
 
 source("R/C.R")
