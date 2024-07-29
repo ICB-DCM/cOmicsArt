@@ -583,7 +583,7 @@ server <- function(input,output,session){
     } else if(uploaded_from() == "testdata"){
       data_input <- readRDS(
         file = "www/Transcriptomics_only_precompiled-LS.RDS"
-      )[[input[[paste0("omic_type_", uploaded_from())]]]]
+      )
       fun_LogIt(
         message = paste0("<font color=\"#FF0000\"><b>**Attention** - Test Data set used</b></font>")
       )
