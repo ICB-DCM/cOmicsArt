@@ -1,6 +1,7 @@
 ### Global Constants will be saved here
-NOTES_PlACEHOLDER <<- "Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes "
-NOTES_HELP <<- "Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)"
+NOTES_PlACEHOLDER <<- "Notes you want to take alongside the plot (will be saved in the report) \nYou can use markdown syntax for your notes "
+NOTES_HELP <<- HTML("<a href='https://www.markdownguide.org/cheat-sheet/' target='_blank'>Here you can find a Markdown Cheat Sheet</a> \n
+                    Please do not use heading mardkown syntax - this will interfere with the reports hierachy")
 
 # Test correction list
 PADJUST_METHOD <<- list(

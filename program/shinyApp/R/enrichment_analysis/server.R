@@ -120,11 +120,12 @@ enrichment_analysis_geneset_server <- function(
             filename = tmp_filename,
             plot = clusterProfiler::dotplot(result),device = "png"
           )
-          fun_LogIt(message = paste("###", id, "ENRICHMENT", sep=" "))
-          fun_LogIt(message = paste("-", id, "Enrichment was performed with a gene set of interest of size: ",length(gene_set_choice)))
-          fun_LogIt(message = paste("- Chosen Organism (needed for translation): ", organism_choice))
+
+
+
+          fun_LogIt(message = paste0("### ", id, "ENRICHMENT"))
           fun_LogIt(
-            message = paste(
+            message = paste0(
               "- The number of found enriched terms (p.adj <0.05): ",
               nrow(result@result[result@result$p.adjust<0.05,])
             )
@@ -137,12 +138,21 @@ enrichment_analysis_geneset_server <- function(
           )
           fun_LogIt(message = paste("- The top 5 terms are the following (sorted by adj. p.val)"))
           fun_LogIt(message = knitr::kable(
-            head(result@result[order(result@result$p.adjust, decreasing = F),], 5),
-            format = "html"
-          ))
+            head(result@result[order(result@result$p.adjust, decreasing = FALSE),], 5),
+            format = "html",
+            escape = FALSE,
+            row.names = FALSE
+          ) %>%
+            kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+            scroll_box(width = "100%", height = "300px"))
+
           if(isTruthy(input$Notes) & !(isEmpty(input$Notes))){
-            fun_LogIt(message = "### Personal Notes:")
-            fun_LogIt(message = input$Notes)
+            fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
+            fun_LogIt(message = paste0(
+              "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
+              input$Notes,
+              "</div>"
+            ))
           }
           removeNotification(notificationID)
           showNotification(ui = "Saved!",type = "message", duration = 1)
@@ -241,7 +251,10 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             selectInput(
               inputId = ns("ValueToAttach"),
               label = "Select the metric to sort the genes after",
-              choices = c("LFC_abs", "LFC"),
+              choices = list(
+                "log fold change (LFC)"="LFC",
+                "absolute LFC"="LFC_abs",
+                "t-statistic value"="statistic_value"),
               selected = input$ValueToAttach
             )
           })
@@ -374,7 +387,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       })
       ## Do enrichment ----
       geneSetChoice <- reactive({
-        if(isTruthy(input$GeneSet2Enrich)){
+
+        if(isTruthy(input$GeneSet2Enrich) & input$ORA_or_GSE == "OverRepresentation_Analysis" ){
           if(input$GeneSet2Enrich == "DE_Genes"){
             # TODO add option to send DE genes
             geneSetChoice_tmp <- DE_genelist()
@@ -403,7 +417,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             geneSetChoice_tmp <- res_tmp[[session$token]]$Heatmap$gene_list
           }
         }else{
-          if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
+          if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs" | input$ValueToAttach == "statistic_value"){
             #takes all genes after preprocessing
             #get LFC
             ctrl_samples_idx <- which(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
@@ -438,6 +452,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             Data2Plot_tmp <- Data2Plot
             if(input$ValueToAttach == "LFC"){
               geneSetChoice_tmp <- Data2Plot_tmp$LFC
+            } else if(input$ValueToAttach == "statistic_value"){
+              geneSetChoice_tmp <- Data2Plot_tmp$statistic
             } else if(input$ValueToAttach == "LFC_abs"){
               geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
             }
@@ -455,7 +471,9 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       observeEvent(input$enrichmentGO,{
         ea_reactives$ea_info <- "Enrichment is running..."
         print("Start Enrichment")
-        fun_LogIt("## ENRICHMENT")
+
+        fun_LogIt(message = "## Enrichment{.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
         req(geneSetChoice())
         ea_reactives$tmp_genes <- geneSetChoice()
         par_tmp[[session$token]]$Enrichment$tmp_genes <<- ea_reactives$tmp_genes
@@ -502,7 +520,9 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               data = ea_reactives$data
             )
           }
+
           ea_reactives$can_start <- TRUE
+
         }
         # Modal in case translation fails
         observeEvent(input$translation_again, {
@@ -558,6 +578,13 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           )
         })
         # start the analysis if ea_reactives$can_start == TRUE
+        fun_LogIt(message = paste0("**Enrichment general** The analysed gene set size: ",
+                                   length(ea_reactives$tmp_genes)))
+        fun_LogIt(message = paste0("**Enrichment general** Chosen Organism (needed for translation): ",
+                                   ea_reactives$organism))
+        fun_LogIt(message = paste0("**Enrichment general** The following sets to check an enrichment: ",
+                                   paste0(names(unlist(ea_reactives$enrichments2do))[unlist(ea_reactives$enrichments2do)],collapse = ",")))
+
         observeEvent(ea_reactives$can_start, {
           req(ea_reactives$can_start == TRUE)
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
@@ -574,6 +601,18 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             )
             tmp <- getUserReactiveValues(input)
             par_tmp[[session$token]]$Enrichment[names(tmp)] <<- tmp
+
+            fun_LogIt(message = paste0("**GSEA** Gene Set enrichment analysis was perfomed."))
+            fun_LogIt(message = paste0("**GSEA** The genes were sorted by: ",input$ValueToAttach))
+            fun_LogIt(message = paste0("**GSEA** Calculation based on ",
+                                      input$sample_annotation_types_cmp_GSEA,": ",
+                                       input$Groups2Compare_treat_GSEA,
+                                       " vs. ",
+                                       input$Groups2Compare_ref_GSEA))
+            fun_LogIt(message = paste0("**GSEA** The adj. p-value threshold was set to 0.05,
+                                       whereby mutliple testing correction was : ",
+                                       input$test_correction))
+
           }else{
             ea_reactives$tmp_genes <- rowData(data$data)[ea_reactives$tmp_genes,"entrezgene_id"]
             ea_reactives$enrichment_results <- over_representation_analysis(
@@ -584,9 +623,21 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               enrichments2do = ea_reactives$enrichments2do,
               adjustMethod = input$test_correction
             )
+            fun_LogIt(message = paste0("**ORA** Overrepresentation analysis was perfomed."))
+            fun_LogIt(message = paste0("**ORA** The genes were taken from: ",input$ValueToAttach))
+            if(input$GeneSet2Enrich =="ProvidedGeneSet"){
+              fun_LogIt(message = paste0("**ORA** The gene set was provided by the user. Filename: ",input$UploadedGeneSet$name))
+            }
+            fun_LogIt(message = paste0("**ORA** The adj. p-value threshold was set to 0.05,
+                                       whereby mutliple testing correction was : ",
+                                       input$test_correction))
             tmp <- getUserReactiveValues(input)
             par_tmp[[session$token]]$Enrichment[names(tmp)] <<- tmp
           }
+          fun_LogIt(message = "### Publication Snippet")
+          fun_LogIt(message = snippet_Enrichment(data = res_tmp[[session$token]],
+                                                 params = par_tmp[[session$token]]))
+          fun_LogIt(message = paste0("## Enrichment results {.tabset .tabset-fade}"))
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
           # res_temp Zuweisung
           res_tmp[[session$token]]["Enrichment"] <<- ea_reactives$enrichment_results

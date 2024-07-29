@@ -146,6 +146,8 @@ pca_Server <- function(id, data, params, row_select){
           )
           pca_reactives$calculate <- 1
         }
+        
+
       })
 
       observeEvent(toListen2PCA(),{
@@ -511,10 +513,25 @@ pca_Server <- function(id, data, params, row_select){
               )
 
               # Add Log Messages
-              fun_LogIt(message = "## PCA")
+              fun_LogIt(message = "## PCA {.tabset .tabset-fade}")
+              fun_LogIt(message = "### Info")
+              if(input$SampleAnnotationTypes_pca!="all"){
+                fun_LogIt(
+                  message = paste0("**PCA** - The following PCA-plot is based on a selection on: ", input$sample_selection_pca)
+                )
+                fun_LogIt(message = "**PCA** - All samples with",input$SampleAnnotationTypes_pca,"being ",paste(input$SampleAnnotationTypes_pca,collapse = ", "),"were selected.")
+              }else{
+                fun_LogIt(message = "**PCA** - The PCA was computed on the entire dataset.")
+              }
+              
               fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
-              ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print("Args!"))
+              ifelse(input$Show_loadings == "Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
               fun_LogIt(message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
+              
+              fun_LogIt(message = "### Publication Snippet")
+              fun_LogIt(message = snippet_PCA(data = res_tmp[[session$token]],
+                                              params = par_tmp[[session$token]]))
+
             })
           }
         )
@@ -585,9 +602,13 @@ pca_Server <- function(id, data, params, row_select){
               ggsave(tmp_filename, plot=scree_plot, device = gsub("\\.","",input$file_ext_Scree))
 
               # Add Log Messages
-              fun_LogIt(message = "### PCA ScreePlot")
+              fun_LogIt(message = "## PCA ScreePlot{.tabset .tabset-fade}")
+              fun_LogIt(message = "### Info")
               fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
               fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
+              fun_LogIt(message = "### Publication Snippet")
+              fun_LogIt(message = snippet_PCAscree(data = res_tmp[[session$token]],
+                                                   params = par_tmp[[session$token]]))
             })
           }
         )
@@ -664,10 +685,15 @@ pca_Server <- function(id, data, params, row_select){
                 dpi = "print"
               )
               # Add Log Messages
-              fun_LogIt(message = "### PCA Loadings")
+              fun_LogIt(message = "## PCA Loadings{.tabset .tabset-fade}")
+              fun_LogIt(message = "### Info")
+
               fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",input$x_axis_selection))
               fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
               fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
+              fun_LogIt(message = "### Publication Snippet")
+              fun_LogIt(message = snippet_PCAloadings(data = res_tmp[[session$token]],
+                                                    params = par_tmp[[session$token]]))
             })
           }
         )
@@ -745,10 +771,16 @@ pca_Server <- function(id, data, params, row_select){
                 dpi = "print"
               )
               # Add Log Messages
-              fun_LogIt(message = "### PCA Loadings Matrix")
+              fun_LogIt(message = "## PCA Loadings Matrix{.tabset .tabset-fade}")
+              fun_LogIt(message = "### Info")
               fun_LogIt(message = paste0("**PCALoadingsMatrix** - Loadings plot for Principle Components 1 till ",input$x_axis_selection))
               fun_LogIt(message = paste0("**PCALoadingsMatrix** - Showing all entities which have an absolute Loadings value of at least", input$filterValue))
               fun_LogIt(message = paste0("**PCALoadingsMatrix** - The corresponding Loadings Matrix plot - ![PCALoadingsMatrix](",tmp_filename,")"))
+              
+              fun_LogIt(message = "### Publication Snippet")
+              fun_LogIt(message = snippet_PCAloadingsMatrix(data = res_tmp[[session$token]],
+                                                    params = par_tmp[[session$token]]))
+
             })
           }
         )
@@ -766,16 +798,35 @@ pca_Server <- function(id, data, params, row_select){
             device = "png"
           )
           # Add Log Messages
-          fun_LogIt(message = "## PCA")
-          fun_LogIt(
-            message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options)
+          fun_LogIt(message = "## PCA {.tabset .tabset-fade}")
+          fun_LogIt(message = "### Info")
+          if(input$data_selection_pca){
+            fun_LogIt(
+              message = paste0("**PCA** - The following PCA-plot is based on a selection of the data. ")
             )
+            fun_LogIt(message = "**PCA** - All samples with",input$SampleAnnotationTypes_pca,"being ",paste(input$sample_selection_pca,collapse = ", "),"were selected.")
+            
+          }else{
+            fun_LogIt(message = "**PCA** - The PCA was computed on the entire dataset.")
+          }
+          fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
           ifelse(input$Show_loadings == "Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
           fun_LogIt(message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
+          
           if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
-            fun_LogIt(message = "### Personal Notes:")
-            fun_LogIt(message = input$NotesPCA)
+            fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
+            fun_LogIt(message = paste0(
+              "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
+              input$NotesPCA,
+              "</div>"
+            ))
           }
+          
+          fun_LogIt(message = "### Publication Snippet")
+          fun_LogIt(message = snippet_PCA(data = res_tmp[[session$token]],
+                                          params = par_tmp[[session$token]]))
+          
+
           removeNotification(notificationID)
           showNotification("Saved!",type = "message", duration = 1)
       })
@@ -792,9 +843,13 @@ pca_Server <- function(id, data, params, row_select){
         )
 
         # Add Log Messages
-        fun_LogIt(message = "### PCA ScreePlot")
+        fun_LogIt(message = "## PCA ScreePlot{.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
         fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
         fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
+        fun_LogIt(message = "### Publication Snippet")
+        fun_LogIt(message = snippet_PCAscree(data = res_tmp[[session$token]],
+                                             params = par_tmp[[session$token]]))
 
         removeNotification(notificationID)
         showNotification("Saved!",type = "message", duration = 1)
@@ -812,10 +867,16 @@ pca_Server <- function(id, data, params, row_select){
         )
 
         # Add Log Messages
-        fun_LogIt(message = "### PCA Loadings")
+        # Add Log Messages
+        fun_LogIt(message = "## PCA Loadings{.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
+        
         fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",pca_reactives$Loadings_x_axis))
         fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",pca_reactives$Loadings_topSlider," and the lowest ",pca_reactives$Loadings_bottomSlider," Loadings"))
         fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
+        fun_LogIt(message = "### Publication Snippet")
+        fun_LogIt(message = snippet_PCAloadings(data = res_tmp[[session$token]],
+                                                params = par_tmp[[session$token]]))
 
         removeNotification(notificationID)
         showNotification("Saved!",type = "message", duration = 1)
@@ -835,14 +896,22 @@ pca_Server <- function(id, data, params, row_select){
           dpi = "print"
         )
         # Add Log Messages
-        fun_LogIt(message = "### PCA Loadings Matrix")
+        fun_LogIt(message = "## PCA Loadings Matrix{.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
         fun_LogIt(message = paste0("**PCALoadingsMatrix** - Loadings plot for Principle Components 1 till ",input$x_axis_selection))
         fun_LogIt(message = paste0("**PCALoadingsMatrix** - Showing all entities which have an absolute Loadings value of at least", input$filterValue))
         fun_LogIt(message = paste0("**PCALoadingsMatrix** - The corresponding Loadings Matrix plot - ![PCALoadingsMatrix](",tmp_filename,")"))
         
+        fun_LogIt(message = "### Publication Snippet")
+        fun_LogIt(message = snippet_PCAloadingsMatrix(data = res_tmp[[session$token]],
+                                                      params = par_tmp[[session$token]]))
+        
         removeNotification(notificationID)
         showNotification("Saved!",type = "message", duration = 1)
       })
+      
+      
+      
     }
   )
 }
