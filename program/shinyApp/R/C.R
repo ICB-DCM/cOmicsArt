@@ -138,3 +138,20 @@ if(format(Sys.Date(), "%d") == "01"){
   ensembl_objects <- readRDS("www/EnsemblObjects.RDS")
   loadedVersion <<- ensembl_objects
 }
+
+
+LOADING_SCREEN <<- tagList(
+  div(
+    style = "position: relative; display: flex; justify-content: center; align-items: center;",
+    div(
+      style = "display: flex;",
+      img(src = "bored_panda_11.png", style = "max-width: 100%; height: auto;"),
+      img(src = "bored_panda_12.png", style = "max-width: 100%; height: auto;")
+    ),
+    div(
+      style = "position: absolute; top: 20%; left: 60%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; color: white; font-size: 24px; font-weight: bold;",
+      spin_flower(),
+      span("Computing...")
+    )
+  )
+)

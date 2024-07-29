@@ -470,6 +470,12 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       })
       observeEvent(input$enrichmentGO,{
         ea_reactives$ea_info <- "Enrichment is running..."
+        waiter <- Waiter$new(
+          id=ns("EnrichmentTabs"),
+          html = LOADING_SCREEN,
+          color="#70BF4F47"
+        )
+        waiter$show()
         print("Start Enrichment")
 
         fun_LogIt(message = "## Enrichment{.tabset .tabset-fade}")
@@ -638,6 +644,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           fun_LogIt(message = snippet_Enrichment(data = res_tmp[[session$token]],
                                                  params = par_tmp[[session$token]]))
           fun_LogIt(message = paste0("## Enrichment results {.tabset .tabset-fade}"))
+          waiter$hide()
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
           # res_temp Zuweisung
           res_tmp[[session$token]]["Enrichment"] <<- ea_reactives$enrichment_results

@@ -61,6 +61,7 @@ pca_main_panel <- function(ns){
   mainPanel(
     id = "mainpanel_pca",
     tabsetPanel(
+      id = "plot_panels_pca",
       type = "pills",
       tabPanel(
         title = "PCA_plot",

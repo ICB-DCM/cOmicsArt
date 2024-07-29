@@ -43,6 +43,7 @@ library(gridExtra)
 library(sva)
 library(pcaPP) # requires gfortran. Not sure how to install on server
 library(reshape2)
+library(waiter)
 # library(svglite)
 
 source("R/C.R")
@@ -61,6 +62,9 @@ options(repos = BiocManager::repositories())
 options(spinner.color = "#1c8a3b", spinner.color.background = "#ffffff", spinner.size = 2)
 
 ui <- shiny::fluidPage(
+  # Loading Bars?
+  # useWaitress(),
+  useWaiter(),
   # JS to reset input values
   tags$script("
     Shiny.addCustomMessageHandler('resetValue', function(variableName) {

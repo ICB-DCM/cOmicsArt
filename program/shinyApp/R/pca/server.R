@@ -156,6 +156,12 @@ pca_Server <- function(id, data, params, row_select){
         req(input$coloring_options)
         req(data$data)
         req(input$Do_PCA[1] > 0)
+        waiter <- Waiter$new(
+          id="plot_panels_pca",
+          html = LOADING_SCREEN,
+          color="#70BF4F47"
+        )
+        waiter$show()
 
         print("PCA analysis on pre-selected data")
         customTitle <- paste0(
@@ -721,6 +727,7 @@ pca_Server <- function(id, data, params, row_select){
 
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$PCA[names(tmp)] <<- tmp
+        waiter$hide()
 
         output$getR_Code_Loadings_matrix <- downloadHandler(
           filename = function(){

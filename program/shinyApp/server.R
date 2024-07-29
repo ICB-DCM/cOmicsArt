@@ -51,7 +51,8 @@ server <- function(input,output,session){
       list.files(path=".") %>%
         setdiff(list.files(path=".", pattern = ".csv")) %>%
         setdiff(list.files(path=".", pattern = ".RDS")) %>%
-        setdiff(list.files(path=".", pattern = ".png"))
+        setdiff(list.files(path=".", pattern = ".png")) %>%
+        setdiff(list.files(path=".", pattern = ".gif"))
     )
     print("Removed old Report files for fresh start")
     setwd("..")
@@ -869,6 +870,13 @@ server <- function(input,output,session){
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     # only enter this when you actually click data
     req(input$Do_preprocessing > 0)
+    waiter <- Waiter$new(
+      id="data_summary",
+      html = LOADING_SCREEN,
+      color="#3897F147",
+      hide_on_render=FALSE
+    )
+    waiter$show()
     print("Do Preprocessing")
     print(selectedData())
     addWarning <- ""
@@ -1015,6 +1023,7 @@ server <- function(input,output,session){
       violin_plot(res_tmp[[session$token]]$data, 
                   color_by = input$violin_color)
       })
+    waiter$hide()
     return("Pre-Processing successfully")
   })
   

@@ -81,6 +81,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         tabPanel(
           title = "Volcano",
           splitLayout(
+            id=ns(paste(contrast[1], contrast[2], "test", sep = "_")),
             style = "border: 1px solid silver:",
             cellWidths = c("40%", "60%"),
             plotlyOutput(
@@ -251,6 +252,16 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   })
   observeEvent(toPlotVolcano(), {
     req(input[[psig_th]], input[[lfc_th]], input[[Volcano_anno_tooltip]])
+    waiter <- Waiter$new(
+      id=ns(paste(contrast[1], contrast[2], "test", sep = "_")),
+      html = LOADING_SCREEN,
+      color="#70BF4F47",
+      hide_on_render=FALSE
+    )
+    waiter$show()
+    on.exit({
+      waiter$hide()
+    })
     # workaround, as somehow the input values dont show up unless we change it in the shiny
     # TODO: fix this (@Lea?)
     sig_ana_reactive$th_psig <- input[[psig_th]]
@@ -328,7 +339,8 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       ylab("-log10(p-value)") +
       ggtitle(label="Uncorrected p-Values") +
       theme_bw()
-    output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
+    output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({
+      ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
       legendgroup="color"
     )})

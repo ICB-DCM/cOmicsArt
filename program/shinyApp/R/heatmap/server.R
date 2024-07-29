@@ -135,6 +135,13 @@ heatmap_server <- function(id, data, params, updates){
           input$row_label_options
         )
         req(selectedData_processed())
+        waiter <- Waiter$new(
+          id=ns("HeatmapPlot"),
+          html = LOADING_SCREEN,
+          color="#70BF4F47"
+        )
+        waiter$show()
+
         # update the data
         data <- update_data(session$token)
         useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
@@ -178,7 +185,7 @@ heatmap_server <- function(id, data, params, updates){
             title = "Warning",
             "The dataset has more than 100 rows. This may cause a high runtime. Do you want to continue?",
             footer = tagList(
-              modalButton("Cancel"),
+              actionButton(ns("cancel_heatmap"), "Cancel"),
               actionButton(ns("continue_heatmap"), "Continue")
             )
           ))
@@ -189,6 +196,7 @@ heatmap_server <- function(id, data, params, updates){
           })
 
           observeEvent(input$cancel_heatmap, {
+            waiter$hide()
             proceed_with_heatmap(FALSE)
             removeModal()
           })
@@ -221,9 +229,11 @@ heatmap_server <- function(id, data, params, updates){
           cluster_cols <- FALSE
           if(input$cluster_rows){
             cluster_rows <- hclust(dist(data2plot), method = "complete")
+            # waitress$inc(30)
           }
           if(input$cluster_cols){
             cluster_cols <- hclust(dist(t(data2plot)), method = "complete")
+            # waitress$inc(30)
           }
 
           # Heatmap
@@ -250,6 +260,7 @@ heatmap_server <- function(id, data, params, updates){
                 silent = F,
                 breaks = breakings
             )
+            # waitress$inc(20)
           }, error = function(e) {
             error_modal(e)
             return(NULL)
@@ -262,6 +273,7 @@ heatmap_server <- function(id, data, params, updates){
           res_tmp[[session$token]][["Heatmap"]]$plot <<- heatmap_plot
           tmp <- getUserReactiveValues(input)
           par_tmp[[session$token]]$Heatmap[names(tmp)] <<- tmp
+          waiter$hide()
         })
 
 
