@@ -21,110 +21,92 @@ pca_Server <- function(id, data, params, row_select){
       )
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
+
       ## UI Section ----
-      output$UseBatch_ui <- renderUI({
-        req(par_tmp[[session$token]]$BatchColumn != "NULL")
-        selectInput(
-          inputId = ns("UseBatch"),
-          label = "Use batch corrected data?",
-          choices = c("No","Yes"),
-          selected = "No"
-        )
-      })
-      output$x_axis_selection_ui <- renderUI({radioGroupButtons(
-        inputId = ns("x_axis_selection"),
-        label = "PC for x-Axis",
-        choices = c("PC1","PC2", "PC3", "PC4"),
-        direction = "vertical",
-        selected = "PC1"
-      )})
-      output$y_axis_selection_ui <- renderUI({radioGroupButtons(
-        inputId = ns("y_axis_selection"),
-        label = "PC for y-Axis",
-        choices = c("PC1","PC2", "PC3", "PC4"),
-        direction = "vertical",
-        selected = "PC2"
-      )})
-      output$Show_loadings_ui <- renderUI({radioGroupButtons(
-        inputId = ns("Show_loadings"),
-        label = "Plot Loadings on top? (currently top 5)",
-        choices = c("Yes","No"),
-        direction = "horizontal",
-        selected = "No"
-      )})
-      output$coloring_options_ui <- renderUI({
+      observeEvent(input$refreshUI, {
         req(data_input_shiny())
-        selectInput(
-          inputId = ns("coloring_options"),
-          label = "Choose the variable to color the samples after",
+        print("Refreshing UI Heatmap")
+        data <- update_data(session$token)
+
+        output$UseBatch_ui <- renderUI({
+          req(par_tmp[[session$token]]$BatchColumn != "NULL")
+          selectInput(
+            inputId = ns("UseBatch"),
+            label = "Use batch corrected data?",
+            choices = c("No","Yes"),
+            selected = "No"
+          )
+        })
+        output$coloring_options_ui <- renderUI({
+          selectInput(
+            inputId = ns("coloring_options"),
+            label = "Choose the variable to color the samples after",
+            choices = c(colnames(colData(data$data))),
+            multiple = F # would be cool if true, to be able to merge vars ?!
+          )
+        })
+        output$nPCAs_to_look_at_ui <- renderUI({
+          sliderInput(
+            inputId = ns("nPCAs_to_look_at"),
+            label = "Number of PC's to include",
+            min = 1,
+            max = length(c(colnames(colData(data$data)))),
+            value = 4,
+            step = 1
+          )
+        })
+
+        ## Data Selection UI ---
+        observe({
+          if(input$data_selection_pca){
+            output$SampleAnnotationTypes_pca_ui <- renderUI({
+              selectInput(
+                inputId = ns("SampleAnnotationTypes_pca"),
+                label = "Which annotation type do you want to select on?",
+                choices = c(colnames(colData(data$data))),
+                selected = c(colnames(colData(data$data)))[1],
+                multiple = F
+              )
+            })
+            output$sample_selection_pca_ui <- renderUI({
+              req(isTruthy(input$SampleAnnotationTypes_pca))
+              selectInput(
+                inputId = ns("sample_selection_pca"),
+                label = "Which entities to use? (Will be the union if multiple selected)",
+                choices = c(
+                  "all",
+                  unique(colData(data$data)[,input$SampleAnnotationTypes_pca])
+                ),
+                selected = "all",
+                multiple = T
+              )
+            })
+          } else{
+            hide(id = "SampleAnnotationTypes_pca",anim=T)
+            hide(id = "sample_selection_pca",anim=T)
+          }
+        })
+
+        output$PCA_anno_tooltip_ui <- renderUI({selectInput(
+          inputId = ns("PCA_anno_tooltip"),
+          label = "Select the anno to be shown at tooltip",
           choices = c(colnames(colData(data$data))),
-          multiple = F # would be cool if true, to be able to merge vars ?!
-        )
-      })
-      output$nPCAs_to_look_at_ui <- renderUI({
-        req(data_input_shiny())
-        sliderInput(
-          inputId = ns("nPCAs_to_look_at"),
-          label = "Number of PC's to include",
-          min = 1,
-          max = length(c(colnames(colData(data$data)))), 
-          value = 4,
-          step = 1
-        )
-      })
-      
-      ## Data Selection UI ---
-      observe({
-        if(input$data_selection_pca){
-          output$SampleAnnotationTypes_pca_ui <- renderUI({
-            req(data_input_shiny())
-            selectInput(
-              inputId = ns("SampleAnnotationTypes_pca"),
-              label = "Which annotation type do you want to select on?",
-              choices = c(colnames(colData(data$data))),
-              selected = c(colnames(colData(data$data)))[1],
-              multiple = F
-            )
-          })
-          output$sample_selection_pca_ui <- renderUI({
-            req(data_input_shiny(),isTruthy(input$SampleAnnotationTypes_pca))
-            selectInput(
-              inputId = ns("sample_selection_pca"),
-              label = "Which entities to use? (Will be the union if multiple selected)",
-              choices = c(
-                "all",
-                unique(colData(data$data)[,input$SampleAnnotationTypes_pca])
-              ),
-              selected = "all",
-              multiple = T
-            )
-          })
-        } else{
-          hide(id = "SampleAnnotationTypes_pca",anim=T)
-          hide(id = "sample_selection_pca",anim=T)
-        }
-      })
+          multiple = F
+        )})
 
-      output$PCA_anno_tooltip_ui <- renderUI({selectInput(
-        inputId = ns("PCA_anno_tooltip"),
-        label = "Select the anno to be shown at tooltip",
-        choices = c(colnames(colData(data$data))),
-        multiple = F
-      )})
-
-      output$EntitieAnno_Loadings_ui <- renderUI({selectInput(
-        inputId = ns("EntitieAnno_Loadings"),
-        label = "Select the annotype shown at y-axis",
-        choices = c(colnames(rowData(data$data))),
-        multiple = F
-      )})
-
-      output$EntitieAnno_Loadings_matrix_ui <- renderUI({selectInput(
-        inputId = ns("EntitieAnno_Loadings_matrix"),
-        label = "Select the annotype shown at y-axis",
-        choices = c(colnames(rowData(data$data))),
-        multiple = F
-      )})
+        output$EntitieAnno_Loadings_ui <- renderUI({selectInput(
+          inputId = ns("EntitieAnno_Loadings"),
+          label = "Select the annotype shown at y-axis",
+          choices = c(colnames(rowData(data$data))),
+          multiple = F
+        )})
+        output$EntitieAnno_Loadings_matrix_ui <- renderUI({selectInput(
+          inputId = ns("EntitieAnno_Loadings_matrix"),
+          label = "Select the annotype shown at y-axis",
+          choices = c(colnames(rowData(data$data))),
+          multiple = F
+        )})
+      })
 
 
       toListen2PCA <- reactive({list(

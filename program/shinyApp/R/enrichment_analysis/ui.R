@@ -78,7 +78,12 @@ ea_sidebar <- function(ns){
   sidebarPanel(
     id = "sidebar_enrichment_analysis",
     uiOutput(outputId = ns("OrganismChoice_ui")) %>% helper(type = "markdown", content = "EA_Options"),
-    uiOutput(outputId = ns("ORA_or_GSE_ui")),
+    radioButtons(
+      inputId = ns("ORA_or_GSE"),
+      label = "Choose type of Analysis",
+      choices = c("GeneSetEnrichment","OverRepresentation_Analysis"),
+      selected = "GeneSetEnrichment"
+    ),
     uiOutput(outputId = ns("UseBatch_ui")),
     uiOutput(outputId = ns("ValueToAttach_ui")),
     uiOutput(outputId = ns("sample_annotation_types_cmp_GSEA_ui")),
@@ -86,7 +91,15 @@ ea_sidebar <- function(ns){
     uiOutput(outputId = ns("Groups2Compare_treat_GSEA_ui")),
     uiOutput(outputId = ns("psig_threhsold_GSEA_ui")),
     uiOutput(outputId = ns("GeneSetChoice_ui")) %>% helper(type = "markdown", content = "EA_GeneSets"),
-    uiOutput(outputId = ns("AdjustmentMethod_ui")),
+    selectInput(
+        inputId = ns("test_correction"),
+        label = "Test correction",
+        choices = c(
+          "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
+          "Holm", "Hommel", "Hochberg", "FDR"
+        ),
+        selected = "Benjamini-Hochberg"
+    ),
     uiOutput(outputId = ns("GeneSet2Enrich_ui")),
     uiOutput(outputId = ns("UploadedGeneSet_ui")),
     uiOutput(outputId = ns("UniverseOfGene_ui")),
