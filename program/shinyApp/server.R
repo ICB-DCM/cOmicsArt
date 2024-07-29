@@ -29,7 +29,7 @@ server <- function(input,output,session){
             "' target='_blank'>cOmicsART</a>",
             " application under version ",
             VERSION,
-            ". Documentation on the user interface can be found ",
+            ".\n Documentation on the user interface can be found ",
             "<a href='",
             DOCUMENTATION,
             "' target='_blank'>here</a>.\n\n"
@@ -263,6 +263,7 @@ server <- function(input,output,session){
         rowData(res_tmp[[session$token]]$data_original)$entrezgene_id[matched_rows] <<- matched_out$entrezgene_id[matched_rows]
       }
     }
+    par_tmp[[session$token]]['addedGeneAnno'] <<- TRUE
     par_tmp[[session$token]]['organism'] <<- input$AddGeneSymbols_organism
     removeModal()
   })
@@ -452,7 +453,8 @@ server <- function(input,output,session){
     req(data_input_shiny())
     par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
     omic_type(input[[paste0("omic_type_", uploaded_from())]])
-    fun_LogIt(message = "## DataInput {.tabset .tabset-fade}")
+    par_tmp[[session$token]]['addedGeneAnno'] <<- FALSE
+    fun_LogIt(message = "## Data Selection {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
     fun_LogIt(
       message = paste0("**DataInput** - Uploaded Omic Type: ", par_tmp[[session$token]]['omic_type'])
@@ -502,6 +504,12 @@ server <- function(input,output,session){
           input$data_sample_anno1$name,"\n\t",
           input$data_row_anno1$name
         ))
+
+        fun_LogIt(message = paste0(
+          "**DataInput** - The raw data dimensions are: ",
+          paste0(dim(res_tmp[[session$token]]$data_original),collapse = ", ")
+        ))
+        
       }
       showTab(inputId = "tabsetPanel1", target = "Pre-processing")
     }
@@ -564,7 +572,7 @@ server <- function(input,output,session){
         })
       }
       data_input <- test_data_upload()
-    } else if(uploaded_from()=="precompiled"){
+    } else if(uploaded_from() == "precompiled"){
       uploadedFile <- readRDS(file = input$data_preDone$datapath)
       if(any(names(uploadedFile) %in% input[[paste0("omic_type_", uploaded_from())]])){
         # This is a file precompiled before 14.March.2023
@@ -572,12 +580,12 @@ server <- function(input,output,session){
       } else {
         data_input[[paste0(input[[paste0("omic_type_", uploaded_from())]],"_SumExp")]] <- uploadedFile
       }
-    } else if(uploaded_from()=="testdata"){
+    } else if(uploaded_from() == "testdata"){
       data_input <- readRDS(
         file = "www/Transcriptomics_only_precompiled-LS.RDS"
       )[[input[[paste0("omic_type_", uploaded_from())]]]]
       fun_LogIt(
-        message = paste0("**DataInput** - Test Data set used")
+        message = paste0("<font color=\"#FF0000\"><b>**Attention** - Test Data set used</b></font>")
       )
     } else {
       output$debug <- renderText({
@@ -637,20 +645,6 @@ server <- function(input,output,session){
       nrow(res_tmp[[session$token]]$data_original) - nrow(res_tmp[[session$token]]$data)
     ))
 
-    fun_LogIt(
-      message = "**DataInput** - All constant annotation entries for entities and samples are removed from the thin out the selection options!"
-    )
-    fun_LogIt(message = paste0(
-        "**DataInput** - The raw data dimensions are:",
-        paste0(dim(res_tmp[[session$token]]$data_original),collapse = ", ")
-    ))
-
-    fun_LogIt(message = "### Publication Snippet")
-    fun_LogIt(message = snippet_dataInput(
-      data_type = par_tmp[[session$token]]$omic_type,
-      data_dimension = paste0(dim(res_tmp[[session$token]]$data_original),collapse = ", ")
-    ))
-    fun_LogIt(message = "<br>")
     return("DataUploadSuccesful")
   })
   #data_input_shiny = is the res object now which is global => not needed ?!
@@ -736,7 +730,6 @@ server <- function(input,output,session){
     # Do actual selection before logging
     print(selectedData())
     # add row and col selection options
-    fun_LogIt(message = "## Data Selection")
     fun_LogIt(message = "**DataSelection** - The following selection was conducted:")
     print(length(input$sample_selection))
     fun_LogIt(message = paste0(
@@ -749,13 +742,18 @@ server <- function(input,output,session){
       input$providedRowAnnotationTypes,
       ": ",paste(input$row_selection,collapse = ", ")
     ))
-    if(!is.null(input$propensityChoiceUser) & length(input$row_selection)>1){
+    if(!is.null(input$propensityChoiceUser)){
       # also record IQR if this + other selection was selected
       fun_LogIt(message = paste0(
         "**DataSelection** - IQR treshold: ",
         input$propensityChoiceUser
       ))
     }
+    
+    fun_LogIt(message = "### Publication Snippet")
+    fun_LogIt(message = snippet_dataInput(data=res_tmp[[session$token]],
+                                          params=par_tmp[[session$token]]))
+    fun_LogIt(message = "<br>")
     showTab(inputId = "tabsetPanel1",target = "Pre-processing",select = T)
   })
   
@@ -763,7 +761,6 @@ server <- function(input,output,session){
   selectedData <- reactive({
     shiny::req(input$row_selection, input$sample_selection)
     par_tmp[[session$token]][["row_selection"]] <<- input$row_selection
-
     par_tmp[[session$token]][["sample_selection"]] <<- input$sample_selection
     par_tmp[[session$token]][["providedRowAnnotationTypes"]] <<- input$providedRowAnnotationTypes
     print("Alright do Row selection")
@@ -796,6 +793,7 @@ server <- function(input,output,session){
         filteredIQR_Expr <- assay(res_tmp[[session$token]]$data_original)[toKeep,]
         selected <- intersect(selected, rownames(filteredIQR_Expr))
       }
+      par_tmp[[session$token]]['propensity'] <<- input$propensityChoiceUser
       remove(filteredIQR_Expr)
     }
 
@@ -883,6 +881,8 @@ server <- function(input,output,session){
     print(selectedData())
     addWarning <- ""
     par_tmp[[session$token]]['PreProcessing_Procedure'] <<- input$PreProcessing_Procedure
+    # reset data to the selection that was done
+    res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]]
 
     print("Remove all entities which are constant over all samples")
     res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data[rownames(res_tmp[[session$token]]$data[which(apply(assay(res_tmp[[session$token]]$data),1,sd) != 0),]),]
@@ -1004,6 +1004,8 @@ server <- function(input,output,session){
       shinyjs::click("single_gene_visualisation-refreshUI",asis = T)
       shinyjs::click("EnrichmentAnalysis-refreshUI",asis = T)
       shinyjs::click("Heatmap-refreshUI",asis = T)
+      shinyjs::click("PCA-refreshUI",asis = T)
+      shinyjs::click("sample_correlation-refreshUI",asis = T)
       paste0(
         addWarning,
         "The data has the dimensions of: ",
@@ -1035,9 +1037,10 @@ server <- function(input,output,session){
     } else {
       tmp_logMessage <- "none"
     }
-    fun_LogIt("## Pre Processing")
+    fun_LogIt("## Pre Processing {.tabset .tabset-fade}")
+    fun_LogIt(message = "### Info")
     fun_LogIt(
-      message = "**PreProcessing** - As general remove all entities which are constant over all samples (automatically)"
+      message = "**PreProcessing** - Alaways done: removal of all entities which are constant over all samples"
     )
     fun_LogIt(
       message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage)
@@ -1045,7 +1048,7 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0(
         "**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",
-        ifelse(input$PreProcessing_Procedure=="vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),input$PreProcessing_Procedure)
+        ifelse(input$PreProcessing_Procedure == "vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),input$PreProcessing_Procedure)
       )
     )
     if(input$BatchEffect_Column != "NULL"){
@@ -1062,6 +1065,10 @@ server <- function(input,output,session){
         paste0(dim(res_tmp[[session$token]]$data),collapse = ", ")
       )
     )
+    fun_LogIt(message = "### Publication Snippet")
+    fun_LogIt(message = snippet_preprocessing(data=res_tmp[[session$token]],
+                                              params=par_tmp[[session$token]]))
+    fun_LogIt(message = "<br>")
   })
 
   # render plots and ui Parts

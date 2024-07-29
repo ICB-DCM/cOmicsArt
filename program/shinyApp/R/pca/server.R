@@ -21,110 +21,92 @@ pca_Server <- function(id, data, params, row_select){
       )
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
+
       ## UI Section ----
-      output$UseBatch_ui <- renderUI({
-        req(par_tmp[[session$token]]$BatchColumn != "NULL")
-        selectInput(
-          inputId = ns("UseBatch"),
-          label = "Use batch corrected data?",
-          choices = c("No","Yes"),
-          selected = "No"
-        )
-      })
-      output$x_axis_selection_ui <- renderUI({radioGroupButtons(
-        inputId = ns("x_axis_selection"),
-        label = "PC for x-Axis",
-        choices = c("PC1","PC2", "PC3", "PC4"),
-        direction = "vertical",
-        selected = "PC1"
-      )})
-      output$y_axis_selection_ui <- renderUI({radioGroupButtons(
-        inputId = ns("y_axis_selection"),
-        label = "PC for y-Axis",
-        choices = c("PC1","PC2", "PC3", "PC4"),
-        direction = "vertical",
-        selected = "PC2"
-      )})
-      output$Show_loadings_ui <- renderUI({radioGroupButtons(
-        inputId = ns("Show_loadings"),
-        label = "Plot Loadings on top? (currently top 5)",
-        choices = c("Yes","No"),
-        direction = "horizontal",
-        selected = "No"
-      )})
-      output$coloring_options_ui <- renderUI({
+      observeEvent(input$refreshUI, {
         req(data_input_shiny())
-        selectInput(
-          inputId = ns("coloring_options"),
-          label = "Choose the variable to color the samples after",
+        print("Refreshing UI Heatmap")
+        data <- update_data(session$token)
+
+        output$UseBatch_ui <- renderUI({
+          req(par_tmp[[session$token]]$BatchColumn != "NULL")
+          selectInput(
+            inputId = ns("UseBatch"),
+            label = "Use batch corrected data?",
+            choices = c("No","Yes"),
+            selected = "No"
+          )
+        })
+        output$coloring_options_ui <- renderUI({
+          selectInput(
+            inputId = ns("coloring_options"),
+            label = "Choose the variable to color the samples after",
+            choices = c(colnames(colData(data$data))),
+            multiple = F # would be cool if true, to be able to merge vars ?!
+          )
+        })
+        output$nPCAs_to_look_at_ui <- renderUI({
+          sliderInput(
+            inputId = ns("nPCAs_to_look_at"),
+            label = "Number of PC's to include",
+            min = 1,
+            max = length(c(colnames(colData(data$data)))),
+            value = 4,
+            step = 1
+          )
+        })
+
+        ## Data Selection UI ---
+        observe({
+          if(input$data_selection_pca){
+            output$SampleAnnotationTypes_pca_ui <- renderUI({
+              selectInput(
+                inputId = ns("SampleAnnotationTypes_pca"),
+                label = "Which annotation type do you want to select on?",
+                choices = c(colnames(colData(data$data))),
+                selected = c(colnames(colData(data$data)))[1],
+                multiple = F
+              )
+            })
+            output$sample_selection_pca_ui <- renderUI({
+              req(isTruthy(input$SampleAnnotationTypes_pca))
+              selectInput(
+                inputId = ns("sample_selection_pca"),
+                label = "Which entities to use? (Will be the union if multiple selected)",
+                choices = c(
+                  "all",
+                  unique(colData(data$data)[,input$SampleAnnotationTypes_pca])
+                ),
+                selected = "all",
+                multiple = T
+              )
+            })
+          } else{
+            hide(id = "SampleAnnotationTypes_pca",anim=T)
+            hide(id = "sample_selection_pca",anim=T)
+          }
+        })
+
+        output$PCA_anno_tooltip_ui <- renderUI({selectInput(
+          inputId = ns("PCA_anno_tooltip"),
+          label = "Select the anno to be shown at tooltip",
           choices = c(colnames(colData(data$data))),
-          multiple = F # would be cool if true, to be able to merge vars ?!
-        )
-      })
-      output$nPCAs_to_look_at_ui <- renderUI({
-        req(data_input_shiny())
-        sliderInput(
-          inputId = ns("nPCAs_to_look_at"),
-          label = "Number of PC's to include",
-          min = 1,
-          max = length(c(colnames(colData(data$data)))), 
-          value = 4,
-          step = 1
-        )
-      })
-      
-      ## Data Selection UI ---
-      observe({
-        if(input$data_selection_pca){
-          output$SampleAnnotationTypes_pca_ui <- renderUI({
-            req(data_input_shiny())
-            selectInput(
-              inputId = ns("SampleAnnotationTypes_pca"),
-              label = "Which annotation type do you want to select on?",
-              choices = c(colnames(colData(data$data))),
-              selected = c(colnames(colData(data$data)))[1],
-              multiple = F
-            )
-          })
-          output$sample_selection_pca_ui <- renderUI({
-            req(data_input_shiny(),isTruthy(input$SampleAnnotationTypes_pca))
-            selectInput(
-              inputId = ns("sample_selection_pca"),
-              label = "Which entities to use? (Will be the union if multiple selected)",
-              choices = c(
-                "all",
-                unique(colData(data$data)[,input$SampleAnnotationTypes_pca])
-              ),
-              selected = "all",
-              multiple = T
-            )
-          })
-        } else{
-          hide(id = "SampleAnnotationTypes_pca",anim=T)
-          hide(id = "sample_selection_pca",anim=T)
-        }
-      })
+          multiple = F
+        )})
 
-      output$PCA_anno_tooltip_ui <- renderUI({selectInput(
-        inputId = ns("PCA_anno_tooltip"),
-        label = "Select the anno to be shown at tooltip",
-        choices = c(colnames(colData(data$data))),
-        multiple = F
-      )})
-
-      output$EntitieAnno_Loadings_ui <- renderUI({selectInput(
-        inputId = ns("EntitieAnno_Loadings"),
-        label = "Select the annotype shown at y-axis",
-        choices = c(colnames(rowData(data$data))),
-        multiple = F
-      )})
-
-      output$EntitieAnno_Loadings_matrix_ui <- renderUI({selectInput(
-        inputId = ns("EntitieAnno_Loadings_matrix"),
-        label = "Select the annotype shown at y-axis",
-        choices = c(colnames(rowData(data$data))),
-        multiple = F
-      )})
+        output$EntitieAnno_Loadings_ui <- renderUI({selectInput(
+          inputId = ns("EntitieAnno_Loadings"),
+          label = "Select the annotype shown at y-axis",
+          choices = c(colnames(rowData(data$data))),
+          multiple = F
+        )})
+        output$EntitieAnno_Loadings_matrix_ui <- renderUI({selectInput(
+          inputId = ns("EntitieAnno_Loadings_matrix"),
+          label = "Select the annotype shown at y-axis",
+          choices = c(colnames(rowData(data$data))),
+          multiple = F
+        )})
+      })
 
 
       toListen2PCA <- reactive({list(
@@ -164,6 +146,8 @@ pca_Server <- function(id, data, params, row_select){
           )
           pca_reactives$calculate <- 1
         }
+        
+
       })
 
       observeEvent(toListen2PCA(),{
@@ -535,10 +519,25 @@ pca_Server <- function(id, data, params, row_select){
               )
 
               # Add Log Messages
-              fun_LogIt(message = "## PCA")
+              fun_LogIt(message = "## PCA {.tabset .tabset-fade}")
+              fun_LogIt(message = "### Info")
+              if(input$SampleAnnotationTypes_pca!="all"){
+                fun_LogIt(
+                  message = paste0("**PCA** - The following PCA-plot is based on a selection on: ", input$sample_selection_pca)
+                )
+                fun_LogIt(message = "**PCA** - All samples with",input$SampleAnnotationTypes_pca,"being ",paste(input$SampleAnnotationTypes_pca,collapse = ", "),"were selected.")
+              }else{
+                fun_LogIt(message = "**PCA** - The PCA was computed on the entire dataset.")
+              }
+              
               fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
-              ifelse(input$Show_loadings=="Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print("Args!"))
+              ifelse(input$Show_loadings == "Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
               fun_LogIt(message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
+              
+              fun_LogIt(message = "### Publication Snippet")
+              fun_LogIt(message = snippet_PCA(data = res_tmp[[session$token]],
+                                              params = par_tmp[[session$token]]))
+
             })
           }
         )
@@ -609,9 +608,13 @@ pca_Server <- function(id, data, params, row_select){
               ggsave(tmp_filename, plot=scree_plot, device = gsub("\\.","",input$file_ext_Scree))
 
               # Add Log Messages
-              fun_LogIt(message = "### PCA ScreePlot")
+              fun_LogIt(message = "## PCA ScreePlot{.tabset .tabset-fade}")
+              fun_LogIt(message = "### Info")
               fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
               fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
+              fun_LogIt(message = "### Publication Snippet")
+              fun_LogIt(message = snippet_PCAscree(data = res_tmp[[session$token]],
+                                                   params = par_tmp[[session$token]]))
             })
           }
         )
@@ -688,10 +691,15 @@ pca_Server <- function(id, data, params, row_select){
                 dpi = "print"
               )
               # Add Log Messages
-              fun_LogIt(message = "### PCA Loadings")
+              fun_LogIt(message = "## PCA Loadings{.tabset .tabset-fade}")
+              fun_LogIt(message = "### Info")
+
               fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",input$x_axis_selection))
               fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
               fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
+              fun_LogIt(message = "### Publication Snippet")
+              fun_LogIt(message = snippet_PCAloadings(data = res_tmp[[session$token]],
+                                                    params = par_tmp[[session$token]]))
             })
           }
         )
@@ -770,10 +778,16 @@ pca_Server <- function(id, data, params, row_select){
                 dpi = "print"
               )
               # Add Log Messages
-              fun_LogIt(message = "### PCA Loadings Matrix")
+              fun_LogIt(message = "## PCA Loadings Matrix{.tabset .tabset-fade}")
+              fun_LogIt(message = "### Info")
               fun_LogIt(message = paste0("**PCALoadingsMatrix** - Loadings plot for Principle Components 1 till ",input$x_axis_selection))
               fun_LogIt(message = paste0("**PCALoadingsMatrix** - Showing all entities which have an absolute Loadings value of at least", input$filterValue))
               fun_LogIt(message = paste0("**PCALoadingsMatrix** - The corresponding Loadings Matrix plot - ![PCALoadingsMatrix](",tmp_filename,")"))
+              
+              fun_LogIt(message = "### Publication Snippet")
+              fun_LogIt(message = snippet_PCAloadingsMatrix(data = res_tmp[[session$token]],
+                                                    params = par_tmp[[session$token]]))
+
             })
           }
         )
@@ -791,16 +805,35 @@ pca_Server <- function(id, data, params, row_select){
             device = "png"
           )
           # Add Log Messages
-          fun_LogIt(message = "## PCA")
-          fun_LogIt(
-            message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options)
+          fun_LogIt(message = "## PCA {.tabset .tabset-fade}")
+          fun_LogIt(message = "### Info")
+          if(input$data_selection_pca){
+            fun_LogIt(
+              message = paste0("**PCA** - The following PCA-plot is based on a selection of the data. ")
             )
+            fun_LogIt(message = "**PCA** - All samples with",input$SampleAnnotationTypes_pca,"being ",paste(input$sample_selection_pca,collapse = ", "),"were selected.")
+            
+          }else{
+            fun_LogIt(message = "**PCA** - The PCA was computed on the entire dataset.")
+          }
+          fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
           ifelse(input$Show_loadings == "Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
           fun_LogIt(message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
+          
           if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
-            fun_LogIt(message = "### Personal Notes:")
-            fun_LogIt(message = input$NotesPCA)
+            fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
+            fun_LogIt(message = paste0(
+              "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
+              input$NotesPCA,
+              "</div>"
+            ))
           }
+          
+          fun_LogIt(message = "### Publication Snippet")
+          fun_LogIt(message = snippet_PCA(data = res_tmp[[session$token]],
+                                          params = par_tmp[[session$token]]))
+          
+
           removeNotification(notificationID)
           showNotification("Saved!",type = "message", duration = 1)
       })
@@ -817,9 +850,13 @@ pca_Server <- function(id, data, params, row_select){
         )
 
         # Add Log Messages
-        fun_LogIt(message = "### PCA ScreePlot")
+        fun_LogIt(message = "## PCA ScreePlot{.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
         fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
         fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
+        fun_LogIt(message = "### Publication Snippet")
+        fun_LogIt(message = snippet_PCAscree(data = res_tmp[[session$token]],
+                                             params = par_tmp[[session$token]]))
 
         removeNotification(notificationID)
         showNotification("Saved!",type = "message", duration = 1)
@@ -837,10 +874,16 @@ pca_Server <- function(id, data, params, row_select){
         )
 
         # Add Log Messages
-        fun_LogIt(message = "### PCA Loadings")
+        # Add Log Messages
+        fun_LogIt(message = "## PCA Loadings{.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
+        
         fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",pca_reactives$Loadings_x_axis))
         fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",pca_reactives$Loadings_topSlider," and the lowest ",pca_reactives$Loadings_bottomSlider," Loadings"))
         fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
+        fun_LogIt(message = "### Publication Snippet")
+        fun_LogIt(message = snippet_PCAloadings(data = res_tmp[[session$token]],
+                                                params = par_tmp[[session$token]]))
 
         removeNotification(notificationID)
         showNotification("Saved!",type = "message", duration = 1)
@@ -860,14 +903,22 @@ pca_Server <- function(id, data, params, row_select){
           dpi = "print"
         )
         # Add Log Messages
-        fun_LogIt(message = "### PCA Loadings Matrix")
+        fun_LogIt(message = "## PCA Loadings Matrix{.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
         fun_LogIt(message = paste0("**PCALoadingsMatrix** - Loadings plot for Principle Components 1 till ",input$x_axis_selection))
         fun_LogIt(message = paste0("**PCALoadingsMatrix** - Showing all entities which have an absolute Loadings value of at least", input$filterValue))
         fun_LogIt(message = paste0("**PCALoadingsMatrix** - The corresponding Loadings Matrix plot - ![PCALoadingsMatrix](",tmp_filename,")"))
         
+        fun_LogIt(message = "### Publication Snippet")
+        fun_LogIt(message = snippet_PCAloadingsMatrix(data = res_tmp[[session$token]],
+                                                      params = par_tmp[[session$token]]))
+        
         removeNotification(notificationID)
         showNotification("Saved!",type = "message", duration = 1)
       })
+      
+      
+      
     }
   )
 }
