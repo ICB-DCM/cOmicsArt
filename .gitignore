@@ -19,4 +19,6 @@ program/shinyApp/*.log
 program/shinyApp/www/*md
 !.github/
 !./renv/cellar
-
+program/shinyApp/www/*/
+program/shinyApp/www/*.png
+docs/_site/*
