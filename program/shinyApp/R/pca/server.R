@@ -357,6 +357,7 @@ pca_Server <- function(id, data, params, row_select){
 
 
         # Actual Plotting
+        colorTheme <- c()
         if(length(levels(pcaData[,input$coloring_options])) > 8){
            if(continiousColors){
              colorTheme <- viridis::viridis(n = 10)
@@ -377,7 +378,7 @@ pca_Server <- function(id, data, params, row_select){
                  values = colorTheme
                )
              scenario <- 1
-           } else{
+           } else {
              pca_plot <- ggplot(
                pcaData,
                mapping = aes(
@@ -466,10 +467,11 @@ pca_Server <- function(id, data, params, row_select){
         if(nchar(customTitle) >= 250){
           customTitle <- "PCA"
         }
-
+        
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$PCA[names(tmp)] <<- tmp
         par_tmp[[session$token]]$PCA$colorTheme <<- colorTheme
+
 
 
         output$getR_Code_PCA <- downloadHandler(
