@@ -42,20 +42,24 @@ selected <- unique(
   }
 
   if(any(col_selection == "all")){
-    stringSelection <- paste0(stringSelection,"\n",
-                              'samples_selected <- colnames(assay(res_tmp$data_original))
-                              tmp_data_selected <- res_tmp$data_original[selected,samples_selected]
-                              ')
+    stringSelection <- paste0(stringSelection,
+                              '\n',
+                              'samples_selected <- colnames(assay(res_tmp$data_original))',
+                              '\n',
+                              'tmp_data_selected <- res_tmp$data_original[selected,samples_selected]'
+                              )
   }else{
     stringSelection <- paste0(stringSelection,
+                              '\n',
                               'samples_selected <- c(
                                 samples_selected,
                                 rownames(colData(res_tmp$data_original))[which(
                                 colData(res_tmp$data_original)[,par_tmp$providedSampleAnnotationTypes] %in% par_tmp$sample_selection
                               )]
+                              )',
+                              '\n',
+                              'tmp_data_selected <- res_tmp$data_original[selected,samples_selected]'
                               )
-                              tmp_data_selected <- res_tmp$data_original[selected,samples_selected]
-                              ')
   }
  # Preprocessing ----
 
@@ -589,10 +593,10 @@ cormat <- cor(
 )
 
 SampleCorrelationPlot <- pheatmap(
-mat = cormat, #res_tmp$SampleCorr
-annotation_row = par_tmp$SampleCorr$annotationDF,
-main = par_tmp$SampleCorr$customTitleSampleCorrelation,
-annotation_colors = par_tmp$SampleCorr$anno_colors
+  mat = cormat, #res_tmp$SampleCorr
+  annotation_row = par_tmp$SampleCorr$annotationDF,
+  main = par_tmp$SampleCorr$customTitleSampleCorrelation,
+  annotation_colors = par_tmp$SampleCorr$anno_colors
 )'
   }
 ## Significance Analysis -----
@@ -1011,8 +1015,10 @@ for(i in storageNames){
   
   return(paste0(CODE_DOWNLOAD_PREFACE,
                 "\n",
+                "# Data Selection ----",
                 stringSelection,
                 "\n",
+                "# Data Preprocessing ----"
                 stringPreProcessing,
                 "\n",
                 stringtosave))
