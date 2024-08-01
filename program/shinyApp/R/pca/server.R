@@ -430,7 +430,7 @@ pca_Server <- function(id, data, params, row_select){
             "% variance"
           )) +
           coord_fixed() +
-          theme_classic() +
+          custom_theme +
           theme(aspect.ratio = 1) +
           ggtitle(customTitle)
         print(input$Show_loadings)
@@ -517,15 +517,16 @@ pca_Server <- function(id, data, params, row_select){
                 plot = pca_plot_final,
                 device = gsub("\\.","",input$file_ext_plot1)
               )
-
               # Add Log Messages
               fun_LogIt(message = "## PCA {.tabset .tabset-fade}")
               fun_LogIt(message = "### Info")
-              if(input$SampleAnnotationTypes_pca!="all"){
-                fun_LogIt(
-                  message = paste0("**PCA** - The following PCA-plot is based on a selection on: ", input$sample_selection_pca)
-                )
-                fun_LogIt(message = "**PCA** - All samples with",input$SampleAnnotationTypes_pca,"being ",paste(input$SampleAnnotationTypes_pca,collapse = ", "),"were selected.")
+              if(input$data_selection_pca){
+                if(input$sample_selection_pca !="all"){
+                  fun_LogIt(
+                    message = paste0("**PCA** - The following PCA-plot is based on a selection on: ", input$sample_selection_pca)
+                  )
+                  fun_LogIt(message = "**PCA** - All samples with",input$SampleAnnotationTypes_pca," being ",paste(input$SampleAnnotationTypes_pca,collapse = ", "),"were selected.")
+                }
               }else{
                 fun_LogIt(message = "**PCA** - The PCA was computed on the entire dataset.")
               }
@@ -550,7 +551,7 @@ pca_Server <- function(id, data, params, row_select){
           geom_point(size = 4,mapping = aes(label = Var)) +
           geom_line() +
           ylab("Variance explained") +
-          theme_bw() +
+          custom_theme +
           ggtitle("Scree-Plot for shown PCA")
         scenario <- 7
         Scree_scenario <- scenario
@@ -630,7 +631,7 @@ pca_Server <- function(id, data, params, row_select){
           scale_fill_gradient2(low = "#277d6a",mid = "white",high = "orange") +
           ylab(ifelse(is.null(input$EntitieAnno_Loadings),"",input$EntitieAnno_Loadings)) +
           xlab(paste0("Loadings: ",input$x_axis_selection)) +
-          theme_bw(base_size = 15)
+          custom_theme
 
         scenario <- 8
         Loading_scenario <- scenario
@@ -719,7 +720,7 @@ pca_Server <- function(id, data, params, row_select){
             limits = c(-max(df_loadings$loading),max(df_loadings$loading))
           ) +
           labs(x = "PCs", y = input$EntitieAnno_Loadings_matrix, fill = "Loading") +
-          theme_bw(base_size = 15)
+          custom_theme
         scenario <- 8.1
         #Loading_scenario <- scenario
         output[["PCA_Loadings_matrix_plot"]] <- renderPlot({LoadingsMatrix})

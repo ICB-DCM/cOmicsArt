@@ -28,7 +28,7 @@ enrichment_analysis_geneset_server <- function(
           showElement(id = "Notes")
           showElement(id = "NotesHelper")
           hideElement(id = "EnrichmentFailure")
-          output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result)})
+          output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result) + custom_theme})
           if(ea_type == "GeneSetEnrichment"){
             ea_scenario <- 15
           }else{
@@ -87,7 +87,7 @@ enrichment_analysis_geneset_server <- function(
           content = function(file){
             ggsave(
               filename = file,
-              plot = clusterProfiler::dotplot(result, title = ""),
+              plot = clusterProfiler::dotplot(result, title = "") + custom_theme,
               device = gsub("\\.","",input$file_ext)
             )
           }
@@ -118,12 +118,12 @@ enrichment_analysis_geneset_server <- function(
           tmp_filename <- paste0(getwd(),file_path, paste(id,Sys.time(),".png",sep="_"))
           ggsave(
             filename = tmp_filename,
-            plot = clusterProfiler::dotplot(result),device = "png"
+            plot = clusterProfiler::dotplot(result) + custom_theme,
+            device = "png"
           )
+          
+          fun_LogIt(message = paste0("### ", id, "_ENRICHMENT"))
 
-
-
-          fun_LogIt(message = paste0("### ", id, "ENRICHMENT"))
           fun_LogIt(
             message = paste0(
               "- The number of found enriched terms (p.adj <0.05): ",

@@ -298,8 +298,7 @@ snippet_Enrichment <- function(
                       It compares the proportion of genes of interest within 
                       the dataset to what would be expected by chance within a so-called universe. ")
     snippet <- paste0(snippet, "Here the universe was chosen as the set of genes present in")
-    browser()
-    if(params$Enrichment$universe == "default"){
+    if(params$Enrichment$UniverseOfGene == "default"){
       snippet <- paste0(snippet, " the respectives set universe ")
     } else if(params$Enrichment$UniverseOfGene == "after_pre_process") {
       snippet <- paste0(snippet, " the genes that were present after pre-processing. ")

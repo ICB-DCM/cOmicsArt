@@ -263,6 +263,21 @@ server <- function(input,output,session){
         rowData(res_tmp[[session$token]]$data_original)$entrezgene_id[matched_rows] <<- matched_out$entrezgene_id[matched_rows]
       }
     }
+    
+    # edit annotation columns such that if na is present in the row annotation,
+    # the na gets replaced by the rowname
+    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data))){
+      if(any(is.na(rowData(res_tmp[[session$token]]$data)[,i]))){
+        rowData(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i]),i] <<- rownames(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i])]
+      }
+    }
+    
+    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data_original))){
+      if(any(is.na(rowData(res_tmp[[session$token]]$data_original)[,i]))){
+        rowData(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i]),i] <<- rownames(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i])]
+      }
+    }
+    
     par_tmp[[session$token]]['addedGeneAnno'] <<- TRUE
     par_tmp[[session$token]]['organism'] <<- input$AddGeneSymbols_organism
     removeModal()
@@ -548,7 +563,10 @@ server <- function(input,output,session){
       if(ncol(data_input$annotation_rows) < 2){
         data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
       }
-    } else if(uploaded_from()=="metadata"){
+      
+      
+      
+    } else if(uploaded_from() == "metadata"){
       tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
       test_data_upload <- function(){
         tryCatch({
@@ -572,6 +590,8 @@ server <- function(input,output,session){
         })
       }
       data_input <- test_data_upload()
+
+      
     } else if(uploaded_from() == "precompiled"){
       uploadedFile <- readRDS(file = input$data_preDone$datapath)
       if(any(names(uploadedFile) %in% input[[paste0("omic_type_", uploaded_from())]])){
@@ -640,6 +660,21 @@ server <- function(input,output,session){
       as.data.frame(rowData(res_tmp[[session$token]]$data)) %>%
         purrr::keep(~length(unique(.x)) != 1)
     )
+    
+    # edit annotation columns such that if na is present in the row annotation,
+    # the na gets replaced by the rowname
+    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data))){
+      if(any(is.na(rowData(res_tmp[[session$token]]$data)[,i]))){
+        rowData(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i]),i] <<- rownames(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i])]
+      }
+    }
+    
+    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data_original))){
+      if(any(is.na(rowData(res_tmp[[session$token]]$data_original)[,i]))){
+        rowData(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i]),i] <<- rownames(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i])]
+      }
+    }
+    
     print(paste0(
       "Number. of anno options annotation_rows lost: ",
       nrow(res_tmp[[session$token]]$data_original) - nrow(res_tmp[[session$token]]$data)

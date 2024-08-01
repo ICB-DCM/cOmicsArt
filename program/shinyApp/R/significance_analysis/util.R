@@ -313,7 +313,8 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       ylab("-log10(p_adj-value)") +
       theme(legend.position = "none") +
       ggtitle(label="Corrected p-Values") +
-      theme_bw()
+      custom_theme
+    
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot,
       legendgroup="color"
@@ -338,9 +339,10 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       xlab("Log FoldChange") +
       ylab("-log10(p-value)") +
       ggtitle(label="Uncorrected p-Values") +
-      theme_bw()
-    output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({
-      ggplotly(
+      custom_theme
+    
+      output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
+
       sig_ana_reactive$VolcanoPlot_raw,
       legendgroup="color"
     )})
@@ -725,7 +727,8 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       ylab("-log10(p_adj-value)") +
       theme(legend.position = "none") +
       ggtitle(label="Corrected p-Values") +
-      theme_bw()
+      custom_theme
+    
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot,
       tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
@@ -751,7 +754,8 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       xlab("Log FoldChange") +
       ylab("-log10(p-value)") +
       ggtitle(label="Uncorrected p-Values")+
-      theme_bw()
+      custom_theme
+    
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
       tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
