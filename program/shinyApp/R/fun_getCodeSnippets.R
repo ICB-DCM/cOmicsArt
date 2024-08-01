@@ -418,14 +418,32 @@ paletteLength <- 25
 myColor_fill <- colorRampPalette(c("blue", "white", "firebrick"))(paletteLength)
   
 # select and caluculate Heatmap input depending on users input - 
-# check par_tmp$Heatmap for selected options or change accrodingly to what you desire
+# check par_tmp$Heatmap for selected options or change accordingly to what you desire
 mycolors <- list()
-if(length(par_tmp$Heatmap$anno_options) == 1){
-  if(length(unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])) <= 8){
-    names(colorTheme) <- unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])
-    colorTheme <- colorTheme[!is.na(names(colorTheme))]
-    mycolors[[par_tmp$Heatmap$anno_options]] <- colorTheme
+annotation_col <- NA
+annotation_row <- NA
+if(!("None" %in% par_tmp$Heatmap$anno_options)){
+  if(length(par_tmp$Heatmap$anno_options) == 1){
+    if(length(unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])) <= 8){
+      names(colorTheme) <- unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])
+      colorTheme <- colorTheme[!is.na(names(colorTheme))]
+      mycolors[[par_tmp$Heatmap$anno_options]] <- colorTheme
+    }
   }
+  annotation_col <- colData(res_tmp$data)[, par_tmp$Heatmap$anno_options, drop = F]
+  annotation_col <- as.data.frame(annotation_col)
+}
+if(!("None" %in% par_tmp$Heatmap$row_anno_options)){
+  if(length(par_tmp$Heatmap$anno_options) == 1){
+    if(length(unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])) <= 8){
+      names(colorTheme) <- unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])
+      colorTheme <- colorTheme[!is.na(names(colorTheme))]
+      mycolors[[par_tmp$Heatmap$anno_options]] <- colorTheme
+    }
+  }
+  
+  annotation_row <- rowData(res_tmp$data)[, par_tmp$Heatmap$row_anno_options, drop = F]
+  annotation_row <- as.data.frame(annotation_row)
 }
 
         
@@ -1016,9 +1034,11 @@ for(i in storageNames){
   return(paste0(CODE_DOWNLOAD_PREFACE,
                 "\n",
                 "# Data Selection ----",
+                "\n",
                 stringSelection,
                 "\n",
                 "# Data Preprocessing ----",
+                "\n",
                 stringPreProcessing,
                 "\n",
                 stringtosave))
