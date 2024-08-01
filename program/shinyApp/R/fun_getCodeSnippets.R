@@ -267,7 +267,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
       xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
       ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
-      theme_classic()+
+      CUSTOM_THEME+
       theme(aspect.ratio = 1)+
       ggtitle(par_tmp$PCA$customTitle)'
     }
@@ -283,7 +283,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
       xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
       ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
-      theme_classic()+
+      CUSTOM_THEME+
       theme(aspect.ratio = 1)+
       ggtitle(par_tmp$PCA$customTitle)'
     }
@@ -300,7 +300,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
       xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
       ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
-      theme_classic()+
+      CUSTOM_THEME+
       theme(aspect.ratio = 1)+
       ggtitle(par_tmp$PCA$customTitle)'
     }
@@ -316,7 +316,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
       xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
       ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
-      theme_classic()+
+      CUSTOM_THEME+
       theme(aspect.ratio = 1)+
       ggtitle(par_tmp$PCA$customTitle)+geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
                                                       aes(x=0, y=0, xend=v1, yend=v2),
@@ -339,7 +339,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
     xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
     ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
     coord_fixed()+
-    theme_classic()+
+    CUSTOM_THEME+
     theme(aspect.ratio = 1)+
     ggtitle(par_tmp$PCA$customTitle)+
     geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
@@ -362,7 +362,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
       xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
       ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
-      theme_classic()+
+      CUSTOM_THEME+
       theme(aspect.ratio = 1)+
       ggtitle(par_tmp$PCA$customTitle)+geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
                  aes(x=0, y=0, xend=v1, yend=v2),
@@ -377,7 +377,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
                                   geom_point(size=4,aes(label=Var))+
                                   geom_line()+
                                   ylab("Variance explained")+
-                                  theme_bw()+
+                                  CUSTOM_THEME+
                                   ggtitle("Scree-Plot for shown PCA")'
     }
 ### Loadings single
@@ -390,7 +390,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
       scale_fill_gradient2(low = "#277d6a",mid = "white",high = "orange") +
       ylab(ifelse(is.null(par_tmp$PCA$EntitieAnno_Loadings),"",par_tmp$PCA$EntitieAnno_Loadings)) +
       xlab(paste0("Loadings: ",par_tmp$PCA$x_axis_selection)) +
-      theme_bw(base_size = 15)'
+     CUSTOM_THEME'
     }
 ### Loadings matrix
   if (numberOfScenario == 8.1) {
@@ -402,7 +402,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
     limits = c(-max(df_loadings$loading),max(df_loadings$loading))
     ) +
     labs(x = "PCs", y = "entity", fill = "Loading") +
-    theme_bw(base_size = 15)'
+    CUSTOM_THEME'
   }
 
   stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave,"\n","lapply(ls(pattern='plot'), get)")
@@ -545,7 +545,7 @@ P_boxplots <- ggplot(GeneData,
   scale_fill_brewer(palette="RdBu")+
   xlab(par_tmp$SingleEntVis$Select_Gene)+
   ylab(par_tmp$SingleEntVis$type_of_data_gene)+
-  theme_bw()+
+  CUSTOM_THEME+
   geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
   #stat_compare_means(method = "anova")+        # Add global annova p-value
   stat_compare_means(comparisons = par_tmp$SingleEntVis$chooseComparisons_list,
@@ -564,7 +564,7 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
   scale_fill_brewer(palette="RdBu")+
   xlab(par_tmp$SingleEntVis$Select_Gene)+
   ylab(par_tmp$SingleEntVis$type_of_data_gene)+
-  theme_bw()'
+ CUSTOM_THEME'
   }
   stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave,"\n","lapply(ls(pattern='boxplots'), get)")
 }
@@ -838,7 +838,7 @@ Upset_plot <- ComplexUpset::upset(
       xlab("Log FoldChange") +
       ylab("-log10(p_adj-value)") +
       theme(legend.position = "none") +
-      theme_bw()+
+      CUSTOM_THEME+
       ggtitle(label="Corrected p-Values")'
     }
     if(numberOfScenario == 23){

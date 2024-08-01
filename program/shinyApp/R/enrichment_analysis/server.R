@@ -28,7 +28,7 @@ enrichment_analysis_geneset_server <- function(
           showElement(id = "Notes")
           showElement(id = "NotesHelper")
           hideElement(id = "EnrichmentFailure")
-          output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result) + custom_theme})
+          output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result) + CUSTOM_THEME})
           if(ea_type == "GeneSetEnrichment"){
             ea_scenario <- 15
           }else{
@@ -87,7 +87,7 @@ enrichment_analysis_geneset_server <- function(
           content = function(file){
             ggsave(
               filename = file,
-              plot = clusterProfiler::dotplot(result, title = "") + custom_theme,
+              plot = clusterProfiler::dotplot(result, title = "") + CUSTOM_THEME,
               device = gsub("\\.","",input$file_ext)
             )
           }
@@ -118,7 +118,7 @@ enrichment_analysis_geneset_server <- function(
           tmp_filename <- paste0(getwd(),file_path, paste(id,Sys.time(),".png",sep="_"))
           ggsave(
             filename = tmp_filename,
-            plot = clusterProfiler::dotplot(result) + custom_theme,
+            plot = clusterProfiler::dotplot(result) + CUSTOM_THEME,
             device = "png"
           )
           

@@ -65,7 +65,17 @@ list2env(envList,envir = globalenv())
 # loads the varaibles directly into global env
 # if you want to combine multiple plots use the `with` notation instead e.g.
 # plot <- with(envList, {ggplot(..)+geom_point()})
-  
+
+# Setting default options
+CUSTOM_THEME <- theme_bw(base_size = 15) + 
+  theme(
+    axis.title = element_text(size = 15),        # Axis labels
+    axis.text = element_text(size = 15),         # Axis tick labels
+    legend.text = element_text(size = 15),       # Legend text
+    legend.title = element_text(size = 15),      # Legend title
+    plot.title = element_text(size = 17, face = 'bold')  # Plot title
+  )
+
 # Happy Adjusting! :)"
 
 # Geneset enrichment list reset
