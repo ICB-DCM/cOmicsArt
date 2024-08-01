@@ -51,7 +51,8 @@ server <- function(input,output,session){
       list.files(path=".") %>%
         setdiff(list.files(path=".", pattern = ".csv")) %>%
         setdiff(list.files(path=".", pattern = ".RDS")) %>%
-        setdiff(list.files(path=".", pattern = ".png"))
+        setdiff(list.files(path=".", pattern = ".png")) %>%
+        setdiff(list.files(path=".", pattern = ".gif"))
     )
     print("Removed old Report files for fresh start")
     setwd("..")
@@ -602,7 +603,7 @@ server <- function(input,output,session){
     } else if(uploaded_from() == "testdata"){
       data_input <- readRDS(
         file = "www/Transcriptomics_only_precompiled-LS.RDS"
-      )[[input[[paste0("omic_type_", uploaded_from())]]]]
+      )
       fun_LogIt(
         message = paste0("<font color=\"#FF0000\"><b>**Attention** - Test Data set used</b></font>")
       )
@@ -904,6 +905,13 @@ server <- function(input,output,session){
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     # only enter this when you actually click data
     req(input$Do_preprocessing > 0)
+    waiter <- Waiter$new(
+      id="data_summary",
+      html = LOADING_SCREEN,
+      color="#3897F147",
+      hide_on_render=FALSE
+    )
+    waiter$show()
     print("Do Preprocessing")
     print(selectedData())
     addWarning <- ""
@@ -1031,6 +1039,8 @@ server <- function(input,output,session){
       shinyjs::click("single_gene_visualisation-refreshUI",asis = T)
       shinyjs::click("EnrichmentAnalysis-refreshUI",asis = T)
       shinyjs::click("Heatmap-refreshUI",asis = T)
+      shinyjs::click("PCA-refreshUI",asis = T)
+      shinyjs::click("sample_correlation-refreshUI",asis = T)
       paste0(
         addWarning,
         "The data has the dimensions of: ",
@@ -1048,6 +1058,7 @@ server <- function(input,output,session){
       violin_plot(res_tmp[[session$token]]$data, 
                   color_by = input$violin_color)
       })
+    waiter$hide()
     return("Pre-Processing successfully")
   })
   

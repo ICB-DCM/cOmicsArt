@@ -14,24 +14,29 @@ sample_correlation_server <- function(id, data, params){
       
       ns <- session$ns
       # UI Section ----
-      output$UseBatch_ui <- renderUI({
-        req(par_tmp[[session$token]]$BatchColumn != "NULL")
-        selectInput(
-          inputId = ns("UseBatch"),
-          label = "Use batch corrected data?",
-          choices = c("No","Yes"),
-          selected = "No"
-        )
-      })
-      output$SampleAnnotationChoice_ui <- renderUI({
-        req(selectedData_processed())
-        selectInput(
-          inputId = ns("SampleAnnotationChoice"),
-          label = "Choose the color annotation for the samples",
-          choices = colnames(colData(data$data)),
-          multiple = T,
-          selected = colnames(colData(data$data))[1]
-        )
+      observeEvent(input$refreshUI, {
+        print("Refreshing UI Sample Correlation")
+        data <- update_data(session$token)
+
+        output$UseBatch_ui <- renderUI({
+          req(par_tmp[[session$token]]$BatchColumn != "NULL")
+          selectInput(
+            inputId = ns("UseBatch"),
+            label = "Use batch corrected data?",
+            choices = c("No","Yes"),
+            selected = "No"
+          )
+        })
+        output$SampleAnnotationChoice_ui <- renderUI({
+          req(selectedData_processed())
+          selectInput(
+            inputId = ns("SampleAnnotationChoice"),
+            label = "Choose the color annotation for the samples",
+            choices = colnames(colData(data$data)),
+            multiple = T,
+            selected = colnames(colData(data$data))[1]
+          )
+        })
       })
       
       # Do sample correlation plot 
@@ -44,6 +49,12 @@ sample_correlation_server <- function(id, data, params){
         req(selectedData_processed())
         req(input$SampleAnnotationChoice)
         req(input$Do_SampleCorrelation > 0)
+        waiter <- Waiter$new(
+          id=ns("SampleCorrelationPlot"),
+          html = LOADING_SCREEN,
+          color="#A208BA35"
+        )
+        waiter$show()
         # update the data if needed
         data <- update_data(session$token)
         useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
@@ -140,7 +151,7 @@ sample_correlation_server <- function(id, data, params){
         if(nchar(customTitleSampleCorrelation) >= 250){
           customTitleSampleCorrelation <- "SampleCorrelation"
         }
-
+        waiter$hide()
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$SampleCorr[names(tmp)] <<- tmp
         par_tmp[[session$token]]$SampleCorr$customTitleSampleCorrelation <<- customTitleSampleCorrelation

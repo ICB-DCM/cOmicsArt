@@ -8,6 +8,7 @@
 
 library(DT)
 library(plotly)
+library(waiter)
 library(shiny, lib.loc = .libPaths()[1])
 library(shinyWidgets)
 library(shinymanager)
@@ -62,6 +63,9 @@ options(repos = BiocManager::repositories())
 options(spinner.color = "#1c8a3b", spinner.color.background = "#ffffff", spinner.size = 2)
 
 ui <- shiny::fluidPage(
+  # Loading Bars?
+  # useWaitress(),
+  useWaiter(),
   # JS to reset input values
   tags$script("
     Shiny.addCustomMessageHandler('resetValue', function(variableName) {

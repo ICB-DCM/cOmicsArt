@@ -7,8 +7,23 @@ significance_analysis_sidebar_ui<- function(ns){
     uiOutput(outputId = ns("chooseComparisons_ui")),
     # UI to choose test method
     uiOutput(outputId = ns("chooseTest_ui")),
-    uiOutput(outputId = ns("chooseSignificanceLevel_ui")),
-    uiOutput(outputId = ns("chooseTestCorrection_ui")),
+    sliderInput(
+      inputId = ns("significance_level"),
+      label = "Significance level",
+      min = 0.005,
+      max = 0.1,
+      value = 0.05,
+      step = 0.005
+    ),
+    selectInput(
+      inputId = ns("test_correction"),
+      label = "Multiple testing correction",
+      choices = c(
+        "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
+        "Holm", "Hommel", "Hochberg", "FDR"
+      ),
+      selected = "Benjamini-Hochberg"
+    ),
     # Button to start analysis
     actionButton(
       inputId = ns("significanceGo"),

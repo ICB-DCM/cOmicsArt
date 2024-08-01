@@ -1,3 +1,6 @@
+# Keep here for now. Needs to be replaced i guess at some point.
+library(waiter)
+
 ### Global Constants will be saved here
 NOTES_PlACEHOLDER <<- "Notes you want to take alongside the plot (will be saved in the report) \nYou can use markdown syntax for your notes "
 NOTES_HELP <<- HTML("<a href='https://www.markdownguide.org/cheat-sheet/' target='_blank'>Here you can find a Markdown Cheat Sheet</a> \n
@@ -188,6 +191,7 @@ if(format(Sys.Date(), "%d") == "01"){
   loadedVersion <<- ensembl_objects
 }
 
+
 # Define the ggplotcustom theme
 CUSTOM_THEME <<- theme_bw(base_size = 15) + 
   theme(
@@ -197,4 +201,22 @@ CUSTOM_THEME <<- theme_bw(base_size = 15) +
     legend.title = element_text(size = 15),      # Legend title
     plot.title = element_text(size = 17, face = "bold")  # Plot title
   )
+
+
+
+LOADING_SCREEN <<- tagList(
+  div(
+    style = "position: relative; display: flex; justify-content: center; align-items: center;",
+    div(
+      style = "display: flex;",
+      img(src = "bored_panda_11.png", style = "max-width: 100%; height: auto;"),
+      img(src = "bored_panda_12.png", style = "max-width: 100%; height: auto;")
+    ),
+    div(
+      style = "position: absolute; top: 20%; left: 60%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; color: white; font-size: 24px; font-weight: bold;",
+      spin_flower(),
+      span("Computing...")
+    )
+  )
+)
 

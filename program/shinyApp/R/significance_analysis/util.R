@@ -81,6 +81,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         tabPanel(
           title = "Volcano",
           splitLayout(
+            id=ns(paste(contrast[1], contrast[2], "test", sep = "_")),
             style = "border: 1px solid silver:",
             cellWidths = c("40%", "60%"),
             plotlyOutput(
@@ -251,6 +252,16 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   })
   observeEvent(toPlotVolcano(), {
     req(input[[psig_th]], input[[lfc_th]], input[[Volcano_anno_tooltip]])
+    waiter <- Waiter$new(
+      id=ns(paste(contrast[1], contrast[2], "test", sep = "_")),
+      html = LOADING_SCREEN,
+      color="#70BF4F47",
+      hide_on_render=FALSE
+    )
+    waiter$show()
+    on.exit({
+      waiter$hide()
+    })
     # workaround, as somehow the input values dont show up unless we change it in the shiny
     # TODO: fix this (@Lea?)
     sig_ana_reactive$th_psig <- input[[psig_th]]
@@ -330,7 +341,8 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       ggtitle(label="Uncorrected p-Values") +
       custom_theme
     
-    output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
+      output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
+
       sig_ana_reactive$VolcanoPlot_raw,
       legendgroup="color"
     )})
@@ -344,7 +356,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                        params = par_tmp[[session$token]]))
   })
-  
+
   observeEvent(input[[ns("only2Report_Volcano_both")]],{
     fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
@@ -355,7 +367,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                        params = par_tmp[[session$token]]))
   })
-  
+
   observeEvent(input[[ns("only2Report_Volcano_raw")]],{
     fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
@@ -364,7 +376,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                        params = par_tmp[[session$token]]))
   })
-  
+
   output[[ns("SavePlot_Volcano")]] <- downloadHandler(
     filename = function() {paste0("VOLCANO_", Sys.time(), input[[ns("file_ext_Volcano")]])},
     content = function(file){
@@ -410,7 +422,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       on.exit({
         fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
-        log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot), 
+        log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
                              sig_ana_reactive$data4Volcano, contrast, file_path)
 #        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
@@ -760,7 +772,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                        params = par_tmp[[session$token]]))
   })
-  
+
   observeEvent(input[[ns("only2Report_Volcano_both")]],{
     fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
@@ -771,7 +783,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                        params = par_tmp[[session$token]]))
   })
-  
+
   observeEvent(input[[ns("only2Report_Volcano_raw")]],{
     fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
@@ -780,7 +792,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                        params = par_tmp[[session$token]]))
   })
-  
+
   output[[ns("SavePlot_Volcano")]] <- downloadHandler(
     filename = function() { paste("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]],sep="") },
     content = function(file){
@@ -813,7 +825,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         fun_LogIt(message = "### Publication Snippet")
         fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                            params = par_tmp[[session$token]]))
-        
+
       })
     })
   output[[ns("SavePlot_Volcano_both")]] <- downloadHandler(
