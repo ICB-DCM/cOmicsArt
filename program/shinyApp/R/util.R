@@ -115,12 +115,16 @@ save.function.from.env <- function(wanted,file="utils.R")
   # Let's
   for(i in seq_along(funs))
   {
+    function_code <- paste(capture.output(funs[[i]]), collapse = "\n")
+    function_code <- gsub("\\[\\[session\\$token\\]\\]", "", function_code)
+    function_code <- gsub("req(.*)", "", function_code)
+    
     cat( # number the function we are about to add
       paste("\n" , "#------ Function number ", i , "-----------------------------------" ,"\n"),
       append = T, file = file
     )
     cat(    # print the function into the file
-      paste(names(funs)[i] , "<-", paste(capture.output(funs[[i]]), collapse = "\n"), collapse = "\n"),
+      paste(names(funs)[i] , "<-", function_code, collapse = "\n"),
       append = T, file = file
     )
     cat(

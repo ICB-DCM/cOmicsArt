@@ -63,6 +63,11 @@ if(MANUALLY){
 # Set Environment ----
 list2env(envList,envir = globalenv()) 
 # loads the varaibles directly into global env
+# if loadedversion present, make it global
+if(exists('loadedVersion')){
+  assign('loadedVersion',loadedVersion,envir = globalenv())
+}
+
 # if you want to combine multiple plots use the `with` notation instead e.g.
 # plot <- with(envList, {ggplot(..)+geom_point()})
 

@@ -550,15 +550,30 @@ if(length(idx_selected)>1){
   }
 GeneData$anno <- as.factor(GeneData$anno)
     '
+  }else if(par_tmp[[session$token]]$SingleEntVis$type_of_data_gene == "batch_corrected_preprocessed"){
+    prequel_stringtosave <- '#get IDX to data
+idx_selected <- which(par_tmp$SingleEntVis$Select_Gene == rowData(res_tmp$data_batch_corrected)[,par_tmp$SingleEntVis$Select_GeneAnno])
+GeneData <- as.data.frame(t(as.data.frame(assay(res_tmp$data_batch_corrected))[idx_selected,,drop=F]))
+GeneData$anno <- colData(res_tmp$data_batch_corrected)[,par_tmp$SingleEntVis$accross_condition]
+if(length(idx_selected)>1){
+  # summarise the data
+  GeneData_medians <- rowMedians(as.matrix(GeneData[,-ncol(GeneData)]))
+  GeneData <- GeneData[,ncol(GeneData),drop=F]
+  GeneData$rowMedian <- GeneData_medians
+  GeneData <- GeneData[,c("rowMedian","anno")]
+}
+GeneData$anno <- as.factor(GeneData$anno)
+    '
   }
 
   if (numberOfScenario == 12) {
-    stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
+    if(all(table(res_tmp[[session$token]]$SingleEntVis$data$anno)>3)){
+      stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
 P_boxplots <- ggplot(GeneData, 
   aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],
       x=anno,
       fill=anno))+
-  geom_boxplot()+ # unable if less then 4 samples in all groups to get the same plot as in the App
+  geom_boxplot()+
   geom_point(shape = 21,size=5)+
   scale_fill_brewer(palette="RdBu")+
   xlab(par_tmp$SingleEntVis$Select_Gene)+
@@ -570,19 +585,54 @@ P_boxplots <- ggplot(GeneData,
                      method = par_tmp$SingleEntVis$testMethod,
                      label = "p.signif",
                      hide.ns = F)'
+    }else{
+      stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
+P_boxplots <- ggplot(GeneData, 
+  aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],
+      x=anno,
+      fill=anno))+
+  geom_point(shape = 21,size=5)+
+  scale_fill_brewer(palette="RdBu")+
+  xlab(par_tmp$SingleEntVis$Select_Gene)+
+  ylab(par_tmp$SingleEntVis$type_of_data_gene)+
+  CUSTOM_THEME+
+  geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
+  #stat_compare_means(method = "anova")+        # Add global annova p-value
+  stat_compare_means(comparisons = par_tmp$SingleEntVis$chooseComparisons_list,
+                     method = par_tmp$SingleEntVis$testMethod,
+                     label = "p.signif",
+                     hide.ns = F)'
+    }
+
   }
   if (numberOfScenario == 13) {
-    stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
+    if(all(table(res_tmp[[session$token]]$SingleEntVis$data$anno)>3)){
+      # boxplots
+      stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
 P_boxplots <- ggplot(res_tmp$SingleEntVis, 
   aes(y=res_tmp$SingleEntVis[,colnames(res_tmp$SingleEntVis)[-ncol(res_tmp$SingleEntVis)]],
       x=anno,
       fill=anno))+
-  geom_boxplot()+# unable if less then 4 samples in all groups to get the same plot as in the App
+        geom_boxplot()+
   geom_point(shape = 21,size=5)+
   scale_fill_brewer(palette="RdBu")+
   xlab(par_tmp$SingleEntVis$Select_Gene)+
   ylab(par_tmp$SingleEntVis$type_of_data_gene)+
  CUSTOM_THEME'
+    }else{
+      # no boxplots      
+      stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
+P_boxplots <- ggplot(res_tmp$SingleEntVis, 
+  aes(y=res_tmp$SingleEntVis[,colnames(res_tmp$SingleEntVis)[-ncol(res_tmp$SingleEntVis)]],
+      x=anno,
+      fill=anno))+
+  geom_point(shape = 21,size=5)+
+  scale_fill_brewer(palette="RdBu")+
+  xlab(par_tmp$SingleEntVis$Select_Gene)+
+  ylab(par_tmp$SingleEntVis$type_of_data_gene)+
+ CUSTOM_THEME'
+    }
+
   }
   stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave,"\n","lapply(ls(pattern='boxplots'), get)")
 }
@@ -704,46 +754,50 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
     )
   }
   
-  if(any(par_tmp$SigAna$comparisons_to_visualize == "all")){
-          # show all comparisons if no more than 4
-          if(length(par_tmp$SigAna$comparisons)<5){
-            chosenVizSet <- par_tmp$SigAna$comparisons
-          }else{
 
-            chosenVizSet <-  par_tmp$SigAna$comparisons[c(1,2)]
-            print("Note: Although you choose all to visualize only first 2 comparisons are shown to avoid unwanted computational overhead, 
-            as you got more than 4 comparisons. Please choose precisely the comparisons for visualisation.")
-          }
-        }else{
-          chosenVizSet <- par_tmp$SigAna$comparisons_to_visualize
-        }
-        for (i in 1:length(chosenVizSet)) {
-          to_add_tmp <- rownames(
-            filter_significant_result(
-              result = sig_results[[chosenVizSet[i]]],
-              alpha = par_tmp$SigAna$significance_level,
-              filter_type = par_tmp$SigAna$sig_to_look_at
-            )
-          )
-          # only add if the result is not empty
-          if(length(to_add_tmp) > 0){
-            res2plot[[chosenVizSet[i]]] <- to_add_tmp
-          }
-        }
-        # check that you have more than one comparison
-        if(length(res2plot) <= 1){
-          print("You either have no significant results or only significant results in one comparison.")
-          # if current plots to llok at are adjusted pvalues, suggest to look at raw pvalues
-            if(par_tmp$SigAna$sig_to_look_at == "Significant"){
-                print("You tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level.")
-            }
-        }
   
   '
 
   ### Venn Diagram ----
+if(numberOfScenario == 20 | numberOfScenario == 21){
+  stringtosave_1 <-
+  'if(any(par_tmp$SigAna$comparisons_to_visualize == "all")){
+    # show all comparisons if no more than 4
+    if(length(par_tmp$SigAna$comparisons)<5){
+      chosenVizSet <- par_tmp$SigAna$comparisons
+    }else{
+      
+      chosenVizSet <-  par_tmp$SigAna$comparisons[c(1,2)]
+      print("Note: Although you choose all to visualize only first 2 comparisons are shown to avoid unwanted computational overhead, 
+            as you got more than 4 comparisons. Please choose precisely the comparisons for visualisation.")
+    }
+  }else{
+    chosenVizSet <- par_tmp$SigAna$comparisons_to_visualize
+  }
+  for (i in 1:length(chosenVizSet)) {
+    to_add_tmp <- rownames(
+      filter_significant_result(
+        result = sig_results[[chosenVizSet[i]]],
+        alpha = par_tmp$SigAna$significance_level,
+        filter_type = par_tmp$SigAna$sig_to_look_at
+      )
+    )
+    # only add if the result is not empty
+    if(length(to_add_tmp) > 0){
+      res2plot[[chosenVizSet[i]]] <- to_add_tmp
+    }
+  }
+  # check that you have more than one comparison
+  if(length(res2plot) <= 1){
+    print("You either have no significant results or only significant results in one comparison.")
+    # if current plots to llok at are adjusted pvalues, suggest to look at raw pvalues
+    if(par_tmp$SigAna$sig_to_look_at == "Significant"){
+      print("You tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level.")
+    }
+  }'
+
     if(numberOfScenario == 20){
-      stringtosave <- '          
+      stringtosave_2 <- '          
       Venn_plot <- ggvenn::ggvenn(
             res2plot, 
             fill_color=c("#44af69", "#f8333c", "#fcab10", "#2b9eb3"),
@@ -752,9 +806,9 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
       '
     }
 
-  ### UpSet Plot ----
+### UpSet Plot ----
   if(numberOfScenario == 21){
-    stringtosave <- '
+    stringtosave_2 <- '
               overlap_list <- prepare_upset_plot(res2plot=res2plot)
           Upset_plot <- ComplexUpset::upset(
             overlap_list,
@@ -803,7 +857,9 @@ Upset_plot <- ComplexUpset::upset(
  
     '
   }
-  
+
+stringtosave <- paste0(stringtosave_1,"\n",stringtosave_2)
+}
   ### Volcano ----
   # option of both unnecessary 
   if(numberOfScenario >= 22 & numberOfScenario <= 23 ){
@@ -849,7 +905,7 @@ Upset_plot <- ComplexUpset::upset(
         color="lightgrey"
         ) +
       geom_vline(
-        xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),par_tmp$SigAna[paste0(par_name,"_lfc_th")]),
+        xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),
         color="lightgrey"
         ) +
       scale_color_manual(values=colorScheme2, name="") +
@@ -873,7 +929,7 @@ Upset_plot <- ComplexUpset::upset(
           color="lightgrey"
       ) +
       geom_vline(
-          xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),par_tmp$SigAna[paste0(par_name,"_lfc_th")]),
+          xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),
           color="lightgrey"
       ) +
       scale_color_manual(values=colorScheme2, name="") +
@@ -940,34 +996,34 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
   
   if(numberOfScenario == 15){
     stringtosave_1 <- '
-    if(par_tmp$Enrichment$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
+if(par_tmp$Enrichment$ValueToAttach == "LFC" | par_tmp$Enrichment$ValueToAttach == "LFC_abs"){
 
-        #get LFC
-        ctrl_samples_idx <- which(colData(res_tmp$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
-        comparison_samples_idx <- which(colData(res_tmp$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
+    #get LFC
+    ctrl_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_ref_GSEA)
+    comparison_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_treat_GSEA)
 
-            Data2Plot <- getLFCs(
-              assays(data$data)$raw,
-              ctrl_samples_idx,
-              comparison_samples_idx
-            )
+        Data2Plot <- getLFCs(
+          assays(res_tmp$data)$raw,
+          ctrl_samples_idx,
+          comparison_samples_idx
+        )
 
-            Data2Plot_tmp <- Data2Plot
-            if(input$ValueToAttach == "LFC"){
-              geneSetChoice_tmp <- Data2Plot_tmp$LFC
-            }
-            else if(input$ValueToAttach == "LFC_abs"){
-              geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
-            }
+        Data2Plot_tmp <- Data2Plot
+        if(par_tmp$Enrichment$ValueToAttach == "LFC"){
+          geneSetChoice_tmp <- Data2Plot_tmp$LFC
+        }
+        else if(par_tmp$Enrichment$ValueToAttach == "LFC_abs"){
+          geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
+        }
 
-            if(length(geneSetChoice_tmp) < 1){
-              print("Nothing significant!")
-              geneSetChoice_tmp <- NULL
-            }else{
-              names(geneSetChoice_tmp) <- Data2Plot_tmp$probename
-            }
-    geneSetChoice <- geneSetChoice_tmp
-          }
+        if(length(geneSetChoice_tmp) < 1){
+          print("Nothing significant!")
+          geneSetChoice_tmp <- NULL
+        }else{
+          names(geneSetChoice_tmp) <- Data2Plot_tmp$probename
+        }
+geneSetChoice <- geneSetChoice_tmp
+}
     '
     stringtosave_3 <- '
          if(anno_results$can_start == FALSE){
@@ -979,15 +1035,15 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
     anno_results$can_start <- TRUE
      }
       enrichment_results <- gene_set_enrichment(
-        input,
-        ea_reactives$tmp_genes,
-        data$data,
-        ea_reactives$enrichments2do,
-        input$test_correction,
-        input$sample_annotation_types_cmp_GSEA,
-        input$Groups2Compare_ref_GSEA,
-        input$Groups2Compare_treat_GSEA,
-        input$ValueToAttach
+        par_tmp$Enrichment$organism_choice_ea,
+        par_tmp$Enrichment$tmp_genes,
+        res_tmp$data,
+        par_tmp$Enrichment$enrichments2do,
+        par_tmp$Enrichment$test_correction,
+        par_tmp$Enrichment$sample_annotation_types_cmp_GSEA,
+        par_tmp$Enrichment$Groups2Compare_ref_GSEA,
+        par_tmp$Enrichment$Groups2Compare_treat_GSEA,
+        par_tmp$Enrichment$ValueToAttach
     )
     
     '
@@ -1008,10 +1064,16 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
   '
 
   stringtosave_4 <- 
-  'storageNames <- paste0("EnrichmentRes_",names(res_tmp$OA))
+  'non_null_names <- names(enrichment_results)[sapply(enrichment_results, function(x) !is.null(x))]
+non_null_names <- non_null_names[!grepl("geneSetChoice",non_null_names)]
+
 plot_list <- list()
-for(i in storageNames){
-  plot_list[[i]] <- clusterProfiler::dotplot(enrichment_results[[i]])+ggtitle(i)
+
+for(i in non_null_names){
+  # only show plots when there is at least one enriched term (padj <0.1)
+  if(any(enrichment_results[[i]]@result$p.adjust < 0.1)){
+    plot_list[[i]] <- clusterProfiler::dotplot(enrichment_results[[i]])+ggtitle(i)+CUSTOM_THEME
+  }
 }
 '
   
