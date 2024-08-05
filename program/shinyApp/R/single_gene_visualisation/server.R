@@ -182,7 +182,7 @@ single_gene_visualisation_server <- function(id, data){
             scale_fill_brewer(palette="RdBu") +
             xlab(input$Select_Gene) +
             ylab(input$type_of_data_gene) +
-            custom_theme
+            CUSTOM_THEME
           
           # check if it is more than 3 points per group, to draw boxplots as well
           if(any(table(GeneData$anno)>3)){

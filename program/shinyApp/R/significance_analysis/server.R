@@ -411,7 +411,7 @@ significance_analysis_server <- function(id, data, params){
           sig_ana_reactive$plot_last <- ComplexUpset::upset(
             sig_ana_reactive$overlap_list,
             colnames(sig_ana_reactive$overlap_list),
-            themes=list(default=custom_theme)
+            themes=list(default=CUSTOM_THEME)
           )
           sig_ana_reactive$intersect_names <-  ggplot_build(
             sig_ana_reactive$plot_last
@@ -454,7 +454,7 @@ significance_analysis_server <- function(id, data, params){
         sig_ana_reactive$plot_last <- ComplexUpset::upset(
           sig_ana_reactive$overlap_list,
           colnames(sig_ana_reactive$overlap_list),
-          themes=list(default = custom_theme),
+          themes=list(default = CUSTOM_THEME),
           queries=queries
         )
       })

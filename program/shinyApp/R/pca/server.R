@@ -431,7 +431,7 @@ pca_Server <- function(id, data, params, row_select){
             "% variance"
           )) +
           coord_fixed() +
-          custom_theme +
+          CUSTOM_THEME +
           theme(aspect.ratio = 1) +
           ggtitle(customTitle)
         print(input$Show_loadings)
@@ -553,7 +553,7 @@ pca_Server <- function(id, data, params, row_select){
           geom_point(size = 4,mapping = aes(label = Var)) +
           geom_line() +
           ylab("Variance explained") +
-          custom_theme +
+          CUSTOM_THEME +
           ggtitle("Scree-Plot for shown PCA")
         scenario <- 7
         Scree_scenario <- scenario
@@ -633,7 +633,7 @@ pca_Server <- function(id, data, params, row_select){
           scale_fill_gradient2(low = "#277d6a",mid = "white",high = "orange") +
           ylab(ifelse(is.null(input$EntitieAnno_Loadings),"",input$EntitieAnno_Loadings)) +
           xlab(paste0("Loadings: ",input$x_axis_selection)) +
-          custom_theme
+          CUSTOM_THEME
 
         scenario <- 8
         Loading_scenario <- scenario
@@ -722,7 +722,7 @@ pca_Server <- function(id, data, params, row_select){
             limits = c(-max(df_loadings$loading),max(df_loadings$loading))
           ) +
           labs(x = "PCs", y = input$EntitieAnno_Loadings_matrix, fill = "Loading") +
-          custom_theme
+          CUSTOM_THEME
         scenario <- 8.1
         #Loading_scenario <- scenario
         output[["PCA_Loadings_matrix_plot"]] <- renderPlot({LoadingsMatrix})
