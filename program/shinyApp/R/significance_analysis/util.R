@@ -313,7 +313,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       ylab("-log10(p_adj-value)") +
       theme(legend.position = "none") +
       ggtitle(label="Corrected p-Values") +
-      custom_theme
+      CUSTOM_THEME
     
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot,
@@ -339,7 +339,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       xlab("Log FoldChange") +
       ylab("-log10(p-value)") +
       ggtitle(label="Uncorrected p-Values") +
-      custom_theme
+      CUSTOM_THEME
     
       output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
 
@@ -727,7 +727,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       ylab("-log10(p_adj-value)") +
       theme(legend.position = "none") +
       ggtitle(label="Corrected p-Values") +
-      custom_theme
+      CUSTOM_THEME
     
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot,
@@ -754,7 +754,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       xlab("Log FoldChange") +
       ylab("-log10(p-value)") +
       ggtitle(label="Uncorrected p-Values")+
-      custom_theme
+      CUSTOM_THEME
     
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
