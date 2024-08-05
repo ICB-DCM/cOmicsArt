@@ -416,7 +416,7 @@ myColor_fill <- colorRampPalette(c("blue", "white", "firebrick"))(paletteLength)
 # select and caluculate Heatmap input depending on users input - 
 # check par_tmp$Heatmap for selected options or change accrodingly to what you desire
 mycolors <- list()
-if(length(par_tmp$Heatmap$anno_options) == 1){
+if(length(par_tmp$Heatmap$anno_options) == 1 & !("None" %in% par_tmp$Heatmap$anno_options)){
   if(length(unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])) <= 8){
     names(colorTheme) <- unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])
     colorTheme <- colorTheme[!is.na(names(colorTheme))]
@@ -454,10 +454,16 @@ if(is.null(data2plot)){
 
   if(numberOfScenario == 11){
     stringtosave <- '
-annotation_col <- colData(res_tmp$data)[, par_tmp$Heatmap$anno_options, drop = F]
-annotation_row <- rowData(res_tmp$data)[, par_tmp$Heatmap$row_anno_options, drop = F]
-annotation_col <- as.data.frame(annotation_col)
-annotation_row <- as.data.frame(annotation_row)
+annotation_col <- NA
+annotation_row <- NA
+if(!("None" %in% par_tmp$Heatmap$anno_options)){
+  annotation_col <- colData(data)[, par_tmp$Heatmap$anno_options, drop = F]
+  annotation_col <- as.data.frame(annotation_col)
+}
+if(!("None" %in% par_tmp$Heatmap$anno_options)){
+  annotation_row <- rowData(data)[, par_tmp$Heatmap$row_anno_options, drop = F]
+  annotation_row <- as.data.frame(annotation_row)
+}
 
 # Potential Clustering
 cluster_rows <- FALSE
@@ -595,13 +601,13 @@ main = par_tmp$SampleCorr$customTitleSampleCorrelation,
 annotation_colors = par_tmp$SampleCorr$anno_colors
 )'
   }
-## Significance Analysis -----
 
+## Significance Analysis -----
 if(numberOfScenario >= 20 & numberOfScenario < 24){
   # Calculate all necessary intermediate data sets
   prequel_stringtosave <- '
   # Test correction list
-PADJUST_METHOD <<- list(
+PADJUST_METHOD <- list(
   "None" = "none",
   "Bonferroni" = "bonferroni",
   "Benjamini-Hochberg" = "BH",
@@ -615,7 +621,7 @@ PADJUST_METHOD <<- list(
 res2plot <- list()
 
 if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
-  dds <- data$DESeq_obj
+  dds <- res_tmp$DESeq_obj
   
   # rewind the comparisons again
   newList <- par_tmp$SigAna$comparisons
@@ -625,17 +631,17 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
   }
 
   # get the results for each contrast and put it all in a big results object
-  sig_results <<- list()
+  sig_results <- list()
   for (i in 1:length(contrasts)) {
     if(identical(
       list(test_method = "Wald", test_correction = PADJUST_METHOD[[par_tmp$SigAna$test_correction]]),
       par_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]]
     )){
       print("Results exists, skipping calculations.")
-      sig_results[[par_tmp$SigAna$comparisons[i]]] <<- res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]]
+      sig_results[[par_tmp$SigAna$comparisons[i]]] <- res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]]
       next
     }
-    sig_results[[par_tmp$SigAna$comparisons[i]]] <<- DESeq2::results(
+    sig_results[[par_tmp$SigAna$comparisons[i]]] <- DESeq2::results(
       dds,
       contrast = c(
         par_tmp$SigAna$sample_annotation_types_cmp,
@@ -645,8 +651,8 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
       pAdjustMethod = PADJUST_METHOD[[par_tmp$SigAna$test_correction]]
     )
     # fill in res_tmp, par_tmp
-    res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <<- sig_results[[par_tmp$SigAna$comparisons[i]]]
-    par_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <<- list(
+    res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <- sig_results[[par_tmp$SigAna$comparisons[i]]]
+    par_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <- list(
       test_method = "Wald",
       test_correction = PADJUST_METHOD[[par_tmp$SigAna$test_correction]]
     )
