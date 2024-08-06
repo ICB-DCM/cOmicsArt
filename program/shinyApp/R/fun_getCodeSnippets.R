@@ -882,7 +882,7 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
     # uncomment the following lines
     # you can also manually change the inputs to geneSetChoice
 
-    #   Tmp <- read.csv(input$UploadedGeneSet$datapath, header = F)
+    #   Tmp <- read.csv(par_tmp$Enrichment$UploadedGeneSet$datapath, header = F)
     #   # check take first column as a character vector
     #   geneSetChoice_tmp <- Tmp$V1
     #   # Check if they start with "ENS.."
@@ -911,7 +911,7 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
 
       enrichment_results <- over_representation_analysis(
         par_tmp$Enrichment,
-        output,
+        par_tmp$organism,
         geneSetChoice,
         res_tmp$data,
         par_tmp$Enrichment$enrichments2do,
@@ -924,23 +924,23 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
   
   if(numberOfScenario == 15){
     stringtosave_1 <- '
-    if(par_tmp$Enrichment$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
+    if(par_tmp$Enrichment$ValueToAttach == "LFC" | par_tmp$Enrichment$ValueToAttach == "LFC_abs"){
 
         #get LFC
-        ctrl_samples_idx <- which(colData(res_tmp$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
-        comparison_samples_idx <- which(colData(res_tmp$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
+        ctrl_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_ref_GSEA)
+        comparison_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_treat_GSEA)
 
             Data2Plot <- getLFCs(
-              assays(data$data)$raw,
+              assays(res_tmp$data)$raw,
               ctrl_samples_idx,
               comparison_samples_idx
             )
 
             Data2Plot_tmp <- Data2Plot
-            if(input$ValueToAttach == "LFC"){
+            if(par_tmp$Enrichment$ValueToAttach == "LFC"){
               geneSetChoice_tmp <- Data2Plot_tmp$LFC
             }
-            else if(input$ValueToAttach == "LFC_abs"){
+            else if(par_tmp$Enrichment$ValueToAttach == "LFC_abs"){
               geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
             }
 
@@ -954,57 +954,63 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
           }
     '
     stringtosave_3 <- '
-         if(anno_results$can_start == FALSE){
-        res_tmp$data <- translate_genes_ea(
-          data = res_tmp$data,
-          annotation_results = anno_results,
-          input = par_tmp$Enrichment
-        )
-    anno_results$can_start <- TRUE
-     }
-      enrichment_results <- gene_set_enrichment(
-        input,
-        ea_reactives$tmp_genes,
-        data$data,
-        ea_reactives$enrichments2do,
-        input$test_correction,
-        input$sample_annotation_types_cmp_GSEA,
-        input$Groups2Compare_ref_GSEA,
-        input$Groups2Compare_treat_GSEA,
-        input$ValueToAttach
-    )
+if(anno_results$can_start == FALSE){
+  res_tmp$data <- translate_genes_ea(
+    data = res_tmp$data,
+    annotation_results = anno_results,
+    input = par_tmp$Enrichment
+  )
+  anno_results$can_start <- TRUE
+}
+enrichment_results <- gene_set_enrichment(
+  par_tmp$organism,
+  par_tmp$Enrichment$tmp_genes,
+  res_tmp$data,
+  par_tmp$Enrichment$enrichments2do,
+  par_tmp$Enrichment$test_correction,
+  par_tmp$Enrichment$sample_annotation_types_cmp_GSEA,
+  par_tmp$Enrichment$Groups2Compare_ref_GSEA,
+  par_tmp$Enrichment$Groups2Compare_treat_GSEA,
+  par_tmp$Enrichment$ValueToAttach
+)
     
-    '
+'
   }
   
   
   stringtosave_2 <- '# Check whether the necessary annotation is available
-        anno_results <- check_annotation_enrichment_analysis(res_tmp$data)
-        res_tmp$data <- anno_results$new_data
+anno_results <- check_annotation_enrichment_analysis(res_tmp$data)
+res_tmp$data <- anno_results$new_data
 
-  if(anno_results$no_ann){
-    print("No valid annotation type was detected in your row annotation. Please indicate the type of annotation with which you uploaded your genes.")
-    print("Should be one of ENSEMBL, ENTREZID, SYMBOL (was selected within App")
-    anno_results$base_annotation <- par_tmp$Enrichment$AnnotationSelection
-    anno_results$can_start = FALSE
-  
-  }
-  '
+if(anno_results$no_ann){
+  print("No valid annotation type was detected in your row annotation. Please indicate the type of annotation with which you uploaded your genes.")
+  print("Should be one of ENSEMBL, ENTREZID, SYMBOL (was selected within App")
+  anno_results$base_annotation <- par_tmp$Enrichment$AnnotationSelection
+  anno_results$can_start = FALSE
+
+}
+'
 
   stringtosave_4 <- 
-  'storageNames <- paste0("EnrichmentRes_",names(res_tmp$OA))
-plot_list <- list()
-for(i in storageNames){
+  'plot_list <- list()
+for(i in names(enrichment_results)){
+  if (is.null(enrichment_results[[i]]) | i == "geneSetChoice"){
+    print(i)
+    print(enrichment_results[[i]])
+    next
+  }
+  print(enrichment_results[[i]])
   plot_list[[i]] <- clusterProfiler::dotplot(enrichment_results[[i]])+ggtitle(i)
 }
 '
-  
-  
-  stringtosave <- paste0(stringtosave_1,"\n",
-                         stringtosave_2,"\n",
-                         stringtosave_3,"\n",
-                         stringtosave_4,"\n",
-                         "lapply(ls(pattern='plot'), get)")
+
+  stringtosave <- paste0(
+    stringtosave_1,"\n",
+    stringtosave_2,"\n",
+    stringtosave_3,"\n",
+    stringtosave_4,"\n",
+    "lapply(ls(pattern='plot'), get)"
+  )
 }
 ### Overrepresentation ----
 
