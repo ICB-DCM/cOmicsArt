@@ -924,35 +924,36 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
   
   if(numberOfScenario == 15){
     stringtosave_1 <- '
-    if(par_tmp$Enrichment$ValueToAttach == "LFC" | par_tmp$Enrichment$ValueToAttach == "LFC_abs"){
+if(par_tmp$Enrichment$ValueToAttach == "LFC" | par_tmp$Enrichment$ValueToAttach == "LFC_abs" | input$ValueToAttach == "statistic_value"){
+  #get LFC
+  ctrl_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_ref_GSEA)
+  comparison_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_treat_GSEA)
 
-        #get LFC
-        ctrl_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_ref_GSEA)
-        comparison_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_treat_GSEA)
+  Data2Plot <- getLFCs(
+    assays(res_tmp$data)$raw,
+    ctrl_samples_idx,
+    comparison_samples_idx
+  )
 
-            Data2Plot <- getLFCs(
-              assays(res_tmp$data)$raw,
-              ctrl_samples_idx,
-              comparison_samples_idx
-            )
+  Data2Plot_tmp <- Data2Plot
+  if(par_tmp$Enrichment$ValueToAttach == "LFC"){
+    geneSetChoice_tmp <- Data2Plot_tmp$LFC
+  }
+  else if(par_tmp$Enrichment$ValueToAttach == "LFC_abs"){
+    geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
+  } else if(input$ValueToAttach == "LFC_abs"){
+    geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
+  }
 
-            Data2Plot_tmp <- Data2Plot
-            if(par_tmp$Enrichment$ValueToAttach == "LFC"){
-              geneSetChoice_tmp <- Data2Plot_tmp$LFC
-            }
-            else if(par_tmp$Enrichment$ValueToAttach == "LFC_abs"){
-              geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
-            }
-
-            if(length(geneSetChoice_tmp) < 1){
-              print("Nothing significant!")
-              geneSetChoice_tmp <- NULL
-            }else{
-              names(geneSetChoice_tmp) <- Data2Plot_tmp$probename
-            }
-    geneSetChoice <- geneSetChoice_tmp
-          }
-    '
+  if(length(geneSetChoice_tmp) < 1){
+    print("Nothing significant!")
+    geneSetChoice_tmp <- NULL
+  }else{
+    names(geneSetChoice_tmp) <- Data2Plot_tmp$probename
+  }
+  geneSetChoice <- geneSetChoice_tmp
+}
+'
     stringtosave_3 <- '
 if(anno_results$can_start == FALSE){
   res_tmp$data <- translate_genes_ea(
