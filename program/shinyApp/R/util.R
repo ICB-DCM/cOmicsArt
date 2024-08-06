@@ -112,22 +112,28 @@ save.function.from.env <- function(wanted,file="utils.R")
   funs <- Filter(is.function, sapply(ls( ".GlobalEnv"), get))
   funs <- funs[names(funs) %in% wanted]
 
-  # Let's
-  for(i in seq_along(funs))
-  {
+  for (i in seq_along(funs)) {
+    func_text <- paste(capture.output(funs[[i]]), collapse = "\n")
+
+    # Perform the replacements
+    func_text <- gsub("res_tmp\\[\\[session\\$token\\]\\]", "res_tmp", func_text)
+    func_text <- gsub("par_tmp\\[\\[session\\$token\\]\\]", "par_tmp", func_text)
+
+    # Write function to the file
     cat( # number the function we are about to add
-      paste("\n" , "#------ Function number ", i , "-----------------------------------" ,"\n"),
-      append = T, file = file
+      paste("\n", "#------ Function number ", i, "-----------------------------------", "\n"),
+      append = TRUE, file = file
     )
     cat(    # print the function into the file
-      paste(names(funs)[i] , "<-", paste(capture.output(funs[[i]]), collapse = "\n"), collapse = "\n"),
-      append = T, file = file
+      paste(names(funs)[i], "<-", func_text, collapse = "\n"),
+      append = TRUE, file = file
     )
     cat(
-      paste("\n" , "#-----------------------------------------" ,"\n"),
-      append = T, file = file
+      paste("\n", "#-----------------------------------------", "\n"),
+      append = TRUE, file = file
     )
   }
+
   cat( # writing at the end of the file how many new functions where added to it
     paste("# A total of ", length(funs), " Functions where written into utils"),
     append = T, file = file
