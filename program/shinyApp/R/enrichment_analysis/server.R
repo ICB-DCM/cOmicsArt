@@ -51,7 +51,8 @@ enrichment_analysis_geneset_server <- function(
            # par_tmp$Enrichment[names(tmp)] <<- tmp
               envList <- list(
                 res_tmp = res_tmp[[session$token]],
-                par_tmp = par_tmp[[session$token]]
+                par_tmp = par_tmp[[session$token]],
+                loadedVersion = loadedVersion
               )
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
@@ -59,12 +60,17 @@ enrichment_analysis_geneset_server <- function(
             # functions needed
             source("R/SourceAll.R")
 
-            save.function.from.env(wanted = c("check_annotation_enrichment_analysis",
-                                              "translate_genes_ea",
-                                              "translate_genes_oa",
-                                              "gene_set_enrichment",
-                                              "over_representation_analysis"),
-                                   file = file.path(temp_directory, "utils.R"))
+            save.function.from.env(
+              wanted = c(
+                "check_annotation_enrichment_analysis",
+                "translate_genes_ea",
+                "translate_genes_oa",
+                "gene_set_enrichment",
+                "over_representation_analysis",
+                "getLFCs"
+              ),
+              file = file.path(temp_directory, "utils.R")
+            )
 
 
             write(getPlotCode(ea_scenario), file.path(temp_directory, "Code.R"))
@@ -647,7 +653,9 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           waiter$hide()
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
           # res_temp Zuweisung
-          res_tmp[[session$token]]["Enrichment"] <<- ea_reactives$enrichment_results
+          
+          res_tmp[[session$token]][["Enrichment"]] <<- ea_reactives$enrichment_results
+
         })
       })
 

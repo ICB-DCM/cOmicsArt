@@ -42,20 +42,24 @@ selected <- unique(
   }
 
   if(any(col_selection == "all")){
-    stringSelection <- paste0(stringSelection,"\n",
-                              'samples_selected <- colnames(assay(res_tmp$data_original))
-                              tmp_data_selected <- res_tmp$data_original[selected,samples_selected]
-                              ')
+    stringSelection <- paste0(stringSelection,
+                              '\n',
+                              'samples_selected <- colnames(assay(res_tmp$data_original))',
+                              '\n',
+                              'tmp_data_selected <- res_tmp$data_original[selected,samples_selected]'
+                              )
   }else{
     stringSelection <- paste0(stringSelection,
+                              '\n',
                               'samples_selected <- c(
                                 samples_selected,
                                 rownames(colData(res_tmp$data_original))[which(
                                 colData(res_tmp$data_original)[,par_tmp$providedSampleAnnotationTypes] %in% par_tmp$sample_selection
                               )]
+                              )',
+                              '\n',
+                              'tmp_data_selected <- res_tmp$data_original[selected,samples_selected]'
                               )
-                              tmp_data_selected <- res_tmp$data_original[selected,samples_selected]
-                              ')
   }
  # Preprocessing ----
 
@@ -263,7 +267,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
       xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
       ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
-      theme_classic()+
+      CUSTOM_THEME+
       theme(aspect.ratio = 1)+
       ggtitle(par_tmp$PCA$customTitle)'
     }
@@ -279,7 +283,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
       xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
       ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
-      theme_classic()+
+      CUSTOM_THEME+
       theme(aspect.ratio = 1)+
       ggtitle(par_tmp$PCA$customTitle)'
     }
@@ -296,7 +300,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
       xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
       ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
-      theme_classic()+
+      CUSTOM_THEME+
       theme(aspect.ratio = 1)+
       ggtitle(par_tmp$PCA$customTitle)'
     }
@@ -312,7 +316,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
       xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
       ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
-      theme_classic()+
+      CUSTOM_THEME+
       theme(aspect.ratio = 1)+
       ggtitle(par_tmp$PCA$customTitle)+geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
                                                       aes(x=0, y=0, xend=v1, yend=v2),
@@ -335,7 +339,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
     xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
     ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
     coord_fixed()+
-    theme_classic()+
+    CUSTOM_THEME+
     theme(aspect.ratio = 1)+
     ggtitle(par_tmp$PCA$customTitle)+
     geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
@@ -358,7 +362,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
       xlab(paste0(names(percentVar[par_tmp$PCA$x_axis_selection]),": ",percentVar[par_tmp$PCA$x_axis_selection], "% variance")) +
       ylab(paste0(names(percentVar[par_tmp$PCA$y_axis_selection]),": ", percentVar[par_tmp$PCA$y_axis_selection], "% variance")) +
       coord_fixed()+
-      theme_classic()+
+      CUSTOM_THEME+
       theme(aspect.ratio = 1)+
       ggtitle(par_tmp$PCA$customTitle)+geom_segment(data=df_out_r[which(df_out_r$feature!=""),],
                  aes(x=0, y=0, xend=v1, yend=v2),
@@ -373,7 +377,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
                                   geom_point(size=4,aes(label=Var))+
                                   geom_line()+
                                   ylab("Variance explained")+
-                                  theme_bw()+
+                                  CUSTOM_THEME+
                                   ggtitle("Scree-Plot for shown PCA")'
     }
 ### Loadings single
@@ -386,7 +390,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
       scale_fill_gradient2(low = "#277d6a",mid = "white",high = "orange") +
       ylab(ifelse(is.null(par_tmp$PCA$EntitieAnno_Loadings),"",par_tmp$PCA$EntitieAnno_Loadings)) +
       xlab(paste0("Loadings: ",par_tmp$PCA$x_axis_selection)) +
-      theme_bw(base_size = 15)'
+     CUSTOM_THEME'
     }
 ### Loadings matrix
   if (numberOfScenario == 8.1) {
@@ -398,7 +402,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
     limits = c(-max(df_loadings$loading),max(df_loadings$loading))
     ) +
     labs(x = "PCs", y = "entity", fill = "Loading") +
-    theme_bw(base_size = 15)'
+    CUSTOM_THEME'
   }
 
   stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave,"\n","lapply(ls(pattern='plot'), get)")
@@ -414,14 +418,30 @@ paletteLength <- 25
 myColor_fill <- colorRampPalette(c("blue", "white", "firebrick"))(paletteLength)
   
 # select and caluculate Heatmap input depending on users input - 
-# check par_tmp$Heatmap for selected options or change accrodingly to what you desire
+# check par_tmp$Heatmap for selected options or change accordingly to what you desire
 mycolors <- list()
-if(length(par_tmp$Heatmap$anno_options) == 1){
+
+if(length(par_tmp$Heatmap$anno_options) == 1 & !("None" %in% par_tmp$Heatmap$anno_options)){
   if(length(unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])) <= 8){
     names(colorTheme) <- unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])
     colorTheme <- colorTheme[!is.na(names(colorTheme))]
     mycolors[[par_tmp$Heatmap$anno_options]] <- colorTheme
+
   }
+  annotation_col <- colData(res_tmp$data)[, par_tmp$Heatmap$anno_options, drop = F]
+  annotation_col <- as.data.frame(annotation_col)
+}
+if(!("None" %in% par_tmp$Heatmap$row_anno_options)){
+  if(length(par_tmp$Heatmap$anno_options) == 1){
+    if(length(unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])) <= 8){
+      names(colorTheme) <- unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])
+      colorTheme <- colorTheme[!is.na(names(colorTheme))]
+      mycolors[[par_tmp$Heatmap$anno_options]] <- colorTheme
+    }
+  }
+  
+  annotation_row <- rowData(res_tmp$data)[, par_tmp$Heatmap$row_anno_options, drop = F]
+  annotation_row <- as.data.frame(annotation_row)
 }
 
         
@@ -454,10 +474,16 @@ if(is.null(data2plot)){
 
   if(numberOfScenario == 11){
     stringtosave <- '
-annotation_col <- colData(res_tmp$data)[, par_tmp$Heatmap$anno_options, drop = F]
-annotation_row <- rowData(res_tmp$data)[, par_tmp$Heatmap$row_anno_options, drop = F]
-annotation_col <- as.data.frame(annotation_col)
-annotation_row <- as.data.frame(annotation_row)
+annotation_col <- NA
+annotation_row <- NA
+if(!("None" %in% par_tmp$Heatmap$anno_options)){
+  annotation_col <- colData(data)[, par_tmp$Heatmap$anno_options, drop = F]
+  annotation_col <- as.data.frame(annotation_col)
+}
+if(!("None" %in% par_tmp$Heatmap$anno_options)){
+  annotation_row <- rowData(data)[, par_tmp$Heatmap$row_anno_options, drop = F]
+  annotation_row <- as.data.frame(annotation_row)
+}
 
 # Potential Clustering
 cluster_rows <- FALSE
@@ -528,39 +554,89 @@ if(length(idx_selected)>1){
   }
 GeneData$anno <- as.factor(GeneData$anno)
     '
+  }else if(par_tmp[[session$token]]$SingleEntVis$type_of_data_gene == "batch_corrected_preprocessed"){
+    prequel_stringtosave <- '#get IDX to data
+idx_selected <- which(par_tmp$SingleEntVis$Select_Gene == rowData(res_tmp$data_batch_corrected)[,par_tmp$SingleEntVis$Select_GeneAnno])
+GeneData <- as.data.frame(t(as.data.frame(assay(res_tmp$data_batch_corrected))[idx_selected,,drop=F]))
+GeneData$anno <- colData(res_tmp$data_batch_corrected)[,par_tmp$SingleEntVis$accross_condition]
+if(length(idx_selected)>1){
+  # summarise the data
+  GeneData_medians <- rowMedians(as.matrix(GeneData[,-ncol(GeneData)]))
+  GeneData <- GeneData[,ncol(GeneData),drop=F]
+  GeneData$rowMedian <- GeneData_medians
+  GeneData <- GeneData[,c("rowMedian","anno")]
+}
+GeneData$anno <- as.factor(GeneData$anno)
+    '
   }
 
   if (numberOfScenario == 12) {
-    stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
+    if(all(table(res_tmp[[session$token]]$SingleEntVis$data$anno)>3)){
+      stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
 P_boxplots <- ggplot(GeneData, 
   aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],
       x=anno,
       fill=anno))+
-  geom_boxplot()+ # unable if less then 4 samples in all groups to get the same plot as in the App
+  geom_boxplot()+
   geom_point(shape = 21,size=5)+
   scale_fill_brewer(palette="RdBu")+
   xlab(par_tmp$SingleEntVis$Select_Gene)+
   ylab(par_tmp$SingleEntVis$type_of_data_gene)+
-  theme_bw()+
+  CUSTOM_THEME+
   geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
   #stat_compare_means(method = "anova")+        # Add global annova p-value
   stat_compare_means(comparisons = par_tmp$SingleEntVis$chooseComparisons_list,
                      method = par_tmp$SingleEntVis$testMethod,
                      label = "p.signif",
                      hide.ns = F)'
-  }
-  if (numberOfScenario == 13) {
-    stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
-P_boxplots <- ggplot(res_tmp$SingleEntVis, 
-  aes(y=res_tmp$SingleEntVis[,colnames(res_tmp$SingleEntVis)[-ncol(res_tmp$SingleEntVis)]],
+    }else{
+      stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
+P_boxplots <- ggplot(GeneData, 
+  aes(y=GeneData[,colnames(GeneData)[-ncol(GeneData)]],
       x=anno,
       fill=anno))+
-  geom_boxplot()+# unable if less then 4 samples in all groups to get the same plot as in the App
   geom_point(shape = 21,size=5)+
   scale_fill_brewer(palette="RdBu")+
   xlab(par_tmp$SingleEntVis$Select_Gene)+
   ylab(par_tmp$SingleEntVis$type_of_data_gene)+
-  theme_bw()'
+  CUSTOM_THEME+
+  geom_hline(yintercept = mean(GeneData[,colnames(GeneData)[-ncol(GeneData)]]), linetype = 2)+ # Add horizontal line at base mean
+  #stat_compare_means(method = "anova")+        # Add global annova p-value
+  stat_compare_means(comparisons = par_tmp$SingleEntVis$chooseComparisons_list,
+                     method = par_tmp$SingleEntVis$testMethod,
+                     label = "p.signif",
+                     hide.ns = F)'
+    }
+
+  }
+  if (numberOfScenario == 13) {
+    if(all(table(res_tmp[[session$token]]$SingleEntVis$data$anno)>3)){
+      # boxplots
+      stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
+P_boxplots <- ggplot(res_tmp$SingleEntVis, 
+  aes(y=res_tmp$SingleEntVis[,colnames(res_tmp$SingleEntVis)[-ncol(res_tmp$SingleEntVis)]],
+      x=anno,
+      fill=anno))+
+        geom_boxplot()+
+  geom_point(shape = 21,size=5)+
+  scale_fill_brewer(palette="RdBu")+
+  xlab(par_tmp$SingleEntVis$Select_Gene)+
+  ylab(par_tmp$SingleEntVis$type_of_data_gene)+
+ CUSTOM_THEME'
+    }else{
+      # no boxplots      
+      stringtosave = '# GeneData now contains the same as res_tmp$SingleEntVis
+P_boxplots <- ggplot(res_tmp$SingleEntVis, 
+  aes(y=res_tmp$SingleEntVis[,colnames(res_tmp$SingleEntVis)[-ncol(res_tmp$SingleEntVis)]],
+      x=anno,
+      fill=anno))+
+  geom_point(shape = 21,size=5)+
+  scale_fill_brewer(palette="RdBu")+
+  xlab(par_tmp$SingleEntVis$Select_Gene)+
+  ylab(par_tmp$SingleEntVis$type_of_data_gene)+
+ CUSTOM_THEME'
+    }
+
   }
   stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave,"\n","lapply(ls(pattern='boxplots'), get)")
 }
@@ -589,19 +665,19 @@ cormat <- cor(
 )
 
 SampleCorrelationPlot <- pheatmap(
-mat = cormat, #res_tmp$SampleCorr
-annotation_row = par_tmp$SampleCorr$annotationDF,
-main = par_tmp$SampleCorr$customTitleSampleCorrelation,
-annotation_colors = par_tmp$SampleCorr$anno_colors
+  mat = cormat, #res_tmp$SampleCorr
+  annotation_row = par_tmp$SampleCorr$annotationDF,
+  main = par_tmp$SampleCorr$customTitleSampleCorrelation,
+  annotation_colors = par_tmp$SampleCorr$anno_colors
 )'
   }
-## Significance Analysis -----
 
+## Significance Analysis -----
 if(numberOfScenario >= 20 & numberOfScenario < 24){
   # Calculate all necessary intermediate data sets
   prequel_stringtosave <- '
   # Test correction list
-PADJUST_METHOD <<- list(
+PADJUST_METHOD <- list(
   "None" = "none",
   "Bonferroni" = "bonferroni",
   "Benjamini-Hochberg" = "BH",
@@ -615,7 +691,7 @@ PADJUST_METHOD <<- list(
 res2plot <- list()
 
 if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
-  dds <- data$DESeq_obj
+  dds <- res_tmp$DESeq_obj
   
   # rewind the comparisons again
   newList <- par_tmp$SigAna$comparisons
@@ -625,17 +701,17 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
   }
 
   # get the results for each contrast and put it all in a big results object
-  sig_results <<- list()
+  sig_results <- list()
   for (i in 1:length(contrasts)) {
     if(identical(
       list(test_method = "Wald", test_correction = PADJUST_METHOD[[par_tmp$SigAna$test_correction]]),
       par_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]]
     )){
       print("Results exists, skipping calculations.")
-      sig_results[[par_tmp$SigAna$comparisons[i]]] <<- res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]]
+      sig_results[[par_tmp$SigAna$comparisons[i]]] <- res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]]
       next
     }
-    sig_results[[par_tmp$SigAna$comparisons[i]]] <<- DESeq2::results(
+    sig_results[[par_tmp$SigAna$comparisons[i]]] <- DESeq2::results(
       dds,
       contrast = c(
         par_tmp$SigAna$sample_annotation_types_cmp,
@@ -645,8 +721,8 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
       pAdjustMethod = PADJUST_METHOD[[par_tmp$SigAna$test_correction]]
     )
     # fill in res_tmp, par_tmp
-    res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <<- sig_results[[par_tmp$SigAna$comparisons[i]]]
-    par_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <<- list(
+    res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <- sig_results[[par_tmp$SigAna$comparisons[i]]]
+    par_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <- list(
       test_method = "Wald",
       test_correction = PADJUST_METHOD[[par_tmp$SigAna$test_correction]]
     )
@@ -682,46 +758,50 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
     )
   }
   
-  if(any(par_tmp$SigAna$comparisons_to_visualize == "all")){
-          # show all comparisons if no more than 4
-          if(length(par_tmp$SigAna$comparisons)<5){
-            chosenVizSet <- par_tmp$SigAna$comparisons
-          }else{
 
-            chosenVizSet <-  par_tmp$SigAna$comparisons[c(1,2)]
-            print("Note: Although you choose all to visualize only first 2 comparisons are shown to avoid unwanted computational overhead, 
-            as you got more than 4 comparisons. Please choose precisely the comparisons for visualisation.")
-          }
-        }else{
-          chosenVizSet <- par_tmp$SigAna$comparisons_to_visualize
-        }
-        for (i in 1:length(chosenVizSet)) {
-          to_add_tmp <- rownames(
-            filter_significant_result(
-              result = sig_results[[chosenVizSet[i]]],
-              alpha = par_tmp$SigAna$significance_level,
-              filter_type = par_tmp$SigAna$sig_to_look_at
-            )
-          )
-          # only add if the result is not empty
-          if(length(to_add_tmp) > 0){
-            res2plot[[chosenVizSet[i]]] <- to_add_tmp
-          }
-        }
-        # check that you have more than one comparison
-        if(length(res2plot) <= 1){
-          print("You either have no significant results or only significant results in one comparison.")
-          # if current plots to llok at are adjusted pvalues, suggest to look at raw pvalues
-            if(par_tmp$SigAna$sig_to_look_at == "Significant"){
-                print("You tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level.")
-            }
-        }
   
   '
 
   ### Venn Diagram ----
+if(numberOfScenario == 20 | numberOfScenario == 21){
+  stringtosave_1 <-
+  'if(any(par_tmp$SigAna$comparisons_to_visualize == "all")){
+    # show all comparisons if no more than 4
+    if(length(par_tmp$SigAna$comparisons)<5){
+      chosenVizSet <- par_tmp$SigAna$comparisons
+    }else{
+      
+      chosenVizSet <-  par_tmp$SigAna$comparisons[c(1,2)]
+      print("Note: Although you choose all to visualize only first 2 comparisons are shown to avoid unwanted computational overhead, 
+            as you got more than 4 comparisons. Please choose precisely the comparisons for visualisation.")
+    }
+  }else{
+    chosenVizSet <- par_tmp$SigAna$comparisons_to_visualize
+  }
+  for (i in 1:length(chosenVizSet)) {
+    to_add_tmp <- rownames(
+      filter_significant_result(
+        result = sig_results[[chosenVizSet[i]]],
+        alpha = par_tmp$SigAna$significance_level,
+        filter_type = par_tmp$SigAna$sig_to_look_at
+      )
+    )
+    # only add if the result is not empty
+    if(length(to_add_tmp) > 0){
+      res2plot[[chosenVizSet[i]]] <- to_add_tmp
+    }
+  }
+  # check that you have more than one comparison
+  if(length(res2plot) <= 1){
+    print("You either have no significant results or only significant results in one comparison.")
+    # if current plots to llok at are adjusted pvalues, suggest to look at raw pvalues
+    if(par_tmp$SigAna$sig_to_look_at == "Significant"){
+      print("You tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level.")
+    }
+  }'
+
     if(numberOfScenario == 20){
-      stringtosave <- '          
+      stringtosave_2 <- '          
       Venn_plot <- ggvenn::ggvenn(
             res2plot, 
             fill_color=c("#44af69", "#f8333c", "#fcab10", "#2b9eb3"),
@@ -730,9 +810,9 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
       '
     }
 
-  ### UpSet Plot ----
+### UpSet Plot ----
   if(numberOfScenario == 21){
-    stringtosave <- '
+    stringtosave_2 <- '
               overlap_list <- prepare_upset_plot(res2plot=res2plot)
           Upset_plot <- ComplexUpset::upset(
             overlap_list,
@@ -781,84 +861,88 @@ Upset_plot <- ComplexUpset::upset(
  
     '
   }
-  
+
+stringtosave <- paste0(stringtosave_1,"\n",stringtosave_2)
+}
   ### Volcano ----
   # option of both unnecessary 
   if(numberOfScenario >= 22 & numberOfScenario <= 23 ){
     stringtosave_1 <- '
-    # plot volcano plot
-    data4Volcano <- sig_results[[chosenVizSet[i]]]
-    par_name <- gsub(":","_",chosenVizSet[i])
-    data4Volcano$probename <- rownames(data4Volcano)
-    data4Volcano$threshold <- ifelse(data4Volcano$padj>par_tmp$SigAna[paste0(par_name,"_psig_th")],"non-significant","significant")
-    data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>par_tmp$SigAna[paste0(par_name,"_psig_th")],"non-significant","significant")
-    data4Volcano$threshold_fc <- ifelse(
-      data4Volcano$log2FoldChange>par_tmp$SigAna[paste0(par_name,"_lfc_th")],
-      "up-regulated",
-      ifelse(
-        data4Volcano$log2FoldChange<(-1*as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),
-        "down-regulated", " "
-      )
-    )
-    data4Volcano$combined <- paste0(data4Volcano$threshold," + ",data4Volcano$threshold_fc)
-    data4Volcano$combined_raw <- paste0(data4Volcano$threshold_raw," + ",data4Volcano$threshold_fc)
-    colorScheme2 <- c("#cf0e5bCD", "#0e5bcfCD", "#939596CD","#cf0e5b1A", "#0e5bcf1A", "#9395961A")
-    names(colorScheme2) <- c(
-      "significant + up-regulated", "significant + down-regulated", "significant +  ",
-      "non-significant + up-regulated", "non-significant + down-regulated", "non-significant +  "
-    )
+# plot volcano plot
+data4Volcano <- sig_results[[chosenVizSet[i]]]
+par_name <- gsub(":","_",chosenVizSet[i])
+data4Volcano$probename <- rownames(data4Volcano)
+data4Volcano$threshold <- ifelse(data4Volcano$padj>par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")],"non-significant","significant")
+data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")],"non-significant","significant")
+data4Volcano$threshold_fc <- ifelse(
+  data4Volcano$log2FoldChange>par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")],
+  "up-regulated",
+  ifelse(
+    data4Volcano$log2FoldChange<(-1*as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),
+    "down-regulated", " "
+  )
+)
+data4Volcano$combined <- paste0(data4Volcano$threshold," + ",data4Volcano$threshold_fc)
+data4Volcano$combined_raw <- paste0(data4Volcano$threshold_raw," + ",data4Volcano$threshold_fc)
+colorScheme2 <- c("#cf0e5bCD", "#0e5bcfCD", "#939596CD","#cf0e5b1A", "#0e5bcf1A", "#9395961A")
+names(colorScheme2) <- c(
+  "significant + up-regulated", "significant + down-regulated", "significant +  ",
+  "non-significant + up-regulated", "non-significant + down-regulated", "non-significant +  "
+)
 
-    # remove NA values
-   data4Volcano <- data4Volcano[complete.cases(data4Volcano),]
+# remove NA values
+data4Volcano <- data4Volcano[complete.cases(data4Volcano),]
 
-    '
+'
     if(numberOfScenario == 22){
       stringtosave_2 <- 'Volcano_plot <- ggplot(
-      data4Volcano,
-      aes(label=probename)
+  data4Volcano,
+  aes(label=probename)
+) +
+  geom_point(aes(
+    x = log2FoldChange,
+    y = -log10(padj),
+    colour = combined
+  )) +
+  geom_hline(
+    yintercept = -1*(log10(as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")]))),
+    color="lightgrey"
     ) +
-      geom_point(aes(
-        x = log2FoldChange,
-        y = -log10(padj),
-        colour = combined
-      )) +
-      geom_hline(
-        yintercept = -1*(log10(as.numeric(par_tmp$SigAna[paste0(par_name,"_psig_th")]))),
-        color="lightgrey"
-        ) +
-      geom_vline(
-        xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),par_tmp$SigAna[paste0(par_name,"_lfc_th")]),
-        color="lightgrey"
-        ) +
-      scale_color_manual(values=colorScheme2, name="") +
-      xlab("Log FoldChange") +
-      ylab("-log10(p_adj-value)") +
-      theme(legend.position = "none") +
-      theme_bw()+
-      ggtitle(label="Corrected p-Values")'
+  geom_vline(
+    xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),
+    color="lightgrey"
+    ) +
+  scale_color_manual(values=colorScheme2, name="") +
+  xlab("Log FoldChange") +
+  ylab("-log10(p_adj-value)") +
+  theme(legend.position = "none") +
+  CUSTOM_THEME +
+  ggtitle(label="Corrected p-Values")'
     }
     if(numberOfScenario == 23){
       stringtosave_2 <- 'Volcano_plot <- ggplot(
-      sig_ana_reactive$data4Volcano,
-      aes(label=probename)
-    ) +
-      geom_point(aes(
-          x = log2FoldChange,
-          y = -log10(pvalue),
-          colour = combined_raw)) +
-      geom_hline(
-          yintercept = -1*(log10(as.numeric(par_tmp$SigAna[paste0(par_name,"_psig_th")]))),
-          color="lightgrey"
-      ) +
-      geom_vline(
-          xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),par_tmp$SigAna[paste0(par_name,"_lfc_th")]),
-          color="lightgrey"
-      ) +
-      scale_color_manual(values=colorScheme2, name="") +
-      xlab("Log FoldChange") +
-      ylab("-log10(p-value)") +
-      ggtitle(label="Uncorrected p-Values")
-      '
+  data4Volcano,
+  aes(label=probename)
+) +
+  geom_point(aes(
+      x = log2FoldChange,
+      y = -log10(pvalue),
+      colour = combined_raw)) +
+  geom_hline(
+      yintercept = -1*(log10(as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")]))),
+      color="lightgrey"
+  ) +
+  geom_vline(
+      xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),
+      color="lightgrey"
+  ) +
+  scale_color_manual(values=colorScheme2, name="") +
+  xlab("Log FoldChange") +
+  ylab("-log10(p-value)") +
+  CUSTOM_THEME +
+  ggtitle(label="Uncorrected p-Values")
+  '
+
     }
     stringtosave <- paste0(stringtosave_1,"\n",stringtosave_2)
   }
@@ -876,7 +960,7 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
     # uncomment the following lines
     # you can also manually change the inputs to geneSetChoice
 
-    #   Tmp <- read.csv(input$UploadedGeneSet$datapath, header = F)
+    #   Tmp <- read.csv(par_tmp$Enrichment$UploadedGeneSet$datapath, header = F)
     #   # check take first column as a character vector
     #   geneSetChoice_tmp <- Tmp$V1
     #   # Check if they start with "ENS.."
@@ -905,7 +989,7 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
 
       enrichment_results <- over_representation_analysis(
         par_tmp$Enrichment,
-        output,
+        par_tmp$organism,
         geneSetChoice,
         res_tmp$data,
         par_tmp$Enrichment$enrichments2do,
@@ -918,87 +1002,96 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
   
   if(numberOfScenario == 15){
     stringtosave_1 <- '
-    if(par_tmp$Enrichment$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
+if(par_tmp$Enrichment$ValueToAttach == "LFC" | par_tmp$Enrichment$ValueToAttach == "LFC_abs" | input$ValueToAttach == "statistic_value"){
+  #get LFC
+  ctrl_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_ref_GSEA)
+  comparison_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_treat_GSEA)
 
-        #get LFC
-        ctrl_samples_idx <- which(colData(res_tmp$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
-        comparison_samples_idx <- which(colData(res_tmp$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
+  Data2Plot <- getLFCs(
+    assays(res_tmp$data)$raw,
+    ctrl_samples_idx,
+    comparison_samples_idx
+  )
 
-            Data2Plot <- getLFCs(
-              assays(data$data)$raw,
-              ctrl_samples_idx,
-              comparison_samples_idx
-            )
+  Data2Plot_tmp <- Data2Plot
+  if(par_tmp$Enrichment$ValueToAttach == "LFC"){
+    geneSetChoice_tmp <- Data2Plot_tmp$LFC
+  }
+  else if(par_tmp$Enrichment$ValueToAttach == "LFC_abs"){
+    geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
+  } else if(input$ValueToAttach == "LFC_abs"){
+    geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
+  }
 
-            Data2Plot_tmp <- Data2Plot
-            if(input$ValueToAttach == "LFC"){
-              geneSetChoice_tmp <- Data2Plot_tmp$LFC
-            }
-            else if(input$ValueToAttach == "LFC_abs"){
-              geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
-            }
-
-            if(length(geneSetChoice_tmp) < 1){
-              print("Nothing significant!")
-              geneSetChoice_tmp <- NULL
-            }else{
-              names(geneSetChoice_tmp) <- Data2Plot_tmp$probename
-            }
-    geneSetChoice <- geneSetChoice_tmp
-          }
-    '
+  if(length(geneSetChoice_tmp) < 1){
+    print("Nothing significant!")
+    geneSetChoice_tmp <- NULL
+  }else{
+    names(geneSetChoice_tmp) <- Data2Plot_tmp$probename
+  }
+  geneSetChoice <- geneSetChoice_tmp
+}
+'
     stringtosave_3 <- '
-         if(anno_results$can_start == FALSE){
-        res_tmp$data <- translate_genes_ea(
-          data = res_tmp$data,
-          annotation_results = anno_results,
-          input = par_tmp$Enrichment
-        )
-    anno_results$can_start <- TRUE
-     }
-      enrichment_results <- gene_set_enrichment(
-        input,
-        ea_reactives$tmp_genes,
-        data$data,
-        ea_reactives$enrichments2do,
-        input$test_correction,
-        input$sample_annotation_types_cmp_GSEA,
-        input$Groups2Compare_ref_GSEA,
-        input$Groups2Compare_treat_GSEA,
-        input$ValueToAttach
-    )
+if(anno_results$can_start == FALSE){
+  res_tmp$data <- translate_genes_ea(
+    data = res_tmp$data,
+    annotation_results = anno_results,
+    input = par_tmp$Enrichment
+  )
+  anno_results$can_start <- TRUE
+}
+enrichment_results <- gene_set_enrichment(
+  par_tmp$organism,
+  par_tmp$Enrichment$tmp_genes,
+  res_tmp$data,
+  par_tmp$Enrichment$enrichments2do,
+  par_tmp$Enrichment$test_correction,
+  par_tmp$Enrichment$sample_annotation_types_cmp_GSEA,
+  par_tmp$Enrichment$Groups2Compare_ref_GSEA,
+  par_tmp$Enrichment$Groups2Compare_treat_GSEA,
+  par_tmp$Enrichment$ValueToAttach
+)
     
-    '
+'
   }
   
   
   stringtosave_2 <- '# Check whether the necessary annotation is available
-        anno_results <- check_annotation_enrichment_analysis(res_tmp$data)
-        res_tmp$data <- anno_results$new_data
+anno_results <- check_annotation_enrichment_analysis(res_tmp$data)
+res_tmp$data <- anno_results$new_data
 
-  if(anno_results$no_ann){
-    print("No valid annotation type was detected in your row annotation. Please indicate the type of annotation with which you uploaded your genes.")
-    print("Should be one of ENSEMBL, ENTREZID, SYMBOL (was selected within App")
-    anno_results$base_annotation <- par_tmp$Enrichment$AnnotationSelection
-    anno_results$can_start = FALSE
-  
-  }
-  '
+if(anno_results$no_ann){
+  print("No valid annotation type was detected in your row annotation. Please indicate the type of annotation with which you uploaded your genes.")
+  print("Should be one of ENSEMBL, ENTREZID, SYMBOL (was selected within App")
+  anno_results$base_annotation <- par_tmp$Enrichment$AnnotationSelection
+  anno_results$can_start = FALSE
 
-  stringtosave_4 <- 
-  'storageNames <- paste0("EnrichmentRes_",names(res_tmp$OA))
-plot_list <- list()
-for(i in storageNames){
-  plot_list[[i]] <- clusterProfiler::dotplot(enrichment_results[[i]])+ggtitle(i)
 }
 '
-  
-  
-  stringtosave <- paste0(stringtosave_1,"\n",
-                         stringtosave_2,"\n",
-                         stringtosave_3,"\n",
-                         stringtosave_4,"\n",
-                         "lapply(ls(pattern='plot'), get)")
+
+  stringtosave_4 <- 
+
+  'plot_list <- list()
+for(i in names(enrichment_results)){
+  if (is.null(enrichment_results[[i]]) | i == "geneSetChoice"){
+    print(i)
+    print(enrichment_results[[i]])
+    next
+  }
+  print(enrichment_results[[i]])
+  plot_list[[i]] <- clusterProfiler::dotplot(enrichment_results[[i]])+ggtitle(i)+CUSTOM_THEME
+
+}
+'
+
+  stringtosave <- paste0(
+    stringtosave_1,"\n",
+    stringtosave_2,"\n",
+    stringtosave_3,"\n",
+    stringtosave_4,"\n",
+    "lapply(ls(pattern='plot'), get)"
+  )
 }
 ### Overrepresentation ----
 
@@ -1011,7 +1104,11 @@ for(i in storageNames){
   
   return(paste0(CODE_DOWNLOAD_PREFACE,
                 "\n",
+                "# Data Selection ----",
+                "\n",
                 stringSelection,
+                "\n",
+                "# Data Preprocessing ----",
                 "\n",
                 stringPreProcessing,
                 "\n",

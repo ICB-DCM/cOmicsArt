@@ -15,7 +15,7 @@ over_representation_analysis <- function(
     species <- "Homo sapiens"
   }
 
-  if(!isTruthy(input$UniverseOfGene)){
+  if(!exists("UniverseOfGene", where = input)){
     universeSelected_tranlsated <- NULL
   } else if(input$UniverseOfGene == "default"){
     universeSelected_tranlsated <- NULL
