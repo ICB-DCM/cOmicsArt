@@ -113,7 +113,10 @@ enrichment_analysis_geneset_server <- function(
           )}
         )
         # download section
-        observeEvent(input$only2Report,{
+        session$userData[[paste0(id, "_Report")]] <- observeEvent(input$only2Report,{
+          if(!is.null(session$userData[[paste0(id, "_Report_Val")]])){
+            req(input$only2Report > session$userData[[paste0(id, "_Report_Val")]])
+          }
           notificationID <- showNotification(ui = "Saving...",duration = 0)
           tmp_filename <- paste0(getwd(),file_path, paste(id,Sys.time(),".png",sep="_"))
           ggsave(
@@ -169,7 +172,14 @@ enrichment_analysis_geneset_server_reactive <- function(
 ){
   observe({
     result <- result_all()[[paste("EnrichmentRes", id, sep = "_")]]
-    enrichment_analysis_geneset_server(id, result, organism_choice, gene_set_choice, ea_type)
+    # remove old observers and change base value
+    if (!is.null(session$userData[[paste0(id, "_Report")]])) {
+      session$userData[[paste0(id, "_Report_Val")]] <- isolate(
+        input[[paste0("EnrichmentAnalysis-", id, "-only2Report")]]
+      )
+      session$userData[[paste0(id, "_Report")]]$destroy()
+    }
+    server <- enrichment_analysis_geneset_server(id, result, organism_choice, gene_set_choice, ea_type)
   })
 }
 
@@ -196,10 +206,12 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         'MIR_Legacy', 'GTRD', 'TFT_Legacy', 'CGN', 'CM', 'GO_BP', 'GO_CC', 'GO_MF',
         'HPO', 'IMMUNESIGDB', 'VAX'
       )
+
+      # Delete and Re-create the servers
       lapply(gene_sets_to_compare, function(id) {
         enrichment_analysis_geneset_server_reactive(
           id = id,
-          result = reactive(ea_reactives$enrichment_results),
+          result_all = reactive(ea_reactives$enrichment_results),
           ea_type = input$ORA_or_GSE,
           organism_choice = ea_reactives$organism,
           gene_set_choice = ea_reactives$tmp_genes
