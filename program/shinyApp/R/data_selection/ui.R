@@ -14,19 +14,19 @@ data_selection_sidebar_panel <- sidebarPanel(
         ),
         shiny::fileInput(
           inputId = "data_matrix1",
-          label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a></small>'),
+          label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv" download>Download example data (Transcriptomics, human)</a></small>'),
           accept = c(".csv", ".xlsx"),
           width = "80%"
         ) %>% helper(type = "markdown", content = "DataSelection_DataUploadFileInput"),
         shiny::fileInput(
           inputId = "data_sample_anno1",
-          label = HTML('Upload sample annotation <br/><small>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv">Download example data</a></small>'),
+          label = HTML('Upload sample annotation <br/><small>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv" download>Download example data</a></small>'),
           accept = c(".csv", ".xlsx"),
           width = "80%"
         ),
         shiny::fileInput(
           inputId = "data_row_anno1",
-          label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a></small>'),
+          label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv" download>Download example data</a></small>'),
           accept = c(".csv", ".xlsx"),
           width = "80%"
         ),
@@ -59,7 +59,7 @@ data_selection_sidebar_panel <- sidebarPanel(
         ),
         shiny::fileInput(
           inputId = "data_preDone",
-          label = HTML('Load precompiled data <br/><small>(saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS"> Download example data</a></small>'),
+          label = HTML('Load precompiled data <br/><small>(saved in this procedure or type SummarizedExperiment)<br/> <a href="Transcriptomics_only_precompiled-LS.RDS" download> Download example data</a></small>'),
           accept = ".RDS",
           width = "80%"
         ) %>% helper(type = "markdown", content = "DataSelection_SummarizedExp"),
@@ -86,7 +86,7 @@ data_selection_sidebar_panel <- sidebarPanel(
         ),
         shiny::fileInput(
           inputId = "data_matrix_metadata",
-          label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv">Download example data (Transcriptomics, human)</a></small>'),
+          label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv" download>Download example data (Transcriptomics, human)</a></small>'),
           accept = c(".csv", ".xlsx"),
           width = "80%"
         ) %>% helper(type = "markdown", content = "DataSelection_MetaData"),
@@ -99,7 +99,7 @@ data_selection_sidebar_panel <- sidebarPanel(
         ),
         shiny::fileInput(
           inputId = "data_row_anno_metadata",
-          label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv">Download example data</a></small>'),
+          label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv" download>Download example data</a></small>'),
           accept = c(".csv", ".xlsx"),
           width = "80%"
         ),
