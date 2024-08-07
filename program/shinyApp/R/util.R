@@ -117,7 +117,7 @@ save.function.from.env <- function(wanted,file="utils.R")
   {
     function_code <- paste(capture.output(funs[[i]]), collapse = "\n")
     function_code <- gsub("\\[\\[session\\$token\\]\\]", "", function_code)
-    function_code <- gsub("req(.*)", "", function_code)
+    function_code <- gsub("req(data_input_shiny())", "", function_code)
     
     cat( # number the function we are about to add
       paste("\n" , "#------ Function number ", i , "-----------------------------------" ,"\n"),

@@ -983,7 +983,7 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
 
       enrichment_results <- over_representation_analysis(
         par_tmp$Enrichment,
-        output,
+        par_tmp$Enrichment$organism_choice_ea,
         geneSetChoice,
         res_tmp$data,
         par_tmp$Enrichment$enrichments2do,
