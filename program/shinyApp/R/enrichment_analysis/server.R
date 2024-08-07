@@ -653,7 +653,9 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           waiter$hide()
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
           # res_temp Zuweisung
-          res_tmp[[session$token]]["Enrichment"] <<- ea_reactives$enrichment_results
+          
+          res_tmp[[session$token]][["Enrichment"]] <<- ea_reactives$enrichment_results
+
         })
       })
 

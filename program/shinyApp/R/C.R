@@ -30,6 +30,7 @@ library(SummarizedExperiment)
 library(pheatmap)
 library(ComplexUpset)
 library(clusterProfiler)
+libraray(msigdbr)
 
 # Load the data ----
 # The following will try to detect the directory of the file and load the data

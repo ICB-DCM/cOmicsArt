@@ -119,7 +119,7 @@ save.function.from.env <- function(wanted,file="utils.R")
     # Perform the replacements
     func_text <- gsub("res_tmp\\[\\[session\\$token\\]\\]", "res_tmp", func_text)
     func_text <- gsub("par_tmp\\[\\[session\\$token\\]\\]", "par_tmp", func_text)
-    func_text <- gsub("req(data_input_shiny())", "", func_text)
+    func_text <- gsub("req\\(data_input_shiny\\(\\)\\)", "", func_text)
 
     # Write function to the file
     cat( # number the function we are about to add
