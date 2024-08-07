@@ -274,7 +274,9 @@ heatmap_server <- function(id, data, params, updates){
           tmp <- getUserReactiveValues(input)
           par_tmp[[session$token]]$Heatmap[names(tmp)] <<- tmp
           waiter$hide()
+          
         })
+
 
 
         output$getR_Code_Heatmap <- downloadHandler(
@@ -296,24 +298,25 @@ heatmap_server <- function(id, data, params, updates){
             )
 
             saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+                          # TODO:
+              # Needs an extra sourcing to have in correct env - potential fix sourceing module specific functions within module
+              # instead of sourcing all - or having them all gloablly source (like general utils)
+              source("R/heatmap/fun_entitieSelection.R")
+              source("R/fun_LFC.R")
+              save.function.from.env(wanted = c("entitieSelection","getLFCs"),
+                                     file = file.path(temp_directory, "utils.R"))
+              
+              zip::zip(
+                zipfile = file,
+                files = dir(temp_directory),
+                root = temp_directory
+              )
+            },
+            contentType = "application/zip"
+          )
+            
 
-            # also save entitie Selection function
-            # TODO:
-            # Needs an extra sourcing to have in correct env - potential fix sourceing module specific functions within module
-            # instead of sourcing all - or having them all gloablly source (like general utils)
-            source("R/heatmap/fun_entitieSelection.R")
-            source("R/fun_LFC.R")
-            save.function.from.env(wanted = c("entitieSelection","getLFCs"),
-                                   file = file.path(temp_directory, "utils.R"))
 
-            zip::zip(
-              zipfile = file,
-              files = dir(temp_directory),
-              root = temp_directory
-            )
-          },
-          contentType = "application/zip"
-        )
 
         output$SavePlot_Heatmap <- downloadHandler(
           filename = function() {

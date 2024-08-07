@@ -112,12 +112,14 @@ save.function.from.env <- function(wanted,file="utils.R")
   funs <- Filter(is.function, sapply(ls( ".GlobalEnv"), get))
   funs <- funs[names(funs) %in% wanted]
 
+
   for (i in seq_along(funs)) {
     func_text <- paste(capture.output(funs[[i]]), collapse = "\n")
 
     # Perform the replacements
     func_text <- gsub("res_tmp\\[\\[session\\$token\\]\\]", "res_tmp", func_text)
     func_text <- gsub("par_tmp\\[\\[session\\$token\\]\\]", "par_tmp", func_text)
+    func_text <- gsub("req\\(data_input_shiny\\(\\)\\)", "", func_text)
 
     # Write function to the file
     cat( # number the function we are about to add
