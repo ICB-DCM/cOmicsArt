@@ -60,13 +60,17 @@ enrichment_analysis_geneset_server <- function(
             # functions needed
             source("R/SourceAll.R")
 
-            save.function.from.env(wanted = c("check_annotation_enrichment_analysis",
-                                              "translate_genes_ea",
-                                              "translate_genes_oa",
-                                              "gene_set_enrichment",
-                                              "over_representation_analysis",
-                                              "getLFCs"),
-                                   file = file.path(temp_directory, "utils.R"))
+            save.function.from.env(
+              wanted = c(
+                "check_annotation_enrichment_analysis",
+                "translate_genes_ea",
+                "translate_genes_oa",
+                "gene_set_enrichment",
+                "over_representation_analysis",
+                "getLFCs"
+              ),
+              file = file.path(temp_directory, "utils.R")
+            )
 
 
             write(getPlotCode(ea_scenario), file.path(temp_directory, "Code.R"))

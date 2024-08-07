@@ -420,15 +420,13 @@ myColor_fill <- colorRampPalette(c("blue", "white", "firebrick"))(paletteLength)
 # select and caluculate Heatmap input depending on users input - 
 # check par_tmp$Heatmap for selected options or change accordingly to what you desire
 mycolors <- list()
-annotation_col <- NA
-annotation_row <- NA
-if(!("None" %in% par_tmp$Heatmap$anno_options)){
-  if(length(par_tmp$Heatmap$anno_options) == 1){
-    if(length(unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])) <= 8){
-      names(colorTheme) <- unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])
-      colorTheme <- colorTheme[!is.na(names(colorTheme))]
-      mycolors[[par_tmp$Heatmap$anno_options]] <- colorTheme
-    }
+
+if(length(par_tmp$Heatmap$anno_options) == 1 & !("None" %in% par_tmp$Heatmap$anno_options)){
+  if(length(unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])) <= 8){
+    names(colorTheme) <- unique(colData(res_tmp$data)[,par_tmp$Heatmap$anno_options])
+    colorTheme <- colorTheme[!is.na(names(colorTheme))]
+    mycolors[[par_tmp$Heatmap$anno_options]] <- colorTheme
+
   }
   annotation_col <- colData(res_tmp$data)[, par_tmp$Heatmap$anno_options, drop = F]
   annotation_col <- as.data.frame(annotation_col)
@@ -476,10 +474,16 @@ if(is.null(data2plot)){
 
   if(numberOfScenario == 11){
     stringtosave <- '
-annotation_col <- colData(res_tmp$data)[, par_tmp$Heatmap$anno_options, drop = F]
-annotation_row <- rowData(res_tmp$data)[, par_tmp$Heatmap$row_anno_options, drop = F]
-annotation_col <- as.data.frame(annotation_col)
-annotation_row <- as.data.frame(annotation_row)
+annotation_col <- NA
+annotation_row <- NA
+if(!("None" %in% par_tmp$Heatmap$anno_options)){
+  annotation_col <- colData(data)[, par_tmp$Heatmap$anno_options, drop = F]
+  annotation_col <- as.data.frame(annotation_col)
+}
+if(!("None" %in% par_tmp$Heatmap$anno_options)){
+  annotation_row <- rowData(data)[, par_tmp$Heatmap$row_anno_options, drop = F]
+  annotation_row <- as.data.frame(annotation_row)
+}
 
 # Potential Clustering
 cluster_rows <- FALSE
@@ -667,13 +671,13 @@ SampleCorrelationPlot <- pheatmap(
   annotation_colors = par_tmp$SampleCorr$anno_colors
 )'
   }
-## Significance Analysis -----
 
+## Significance Analysis -----
 if(numberOfScenario >= 20 & numberOfScenario < 24){
   # Calculate all necessary intermediate data sets
   prequel_stringtosave <- '
   # Test correction list
-PADJUST_METHOD <<- list(
+PADJUST_METHOD <- list(
   "None" = "none",
   "Bonferroni" = "bonferroni",
   "Benjamini-Hochberg" = "BH",
@@ -687,7 +691,7 @@ PADJUST_METHOD <<- list(
 res2plot <- list()
 
 if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
-  dds <- data$DESeq_obj
+  dds <- res_tmp$DESeq_obj
   
   # rewind the comparisons again
   newList <- par_tmp$SigAna$comparisons
@@ -697,17 +701,17 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
   }
 
   # get the results for each contrast and put it all in a big results object
-  sig_results <<- list()
+  sig_results <- list()
   for (i in 1:length(contrasts)) {
     if(identical(
       list(test_method = "Wald", test_correction = PADJUST_METHOD[[par_tmp$SigAna$test_correction]]),
       par_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]]
     )){
       print("Results exists, skipping calculations.")
-      sig_results[[par_tmp$SigAna$comparisons[i]]] <<- res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]]
+      sig_results[[par_tmp$SigAna$comparisons[i]]] <- res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]]
       next
     }
-    sig_results[[par_tmp$SigAna$comparisons[i]]] <<- DESeq2::results(
+    sig_results[[par_tmp$SigAna$comparisons[i]]] <- DESeq2::results(
       dds,
       contrast = c(
         par_tmp$SigAna$sample_annotation_types_cmp,
@@ -717,8 +721,8 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
       pAdjustMethod = PADJUST_METHOD[[par_tmp$SigAna$test_correction]]
     )
     # fill in res_tmp, par_tmp
-    res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <<- sig_results[[par_tmp$SigAna$comparisons[i]]]
-    par_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <<- list(
+    res_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <- sig_results[[par_tmp$SigAna$comparisons[i]]]
+    par_tmp$SigAna[[par_tmp$SigAna$sample_annotation_types_cmp]][[par_tmp$SigAna$comparisons[i]]] <- list(
       test_method = "Wald",
       test_correction = PADJUST_METHOD[[par_tmp$SigAna$test_correction]]
     )
@@ -864,79 +868,81 @@ stringtosave <- paste0(stringtosave_1,"\n",stringtosave_2)
   # option of both unnecessary 
   if(numberOfScenario >= 22 & numberOfScenario <= 23 ){
     stringtosave_1 <- '
-    # plot volcano plot
-    data4Volcano <- sig_results[[chosenVizSet[i]]]
-    par_name <- gsub(":","_",chosenVizSet[i])
-    data4Volcano$probename <- rownames(data4Volcano)
-    data4Volcano$threshold <- ifelse(data4Volcano$padj>par_tmp$SigAna[paste0(par_name,"_psig_th")],"non-significant","significant")
-    data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>par_tmp$SigAna[paste0(par_name,"_psig_th")],"non-significant","significant")
-    data4Volcano$threshold_fc <- ifelse(
-      data4Volcano$log2FoldChange>par_tmp$SigAna[paste0(par_name,"_lfc_th")],
-      "up-regulated",
-      ifelse(
-        data4Volcano$log2FoldChange<(-1*as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),
-        "down-regulated", " "
-      )
-    )
-    data4Volcano$combined <- paste0(data4Volcano$threshold," + ",data4Volcano$threshold_fc)
-    data4Volcano$combined_raw <- paste0(data4Volcano$threshold_raw," + ",data4Volcano$threshold_fc)
-    colorScheme2 <- c("#cf0e5bCD", "#0e5bcfCD", "#939596CD","#cf0e5b1A", "#0e5bcf1A", "#9395961A")
-    names(colorScheme2) <- c(
-      "significant + up-regulated", "significant + down-regulated", "significant +  ",
-      "non-significant + up-regulated", "non-significant + down-regulated", "non-significant +  "
-    )
+# plot volcano plot
+data4Volcano <- sig_results[[chosenVizSet[i]]]
+par_name <- gsub(":","_",chosenVizSet[i])
+data4Volcano$probename <- rownames(data4Volcano)
+data4Volcano$threshold <- ifelse(data4Volcano$padj>par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")],"non-significant","significant")
+data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")],"non-significant","significant")
+data4Volcano$threshold_fc <- ifelse(
+  data4Volcano$log2FoldChange>par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")],
+  "up-regulated",
+  ifelse(
+    data4Volcano$log2FoldChange<(-1*as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),
+    "down-regulated", " "
+  )
+)
+data4Volcano$combined <- paste0(data4Volcano$threshold," + ",data4Volcano$threshold_fc)
+data4Volcano$combined_raw <- paste0(data4Volcano$threshold_raw," + ",data4Volcano$threshold_fc)
+colorScheme2 <- c("#cf0e5bCD", "#0e5bcfCD", "#939596CD","#cf0e5b1A", "#0e5bcf1A", "#9395961A")
+names(colorScheme2) <- c(
+  "significant + up-regulated", "significant + down-regulated", "significant +  ",
+  "non-significant + up-regulated", "non-significant + down-regulated", "non-significant +  "
+)
 
-    # remove NA values
-   data4Volcano <- data4Volcano[complete.cases(data4Volcano),]
+# remove NA values
+data4Volcano <- data4Volcano[complete.cases(data4Volcano),]
 
-    '
+'
     if(numberOfScenario == 22){
       stringtosave_2 <- 'Volcano_plot <- ggplot(
-      data4Volcano,
-      aes(label=probename)
+  data4Volcano,
+  aes(label=probename)
+) +
+  geom_point(aes(
+    x = log2FoldChange,
+    y = -log10(padj),
+    colour = combined
+  )) +
+  geom_hline(
+    yintercept = -1*(log10(as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")]))),
+    color="lightgrey"
     ) +
-      geom_point(aes(
-        x = log2FoldChange,
-        y = -log10(padj),
-        colour = combined
-      )) +
-      geom_hline(
-        yintercept = -1*(log10(as.numeric(par_tmp$SigAna[paste0(par_name,"_psig_th")]))),
-        color="lightgrey"
-        ) +
-      geom_vline(
-        xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),
-        color="lightgrey"
-        ) +
-      scale_color_manual(values=colorScheme2, name="") +
-      xlab("Log FoldChange") +
-      ylab("-log10(p_adj-value)") +
-      theme(legend.position = "none") +
-      CUSTOM_THEME+
-      ggtitle(label="Corrected p-Values")'
+  geom_vline(
+    xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),
+    color="lightgrey"
+    ) +
+  scale_color_manual(values=colorScheme2, name="") +
+  xlab("Log FoldChange") +
+  ylab("-log10(p_adj-value)") +
+  theme(legend.position = "none") +
+  CUSTOM_THEME +
+  ggtitle(label="Corrected p-Values")'
     }
     if(numberOfScenario == 23){
       stringtosave_2 <- 'Volcano_plot <- ggplot(
-      sig_ana_reactive$data4Volcano,
-      aes(label=probename)
-    ) +
-      geom_point(aes(
-          x = log2FoldChange,
-          y = -log10(pvalue),
-          colour = combined_raw)) +
-      geom_hline(
-          yintercept = -1*(log10(as.numeric(par_tmp$SigAna[paste0(par_name,"_psig_th")]))),
-          color="lightgrey"
-      ) +
-      geom_vline(
-          xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),as.numeric(par_tmp$SigAna[paste0(par_name,"_lfc_th")])),
-          color="lightgrey"
-      ) +
-      scale_color_manual(values=colorScheme2, name="") +
-      xlab("Log FoldChange") +
-      ylab("-log10(p-value)") +
-      ggtitle(label="Uncorrected p-Values")
-      '
+  data4Volcano,
+  aes(label=probename)
+) +
+  geom_point(aes(
+      x = log2FoldChange,
+      y = -log10(pvalue),
+      colour = combined_raw)) +
+  geom_hline(
+      yintercept = -1*(log10(as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")]))),
+      color="lightgrey"
+  ) +
+  geom_vline(
+      xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),
+      color="lightgrey"
+  ) +
+  scale_color_manual(values=colorScheme2, name="") +
+  xlab("Log FoldChange") +
+  ylab("-log10(p-value)") +
+  CUSTOM_THEME +
+  ggtitle(label="Uncorrected p-Values")
+  '
+
     }
     stringtosave <- paste0(stringtosave_1,"\n",stringtosave_2)
   }
@@ -954,7 +960,7 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
     # uncomment the following lines
     # you can also manually change the inputs to geneSetChoice
 
-    #   Tmp <- read.csv(input$UploadedGeneSet$datapath, header = F)
+    #   Tmp <- read.csv(par_tmp$Enrichment$UploadedGeneSet$datapath, header = F)
     #   # check take first column as a character vector
     #   geneSetChoice_tmp <- Tmp$V1
     #   # Check if they start with "ENS.."
@@ -983,7 +989,7 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
 
       enrichment_results <- over_representation_analysis(
         par_tmp$Enrichment,
-        par_tmp$Enrichment$organism_choice_ea,
+        par_tmp$organism,
         geneSetChoice,
         res_tmp$data,
         par_tmp$Enrichment$enrichments2do,
@@ -996,93 +1002,96 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
   
   if(numberOfScenario == 15){
     stringtosave_1 <- '
-if(par_tmp$Enrichment$ValueToAttach == "LFC" | par_tmp$Enrichment$ValueToAttach == "LFC_abs"){
+if(par_tmp$Enrichment$ValueToAttach == "LFC" | par_tmp$Enrichment$ValueToAttach == "LFC_abs" | input$ValueToAttach == "statistic_value"){
+  #get LFC
+  ctrl_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_ref_GSEA)
+  comparison_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_treat_GSEA)
 
-    #get LFC
-    ctrl_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_ref_GSEA)
-    comparison_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_treat_GSEA)
+  Data2Plot <- getLFCs(
+    assays(res_tmp$data)$raw,
+    ctrl_samples_idx,
+    comparison_samples_idx
+  )
 
-        Data2Plot <- getLFCs(
-          assays(res_tmp$data)$raw,
-          ctrl_samples_idx,
-          comparison_samples_idx
-        )
+  Data2Plot_tmp <- Data2Plot
+  if(par_tmp$Enrichment$ValueToAttach == "LFC"){
+    geneSetChoice_tmp <- Data2Plot_tmp$LFC
+  }
+  else if(par_tmp$Enrichment$ValueToAttach == "LFC_abs"){
+    geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
+  } else if(input$ValueToAttach == "LFC_abs"){
+    geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
+  }
 
-        Data2Plot_tmp <- Data2Plot
-        if(par_tmp$Enrichment$ValueToAttach == "LFC"){
-          geneSetChoice_tmp <- Data2Plot_tmp$LFC
-        }
-        else if(par_tmp$Enrichment$ValueToAttach == "LFC_abs"){
-          geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
-        }
-
-        if(length(geneSetChoice_tmp) < 1){
-          print("Nothing significant!")
-          geneSetChoice_tmp <- NULL
-        }else{
-          names(geneSetChoice_tmp) <- Data2Plot_tmp$probename
-        }
-geneSetChoice <- geneSetChoice_tmp
+  if(length(geneSetChoice_tmp) < 1){
+    print("Nothing significant!")
+    geneSetChoice_tmp <- NULL
+  }else{
+    names(geneSetChoice_tmp) <- Data2Plot_tmp$probename
+  }
+  geneSetChoice <- geneSetChoice_tmp
 }
-    '
+'
     stringtosave_3 <- '
-         if(anno_results$can_start == FALSE){
-        res_tmp$data <- translate_genes_ea(
-          data = res_tmp$data,
-          annotation_results = anno_results,
-          input = par_tmp$Enrichment
-        )
-    anno_results$can_start <- TRUE
-     }
-      enrichment_results <- gene_set_enrichment(
-        par_tmp$Enrichment$organism_choice_ea,
-        par_tmp$Enrichment$tmp_genes,
-        res_tmp$data,
-        par_tmp$Enrichment$enrichments2do,
-        par_tmp$Enrichment$test_correction,
-        par_tmp$Enrichment$sample_annotation_types_cmp_GSEA,
-        par_tmp$Enrichment$Groups2Compare_ref_GSEA,
-        par_tmp$Enrichment$Groups2Compare_treat_GSEA,
-        par_tmp$Enrichment$ValueToAttach
-    )
+if(anno_results$can_start == FALSE){
+  res_tmp$data <- translate_genes_ea(
+    data = res_tmp$data,
+    annotation_results = anno_results,
+    input = par_tmp$Enrichment
+  )
+  anno_results$can_start <- TRUE
+}
+enrichment_results <- gene_set_enrichment(
+  par_tmp$organism,
+  par_tmp$Enrichment$tmp_genes,
+  res_tmp$data,
+  par_tmp$Enrichment$enrichments2do,
+  par_tmp$Enrichment$test_correction,
+  par_tmp$Enrichment$sample_annotation_types_cmp_GSEA,
+  par_tmp$Enrichment$Groups2Compare_ref_GSEA,
+  par_tmp$Enrichment$Groups2Compare_treat_GSEA,
+  par_tmp$Enrichment$ValueToAttach
+)
     
-    '
+'
   }
   
   
   stringtosave_2 <- '# Check whether the necessary annotation is available
-        anno_results <- check_annotation_enrichment_analysis(res_tmp$data)
-        res_tmp$data <- anno_results$new_data
+anno_results <- check_annotation_enrichment_analysis(res_tmp$data)
+res_tmp$data <- anno_results$new_data
 
-  if(anno_results$no_ann){
-    print("No valid annotation type was detected in your row annotation. Please indicate the type of annotation with which you uploaded your genes.")
-    print("Should be one of ENSEMBL, ENTREZID, SYMBOL (was selected within App")
-    anno_results$base_annotation <- par_tmp$Enrichment$AnnotationSelection
-    anno_results$can_start = FALSE
-  
-  }
-  '
+if(anno_results$no_ann){
+  print("No valid annotation type was detected in your row annotation. Please indicate the type of annotation with which you uploaded your genes.")
+  print("Should be one of ENSEMBL, ENTREZID, SYMBOL (was selected within App")
+  anno_results$base_annotation <- par_tmp$Enrichment$AnnotationSelection
+  anno_results$can_start = FALSE
 
-  stringtosave_4 <- 
-  'non_null_names <- names(enrichment_results)[sapply(enrichment_results, function(x) !is.null(x))]
-non_null_names <- non_null_names[!grepl("geneSetChoice",non_null_names)]
-
-plot_list <- list()
-
-for(i in non_null_names){
-  # only show plots when there is at least one enriched term (padj <0.1)
-  if(any(enrichment_results[[i]]@result$p.adjust < 0.1)){
-    plot_list[[i]] <- clusterProfiler::dotplot(enrichment_results[[i]])+ggtitle(i)+CUSTOM_THEME
-  }
 }
 '
-  
-  
-  stringtosave <- paste0(stringtosave_1,"\n",
-                         stringtosave_2,"\n",
-                         stringtosave_3,"\n",
-                         stringtosave_4,"\n",
-                         "lapply(ls(pattern='plot'), get)")
+
+  stringtosave_4 <- 
+
+  'plot_list <- list()
+for(i in names(enrichment_results)){
+  if (is.null(enrichment_results[[i]]) | i == "geneSetChoice"){
+    print(i)
+    print(enrichment_results[[i]])
+    next
+  }
+  print(enrichment_results[[i]])
+  plot_list[[i]] <- clusterProfiler::dotplot(enrichment_results[[i]])+ggtitle(i)+CUSTOM_THEME
+
+}
+'
+
+  stringtosave <- paste0(
+    stringtosave_1,"\n",
+    stringtosave_2,"\n",
+    stringtosave_3,"\n",
+    stringtosave_4,"\n",
+    "lapply(ls(pattern='plot'), get)"
+  )
 }
 ### Overrepresentation ----
 
