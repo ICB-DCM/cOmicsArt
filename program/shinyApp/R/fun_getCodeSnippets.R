@@ -1,4 +1,3 @@
-
 getPlotCode <- function(numberOfScenario) {
   PreProcessing_Procedure <- par_tmp[[session$token]]$PreProcessing_Procedure
   row_selection <- par_tmp[[session$token]]$row_selection
@@ -174,9 +173,43 @@ selected <- unique(
   }else{
     stringPreProcessing <- ''
   }
+
     
 
 ## Plot Code ----
+  ## PreProcessing ----
+
+  if(numberOfScenario == 0.5){
+    stringtosave <- '
+violin_plot <- function(data, color_by){
+  # create a violin plot based on the provided summarized experiment. Colors by
+  # the provided color_by column and returns the plot
+  data_frame <- as.data.frame(assay(data))
+  data_frame <- reshape2::melt(data_frame, variable.name="Sample", value.name="Counts")
+  data_frame <- merge(data_frame, colData(data), by.x = "Sample", by.y = "row.names")
+  plot2return <- ggplot(data_frame, aes(x = Sample, y = Counts, fill = data_frame[[color_by]])) +
+    geom_violin(trim = T, color = "black") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    labs(title = "Count distribution per sample",
+         x = "Sample",
+         y = "Counts",
+         fill = color_by
+    )
+  return(plot2return)
+}
+raw_violin <- violin_plot(
+  res_tmp$data_original[par_tmp[["entities_selected"]],par_tmp[["samples_selected"]]],
+  par_tmp$violin_color
+) + ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
+preprocessed_violin <- violin_plot(
+  res_tmp$data,
+  par_tmp$violin_color
+) + ggtitle("Count distribution per sample - preprocessed") + theme(legend.position = "none")
+lapply(ls(pattern="violin"), get)
+'
+  }
+
   ## PCA ----
   if(numberOfScenario >= 1 & numberOfScenario < 9){
     # Calculate all necessary intermediate data sets
