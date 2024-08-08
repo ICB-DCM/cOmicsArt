@@ -155,19 +155,34 @@ selected <- unique(
       batch = as.factor(colData(res_tmp$data_batch_corrected)[,par_tmp["BatchColumn"]])
     )
     '
-    # copy string to a new one and replace all occurrences of res_tmp$data with res_tmp$data_batch_corrected
-    stringPreProcessing_batch <- stringPreProcessing
-    stringPreProcessing_batch <- gsub("res_tmp$data","res_tmp$data_batch_corrected",stringPreProcessing_batch)
-    string_batchCorrection <- paste0(prequel_stringPreProcessing,"\n", string_batchCorrection)
+   # string_batchCorrection <- paste0(prequel_stringPreProcessing,"\n", string_batchCorrection)
   } else if (par_tmp[[session$token]]['BatchColumn'] != "NULL" & PreProcessing_Procedure == "vst_DESeq") {
-    stringPreProcessing_batch <- stringPreProcessing
-    stringPreProcessing_batch <- gsub("res_tmp$data","res_tmp$data_batch_corrected",stringPreProcessing_batch)
-    stringPreProcessing_batch <- gsub("par_tmp$DESeq_formula","par_tmp$DESeq_formula_batch",stringPreProcessing_batch)
-    string_batchCorrection <- paste0(prequel_stringPreProcessing,"\n", string_batchCorrection)
+    # formula needs to be updated
+    string_batchCorrection <- 'dds_batch <- DESeq2::DESeqDataSetFromMatrix(
+          countData = assay(res_tmp$data),
+          colData = colData(res_tmp$data),
+          design = as.formula(par_tmp$DESeq_formula_batch)
+        )
+      de_seq_result_batch <- DESeq2::DESeq(dds_batch)
+      res_tmp$DESeq_obj_batch <- de_seq_result_batch
+      dds_vst_batch <- vst(
+      object = de_seq_result,
+      blind = TRUE
+      )
+    # Note that the following command overwrites the current data with the batch corrected data
+    # if you want to recover the non batch corrected data you can check dds_vst
+      assay(res_tmp$data) <- as.data.frame(assay(de_seq_result_batch))
+      '
+    #stringPreProcessing_batch <- stringPreProcessing
+    # pre-processing needs to be redone here bzw checked up front
+    
+    #stringPreProcessing_batch <- gsub("res_tmp$data","res_tmp$data_batch_corrected",stringPreProcessing_batch)
+    #stringPreProcessing_batch <- gsub("par_tmp$DESeq_formula","par_tmp$DESeq_formula_batch",stringPreProcessing_batch)
+   # string_batchCorrection <- paste0(prequel_stringPreProcessing,"\n", string_batchCorrection)
   } else {
       string_batchCorrection <- ''
   }
-  stringPreProcessing <- paste0(prequel_stringPreProcessing,"\n", string_batchCorrection, "\n", stringPreProcessing)
+  stringPreProcessing <- paste0(prequel_stringPreProcessing,"\n", stringPreProcessing, "\n", string_batchCorrection)
   if (par_tmp[[session$token]]['BatchColumn'] != "NULL") {
     stringPreProcessing <- paste0(
       stringPreProcessing, "\n",
