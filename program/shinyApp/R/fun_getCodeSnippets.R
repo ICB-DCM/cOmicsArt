@@ -152,7 +152,7 @@ selected <- unique(
     string_batchCorrection <- 'res_tmp$data_batch_corrected <- res_tmp$data
       assay(res_tmp$data_batch_corrected) <- sva::ComBat(
       dat = assay(res_tmp$data_batch_corrected),
-      batch = as.factor(colData(res_tmp$data_batch_corrected)[,par_tmp["BatchColumn"]])
+      batch = as.factor(colData(res_tmp$data_batch_corrected)[,par_tmp$BatchColumn])
     )
     '
    # string_batchCorrection <- paste0(prequel_stringPreProcessing,"\n", string_batchCorrection)
