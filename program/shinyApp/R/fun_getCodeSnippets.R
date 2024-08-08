@@ -146,7 +146,7 @@ selected <- unique(
       '
     }
   }else{
-    stringPreProcessing <- ''
+    stringPreProcessing <- 'res_tmp$data <- tmp_data_selected'
   }
   if(par_tmp[[session$token]]['BatchColumn'] != "NULL" & PreProcessing_Procedure != "vst_DESeq"){
     string_batchCorrection <- 'res_tmp$data_batch_corrected <- res_tmp$data
