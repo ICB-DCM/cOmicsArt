@@ -146,6 +146,7 @@ selected <- unique(
       '
     }
   }else{
+    prequel_stringPreProcessing <- c("")
     stringPreProcessing <- 'res_tmp$data <- tmp_data_selected'
   }
   if(par_tmp[[session$token]]['BatchColumn'] != "NULL" & PreProcessing_Procedure != "vst_DESeq"){
