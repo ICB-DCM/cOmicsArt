@@ -1,95 +1,61 @@
 entitieSelection <- function(
   data,
   type,
-  TopK2Show = NA,
-  additionalInput_row_anno = NA,
-  additionalInput_row_anno_factor = NA,
-  additionalInput_sample_annotation_types = NA,
-  additionalInput_ctrl_idx = NA,
-  additionalInput_cmp_idx = NA,
-  psig_threhsold = NA
+  TopK2Show=NULL,
+  TopKOrder=NULL,
+  additionalInput_row_anno=NULL,
+  additionalInput_row_anno_factor=NULL,
+  additionalInput_sample_annotation_types=NULL,
+  additionalInput_ctrl_idx=NULL,
+  additionalInput_cmp_idx=NULL,
+  psig_threhsold=NULL
 ){
-  # to cover: c("TopK","significant_LFC","LFC_onlySig","rowAnno_based")
-  filtered_data <- data$Matrix
-  # drop any NAs in data frame (find cause for this!!)
-  if(any(is.na(filtered_data))){
-    print("NAs where found!!")
-    filtered_data <- filtered_data[complete.cases(filtered_data), ]
-    data$annotation_rows <- data$annotation_rows[rownames(filtered_data),]
-  }
-  
-  orderMakesSense_flag <- FALSE
-  print("Entitie Selection new?")
-  #print(additionalInput_row_anno)
-  if(any(type == "rowAnno_based") & 
-  !(any(is.na(additionalInput_row_anno))) & 
-  !any(is.na(additionalInput_row_anno_factor))){
-    # Note here this only what to show, LFCs and more importantly multiple test correction will be done on the entire set (without the row anno based selection!!)
-    if(any(additionalInput_row_anno_factor == "all")){
-      filtered_data <- filtered_data
-    }else{
-      filtered_data <- filtered_data[which(data$annotation_rows[,additionalInput_row_anno]%in%additionalInput_row_anno_factor),]
-    }
-  }
-  if(!(is.na(additionalInput_sample_annotation_types)) & !(is.na(additionalInput_ctrl_idx)) & !(is.na(additionalInput_cmp_idx))){
-    if(any(type == "significant_LFC")){
-      # sort based on significance
-      # need LFCs
-      # is reachable from here? selectedData_processed()[[input$omicType]]$sample_table
-      ctrl_samples_idx <- which(
-        data$sample_table[,additionalInput_sample_annotation_types] %in% additionalInput_ctrl_idx
-      )
-      comparison_samples_idx <- which(
-        data$sample_table[,additionalInput_sample_annotation_types] %in% additionalInput_cmp_idx
-      )
-      if(length(ctrl_samples_idx) <= 1 | length(comparison_samples_idx) <= 1){
-        warning("LFC makes no sense just having a single sample per conidition, which is here the case!")
-        filtered_data <- NULL
-      }else{
-        LFC_output <- getLFC(
-          data = filtered_data,
-          ctrl_samples_idx = ctrl_samples_idx,
-          comparison_samples_idx = comparison_samples_idx
-        )
-        filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$p_adj,decreasing = F)],,drop=F]
-        orderMakesSense_flag <- T
-      }
-    }
-    if(any(type == "LFC_onlySig")){
-     ctrl_samples_idx <- which(
-       data$sample_table[,additionalInput_sample_annotation_types] %in% additionalInput_ctrl_idx
-     )
-     comparison_samples_idx <- which(
-       data$sample_table[,additionalInput_sample_annotation_types]%in%additionalInput_cmp_idx
-     )
-     LFC_output <- getLFC(
-       data = data$Matrix,
-       ctrl_samples_idx = ctrl_samples_idx,
-       comparison_samples_idx = comparison_samples_idx
-     )
-     if(!(any(LFC_output$p_adj<psig_threhsold))){
-       warning("No single entry left! Maybe adjust psig_threhsold_heatmap (but do not put it arbitraly high!)")
-       filtered_data <- NULL
-     }else{
-       filtered_data <- filtered_data[rownames(LFC_output)[which(LFC_output$p_adj<psig_threhsold)],,drop=F]
-       filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$LFC,decreasing = F)],,drop=F]
-       filtered_data <- filtered_data[complete.cases(filtered_data), ]
-       orderMakesSense_flag <- T
-     }
-   }
-  }
-  
-  if(any(type == "TopK")){
-    if(orderMakesSense_flag){
-      #assumes the data to be sorted somehow
-      if(nrow(filtered_data) > TopK2Show){
-        filtered_data <- filtered_data[c(1:TopK2Show),,drop=F]
-      }else{
-        filtered_data <- filtered_data
-      }
-    }else{
+
+  filtered_data <- assay(data)
+  if (type=="Select based on Annotation"){
+    if(any(is.null(additionalInput_row_anno) & is.null(additionalInput_row_anno_factor))){
+      print("No row annotation selected!")
       filtered_data <- NULL
+      return(filtered_data)
     }
+    if(any(additionalInput_row_anno_factor=="all")){
+      return(filtered_data)
+    }
+    filtered_data <- filtered_data[which(rowData(data)[, additionalInput_row_anno] %in% additionalInput_row_anno_factor),]
+    return(filtered_data)
   }
-  return(filtered_data)
+  if (type=="Top K"){
+    # TODO: Replace this with already calculated LFCs from Significance Analysis
+    # calculate the LFCs
+    if(any(is.null(additionalInput_sample_annotation_types)) & any(is.null(additionalInput_ctrl_idx)) & any(is.null(additionalInput_cmp_idx))){
+      print("No sample annotation selected!")
+      filtered_data <- NULL
+      return(filtered_data)
+    }
+    ctrl_samples_idx <- which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_ctrl_idx)
+    comparison_samples_idx <- which(colData(data)[,additionalInput_sample_annotation_types]%in%additionalInput_cmp_idx)
+    if((length(ctrl_samples_idx) <= 1) | (length(comparison_samples_idx) <= 1)){
+      warning("LFC makes no sense just having a single sample per conidition, which is here the case!")
+      filtered_data <- NULL
+      return(filtered_data)
+    }
+    LFC_output <- getLFCs(filtered_data, ctrl_samples_idx, comparison_samples_idx)
+    if(TopKOrder=="LogFoldChange"){
+      filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$LFC)],, drop=F]
+    } else if(TopKOrder=="absolute LogFoldChange"){
+      filtered_data <- filtered_data[rownames(LFC_output)[order(abs(LFC_output$LFC))],, drop=F]
+    } else if(TopKOrder=="LogFoldChange and Significant"){
+      filtered_data <- filtered_data[rownames(LFC_output)[which(LFC_output$p_adj<psig_threhsold)],, drop=F]
+      filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$LFC)],, drop=F]
+    } else if(TopKOrder=="absolute LogFoldChange and Significant"){
+      filtered_data <- filtered_data[rownames(LFC_output)[which(LFC_output$p_adj<psig_threhsold)],, drop=F]
+      filtered_data <- filtered_data[rownames(LFC_output)[order(abs(LFC_output$LFC))],, drop=F]
+    }
+    if(nrow(filtered_data)>TopK2Show){
+      filtered_data <- filtered_data[c(1:TopK2Show),, drop=F]
+    } else{
+      print("Less than TopK2Show entries left!")
+    }
+    return(filtered_data)
+  }
 }

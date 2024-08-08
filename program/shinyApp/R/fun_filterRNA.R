@@ -6,6 +6,6 @@ filter_rna <- function(rna=rna, prop = 0.5){
   IQRGE <- apply(rna, 1, IQR, na.rm=TRUE)
   propGEIQR <- quantile(IQRGE, prop)
   #selected genes/probes are the intersection of the two previous sets
-  filter2 <- (intersect(which(maxGE> propGEmax), which(IQRGE> propGEIQR)))
-  return(filter2)
+  filter <- (intersect(which(maxGE> propGEmax), which(IQRGE> propGEIQR)))
+  return(filter)
 }

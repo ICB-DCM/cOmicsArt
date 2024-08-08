@@ -1,7 +1,8 @@
 sampleCorrelation_sidebar_panel <- function(ns){
   sidebarPanel(
     id = "sidebar_sampleCorrelation",
-    h4("Sample Correlation"),
+    h4("Sample Correlation") %>% helper(type = "markdown", content = "SampleCorr_Choices"),
+    uiOutput(outputId = ns("UseBatch_ui")),
     selectInput(
       inputId = ns("corrMethod"),
       label = "Choose the correlation method",
@@ -10,11 +11,16 @@ sampleCorrelation_sidebar_panel <- function(ns){
     ),
     actionButton(
       inputId = ns("Do_SampleCorrelation"),
-      label = "Show sample correlation Plot",
+      label = "Get Sample Correlation",
       icon("fas fa-laptop-code")
     ),
     hr(style = "border-top: 1px solid #000000;"),
-    uiOutput(outputId = ns("SampleAnnotationChoice_ui"))
+    uiOutput(outputId = ns("SampleAnnotationChoice_ui")) %>% helper(type = "markdown", content = "SampleCorr_Color"),
+    # hidden Button to refresh the UI
+    hidden(actionButton(
+      inputId = ns("refreshUI"),
+      label = "Refresh"
+    )),
   )
 }
 
@@ -22,13 +28,12 @@ sampleCorrelation_sidebar_panel <- function(ns){
 sampleCorrelation_main_panel <- function(ns){
   mainPanel(
   id = "main_sampleCorrelation",
+  textOutput(outputId = ns("SampleCorr_Info"), container = pre),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("100%"),
     plotOutput(
       outputId = ns("SampleCorrelationPlot")
-    ) %>% withSpinner(
-      type = 8,
-      color = getOption("spinner.color", default = "#b8cee0"))
+    )
   ),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
@@ -37,8 +42,8 @@ sampleCorrelation_main_panel <- function(ns){
       inputId = ns("only2Report_SampleCorrelation"),
       label = "Send only to Report",
       class = "btn-info"
-    ),
-  ),
+    )
+  ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
   splitLayout(
     style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
     NULL,
@@ -67,15 +72,18 @@ sampleCorrelation_main_panel <- function(ns){
       selected = ".png"
     )
   ),
-  textAreaInput(
-    inputId = ns("NotesSampleCorrelation"),
-    label = "Notes:",
-    placeholder = NOTES_PlACEHOLDER,
-    width = "1000px") %>% helper(
-      type = "markdown", 
-      content = "TakingNotesMD_help"
-    ),
-  helpText(NOTES_HELP)
+  splitLayout(
+    style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+    cellArgs = list(style = "padding: 5px"),
+    div(textAreaInput(
+      inputId = ns("NotesSampleCorrelation"),
+      label = "Notes:",
+      placeholder = NOTES_PlACEHOLDER,
+      width = "1000px"
+    ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
+    helpText(NOTES_HELP)),
+    NULL
+  ),
 )
 }
 
@@ -88,7 +96,7 @@ sampleCorrelation_UI <- function(id){
     id = "sample_correlation",
     fluid = T,
     h4("Sample Correlation"),
-    pca_sidebar <- sampleCorrelation_sidebar_panel(ns),
-    pca_main <- sampleCorrelation_main_panel(ns),
+    sampleCorrelation_sidebar_panel(ns),
+    sampleCorrelation_main_panel(ns),
   )
 }

@@ -6,7 +6,6 @@ geneset_panel_UI <- function(
 
   tabPanel(
     title = id_wo_ns,
-    # textOutput("Info", container = pre),
     tabsetPanel(
       tabPanel(
         title = paste(id_wo_ns, " Enrichment"),
@@ -21,7 +20,7 @@ geneset_panel_UI <- function(
             label = "Send only to Report",
             class = "btn-info"
           )
-        ),
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
@@ -53,16 +52,18 @@ geneset_panel_UI <- function(
             selected = ".pdf"
           )
         ),
-        textAreaInput(
-          inputId = ns("Notes"),
-          label = "Notes:",
-          placeholder = "Notes you want to take alongside the Plot (will be saved in the report) \nYou may want to use markdown syntay for structering the notes ",
-          width = "1000px"
-        ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
-        tags$div(
-          id = ns("NotesHelper"),
-          helpText("Notes: For structure reasons you should start with Heading Level 4 (hence #### My personal Title)")
-        )
+        splitLayout(
+          style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+          cellArgs = list(style = "padding: 5px"),
+          div(textAreaInput(
+            inputId = ns("Notes"),
+            label = "Notes:",
+            placeholder = NOTES_PlACEHOLDER,
+            width = "1000px"
+          ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
+          helpText(NOTES_HELP)),
+          NULL
+        ),
       ),
       tabPanel(
         title = paste(id_wo_ns, "Enrichment Table"),
@@ -75,22 +76,44 @@ geneset_panel_UI <- function(
 
 ea_sidebar <- function(ns){
   sidebarPanel(
-    uiOutput(outputId = ns("OrganismChoice_ui")),
-    uiOutput(outputId = ns("ORA_or_GSE_ui")),
+    id = "sidebar_enrichment_analysis",
+    uiOutput(outputId = ns("OrganismChoice_ui")) %>% helper(type = "markdown", content = "EA_Options"),
+    radioButtons(
+      inputId = ns("ORA_or_GSE"),
+      label = "Choose type of Analysis",
+      choices = c("GeneSetEnrichment","OverRepresentation_Analysis"),
+      selected = "GeneSetEnrichment"
+    ),
+    uiOutput(outputId = ns("UseBatch_ui")),
     uiOutput(outputId = ns("ValueToAttach_ui")),
     uiOutput(outputId = ns("sample_annotation_types_cmp_GSEA_ui")),
     uiOutput(outputId = ns("Groups2Compare_ref_GSEA_ui")),
     uiOutput(outputId = ns("Groups2Compare_treat_GSEA_ui")),
     uiOutput(outputId = ns("psig_threhsold_GSEA_ui")),
-    uiOutput(outputId = ns("GeneSetChoice_ui")),
+    uiOutput(outputId = ns("GeneSetChoice_ui")) %>% helper(type = "markdown", content = "EA_GeneSets"),
+    selectInput(
+        inputId = ns("test_correction"),
+        label = "Test correction",
+        choices = c(
+          "None", "Bonferroni", "Benjamini-Hochberg", "Benjamini Yekutieli",
+          "Holm", "Hommel", "Hochberg", "FDR"
+        ),
+        selected = "Benjamini-Hochberg"
+    ),
     uiOutput(outputId = ns("GeneSet2Enrich_ui")),
     uiOutput(outputId = ns("UploadedGeneSet_ui")),
     uiOutput(outputId = ns("UniverseOfGene_ui")),
     actionButton(
       inputId = ns("enrichmentGO"),
-      label = "Do enrichment analysis"
+      label = "Get Enrichment Analysis"
     ),
-    uiOutput(outputId = ns("KeggPathwayID_ui"))
+    hr(style = "border-top: 1px solid #000000;"),
+    uiOutput(outputId = ns("KeggPathwayID_ui")),
+    # Button to refresh the UI
+    hidden(actionButton(
+      inputId = ns("refreshUI"),
+      label = "Refresh UI"
+    ))
   )
 }
 
@@ -155,7 +178,7 @@ ea_main <- function(ns){
           label = "Adjust Height",
           min = 400, max = 1500, step = 20, value = 640
         ),
-        imageOutput(outputId = ns("KeggPathwayOutput_img")) %>% withSpinner(type = 8)
+        imageOutput(outputId = ns("KeggPathwayOutput_img"))
       )
     )
   )
@@ -172,7 +195,7 @@ enrichment_analysis_UI <- function(id){
     # Enrichment
     #########################################
     h4("NOTE THAT THIS ONLY MAKES SENSE FOR TRANSCRIPTOMICS DATA AT THE MOMENT!"),
-    enrichment_analysis_sidebar <- ea_sidebar(ns),
-    enrichment_analysis_main <- ea_main(ns),
+    ea_sidebar(ns),
+    ea_main(ns),
   )
 }

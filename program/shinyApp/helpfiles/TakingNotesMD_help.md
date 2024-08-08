@@ -1,4 +1,6 @@
 ## Personal Note Taking
+
+
 This Section is here for your Notes. It can be as easy as just a keyword or as complex as an entire figure description or even an entire book (however I do think there are better tools for this).
 To enable possibilities to structure your text, involving headings, bullets points or colored chunks `markdown` syntax can be used. 
 >Click [here](https://www.markdownguide.org/basic-syntax/) for their detailed documentation.

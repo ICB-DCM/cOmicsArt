@@ -1,9 +1,10 @@
 enrichment_analysis_geneset_server <- function(
-  id, result, scenario, organism_choice, gene_set_choice
+  id, result, organism_choice, gene_set_choice, ea_type
 ){
   moduleServer(
     id,
     function(input,output,session){
+      file_path <- paste0("/www/",session$token,"/")
       if(is.null(result)){
         output$EnrichmentFailure <- renderText("Currently there is no result to display.")
         hideElement(id = "EnrichmentPlot")
@@ -27,27 +28,52 @@ enrichment_analysis_geneset_server <- function(
           showElement(id = "Notes")
           showElement(id = "NotesHelper")
           hideElement(id = "EnrichmentFailure")
-          output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result)})
+          output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result) + CUSTOM_THEME})
+          if(ea_type == "GeneSetEnrichment"){
+            ea_scenario <- 15
+          }else{
+            ea_scenario <- 14
+          }
         }
         else{ # print that no significant result was found
           showElement(id = "EnrichmentFailure")
           output$EnrichmentFailure <- renderText("No significant result found. For further details check the table.")
+          ea_scenario <- 0
         }
+
         # download R Code for further plotting
         output$getR_Code <- downloadHandler(
           filename = function(){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
-            envList <- list(EnrichmentRes = result)
-            # assign unique name to result for saving later
-            result_name <- paste("EnrichmentRes", id, sep="_")
-            names(envList) <- result_name
-
+          #  tmp <- getUserReactiveValues(input)
+           # par_tmp$Enrichment[names(tmp)] <<- tmp
+              envList <- list(
+                res_tmp = res_tmp[[session$token]],
+                par_tmp = par_tmp[[session$token]],
+                loadedVersion = loadedVersion
+              )
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
 
-            write(getPlotCode(scenario), file.path(temp_directory, "Code.R"))
+            # functions needed
+            source("R/SourceAll.R")
+
+            save.function.from.env(
+              wanted = c(
+                "check_annotation_enrichment_analysis",
+                "translate_genes_ea",
+                "translate_genes_oa",
+                "gene_set_enrichment",
+                "over_representation_analysis",
+                "getLFCs"
+              ),
+              file = file.path(temp_directory, "utils.R")
+            )
+
+
+            write(getPlotCode(ea_scenario), file.path(temp_directory, "Code.R"))
 
             saveRDS(envList, file.path(temp_directory, "Data.RDS"))
             zip::zip(
@@ -67,10 +93,9 @@ enrichment_analysis_geneset_server <- function(
           content = function(file){
             ggsave(
               filename = file,
-              plot = clusterProfiler::dotplot(result, title = ""),
+              plot = clusterProfiler::dotplot(result, title = "") + CUSTOM_THEME,
               device = gsub("\\.","",input$file_ext)
             )
-            # TODO : on.exit({Logging_GSEA})
           }
         )
 
@@ -96,28 +121,44 @@ enrichment_analysis_geneset_server <- function(
         # download section
         observeEvent(input$only2Report,{
           notificationID <- showNotification(ui = "Saving...",duration = 0)
-          tmp_filename <- paste0(getwd(),"/www/", paste(id,Sys.time(),".png",sep="_"))
+          tmp_filename <- paste0(getwd(),file_path, paste(id,Sys.time(),".png",sep="_"))
           ggsave(
             filename = tmp_filename,
-            plot = clusterProfiler::dotplot(result),device = "png"
+            plot = clusterProfiler::dotplot(result) + CUSTOM_THEME,
+            device = "png"
           )
-          fun_LogIt(message = paste("###", id, "ENRICHMENT", sep=" "))
-          fun_LogIt(message = paste("-", id, "Enrichment was performed with a gene set of interest of size: ",length(geneSetChoice_tranlsated)))
-          fun_LogIt(message = paste("- Note that ENSEMBL IDs were translated to ENTREZIDs. Original size: ",length(gene_set_choice)))
-          fun_LogIt(message = paste("- Chosen Organism (needed for translation): ", organism_choice))
-          # fun_LogIt(message = paste0("**KEGG ENRICHMENT** - The universe of genes was selected to be: ",global_Vars$KEGG_UniverseOfGene, " (",length(global_Vars$KEGG_universeSelected_tranlsated)," genes)"))
-          # TODO: discuss with Lea -> global_Vars$KEGG_UniverseOfGene is only defined in case of ORA. Wouldn't that throw an error?
-          fun_LogIt(message = paste("- The number of found enriched terms (p.adj <0.05): ",nrow(result@result[result@result$p.adjust<0.05,])))
-          # TODO: discuss with LEA -> On exit logging the same as this one?
-          fun_LogIt(message = paste0("**KEGG ENRICHMENT** - ![KEGG ENRICHMENT](",tmp_filename,")"))
+          
+          fun_LogIt(message = paste0("### ", id, "_ENRICHMENT"))
+
+          fun_LogIt(
+            message = paste0(
+              "- The number of found enriched terms (p.adj <0.05): ",
+              nrow(result@result[result@result$p.adjust<0.05,])
+            )
+          )
+
+          fun_LogIt(
+            message = paste0(
+              "**", id, " ENRICHMENT** - ![", id, " ENRICHMENT](",tmp_filename,")"
+            )
+          )
           fun_LogIt(message = paste("- The top 5 terms are the following (sorted by adj. p.val)"))
           fun_LogIt(message = knitr::kable(
-            head(result@result[order(result@result$p.adjust,decreasing = T),], 5),
-            format = "html"
-          ))
+            head(result@result[order(result@result$p.adjust, decreasing = FALSE),], 5),
+            format = "html",
+            escape = FALSE,
+            row.names = FALSE
+          ) %>%
+            kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+            scroll_box(width = "100%", height = "300px"))
+
           if(isTruthy(input$Notes) & !(isEmpty(input$Notes))){
-            fun_LogIt(message = "### Personal Notes:")
-            fun_LogIt(message = input$Notes)
+            fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
+            fun_LogIt(message = paste0(
+              "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
+              input$Notes,
+              "</div>"
+            ))
           }
           removeNotification(notificationID)
           showNotification(ui = "Saved!",type = "message", duration = 1)
@@ -130,365 +171,164 @@ enrichment_analysis_geneset_server <- function(
 
 # Reactive server function that calls the enrichment analysis geneset server function
 enrichment_analysis_geneset_server_reactive <- function(
-  id, result_all, scenario, organism_choice, gene_set_choice
+  id, result_all, organism_choice, gene_set_choice, ea_type
 ){
   observe({
     result <- result_all()[[paste("EnrichmentRes", id, sep = "_")]]
-    enrichment_analysis_geneset_server(id, result, scenario, organism_choice, gene_set_choice)
+    enrichment_analysis_geneset_server(id, result, organism_choice, gene_set_choice, ea_type)
   })
 }
 
 
-enrichment_analysis_Server <- function(id, scenario, omic_type){
+enrichment_analysis_Server <- function(id, data, params, updates){
 
   moduleServer(
     id,
     function(input,output,session){
+      ea_reactives <- reactiveValues(
+        ea_info = "Choose between ORA or GSEA!",
+        can_start = FALSE,
+        data = NULL,
+        organism = NULL
+      )
       ns <- session$ns
       ## initialize result as NULL
-      global_Vars$enrichment_results <<- list(
-        "EnrichmentRes_Hallmarks" = NULL,
-        "EnrichmentRes_C1" = NULL,
-        "EnrichmentRes_C2" = NULL,
-        "EnrichmentRes_CGP" = NULL,
-        "EnrichmentRes_CP" = NULL,
-        "EnrichmentRes_BIOCARTA" = NULL,
-        "EnrichmentRes_KEGG" = NULL,
-        "EnrichmentRes_PID" = NULL,
-        "EnrichmentRes_REACTOME" = NULL,
-        "EnrichmentRes_WIKIPATHWAYS" = NULL,
-        "EnrichmentRes_C3" = NULL,
-        "EnrichmentRes_MIRDB" = NULL,
-        "EnrichmentRes_MIR_Legacy" = NULL,
-        "EnrichmentRes_GTRD" = NULL,
-        "EnrichmentRes_TFT_Legacy" = NULL,
-        "EnrichmentRes_C4" = NULL,
-        "EnrichmentRes_CGN" = NULL,
-        "EnrichmentRes_CM" = NULL,
-        "EnrichmentRes_C5" = NULL,
-        "EnrichmentRes_GO" = NULL,
-        "EnrichmentRes_GO_BP" = NULL,
-        "EnrichmentRes_GO_CC" = NULL,
-        "EnrichmentRes_GO_MF" = NULL,
-        "EnrichmentRes_HPO" = NULL,
-        "EnrichmentRes_C6" = NULL,
-        "EnrichmentRes_C7" = NULL,
-        "EnrichmentRes_IMMUNESIGDB" = NULL,
-        "EnrichmentRes_VAX" = NULL,
-        "EnrichmentRes_C8" = NULL,
-        "geneSetChoice_tranlsated" = NULL
-      )
+      ea_reactives$enrichment_results <- ENRICHMENT_RESULT_RESET
+      # TODO: Call this in a loop.
       ## Call Modules
-      enrichment_analysis_geneset_server_reactive(
-        id = 'KEGG',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
+      gene_sets_to_compare <- c(
+        'KEGG', 'GO', 'REACTOME', 'Hallmarks', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6',
+        'C7', 'C8', 'CGP', 'CP', 'BIOCARTA', 'PID', 'WIKIPATHWAYS', 'MIRDB',
+        'MIR_Legacy', 'GTRD', 'TFT_Legacy', 'CGN', 'CM', 'GO_BP', 'GO_CC', 'GO_MF',
+        'HPO', 'IMMUNESIGDB', 'VAX'
       )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'GO',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'REACTOME',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'Hallmarks',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'C1',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'C2',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'C3',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'C4',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'C5',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'C6',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      # Currently C7 subset Immunesigdb
-      enrichment_analysis_geneset_server_reactive(
-        id = 'C7',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'C8',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'CGP',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'CP',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'BIOCARTA',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'PID',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'WIKIPATHWAYS',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'MIRDB',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'MIR_Legacy',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'GTRD',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'TFT_Legacy',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'CGN',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'CM',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'GO_BP',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'GO_CC',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'GO_MF',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'HPO',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'IMMUNESIGDB',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      enrichment_analysis_geneset_server_reactive(
-        id = 'VAX',
-        result = reactive(global_Vars$enrichment_results),
-        scenario = scenario,
-        organism_choice = input$OrganismChoice,
-        gene_set_choice = tmp_genes
-      )
-      ## Ui section
-      output$OrganismChoice_ui <- renderUI({
-        selectInput(
-          inputId = ns("OrganismChoice"),
-          label = "Specificy your current organism",
-          choices = c("hsa", "mmu"),
-          selected = "mmu"
+      lapply(gene_sets_to_compare, function(id) {
+        enrichment_analysis_geneset_server_reactive(
+          id = id,
+          result = reactive(ea_reactives$enrichment_results),
+          ea_type = input$ORA_or_GSE,
+          organism_choice = ea_reactives$organism,
+          gene_set_choice = ea_reactives$tmp_genes
         )
       })
-      output$ORA_or_GSE_ui <- renderUI({
-        radioButtons(
-          inputId = ns("ORA_or_GSE"),
-          label = "Choose type of Analysis",
-          choices = c("GeneSetEnrichment","OverRepresentation_Analysis"),
-          selected = "GeneSetEnrichment")
+      ## Ui section
+      output$OrganismChoice_ui <- renderUI({
+        if (is.null(par_tmp[[session$token]][['organism']])) {
+          selectInput(
+            inputId = ns("organism_choice_ea"),
+            label = "Choose an organism:",
+            choices = c("Mouse genes (GRCm39)", "Human genes (GRCh38.p14)"),
+            selected = "Mouse genes (GRCm39)"
+          )
+        } else if (
+          par_tmp[[session$token]][['organism']] %in% c("Mouse genes (GRCm39)", "Human genes (GRCh38.p14)")
+        ) {
+          paste0("The organism you have chosen is ", ea_reactives$organism, ".")
+        } else {
+          div(
+            style = "color: red;",
+            "Warning: Enrichment analysis currently cannot be done for the given organism."
+          )
+        }
       })
-
+      # observer for Info text
+      observe(
+        shinyjs::html(
+          id = 'EnrichmentFailure',
+          ea_reactives$ea_info
+        )
+      )
+      # refresh the UI/data if needed
+      observeEvent(input$refreshUI, {
+        ea_reactives$data <- update_data(session$token)$data
+        ea_reactives$organism <- par_tmp[[session$token]][['organism']]
+      })
+      observeEvent(input$organism_choice_ea, {
+        print("!organism choice changed!")
+        par_tmp[[session$token]]['organism'] <<- input$organism_choice_ea
+        ea_reactives$organism <- input$organism_choice_ea
+      })
       observe({
         req(input$ORA_or_GSE)
-        output$EnrichmentInfo <- renderText("Click Do Enrichment to Start")
+        ea_reactives$ea_info <- "Click 'Do Enrichment' to Start"
 
         if(input$ORA_or_GSE == "GeneSetEnrichment"){
           output$ValueToAttach_ui <- renderUI({
             selectInput(
               inputId = ns("ValueToAttach"),
               label = "Select the metric to sort the genes after",
-              choices = c("LFC", "LFC_abs"),
-              selected = "LFC_abs")
+              choices = list(
+                "log fold change (LFC)"="LFC",
+                "absolute LFC"="LFC_abs",
+                "t-statistic value"="statistic_value"),
+              selected = input$ValueToAttach
+            )
           })
-          req(input$ValueToAttach)
-          if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
-            output$sample_annotation_types_cmp_GSEA_ui <- renderUI({
-              req(data_input_shiny())
-              selectInput(
-                inputId = ns("sample_annotation_types_cmp_GSEA"),
-                label = "Choose type for LFC-based ordering",
-                choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
-                multiple = F,
-                selected = c(colnames(data_input_shiny()[[omic_type()]]$sample_table))[1]
+          output$sample_annotation_types_cmp_GSEA_ui <- renderUI({
+            req(data_input_shiny())
+            if(is.null(ea_reactives$data)){
+              ea_reactives$data <- data$data
+            }
+            selectInput(
+              inputId = ns("sample_annotation_types_cmp_GSEA"),
+              label = "Choose type for LFC-based ordering",
+              choices = c(colnames(colData(ea_reactives$data))),
+              multiple = F,
+              selected = c(colnames(colData(ea_reactives$data)))[1]
+            )
+          })
+          output$Groups2Compare_ref_GSEA_ui <- renderUI({
+            req(data_input_shiny())
+            req(input$sample_annotation_types_cmp_GSEA)
+            if(is.null(ea_reactives$data)){
+              ea_reactives$data <- data$data
+            }
+            selectInput(
+              inputId = ns("Groups2Compare_ref_GSEA"),
+              label = "Choose reference of log2 FoldChange",
+              choices = unique(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA]),
+              multiple = F ,
+              selected = unique(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA])[1]
+            )
+          })
+          output$Groups2Compare_treat_GSEA_ui <- renderUI({
+            req(data_input_shiny())
+            req(input$sample_annotation_types_cmp_GSEA)
+            if(is.null(ea_reactives$data)){
+              ea_reactives$data <- data$data
+            }
+            selectInput(
+              inputId = ns("Groups2Compare_treat_GSEA"),
+              label = "Choose treatment group of log2 FoldChange",
+              choices = unique(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA]),
+              multiple = F ,
+              selected = unique(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA])[2]
+            )
+          })
+          # Choose Sets to do gene set enrichment for
+          output$GeneSetChoice_ui <- renderUI({
+            selectInput(
+              inputId = ns("GeneSetChoice"),
+              label = "Choose sets to do enrichment for",
+              choices = c(
+                "KEGG", "GO", "REACTOME", "Hallmarks",
+                "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8",
+                "CGP", "CP", "BIOCARTA", "PID", "WIKIPATHWAYS",
+                "MIRDB", "MIR_Legacy", "GTRD", "TFT_Legacy",
+                "CGN", "CM", "GO_BP", "GO_CC", "GO_MF", "HPO",
+                "IMMUNESIGDB", "VAX"
+              ),
+              multiple = T ,
+              selected = c(
+                "KEGG", "Hallmarks", "GO_CC"
               )
-            })
-            output$Groups2Compare_ref_GSEA_ui <- renderUI({
-              req(data_input_shiny())
-              req(input$sample_annotation_types_cmp_GSEA)
-              selectInput(
-                inputId = ns("Groups2Compare_ref_GSEA"),
-                label = "Choose reference of log2 FoldChange",
-                choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA]),
-                multiple = F ,
-                selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA])[1]
-              )
-            })
-            output$Groups2Compare_treat_GSEA_ui <- renderUI({
-              req(data_input_shiny())
-              req(input$sample_annotation_types_cmp_GSEA)
-              selectInput(
-                inputId = ns("Groups2Compare_treat_GSEA"),
-                label = "Choose treatment group of log2 FoldChange",
-                choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA]),
-                multiple = F ,
-                selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA])[2]
-              )
-            })
-            output$psig_threhsold_GSEA_ui <- renderUI({
-              req(data_input_shiny())
-              numericInput(
-                inputId = ns("psig_threhsold_GSEA" ),
-                label = "adj. p-value threshold",
-                min = 0,
-                max = 1,
-                step = 0.01,
-                value = 0.05
-              )
-            })
-            # Choose Sets to do gene set enrichment for
-            output$GeneSetChoice_ui <- renderUI({
-              selectInput(
-                inputId = ns("GeneSetChoice"),
-                label = "Choose sets to do enrichment for",
-                choices = c(
-                  "KEGG", "GO", "REACTOME", "Hallmarks",
-                  "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8",
-                  "CGP", "CP", "BIOCARTA", "PID", "WIKIPATHWAYS",
-                  "MIRDB", "MIR_Legacy", "GTRD", "TFT_Legacy",
-                  "CGN", "CM", "GO_BP", "GO_CC", "GO_MF", "HPO",
-                  "IMMUNESIGDB", "VAX"
-                ),
-                multiple = T ,
-                selected = c(
-                  "KEGG", "Hallmarks", "GO_CC"
-                )
-              )
-            })
-          }else{
-            hide(id = "sample_annotation_types_cmp_GSEA", anim = T)
-            hide(id = "Groups2Compare_ref_GSEA", anim = T)
-            hide(id = "Groups2Compare_treat_GSEA", anim = T)
-            hide(id = "psig_threhsold_GSEA", anim = T)
-            hide(id = "GeneSetChoice", anim = T)
-          }
+            )
+          })
         }else{
           hide(id = "ValueToAttach", anim = T)
           hide(id = "sample_annotation_types_cmp_GSEA", anim = T)
           hide(id = "Groups2Compare_ref_GSEA", anim = T)
           hide(id = "Groups2Compare_treat_GSEA", anim = T)
-          hide(id = "psig_threhsold_GSEA", anim = T)
         }
 
         if(input$ORA_or_GSE == "OverRepresentation_Analysis"){
@@ -497,12 +337,11 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               inputId = ns("GeneSet2Enrich"),
               label = "Choose a gene set to hand over to enrich",
               choices = c(
-                # "DE_Genes",  # deactivated for now
-                "ProvidedGeneSet"
-                # "heatmap_genes"  # deactivated till switch is fixed.
+                "ProvidedGeneSet",
+                "heatmap_genes"
               ),
               multiple = F,
-              selected = "ProvidedGeneSet"
+              selected = input$GeneSet2Enrich
             )
           })
           output$UniverseOfGene_ui <- renderUI({
@@ -511,21 +350,13 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
               label = "Select an Universe for enrichment (default is clusterProfilers default",
               choices = c(
                 "default",
-                "allPresentGenes_after_pre_process",
-                "allPresentGenes_before_pre_process"
+                "after_pre_process",
+                "before_pre_process"
               ),
               selected = "default"
             )
           })
           req(input$GeneSet2Enrich)
-          if(input$GeneSet2Enrich == "DE_Genes"){
-            output$UploadedGeneSet_ui <- renderUI({NULL})
-            # atm this is not done
-            # geneSetChoice<-DE_GenesGlobal_4comp
-            print("not done atm")
-            # print(paste("Gene Set provided to check for enrichment: ",length(geneSetChoice)))
-          }
-
           if(input$GeneSet2Enrich == "ProvidedGeneSet"){
             output$UploadedGeneSet_ui <- renderUI(
               {shiny::fileInput(
@@ -533,6 +364,8 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
                 label = "Select a file (.csv, 1 column, ENSEMBL, e.g. ENSMUSG....)"
               )}
             )
+          }else{
+            hide(id = "UploadedGeneSet",anim=T)
           }
         }else{
           hide(id = "GeneSet2Enrich",anim=T)
@@ -541,101 +374,41 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
         }
         })
       # create List to track which enrichements are to do
-      global_Vars$enrichments2do <- list(
-        "Hallmarks" = F,
-        "C1" = F,
-        "C2" = F,
-        "CGP" = F,
-        "CP" = F,
-        "BIOCARTA" = F,
-        "KEGG" = F,
-        "PID" = F,
-        "REACTOME" = F,
-        "WIKIPATHWAYS" = F,
-        "C3" = F,
-        "MIRDB" = F,
-        "MIR_Legacy" = F,
-        "GTRD" = F,
-        "TFT_Legacy" = F,
-        "C4" = F,
-        "CGN" = F,
-        "CM" = F,
-        "C5" = F,
-        "GO" = F,
-        "GO_BP" = F,
-        "GO_CC" = F,
-        "GO_MF" = F,
-        "HPO" = F,
-        "C6" = F,
-        "C7" = F,
-        "IMMUNESIGDB" = F,
-        "VAX" = F,
-        "C8" = F
-      )
+      ea_reactives$enrichments2do <- GENESETS_RESET
       # change values in list to true if selected
       observeEvent(input$GeneSetChoice, {
         # reset list
-        global_Vars$enrichments2do <- list(
-          "Hallmarks" = F,
-          "C1" = F,
-          "C2" = F,
-          "CGP" = F,
-          "CP" = F,
-          "BIOCARTA" = F,
-          "KEGG" = F,
-          "PID" = F,
-          "REACTOME" = F,
-          "WIKIPATHWAYS" = F,
-          "C3" = F,
-          "MIRDB" = F,
-          "MIR_Legacy" = F,
-          "GTRD" = F,
-          "TFT_Legacy" = F,
-          "C4" = F,
-          "CGN" = F,
-          "CM" = F,
-          "C5" = F,
-          "GO" = F,
-          "GO_BP" = F,
-          "GO_CC" = F,
-          "GO_MF" = F,
-          "HPO" = F,
-          "C6" = F,
-          "C7" = F,
-          "IMMUNESIGDB" = F,
-          "VAX" = F,
-          "C8" = F
-        )
+        ea_reactives$enrichments2do <- GENESETS_RESET
         for(i in 1:length(input$GeneSetChoice)){
-          global_Vars$enrichments2do[[input$GeneSetChoice[i]]] <- T
+          ea_reactives$enrichments2do[[input$GeneSetChoice[i]]] <- T
         }
         # hide the unselected ones
-        for(name in names(which(global_Vars$enrichments2do == FALSE))){
+        for(name in names(which(ea_reactives$enrichments2do == FALSE))){
           hideTab(inputId = "EnrichmentTabs", target = name)
         }
         # show the selected ones
-        for(name in names(which(global_Vars$enrichments2do == TRUE))){
+        for(name in names(which(ea_reactives$enrichments2do == TRUE))){
           showTab(inputId = "EnrichmentTabs", target = name)
         }
       })
       ## Do enrichment ----
       geneSetChoice <- reactive({
-        output$KEGG_Enrichment <- renderPlot({ggplot()})
-        if(isTruthy(input$GeneSet2Enrich)){
+
+        if(isTruthy(input$GeneSet2Enrich) & input$ORA_or_GSE == "OverRepresentation_Analysis" ){
           if(input$GeneSet2Enrich == "DE_Genes"){
-            # atm this is not done
+            # TODO add option to send DE genes
             geneSetChoice_tmp <- DE_genelist()
           }
           if(input$GeneSet2Enrich == "ProvidedGeneSet"){
             if(!is.null(input$UploadedGeneSet)){
               Tmp <- read.csv(input$UploadedGeneSet$datapath, header = F)
-              # check take first column as acharacter vector
+              # check take first column as a character vector
               geneSetChoice_tmp <- Tmp$V1
-              ## Here somehow if value next to gene provieded needs to be considered further down
+              ## Here somehow if value next to gene provided needs to be considered further down
               # Check if they start with "ENS.."
               if(!length(which(grepl("ENS.*",geneSetChoice_tmp) == TRUE)) == length(geneSetChoice_tmp)){
                 print("wrong data!")
-                output$EnrichmentInfo <- renderText("Check your input format, should be only gene names ENSMBL-IDs")
+                ea_reactives$ea_info <- "Check your input format, should be only gene names ENSMBL-IDs"
                 geneSetChoice_tmp <- NULL
               }else{
                 geneSetChoice_tmp <- geneSetChoice_tmp
@@ -647,94 +420,242 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             }
           }
           if(input$GeneSet2Enrich == "heatmap_genes"){
-            geneSetChoice_tmp <- heatmap_genelist
+            geneSetChoice_tmp <- res_tmp[[session$token]]$Heatmap$gene_list
           }
         }else{
-          if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs"){
+          if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs" | input$ValueToAttach == "statistic_value"){
             #takes all genes after preprocessing
             #get LFC
-            ctrl_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
-            comparison_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
+            ctrl_samples_idx <- which(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
+            comparison_samples_idx <- which(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
 
-            Data2Plot <- getLFC(
-              selectedData_processed()[[omic_type()]]$Matrix,
-              ctrl_samples_idx,
-              comparison_samples_idx
+            Data2Plot <- tryCatch(
+              {
+                getLFCs(
+                  assays(ea_reactives$data)$raw,
+                  ctrl_samples_idx,
+                  comparison_samples_idx
+                )
+              },
+              error=function(e){
+                showModal(modalDialog(
+                  title = HTML("<font color='red'>An Error occured</font>"),
+                  footer = tagList(
+                    modalButton("Close")
+                  ),
+                  HTML(paste0(
+                    "<font color='red'>Error: ",e$message,"</font><br><br>",
+                    "The Error occured during fold change calculation. ",
+                    "Did you choose the right comparison groups?"
+                  ))
+                ))
+              }
             )
-
-            # get thresholds to cut the set
-            # TODO: currently not working with cutoff value
+            if (is.null(Data2Plot)){
+              return(NULL)
+            }
 
             Data2Plot_tmp <- Data2Plot
-            # Data2Plot_tmp=Data2Plot[Data2Plot$p_adj<=input$psig_threhsold_GSEA,]
             if(input$ValueToAttach == "LFC"){
               geneSetChoice_tmp <- Data2Plot_tmp$LFC
-            }
-            else if(input$ValueToAttach == "LFC_abs"){
+            } else if(input$ValueToAttach == "statistic_value"){
+              geneSetChoice_tmp <- Data2Plot_tmp$statistic
+            } else if(input$ValueToAttach == "LFC_abs"){
               geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
             }
 
             if(length(geneSetChoice_tmp) < 1){
               print("Nothing significant!")
               geneSetChoice_tmp <- NULL
-            }else{
+            } else {
               names(geneSetChoice_tmp) <- Data2Plot_tmp$probename
             }
           }
         }
         geneSetChoice_tmp
       })
-      output$KEGG_Enrichment <- renderPlot({ggplot()})
       observeEvent(input$enrichmentGO,{
-        tmp_genes <- geneSetChoice()
-        output$EnrichmentInfo <- renderText("Enrichment is running...")
+        ea_reactives$ea_info <- "Enrichment is running..."
+        waiter <- Waiter$new(
+          id=ns("EnrichmentTabs"),
+          html = LOADING_SCREEN,
+          color="#70BF4F47"
+        )
+        waiter$show()
         print("Start Enrichment")
-        output$KEGG_Enrichment <- renderPlot({ggplot()})
-        fun_LogIt("## ENRICHMENT")
+
+        fun_LogIt(message = "## Enrichment{.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
         req(geneSetChoice())
+        ea_reactives$tmp_genes <- geneSetChoice()
+        par_tmp[[session$token]]$Enrichment$tmp_genes <<- ea_reactives$tmp_genes
+        par_tmp[[session$token]]$Enrichment$enrichments2do <<- ea_reactives$enrichments2do
         # Check whether the necessary annotation is available
-        anno_results <- check_annotation_enrichment_analysis()
-        if(anno_results$no_ann){
+        anno_results <- check_annotation_enrichment_analysis(ea_reactives$data)
+        ea_reactives$data <- anno_results$new_data
+        ea_reactives$can_start <- anno_results$can_start
+        translation_modal <- function(){
           showModal(modalDialog(
             title = "No annotation type detected",
             footer = NULL,
-            p("No valid annotation type was detected in your row annotation. Please indicate the type of annotation with which you uploaded your genes."),
+            p(paste0(
+              "No valid annotation type was detected in your row annotation. ",
+              "Please indicate the type of annotation with which you uploaded your genes.\n",
+              "Here are the first 5 rownames of your row annotation: \n",
+              toString(rownames(ea_reactives$data)[1:5])
+            )),
             selectInput(
               inputId = ns("AnnotationSelection"),
               label = "Which annotation are you using?",
-              choices = c("ENSEMBL", "ENTREZID", "SYMBOL"),
-              selected="ENTREZID",
+              choices = c("ensembl_gene_id", "external_gene_name", "entrezgene_id"),
+              selected="entrezgene_id",
               multiple = F
-            ),
-            p("The enrichment analysis needs multiple gene annotations. If you do not want this dialog to appear again, please check the box below."),
-            checkboxInput(
-              inputId= ns("updateAnnotation"),
-              label = "Do you want the annotation to be updated in your file?",
-              value = FALSE,
             ),
             actionButton(inputId = ns("AMC"), label = "Proceed"),
           ))
         }
-        # close modal on button click
-        observeEvent(input$AMC, {
-          removeModal()
+        if(anno_results$no_ann){
+          translation_modal()
+        }else if(anno_results$can_start == FALSE){
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            translate_genes_ea(
+            ea_reactives$data <- translate_genes_ea(
+              data = ea_reactives$data,
               annotation_results = anno_results,
               input = input
             )
-            global_Vars$enrichment_results <<- gene_set_enrichment(input, output, tmp_genes)
           }else{
-            tmp_genes <- translate_genes_oa(
+            ea_reactives$tmp_genes <- translate_genes_oa(
               annotation_results = anno_results,
               input = input,
-              geneSetChoice = tmp_genes,
-              geneSet2Enrich = input$GeneSet2Enrich
+              geneSetChoice = ea_reactives$tmp_genes,
+              geneSet2Enrich = input$GeneSet2Enrich,
+              data = ea_reactives$data
             )
-            global_Vars$enrichment_results <<- over_representation_analysis(input, output, tmp_genes)
           }
-          # TODO: fix scenario
-          output$EnrichmentInfo <- renderText("**Enrichment Analysis Done!**")
+
+          ea_reactives$can_start <- TRUE
+
+        }
+        # Modal in case translation fails
+        observeEvent(input$translation_again, {
+          # close modal
+          removeModal()
+          # call translation again
+          translation_modal()
+        })
+        # close modal on button click
+        observeEvent(input$AMC, {
+          anno_results$base_annotation <- input$AnnotationSelection
+          removeModal()
+          tryCatch(
+            {
+              if(input$ORA_or_GSE == "GeneSetEnrichment"){
+                ea_reactives$data <- translate_genes_ea(
+                  data = ea_reactives$data,
+                  annotation_results = anno_results,
+                  input = input
+                )
+              }else{
+                ea_reactives$tmp_genes <- translate_genes_oa(
+                  annotation_results = anno_results,
+                  input = input,
+                  geneSetChoice = ea_reactives$tmp_genes,
+                  geneSet2Enrich = input$GeneSet2Enrich,
+                  data = ea_reactives$data
+                )
+              }
+              ea_reactives$can_start <- TRUE
+            },
+            error=function(e){
+              showModal(modalDialog(
+                title = HTML("<font color='red'>An Error occured</font>"),
+                footer = tagList(
+                  actionButton(
+                    inputId = ns("translation_again"),
+                    label = "Choose another annotation type"
+                  ),
+                  modalButton("Close")
+                ),
+                HTML(paste0(
+                  "<font color='red'>Error: ",e$message,"</font><br><br>",
+                  "It is highly likely that the error is caused by the fact that the ",
+                  "gene names in your data set do not match the gene names in the ",
+                  "annotation you selected. Please check your data set and annotation ",
+                  "and try again.<br><br>",
+                  "Otherwise, please contact the cOmicsArtist Lea and Paul ",
+                  "(<a href = 'mailto: cOmicsArtist@outlook.de'>cOmicsArtist@outlook.de</a>)."
+                ))
+              ))
+            }
+          )
+        })
+        # start the analysis if ea_reactives$can_start == TRUE
+        fun_LogIt(message = paste0("**Enrichment general** The analysed gene set size: ",
+                                   length(ea_reactives$tmp_genes)))
+        fun_LogIt(message = paste0("**Enrichment general** Chosen Organism (needed for translation): ",
+                                   ea_reactives$organism))
+        fun_LogIt(message = paste0("**Enrichment general** The following sets to check an enrichment: ",
+                                   paste0(names(unlist(ea_reactives$enrichments2do))[unlist(ea_reactives$enrichments2do)],collapse = ",")))
+
+        observeEvent(ea_reactives$can_start, {
+          req(ea_reactives$can_start == TRUE)
+          if(input$ORA_or_GSE == "GeneSetEnrichment"){
+            ea_reactives$enrichment_results <- gene_set_enrichment(
+              ea_reactives$organism,
+              ea_reactives$tmp_genes,
+              ea_reactives$data,
+              ea_reactives$enrichments2do,
+              input$test_correction,
+              input$sample_annotation_types_cmp_GSEA,
+              input$Groups2Compare_ref_GSEA,
+              input$Groups2Compare_treat_GSEA,
+              input$ValueToAttach
+            )
+            tmp <- getUserReactiveValues(input)
+            par_tmp[[session$token]]$Enrichment[names(tmp)] <<- tmp
+
+            fun_LogIt(message = paste0("**GSEA** Gene Set enrichment analysis was perfomed."))
+            fun_LogIt(message = paste0("**GSEA** The genes were sorted by: ",input$ValueToAttach))
+            fun_LogIt(message = paste0("**GSEA** Calculation based on ",
+                                      input$sample_annotation_types_cmp_GSEA,": ",
+                                       input$Groups2Compare_treat_GSEA,
+                                       " vs. ",
+                                       input$Groups2Compare_ref_GSEA))
+            fun_LogIt(message = paste0("**GSEA** The adj. p-value threshold was set to 0.05,
+                                       whereby mutliple testing correction was : ",
+                                       input$test_correction))
+
+          }else{
+            ea_reactives$tmp_genes <- rowData(data$data)[ea_reactives$tmp_genes,"entrezgene_id"]
+            ea_reactives$enrichment_results <- over_representation_analysis(
+              input = input,
+              organism = ea_reactives$organism,
+              geneSetChoice = ea_reactives$tmp_genes,
+              data = data,
+              enrichments2do = ea_reactives$enrichments2do,
+              adjustMethod = input$test_correction
+            )
+            fun_LogIt(message = paste0("**ORA** Overrepresentation analysis was perfomed."))
+            fun_LogIt(message = paste0("**ORA** The genes were taken from: ",input$ValueToAttach))
+            if(input$GeneSet2Enrich =="ProvidedGeneSet"){
+              fun_LogIt(message = paste0("**ORA** The gene set was provided by the user. Filename: ",input$UploadedGeneSet$name))
+            }
+            fun_LogIt(message = paste0("**ORA** The adj. p-value threshold was set to 0.05,
+                                       whereby mutliple testing correction was : ",
+                                       input$test_correction))
+            tmp <- getUserReactiveValues(input)
+            par_tmp[[session$token]]$Enrichment[names(tmp)] <<- tmp
+          }
+          fun_LogIt(message = "### Publication Snippet")
+          fun_LogIt(message = snippet_Enrichment(data = res_tmp[[session$token]],
+                                                 params = par_tmp[[session$token]]))
+          fun_LogIt(message = paste0("## Enrichment results {.tabset .tabset-fade}"))
+          waiter$hide()
+          ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
+          # res_temp Zuweisung
+          
+          res_tmp[[session$token]][["Enrichment"]] <<- ea_reactives$enrichment_results
+
         })
       })
 
@@ -746,7 +667,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             selectInput(
               inputId = ns("sample_anno_types_KEGG"),
               label = "Choose type for LFC overlay",
-              choices = c(colnames(data_input_shiny()[[omic_type()]]$sample_table)),
+              choices = c(colnames(colData(ea_reactives$data))),
               multiple = F ,
               selected = NULL
             )
@@ -756,9 +677,9 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             selectInput(
               inputId = ns("ComparisonOptionsCRTL"),
               label = "Choose reference of log2 FoldChange",
-              choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]),
+              choices = unique(colData(ea_reactives$data)[,input$sample_anno_types_KEGG]),
               multiple = F ,
-              selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG])[1]
+              selected = unique(colData(ea_reactives$data)$sample_table[,input$sample_anno_types_KEGG])[1]
             )
           })
           output$ComparisonOptionsCOMP_ui <- renderUI({
@@ -766,12 +687,12 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             selectInput(
               inputId = ns("ComparisonOptionsCOMP"),
               label = "Choose treatment group of log2 FoldChange",
-              choices = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]),
+              choices = unique(colData(ea_reactives$data)[,input$sample_anno_types_KEGG]),
               multiple = F ,
-              selected = unique(data_input_shiny()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG])[2]
+              selected = unique(colData(ea_reactives$data)[,input$sample_anno_types_KEGG])[2]
             )
           })
-          output$psig_KEGG_ui=renderUI({
+          output$psig_KEGG_ui <- renderUI({
             req(data_input_shiny())
             numericInput(
               inputId = ns("psig_KEGG"),
@@ -801,17 +722,17 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
         ## reduce dataset to selected genes
 
         if(input$plotOnTopOption == "LFC"){
-          Data2PlotOnTop <- selectedData_processed()[[omic_type()]]$Matrix[geneSetChoice(),,drop=F]
-          ctrl_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCRTL)
-          comparison_samples_idx <- which(selectedData_processed()[[omic_type()]]$sample_table[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCOMP)
+          Data2PlotOnTop <- ea_reactives$data[geneSetChoice(),,drop=F]
+          ctrl_samples_idx <- which(colData(ea_reactives$data)[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCRTL)
+          comparison_samples_idx <- which(colData(ea_reactives$data)[,input$sample_anno_types_KEGG]%in%input$ComparisonOptionsCOMP)
           if(length(comparison_samples_idx) <= 1 | length(ctrl_samples_idx) <= 1){
-            output$EnrichmentInfo <- renderText("Choose variable with at least two samples per condition!")
+            ea_reactives$ea_info <- "Choose variable with at least two samples per condition!"
             req(FALSE)
           }
           if(any(Data2PlotOnTop<0)){
-            output$EnrichmentInfo <- renderText("Choose another preprocessing, as there are negative values!")
+            ea_reactives$ea_info <- "Choose another preprocessing, as there are negative values!"
           }else{
-            Data2Plot <- getLFC(
+            Data2Plot <- getLFCs(
               Data2PlotOnTop,
               ctrl_samples_idx,
               comparison_samples_idx
@@ -821,14 +742,14 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             geneSetChoice(),
             fromType = "ENSEMBL",
             toType = "ENTREZID",
-            OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db")
+            OrgDb = ifelse(ea_reactives$organism == "hsa","org.Hs.eg.db","org.Mm.eg.db")
           )$ENTREZID
           testingMatrix <- data.frame(
             GeneID = geneSetChoice_tranlsated$ENTREZID,
             log2_FC = Data2Plot[,"LFC"]
           )
           # delete duplicated entries
-          testingMatrix = testingMatrix[!duplicated(testingMatrix$GeneID),]
+          testingMatrix <- testingMatrix[!duplicated(testingMatrix$GeneID),]
           rownames(testingMatrix) <- testingMatrix$GeneID
           testingMatrix$GeneID <- NULL
           testingMatrix <- as.matrix(testingMatrix) #Test to global to catch
@@ -839,7 +760,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
             geneSetChoice(),
             fromType = "ENSEMBL",
             toType = "ENTREZID",
-            OrgDb = ifelse(input$OrganismChoice == "hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
+            OrgDb = ifelse(ea_reactives$organism == "hsa","org.Hs.eg.db","org.Mm.eg.db"))$ENTREZID
 
           geneSetChoice_final <- geneSetChoice_tranlsated
           output$WorkAroundLegend <- renderPrint({paste0("Colored if present in provided gene set")})
@@ -850,7 +771,7 @@ enrichment_analysis_Server <- function(id, scenario, omic_type){
           PathviewRes <- pathview(
             gene.data  = geneSetChoice_final,
             pathway.id = real_PathwayID,
-            species = input$OrganismChoice,
+            species = ea_reactives$organism,
             limit = ifelse(is.matrix(geneSetChoice_final),list(gene=max(abs(geneSetChoice_final)), cpd=1),list(gene=1,cpd=1)),
             low = "#379fcc",
             mid = "grey",

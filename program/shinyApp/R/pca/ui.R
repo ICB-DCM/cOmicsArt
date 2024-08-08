@@ -5,19 +5,54 @@ pca_sidebar_panel <- function(ns){
     # explorative analysis
     # PCA
     #########################################
-    h4("Explorative Analysis"),
+    h4("Explorative Analysis") %>% helper(type = "markdown", content = "PCA_Choices"),
+    uiOutput(outputId = ns("UseBatch_ui")),
+    ### data selection
+    switchInput(
+      inputId = ns("data_selection_pca"),
+      label = "Select Data",
+      inline = T,
+      size = "mini"
+    ),
+    uiOutput(outputId = ns("SampleAnnotationTypes_pca_ui")),
+    uiOutput(outputId = ns("sample_selection_pca_ui")),
+    ### start pca ---
     actionButton(
       inputId = ns("Do_PCA"),
-      label = "Perform PCA",
+      label = "Get PCA",
       icon("fas fa-laptop-code")
     ),
+    ### further visualizations
     hr(style = "border-top: 1px solid #000000;"),
     uiOutput(outputId = ns("coloring_options_ui")),
-    uiOutput(outputId = ns("x_axis_selection_ui")),
-    uiOutput(outputId = ns("y_axis_selection_ui")),
-    uiOutput(outputId = ns("Show_loadings_ui")),
+    radioGroupButtons(
+      inputId = ns("x_axis_selection"),
+      label = "PC for x-Axis",
+      choices = c("PC1","PC2", "PC3", "PC4"),
+      direction = "vertical",
+      selected = "PC1"
+    ),
+    radioGroupButtons(
+      inputId = ns("y_axis_selection"),
+      label = "PC for y-Axis",
+      choices = c("PC1","PC2", "PC3", "PC4"),
+      direction = "vertical",
+      selected = "PC2"
+    ),
+    radioGroupButtons(
+      inputId = ns("Show_loadings"),
+      label = "Plot Loadings on top? (currently top 5)",
+      choices = c("Yes","No"),
+      direction = "horizontal",
+      selected = "No"
+    ),
     helpText("Note: if you would like to change the annotation of the indicated loading vectors please select an option the the tab Loadings"),
-    hr(style = "border-top: 1px dashed #000000;")
+    hr(style = "border-top: 1px dashed #000000;"),
+    # hidden Button to refresh the UI
+    hidden(actionButton(
+      inputId = ns("refreshUI"),
+      label = "Refresh"
+    ))
   )
 }
 
@@ -26,14 +61,12 @@ pca_main_panel <- function(ns){
   mainPanel(
     id = "mainpanel_pca",
     tabsetPanel(
+      id = "plot_panels_pca",
       type = "pills",
       tabPanel(
-        title = "PCA",
-        splitLayout(
-          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-          plotlyOutput(outputId = ns("PCA_plot")) %>% withSpinner(type = 8),
-          textOutput(outputId = ns("PCA_plot_Options_selected"), container = pre)
-        ),
+        title = "PCA_plot",
+        textOutput(outputId = ns("PCA_Info"), container = pre),
+        plotlyOutput(outputId = ns("PCA_plot")),
         uiOutput(outputId = ns("PCA_anno_tooltip_ui")),
         splitLayout(
           style = "border: 1px solid silver:",
@@ -43,7 +76,7 @@ pca_main_panel <- function(ns){
             inputId = ns("only2Report_pca"),
             label = "Send only to Report"
           )
-        ),
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
@@ -75,20 +108,25 @@ pca_main_panel <- function(ns){
             selected = ".png"
           )
         ),
-        textAreaInput(
-          inputId = ns("NotesPCA"),
-          label = "Notes:",
-          placeholder = NOTES_PlACEHOLDER,
-          width = "1000px"
-        )%>% helper(type = "markdown", content = "TakingNotesMD_help"),
-        helpText(NOTES_HELP)
+        splitLayout(
+          style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+          cellArgs = list(style = "padding: 5px"),
+          div(textAreaInput(
+            inputId = ns("NotesPCA"),
+            label = "Notes:",
+            placeholder = NOTES_PlACEHOLDER,
+            width = "1000px"
+          ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
+          helpText(NOTES_HELP)),
+          NULL
+        ),
       ),
       tabPanel(
         title = "PCA_Loadings",
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
-          plotOutput(outputId = ns("PCA_Loadings_plot")) %>% withSpinner(type = 8),
+          plotOutput(outputId = ns("PCA_Loadings_plot")),
           textOutput(outputId = ns("Loadings_plot_Options_selected_out"), container = pre)
         ),
         uiOutput(outputId = ns("EntitieAnno_Loadings_ui")),
@@ -117,7 +155,7 @@ pca_main_panel <- function(ns){
             label = "Send only to Report",
             class = "btn-info"
           )
-        ),
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
@@ -155,19 +193,13 @@ pca_main_panel <- function(ns){
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
-          plotOutput(outputId = ns("PCA_Loadings_matrix_plot")) %>% withSpinner(type = 8),
+          plotOutput(outputId = ns("PCA_Loadings_matrix_plot")),
           NULL
           #textOutput(outputId = ns("Loadings_plot_Options_selected_out"), container = pre)
         ),
         uiOutput(outputId = ns("EntitieAnno_Loadings_matrix_ui")),
-        sliderInput(
-          inputId = ns("nPCAs_to_look_at"),
-          label = "Number of PC's to include",
-          min = 1,
-          max = 10, # renderui?
-          value = 5,
-          step = 1
-        ),
+        uiOutput(outputId = ns("nPCAs_to_look_at_ui")),
+
         sliderInput(
           inputId = ns("filterValue"),
           label = "absolute Loading threshold to filter entities with low impact",
@@ -185,7 +217,7 @@ pca_main_panel <- function(ns){
             label = "Send only to Report",
             class = "btn-info"
           )
-        ),
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
@@ -235,7 +267,7 @@ pca_main_panel <- function(ns){
             label = "Send only to Report",
             class = "btn-info"
           )
-        ),
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),
@@ -277,11 +309,11 @@ pca_UI <- function(id){
   ns <- NS(id)
 
   tabPanel(
-    title = "PCA",  # can be renamed after UMAP is added
+    title = "PCA",
     id = "pca",
     fluid = T,
     h4("PCA"),
-    pca_sidebar <- pca_sidebar_panel(ns),
-    pca_main <- pca_main_panel(ns),
+    pca_sidebar_panel(ns),
+    pca_main_panel(ns),
   )
 }

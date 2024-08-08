@@ -1,0 +1,27 @@
+To add to Documentation you can edit the individual markdown files
+in normal markdown manner
+
+If you add a new file:
+Ensure to add a header -
+for a parent:
+```
+---
+layout: default
+title: "Local Installation"
+nav_order: 10
+---
+```
+
+for a child:
+```
+---
+layout: default
+title: "Local Installation"
+parent: ???
+nav_order: 10
+---
+```
+
+For structure reason please ensure that children pages get placed in a folder
+which name is **exactly** the same name as the parent page.
+test
