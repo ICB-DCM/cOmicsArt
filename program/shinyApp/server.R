@@ -1073,7 +1073,9 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0(
         "**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",
-        ifelse(input$PreProcessing_Procedure == "vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),input$PreProcessing_Procedure)
+        ifelse(input$PreProcessing_Procedure == "vst_DESeq",
+               paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),
+               input$PreProcessing_Procedure)
       )
     )
     if(input$BatchEffect_Column != "NULL"){
