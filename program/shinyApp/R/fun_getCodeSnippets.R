@@ -145,34 +145,34 @@ selected <- unique(
       assay(res_tmp$data) <- as.data.frame(pareto.matrix)
       '
     }
-    if(par_tmp[[session$token]]['BatchColumn'] != "NULL" & PreProcessing_Procedure != "vst_DESeq"){
-      string_batchCorrection <- 'res_tmp$data_batch_corrected <- res_tmp$data
-        assay(res_tmp$data_batch_corrected) <- sva::ComBat(
-        dat = assay(res_tmp$data_batch_corrected),
-        batch = as.factor(colData(res_tmp$data_batch_corrected)[,par_tmp["BatchColumn"]])
-      )
-      '
-      # copy string to a new one and replace all orccurences of res_tmp$data with res_tmp$data_batch_corrected
-      stringPreProcessing_batch <- stringPreProcessing
-      stringPreProcessing_batch <- gsub("res_tmp$data","res_tmp$data_batch_corrected",stringPreProcessing_batch)
-      string_batchCorrection <- paste0(prequel_stringPreProcessing,"\n", string_batchCorrection)
-    } else if (par_tmp[[session$token]]['BatchColumn'] != "NULL" & PreProcessing_Procedure == "vst_DESeq") {
-      stringPreProcessing_batch <- stringPreProcessing
-      stringPreProcessing_batch <- gsub("res_tmp$data","res_tmp$data_batch_corrected",stringPreProcessing_batch)
-      stringPreProcessing_batch <- gsub("par_tmp$DESeq_formula","par_tmp$DESeq_formula_batch",stringPreProcessing_batch)
-      string_batchCorrection <- paste0(prequel_stringPreProcessing,"\n", string_batchCorrection)
-    } else {
-        string_batchCorrection <- ''
-    }
-    stringPreProcessing <- paste0(prequel_stringPreProcessing,"\n", string_batchCorrection, "\n", stringPreProcessing)
-    if (par_tmp[[session$token]]['BatchColumn'] != "NULL") {
-      stringPreProcessing <- paste0(
-        stringPreProcessing, "\n",
-        "# uncomment this line to use batch corrected data\n# res_tmp$data <- res_tmp$data_batch_corrected\n"
-      )
-    }
   }else{
     stringPreProcessing <- ''
+  }
+  if(par_tmp[[session$token]]['BatchColumn'] != "NULL" & PreProcessing_Procedure != "vst_DESeq"){
+    string_batchCorrection <- 'res_tmp$data_batch_corrected <- res_tmp$data
+      assay(res_tmp$data_batch_corrected) <- sva::ComBat(
+      dat = assay(res_tmp$data_batch_corrected),
+      batch = as.factor(colData(res_tmp$data_batch_corrected)[,par_tmp["BatchColumn"]])
+    )
+    '
+    # copy string to a new one and replace all occurrences of res_tmp$data with res_tmp$data_batch_corrected
+    stringPreProcessing_batch <- stringPreProcessing
+    stringPreProcessing_batch <- gsub("res_tmp$data","res_tmp$data_batch_corrected",stringPreProcessing_batch)
+    string_batchCorrection <- paste0(prequel_stringPreProcessing,"\n", string_batchCorrection)
+  } else if (par_tmp[[session$token]]['BatchColumn'] != "NULL" & PreProcessing_Procedure == "vst_DESeq") {
+    stringPreProcessing_batch <- stringPreProcessing
+    stringPreProcessing_batch <- gsub("res_tmp$data","res_tmp$data_batch_corrected",stringPreProcessing_batch)
+    stringPreProcessing_batch <- gsub("par_tmp$DESeq_formula","par_tmp$DESeq_formula_batch",stringPreProcessing_batch)
+    string_batchCorrection <- paste0(prequel_stringPreProcessing,"\n", string_batchCorrection)
+  } else {
+      string_batchCorrection <- ''
+  }
+  stringPreProcessing <- paste0(prequel_stringPreProcessing,"\n", string_batchCorrection, "\n", stringPreProcessing)
+  if (par_tmp[[session$token]]['BatchColumn'] != "NULL") {
+    stringPreProcessing <- paste0(
+      stringPreProcessing, "\n",
+      "# uncomment this line to use batch corrected data\n# res_tmp$data <- res_tmp$data_batch_corrected\n"
+    )
   }
     
 
