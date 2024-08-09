@@ -1122,7 +1122,7 @@ for(i in names(enrichment_results)){
     stringtosave <- '# No_code_yet'
   }
   
-  return(paste0(get_package_source(stringSource),
+  return(paste0(get_package_source(unqiue(stringSource)),
                 "\n",
                 CODE_DOWNLOAD_PREFACE,
                 "\n",
