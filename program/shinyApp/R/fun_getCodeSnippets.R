@@ -158,7 +158,7 @@ assay(res_tmp$data_batch_corrected) <- sva::ComBat(
 )
 '
   } else if (par_tmp[[session$token]]['BatchColumn'] != "NULL" & PreProcessing_Procedure == "vst_DESeq") {
-    # formula needs to be updated
+    # TODO: formula needs to be updated
     string_batchCorrection <- '
 dds_batch <- DESeq2::DESeqDataSetFromMatrix(
       countData = assay(res_tmp$data),
