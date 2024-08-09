@@ -51,7 +51,6 @@ pre_processing_main_panel <- mainPanel(
         6,
         h4("Pre-processed Data"),
         plotOutput("preprocessed_violin_plot"),
-        plotOutput("preprocessed_kde_plot")
       )
     ),
     splitLayout(
