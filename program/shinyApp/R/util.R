@@ -243,7 +243,7 @@ get_package_source <- function(package_name, lockfile = "../renv.lock"){
 
 # This command is requried only once per R installation. (uncomment if needed)
 # install.packages("BiocManager", repos = "https://cloud.r-project.org")
-BiocManager::install(version = "',lockfile_content$Bioconductor$Version,'")
+# BiocManager::install(version = "',lockfile_content$Bioconductor$Version,'")
 check_and_install_package <- function(package_name) {
   for(package in package_name){
   # Check if the package is installed
