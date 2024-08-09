@@ -780,7 +780,6 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
 
   ### Venn Diagram ----
 if(numberOfScenario == 20 | numberOfScenario == 21){
-
   stringtosave_1 <-
   'if(any(par_tmp$SigAna$comparisons_to_visualize == "all")){
     # show all comparisons if no more than 4
