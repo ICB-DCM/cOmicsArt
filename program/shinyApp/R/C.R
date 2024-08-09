@@ -19,19 +19,6 @@ PADJUST_METHOD <<- list(
 )
 
 CODE_DOWNLOAD_PREFACE <<- "
-# ShinyOmics R Code Download\n# Load necassary packages ----
-# (if errors please install respective packages - e.g. install.packages('ggplot2'))
-
-library(ggplot2)
-library(ggvenn)
-library(ggpubr)
-library(rstudioapi)
-library(SummarizedExperiment)
-library(pheatmap)
-library(ComplexUpset)
-library(clusterProfiler)
-libraray(msigdbr)
-
 # Load the data ----
 # The following will try to detect the directory of the file and load the data
 # this is succesfull if

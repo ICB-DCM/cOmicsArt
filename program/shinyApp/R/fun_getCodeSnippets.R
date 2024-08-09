@@ -4,6 +4,11 @@ getPlotCode <- function(numberOfScenario) {
   row_selection <- par_tmp[[session$token]]$row_selection
   col_selection <- par_tmp[[session$token]]$sample_selection
   omic_type <- par_tmp[[session$token]]$omic_type
+  
+  # Always needed packages
+  stringSource <- c("SummarizedExperiment",
+                    "rstudioapi",
+                    "ggplot2")
 
   #TODO  change all data download to par_tmp and res_tmp
  # Selection ----
@@ -93,6 +98,7 @@ selected <- unique(
     '
       }
     if(PreProcessing_Procedure == "vst_DESeq"){
+      stringSource <- c(stringSource, "DESeq2")
         stringPreProcessing <- 'dds <- DESeq2::DESeqDataSetFromMatrix(
           countData = assay(res_tmp$data),
           colData = colData(res_tmp$data),
@@ -146,6 +152,7 @@ selected <- unique(
       '
     }
     if(par_tmp[[session$token]]['BatchColumn'] != "NULL" & PreProcessing_Procedure != "vst_DESeq"){
+      stringSource <- c(stringSource, "sva")
       string_batchCorrection <- 'res_tmp$data_batch_corrected <- res_tmp$data
         assay(res_tmp$data_batch_corrected) <- sva::ComBat(
         dat = assay(res_tmp$data_batch_corrected),
@@ -412,6 +419,7 @@ if(!is.null(par_tmp$PCA$EntitieAnno_Loadings_matrix)){
   
   ## Heatmap ----
 if(numberOfScenario >= 10  & numberOfScenario <= 11){
+  stringSource <- c(stringSource, "pheatmap")
   prequel_stringtosave <- '
 colorTheme <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c","#fdbf6f", "#ff7f00", "#fb9a99", "#e31a1c")
 paletteLength <- 25
@@ -523,6 +531,7 @@ stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave)
 
 ## Single Gene Visualisation ----
 if(numberOfScenario %in% c(12,13)){
+  stringSource <- c(stringSource, "ggpubr")
   if(par_tmp[[session$token]]$SingleEntVis$type_of_data_gene == "preprocessed"){
     prequel_stringtosave <- '#get IDX to data
 idx_selected <- which(par_tmp$SingleEntVis$Select_Gene == rowData(res_tmp$data)[,par_tmp$SingleEntVis$Select_GeneAnno])
@@ -640,6 +649,11 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
   }
   stringtosave <- paste0(prequel_stringtosave,"\n",stringtosave,"\n","lapply(ls(pattern='boxplots'), get)")
 }
+
+if(numberOfScenario %in% c(14,15,16,17)){
+  stringSource <- c(stringSource, "clusterProfiler","msigdbr")
+}
+
  
   ## TODO ensure this remains working with new output from Enrichment, needs a potential update!
   if(numberOfScenario == 14){
@@ -658,6 +672,7 @@ P_boxplots <- ggplot(res_tmp$SingleEntVis,
 
 ## Sample Correlation plot ----
   if(numberOfScenario == 18){
+    stringSource <- c(stringSource, "pheatmap")
     stringtosave <- 'annotationDF <- colData(res_tmp$data)[,par_tmp$SampleCorr$SampleAnnotationChoice,drop = F]
 cormat <- cor(
   x = as.matrix(assay(res_tmp$data)),
@@ -674,6 +689,7 @@ SampleCorrelationPlot <- pheatmap(
 
 ## Significance Analysis -----
 if(numberOfScenario >= 20 & numberOfScenario < 24){
+  stringSource <- c(stringSource, "DESeq2")
   # Calculate all necessary intermediate data sets
   prequel_stringtosave <- '
   # Test correction list
@@ -764,6 +780,7 @@ if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
 
   ### Venn Diagram ----
 if(numberOfScenario == 20 | numberOfScenario == 21){
+
   stringtosave_1 <-
   'if(any(par_tmp$SigAna$comparisons_to_visualize == "all")){
     # show all comparisons if no more than 4
@@ -801,6 +818,7 @@ if(numberOfScenario == 20 | numberOfScenario == 21){
   }'
 
     if(numberOfScenario == 20){
+      stringSource <- c(stringSource, "ggvenn")
       stringtosave_2 <- '          
       Venn_plot <- ggvenn::ggvenn(
             res2plot, 
@@ -812,6 +830,7 @@ if(numberOfScenario == 20 | numberOfScenario == 21){
 
 ### UpSet Plot ----
   if(numberOfScenario == 21){
+    stringSource <- c(stringSource,"ComplexUpset")
     stringtosave_2 <- '
               overlap_list <- prepare_upset_plot(res2plot=res2plot)
           Upset_plot <- ComplexUpset::upset(
@@ -955,6 +974,7 @@ data4Volcano <- data4Volcano[complete.cases(data4Volcano),]
 ## Enrichment Analysis ----
 if(numberOfScenario >= 14 & numberOfScenario <= 15){
   if(numberOfScenario == 14){
+    stringSource <- c(stringSource, "msigdbr","clusterProfiler")
     stringtosave_1 <- '
     # if you want to upload a different set of genes than uploaded to the App
     # uncomment the following lines
@@ -1102,7 +1122,9 @@ for(i in names(enrichment_results)){
     stringtosave <- '# No_code_yet'
   }
   
-  return(paste0(CODE_DOWNLOAD_PREFACE,
+  return(paste0(get_package_source(stringSource),
+                "\n",
+                CODE_DOWNLOAD_PREFACE,
                 "\n",
                 "# Data Selection ----",
                 "\n",
