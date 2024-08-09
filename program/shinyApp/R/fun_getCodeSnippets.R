@@ -157,7 +157,6 @@ assay(res_tmp$data_batch_corrected) <- sva::ComBat(
   batch = as.factor(colData(res_tmp$data_batch_corrected)[,par_tmp$BatchColumn])
 )
 '
-   # string_batchCorrection <- paste0(prequel_stringPreProcessing,"\n", string_batchCorrection)
   } else if (par_tmp[[session$token]]['BatchColumn'] != "NULL" & PreProcessing_Procedure == "vst_DESeq") {
     # formula needs to be updated
     string_batchCorrection <- '
