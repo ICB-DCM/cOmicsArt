@@ -52,6 +52,6 @@ To get more information on the tabs, navigate to the respective documentation us
     </ol>
   </div>
   <div style="float: right; width: 30%;">
-    <img src="{{ site.baseurl }}/assets/images/design_principleSidePanel.png" alt="The design of the side panel" style="width: 100%;">
+    <img src="/OmicShiny/assets/images/design_principleSidePanel.png" alt="The design of the side panel" style="width: 100%;">
   </div>
 </div>
