@@ -112,7 +112,6 @@ save.function.from.env <- function(wanted,file="utils.R")
   funs <- Filter(is.function, sapply(ls( ".GlobalEnv"), get))
   funs <- funs[names(funs) %in% wanted]
 
-  # Let's
   for(i in seq_along(funs))
   {
     cat( # number the function we are about to add
