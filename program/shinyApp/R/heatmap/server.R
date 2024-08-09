@@ -267,14 +267,16 @@ heatmap_server <- function(id, data, params, updates){
           })
 
           req(!is.null(heatmap_plot))
-          heatmap_scenario <- scenario
+          heatmap_reactives$heatmap_scenario <- scenario
           output[["HeatmapPlot"]] <- renderPlot({heatmap_plot})
           res_tmp[[session$token]][["Heatmap"]]$data <<- heatmap_data
           res_tmp[[session$token]][["Heatmap"]]$plot <<- heatmap_plot
           tmp <- getUserReactiveValues(input)
           par_tmp[[session$token]]$Heatmap[names(tmp)] <<- tmp
           waiter$hide()
+          
         })
+
 
 
         output$getR_Code_Heatmap <- downloadHandler(
@@ -290,31 +292,35 @@ heatmap_server <- function(id, data, params, updates){
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
 
-            write(getPlotCode(heatmap_scenario), file.path(temp_directory, "Code.R"))
+            write(
+              getPlotCode(isolate(heatmap_reactives$heatmap_scenario)),
+              file.path(temp_directory, "Code.R")
+            )
 
             saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+                          # TODO:
+              # Needs an extra sourcing to have in correct env - potential fix sourceing module specific functions within module
+              # instead of sourcing all - or having them all gloablly source (like general utils)
+              source("R/heatmap/fun_entitieSelection.R")
+              source("R/fun_LFC.R")
+              save.function.from.env(wanted = c("entitieSelection","getLFCs"),
+                                     file = file.path(temp_directory, "utils.R"))
+              
+              zip::zip(
+                zipfile = file,
+                files = dir(temp_directory),
+                root = temp_directory
+              )
+            },
+            contentType = "application/zip"
+          )
+            
 
-            # also save entitie Selection function
-            # TODO:
-            # Needs an extra sourcing to have in correct env - potential fix sourceing module specific functions within module
-            # instead of sourcing all - or having them all gloablly source (like general utils)
-            source("R/heatmap/fun_entitieSelection.R")
-            source("R/fun_LFC.R")
-            save.function.from.env(wanted = c("entitieSelection","getLFCs"),
-                                   file = file.path(temp_directory, "utils.R"))
 
-            zip::zip(
-              zipfile = file,
-              files = dir(temp_directory),
-              root = temp_directory
-            )
-          },
-          contentType = "application/zip"
-        )
 
         output$SavePlot_Heatmap <- downloadHandler(
           filename = function() {
-            paste0(heatmap_reactives$customTitle, " ", Sys.time(), input$file_ext_Heatmap)
+            paste0(isolate(heatmap_reactives$customTitle), " ", Sys.time(), input$file_ext_Heatmap)
           },
           content = function(file){
             save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
@@ -322,7 +328,7 @@ heatmap_server <- function(id, data, params, updates){
               tmp_filename <- paste0(
                 getwd(),
                 file_path,
-                paste0(heatmap_reactives$customTitle, " ", Sys.time(), input$file_ext_Heatmap)
+                paste0(isolate(heatmap_reactives$customTitle), " ", Sys.time(), input$file_ext_Heatmap)
               )
               save_pheatmap(
                 heatmap_plot,
@@ -366,7 +372,7 @@ heatmap_server <- function(id, data, params, updates){
         tmp_filename <- paste0(
           getwd(),
           file_path,
-          paste(paste0(heatmap_reactives$customTitle, Sys.time(), ".png"))
+          paste(paste0(isolate(heatmap_reactives$customTitle), Sys.time(), ".png"))
         )
         save_pheatmap(
           res_tmp[[session$token]][["Heatmap"]]$plot,

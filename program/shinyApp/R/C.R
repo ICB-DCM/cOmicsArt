@@ -18,7 +18,10 @@ PADJUST_METHOD <<- list(
   "FDR" = "BH"
 )
 
-CODE_DOWNLOAD_PREFACE <<- "# ShinyOmics R Code Download\n# Load necassary packages (if errors please install respective packages)
+CODE_DOWNLOAD_PREFACE <<- "
+# ShinyOmics R Code Download\n# Load necassary packages ----
+# (if errors please install respective packages - e.g. install.packages('ggplot2'))
+
 library(ggplot2)
 library(ggvenn)
 library(ggpubr)
@@ -27,31 +30,58 @@ library(SummarizedExperiment)
 library(pheatmap)
 library(ComplexUpset)
 library(clusterProfiler)
+libraray(msigdbr)
 
-# make sure environment is empty
+# Load the data ----
+# The following will try to detect the directory of the file and load the data
+# this is succesfull if
+# - you have just unzipped the folder and did not move the files separately to different locations
+# - you kept the original filenames
+# - you work in RStudio
 
-# if not run in RStudio  you need to specify the directory fo the file yourself!
+# If the requisites are not met you will have to adjust the path to the data file
+# and your utils.R file (if present) manually
 
-if(Sys.getenv('RSTUDIO')==1){
-  direcoty_of_files=dirname(rstudioapi::getSourceEditorContext()$path)
-  envList=readRDS(paste0(direcoty_of_files,'/','Data.rds'))
+MANUALLY <- FALSE # change to TRUE, if you want to set the paths manually
+
+if(MANUALLY){
+  # Adjust the path to the data file
+  envList <- readRDS('path/to/Data.rds')
+  # Adjust the path to the utils.R file
+  source('path/to/utils.R')
+  print('Path manually set')
+}else{
+  # if you get an error try to set paths manually
+  # remember to set MANUALLY <- TRUE
+  direcoty_of_files <- dirname(rstudioapi::getSourceEditorContext()$path)
+  envList <- readRDS(paste0(direcoty_of_files,'/','Data.rds'))
   if('utils.R' %in% list.files(direcoty_of_files)){
     source(file.path(direcoty_of_files,'utils.R'))
   }
-}else{
-  # assuming to be in the correct directory (where Code lies)
-  envList=readRDS('Data.rds')
-  if('utils.R' %in% list.files()){
-    source('utils.R')
-  }
+  print('Path automatically set')
 }
 
-
+# Set Environment ----
 list2env(envList,envir = globalenv()) 
 # loads the varaibles directly into global env
+# if loadedversion present, make it global
+if(exists('loadedVersion')){
+  assign('loadedVersion',loadedVersion,envir = globalenv())
+}
+
 # if you want to combine multiple plots use the `with` notation instead e.g.
 # plot <- with(envList, {ggplot(..)+geom_point()})
-  
+
+# Setting default options
+CUSTOM_THEME <- theme_bw(base_size = 15) + 
+  theme(
+    axis.title = element_text(size = 15),        # Axis labels
+    axis.text = element_text(size = 15),         # Axis tick labels
+    legend.text = element_text(size = 15),       # Legend text
+    legend.title = element_text(size = 15),      # Legend title
+    plot.title = element_text(size = 17, face = 'bold')  # Plot title
+  )
+
 # Happy Adjusting! :)"
 
 # Geneset enrichment list reset

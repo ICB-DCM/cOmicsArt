@@ -106,17 +106,17 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
             actionButton(
-              inputId = ns("only2Report_Volcano"),
+              inputId = ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_")),
               label = "Send only to Report",
               class = "btn-info"
             ),
             actionButton(
-              inputId = ns("only2Report_Volcano_both"),
+              inputId = ns(paste(contrast[1], contrast[2], "only2Report_Volcano_both", sep = "_")),
               label = "Send only to Report",
               class = "btn-info"
             ),
             actionButton(
-              inputId = ns("only2Report_Volcano_raw"),
+              inputId = ns(paste(contrast[1], contrast[2], "only2Report_Volcano_raw", sep = "_")),
               label = "Send only to Report",
               class = "btn-info"
             )
@@ -140,17 +140,17 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
             downloadButton(
-              outputId = ns("SavePlot_Volcano"),
+              outputId = ns(paste(contrast[1], contrast[2], "SavePlot_Volcano", sep = "_")),
               label = "Save plot",
               class = "btn-info"
             ),
             downloadButton(
-              outputId = ns("SavePlot_Volcano_both"),
+              outputId = ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_both", sep = "_")),
               label = "Save plot",
               class = "btn-info"
             ),
             downloadButton(
-              outputId = ns("SavePlot_Volcano_raw"),
+              outputId = ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_raw", sep = "_")),
               label = "Save plot",
               class = "btn-info"
             )
@@ -251,6 +251,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     )
   })
   observeEvent(toPlotVolcano(), {
+    print("Plot volcano")
     req(input[[psig_th]], input[[lfc_th]], input[[Volcano_anno_tooltip]])
     waiter <- Waiter$new(
       id=ns(paste(contrast[1], contrast[2], "test", sep = "_")),
@@ -348,34 +349,152 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     )})
   })
 
-  observeEvent(input[[ns("only2Report_Volcano")]],{
-    fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
-    fun_LogIt(message = "### Publication Snippet")
-    fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                       params = par_tmp[[session$token]]))
-  })
+  session$userData[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_"))]] <- observeEvent(
+    input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_"))]], {
+      if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_val", sep = "_")]])){
+          req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_val", sep = "_")]])
+      }
+      fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(message = "### Info")
+      log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
+      fun_LogIt(message = "### Publication Snippet")
+      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
+                                         params = par_tmp[[session$token]]))
+    }
+  )
 
-  observeEvent(input[[ns("only2Report_Volcano_both")]],{
-    fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
-                         sig_ana_reactive$data4Volcano, contrast, file_path)
-    #log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
-    fun_LogIt(message = "### Publication Snippet")
-    fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                       params = par_tmp[[session$token]]))
-  })
+  session$userData[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_both", sep = "_"))]] <- observeEvent(
+    input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_both", sep = "_"))]],{
+      if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_both_val", sep = "_")]])){
+        req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_both", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_both_val", sep = "_")]])
+      }
+      fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(message = "### Info")
+      log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
+                           sig_ana_reactive$data4Volcano, contrast, file_path)
+      #log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
+      fun_LogIt(message = "### Publication Snippet")
+      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
+                                         params = par_tmp[[session$token]]))
+    }
+  )
 
-  observeEvent(input[[ns("only2Report_Volcano_raw")]],{
-    fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
-    fun_LogIt(message = "### Publication Snippet")
-    fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                       params = par_tmp[[session$token]]))
-  })
+  session$userData[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_raw", sep = "_"))]] <- observeEvent(
+    input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_raw", sep = "_"))]],{
+      if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_raw_val", sep = "_")]])){
+        req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_raw", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_raw_val", sep = "_")]])
+      }
+      fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(message = "### Info")
+      log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
+      fun_LogIt(message = "### Publication Snippet")
+      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
+                                         params = par_tmp[[session$token]]))
+    }
+  )
+
+  output[[ns("getR_Code_Volcano")]] <- downloadHandler(
+      filename = function(){
+        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      },
+      content = function(file){
+        tmp <- getUserReactiveValues(input)
+        par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
+
+        envList <- list(
+          res_tmp = res_tmp[[session$token]],
+          par_tmp = par_tmp[[session$token]]
+        )
+        useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
+        if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
+          if (useBatch) {
+            envList$dds <- res_tmp[[session$token]]$DESeq_obj_batch_corrected
+          } else {
+            envList$dds <- res_tmp[[session$token]]$DESeq_obj
+          }
+        }
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+
+        write(
+          getPlotCode(22),
+          file.path(temp_directory, "Code.R")
+        )
+        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+
+        #TODO
+        # Needs an extra sourcing to have in correct env - potential fix sourcing module specific functions within module
+        # instead of sourcing all - or having them all globablly source (like general utils)
+        source("R/significance_analysis/util.R")
+        source("R/SourceAll.R")
+
+        save.function.from.env(wanted = c("significance_analysis",
+                                          "filter_significant_result",
+                                          "getLFC",
+                                          "map_intersects_for_highlight",
+                                          "prepare_upset_plot",
+                                          "filter_rna"),
+                              file = file.path(temp_directory, "utils.R"))
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+      },
+      contentType = "application/zip"
+    )
+
+    output[[ns("getR_Code_Volcano_raw")]] <- downloadHandler(
+
+      filename = function(){
+        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      },
+      content = function(file){
+        tmp <- getUserReactiveValues(input)
+        par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
+
+        envList <- list(
+          res_tmp = res_tmp[[session$token]],
+          par_tmp = par_tmp[[session$token]]
+        )
+        useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
+        if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
+          if (useBatch) {
+            envList$dds <- res_tmp[[session$token]]$DESeq_obj_batch_corrected
+          } else {
+            envList$dds <- res_tmp[[session$token]]$DESeq_obj
+          }
+        }
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+
+        write(
+          getPlotCode(23),
+          file.path(temp_directory, "Code.R")
+        )
+        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+
+        #TODO
+        # Needs an extra sourcing to have in correct env - potential fix sourcing module specific functions within module
+        # instead of sourcing all - or having them all globablly source (like general utils)
+        source("R/significance_analysis/util.R")
+        source("R/SourceAll.R")
+
+        save.function.from.env(wanted = c("significance_analysis",
+                                          "filter_significant_result",
+                                          "getLFC",
+                                          "map_intersects_for_highlight",
+                                          "prepare_upset_plot",
+                                          "filter_rna"),
+                               file = file.path(temp_directory, "utils.R"))
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+      },
+      contentType = "application/zip"
+    )
 
   output[[ns("SavePlot_Volcano")]] <- downloadHandler(
     filename = function() {paste0("VOLCANO_", Sys.time(), input[[ns("file_ext_Volcano")]])},
@@ -677,6 +796,17 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   })
   observeEvent(toPlotVolcano(), {
     req(input[[psig_th]], input[[lfc_th]])
+    waiter <- Waiter$new(
+      id=ns(paste(contrast[1], contrast[2], "test", sep = "_")),
+      html = LOADING_SCREEN,
+      color="#70BF4F47",
+      hide_on_render=FALSE
+    )
+    waiter$show()
+    on.exit({
+      waiter$hide()
+    })
+    # work
     sig_ana_reactive$th_psig <- input[[psig_th]]
     sig_ana_reactive$th_lfc <- input[[lfc_th]]
     sig_ana_reactive$annotip <- input[[Volcano_anno_tooltip]]
@@ -792,6 +922,109 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                        params = par_tmp[[session$token]]))
   })
+
+  output[[ns("getR_Code_Volcano")]] <- downloadHandler(
+    filename = function(){
+      paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+    },
+    content = function(file){
+      tmp <- getUserReactiveValues(input)
+      par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
+
+      envList <- list(
+        res_tmp = res_tmp[[session$token]],
+        par_tmp = par_tmp[[session$token]]
+      )
+      useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
+      if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
+        if (useBatch) {
+          envList$dds <- res_tmp[[session$token]]$DESeq_obj_batch_corrected
+        } else {
+          envList$dds <- res_tmp[[session$token]]$DESeq_obj
+        }
+      }
+      temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+      dir.create(temp_directory)
+
+      write(
+        getPlotCode(22),
+        file.path(temp_directory, "Code.R")
+      )
+      saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+
+      #TODO
+      # Needs an extra sourcing to have in correct env - potential fix sourcing module specific functions within module
+      # instead of sourcing all - or having them all globablly source (like general utils)
+      source("R/significance_analysis/util.R")
+      source("R/SourceAll.R")
+
+      save.function.from.env(wanted = c("significance_analysis",
+                                        "filter_significant_result",
+                                        "getLFC",
+                                        "map_intersects_for_highlight",
+                                        "prepare_upset_plot",
+                                        "filter_rna"),
+                            file = file.path(temp_directory, "utils.R"))
+      zip::zip(
+        zipfile = file,
+        files = dir(temp_directory),
+        root = temp_directory
+      )
+    },
+    contentType = "application/zip"
+  )
+
+  output[[ns("getR_Code_Volcano_raw")]] <- downloadHandler(
+
+    filename = function(){
+      paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+    },
+    content = function(file){
+      tmp <- getUserReactiveValues(input)
+      par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
+
+      envList <- list(
+        res_tmp = res_tmp[[session$token]],
+        par_tmp = par_tmp[[session$token]]
+      )
+      useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
+      if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
+        if (useBatch) {
+          envList$dds <- res_tmp[[session$token]]$DESeq_obj_batch_corrected
+        } else {
+          envList$dds <- res_tmp[[session$token]]$DESeq_obj
+        }
+      }
+      temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+      dir.create(temp_directory)
+
+      write(
+        getPlotCode(23),
+        file.path(temp_directory, "Code.R")
+      )
+      saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+
+      #TODO
+      # Needs an extra sourcing to have in correct env - potential fix sourcing module specific functions within module
+      # instead of sourcing all - or having them all globablly source (like general utils)
+      source("R/significance_analysis/util.R")
+      source("R/SourceAll.R")
+
+      save.function.from.env(wanted = c("significance_analysis",
+                                        "filter_significant_result",
+                                        "getLFC",
+                                        "map_intersects_for_highlight",
+                                        "prepare_upset_plot",
+                                        "filter_rna"),
+                             file = file.path(temp_directory, "utils.R"))
+      zip::zip(
+        zipfile = file,
+        files = dir(temp_directory),
+        root = temp_directory
+      )
+    },
+    contentType = "application/zip"
+  )
 
   output[[ns("SavePlot_Volcano")]] <- downloadHandler(
     filename = function() { paste("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]],sep="") },
