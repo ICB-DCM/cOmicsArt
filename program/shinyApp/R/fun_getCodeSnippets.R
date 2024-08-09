@@ -189,7 +189,7 @@ violin_plot <- function(data, color_by){
   data_frame <- merge(data_frame, colData(data), by.x = "Sample", by.y = "row.names")
   plot2return <- ggplot(data_frame, aes(x = Sample, y = Counts, fill = data_frame[[color_by]])) +
     geom_violin(trim = T, color = "black") +
-    theme_minimal() +
+    CUSTOM_THEME +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     labs(title = "Count distribution per sample",
          x = "Sample",
