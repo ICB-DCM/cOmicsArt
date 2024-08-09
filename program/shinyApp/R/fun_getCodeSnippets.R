@@ -1121,8 +1121,9 @@ for(i in names(enrichment_results)){
   if(numberOfScenario == 0){
     stringtosave <- '# No_code_yet'
   }
-  
-  return(paste0(get_package_source(unique(stringSource)),
+  #browser()
+  stringSource_complete <- get_package_source(unique(stringSource))
+  return(paste0(stringSource_complete,
                 "\n",
                 CODE_DOWNLOAD_PREFACE,
                 "\n",
