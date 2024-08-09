@@ -1002,7 +1002,7 @@ if(numberOfScenario >= 14 & numberOfScenario <= 15){
   
   if(numberOfScenario == 15){
     stringtosave_1 <- '
-if(par_tmp$Enrichment$ValueToAttach == "LFC" | par_tmp$Enrichment$ValueToAttach == "LFC_abs" | input$ValueToAttach == "statistic_value"){
+if(par_tmp$Enrichment$ValueToAttach == "LFC" | par_tmp$Enrichment$ValueToAttach == "LFC_abs" | par_tmp$Enrichment$ValueToAttach == "statistic_value"){
   #get LFC
   ctrl_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_ref_GSEA)
   comparison_samples_idx <- which(colData(res_tmp$data)[,par_tmp$Enrichment$sample_annotation_types_cmp_GSEA] %in% par_tmp$Enrichment$Groups2Compare_treat_GSEA)
@@ -1019,7 +1019,7 @@ if(par_tmp$Enrichment$ValueToAttach == "LFC" | par_tmp$Enrichment$ValueToAttach 
   }
   else if(par_tmp$Enrichment$ValueToAttach == "LFC_abs"){
     geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
-  } else if(input$ValueToAttach == "LFC_abs"){
+  } else if(par_tmp$Enrichment$ValueToAttach == "LFC_abs"){
     geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
   }
 
