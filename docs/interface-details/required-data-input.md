@@ -21,7 +21,7 @@ Within cOmicsART, you have several options to do so:
 # General Remarks on Data Input 🏷️
 cOmicsART expects three data tables, which can be supplied in different ways, holding information about the measurement itself, information regarding the measured samples, and information regarding the measured entities, such as genes, metabolites, or lipids. We'll provide here the description of the minimal requirements, but please keep in mind that you are not limited to these. Adjusting the data input, especially annotation, is often part of the explorative phase. Check out [Showcase A](showcases/showcase-a.md) for examples.
 
-<img src="DataInputShiny.png" width="600">
+![Required Data input consists out of three tables](/OmicShiny/assets/images/DataInputShiny.png)
 
 ## Starting with a Single Table - Data Matrix 📝
 When you have only your omics data table (referred to as the Data Matrix), ensure that entities are organized in rows and samples in columns. There are no limitations on the number of rows and columns (e.g., genes and samples), but you should have more than two entities and samples for meaningful analysis. While cOmicsART is designed for omics analysis, you can upload any type of measurements arranged in a data matrix format. However, please note that some analyses, such as enrichment analysis, might not be meaningful with non-omics data. Also, some provided pre-processing options then might not be relevant - you have the option to select 'None' as pre-processing, giving you the option to perform pre-processing beforehand and upload and analyze the uploaded data.

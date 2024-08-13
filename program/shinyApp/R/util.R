@@ -111,31 +111,29 @@ save.function.from.env <- function(wanted,file="utils.R")
   # and find wanted function
   funs <- Filter(is.function, sapply(ls( ".GlobalEnv"), get))
   funs <- funs[names(funs) %in% wanted]
+  
+  func_text <- paste(capture.output(funs[[i]]), collapse = "\n")
+  
+  # Perform the replacements
+  func_text <- gsub("res_tmp\\[\\[session\\$token\\]\\]", "res_tmp", func_text)
+  func_text <- gsub("par_tmp\\[\\[session\\$token\\]\\]", "par_tmp", func_text)
+  func_text <- gsub("req\\(data_input_shiny\\(\\)\\)", "", func_text)
 
-
-  for (i in seq_along(funs)) {
-    func_text <- paste(capture.output(funs[[i]]), collapse = "\n")
-
-    # Perform the replacements
-    func_text <- gsub("res_tmp\\[\\[session\\$token\\]\\]", "res_tmp", func_text)
-    func_text <- gsub("par_tmp\\[\\[session\\$token\\]\\]", "par_tmp", func_text)
-    func_text <- gsub("req\\(data_input_shiny\\(\\)\\)", "", func_text)
-
-    # Write function to the file
+  for(i in seq_along(funs))
+  {
     cat( # number the function we are about to add
-      paste("\n", "#------ Function number ", i, "-----------------------------------", "\n"),
-      append = TRUE, file = file
+      paste("\n" , "#------ Function number ", i , "-----------------------------------" ,"\n"),
+      append = T, file = file
     )
     cat(    # print the function into the file
-      paste(names(funs)[i], "<-", func_text, collapse = "\n"),
-      append = TRUE, file = file
+      paste(names(funs)[i] , "<-", paste(capture.output(funs[[i]]), collapse = "\n"), collapse = "\n"),
+      append = T, file = file
     )
     cat(
-      paste("\n", "#-----------------------------------------", "\n"),
-      append = TRUE, file = file
+      paste("\n" , "#-----------------------------------------" ,"\n"),
+      append = T, file = file
     )
   }
-
   cat( # writing at the end of the file how many new functions where added to it
     paste("# A total of ", length(funs), " Functions where written into utils"),
     append = T, file = file
@@ -236,5 +234,55 @@ violin_plot <- function(data, color_by){
          fill = color_by
     )
   return(plot2return)
+}
+
+get_package_source <- function(package_name, lockfile = "../renv.lock"){
+  # Read and parse the renv.lock file
+  lockfile_content <- fromJSON(lockfile)
+  snippet <- paste0('
+# ShinyOmics R Code Download
+# Load necassary packages ----
+# Note that you do not need to install packages everytime you run the script
+# The following will check whether the package is installed and if not, installs it
+# We provide the version and repo of the package that was used in the project
+# in case the you run into problems try to install the specifc version
+
+# This command is requried only once per R installation. (uncomment if needed)
+# install.packages("BiocManager", repos = "https://cloud.r-project.org")
+# BiocManager::install(version = "',lockfile_content$Bioconductor$Version,'")
+check_and_install_package <- function(package_name) {
+  for(package in package_name){
+  # Check if the package is installed
+  if (!requireNamespace(package, quietly = TRUE)) {
+    # If not installed, install the package
+    BiocManager::install(package)
+  }
+  }
+}')
+  # Navigate to the specific package's source information
+  for(package in package_name){
+    if (package %in% names(lockfile_content$Packages)) {
+      package_info <- lockfile_content$Packages[[package]]
+      source_repo <- package_info$Repository
+      if(is.null(source_repo)){
+        # Biconductor Version
+        snippet <- paste0(snippet,"\n",
+                          'check_and_install_package("',package,'")\n',
+                          'library("',package,'") #tested with: source ',package_info$Source,', v.',package_info$Version) 
+        
+      }else{
+        # CRAN
+        # Biconductor Version
+        snippet <- paste0(snippet,"\n",
+                          'check_and_install_package("',package,'")\n',
+                          'library("',package,'") #tested with: source ',source_repo,', v.',package_info$Version) 
+        
+      }
+    } else {
+      # If the package is not found in the lockfile, return an error message
+      warning(paste(package, "not found in the lockfile"))
+    }
+  }
+  return(snippet)
 }
 

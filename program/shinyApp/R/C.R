@@ -1,6 +1,6 @@
 # Keep here for now. Needs to be replaced i guess at some point.
 library(waiter)
-
+library(ggplot2)
 ### Global Constants will be saved here
 NOTES_PlACEHOLDER <<- "Notes you want to take alongside the plot (will be saved in the report) \nYou can use markdown syntax for your notes "
 NOTES_HELP <<- HTML("<a href='https://www.markdownguide.org/cheat-sheet/' target='_blank'>Here you can find a Markdown Cheat Sheet</a> \n
@@ -19,18 +19,6 @@ PADJUST_METHOD <<- list(
 )
 
 CODE_DOWNLOAD_PREFACE <<- "
-# ShinyOmics R Code Download\n# Load necassary packages ----
-# (if errors please install respective packages - e.g. install.packages('ggplot2'))
-
-library(ggplot2)
-library(ggvenn)
-library(ggpubr)
-library(rstudioapi)
-library(SummarizedExperiment)
-library(pheatmap)
-library(ComplexUpset)
-library(clusterProfiler)
-library(msigdbr)
 
 # Load the data ----
 # The following will try to detect the directory of the file and load the data
