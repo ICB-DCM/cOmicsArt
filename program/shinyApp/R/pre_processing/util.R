@@ -10,7 +10,7 @@ preprocessing <- function(data, omic_type, procedure){
   if(procedure %in% c("Scaling_0_1", "pareto_scaling")){
     return(scaling_normalisation(data, omic_type, procedure))
   }
-  if(procedure %in% c("log10", "ln")){
+  if(procedure %in% c("log10", "ln", "log2")){
     return(ln_normalisation(data, omic_type, procedure))
   }
   if(procedure == "none"){
@@ -72,7 +72,8 @@ scaling_normalisation <- function(data, omic_type, scaling_procedure){
 
 ln_normalisation <- function(data, omic_type, logarithm_procedure){
   # Center and scale the data
-  logarithm <- ifelse(logarithm_procedure == "log10", log10, log)
+  logarithm <- ifelse(logarithm_procedure == "log10", log10,
+                      ifelse(logarithm_procedure == "log2", log2, log))
   # prefilter the data
   data <- prefiltering(data, omic_type)
   # log the data and always add 1 to avoid -Inf
