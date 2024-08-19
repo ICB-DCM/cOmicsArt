@@ -55,7 +55,13 @@
   - Special consideration is given to handling zero values to avoid undefined 
     results: If any zero values are present, +1 is added to all values before applying
     the logarithm.
-
+    
+- **Logarithm Base 2 (log2):**
+  - The base-2 logarithm of each data point is calculated.
+  - Special consideration is given to handling zero values to avoid undefined 
+    results: If any zero values are present, +1 is added to all values before applying
+    the logarithm.
+    
 - **Pareto Scaling:**
   - Pareto scaling emphasizes the importance of small values by dividing each data point by the square root of its standard deviation.
   - This method is suitable for datasets with a wide range of values.
