@@ -209,7 +209,7 @@ ui <- shiny::fluidPage(
   ),
   splitLayout(
     cellWidths = c("75%", "10%", "15%"),
-    tags$a(href = "https://leaseep.github.io/OmicShiny/", "Go To Documentation", target = "_blank"),
+    tags$a(href = "https://leaseep.github.io/cOmicsArt/", "Go To Documentation", target = "_blank"),
     NULL
   ),
 
