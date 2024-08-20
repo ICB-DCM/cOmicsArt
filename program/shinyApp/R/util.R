@@ -11,7 +11,7 @@ error_modal <- function(e, additional_text = NULL){
   additional_text <- paste0(
     additional_text,
     "<br><br>Otherwise, please contact the cOmicsArtist Lea and Paul via cOmicsArtist@outlook.de",
-    "or open an issue on <a href='https://github.com/LeaSeep/OmicShiny'>github</a> ",
+    "or open an issue on <a href='https://github.com/LeaSeep/cOmicsArt'>github</a> ",
     "describing your problem."
   )
   showModal(modalDialog(

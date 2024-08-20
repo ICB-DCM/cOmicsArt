@@ -63,7 +63,7 @@ jobs:
         run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: production
-          PAGES_REPO_NWO: leaseep/OmicShiny
+          PAGES_REPO_NWO: leaseep/cOmicsArt
           
       - name: Upload artifact
         # Automatically uploads an artifact from the './_site' directory by default

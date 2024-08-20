@@ -10,12 +10,12 @@ editor_options:
 # Introduction
 
 ![A comic about a cat finding
-cOmicsART](/OmicShiny/assets/images/cOmicsTurtle.png) *Image generated
+cOmicsART](/cOmicsArt/assets/images/cOmicsTurtle.png) *Image generated
 using DALL-E by OpenAI. Adjusted by Lea Seep*
 
 Why do you want to install cOmicsART locally? If you just want to use it
 make sure to checkout the website:
-[cOmicsART](https://shiny.iaas.uni-bonn.de/OmicShiny/). For this there
+[cOmicsART](https://shiny.iaas.uni-bonn.de/cOmicsArt/). For this there
 is no installation effort required. If you know you are right here,
 let's get started.
 
@@ -41,7 +41,7 @@ Open a terminal or command prompt and use the following command to clone
 the repository:
 
 ``` bash
-git clone https://github.com/leaseep/OmicShiny.git
+git clone https://github.com/leaseep/cOmicsArt.git
 ```
 
 ### 2. Navigate to the Project Directory
@@ -49,7 +49,7 @@ git clone https://github.com/leaseep/OmicShiny.git
 Change the directory to the cloned repository:
 
 ``` bash
-cd OmicShiny
+cd cOmicsArt
 ```
 
 ## 3. Restore the R Environment
