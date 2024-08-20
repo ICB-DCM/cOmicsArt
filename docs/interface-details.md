@@ -6,7 +6,7 @@ nav_order: 2
 ---
 
 # Interface Details
-![A comic about a cat finding cOmicsART](/OmicShiny/assets/images/cOmicsOctopus.png)
+![A comic about a cat finding cOmicsART](/cOmicsArt/assets/images/cOmicsOctopus.png)
 *Image generated using DALL-E by OpenAI. Adjusted by Lea Seep*
 
 If you need tab-specific information, navigate to the respective documentation using the left sidebar.
@@ -52,6 +52,6 @@ To get more information on the tabs, navigate to the respective documentation us
     </ol>
   </div>
   <div style="float: right; width: 30%;">
-    <img src="/OmicShiny/assets/images/design_principleSidePanel.png" alt="The design of the side panel" style="width: 100%;">
+    <img src="/cOmicsArt/assets/images/design_principleSidePanel.png" alt="The design of the side panel" style="width: 100%;">
   </div>
 </div>
