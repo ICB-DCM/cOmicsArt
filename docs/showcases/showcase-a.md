@@ -76,7 +76,7 @@ However, we can observe no separation of the groups along PC1 but rather by a co
 
 To statistically test the two genes identified by their high loadings on PC1 and their difference in expression between the treatments, we can go to the Single Gene Visualisations tab. Here, single tests are performed and no multiple testing correction is done, allowing for a quick lookup of genes of interest. Checking Dusp1, Fos, Osm, and Ppbp, we obtain significant (p\<0.05) results for all but Osm, with Dusp1 and Fos being upregulated in HSD compared to NSD, while Ppbp is downregulated (Fig. D4A).
 
-![Figure D4 Single gene visualisations. A Boxplots with statistical testing for Ppbp, Osm, Fos, and Dusp1 expression grouped by treatment. B Dotplot of Ppbp expression shown per individual.](/cOmicsArt/assets/images/FigureD4.png)
+![Figure D4 Single gene visualisations. A Boxplots with statistical testing for Ppbp, Osm, Fos, and Dusp1 expression grouped by treatment. B Dotplot of Ppbp expression shown per individual.](/cOmicsArt/assets/images/Figure4.png)
 
 If we change the 'groups to show the data for' to ‘Simulation_Treatment’, we can observe for Ppbp that NSD_1 and NSD_2 and HSD_3 and HSD_5 behave differently from the other members of the group (Fig. D4B). This aligns with the PCA results. Note, that we cannot 'test' for a difference as we have a single data point for each.
 
