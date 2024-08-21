@@ -54,3 +54,5 @@ While one can visually confirm that the offspring diet is the major source of va
 Table E1 Confusion matrices of kNN-based offspring-diet prediction. A Confusion matrix indicating the correct classification of all HFD offspring samples, whereby seven additional actual CD samples have been wrongly predicted as HFD samples. B Confusion matrix showing the actual complete condition (of mothers and offspring) highlights that only samples with obese mothers on offspring kept on CD are misclassified as offspring on HFD.
 
 The ability to access and customize code snippets directly from cOmicsArt significantly enhances the flexibility and depth of analysis for researchers. By providing the underlying R code, cOmicsArt not only allows for easy replication of visualizations and results but also allows users to extend and tailor their analyses to their needs and questions.
+
+## References
