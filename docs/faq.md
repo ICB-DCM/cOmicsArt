@@ -41,7 +41,7 @@ Common issues are: Not exactly the same row or columnnames, missing values, wron
   </div>
 
 <div class="question" onclick="toggleAnswer('q4')">4. The app is running since ages and nothing happens</div>
-  <div id="q5" class="answer">
+  <div id="q4" class="answer">
   Is grey overlay visibile? If yes, tha app backend has crashed - this can have multiple reasons. It could be a disconnection between your browser and the server or the server itself is not running anymore. If you refresh the page you might be able to reconnect but potentially have to redo your work. We try to almost alsways give you the option to still recieve the HTML report so you know at least what has been done up to this point. If this happens often to you it might be a good idea to employ our DOCKER image or install the app locally on your machine. Instructions can be found in the 'Installation' tab in the sidebar.
   </div>
 </div>
