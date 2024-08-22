@@ -71,7 +71,7 @@ The main panel displays the results of the enrichment analysis. Here are some ke
   
 - **Download Options**: The visualisation can be downloaded directly in common formats 
   (e.g., PNG, TIFF, PDF) or sent to the report. You can also download the underlying R 
-  code and data. For more information, check out [Interface Details](interface-details.md). The tables can be downloaded in common formats as well (.csv,
+  code and data. For more information, check out [Interface Details](../interface-details.md). The tables can be downloaded in common formats as well (.csv,
   .xlsx).
 
 ### Other Notes

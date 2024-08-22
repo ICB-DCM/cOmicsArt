@@ -68,7 +68,7 @@ The main panel displays the heatmap and additional options. Here are some key po
 - **Save genes shown in Heatmap as list**: Save the list of genes displayed in the 
   heatmap for further usage in the [Enrichment Analysis](enrichment-analysis.md).
 
-- **Download Options**: The visualization can be downloaded directly in common formats (e.g., PNG, TIFF, PDF) or sent to the report. You can also download the underlying R code and data. For more information, check out [Interface Details](interface-details.md).
+- **Download Options**: The visualization can be downloaded directly in common formats (e.g., PNG, TIFF, PDF) or sent to the report. You can also download the underlying R code and data. For more information, check out [Interface Details](../interface-details.md).
 
 - **Notes**: Add personal notes regarding the heatmap.
 
