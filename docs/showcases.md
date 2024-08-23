@@ -16,7 +16,7 @@ So lean back and enjoy the show(cases)! 🍿
 
 Note, that these showcases are not exhaustive and only serve as an example of what is possible with cOmicsART. We encourage you to explore the app and its features further to find the best workflow for your data.
 
-1.  **Data Input Showcase**: This example demonstrates how to work with data inputs, and utilizing all functions within cOmicsART. It emphasizes how one can work in explorative manners to gain insights from the data. This includes the use of data selection, the addition of metadata based on first analysis results, the use of the report to ensure complete reproducibility as well as the discussion ground for further potential steps.
+1.  **Data Input Showcase**: This example demonstrates how to work with data inputs, and utilize all functions within cOmicsART. It emphasizes how one can work in explorative manners to gain insights from the data. This includes the use of data selection, the addition of metadata based on first analysis results, the use of the report to ensure complete reproducibility as well as the discussion ground for further potential steps.
 
 =\> Go to the [Showcase A](showcases/showcase-a.md)
 
