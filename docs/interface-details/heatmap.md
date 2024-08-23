@@ -11,7 +11,7 @@ The Heatmap tab is divided into two main sections: the side panel and the main p
 
 ## Side Panel
 
-Within the side panel you have multiple options, which itself depend on the selected option within
+Within the side panel, you have multiple options, which depend on the selected option within
 'Select Entities to show'. Here are the general options:
 
 - **Use batch corrected data?**: Allows you to choose whether to use batch corrected data.
@@ -24,7 +24,7 @@ Within the side panel you have multiple options, which itself depend on the sele
 
 ### Conditional Options for "Top K"
 
-Often, you don want to visualisze the entire set of entities you have but only the top entities, for example the top 100 entities with highest LogFoldChange
+Often, you don't want to visualize the entire set of entities you have but only the top entities, for example, the top 100 entities with the highest LogFoldChange
 Hence you need to specifcy the ordering critera and the 'k' (number of entities) you want to visualize. 
 
 - **Order based on**: Select the criterion for ordering the top entities.
@@ -36,7 +36,7 @@ Hence you need to specifcy the ordering critera and the 'k' (number of entities)
 
 - **Choose treatment group of log2 FoldChange**: Select the treatment group for log2 fold change.
 
-- **adj. p-value threshold**: Set the adjusted p-value threshold. Only entities with an adjusted p-value below this threshold will be considered. Hence, if you k is greater than the number of significant entities, you will get less than k entities.
+- **adj. p-value threshold**: Set the adjusted p-value threshold. Only entities with an adjusted p-value below this threshold will be considered. Hence, if your `k` is greater than the number of significant entities, you will get less than `k` entities.
 
 ### Conditional Options for "Select based on Annotation"
 
@@ -50,9 +50,9 @@ Hence you need to specifcy the ordering critera and the 'k' (number of entities)
 
 ### Aesthetics Options
 
-- **Choose the variable to color the samples after**: Select the variable for coloring the samples. The coloring options are populated based on the sample annotation provided initially. Often, you want to examne whether the given samles labels coincidence with the unsupervised clustering of the heatmap.
+- **Choose the variable to color the samples after**: Select the variable for coloring the samples. The coloring options are populated based on the sample annotation provided initially. Often, you want to examine whether the given sample labels coincide with the unsupervised clustering of the heatmap.
 
-- **Choose the variable to color the rows after**: Select the variable for coloring the rows. The coloring options are populated based on the row annotation provided initially. This can help to identify patterns within the heatmap similar to the coloring of the samples.
+- **Choose the variable to color the rows after**: Select the variable for coloring the rows. The coloring options are populated based on the row annotation provided initially. This can help identify patterns within the heatmap that are similar to the coloring of the samples.
 
 - **Row/Column Clustering?**: Enable or disable row/column clustering.
 

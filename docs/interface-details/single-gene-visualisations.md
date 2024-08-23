@@ -31,7 +31,7 @@ In the side panel, you have the following options:
 The main panel displays the single gene visualisations. Here are some key points:
 
 - **Visualisation**: The visualisation provides a boxplot or dot plot based on the number of samples per group and the selected options. Note that you only see boxplots if you have more than 3 samples per group. If there are fewer than 4 samples, only dots will be displayed.
-- **Select your desired comparisons**: Here you select which comparisons you want to test and display in the plot. Note that each test is taken as individual test, there is no multiple testing correction done \([Why it is important](https://www.nature.com/articles/nbt1209-1135)\) when choosing more than one test. For more advanced testing please go to the [Significance analysis tab](significance-analysis.md)
+- **Select your desired comparisons**: Here you select which comparisons you want to test and display in the plot. Note that each test is taken as an individual test, there is no multiple testing correction done \([Why it is important](https://www.nature.com/articles/nbt1209-1135)\) when choosing more than one test. For more advanced testing please go to the [Significance analysis tab](significance-analysis.md)
 
 
 - **Download Options**: The visualisation can be downloaded directly in common formats (e.g., PNG, TIFF, PDF) or sent to the report. You can also download the underlying R code and data. For more information, check out [Interface Details](../interface-details.md).

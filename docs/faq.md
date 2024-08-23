@@ -48,7 +48,7 @@ Common issues are: Not exactly the same row or columnnames, missing values, wron
 
 <div class="question" onclick="toggleAnswer('q5')">5. Where is the HTMl report?</div>
   <div id="q5" class="answer">
-  The report is generated for your download upon clicking on the hyperlink 'Download Report (as html)' underneath the cOmicsArt - text at the top left. Upon clicking you will see a loading bar and the report will be finalized. To retrieve it you need to click on 'Download report' (it is also a hyperlink) - you should get prompted your file-browser to save the file. If this does not happen please check your browser settings and allow pop-ups for this page.
+  The report is generated for your download upon clicking on the hyperlink 'Download Report (as html)' underneath the cOmicsArt - text at the top left. Upon clicking you will see a loading bar and the report will be finalized. To retrieve it you need to click on 'Download report' (it is also a hyperlink) - you should get prompted by your file-browser to save the file. If this does not happen please check your browser settings and allow pop-ups for this page.
   </div>
 </div>
 
