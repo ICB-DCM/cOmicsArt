@@ -12,7 +12,7 @@ We’ve created a detailed screen recording to guide you through the navigation 
 
 ✨ To make your journey even smoother, we’ve provided time stamps below so you can jump directly to the steps that interest you the most:
 
--   00:00 Introduction
+-   [00:00](https://www.youtube.com/watch?v=pTGjtIYQOak&t=0s) Introduction
 -   00:28 Uploading Data
 -   03:08 Data Selection
 -   04:40 Data Preprocessing
