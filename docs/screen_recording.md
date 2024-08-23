@@ -14,15 +14,15 @@ We’ve created a detailed screen recording to guide you through the navigation 
 
 -   [00:00](https://www.youtube.com/watch?v=pTGjtIYQOak&t=0s) Introduction
 -   [00:28](https://www.youtube.com/watch?v=pTGjtIYQOak&t=28s) Uploading Data
--   03:08 Data Selection
--   04:40 Data Preprocessing
--   06:28 Sample Correlation
--   08:21 Principal Component Analysis (PCA)
--   10:26 Significance Analysis
--   12:48 Single Gene Visualization
--   13:31 Enrichment Analysis
--   14:38 ️ Heatmap
--   15:43 Report
+-   [03:08](https://www.youtube.com/watch?v=pTGjtIYQOak&t=188s) Data Selection
+-   [04:40](https://www.youtube.com/watch?v=pTGjtIYQOak&t=280s) Data Preprocessing
+-   [06:28](https://www.youtube.com/watch?v=pTGjtIYQOak&t=388s) Sample Correlation
+-   [08:21](https://www.youtube.com/watch?v=pTGjtIYQOak&t=501s) Principal Component Analysis (PCA)
+-   [10:26](https://www.youtube.com/watch?v=pTGjtIYQOak&t=626s) Significance Analysis
+-   [12:48](https://www.youtube.com/watch?v=pTGjtIYQOak&t=768s) Single Gene Visualization
+-   [13:31](https://www.youtube.com/watch?v=pTGjtIYQOak&t=811s) Enrichment Analysis
+-   [14:38](https://www.youtube.com/watch?v=pTGjtIYQOak&t=878s) ️ Heatmap
+-   [15:43](https://www.youtube.com/watch?v=pTGjtIYQOak&t=943s) Report
 
 We hope this helps you navigate cOmicsArt with ease! 😊
 
