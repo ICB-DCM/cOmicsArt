@@ -146,7 +146,7 @@ The set includes: ENSMUSG00000044786 (Zfp36), ENSMUSG00000052684 (Jun), ENSMUSG0
 
 ## Set analysis - Heatmap & Enrichment Analysis:
 
-To obtain a nice visual representation, we switch to the heatmap panel and select for the row-selection Select based on Annotation - which means that we can select data based on their row annotation hence for example precisely their ID. We select the 10 genes which we just identified to be signficiantly upregulated. The resulting heatmap, after row-wise scaling, shows a distinct separation of the treatments, whereby the sample NSD_5 clusters closes to HSD_1, which itself clusters away from the other HSD samples (Fig. D6).
+To obtain a nice visual representation, we switch to the heatmap panel and select for the row-selection Select based on Annotation - which means that we can select data based on their row annotation hence for example precisely their ID. We select the 10 genes which we just identified to be significantly upregulated. The resulting heatmap, after row-wise scaling, shows a distinct separation of the treatments, whereby the sample NSD_5 clusters close to HSD_1, which itself clusters away from the other HSD samples (Fig. D6).
 
 ![Figure D6 Heatmap of significant upregulated genes. The genes and the samples are ordered in correspondance to the applied hierarichal clustering.](/cOmicsArt/assets/images/FigureD6.png)
 
