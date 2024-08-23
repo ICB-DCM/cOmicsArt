@@ -36,7 +36,7 @@ For pre-processing, we select the DESeq option. Upon selection, we specify 'Trea
 
 ![Figure D1 Diagnostic plots. The diagnostic plot displays each sample’s gene count distribution colored after treatment.](/cOmicsArt/assets/images/FigureD1.png)
 
-After clicking 'Get Pre-Processing', the data is processed and we can assess the diagnostic plots of the sample distribution (Fig. D1). We color the sample distribution diagnostic plots with respect to their treatment (side panel below the horizontal line, hence only performing re-coloring but no re-pre-processing). After preprocessing, we can see that the distribution across samples is quite similar and does not depend on the underlying treatment. We can conclude that the chosen pre-processing was successful in generating homogeneous distributions across samples.
+After clicking 'Get Pre-Processing', the data is processed and we can assess the diagnostic plots of the sample distribution (Fig. D1). We color the sample distribution diagnostic plots with respect to their treatment (side panel below the horizontal line, hence only performing re-coloring but no re-pre-processing). After preprocessing, we can see that the distribution across samples is similar and does not depend on the underlying treatment. We can conclude that the chosen pre-processing was successful in generating homogeneous distributions across samples.
 
 ## Investigating global patterns - Sample Correlation and PCA
 
