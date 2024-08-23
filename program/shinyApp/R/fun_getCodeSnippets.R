@@ -944,8 +944,9 @@ stringtosave <- paste0(stringtosave_1,"\n",stringtosave_2)
   if(numberOfScenario >= 22 & numberOfScenario <= 23 ){
     stringtosave_1 <- '
 # plot volcano plot
-data4Volcano <- sig_results[[chosenVizSet[i]]]
-par_name <- gsub(":","_",chosenVizSet[i])
+contrast <- paste0(par_tmp$SigAna$contrast[[1]], ":", par_tmp$SigAna$contrast[[2]])
+data4Volcano <- sig_results[[contrast]]
+par_name <- gsub(":","_",contrast)
 data4Volcano$probename <- rownames(data4Volcano)
 data4Volcano$threshold <- ifelse(data4Volcano$padj>par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")],"non-significant","significant")
 data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")],"non-significant","significant")

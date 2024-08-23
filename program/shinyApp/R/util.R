@@ -111,22 +111,20 @@ save.function.from.env <- function(wanted,file="utils.R")
   # and find wanted function
   funs <- Filter(is.function, sapply(ls( ".GlobalEnv"), get))
   funs <- funs[names(funs) %in% wanted]
-  
-  func_text <- paste(capture.output(funs[[i]]), collapse = "\n")
-  
-  # Perform the replacements
-  func_text <- gsub("res_tmp\\[\\[session\\$token\\]\\]", "res_tmp", func_text)
-  func_text <- gsub("par_tmp\\[\\[session\\$token\\]\\]", "par_tmp", func_text)
-  func_text <- gsub("req\\(data_input_shiny\\(\\)\\)", "", func_text)
 
-  for(i in seq_along(funs))
-  {
+  for(i in seq_along(funs)) {
+    func_text <- paste(capture.output(funs[[i]]), collapse = "\n")
+
+    # Perform the replacements
+    func_text <- gsub("res_tmp\\[\\[session\\$token\\]\\]", "res_tmp", func_text)
+    func_text <- gsub("par_tmp\\[\\[session\\$token\\]\\]", "par_tmp", func_text)
+    func_text <- gsub("req\\(data_input_shiny\\(\\)\\)", "", func_text)
     cat( # number the function we are about to add
       paste("\n" , "#------ Function number ", i , "-----------------------------------" ,"\n"),
       append = T, file = file
     )
     cat(    # print the function into the file
-      paste(names(funs)[i] , "<-", paste(capture.output(funs[[i]]), collapse = "\n"), collapse = "\n"),
+      paste(names(funs)[i] , "<-", func_text, collapse = "\n"),
       append = T, file = file
     )
     cat(

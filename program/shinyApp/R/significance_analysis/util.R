@@ -400,6 +400,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       content = function(file){
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
+        par_tmp[[session$token]]$SigAna$contrast <<- contrast
 
         envList <- list(
           res_tmp = res_tmp[[session$token]],
@@ -452,6 +453,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       content = function(file){
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
+        par_tmp[[session$token]]$SigAna$contrast <<- contrast
 
         envList <- list(
           res_tmp = res_tmp[[session$token]],
@@ -930,6 +932,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     content = function(file){
       tmp <- getUserReactiveValues(input)
       par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
+      par_tmp[[session$token]]$SigAna$contrast <<- contrast
 
       envList <- list(
         res_tmp = res_tmp[[session$token]],
@@ -982,6 +985,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     content = function(file){
       tmp <- getUserReactiveValues(input)
       par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
+      par_tmp[[session$token]]$SigAna$contrast <<- contrast
 
       envList <- list(
         res_tmp = res_tmp[[session$token]],
