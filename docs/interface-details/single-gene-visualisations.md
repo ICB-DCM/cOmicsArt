@@ -20,7 +20,7 @@ In the side panel, you have the following options:
 
 - **Select Annotation you want to select an entity from**: You can choose the annotation to select the entities from. The options are directly taken from the provided row annotation. Precisely it is the column names of the row annotation.
 
-- **Select the Gene from the list**: In the dropdown menu, you can choose from the unique items present in the chosen annotation category. Note that you can choose an annotation that is the same for multiple items. For example, you can choose `gene_type` (if present in your row annotation) and then `protein coding`. The displayed plot will show the sum of all protein coding genes for the respective sample, grouped by what is chosen below. You can check out [Showcase B](showcase-b.md) for an actual example. There is also a [screen recording](../screen_recording.md) covering some examples.
+- **Select the Gene from the list**: In the dropdown menu, you can choose from the unique items present in the chosen annotation category. Note that you can choose an annotation that is the same for multiple items. For example, you can choose `gene_type` (if present in your row annotation) and then `protein coding`. The displayed plot will show the sum of all protein coding genes for the respective sample, grouped by what is chosen below. You can check out [our showcases](../showcases.md) for actual examples. There is also a [screen recording](../screen_recording.md) covering some examples.
 
 - **Get Single Gene Visualisation**: Clicking this button will generate the visualisation in the main panel based on the selected options.
 
@@ -31,10 +31,10 @@ In the side panel, you have the following options:
 The main panel displays the single gene visualisations. Here are some key points:
 
 - **Visualisation**: The visualisation provides a boxplot or dot plot based on the number of samples per group and the selected options. Note that you only see boxplots if you have more than 3 samples per group. If there are fewer than 4 samples, only dots will be displayed.
-- **Select your desired comparisons**: Here you select which comparisons you want to test and display in the plot. Note that each test is taken as individual test, there is no multiple testing correction done ((Why it is important)[https://www.nature.com/articles/nbt1209-1135]) when choosing more than one test. For more advanced testing please go to the [Significance analysis tab](significance-analysis.md)
+- **Select your desired comparisons**: Here you select which comparisons you want to test and display in the plot. Note that each test is taken as an individual test, there is no multiple testing correction done \([Why it is important](https://www.nature.com/articles/nbt1209-1135)\) when choosing more than one test. For more advanced testing please go to the [Significance analysis tab](significance-analysis.md)
 
 
-- **Download Options**: The visualisation can be downloaded directly in common formats (e.g., PNG, TIFF, PDF) or sent to the report. You can also download the underlying R code and data. For more information, check out [Interface Details](interface-details.md).
+- **Download Options**: The visualisation can be downloaded directly in common formats (e.g., PNG, TIFF, PDF) or sent to the report. You can also download the underlying R code and data. For more information, check out [Interface Details](../interface-details.md).
 
 ### Other Notes
 

@@ -41,7 +41,7 @@ The main panel displays the PCA results. Here are some key points:
 
 - **Information Display**: At the top of the main panel, some information is displayed regarding the computation of the PCA.
 
-- **Download Options**: The visualization can be downloaded directly in common formats (e.g., PNG, TIFF, PDF) or sent to the report. You can also download the underlying R code and data. For more information, check out [Interface Details](interface-details.md).
+- **Download Options**: The visualization can be downloaded directly in common formats (e.g., PNG, TIFF, PDF) or sent to the report. You can also download the underlying R code and data. For more information, check out [Interface Details](../interface-details.md).
 
 ### Other Notes
 
