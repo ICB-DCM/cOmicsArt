@@ -32,7 +32,7 @@ For now, no selection of the data is done, such that all data is considered duri
 
 ### Pre-processing:
 
-For pre-processing, we select the DESeq option. Upon selection, we specify 'Treatment' as the main factor for the model. For more details about the DESeq2 pipeline used in the background, check out the DESeq2 vignette. The pre-processing involves filtering lowly expressed genes before applying the DESeq2 pipeline.
+For pre-processing, we select the DESeq option. Upon selection, we specify 'Treatment' as the main factor for the model. For more details about the DESeq2 pipeline used in the background, check out the [DESeq2 vignette](https://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html). The pre-processing involves filtering lowly expressed genes before applying the DESeq2 pipeline.
 
 ![Figure D1 Diagnostic plots. The diagnostic plot displays each sample’s gene count distribution colored after treatment.](/cOmicsArt/assets/images/FigureD1.png)
 
