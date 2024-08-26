@@ -18,15 +18,15 @@ In this example, we will create a volcano plot using the example dataset.
 
 To recreate this example **within** cOmicsArt, use the following steps:
 
-1. Start the Application (locally or [online](https://shiny.iaas.uni-bonn.de/cOmicsArt/))
-2. In the `Data Selection`, use the `Testdata`
-3. We want to use all the data, so we will not filter the data, directly clicking `"Start 
+0. Start the Application (locally or [online](https://shiny.iaas.uni-bonn.de/cOmicsArt/))
+1. In the `Data Selection`, use the `Testdata`
+2. We want to use all the data, so we will not filter the data, directly clicking `"Start 
    the Journey"`
-4. Select `DESeq2` as the pre-processing method with `condition` as the main factor
-5. In the `Significance Analysis`, run the significance analysis for `trt:untrt`, Significance 
+3. Select `DESeq2` as the pre-processing method with `condition` as the main factor
+4. In the `Significance Analysis`, run the significance analysis for `trt:untrt`, Significance 
    level: `0.05` and test-correction: `Benjamini-Hochberg`
-6. Select now the `trt:untrt` tab, in the the `Volcano` tab
-7. Download the data and code by clicking on `Get underlying R code and data` under 
+5. Select now the `trt:untrt` tab, in that the `Volcano` tab
+6. Download the data and code by clicking on `Get underlying R code and data` under 
    `Volcanot plot padj`
 
 Anything not mentioned here can be left as default. Below you can find a slide show of 
@@ -38,7 +38,7 @@ the steps to follow:
   <span id="prev" style="font-size: 2em; cursor: pointer; margin-right: 10px;">&#8592;</span>
 
   <!-- Image element -->
-  <img id="slideshow" src="/cOmicsArt/assets/images/" width="600px">
+  <img id="slideshow" src="/cOmicsArt/assets/images/Slideshow1.png" width="600px">
 
   <!-- Right arrow -->
   <span id="next" style="font-size: 2em; cursor: pointer; margin-left: 10px;">&#8594;</span>
@@ -49,8 +49,10 @@ the steps to follow:
 
 <script>
 var images = [
-    {src: "/cOmicsArt/assets/images/cOmicsCat.png", subtitle: "Test 1"},
-    {src: "/cOmicsArt/assets/images/cOmicsGiraffe.png", subtitle: "Test 2"}
+    {src: "/cOmicsArt/assets/images/Slideshow1.png", subtitle: "1. Select Testdata, 2.1 Choose all data, 2.2 Start the Journey"},
+    {src: "/cOmicsArt/assets/images/Slideshow2.png", subtitle: "3.1 Select DESeq2 as pre-processing method, 3.2 Select condition as main factor, 3.3 Run the pre-processing"},
+    {src: "/cOmicsArt/assets/images/Slideshow3.png", subtitle: "4.1 Select trt:untrt 4.2 Run the significance analysis, 5. Select trt:untrt tab"},
+    {src: "/cOmicsArt/assets/images/Slideshow4.png", subtitle: "5.2 Select Volcano tab, 6. Download the data and code"},
 ];
 var currentIndex = 0;
 
