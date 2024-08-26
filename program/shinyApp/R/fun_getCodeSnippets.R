@@ -944,16 +944,19 @@ stringtosave <- paste0(stringtosave_1,"\n",stringtosave_2)
   if(numberOfScenario >= 22 & numberOfScenario <= 23 ){
     stringtosave_1 <- '
 # plot volcano plot
-data4Volcano <- sig_results[[chosenVizSet[i]]]
-par_name <- gsub(":","_",chosenVizSet[i])
+contrast <- paste0(par_tmp$SigAna$contrast[[1]], ":", par_tmp$SigAna$contrast[[2]])
+data4Volcano <- sig_results[[contrast]]
+par_name <- gsub(":","_",contrast)
+significance_threshold <- par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")]
+lfc_threshold <- par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_lfc_th")]
 data4Volcano$probename <- rownames(data4Volcano)
-data4Volcano$threshold <- ifelse(data4Volcano$padj>par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")],"non-significant","significant")
-data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")],"non-significant","significant")
+data4Volcano$threshold <- ifelse(data4Volcano$padj>significance_threshold,"non-significant","significant")
+data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>significance_threshold,"non-significant","significant")
 data4Volcano$threshold_fc <- ifelse(
-  data4Volcano$log2FoldChange>par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")],
+  data4Volcano$log2FoldChange>lfc_threshold,
   "up-regulated",
   ifelse(
-    data4Volcano$log2FoldChange<(-1*as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),
+    data4Volcano$log2FoldChange<(-1*as.numeric(lfc_threshold)),
     "down-regulated", " "
   )
 )
@@ -980,11 +983,11 @@ data4Volcano <- data4Volcano[complete.cases(data4Volcano),]
     colour = combined
   )) +
   geom_hline(
-    yintercept = -1*(log10(as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")]))),
+    yintercept = -1*(log10(as.numeric(significance_threshold))),
     color="lightgrey"
     ) +
   geom_vline(
-    xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),
+    xintercept = c((-1*as.numeric(lfc_threshold)),as.numeric(lfc_threshold)),
     color="lightgrey"
     ) +
   scale_color_manual(values=colorScheme2, name="") +
@@ -1004,11 +1007,11 @@ data4Volcano <- data4Volcano[complete.cases(data4Volcano),]
       y = -log10(pvalue),
       colour = combined_raw)) +
   geom_hline(
-      yintercept = -1*(log10(as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")]))),
+      yintercept = -1*(log10(as.numeric(significance_threshold))),
       color="lightgrey"
   ) +
   geom_vline(
-      xintercept = c((-1*as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),as.numeric(par_tmp$SigAna[paste0("SignificanceAnalysis-",par_name,"_psig_th")])),
+      xintercept = c((-1*as.numeric(lfc_threshold)),as.numeric(lfc_threshold)),
       color="lightgrey"
   ) +
   scale_color_manual(values=colorScheme2, name="") +
