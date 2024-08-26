@@ -47,8 +47,8 @@ To get more information on the tabs, navigate to the respective documentation us
       <li><strong>Main Panel Structure:</strong> Each main panel contains the visualization of the analysis results. Some panels are further subdivided to show multiple results, for example, the Significance Analysis tab.</li>
       <li><strong>Picture Download Options:</strong> Users can download visualizations and results in common formats (e.g., PNG, TIFF, PDF). There are respective buttons to select the file format. Upon 'Save plot' the file is downloaded to the local machine.</li>
       <li><strong>Sending Visualizations to Report:</strong> Upon button click on 'Send only to report' the current shown visualization and associated parameters are saved to the Report. Hence, you can play around with parameters and can save the one of interest to you without cluttering the report with all tried options.</li>
-      <li><strong>Get Underlying R Code and Data:</strong> Upon button click, the R script and respective data to generate shown plot will be presented for download. The script includes the Data selection, pre-processing as well as the respective analysis. For more details make sure to check out [Code and Data](code-and-data.md).</li>
-      <li><strong>Notes:</strong> At the bottom of each tab you can find the Notes field - here you can enter text which will be saved within the report. You can use [markdown syntax](https://www.markdownguide.org/cheat-sheet/) here.</li>
+      <li><strong>Get Underlying R Code and Data:</strong> Upon button click, the R script and respective data to generate shown plot will be presented for download. The script includes the Data selection, pre-processing as well as the respective analysis. For more details make sure to check out <a href="code-and-data.md">Code and Data</a>.</li>
+      <li><strong>Notes:</strong> At the bottom of each tab you can find the Notes field - here you can enter text which will be saved within the report. You can use <a href="https://www.markdownguide.org/cheat-sheet/">markdown syntax</a> here.</li>
     </ol>
   </div>
   <div style="float: right; width: 30%;">
