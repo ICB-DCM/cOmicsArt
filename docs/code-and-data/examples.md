@@ -20,7 +20,7 @@ To recreate this example **within** cOmicsArt, use the following steps:
 
 0. Start the Application (locally or [online](https://shiny.iaas.uni-bonn.de/cOmicsArt/))
 1. In the `Data Selection`, use the `Testdata`
-2. We want to use all the data, so we will not filter the data, directly clicking `"Start 
+2. We want to use all the data, so we will not filter the data. Hence, directly click `"Start 
    the Journey"`
 3. Select `DESeq2` as the pre-processing method with `condition` as the main factor
 4. In the `Significance Analysis`, run the significance analysis for `trt:untrt`, Significance 
@@ -75,9 +75,9 @@ document.getElementById("next").onclick = function() {
 ### Downloaded R Code
 
 If successful, you should have downloaded a folder with the files `Data.RDS`, `utils.
-R` and `Code.R`. The `Data.RDS` file contains the data used in the analysis, a more 
-detailed description of the data can be found in the in [Data object](data.md). The 
-`utils.R` file contains the functions used in the analysis, while the `Code.R` file 
+R` and `Code.R` (you need to unzipp the downloaded folder). The `Data.RDS` file contains the data used in the analysis, a more 
+detailed description of the data can be found in the [Data object](data.md). The 
+`utils.R` file contains the custom functions used in the analysis, while the `Code.R` file 
 contains the code to reproduce the volcano plot along with the data processing steps.
 
 The R code is shown below:
@@ -425,9 +425,9 @@ website](https://ggplot2.tidyverse.org).
 ### Altering Thresholds
 
 In many cases, we have to adjust the pvalue threshold or the log2 fold change 
-threshold, deteriming the significance of the data points. In the code, the thresholds 
+threshold, determining the significance of the data points. In the code, the thresholds 
 are defined in lines 194 + 195. They originally use the vales stored from the 
-application, but we can insert our own values.
+application, but we can change to new values, without the need to go back to cOmicsArt.
 
 <div style="display: flex; align-items: center; justify-content: center;">
 
@@ -472,7 +472,7 @@ In a troughout analysis, we never only want to compare a single contrast. We can
 adjust the code to change the contrast we compare. In the most straightforward case, 
 we will flip the treatment and control groups. We will keep the adjusted thresholds 
 and thus only have to take care of the `par_tmp$SigAna$comparisons` and 
-`par_tmp$SigAna$contrast`. We overwrite both after loading the RDS file.
+`par_tmp$SigAna$contrast`. We overwrite both after loading the RDS file, holding the data and results obtained from cOmicsArt.
 
 <div style="display: flex; align-items: center; justify-content: center;">
 
@@ -483,7 +483,7 @@ and thus only have to take care of the `par_tmp$SigAna$comparisons` and
 overflow-x: auto; overflow-y: auto; white-space: nowrap;">
       <pre><code>
 list2env(envList,envir = globalenv()) 
-# loads the varaibles directly into global env
+# loads the variables directly into global env
 # if loadedversion present, make it global
 if(exists('loadedVersion')){
   assign('loadedVersion',loadedVersion,envir = globalenv())
@@ -505,7 +505,7 @@ overflow-x: auto; overflow-y: auto; white-space: nowrap;">
       <pre><code>
 # Set Environment ----
 list2env(envList,envir = globalenv()) 
-# loads the varaibles directly into global env
+# loads the variables directly into global env
 # if loadedversion present, make it global
 if(exists('loadedVersion')){
   assign('loadedVersion',loadedVersion,envir = globalenv())
@@ -526,5 +526,5 @@ The altered plot will look like a mirrored version of the threshold adjusted plo
 
 There are of course many more things one can adjust in the plot theme, the threshholds 
 and or the comparison. The code is structured in a way that makes it easy to adjust 
-the code and rerun the analysis. With this example, we have learned how to adjust the 
+the code and rerun the analysis. With this example, we showed how to adjust the 
 code to our needs and individualize the workflow.

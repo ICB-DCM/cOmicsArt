@@ -95,7 +95,7 @@ tmp_data_selected <- res_tmp$data_original[selected,samples_selected]
 
 ## 4. Preprocessing
 
-The preprocessing is set up as used in the appication. Adjustments to this part might 
+The preprocessing is set up as used in the application. Adjustments to this part might 
 be more intricate, e.g. adjusting the statistical model in DESeq2. The code will look 
 like this (here depending on the preprocessing method):
 
@@ -116,7 +116,7 @@ assay(res_tmp$data) <- as.data.frame(assay(dds_vst))
 ```
 
 Up until this point the code will look the same for all different kinds of analysis 
-you ca download the code for.The following steps will be highly specific to the 
+you can download the code for. The following steps will be highly specific to the 
 analysis for which the code was downloaded. If you want to combine multiple analysis 
 steps you may copy and paste the these last parts of multiple analyses below the first 4 
 steps altogether.
@@ -207,7 +207,12 @@ An example how to adjust this, for example changing the comparison method is sho
 
 After the analysis is done, the results are visualized. There are two visualization 
 types in cOmicsArt, using ggplot2 and using pheatmap. These parts can be adjusted 
-following their respective documentation. The code for a typical ggplot2 visualization 
+following their respective documentation. Also, there exists gallerys and other useful resources, where one can screen for what they search for visually and get the particular code snippets:
+- [R Gallery,](ggplot2 https://r-graph-gallery.com/ggplot2-package.html)
+- [Top 50 ggplot visualisaitions](https://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html?utm_content=cmp-true)
+- [ggplot extensions](https://exts.ggplot2.tidyverse.org/gallery/)
+- [Pheatmp function](https://r-charts.com/correlation/pheatmap/?utm_content=cmp-true)
+From own experience, we can also recommend LLMs such as ChatGPT to help to adjust the plotting commands. The code for a typical ggplot2 visualization 
 will look like this:
 
 ```r
