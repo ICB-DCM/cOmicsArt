@@ -72,8 +72,18 @@ scaling_normalisation <- function(data, omic_type, scaling_procedure){
 
 ln_normalisation <- function(data, omic_type, logarithm_procedure){
   # Center and scale the data
-  logarithm <- ifelse(logarithm_procedure == "log10", log10,
-                      ifelse(logarithm_procedure == "log2", log2, log))
+  if(logarithm_procedure == "log10")
+  {
+    logarithm = log10
+  }
+  else if(logarithm_procedure == "log2")
+  {
+    logarithm = log2
+  }
+  else
+  {
+    logarithm = log
+  }
   # prefilter the data
   data <- prefiltering(data, omic_type)
   # log the data and always add 1 to avoid -Inf
