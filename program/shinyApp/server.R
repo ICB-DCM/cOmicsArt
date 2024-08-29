@@ -908,7 +908,8 @@ server <- function(input,output,session){
     waiter <- Waiter$new(
       id="data_summary",
       html = LOADING_SCREEN,
-      color="#3897F147",
+      #color="#3897F147",
+      color = "rgba(255,255,255,0)",
       hide_on_render=FALSE
     )
     waiter$show()
