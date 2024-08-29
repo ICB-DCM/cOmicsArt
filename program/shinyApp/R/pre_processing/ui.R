@@ -14,6 +14,7 @@ pre_processing_sidebar_panel <- sidebarPanel(
       "centering to 0 and scaling" = "simpleCenterScaling",
       "scaling values to be within 0 and 1" = "Scaling_0_1",
       "log10" = "log10",
+      "log2" = "log2",
       "Pareto scaling (mean-centered and scaled by the square root of the standard deviation)" = "pareto_scaling",
       "natural logarithm" = "ln"
     ),

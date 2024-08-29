@@ -14,7 +14,7 @@ The Pre-processing tab is divided into two main sections: the side panel and the
 In the side panel, you have the following options:
 
 - **Pre-Processing Procedures**: You can select from various pre-processing procedures.
-  - Options: none, filterOnly, vst_DESeq, simpleCenterScaling, Scaling_0_1, log10, pareto_scaling, ln
+  - Options: none, filterOnly, vst_DESeq, simpleCenterScaling, Scaling_0_1, log10, log2, pareto_scaling, ln
   - vst_DESeq also requires the selection of a design formula.
 
 - **Select Batch Effect Column**: Choose a batch effect if applicable. Possible 
