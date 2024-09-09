@@ -2,6 +2,7 @@
 
 ![comic of a wombat on the path to find this
 Readme](docs/assets/images/cOmicsART_README.png)
+*Image generated using DALL-E by OpenAI. Adjusted by Lea Seep*
 
 Please refer to the following listed links for further information on
 the respective topics:
