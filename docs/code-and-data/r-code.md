@@ -9,7 +9,7 @@ nav_order: 2
 
 This page contains an explanation of the R code structure when downloading R code and 
 data to reproduce/alter the analysis. We will use the original code of [the volcano 
-plot example](examples.md).
+plot example](code-and-data/examples.md).
 
 ## 1. Package loading and installation
 
