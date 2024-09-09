@@ -1927,8 +1927,14 @@
     },
     "ggtree": {
       "Package": "ggtree",
-      "Version": "3.6.2",
-      "Source": "Bioconductor",
+      "Version": "3.13.1",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "ggtree",
+      "RemoteUsername": "YuLab-SMU",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "01b29ef59680d01d9fbf433714011f3dd62721e5",
       "Requirements": [
         "R",
         "ape",
@@ -1950,7 +1956,7 @@
         "utils",
         "yulab.utils"
       ],
-      "Hash": "87f158a81a3fe875f084692ce5544be6"
+      "Hash": "196850e99e115a8c2da2d97d8da8882b"
     },
     "ggvenn": {
       "Package": "ggvenn",
@@ -4155,20 +4161,18 @@
     },
     "yulab.utils": {
       "Package": "yulab.utils",
-      "Version": "0.1.4",
+      "Version": "0.1.7",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "cli",
         "digest",
         "fs",
-        "memoise",
         "rlang",
-        "stats",
         "tools",
         "utils"
       ],
-      "Hash": "60ee2aaa179dc282e9fa7367bad76e89"
+      "Hash": "367554cd9602e69616660580c820b3bf"
     },
     "zip": {
       "Package": "zip",

@@ -34,9 +34,6 @@ jobs:
       shell: Rscript {0}
       run: |
         install.packages("renv")
-        install.packages('BiocManager')
-        BiocManager::install("treeio")
-        BiocManager::install('ggtree')
         print(getwd())
         renv::restore(lockfile="program/renv.lock")
         
