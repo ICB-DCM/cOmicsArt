@@ -120,8 +120,6 @@ Open a terminal or command prompt and use the following command to pull the Dock
 docker pull pauljonasjost/comicsart:latest
 ```
 
-Replace `username` with your Docker Hub username.
-
 ### 3. Run the Docker Container
 
 After pulling the image, you can run the Docker container with the following command:
@@ -143,6 +141,8 @@ http://localhost:3838
 ```
 
 This will open the Shiny app in your browser.
+Note, that this intitially may take some time due to initializing.
+
 
 ### 5. Update the Docker Image
 
