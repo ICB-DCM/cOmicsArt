@@ -1,20 +1,18 @@
-# Data Input Notes:
+# Welcome to cOmicsArt
+
+
+
+Please refer to the following listed links for further information on the respective topics:
+
 ## Status Quo
 General Test:
-![example workflow](https://github.com/LeaSeep/cOmicsArt/actions/workflows/run-tests.yaml/badge.svg)
+![Repository status](https://github.com/LeaSeep/cOmicsArt/actions/workflows/run-tests.yaml/badge.svg?branch=main)
+![Web Browser status]()
 
-Develop-Version Test-Status:
-![develop status](https://github.com/LeaSeep/cOmicsArt/actions/workflows/run-tests.yaml/badge.svg?branch=develop)
+cOmicsArt is freely available at https://shiny.iaas.uni-bonn.de/cOmicsArt/; 
+User documentation is available at https://icb-dcm.github.io/cOmicsArt/; 
+A docker image can be retrieved from https://hub.docker.com/r/pauljonasjost/comicsart/tags; 
+A screen recording of cOmicsArt is available at: https://www.youtube.com/watch?v=pTGjtIYQOak 
 
-Main-Version Test-Status:
-![main status](https://github.com/LeaSeep/cOmicsArt/actions/workflows/run-tests.yaml/badge.svg?branch=main)
-
-3 tables are needed:
-1. data-table (e.g. counts or intensitites)
-  - row names must be entities (e.g. genes or metabolites)
-  - column names must be sample names
-2. sample annotation (e.g. Treatment, tissue type) 
-  - rownames must match the colnames from (1.), hence each sample get a row
-  - MUST have a column called global_ID (same as rownames) with unique entries
-3. entitie annotation (e.g. type of gene or assoc pathway of metab)
-  - rownames must match the rownames from (1.)
+A snapshot upon publication can be found on Zenodo: very last thing; Note, that
+you can find within the branches the Zenodo based branches.
