@@ -14,9 +14,9 @@ the respective topics:
 
 ## Status Quo
 
-General Test: ![Repository
-status](https://github.com/ICB_DCM/cOmicsArt/actions/workflows/run-tests.yaml/badge.svg?branch=main)
-![Web Browser status]()
+General Test:
+[![Test Shiny App Startup](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/start_check.yaml/badge.svg)](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/start_check.yaml)
+[![Deploy Jekyll site to Pages](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/pages.yml/badge.svg)](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/pages.yml)
 
 -   cOmicsArt is freely available at
     <https://shiny.iaas.uni-bonn.de/cOmicsArt/>
