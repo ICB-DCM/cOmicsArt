@@ -38,14 +38,21 @@ the steps to follow:
   <span id="prev" style="font-size: 2em; cursor: pointer; margin-right: 10px;">&#8592;</span>
 
   <!-- Image element -->
-  <img id="slideshow" src="/cOmicsArt/assets/images/Slideshow1.png" width="600px">
+  <img id="slideshow" src="/cOmicsArt/assets/images/Slideshow1.png" width="600px" style="transition: transform 0.3s ease;">
 
   <!-- Right arrow -->
   <span id="next" style="font-size: 2em; cursor: pointer; margin-left: 10px;">&#8594;</span>
 </div>
 
 <!-- Subtitle element -->
-<p id="subtitle" style="text-align: center;">Test 1</p>
+<p id="subtitle" style="text-align: center;">Slideshow</p>
+
+<style>
+  /* Enlarge image on hover */
+  #slideshow:hover {
+    transform: scale(1.5); /* Enlarge the image by 1.5 times */
+  }
+</style>
 
 <script>
 var images = [
@@ -71,6 +78,7 @@ document.getElementById("next").onclick = function() {
     updateSlideshow(currentIndex);
 };
 </script>
+
 
 ### Downloaded R Code
 
