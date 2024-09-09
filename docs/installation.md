@@ -105,14 +105,67 @@ Shiny app.
 
 ## Prerequisites
 
-1.  **Install Docker**: Ensure Docker is installed on your system. You
-    can download and install Docker from [Docker's official
-    website](https://www.docker.com/get-started).
+### 1.  **Install Docker**
 
-## Steps to Run the ShinyApp
+Ensure Docker is installed on your system. You can download and install Docker from 
+[Docker's official website](https://www.docker.com/get-started).
+
+## Steps to Install and Run the Shiny App
+
+### 2. Pull the Docker Image
+
+Open a terminal or command prompt and use the following command to pull the Docker image from Docker Hub:
+
+```bash
+docker pull pauljonasjost/comicsart:latest
+```
+
+### 3. Run the Docker Container
+
+After pulling the image, you can run the Docker container with the following command:
+
+```bash
+docker run -p 3838:3838 pauljonasjost/comicsart:latest
+```
+
+This command does the following:
+- `-p 3838:3838` maps port 3838 in the Docker container to port 3838 on your local machine.
+- `pauljonasjost/comicsart:latest` specifies the Docker image to run.
+
+### 4. Access the Shiny App
+
+Once the container is running, open your web browser and navigate to:
+
+```bash
+http://localhost:3838
+```
+
+This will open the Shiny app in your browser.
+Note, that this intitially may take some time due to initializing.
+
+
+### 5. Update the Docker Image
+
+To update the Docker image with the latest version, pull the image again:
+
+```bash
+docker pull pauljonasjost/comicsart:latest
+```
+
+Then follow the steps to run the updated image.
+
+### Troubleshooting
+
+If you encounter issues, consider the following tips:
+
+- **Port Conflicts**: If port 3838 is already in use, map the container's port to a different local port, e.g., 8888:
+
+  ```bash
+  docker run -p 8888:3838 username/shinyapp:latest
+  ```
+
+  Then access the app at `http://localhost:8888`.
+
+- **Permissions Issues**: On Linux, you may need to use `sudo` for Docker commands.
 
 .....
-
-# Local deploy the App from github
-
-....
