@@ -56,22 +56,19 @@ The files must be in the following format:<br>
 - ⚠️ The files need to be **.csv** files, which also means that they need to be comma-separated, not semicolon-separated. When **exporting from Excel**, make sure to check that the separator is a comma. If your Excel is in German, your default export uses semicolons which will lead to errors!
 - ⚠️ As stated above, the **column names in the data matrix** must be the same as the **row names in the sample annotation**. And the **row names in the data matrix** must be the same as the **row names in the entities annotation**. Upon upload, **before** pressing 'Do', you can switch the tab to go to 'Upload for visual inspection'. Here, you can inspect the uploaded files and check if they correspond to your expectations. Additionally, at the bottom, several outputs from tests are given - they should all be 'Yes'.
 
-## Starting with a Single Table and a Metadatasheet 📝 📝
+## Starting with a Single Table and a Metadatasheet 📝 
 
 ### Starting with a Single Table - Data Matrix 📝
 When you have only your omics data table (referred to as the Data Matrix), ensure that entities are organized in rows and samples in columns. There are no limitations on the number of rows and columns (e.g., genes and samples), but you should have more than two entities and samples for meaningful analysis. While cOmicsART is designed for omics analysis, you can upload any type of measurements arranged in a data matrix format. However, please note that some analyses, such as enrichment analysis, might not be meaningful with non-omics data. Also, some provided pre-processing options then might not be relevant - you have the option to select 'None' as pre-processing, giving you the option to perform pre-processing beforehand and upload and analyze the uploaded data.
 
-### The Metadatasheet 📝
+### The Metadatasheet 🚀
 The Metadatasheet enables biomedical researchers to organize their data and metadata along the data lifecycle and is suitable for more than just omics data. For more information, see [From Planning Stage Towards FAIR Data: A Practical Metadatasheet For Biomedical Scientists](https://www.nature.com/articles/s41597-024-03349-2). If you have such a metadatasheet, the sample table can be replaced by uploading the Metadatasheet. We aim to majorly enhance the incorporation of the Metadatasheet with cOmicsART.
 
 ### Creating an Annotation Table 🔧
 Having the data matrix, you need to create a fitting annotation table. A fitting annotation table has the row names of the data matrix in its row names. Each additional column in the annotation table carries additional information about the entities (referred to as row annotation). Examples are gene type, lipid class, or other IDs. You are not limited to the number of columns, hence to the number of information you can supply to your entities.
 
-Within cOmicsART, this information can be used within the data selection or to be visualized instead of the row index. For some examples of the data selection, go to [data selection](selection.md).
+Within cOmicsArt, this information can be used within the data selection or to be visualized instead of the row index. For some examples of the data selection, go to [data selection](selection.md).
 
-## Starting with an RDS Object 📝
-Once you have uploaded your three data tables to the app, you can click on 'save as RDS Object'. This is an R-specific object that saves all three files in one object. Hence, for any new analysis, you can just upload this single file and not multiple to save yourself some time. Note that the RDS object is in general not a standardardized format, which means that you cannot upload any RDS object. If you want to create a RDS-object outside cOmicsART see [RDS-Structure](### [Advanced] RDS-Structure)
-
-### 🏆 [Advanced] RDS-Structure
-*** to come ***
+## Starting with an RDS Object 
+Once you have uploaded your three data tables to the app, you can click on 'save as RDS Object'. This is an R-specific object that saves all three files in one object. Hence, for any new analysis, you can just upload this single file and not multiple to save yourself some time. Note that the RDS object is in general not a standardardized format, which means that you cannot upload any RDS object. 
 
