@@ -10,7 +10,7 @@ nav_order: 7
 
 The Single Gene Visualisations tab is divided into two main sections: the side panel and the main panel.
 
-## Side Panel
+## Side Panel 📚
 
 In the side panel, you have the following options:
 
@@ -26,7 +26,7 @@ In the side panel, you have the following options:
 
 - **Choose the groups to show the data for**: Below the horizontal line, you can choose the groups to show the data for. The options are populated based on the sample annotation provided initially.
 
-## Main Panel
+## Main Panel 💡
 
 The main panel displays the single gene visualisations. Here are some key points:
 
@@ -36,6 +36,6 @@ The main panel displays the single gene visualisations. Here are some key points
 
 - **Download Options**: The visualisation can be downloaded directly in common formats (e.g., PNG, TIFF, PDF) or sent to the report. You can also download the underlying R code and data. For more information, check out [Interface Details](../interface-details.md).
 
-### Other Notes
+### Other Notes 📌
 
 - **Question Marks**: The displayed question marks provide quick and immediate help. However, since you are reading this documentation, you found the extensive version. Hope it helped!

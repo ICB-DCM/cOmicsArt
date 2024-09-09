@@ -9,7 +9,7 @@ nav_order: 8
 
 The Enrichment Analysis tab allows you to perform enrichment analysis specifically for transcriptomics data. This section is divided into two areas: the side panel and the main panel.
 
-## Side Panel
+## Side Panel 📚
 
 In the side panel, you have the following options:
 
@@ -56,7 +56,7 @@ In both cases GSEA and ORA, you will have the following additional options:
 - **Get Enrichment Analysis**: Clicking this button will generate the results in the 
   main panel
 
-## Main Panel
+## Main Panel 💡
 
 The main panel displays the results of the enrichment analysis. Here are some key points:
 
@@ -74,7 +74,7 @@ The main panel displays the results of the enrichment analysis. Here are some ke
   code and data. For more information, check out [Interface Details](../interface-details.md). The tables can be downloaded in common formats as well (.csv,
   .xlsx).
 
-### Other Notes
+### Other Notes 📌
 
 - **Question Marks**: The displayed question marks provide quick and immediate help. They offer guidance and additional information about the options available.
 

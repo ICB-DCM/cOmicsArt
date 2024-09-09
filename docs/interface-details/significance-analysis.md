@@ -9,7 +9,7 @@ nav_order: 4
 
 The Significance Analysis tab is divided into two main sections: the side panel and the main panel.
 
-## Side Panel
+## Side Panel 📚
 
 In the side panel, you have the following options:
 
@@ -29,7 +29,7 @@ In the side panel, you have the following options:
 
 - **Get Significance Analysis**: Clicking this button will perform the significance analysis based on the selected parameters.
 
-## Main Panel
+## Main Panel 💡
 
 The main panel displays the results of the significance analysis. The main panel has several tabs:
 - **Result Visualization**: This tab shows similarities and differences between the groups you compared.
@@ -65,7 +65,7 @@ The main panel displays the results of the significance analysis. The main panel
       formats (e.g., PNG, TIFF, PDF) or sent to the report. You can also download 
       the underlying R code and data. For more information, check out [Interface Details](../interface-details.md).
 
-### Other Notes
+### Other Notes 📌
 
 - **Question Marks**: The displayed question marks provide quick and immediate help. However, since you are reading this documentation, you found the extensive version. Hope it helped!
 - **Interpretation**: The plots and table can give insights into the significant 
