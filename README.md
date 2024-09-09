@@ -1,13 +1,7 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # Welcome to cOmicsArt
 
 ![comic of a wombat on the path to find this
-Readme](docs/assests/images/cOmicsART_README.png)
+Readme](docs/assets/images/cOmicsART_README.png)
 
 Please refer to the following listed links for further information on
 the respective topics:
@@ -15,7 +9,7 @@ the respective topics:
 ## Status Quo
 
 General Test:
-[![Test Shiny App Startup](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/start_check.yaml/badge.svg)](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/start_check.yaml)
+[![Repository Status](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/start_check.yaml/badge.svg)](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/start_check.yaml)
 
 [![Deploy Jekyll site to Pages](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/pages.yml/badge.svg)](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/pages.yml)
 
