@@ -41,7 +41,7 @@ Open a terminal or command prompt and use the following command to clone
 the repository:
 
 ``` bash
-git clone https://github.com/leaseep/cOmicsArt.git
+git clone https://github.com/icb-dcm/cOmicsArt.git
 ```
 
 ### 2. Navigate to the Project Directory
