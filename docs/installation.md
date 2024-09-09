@@ -7,7 +7,7 @@ editor_options:
     wrap: 72
 ---
 
-# Introduction
+# Local Installation
 
 ![A comic about a cat finding
 cOmicsART](/cOmicsArt/assets/images/cOmicsTurtle.png) *Image generated
@@ -15,13 +15,11 @@ using DALL-E by OpenAI. Adjusted by Lea Seep*
 
 Why do you want to install cOmicsART locally? If you just want to use it
 make sure to checkout the website:
-[cOmicsART](https://shiny.iaas.uni-bonn.de/cOmicsArt/). For this there
+[cOmicsART](https://shiny.iaas.uni-bonn.de/cOmicsArt/). Here
 is no installation effort required. If you know you are right here,
-let's get started.
+let's get started. You can find here instructions to run cOmicsART locally within RStudio or using Docker.
 
 # Running a cOmicsART locally within RStudio
-
-# Installing and Running the Shiny App Locally
 
 This guide provides detailed instructions on how to install and run the
 Shiny app from the provided GitHub repository.
@@ -31,7 +29,7 @@ Shiny app from the provided GitHub repository.
 Ensure you have the following software installed on your system: -
 [Git](https://git-scm.com/) - [R](https://www.r-project.org/) -
 [RStudio](https://rstudio.com/products/rstudio/download/) -
-[renv](https://rstudio.github.io/renv/articles/renv.html) package in R
+[renv](https://rstudio.github.io/renv/articles/renv.html) package in R.
 
 ## Steps to Install and Run the Shiny App
 

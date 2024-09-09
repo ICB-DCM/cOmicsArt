@@ -34,7 +34,10 @@ For now, no selection of the data is done, such that all data is considered duri
 
 For pre-processing, we select the DESeq option. Upon selection, we specify 'Treatment' as the main factor for the model. For more details about the DESeq2 pipeline used in the background, check out the [DESeq2 vignette](https://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html). The pre-processing involves filtering lowly expressed genes before applying the DESeq2 pipeline.
 
-![Figure D1 Diagnostic plots. The diagnostic plot displays each sample’s gene count distribution colored after treatment.](/cOmicsArt/assets/images/FigureD1.png)
+<figure>
+  <img src="/cOmicsArt/assets/images/FigureD1.png" alt="Figure D1 Diagnostic plots. The diagnostic plot displays each sample’s gene count distribution colored after treatment." width="600">
+  <figcaption>Figure D1: Diagnostic plots. The diagnostic plot displays each sample’s gene count distribution colored after treatment.</figcaption>
+</figure>
 
 After clicking 'Get Pre-Processing', the data is processed and we can assess the diagnostic plots of the sample distribution (Fig. D1). We color the sample distribution diagnostic plots with respect to their treatment (side panel below the horizontal line, hence only performing re-coloring but no re-pre-processing). After preprocessing, we can see that the distribution across samples is similar and does not depend on the underlying treatment. We can conclude that the chosen pre-processing was successful in generating homogeneous distributions across samples.
 
@@ -46,7 +49,11 @@ This section explores the correlation pattern among samples to determine if samp
 
 We first investigate whether global patterns within the data fit our expectations: samples with similar treatment are more similar to each other. Therefore, we assess their correlation pattern using the Pearson correlation coefficient within the sample correlation tab. Upon clicking ‘Get Sample Correlation’ we can observe that the correlation across all our samples is very high. Upon selecting ‘treatment’ as the annotation variable we can observe rather minor differences between the treatment groups (Fig. D2). This could indicate that the treatment does not have a strong effect on the global gene expression patterns. The expected effect is potentially only visible in a subset of the samples. Also, sample correlation incorporating all data might not be the best way to assess the effect of the treatment on such high-dimensional data. Hence, we further assess the PCA, to identify which linear combinations of features (here genes) explain the most variance within the data.
 
-![Figure D2 Sample correlation plot. The sample correlation matrix is displayed as a heatmap whereby hierarchical clustering is added and determines the ordering of rows/columns. Note, the small range of correlation values at the legend.](/cOmicsArt/assets/images/FigureD2.png)
+<figure>
+  <img src="/cOmicsArt/assets/images/FigureD2.png" alt="Figure D2 Sample correlation plot. The sample correlation matrix is displayed as a heatmap whereby hierarchical clustering is added and determines the ordering of rows/columns. Note, the small range of correlation values at the legend." width="600">
+  <figcaption>Figure D2: Sample correlation plot. The sample correlation matrix is displayed as a heatmap, with hierarchical clustering determining the ordering of rows and columns. Note the small range of correlation values at the legend.</figcaption>
+</figure>
+
 
 PCA:
 
@@ -62,7 +69,10 @@ Switching to the *'PCA_Loadings'* tab allows us to gain insights into the featur
 
 [^3]: Piccardoni, P. et al. Thrombin-activated human platelets release two NAP-2 variants that stimulate polymorphonuclear leukocytes. Thromb Haemost 76, 780–785 (1996)
 
-![Figure D3 PCA tab results. A PCA plot showing 1st and 2nd principal components colored after treatment. B Scree-plot showing the variances explained per PC component. Within cOmicsArt one can hover over the points to retrieve the exact value. C The loadingsplot shows the top 20 absolute loadings and associated genes. Note that NA’s in the intitial annotation are replaced by the respective row ID. D The loadings matrix plot shows the loadings greater than 0.05 for the selected PCs 1 and 2.](/cOmicsArt/assets/images/FigureD3.png)
+<figure>
+  <img src="/cOmicsArt/assets/images/FigureD3.png" alt="Figure D3 PCA tab results. A PCA plot showing 1st and 2nd principal components colored after treatment. B Scree-plot showing the variances explained per PC component. Within cOmicsArt one can hover over the points to retrieve the exact value. C The loadings plot shows the top 20 absolute loadings and associated genes. Note that NA’s in the initial annotation are replaced by the respective row ID. D The loadings matrix plot shows the loadings greater than 0.05 for the selected PCs 1 and 2." width="600">
+  <figcaption>Figure D3: PCA tab results. A PCA plot showing 1st and 2nd principal components colored after treatment. B Scree-plot showing the variances explained per PC component. Within cOmicsArt, one can hover over the points to retrieve the exact value. C The loadings plot shows the top 20 absolute loadings and associated genes. Note that NA’s in the initial annotation are replaced by the respective row ID. D The loadings matrix plot shows the loadings greater than 0.05 for the selected PCs 1 and 2.</figcaption>
+</figure>
 
 However, we can observe no separation of the groups along PC1 but rather by a combination of PC1 and PC2 (separation by a diagonal from middle top to bottom right) - hence high loadings on both principal components need to be assessed. For this, we switch to the ‘PCA_Loadings_Matrix’ panel. To see something meaningful, we need to adjust the default parameters at the bottom. From the previous loadings plot, we can deduce that the general loading levels are rather small - therefore, we adjust the 'absolute loading threshold to filter entities with low impact' to 0.05. As we are interested in PC1 and PC2, we adjust the number of PCs to include them as well (Fig. D3 D). We can confirm by visual inspection that Dusp1 has the combined highest impact, followed by Fos and Osm. Fos in combination with Jun are components of the AP-1 transcription factor complex and have been reported to play a role in inflammaging[^4]. Osm is a gene that has been known to have inflammatory and anti-inflammatory effects[^5].
 
@@ -76,7 +86,10 @@ However, we can observe no separation of the groups along PC1 but rather by a co
 
 To statistically test the two genes identified by their high loadings on PC1 and their difference in expression between the treatments, we can go to the Single Gene Visualisations tab. Here, single tests are performed and no multiple testing correction is done, allowing for a quick lookup of genes of interest. Checking Dusp1, Fos, Osm, and Ppbp, we obtain significant (p\<0.05) results for all but Osm, with Dusp1 and Fos being upregulated in HSD compared to NSD, while Ppbp is downregulated (Fig. D4A).
 
-![Figure D4 Single gene visualisations. A Boxplots with statistical testing for Ppbp, Osm, Fos, and Dusp1 expression grouped by treatment. B Dotplot of Ppbp expression shown per individual.](/cOmicsArt/assets/images/Figure4.png)
+<figure>
+  <img src="/cOmicsArt/assets/images/Figure4.png" alt="Figure D4 Single gene visualisations. A Boxplots with statistical testing for Ppbp, Osm, Fos, and Dusp1 expression grouped by treatment. B Dotplot of Ppbp expression shown per individual." width="600">
+  <figcaption>Figure D4: Single gene visualisations. A Boxplots with statistical testing for Ppbp, Osm, Fos, and Dusp1 expression grouped by treatment. B Dotplot of Ppbp expression shown per individual.</figcaption>
+</figure>
 
 If we change the 'groups to show the data for' to ‘Simulation_Treatment’, we can observe for Ppbp that NSD_1 and NSD_2 and HSD_3 and HSD_5 behave differently from the other members of the group (Fig. D4B). This aligns with the PCA results. Note, that we cannot 'test' for a difference as we have a single data point for each.
 
@@ -136,9 +149,12 @@ The most significant gene is ENSMUSG00000044786 (ZFP36). To get an overview of a
 | ENSMUSG00000019960 | 1965.95  | -0.30          | 1.77E-03 | 4.44E-02 |
 | ENSMUSG00000102051 | 1772.11  | -0.34          | 3.15E-05 | 2.20E-03 |
 
-Table D1 Statistical analysis. Overview showing all significant genes from the comparison HSD vs NSD (adjusted p value \< 0.05 and sorted by log2FoldChange(LFC)). Omitting the columns ‘lfcSE’, baseMean and ‘stat’. The double line separates up from downregulated genes.
+Table D1 Statistical analysis. Overview showing all significant genes from the comparison HSD vs NSD (adjusted p value \< 0.05 and sorted by log2FoldChange(LFC)). Omitting the columns ‘lfcSE’, baseMean and ‘stat’.
 
-![Figure D5 Volcano plot. Volcano plot of all tested genes, highlighting in red all signficant genes defined by adj. pvalue \> 0.05 and a LFC \> 0.5.](/cOmicsArt/assets/images/FigureD5.png)
+<figure>
+  <img src="/cOmicsArt/assets/images/FigureD5.png" alt="Figure D5 Volcano plot. Volcano plot of all tested genes, highlighting in red all significant genes defined by adj. pvalue > 0.05 and a LFC > 0.5." width="600">
+  <figcaption>Figure D5: Volcano plot. Volcano plot of all tested genes, highlighting in red all significant genes defined by adj. pvalue > 0.05 and a LFC > 0.5.</figcaption>
+</figure>
 
 The set includes: ENSMUSG00000044786 (Zfp36), ENSMUSG00000052684 (Jun), ENSMUSG00000053560 (Ier2), ENSMUSG00000020423 (Btg2), ENSMUSG00000052837 (JunB), ENSMUSG00000021250 (Fos), ENSMUSG00000038418 (Egr1), ENSMUSG00000021123 (Rdh12), ENSMUSG00000031431 (TSC22D3), ENSMUSG00000024190 (Dusp1). Half of these genes have been associated with major functions of neutrophils, such as Egr1 for microbial killing, chemoattractant priming, NETosis, Fos, Btg2, and Dusp2 for small pore migration, and JunB for NETosis[^6]. Further, Jun, Ier2, JunB, Fos, and Egr1 belong to the early immediate response, while Zfp36, TSC22D3 and Dusp1 belong to the glucocorticoid targets. We can conclude that besides no great global shifts, neutrophil core functions seem to be altered by High salt diet.
 
@@ -148,11 +164,19 @@ The set includes: ENSMUSG00000044786 (Zfp36), ENSMUSG00000052684 (Jun), ENSMUSG0
 
 To obtain a nice visual representation, we switch to the heatmap panel and select for the row-selection Select based on Annotation - which means that we can select data based on their row annotation hence for example precisely their ID. We select the 10 genes which we just identified to be significantly upregulated. The resulting heatmap, after row-wise scaling, shows a distinct separation of the treatments, whereby the sample NSD_5 clusters close to HSD_1, which itself clusters away from the other HSD samples (Fig. D6).
 
-![Figure D6 Heatmap of significant upregulated genes. The genes and the samples are ordered in correspondance to the applied hierarichal clustering.](/cOmicsArt/assets/images/FigureD6.png)
+<figure>
+  <img src="/cOmicsArt/assets/images/FigureD6.png" alt="Figure D6 Heatmap of significant upregulated genes. The genes and the samples are ordered in correspondence to the applied hierarchical clustering." width="600">
+  <figcaption>Figure D6: Heatmap of significant upregulated genes. The genes and the samples are ordered in correspondence to the applied hierarchical clustering.</figcaption>
+</figure>
+
 
 We save the set of genes by clicking Save genes shown in Heatmap for OA within Enrichment Analysis tab’ to further use them for overrepresantation analysis. To further characterise the set we can perform an enrichment analysis. We switch to the Enrichment Analysis tab and select the gene set we just identified. As we have a set of genes we first perform an Over-representation analysis uploading the identified set of genes. We choose the set to test as KEGG, HALLMARK and GO_BP (biological process). As universe, we used all genes present after pre-processing. We obtain enriched terms for Hallmark such as TNFa signaling via NFkB, Hypoxia, UV response up, and P53 pathway (Fig. D7).
 
-![Figure D7 Hallmark enrichment result.](/cOmicsArt/assets/images/FigureD7.png)
+<figure>
+  <img src="/cOmicsArt/assets/images/FigureD7.png" alt="Figure D7 Hallmark enrichment result." width="600">
+  <figcaption>Figure D7: Hallmark enrichment result.</figcaption>
+</figure>
+
 
 In addition to the visualisations we obtain the enrichment results as tables, telling us which query genes are within the respective (enriched) set. We can, for example, see, that 8 of our input genes belong to the term TNFa signalling via NFkB (Table D2).
 
@@ -173,7 +197,11 @@ Considering the cell type (bone-marrow neutrophils), the studied cells seem to d
 
 [^7]: Jeon, J. H., Hong, C. W., Kim, E. Y. & Lee, J. M. Current understanding on the metabolism of neutrophils. *Immune Network* vol. 20 1–13 Preprint at <https://doi.org/10.4110/in.2020.20.e46> (2020)
 
-![Figure D8 Dotplots. Enriched sets based on the Log Fold change between HSD and NSD. A Hallmark, B KEGG, C GO biological process.](/cOmicsArt/assets/images/FigureD8.png)
+<figure>
+  <img src="/cOmicsArt/assets/images/FigureD8.png" alt="Figure D8 Dotplots. Enriched sets based on the Log Fold change between HSD and NSD. A Hallmark, B KEGG, C GO biological process." width="600">
+  <figcaption>Figure D8: Dotplots. Enriched sets based on the Log Fold change between HSD and NSD. A Hallmark, B KEGG, C GO biological process.</figcaption>
+</figure>
+
 
 ## Intermediate summary
 

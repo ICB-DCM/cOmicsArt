@@ -38,14 +38,21 @@ the steps to follow:
   <span id="prev" style="font-size: 2em; cursor: pointer; margin-right: 10px;">&#8592;</span>
 
   <!-- Image element -->
-  <img id="slideshow" src="/cOmicsArt/assets/images/Slideshow1.png" width="600px">
+  <img id="slideshow" src="/cOmicsArt/assets/images/Slideshow1.png" width="600px" style="transition: transform 0.3s ease;">
 
   <!-- Right arrow -->
   <span id="next" style="font-size: 2em; cursor: pointer; margin-left: 10px;">&#8594;</span>
 </div>
 
 <!-- Subtitle element -->
-<p id="subtitle" style="text-align: center;">Test 1</p>
+<p id="subtitle" style="text-align: center;">Slideshow</p>
+
+<style>
+  /* Enlarge image on hover */
+  #slideshow:hover {
+    transform: scale(1.5); /* Enlarge the image by 1.5 times */
+  }
+</style>
 
 <script>
 var images = [
@@ -72,6 +79,7 @@ document.getElementById("next").onclick = function() {
 };
 </script>
 
+
 ### Downloaded R Code
 
 If successful, you should have downloaded a folder with the files `Data.RDS`, `utils.
@@ -82,9 +90,12 @@ contains the code to reproduce the volcano plot along with the data processing s
 
 The R code is shown below:
 
-<div style="width: 90%; height: 50vh; margin: 0 auto; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; box-sizing: border-box;">
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
 
-```r
+  <!-- Code block with copy button -->
+  <div style="width: 90%; padding: 2px; margin-bottom: 10px;">
+    <div style="background-color: #f9f9f9; border: 1px solid #ccc; height: 800px; overflow-y: auto; padding: 10px;">
+      <pre><code id="code-block">
 # ShinyOmics R Code Download
 # Load necassary packages ----
 # Note that you do not need to install packages everytime you run the script
@@ -326,7 +337,9 @@ Volcano_plot <- ggplot(
   CUSTOM_THEME +
   ggtitle(label="Corrected p-Values")
 lapply(ls(pattern='plot'), get)
-```
+      </code></pre>
+    </div>
+  </div>
 </div>
 
 A detailed explanation of the code structure can be found [here](r-code.md). We will 
@@ -347,12 +360,12 @@ appearance by just replacing the original `CUSTOM_THEME` object with the altered
 In the code `CUTSOM_THEME` can be found in lines 71-79. Below you can see the 
 original and altered theme side by side:
 
-<div style="display: flex; align-items: center; justify-content: center;">
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
 
-<!-- Original Theme -->
-<div style="width: 45%; padding: 10px;">
-<h3 style="text-align: center;">Original Theme</h3>
-<div style="background-color: #f9f9f9; border: 1px solid #ccc; height: 500px; overflow-y: auto;">
+  <!-- Original Theme -->
+  <div style="width: 90%; padding: 10px; margin-bottom: 0px;">
+    <h3 style="text-align: center;">Original Theme</h3>
+    <div style="background-color: #f9f9f9; border: 1px solid #ccc; height: 500px; overflow-y: auto;">
       <pre><code>
 # Setting default options
 CUSTOM_THEME <- theme_bw(base_size = 15) + 
@@ -373,12 +386,12 @@ CUSTOM_THEME <- theme_bw(base_size = 15) +
   </div>
 
   <!-- Arrow in between -->
-  <div style="width: 10%; text-align: center; font-size: 2em;">
-    &#8594;
+  <div style="width: 90%; text-align: center; font-size: 2em; margin-bottom: 20px;">
+    &#8595;
   </div>
 
   <!-- Altered Theme -->
-  <div style="width: 45%; padding: 10px;">
+  <div style="width: 90%; padding: 10px;">
     <h3 style="text-align: center;">Altered Theme</h3>
     <div style="background-color: #f9f9f9; border: 1px solid #ccc; height: 500px; overflow-y: auto;">
       <pre><code>
@@ -403,6 +416,7 @@ CUSTOM_THEME <- theme_dark(base_size = 18) +
   </div>
 
 </div>
+
 
 We can save the plot easily as pdf, png or svg using:
 
@@ -429,13 +443,12 @@ threshold, determining the significance of the data points. In the code, the thr
 are defined in lines 194 + 195. They originally use the vales stored from the 
 application, but we can change to new values, without the need to go back to cOmicsArt.
 
-<div style="display: flex; align-items: center; justify-content: center;">
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
 
   <!-- Original Thresholds -->
-  <div style="width: 45%; padding: 10px;">
+  <div style="width: 90%; padding: 10px; margin-bottom: 5px;">
     <h4 style="text-align: center;">Original Thresholds</h4>
-    <div style="background-color: #f9f9f9; height: 200px; border: 1px solid #ccc; 
-overflow-x: auto; overflow-y: auto; white-space: nowrap;">
+    <div style="background-color: #f9f9f9; height: 150px; border: 1px solid #ccc; overflow-x: auto; overflow-y: auto; white-space: nowrap;">
       <pre><code>
 significance_threshold <- par_tmp$SigAna[paste0("SignificanceAnalysis-", par_name, "_psig_th")]
 lfc_threshold <- par_tmp$SigAna[paste0("SignificanceAnalysis-", par_name, "_lfc_th")]
@@ -444,15 +457,14 @@ lfc_threshold <- par_tmp$SigAna[paste0("SignificanceAnalysis-", par_name, "_lfc_
   </div>
 
   <!-- Arrow in between -->
-  <div style="width: 10%; text-align: center; font-size: 2em;">
-    &#8594;
+  <div style="width: 90%; text-align: center; font-size: 2em; margin-bottom: 20px;">
+    &#8595;
   </div>
 
   <!-- Altered Thresholds -->
-  <div style="width: 45%; padding: 10px;">
+  <div style="width: 90%; padding: 10px;">
     <h4 style="text-align: center;">Altered Thresholds</h4>
-    <div style="background-color: #f9f9f9; height: 200px; border: 1px solid #ccc; 
-overflow-x: auto; overflow-y: auto; white-space: nowrap;">
+    <div style="background-color: #f9f9f9; height: 200px; border: 1px solid #ccc; overflow-x: auto; overflow-y: auto; white-space: nowrap;">
       <pre><code>
 significance_threshold <- 0.01
 lfc_threshold <- 2.5
@@ -474,13 +486,12 @@ we will flip the treatment and control groups. We will keep the adjusted thresho
 and thus only have to take care of the `par_tmp$SigAna$comparisons` and 
 `par_tmp$SigAna$contrast`. We overwrite both after loading the RDS file, holding the data and results obtained from cOmicsArt.
 
-<div style="display: flex; align-items: center; justify-content: center;">
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
 
   <!-- Original Code -->
-  <div style="width: 45%; padding: 10px;">
-    <h4 style="text-align: center;">Original Thresholds</h4>
-    <div style="background-color: #f9f9f9; height: 275px; border: 1px solid #ccc; 
-overflow-x: auto; overflow-y: auto; white-space: nowrap;">
+  <div style="width: 90%; padding: 10px; margin-bottom: 20px;">
+    <h4 style="text-align: center;">Original Code</h4>
+    <div style="background-color: #f9f9f9; height: 200px; border: 1px solid #ccc; overflow-x: auto; overflow-y: auto; white-space: nowrap;">
       <pre><code>
 list2env(envList,envir = globalenv()) 
 # loads the variables directly into global env
@@ -493,15 +504,14 @@ if(exists('loadedVersion')){
   </div>
 
   <!-- Arrow in between -->
-  <div style="width: 10%; text-align: center; font-size: 2em;">
-    &#8594;
+  <div style="width: 90%; text-align: center; font-size: 2em; margin-bottom: 20px;">
+    &#8595;
   </div>
 
   <!-- Altered Comparison -->
-  <div style="width: 45%; padding: 10px;">
-    <h4 style="text-align: center;">Altered Thresholds</h4>
-    <div style="background-color: #f9f9f9; height: 275px; border: 1px solid #ccc; 
-overflow-x: auto; overflow-y: auto; white-space: nowrap;">
+  <div style="width: 90%; padding: 10px;">
+    <h4 style="text-align: center;">Altered Code</h4>
+    <div style="background-color: #f9f9f9; height: 200px; border: 1px solid #ccc; overflow-x: auto; overflow-y: auto; white-space: nowrap;">
       <pre><code>
 # Set Environment ----
 list2env(envList,envir = globalenv()) 
@@ -517,6 +527,7 @@ par_tmp$SigAna$contrast <- c("untrt", "trt")
   </div>
 
 </div>
+
 
 The altered plot will look like a mirrored version of the threshold adjusted plot:
 

@@ -7,15 +7,15 @@ nav_order: 1
 
 # Data Selection
 
-The Data Selection tab is the initial step to upload and manage your data in cOmicsART. This section is divided into two main areas: the side panel and the main panel.
+The Data Selection tab is the initial step to upload and manage your data in cOmicsArt. This section is divided into two main areas: the side panel and the main panel.
 
-## Side Panel
+## Side Panel 📚
 
 The side panel offers several tabs for different data input methods. The data Upload 
-and possibile strctures are dtailed in the [Data Input](required-data-input.md). 
+and possible structure are detailed in the [Data Input](required-data-input.md). 
 Nonetheless, here is a short overview:
 
-### File Input
+### File Input 🛠️
 
 - **Omic Type that is uploaded**: Select the type of omics data you are uploading (Transcriptomics, Lipidomics, Metabolomics).
 
@@ -32,7 +32,7 @@ Nonetheless, here is a short overview:
 
 - **Upload new data**: Click this button to upload new data files.
 
-### Precompiled
+### Precompiled 🔧
 
 - **Omic Type that is uploaded**: Select the type of omics data you are uploading (Transcriptomics, Lipidomics, Metabolomics).
 
@@ -57,13 +57,13 @@ Very similar to the `File Input`, but replacing the sample annotation with the
 
 - **Upload new data**: Click this button to upload new metadata files.
 
-### Testdata
+### Testdata 🧪
 
 - **Omic Type that is uploaded**: Select the type of omics data you are uploading (Transcriptomics, Lipidomics, Metabolomics).
 
 - **Start straight away with a test-dataset!**: Click this button to start with a test dataset.
 
-## Main Panel
+## Main Panel 💡
 
 The main panel provides options for detailed data selection:
 
@@ -88,15 +88,15 @@ The main panel provides options for detailed data selection:
   samples or all samples from a specific experiment. Again, the more information you 
   have on the samples, the better you can choose here. 
 
-### Save Input As RDS
+### Save Input As RDS 💾
 
 - **Save file input to upload later**: Click this button to save the file input as an RDS file for later use.
 
-### Start the Journey
+### Start the Journey 🚀
 
 - **Start the Journey**: Click this button to proceed with the analysis. This will 
   automatically bring you to the [Pre-processing tab](pre-processing.md).
 
-### Other Notes
+### Other Notes 📌
 
 - **Question Marks**: The displayed question marks provide quick and immediate help. They offer guidance and additional information about the options available.

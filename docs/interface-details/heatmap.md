@@ -9,7 +9,7 @@ nav_order: 6
 
 The Heatmap tab is divided into two main sections: the side panel and the main panel.
 
-## Side Panel
+## Side Panel 📚
 
 Within the side panel, you have multiple options, which depend on the selected option within
 'Select Entities to show'. Here are the general options:
@@ -59,7 +59,7 @@ Hence you need to specifcy the ordering critera and the 'k' (number of entities)
 - **row-wise scaling?**: Enable or disable row-wise scaling - note that this is z-scaling. Useful to see changes 
   within one row more clearly.
 
-## Main Panel
+## Main Panel 💡
 
 The main panel displays the heatmap and additional options. Here are some key points:
 
@@ -78,7 +78,7 @@ The main panel displays the heatmap and additional options. Here are some key po
 
 - **Notes**: Add personal notes regarding the heatmap.
 
-### Other Notes
+### Other Notes 📌
 
 - **Question Marks**: The displayed question marks provide quick and immediate help. However, since you are reading this documentation, you found the extensive version. Hope it helped!
 - **Interpretation**: The heatmap can provide insights into the relationships between different entities based on the selected annotations and clustering options. Adjusting the selection and aesthetic parameters can help in identifying the most relevant patterns.

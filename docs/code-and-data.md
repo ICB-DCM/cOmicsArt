@@ -16,6 +16,5 @@ This not only guarantees the reproducibility of your analysis, but also allows y
 easily adjust your analysis to your needs.
 
 This page provides information regarding the Code and Data download for 
-cOmicsART. We explain the [general code structure](code-and-data/r-code.md) and provide an [example how to adjust 
-the code](code-and-data/examples.md). Note that the adjusted code is only exemplary 
+cOmicsART. We explain the [general code structure](code-and-data/r-code.md) and provide an [example how to adjust the code](code-and-data/examples.md). Note that the adjusted code is only exemplary 
 and not exhaustive. We encourage you to explore the code and adjust it to your needs.

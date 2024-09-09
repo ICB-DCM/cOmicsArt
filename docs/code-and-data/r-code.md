@@ -8,8 +8,7 @@ nav_order: 2
 # R code
 
 This page contains an explanation of the R code structure when downloading R code and 
-data to reproduce/alter the analysis. We will use the original code of [the volcano 
-plot example](examples.md).
+data to reproduce/alter the analysis. We will use the original code of [the volcano plot example](code-and-data/examples.md).
 
 ## 1. Package loading and installation
 
@@ -208,10 +207,11 @@ An example how to adjust this, for example changing the comparison method is sho
 After the analysis is done, the results are visualized. There are two visualization 
 types in cOmicsArt, using ggplot2 and using pheatmap. These parts can be adjusted 
 following their respective documentation. Also, there exists gallerys and other useful resources, where one can screen for what they search for visually and get the particular code snippets:
-- [R Gallery,](ggplot2 https://r-graph-gallery.com/ggplot2-package.html)
+- [R Gallery](ggplot2 https://r-graph-gallery.com/ggplot2-package.html)
 - [Top 50 ggplot visualisaitions](https://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html?utm_content=cmp-true)
 - [ggplot extensions](https://exts.ggplot2.tidyverse.org/gallery/)
 - [Pheatmp function](https://r-charts.com/correlation/pheatmap/?utm_content=cmp-true)
+
 From own experience, we can also recommend LLMs such as ChatGPT to help to adjust the plotting commands. The code for a typical ggplot2 visualization 
 will look like this:
 
