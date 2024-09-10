@@ -4,6 +4,10 @@
 Readme](docs/assets/images/cOmicsART_README.png)
 *Image generated using DALL-E by OpenAI. Adjusted by Lea Seep*
 
+The availability of bulk-omic data is steadily increasing, necessitating collaborative efforts between experimental and computational researchers. While software tools with graphical user interfaces (GUIs) enable rapid and interactive data assessment, they are limited to pre-implemented methods, often requiring transitions to custom code for further adjustments. 
+However, most available tools lack GUI-independent reproducibility such as direct integration with R, resulting in very limited support for transition. Therefore, we introduce the **customizable Omics Analysis and reporting tool – cOmicsArt**. cOmicsArt aims to enhance collaboration through seamless integration of GUI-based analysis with R. The GUI allows researchers to perform user-friendly exploratory and statistical analyses with interactive visualizations and automatic documentation. 
+Downloadable R scripts and results ensure reproducibility and smooth integration with R, supporting both novice and experienced programmers by enabling easy customizations and serving as a foundation for more advanced analyses. This versatility also allows for usage in educational settings guiding students from GUI-based analysis to R Code.
+
 Please refer to the following listed links for further information on
 the respective topics:
 
