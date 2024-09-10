@@ -218,6 +218,15 @@ significance_analysis_server <- function(id, data, params){
         # delete old panels
         if(!is.null(sig_ana_reactive$significance_tabs_to_delete)){
           for (i in seq_along(sig_ana_reactive$significance_tabs_to_delete)) {
+            # destroy old report buttons
+            con <- unlist(strsplit(x = sig_ana_reactive$significance_tabs_to_delete[[i]],split = ":"))
+            name <- paste(con[1], con[2], "only2Report_Volcano", sep = "_")
+            for (button in c("", "_both", "_raw")){
+              session$userData[[paste0(name, button, "_val")]] <- isolate(
+                input[[paste0(name, button)]]
+              )
+              session$userData[[ns(paste0(name, button))]]$destroy()
+            }
             removeTab(
               inputId = "significance_analysis_results",
               target = sig_ana_reactive$significance_tabs_to_delete[[i]]
@@ -308,7 +317,7 @@ significance_analysis_server <- function(id, data, params){
           })
         }
         # for each result create a tabPanel
-        for (i in seq_along(sig_ana_reactive$sig_results)) {
+        for (i in seq_along(input$comparisons)) {
           create_new_tab(
             title = input$comparisons[i],
             targetPanel = "significance_analysis_results",

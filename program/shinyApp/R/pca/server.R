@@ -480,7 +480,6 @@ pca_Server <- function(id, data, params, row_select){
           },
           content = function(file){
             envList <- list(
-
               res_tmp = res_tmp[[session$token]],
               par_tmp = par_tmp[[session$token]]
             )

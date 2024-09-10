@@ -41,16 +41,66 @@ pre_processing_main_panel <- mainPanel(
     htmlOutput(outputId = "Statisitcs_Data"),
     HTML(text = "<br>"),
     fluidRow(
-      column(6,
-             h4("Raw Data"),
-             plotOutput("raw_violin_plot"),
-             plotOutput("raw_kde_plot")
+      column(
+        6,
+        h4("Raw Data"),
+        plotOutput("raw_violin_plot"),
+        plotOutput("raw_kde_plot")
       ),
-      column(6,
-             h4("Pre-processed Data"),
-             plotOutput("preprocessed_violin_plot"),
-             plotOutput("preprocessed_kde_plot")
+      column(
+        6,
+        h4("Pre-processed Data"),
+        plotOutput("preprocessed_violin_plot"),
       )
+    ),
+    splitLayout(
+      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+      NULL,
+      actionButton(
+        inputId = "only2Report_Preprocess",
+        label = "Send only to Report",
+        class = "btn-info"
+      )
+    ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+    splitLayout(
+      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+      NULL,
+      downloadButton(
+        outputId = "getR_Code_Preprocess",
+        label = "Get underlying R code and data",
+        icon = icon(name = "code")
+      )
+    ),
+    splitLayout(
+      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+      NULL,
+      downloadButton(
+        outputId = "SavePlot_Preprocess",
+        label = "Save plot",
+        class = "btn-info"
+      )
+    ),
+    splitLayout(
+      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+      NULL,
+      radioGroupButtons(
+        inputId = "file_ext_Preprocess",
+        label = "File Type:",
+        choices = c(".png", ".tiff", ".pdf"),
+        selected = ".png"
+      )
+    ),
+    splitLayout(
+      style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+      cellArgs = list(style = "padding: 5px"),
+      div(textAreaInput(
+        inputId = "NotesPreprocessedData",
+        label = "Notes:",
+        placeholder = NOTES_PlACEHOLDER,
+        width = "1000px"
+      ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
+      helpText(NOTES_HELP)),
+      NULL
     )
   )
 )

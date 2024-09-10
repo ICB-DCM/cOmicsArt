@@ -928,48 +928,6 @@ server <- function(input,output,session){
     res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data[rownames(res_tmp[[session$token]]$data),]
     par_tmp[[session$token]]['BatchColumn'] <<- input$BatchEffect_Column
 
-    # Batch correction before preprocessing
-    if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure != "vst_DESeq") {
-      tryCatch({
-        res_tmp[[session$token]]$data_batch_corrected <<- prefiltering(
-          res_tmp[[session$token]]$data,
-          par_tmp[[session$token]]$omic_type
-        )
-        assay(res_tmp[[session$token]]$data_batch_corrected) <<- sva::ComBat(
-          dat = assay(res_tmp[[session$token]]$data_batch_corrected),
-          batch = as.factor(colData(res_tmp[[session$token]]$data_batch_corrected)[,input$BatchEffect_Column])
-        )
-      }, error = function(e){
-        error_modal(
-          e, additional_text = "Batch correction failed. Make sure the batch effect column is correct!"
-        )
-        req(FALSE)
-      })
-    } else if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure == "vst_DESeq"){
-      tryCatch({
-        res_tmp[[session$token]]$data_batch_corrected <<- deseq_processing(
-            data = tmp_data_selected,
-            omic_type = par_tmp[[session$token]]$omic_type,
-            formula_main = input$DESeq_formula_main,
-            formula_sub = c(input$DESeq_formula_sub, input$BatchEffect_Column),
-            session_token = session$token,
-            batch_correct = T
-          )
-      }, error = function(e){
-        error_modal(
-          e, additional_text = paste0(
-            "Batch correction using DESeq failed. Most likely due to linear dependencies ",
-            "in the design matrix (one or more factors informing about another one).",
-            "Make sure the batch effect column is correct and ",
-            "that the design matrix is not singular!"
-            )
-        )
-        req(FALSE)
-      })
-    } else {
-      res_tmp[[session$token]]$data_batch_corrected <<- NULL
-    }
-
     # preprocessing
     print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
     tryCatch({
@@ -988,18 +946,50 @@ server <- function(input,output,session){
           omic_type = par_tmp[[session$token]]$omic_type,
           procedure = input$PreProcessing_Procedure
         )
-        if (!is.null(res_tmp[[session$token]]$data_batch_corrected)) {
-          res_tmp[[session$token]]$data_batch_corrected <<- preprocessing(
-            data = res_tmp[[session$token]]$data_batch_corrected,
-            omic_type = par_tmp[[session$token]]$omic_type,
-            procedure = input$PreProcessing_Procedure
-          )
-        }
       }
     }, error = function(e){
       error_modal(e)
       req(FALSE)
     })
+    
+    # Batch correction after preprocessing
+    if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure != "vst_DESeq") {
+      tryCatch({
+        res_tmp[[session$token]]$data_batch_corrected <<- res_tmp[[session$token]]$data
+        assay(res_tmp[[session$token]]$data_batch_corrected) <<- sva::ComBat(
+          dat = assay(res_tmp[[session$token]]$data_batch_corrected),
+          batch = as.factor(colData(res_tmp[[session$token]]$data_batch_corrected)[,input$BatchEffect_Column])
+        )
+      }, error = function(e){
+        error_modal(
+          e, additional_text = "Batch correction failed. Make sure the batch effect column is correct!"
+        )
+        req(FALSE)
+      })
+    } else if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure == "vst_DESeq"){
+      tryCatch({
+        res_tmp[[session$token]]$data_batch_corrected <<- deseq_processing(
+          data = tmp_data_selected,
+          omic_type = par_tmp[[session$token]]$omic_type,
+          formula_main = input$DESeq_formula_main,
+          formula_sub = c(input$DESeq_formula_sub, input$BatchEffect_Column),
+          session_token = session$token,
+          batch_correct = T
+        )
+      }, error = function(e){
+        error_modal(
+          e, additional_text = paste0(
+            "Batch correction using DESeq failed. Most likely due to linear dependencies ",
+            "in the design matrix (one or more factors informing about another one).",
+            "Make sure the batch effect column is correct and ",
+            "that the design matrix is not singular!"
+          )
+        )
+        req(FALSE)
+      })
+    } else {
+      res_tmp[[session$token]]$data_batch_corrected <<- NULL
+    }
 
     if(input$PreProcessing_Procedure == "filterOnly"){
       addWarning <- "<font color=\"#000000\"><b>Only Filtering of low abundant is done only if Transcriptomics or Metabolomics was chosen</b></font><br>"
@@ -1058,6 +1048,7 @@ server <- function(input,output,session){
       violin_plot(res_tmp[[session$token]]$data, 
                   color_by = input$violin_color)
       })
+    par_tmp[[session$token]]['violin_color'] <<- input$violin_color
     waiter$hide()
     return("Pre-Processing successfully")
   })
@@ -1083,7 +1074,9 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0(
         "**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",
-        ifelse(input$PreProcessing_Procedure == "vst_DESeq",paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),input$PreProcessing_Procedure)
+        ifelse(input$PreProcessing_Procedure == "vst_DESeq",
+               paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),
+               input$PreProcessing_Procedure)
       )
     )
     if(input$BatchEffect_Column != "NULL"){
@@ -1118,6 +1111,164 @@ server <- function(input,output,session){
     )
   })
   output$debug <- renderText(dim(res_tmp[[session$token]]$data))
+
+  ## Preprocessing save, Report and Code Snippet
+  output$SavePlot_Preprocess <- downloadHandler(
+    filename = function() {
+      paste0("Preprocessing_ViolinPlot_", Sys.Date(), input$file_ext_Preprocess)
+    },
+    content = function(file) {
+      # Create individual plots
+      raw_plot <- violin_plot(
+        res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']], par_tmp[[session$token]][['samples_selected']]],
+        color_by = input$violin_color
+      ) + ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
+
+      preprocessed_plot <- violin_plot(
+        res_tmp[[session$token]]$data,
+        color_by = input$violin_color
+      ) + ggtitle("Count distribution per sample - preprocessed")
+
+      # Arrange the plots side by side with more space for the right plot
+      combined_plot <- grid.arrange(
+        raw_plot,
+        preprocessed_plot,
+        ncol = 2,
+        widths = c(1, 1.3)
+      )
+
+      # Save the combined plot
+      ggsave(
+        filename = file,
+        plot = combined_plot,
+        width = 16,  # Increase the width of the figure
+        height = 8,  # Adjust height if necessary
+        units = "in",
+        device = gsub("\\.","",input$file_ext_Preprocess)
+      )
+
+      on.exit({
+        file_path <- paste0("/www/",session$token,"/")
+        tmp_filename <- paste0(
+          getwd(),
+          file_path,
+          paste0(
+            "Preprocessing_ViolinPlot_",
+            format(Sys.time(), "%Y_%m_%d_%H_%M_%S"),
+            input$file_ext_Preprocess
+          )
+        )
+        raw_plot <- violin_plot(
+          res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']], par_tmp[[session$token]][['samples_selected']]],
+          color_by = input$violin_color
+        ) + ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
+
+        preprocessed_plot <- violin_plot(
+          res_tmp[[session$token]]$data,
+          color_by = input$violin_color
+        ) + ggtitle("Count distribution per sample - preprocessed")
+
+        # Arrange the plots side by side with more space for the right plot
+        combined_plot <- grid.arrange(
+          raw_plot,
+          preprocessed_plot,
+          ncol = 2,
+          widths = c(1, 1.3)
+        )
+        ggsave(
+          filename = tmp_filename,
+          plot = combined_plot,
+          width = 16,  # Increase the width of the figure
+          height = 8,  # Adjust height if necessary
+          units = "in",
+          device = gsub("\\.","",input$file_ext_Preprocess)
+        )
+
+        fun_LogIt(message = "## PreProcessing Violin Plot{.tabset .tabset-fade}")
+        fun_LogIt(message = "### Info")
+        fun_LogIt(message = paste0("**PreProcess** - The Samples were plotted after: ",input$violin_color))
+        fun_LogIt(
+          message = paste0("**PreProcess** - ![Violin Plot](",tmp_filename,")")
+        )
+        # no publication snippet as thats already in the log
+      })
+    }
+  )
+
+  observeEvent(input$only2Report_Preprocess,{
+    notificationID <- showNotification("Saving...",duration = 0)
+    tmp_filename <- paste0(
+      getwd(),
+      file_path,
+      paste0(
+        "Preprocessing_ViolinPlot_",
+        format(Sys.time(), "%Y_%m_%d_%H_%M_%S"),
+        input$file_ext_Preprocess
+      )
+    )
+    raw_plot <- violin_plot(
+      res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']], par_tmp[[session$token]][['samples_selected']]],
+      color_by = input$violin_color
+    ) + ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
+
+    preprocessed_plot <- violin_plot(
+      res_tmp[[session$token]]$data,
+      color_by = input$violin_color
+    ) + ggtitle("Count distribution per sample - preprocessed")
+
+    # Arrange the plots side by side with more space for the right plot
+    combined_plot <- grid.arrange(
+      raw_plot,
+      preprocessed_plot,
+      ncol = 2,
+      widths = c(1, 1.3)
+    )
+    ggsave(
+      filename = tmp_filename,
+      plot = combined_plot,
+      width = 16,  # Increase the width of the figure
+      height = 8,  # Adjust height if necessary
+      units = "in",
+      device = gsub("\\.","",input$file_ext_Preprocess)
+    )
+    fun_LogIt(message = "## PreProcessing Violin Plot{.tabset .tabset-fade}")
+    fun_LogIt(message = "### Info")
+    fun_LogIt(message = paste0("**PreProcess** - The Samples were plotted after: ",input$violin_color))
+    fun_LogIt(
+      message = paste0("**PreProcess** - ![Violin Plot](",tmp_filename,")")
+    )
+    # no publication snippet as thats already in the log
+    removeNotification(notificationID)
+    showNotification("Saved!",type = "message", duration = 1)
+  })
+
+  output$getR_Code_Preprocess <- downloadHandler(
+    filename = function() {
+      paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+    },
+    content = function(file) {
+      envList <- list(
+        res_tmp = res_tmp[[session$token]],
+        par_tmp = par_tmp[[session$token]]
+      )
+      temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+      dir.create(temp_directory)
+
+      write(
+        getPlotCode(0.5),
+        file.path(temp_directory, "Code.R")
+      )
+
+      saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+
+      zip::zip(
+        zipfile = file,
+        files = dir(temp_directory),
+        root = temp_directory
+      )
+    },
+    contentType = "application/zip"
+  )
 
   # Sample Correlation ----
   # calling server without reactive it will be init upon start, with no update

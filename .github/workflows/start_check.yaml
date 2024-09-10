@@ -34,7 +34,8 @@ jobs:
       shell: Rscript {0}
       run: |
         install.packages("renv")
-        renv::restore()
+        print(getwd())
+        renv::restore(lockfile="program/renv.lock")
         
     # - name: Get R and OS version
     #   id: get-version
