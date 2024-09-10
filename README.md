@@ -26,7 +26,7 @@ General Test:
 -   A screen recording of cOmicsArt is available at
     <https://www.youtube.com/watch?v=pTGjtIYQOak>
 
--   A snapshot upon publication can be found on Zenodo: very last thing;
+-   A snapshot upon publication can be found on Zenodo: <https://zenodo.org/records/13740904>
     Note, that you can find within the branches the Zenodo based
     branches.
 
