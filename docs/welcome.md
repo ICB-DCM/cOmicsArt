@@ -9,7 +9,7 @@ nav_order: 1
 ![A comic about a cat finding cOmicsART](/cOmicsArt/assets/images/cOmicsCat.png)
 *Image generated using DALL-E by OpenAI. Adjusted by Lea Seep*
 
-If you are looking for the web app, please visit: 🌐 [cOmicsART Web App](https://comicsart.org/)
+If you are looking for the web app, please visit: 🌐 [cOmicsART Web App](https://shiny.iaas.uni-bonn.de/cOmicsArt/)
 
 Otherwise, you can navigate through the documentation using the sidebar on the left. If you’re searching for something specific, try using the search bar at the top. 🔍 It can search through the entire documentation and guide you to the relevant section.
 
