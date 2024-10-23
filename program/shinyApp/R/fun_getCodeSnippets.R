@@ -235,7 +235,7 @@ lapply(ls(pattern="violin"), get)
 pca <- prcomp(
   x = as.data.frame(t(assay(res_tmp$data))),
   center = T,
-  scale. = FALSE
+  scale. = ifelse(par_tmp$PCA$scale_data == "Yes",T,F)
 )
     
 pcaData <- data.frame(pca$x,colData(res_tmp$data))
