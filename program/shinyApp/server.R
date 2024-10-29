@@ -906,7 +906,6 @@ server <- function(input,output,session){
     # only enter this when you actually click data
     req(input$Do_preprocessing > 0)
     waiter <- Waiter$new(
-      id="data_summary",
       html = LOADING_SCREEN,
       #color="#3897F147",
       color = "rgba(255,255,255,0)",

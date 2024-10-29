@@ -489,7 +489,6 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       observeEvent(input$enrichmentGO,{
         ea_reactives$ea_info <- "Enrichment is running..."
         waiter <- Waiter$new(
-          id=ns("EnrichmentTabs"),
           html = LOADING_SCREEN,
           color="#70BF4F47"
         )

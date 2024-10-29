@@ -157,7 +157,6 @@ pca_Server <- function(id, data, params, row_select){
         req(data$data)
         req(input$Do_PCA[1] > 0)
         waiter <- Waiter$new(
-          id="plot_panels_pca",
           html = LOADING_SCREEN,
           color="#70BF4F47"
         )
