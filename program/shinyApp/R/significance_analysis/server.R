@@ -520,6 +520,7 @@ significance_analysis_server <- function(id, data, params){
           paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
         },
         content = function(file){
+          waiter$show()
           tmp <- getUserReactiveValues(input)
           par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
           
@@ -579,6 +580,7 @@ significance_analysis_server <- function(id, data, params){
             files = dir(temp_directory),
             root = temp_directory
           )
+          waiter$hide()
         },
         contentType = "application/zip"
       )

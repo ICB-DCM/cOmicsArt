@@ -1247,6 +1247,7 @@ server <- function(input,output,session){
       paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
     content = function(file) {
+      waiter$show()
       envList <- list(
         res_tmp = res_tmp[[session$token]],
         par_tmp = par_tmp[[session$token]]
@@ -1266,6 +1267,7 @@ server <- function(input,output,session){
         files = dir(temp_directory),
         root = temp_directory
       )
+      waiter$hide()
     },
     contentType = "application/zip"
   )

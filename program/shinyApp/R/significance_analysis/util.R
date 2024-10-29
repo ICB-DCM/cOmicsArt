@@ -398,6 +398,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
       },
       content = function(file){
+        waiter$show()
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
         par_tmp[[session$token]]$SigAna$contrast <<- contrast
@@ -441,6 +442,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           files = dir(temp_directory),
           root = temp_directory
         )
+        waiter$hide()
       },
       contentType = "application/zip"
     )
@@ -451,6 +453,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
       },
       content = function(file){
+        waiter$show()
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
         par_tmp[[session$token]]$SigAna$contrast <<- contrast
@@ -494,6 +497,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           files = dir(temp_directory),
           root = temp_directory
         )
+        waiter$hide()
       },
       contentType = "application/zip"
     )
@@ -930,6 +934,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
     content = function(file){
+      waiter$show()
       tmp <- getUserReactiveValues(input)
       par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
       par_tmp[[session$token]]$SigAna$contrast <<- contrast
@@ -973,6 +978,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         files = dir(temp_directory),
         root = temp_directory
       )
+      waiter$hide()
     },
     contentType = "application/zip"
   )
@@ -983,6 +989,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
     content = function(file){
+      waiter$show()
       tmp <- getUserReactiveValues(input)
       par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
       par_tmp[[session$token]]$SigAna$contrast <<- contrast
@@ -1026,6 +1033,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         files = dir(temp_directory),
         root = temp_directory
       )
+      waiter$hide()
     },
     contentType = "application/zip"
   )

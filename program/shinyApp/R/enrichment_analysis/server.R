@@ -47,6 +47,7 @@ enrichment_analysis_geneset_server <- function(
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
+            waiter$show()
           #  tmp <- getUserReactiveValues(input)
            # par_tmp$Enrichment[names(tmp)] <<- tmp
               envList <- list(
@@ -81,6 +82,7 @@ enrichment_analysis_geneset_server <- function(
               files = dir(temp_directory),
               root = temp_directory
             )
+            waiter$hide()
           },
           contentType = "application/zip"
         )
