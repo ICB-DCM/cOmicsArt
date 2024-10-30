@@ -9,7 +9,7 @@ nav_order: 4
 
 The Significance Analysis tab is divided into two main sections: the side panel and the main panel.
 
-## Side Panel
+## Side Panel 📚
 
 In the side panel, you have the following options:
 
@@ -29,7 +29,7 @@ In the side panel, you have the following options:
 
 - **Get Significance Analysis**: Clicking this button will perform the significance analysis based on the selected parameters.
 
-## Main Panel
+## Main Panel 💡
 
 The main panel displays the results of the significance analysis. The main panel has several tabs:
 - **Result Visualization**: This tab shows similarities and differences between the groups you compared.
@@ -52,8 +52,7 @@ The main panel displays the results of the significance analysis. The main panel
     - **Intersections**: The dots and lines indicate which groups are part of each intersection.
   - **Download Options**: You can save the plots in different file formats such as 
     PNG, TIFF, and PDF. You also have the option to download the underlying R code 
-    and data. For more information, check out [Interface 
-      Details](interface-details.md).
+    and data. For more information, check out [Interface Details](../interface-details.md).
 - **Comparison tabs**: For each selected comparison, a separate tab is created in 
   which the results can be viewed. They consist of a Volcano plot and a table.
   - **Table**: A sortable table, displaying pvalue, padj, log2FoldChange, and other 
@@ -64,10 +63,9 @@ The main panel displays the results of the significance analysis. The main panel
     - **Uncorrected p-Values**: Shows the log fold change versus the uncorrected p-values.
     - Both plots simultaneously or separately can be downloaded directly in common 
       formats (e.g., PNG, TIFF, PDF) or sent to the report. You can also download 
-      the underlying R code and data. For more information, check out [Interface 
-      Details](interface-details.md).
+      the underlying R code and data. For more information, check out [Interface Details](../interface-details.md).
 
-### Other Notes
+### Other Notes 📌
 
 - **Question Marks**: The displayed question marks provide quick and immediate help. However, since you are reading this documentation, you found the extensive version. Hope it helped!
 - **Interpretation**: The plots and table can give insights into the significant 

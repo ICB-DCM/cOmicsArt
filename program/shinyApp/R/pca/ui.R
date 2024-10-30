@@ -16,6 +16,14 @@ pca_sidebar_panel <- function(ns){
     ),
     uiOutput(outputId = ns("SampleAnnotationTypes_pca_ui")),
     uiOutput(outputId = ns("sample_selection_pca_ui")),
+    # Scale data to unit variance y/n
+    radioGroupButtons(
+      inputId = ns("scale_data"),
+      label = "Scale data to unit variance?",
+      choices = c("Yes","No"),
+      direction = "horizontal",
+      selected = "No"
+    ),
     ### start pca ---
     actionButton(
       inputId = ns("Do_PCA"),

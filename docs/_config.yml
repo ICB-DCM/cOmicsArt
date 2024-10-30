@@ -3,8 +3,8 @@
 title: cOmicsART Documentation
 logo: "/assets/images/Logo_cOmicsArt.svg"  # Update to the new image file path
 description: Here you find all the information you need to use cOmicsART
-baseurl: "/OmicShiny"
-url: "https://leaseep.github.io/"
+baseurl: "/cOmicsART"
+url: "https://icb-dcm.github.io/"
 #theme: just-the-docs
 remote_theme: just-the-docs/just-the-docs
 

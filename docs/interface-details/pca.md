@@ -9,7 +9,7 @@ nav_order: 5
 
 The PCA tab is divided into two main sections: the side panel and the main panel.
 
-## Side Panel
+## Side Panel 📚
 
 In the side panel, you have the following options:
 
@@ -29,7 +29,7 @@ In the side panel, you have the following options:
 
 - **Plot Loadings on top**: You can choose to plot the loadings on top of the PCA plot (the top 5 are used). You can hover over them to identify the respective entities. For more help on how to interpret loadings within a PCA, check out [this resource on PCA loadings interpretation](https://towardsdatascience.com/what-are-pca-loadings-and-biplots-9a7897f2e559).
 
-## Main Panel
+## Main Panel 💡
 
 The main panel displays the PCA results. Here are some key points:
 
@@ -41,9 +41,9 @@ The main panel displays the PCA results. Here are some key points:
 
 - **Information Display**: At the top of the main panel, some information is displayed regarding the computation of the PCA.
 
-- **Download Options**: The visualization can be downloaded directly in common formats (e.g., PNG, TIFF, PDF) or sent to the report. You can also download the underlying R code and data. For more information, check out [Interface Details](interface-details.md).
+- **Download Options**: The visualization can be downloaded directly in common formats (e.g., PNG, TIFF, PDF) or sent to the report. You can also download the underlying R code and data. For more information, check out [Interface Details](../interface-details.md).
 
-### Other Notes
+### Other Notes 📌
 
 - **Question Marks**: The displayed question marks provide quick and immediate help. However, since you are reading this documentation, you found the extensive version. Hope it helped!
 - **PCA Interpretation**: Observing the PCA plot can give insights into the relationships between different samples based on the selected annotation and the principal components chosen for the axes. For more information on PCA interpretation, check out [this video on PCA interpretation](https://www.youtube.com/watch?v=FgakZw6K1QQ).

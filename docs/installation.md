@@ -7,21 +7,19 @@ editor_options:
     wrap: 72
 ---
 
-# Introduction
+# Local Installation
 
 ![A comic about a cat finding
-cOmicsART](/OmicShiny/assets/images/cOmicsTurtle.png) *Image generated
+cOmicsART](/cOmicsArt/assets/images/cOmicsTurtle.png) *Image generated
 using DALL-E by OpenAI. Adjusted by Lea Seep*
 
 Why do you want to install cOmicsART locally? If you just want to use it
 make sure to checkout the website:
-[cOmicsART](https://shiny.iaas.uni-bonn.de/OmicShiny/). For this there
+[cOmicsART](https://shiny.iaas.uni-bonn.de/cOmicsArt/). Here
 is no installation effort required. If you know you are right here,
-let's get started.
+let's get started. You can find here instructions to run cOmicsART locally within RStudio or using Docker.
 
 # Running a cOmicsART locally within RStudio
-
-# Installing and Running the Shiny App Locally
 
 This guide provides detailed instructions on how to install and run the
 Shiny app from the provided GitHub repository.
@@ -31,7 +29,7 @@ Shiny app from the provided GitHub repository.
 Ensure you have the following software installed on your system: -
 [Git](https://git-scm.com/) - [R](https://www.r-project.org/) -
 [RStudio](https://rstudio.com/products/rstudio/download/) -
-[renv](https://rstudio.github.io/renv/articles/renv.html) package in R
+[renv](https://rstudio.github.io/renv/articles/renv.html) package in R.
 
 ## Steps to Install and Run the Shiny App
 
@@ -41,7 +39,7 @@ Open a terminal or command prompt and use the following command to clone
 the repository:
 
 ``` bash
-git clone https://github.com/leaseep/OmicShiny.git
+git clone https://github.com/icb-dcm/cOmicsArt.git
 ```
 
 ### 2. Navigate to the Project Directory
@@ -49,7 +47,7 @@ git clone https://github.com/leaseep/OmicShiny.git
 Change the directory to the cloned repository:
 
 ``` bash
-cd OmicShiny
+cd cOmicsArt
 ```
 
 ## 3. Restore the R Environment
@@ -105,14 +103,67 @@ Shiny app.
 
 ## Prerequisites
 
-1.  **Install Docker**: Ensure Docker is installed on your system. You
-    can download and install Docker from [Docker's official
-    website](https://www.docker.com/get-started).
+### 1.  **Install Docker**
 
-## Steps to Run the ShinyApp
+Ensure Docker is installed on your system. You can download and install Docker from 
+[Docker's official website](https://www.docker.com/get-started).
+
+## Steps to Install and Run the Shiny App
+
+### 2. Pull the Docker Image
+
+Open a terminal or command prompt and use the following command to pull the Docker image from Docker Hub:
+
+```bash
+docker pull pauljonasjost/comicsart:latest
+```
+
+### 3. Run the Docker Container
+
+After pulling the image, you can run the Docker container with the following command:
+
+```bash
+docker run -p 3838:3838 pauljonasjost/comicsart:latest
+```
+
+This command does the following:
+- `-p 3838:3838` maps port 3838 in the Docker container to port 3838 on your local machine.
+- `pauljonasjost/comicsart:latest` specifies the Docker image to run.
+
+### 4. Access the Shiny App
+
+Once the container is running, open your web browser and navigate to:
+
+```bash
+http://localhost:3838
+```
+
+This will open the Shiny app in your browser.
+Note, that this intitially may take some time due to initializing.
+
+
+### 5. Update the Docker Image
+
+To update the Docker image with the latest version, pull the image again:
+
+```bash
+docker pull pauljonasjost/comicsart:latest
+```
+
+Then follow the steps to run the updated image.
+
+### Troubleshooting
+
+If you encounter issues, consider the following tips:
+
+- **Port Conflicts**: If port 3838 is already in use, map the container's port to a different local port, e.g., 8888:
+
+  ```bash
+  docker run -p 8888:3838 username/shinyapp:latest
+  ```
+
+  Then access the app at `http://localhost:8888`.
+
+- **Permissions Issues**: On Linux, you may need to use `sudo` for Docker commands.
 
 .....
-
-# Local deploy the App from github
-
-....
