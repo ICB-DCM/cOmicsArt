@@ -50,7 +50,6 @@ sample_correlation_server <- function(id, data, params){
         req(input$SampleAnnotationChoice)
         req(input$Do_SampleCorrelation > 0)
         waiter <- Waiter$new(
-          id=ns("SampleCorrelationPlot"),
           html = LOADING_SCREEN,
           color="#A208BA35"
         )

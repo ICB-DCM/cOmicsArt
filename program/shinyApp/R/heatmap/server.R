@@ -136,7 +136,6 @@ heatmap_server <- function(id, data, params, updates){
         )
         req(selectedData_processed())
         waiter <- Waiter$new(
-          id=ns("HeatmapPlot"),
           html = LOADING_SCREEN,
           color="#70BF4F47"
         )

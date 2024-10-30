@@ -495,11 +495,18 @@ server <- function(input,output,session){
     )){
       output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
     } else if (uploaded_from() == "testdata"){
+      show_toast(
+        title = paste(par_tmp[[session$token]]['omic_type'],"Example Upload"),
+        text = paste(par_tmp[[session$token]]['omic_type'],"- Example upload was successful"),
+        position = "top",
+        timer = 1500,
+        timerProgressBar = T
+      )
       output$debug <- renderText({"The Test Data Set was used"})
     } else {
       show_toast(
         title = paste(par_tmp[[session$token]]['omic_type'],"Data Upload"),
-        text = paste(par_tmp[[session$token]]['omic_type'],"-data upload was successful"),
+        text = paste(par_tmp[[session$token]]['omic_type'],"- data upload was successful"),
         position = "top",
         timer = 1500,
         timerProgressBar = T
@@ -528,6 +535,7 @@ server <- function(input,output,session){
         
       }
       showTab(inputId = "tabsetPanel1", target = "Pre-processing")
+
     }
   })
 
@@ -680,7 +688,6 @@ server <- function(input,output,session){
       "Number. of anno options annotation_rows lost: ",
       nrow(res_tmp[[session$token]]$data_original) - nrow(res_tmp[[session$token]]$data)
     ))
-
     return("DataUploadSuccesful")
   })
   #data_input_shiny = is the res object now which is global => not needed ?!
@@ -910,6 +917,7 @@ server <- function(input,output,session){
       html = LOADING_SCREEN,
       color = "#3897F147",
       hide_on_render = FALSE
+
     )
     waiter$show()
     print("Do Preprocessing")

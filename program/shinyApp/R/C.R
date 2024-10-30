@@ -34,7 +34,7 @@ MANUALLY <- FALSE # change to TRUE, if you want to set the paths manually
 
 if(MANUALLY){
   # Adjust the path to the data file
-  envList <- readRDS('path/to/Data.rds')
+  envList <- readRDS('path/to/Data.RDS')
   # Adjust the path to the utils.R file
   source('path/to/utils.R')
   print('Path manually set')
@@ -42,7 +42,7 @@ if(MANUALLY){
   # if you get an error try to set paths manually
   # remember to set MANUALLY <- TRUE
   direcoty_of_files <- dirname(rstudioapi::getSourceEditorContext()$path)
-  envList <- readRDS(paste0(direcoty_of_files,'/','Data.rds'))
+  envList <- readRDS(paste0(direcoty_of_files,'/','Data.RDS'))
   if('utils.R' %in% list.files(direcoty_of_files)){
     source(file.path(direcoty_of_files,'utils.R'))
   }
@@ -220,21 +220,21 @@ CUSTOM_THEME <<- theme_bw(base_size = 15) +
     plot.title = element_text(size = 17, face = "bold")  # Plot title
   )
 
-
-
-LOADING_SCREEN <<- tagList(
+LOADING_SCREEN <- tagList(
   div(
-    style = "position: relative; display: flex; justify-content: center; align-items: center;",
+    style = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; padding: 0; margin: 0; box-sizing: border-box; overflow: hidden; background-color: rgba(225, 225, 225, 0.5);", # Light background color
     div(
-      style = "display: flex;",
-      img(src = "bored_panda_11.png", style = "max-width: 100%; height: auto;"),
-      img(src = "bored_panda_12.png", style = "max-width: 100%; height: auto;")
-    ),
-    div(
-      style = "position: absolute; top: 20%; left: 60%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; color: white; font-size: 24px; font-weight: bold;",
-      spin_flower(),
-      span("Computing...")
+      style = "display: flex; flex-direction: column; align-items: center; width: auto; height: auto; padding: 20px; margin: 0; box-sizing: border-box; background-color: rgba(225, 225, 225, 0); border-radius: 10px;", # Slightly darker background behind images
+      # Centered Images
+      img(src = "bored_panda_11.png", style = "width: 50%; height: auto; object-fit: contain; margin-bottom: 10px; padding: 0;"),
+      img(src = "bored_panda_12.png", style = "width: 50%; height: auto; object-fit: contain; margin: 0; padding: 0;"),
+      
+      # Centered Spinner and Text
+      div(
+        style = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; color: white; font-size: 24px; font-weight: bold;",
+        spin_flower(),
+        span("Computing...")
+      )
     )
   )
 )
-

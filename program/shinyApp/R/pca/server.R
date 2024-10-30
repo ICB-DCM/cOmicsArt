@@ -130,7 +130,8 @@ pca_Server <- function(id, data, params, row_select){
         check <- check_calculations(list(
           sample_selection_pca = input$sample_selection_pca,
           SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca,
-          batch = ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
+          batch = ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F),
+          scale_data = input$scale_data
         ), "PCA")
         if (check == "No Result yet"){
           output$PCA_Info <- renderText("PCA computed.")
@@ -157,7 +158,6 @@ pca_Server <- function(id, data, params, row_select){
         req(data$data)
         req(input$Do_PCA[1] > 0)
         waiter <- Waiter$new(
-          id="plot_panels_pca",
           html = LOADING_SCREEN,
           color="#70BF4F47"
         )
@@ -200,7 +200,7 @@ pca_Server <- function(id, data, params, row_select){
             pca <- prcomp(
               x = as.data.frame(t(as.data.frame(assay(data2plot)))),
               center = T,
-              scale. = FALSE
+              scale. = ifelse(input$scale_data == "Yes",T,F)
             )
           }, error = function(e){
             error_modal(e)
@@ -223,7 +223,9 @@ pca_Server <- function(id, data, params, row_select){
           # assign par_temp as empty list
           par_tmp[[session$token]][["PCA"]] <<- list(
             sample_selection_pca = input$sample_selection_pca,
-            SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca
+            SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca,
+            batch = ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F),
+            scale_data = input$scale_data
           )
         } else {
           # otherwise read the reactive values
