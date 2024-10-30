@@ -119,7 +119,7 @@ data_selection_sidebar_panel <- sidebarPanel(
             selectInput(
               inputId = "omic_type_testdata",
               label = "Omic Type that is uploaded",
-              choices = c("Transcriptomics", "Lipidomics", "Metabolomics"),
+              choices = c("Transcriptomics"),
               selected = "",
               width = "80%"
             )
