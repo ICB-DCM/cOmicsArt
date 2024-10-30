@@ -164,6 +164,11 @@ sample_correlation_server <- function(id, data, params){
       output$getR_SampleCorrelation <- downloadHandler(
         filename = function(){ paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")},
         content = function(file){
+          waiter <- Waiter$new(
+            html = LOADING_SCREEN,
+            color = "#3897F147",
+            hide_on_render = FALSE
+          )
           waiter$show()
           envList <- list(
 

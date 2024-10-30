@@ -284,6 +284,11 @@ heatmap_server <- function(id, data, params, updates){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
+            waiter <- Waiter$new(
+              html = LOADING_SCREEN,
+              color = "#3897F147",
+              hide_on_render = FALSE
+            )
             waiter$show()
             envList <- list(
               res_tmp = res_tmp[[session$token]],

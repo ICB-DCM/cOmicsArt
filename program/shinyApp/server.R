@@ -81,6 +81,7 @@ server <- function(input,output,session){
   # create an empty list in res/par_tmp[[session$token]]
   res_tmp[[session$token]] <<- list()
   par_tmp[[session$token]] <<- list()
+  
   # On session end, remove the list from res/par_tmp
   session$onSessionEnded(function() {
     res_tmp[[session$token]] <<- NULL
@@ -906,10 +907,9 @@ server <- function(input,output,session){
     # only enter this when you actually click data
     req(input$Do_preprocessing > 0)
     waiter <- Waiter$new(
-      id="data_summary",
       html = LOADING_SCREEN,
-      color="#3897F147",
-      hide_on_render=FALSE
+      color = "#3897F147",
+      hide_on_render = FALSE
     )
     waiter$show()
     print("Do Preprocessing")
@@ -1247,6 +1247,11 @@ server <- function(input,output,session){
       paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
     content = function(file) {
+      waiter <- Waiter$new(
+        html = LOADING_SCREEN,
+        color = "#3897F147",
+        hide_on_render = FALSE
+      )
       waiter$show()
       envList <- list(
         res_tmp = res_tmp[[session$token]],
