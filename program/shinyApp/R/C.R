@@ -34,7 +34,7 @@ MANUALLY <- FALSE # change to TRUE, if you want to set the paths manually
 
 if(MANUALLY){
   # Adjust the path to the data file
-  envList <- readRDS('path/to/Data.rds')
+  envList <- readRDS('path/to/Data.RDS')
   # Adjust the path to the utils.R file
   source('path/to/utils.R')
   print('Path manually set')
@@ -42,7 +42,7 @@ if(MANUALLY){
   # if you get an error try to set paths manually
   # remember to set MANUALLY <- TRUE
   direcoty_of_files <- dirname(rstudioapi::getSourceEditorContext()$path)
-  envList <- readRDS(paste0(direcoty_of_files,'/','Data.rds'))
+  envList <- readRDS(paste0(direcoty_of_files,'/','Data.RDS'))
   if('utils.R' %in% list.files(direcoty_of_files)){
     source(file.path(direcoty_of_files,'utils.R'))
   }

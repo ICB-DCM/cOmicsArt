@@ -1,20 +1,33 @@
-# Data Input Notes:
+# Welcome to cOmicsArt
+
+![comic of a wombat on the path to find this
+Readme](docs/assets/images/cOmicsART_README.png)
+*Image generated using DALL-E by OpenAI. Adjusted by Lea Seep*
+
+Please refer to the following listed links for further information on
+the respective topics:
+
 ## Status Quo
+
 General Test:
-![example workflow](https://github.com/LeaSeep/OmicShiny/actions/workflows/run-tests.yaml/badge.svg)
+[![Repository Status](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/start_check.yaml/badge.svg)](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/start_check.yaml)
 
-Develop-Version Test-Status:
-![develop status](https://github.com/LeaSeep/OmicShiny/actions/workflows/run-tests.yaml/badge.svg?branch=develop)
+[![Deploy Jekyll site to Pages](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/pages.yml/badge.svg)](https://github.com/ICB-DCM/cOmicsArt/actions/workflows/pages.yml)
 
-Main-Version Test-Status:
-![main status](https://github.com/LeaSeep/OmicShiny/actions/workflows/run-tests.yaml/badge.svg?branch=main)
+-   cOmicsArt is freely available at
+    <https://shiny.iaas.uni-bonn.de/cOmicsArt/>
 
-3 tables are needed:
-1. data-table (e.g. counts or intensitites)
-  - row names must be entities (e.g. genes or metabolites)
-  - column names must be sample names
-2. sample annotation (e.g. Treatment, tissue type) 
-  - rownames must match the colnames from (1.), hence each sample get a row
-  - MUST have a column called global_ID (same as rownames) with unique entries
-3. entitie annotation (e.g. type of gene or assoc pathway of metab)
-  - rownames must match the rownames from (1.)
+-   User documentation is available at
+    <https://icb-dcm.github.io/cOmicsArt/>
+
+-   A docker image can be retrieved from
+    <https://hub.docker.com/r/pauljonasjost/comicsart/tags>
+
+-   A screen recording of cOmicsArt is available at
+    <https://www.youtube.com/watch?v=pTGjtIYQOak>
+
+-   A snapshot upon publication can be found on Zenodo: very last thing;
+    Note, that you can find within the branches the Zenodo based
+    branches.
+
+Have fun!
