@@ -265,6 +265,12 @@ single_gene_visualisation_server <- function(id, data){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
+            waiter <- Waiter$new(
+              html = LOADING_SCREEN,
+              color = "#3897F147",
+              hide_on_render = FALSE
+            )
+            waiter$show()
             envList <- list(
 
               res_tmp = res_tmp[[session$token]],
@@ -281,6 +287,7 @@ single_gene_visualisation_server <- function(id, data){
               files = dir(temp_directory),
               root = temp_directory
             )
+            waiter$hide()
           },
           contentType = "application/zip"
         )
