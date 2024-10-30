@@ -196,7 +196,6 @@ significance_analysis_server <- function(id, data, params){
       observeEvent(sig_ana_reactive$start_analysis,{
         req(sig_ana_reactive$start_analysis > 0)
         waiter <- Waiter$new(
-          id=ns("significance_analysis_results"),
           html = LOADING_SCREEN,
           color="#70BF4F47",
           hide_on_render=F
