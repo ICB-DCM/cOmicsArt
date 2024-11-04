@@ -323,7 +323,7 @@ heatmap_server <- function(id, data, params, updates){
             paste0(isolate(heatmap_reactives$customTitle), " ", Sys.time(), input$file_ext_Heatmap)
           },
           content = function(file){
-            save_pheatmap(heatmap_plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
+            save_pheatmap(res_tmp[[session$token]][["Heatmap"]]$plot,filename=file,type=gsub("\\.","",input$file_ext_Heatmap))
             on.exit({
               tmp_filename <- paste0(
                 getwd(),
@@ -331,7 +331,7 @@ heatmap_server <- function(id, data, params, updates){
                 paste0(isolate(heatmap_reactives$customTitle), " ", Sys.time(), input$file_ext_Heatmap)
               )
               save_pheatmap(
-                heatmap_plot,
+                res_tmp[[session$token]][["Heatmap"]]$plot,
                 filename = tmp_filename,
                 type = gsub("\\.","",input$file_ext_Heatmap)
               )
