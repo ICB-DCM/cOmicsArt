@@ -1,6 +1,7 @@
 ### Data Selection by Columns and Rows
 
 ***
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/selection.html#row-selection---biochemical-entities" target="_blank">here</a>.
 
 With `Row selection` you can choose the entities (e.g. genes) you want to include in the 
 analysis.
