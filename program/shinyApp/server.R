@@ -107,13 +107,13 @@ server <- function(input,output,session){
   # Start the tour when the "Start Tour" button is clicked
   observeEvent(input$start_tour, {
     print("Star Tour")
-    runjs("document.querySelector('.driver-close-btn').click();")
+    shinyjs::runjs("document.querySelector('.driver-close-btn').click();")
     guide$init()$start()
   })
   
   observeEvent(input$guide_cicerone_next, {
     print("Next")
-    runjs("document.querySelector('.driver-close-btn').click();")
+    shinyjs::runjs("document.querySelector('.driver-close-btn').click();")
     showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
     #showTab(inputId = "tabsetPanel1", target = "Data selection")
   })
