@@ -39,7 +39,7 @@ To get more information on the tabs, navigate to the respective documentation us
    - **Upper Section:** Contains options affecting the analysis, requiring recomputation when changed. The analysis is triggered by a "Do/Get analysis" button above the division line.
    - **Lower Section:** Displays secondary parameters with changes reflecting immediately in the results (automatic update).
    
-![The design of the side panel](/cOmicsArt/assets/images/desing_principleSidePanel.png)
+![The design of the side panel](/cOmicsArt/assets/images/design_principleSidePanel.png)
    
 2. **Main Panel Structure:** Each main panel contains the visualization of the analysis results. Some panels are further subdivided to show multiple results, for example, the Significance Analysis tab.
 
