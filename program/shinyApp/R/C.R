@@ -300,6 +300,11 @@ guide <<- Cicerone$
     As soon as the Pre-processing is done the analysis tabs will appear - those do not have to be completed in a specific order - they work independently from each other."
   )$
   step(
+    el = "firstQ",
+    title = "Question Marks",
+    description = "Click on theese to get more help on the particular tagged item. (Do not click on this during this guide, you can try it out afterwards) "
+  )$
+  step(
     el = "UsefulLinks",
     title = "Useful Links",
     description = "Here are two helpful links - the top one let's you get the automatic generated report. The bottom one redirects you to the extensive Documentation (opens a new tab). This links are always present."

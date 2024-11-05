@@ -96,6 +96,10 @@ ui <- shiny::fluidPage(
         width: 90%;
         max-width: 90%;
       }
+      .shinyhelper-container {
+        font-size: 24px;
+        color: darkred !important;
+      }
       #sidebar_data_selection {
           background-color: #70BF4F47;
       }
