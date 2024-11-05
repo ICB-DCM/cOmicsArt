@@ -50,6 +50,7 @@ library(reshape2)
 source("R/C.R")
 source("R/module_DownloadReport.R",local=T)
 # source the uis for each panel here
+source("R/help_tab/ui.R",local=T)
 source("R/data_selection/ui.R",local=T)
 source("R/pre_processing/ui.R",local=T)
 source("R/pca/ui.R",local=T)
@@ -66,6 +67,7 @@ ui <- shiny::fluidPage(
   # Loading Bars?
   # useWaitress(),
   useWaiter(),
+  use_cicerone(),
   # JS to reset input values
   tags$script("
     Shiny.addCustomMessageHandler('resetValue', function(variableName) {
@@ -218,6 +220,7 @@ ui <- shiny::fluidPage(
     ################################################################################
     # Tab Selection w Upload
     ################################################################################
+    help_tab_panel,
     data_selection_panel,
     pre_processing_panel,
     sampleCorrelation_UI("sample_correlation"),

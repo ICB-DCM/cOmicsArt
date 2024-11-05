@@ -72,7 +72,103 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
   shinyjs::hide("mainPanel_DataSelection")
+
+# Set Up ad Show user Landing page ----
+# TODO: SetUp cookie usage to land on second page
+  # Define the guide
+  # Note do this in here to avoid setting a global upon close
+  guide_welcome <- Cicerone$
+    new(id = "guide", 
+        opacity = 0.9,
+        keyboard_control = TRUE)$
+    step(
+      el = "start_tour",
+      title = "Welcome to cOmicsArt!",
+      description = "If you need help press the button! If you want to start directly click next and you will be directed to Data selection automatically.",
+    )$
+    step(
+      el = "tabsetPanel1",
+      title = "Welcome to cOmicsArt!",
+      description = "You pressed next - redirection triggered",
+    )
   
+  guide_welcome$init()$start()
+  
+  # Start the tour when the "Start Tour" button is clicked
+  observeEvent(input$start_tour, {
+    print("Star Tour")
+    guide$init()$start()
+  })
+  
+  observeEvent(input$guide_cicerone_next, {
+    print("Next")
+    guide_welcome$move_forward()
+    showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
+    #showTab(inputId = "tabsetPanel1", target = "Data selection")
+  })
+
+  output$help_tab_info <- renderText({
+    HTML(paste0(
+    "Please select an image to display within the sidebar(left)<br>",
+    "To confirm your selection click the button labelled 'GO show me help!' within the sidebar."
+    ))
+  })
+  
+  output$WelcomePage_ui <- renderUI({
+    imageOutput("WelcomePage")
+  })
+  
+  observeEvent(input$get_help,{
+    if(input$ImageSelect == "WelcomePage"){
+      output$WelcomePage_ui <- renderUI({
+        imageOutput("WelcomePage")
+      })
+      output$WelcomePage <- renderImage({
+        # Path to the image file
+        list(
+          src = "www/WelcomPage.png",
+          contentType = "image/png",
+          width = paste0(input$ImageWidth,"%"), # Adjust as needed
+          height = input$ImageHeight # Adjust as needed
+        )
+      }, deleteFile = FALSE) # Set deleteFile to FALSE to keep the image file
+      output$help_tab_info <- renderText({
+        HTML(
+          paste0(
+            "As you selected the WelcomePage on the **left**, you can see a ccreenshot of the WelcomePage below.<br>",
+            "If you want to see the full documentation, click ",
+            "<a href='https://icb-dcm.github.io/cOmicsArt/' target='_blank'>here</a>",
+            ".<br>or click on the link on the top left of the screen 'Go To Documentation'.<br><br>",
+            "Within cOmicsArt this box will display information depending on the current tab you are in.<br> A tab represents an analysis."
+          )
+        )
+        }
+      )
+    } else if(input$ImageSelect == "YouTube Tutorial"){
+      output$WelcomePage_ui <- renderUI({
+        tags$iframe(
+          width = paste0(input$ImageWidth,"%"), # Adjust as needed
+          height = input$ImageHeight, # Adjust as needed
+          src = "https://www.youtube.com/embed/pTGjtIYQOak",
+          frameborder = "0",
+          allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+          allowfullscreen = TRUE
+        )
+      })
+    } else if(input$ImageSelect == "nothing selected"){
+      output$help_tab_info <- renderText({
+        HTML(paste0(
+          "You have selected 'nothing selected' - hence there is nothing to show<br>.",
+          "Do you want to see something else? Try to select a different Image (Select Image) on the left!<br>",
+          "Did you maybe just press the button?"
+        ))
+      })
+      output$WelcomePage_ui <- renderUI({NULL})
+    }
+  })
+
+  
+
 # Init res_tmp and par_tmp objects if they do not yet exist ----
   if(!exists("res_tmp")){
     res_tmp <<- list()

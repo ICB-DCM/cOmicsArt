@@ -238,3 +238,59 @@ LOADING_SCREEN <- tagList(
     )
   )
 )
+
+
+
+guide <<- Cicerone$
+  new(keyboard_control = TRUE)$
+  step(
+    el = "sidebar_help_tab",
+    title = "Sidebar",
+    description = "This is the sidebar where you can select images and adjust settings. We will go through the elements step by step in a second.",
+  )$
+  step(
+    el = "mainPanel_help_tab",
+    title = "Main Panel",
+    description = "This is the main panel where you can view the output based on your input in the sidepanel. We will go through the elements step by step in a second."
+  )$
+  step(
+    el = "ImageSelectArea",
+    position = "right",
+    title = "Selecting the required options",
+    description = "In this little tutorial we have one parameter to set, which we can select from the dropdown menu. Click on the little arrow down to see the options. Select 'Youtube Tutorial'"
+  )$
+  step(
+    el = "horizontalLine",
+    title = "An important line",
+    description = "This line separates the sidebar. All options above this line require your input (selecting your desired option and pressing the 'GO!' button). All options below this line can be first left as they are. 
+    Their changes are directly applied to the output and do not require any re-computation. We will come back to those later."
+  )$
+  step(
+    el = "get_help",
+    title = "Starting the analysis",
+    description = "After you have selected your options (or sometimes stick with the pre-selected option) you have to press this button to ensure your selection is now actually carried out. Press it now to continue."
+  )$
+  step(
+    el ="mainPanel_help_tab",
+    title = "Main Panel",
+    position = "mid-center",
+    description = "Remember this? This is the main Panel. If you have selected Youtube Tutorial AND pressed the 'GO' button you will see a video here (You might want to watch it after this little guide to get introduced to the analysis features).
+    If you don't see a video here, you might have missed to press the 'GO' button or selected a different option. Click onto previous to correct your mistakes.
+    If you see the video click next."
+  )$
+  step(
+    el = "help_tab_info",
+    title = "Information",
+    description = "This grey box will contain information about the performed analysis. For example: It will notify you if the analysis was successful or if there were any warning. It is always a good idea to pay attention to the output here."
+  )$
+  step(
+    el = "NextPanel",
+    title = "Next Panel",
+    description = "This button will take you to the next panel where you can perfomr the Data upload and selection. You can navigate between the tabs by also simply clicking on the tab names. Click on 'Next' to see more details."
+  )$
+  step(
+    el ="tabsetPanel1",
+    title = "Analysis Tabs",
+    description = "These are the different tabs currently available. You can switch between them by clicking on the tab names. Each tab has a different purpose. Note, that more tabs will appear after the mandatory tabs Data selection and Pre-processing (not visible yet).
+    As soon as the Pre-processing is done the analysis tabs will appear - those do not have to be completed in a specific order - they work independently from each other."
+  )
