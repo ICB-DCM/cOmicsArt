@@ -307,7 +307,7 @@ guide <<- Cicerone$
   step(
     el = "UsefulLinks",
     title = "Useful Links",
-    description = "Here are two helpful links - the top one let's you get the automatic generated report. The bottom one redirects you to the extensive Documentation (opens a new tab). This links are always present."
+    description = "Here are two helpful links - the top one let's you get the automatic generated report. The bottom one redirects you to the extensive Documentation (opens a new tab). Note, that you can search through the enitre documentation for keywords! This links are always present."
   )$
   step(
     el = "WelcomePage_ui",

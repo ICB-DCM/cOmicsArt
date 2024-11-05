@@ -11,7 +11,7 @@ nav_order: 1
 
 If you are looking for the web app, please visit: 🌐 [cOmicsART Web App](https://shiny.iaas.uni-bonn.de/cOmicsArt/)
 
-Otherwise, you can navigate through the documentation using the sidebar on the left. If you’re searching for something specific, try using the search bar at the top. 🔍 It can search through the entire documentation and guide you to the relevant section.
+Otherwise, you can navigate through the documentation using the sidebar on the left. **If you’re searching for something specific, try using the search bar at the top.** 🔍 It can search through the entire documentation and guide you to the relevant section.
 
 **Have fun exploring!** 🎉
 
