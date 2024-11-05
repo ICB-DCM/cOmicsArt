@@ -94,6 +94,10 @@ ui <- shiny::fluidPage(
         width: 90%;
         max-width: 90%;
       }
+      .shiny-disconnected-overlay {
+        background-color: black !important;
+        opacity: 1;
+      }
       #sidebar_data_selection {
           background-color: #70BF4F47;
       }
