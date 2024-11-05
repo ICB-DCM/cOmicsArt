@@ -102,7 +102,7 @@ server <- function(input,output,session){
       description = "You pressed next - redirection triggered",
     )
   
-  guide_welcome$init()$start()
+   # guide_welcome$init()$start()
   
   # Start the tour when the "Start Tour" button is clicked
   observeEvent(input$start_tour, {
