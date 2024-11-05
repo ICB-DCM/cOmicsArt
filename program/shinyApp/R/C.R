@@ -284,13 +284,32 @@ guide <<- Cicerone$
     description = "This grey box will contain information about the performed analysis. For example: It will notify you if the analysis was successful or if there were any warning. It is always a good idea to pay attention to the output here."
   )$
   step(
+    el = "options",
+    title = "Parameters of the visulaization",
+    description = "The options below the line are applied to the generated output and hence immediately applied. Here, we have the options the adjust the width and height of the image. You can adjust them to your liking."
+  )$
+  step(
     el = "NextPanel",
     title = "Next Panel",
     description = "This button will take you to the next panel where you can perfomr the Data upload and selection. You can navigate between the tabs by also simply clicking on the tab names. Click on 'Next' to see more details."
   )$
   step(
-    el ="tabsetPanel1",
+    el = "tabsetPanel1",
     title = "Analysis Tabs",
     description = "These are the different tabs currently available. You can switch between them by clicking on the tab names. Each tab has a different purpose. Note, that more tabs will appear after the mandatory tabs Data selection and Pre-processing (not visible yet).
     As soon as the Pre-processing is done the analysis tabs will appear - those do not have to be completed in a specific order - they work independently from each other."
-  )
+  )$
+  step(
+    el = "UsefulLinks",
+    title = "Useful Links",
+    description = "Here are two helpful links - the top one let's you get the automatic generated report. The bottom one redirects you to the extensive Documentation (opens a new tab). This links are always present."
+  )$
+  step(
+    el = "WelcomePage_ui",
+    title = "The End",
+    description = "
+    <p>This is the end of the little tutorial. If you'd like more specific help about cOmicsART in action, check out the <a href='https://www.youtube.com/watch?v=pTGjtIYQOak&t=2s' target='_blank'>YouTube Tutorial</a>!</p>
+    <p>You can also visit the <a href='https://icb-dcm.github.io/cOmicsArt/' target='_blank'>documentation</a> for more detailed information.</p>
+    <p>After this tutorial, you should be able to find the link within the interface on your own. Happy exploring! <i class='fas fa-cat'></i> </p>
+  "
+    )

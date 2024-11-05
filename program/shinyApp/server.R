@@ -80,12 +80,22 @@ server <- function(input,output,session){
   guide_welcome <- Cicerone$
     new(id = "guide", 
         opacity = 0.9,
+        padding = 10,
         keyboard_control = TRUE)$
     step(
       el = "start_tour",
       title = "Welcome to cOmicsArt!",
-      description = "If you need help press the button! If you want to start directly click next and you will be directed to Data selection automatically.",
-    )$
+      position = "right-center",
+      description = HTML("
+      <div style='min-width: 300px; min-height: 150px; padding: 10px;'>
+        <img src='Logo_cOmicsArt_clear.png' alt='cOmicsArt Logo' style='max-width:90%;'>
+        <div style='font-size: 18px; margin-top: 10px;'>
+          <p><i class='fas fa-question-circle'></i> Need help? Press the blue button</p>
+          <p><i class='fas fa-rocket'></i> Want to start directly? Click 'Next'.</p>
+        </div>
+      </div>
+    ")
+  )$
     step(
       el = "tabsetPanel1",
       title = "Welcome to cOmicsArt!",
@@ -97,12 +107,13 @@ server <- function(input,output,session){
   # Start the tour when the "Start Tour" button is clicked
   observeEvent(input$start_tour, {
     print("Star Tour")
+    runjs("document.querySelector('.driver-close-btn').click();")
     guide$init()$start()
   })
   
   observeEvent(input$guide_cicerone_next, {
     print("Next")
-    guide_welcome$move_forward()
+    runjs("document.querySelector('.driver-close-btn').click();")
     showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
     #showTab(inputId = "tabsetPanel1", target = "Data selection")
   })
@@ -165,6 +176,10 @@ server <- function(input,output,session){
       })
       output$WelcomePage_ui <- renderUI({NULL})
     }
+  })
+  
+  observeEvent(input$NextPanel,{
+    showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
   })
 
   
