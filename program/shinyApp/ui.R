@@ -94,9 +94,20 @@ ui <- shiny::fluidPage(
         width: 90%;
         max-width: 90%;
       }
-      .shiny-disconnected-overlay {
-        background-color: black !important;
+      #shiny-disconnected-overlay {
+        background-color: grey;
         opacity: 1;
+        z-index: 99999 !important;
+      }
+      #shiny-disconnected-overlay::after {
+        content: 'Connection lost. You need to refresh the page. You will need to start again. There can be multiple reasons, such as instable internet connection. If you reproduce this behaviour please report the steps/ clicks you took and report them! This would help all of us, developers, contributors and users <3';
+        color: white; 
+        font-size: 20px; 
+        position: absolute;
+        top: 50%; /* Center the text vertically */
+        left: 50%; /* Center the text horizontally */
+        transform: translate(-50%, -50%); 
+        text-align: center; 
       }
       #sidebar_data_selection {
           background-color: #70BF4F47;
