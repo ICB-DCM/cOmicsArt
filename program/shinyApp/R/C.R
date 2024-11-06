@@ -306,7 +306,7 @@ guide <<- cicerone::Cicerone$
   step(
     el = "UsefulLinks",
     title = "Very Useful Links",
-    description = HTML("The top one let's you get the automatic generated report.<br> The bottom leads you to the *extensive* Documentation. <br>Note, that you can search through the entire documentation for keywords! <br>This links are always present.")
+    description = HTML("The top one let's you get the automatic generated report.<br> The bottom leads you to the *extensive* Documentation. Click it now! <br>Note, that you can search through the entire documentation for keywords!")
   )$
   step(
     el = "WelcomePage_ui",
