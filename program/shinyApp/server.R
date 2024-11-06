@@ -892,7 +892,7 @@ server <- function(input,output,session){
       choices = c(colnames(colData(res_tmp[[session$token]]$data))),
       multiple = T,
       selected = "condition"
-    ) %>% helper(type = "markdown", content = "PreProcessing_DESeqSub")
+    ) %>% helper(type = "markdown", content = "PreProcessing_DESeq")
   })
 
 ## Do preprocessing ----  
