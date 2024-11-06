@@ -6,7 +6,6 @@ enrichment_analysis_geneset_server <- function(
     function(input,output,session){
       file_path <- paste0("/www/",session$token,"/")
       if(is.null(result)){
-        output$EnrichmentInfo <- renderText("Press 'Get Enrichment Analysis' to start. Note that this analysis is only meaningful for gene sets at the moment.")
         output$EnrichmentFailure <- renderText("Currently there is no result to display.")
         hideElement(id = "EnrichmentPlot")
         hideElement(id = "only2Report")
@@ -217,6 +216,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         organism = NULL
       )
       ns <- session$ns
+      output$EnrichmentInfo <- renderText({"Press 'Get Enrichment Analysis' to start. Note that this analysis is only meaningful for gene sets at the moment."})
       ## initialize result as NULL
       ea_reactives$enrichment_results <- ENRICHMENT_RESULT_RESET
       # TODO: Call this in a loop.
