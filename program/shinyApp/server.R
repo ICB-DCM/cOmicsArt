@@ -769,7 +769,7 @@ server <- function(input,output,session){
   })
   
 ## Log Selection ----
-  observeEvent(input$NextPanel,{
+  observeEvent(c(input$NextPanel, input$use_full_data),{
     # Do actual selection before logging
     print(selectedData())
     # add row and col selection options
