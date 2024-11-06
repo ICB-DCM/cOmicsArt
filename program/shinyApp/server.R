@@ -179,6 +179,11 @@ server <- function(input,output,session){
       )})
     }
   })
+  
+  # Show or hide the gene annotation options based on the button click
+  observeEvent(input$geneAnno_toggle_button, {
+    shinyjs::toggle(id = "geneAnno_toggle")  # Toggle the div on button click
+  })
 
   observeEvent(input$AddGeneSymbols, {
     req(data_input_shiny())

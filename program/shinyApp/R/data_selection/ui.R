@@ -142,12 +142,21 @@ data_selection_main_panel <- mainPanel(
   div(id ="InfoBox_DataSelection",
       htmlOutput(outputId = "debug", container = pre)
       ),
-  div(
+  # add link to toggle on the div geneAnno_toggle
+  actionButton(
+    inputId = "geneAnno_toggle_button",
+    label = "(show/hide) Further entitie Annotation options",
+    icon = icon('plus'),
+    style = "color: #000000; background-color: transparent; border-color: transparent"
+  ),
+  div( 
+    id  = "geneAnno_toggle",
+    style = "display: none;",
     class = "AddGeneSymbols_ui",
     uiOutput("AddGeneSymbols_organism_ui"),
-    uiOutput("AddGeneSymbols_ui")
+    uiOutput("AddGeneSymbols_ui"),
+    hr(style = "border-top: 1px solid #858585;")
   ),
-  hr(style = "border-top: 1px solid #858585;"),
   fluidRow(
     column(5,
            div(class = "DataSelection",
