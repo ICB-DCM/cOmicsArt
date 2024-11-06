@@ -24,6 +24,7 @@ single_gene_visualisation_sidebar_ui<- function(ns){
 single_gene_visualisation_main_ui <- function(ns){
   mainPanel(
     id = "main_single_gene_visualisation",
+    textOutput(outputId = ns("SingleGene_Info"), container = pre),
     splitLayout(
       style = "border: 1px solid silver:",
       cellWidths = c("50%", "50%"),

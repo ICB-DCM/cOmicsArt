@@ -68,12 +68,12 @@ pca_sidebar_panel <- function(ns){
 pca_main_panel <- function(ns){
   mainPanel(
     id = "mainpanel_pca",
+    textOutput(outputId = ns("PCA_Info"), container = pre),
     tabsetPanel(
       id = "plot_panels_pca",
       type = "pills",
       tabPanel(
         title = "PCA_plot",
-        textOutput(outputId = ns("PCA_Info"), container = pre),
         plotlyOutput(outputId = ns("PCA_plot")),
         uiOutput(outputId = ns("PCA_anno_tooltip_ui")),
         splitLayout(
