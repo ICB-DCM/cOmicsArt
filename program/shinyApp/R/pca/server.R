@@ -286,10 +286,21 @@ pca_Server <- function(id, data, params, row_select){
         )
         #LoadingsDF$Loading=scale(LoadingsDF$Loading)
         LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
-        LoadingsDF <- rbind(
-          LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - input$bottomSlider),],
-          LoadingsDF[input$topSlider:1,]
-        )
+        
+        # need to test if default of slider is below the number of entities
+        if(input$topSlider + input$bottomSlider > nrow(LoadingsDF)){
+          LoadingsDF
+          output$PCA_Info <- renderText({
+            paste0("Within Loadings visualisations:
+the requested number of entities to show is higher than the number of entities in the data.
+Hence, all entities are shown. The total number of entities is: ", length(rownames(pca$rotation)))})
+        }else{
+          LoadingsDF <- rbind(
+            LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - input$bottomSlider),],
+            LoadingsDF[input$topSlider:1,]
+          )
+        }
+        
         LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
         if(!is.null(input$EntitieAnno_Loadings)){
           req(data_input_shiny())
