@@ -76,7 +76,9 @@ server <- function(input,output,session){
   shinyjs::hideElement(id = "div_sampleCorrelation_main_panel")
   shinyjs::hideElement(id = "PCA_main_panel_div")
   shinyjs::hideElement(id = "Significance_div")
-  
+  shinyjs::hideElement(id = "Heatmap_div")
+  shinyjs::hideElement(id = "SingleGene_div")
+  shinyjs::hideElement(id = "enrichment_div")
 # Init res_tmp and par_tmp objects if they do not yet exist ----
   if(!exists("res_tmp")){
     res_tmp <<- list()

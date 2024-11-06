@@ -495,6 +495,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         geneSetChoice_tmp
       })
       observeEvent(input$enrichmentGO,{
+        shinyjs::showElement(id = "enrichment_div")
         ea_reactives$ea_info <- "Enrichment is running..."
         waiter <- Waiter$new(
           html = LOADING_SCREEN,

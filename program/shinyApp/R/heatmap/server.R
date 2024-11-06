@@ -133,6 +133,7 @@ heatmap_server <- function(id, data, params, updates){
 
       observeEvent(toListen2Heatmap(),{
         req(input$Do_Heatmap[1]>0)
+        shinyjs::showElement(id = "Heatmap_div", asis = TRUE)
         req(
           input$row_selection_options,
           input$anno_options,

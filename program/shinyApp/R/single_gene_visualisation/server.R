@@ -119,6 +119,7 @@ single_gene_visualisation_server <- function(id, data){
       observeEvent(toListen(),{
         req(input$singleGeneGo>0)
         print(input$Select_Gene)
+        shinyjs::showElement(id = "SingleGene_div", asis = TRUE)
         # update the data
         data <- update_data(session$token)
 
