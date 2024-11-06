@@ -911,6 +911,10 @@ server <- function(input,output,session){
   })
 
 ## Do preprocessing ----  
+  # Add initial text to help boxes
+  output$Statisitcs_Data <- renderText({
+    "Press 'Get-Preprocessing' to start!"
+  })
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     # only enter this when you actually click data
     req(input$Do_preprocessing > 0)
@@ -1042,14 +1046,22 @@ server <- function(input,output,session){
       shinyjs::click("PCA-refreshUI",asis = T)
       shinyjs::click("sample_correlation-refreshUI",asis = T)
       paste0(
-        addWarning,
         "The data has the dimensions of: ",
         paste0(dim(res_tmp[[session$token]]$data),collapse = ", "),
         "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
-        "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
+        "<br","If logX was chosen, in case of 0's present logX(data+1) is done",
         "<br","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(res_tmp[[session$token]]$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
+    # set the warning as toast
+    show_toast(
+      title = "Attention",
+      text = HTML(addWarning),
+      position = "top",
+      timer = 2500,
+      timerProgressBar = T
+    )
+    
     output$raw_violin_plot <- renderPlot({
       violin_plot(res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
                   color_by = input$violin_color)

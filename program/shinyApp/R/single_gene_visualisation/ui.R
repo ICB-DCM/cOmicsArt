@@ -5,7 +5,6 @@ single_gene_visualisation_sidebar_ui<- function(ns){
     uiOutput(outputId = ns("type_of_visualitsation_ui")),
     uiOutput(outputId = ns("Select_GeneAnno_ui")),
     uiOutput(outputId = ns("Select_Gene_ui")),
-    helpText("Note: if you choose a group rather than a single entitie, the values will be summarized by taking the median"),
 
     actionButton(
       inputId = ns("singleGeneGo"), 
@@ -24,13 +23,14 @@ single_gene_visualisation_sidebar_ui<- function(ns){
 single_gene_visualisation_main_ui <- function(ns){
   mainPanel(
     id = "main_single_gene_visualisation",
+    textOutput(outputId = ns("SingleGene_Info"), container = pre),
     splitLayout(
       style = "border: 1px solid silver:",
       cellWidths = c("50%", "50%"),
       plotOutput(outputId = ns("SingleGenePlot")),
       textOutput(outputId = ns("InfoText"))
     ),
-    h5(HTML("Note, that you only see boxplots if you have more than 3 samples per group")),
+    #h5(HTML("Note, that you only see boxplots if you have more than 3 samples per group")),
     uiOutput(outputId = ns("chooseComparisons_ui")),
     splitLayout(
       style = "border: 1px solid silver:",

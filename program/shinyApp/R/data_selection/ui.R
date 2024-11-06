@@ -139,6 +139,9 @@ data_selection_sidebar_panel <- sidebarPanel(
 
 data_selection_main_panel <- mainPanel(
   id = "mainPanel_DataSelection",
+  div(id ="InfoBox_DataSelection",
+      htmlOutput(outputId = "debug", container = pre)
+      ),
   div(
     class = "AddGeneSymbols_ui",
     uiOutput("AddGeneSymbols_organism_ui"),
@@ -160,7 +163,6 @@ data_selection_main_panel <- mainPanel(
                uiOutput("sample_selection_ui")
            ))
   ),
-  hr(style = "border-top: 1px solid #858585;"),
   div(
     id = "SaveInputAsRDS",
     downloadButton(
@@ -168,7 +170,6 @@ data_selection_main_panel <- mainPanel(
       label = "Save file input to upload later"
     ) %>% helper(type = "markdown", content = "DataSelection_compilation_help")
   ),
-  htmlOutput(outputId = "debug", container = pre),
   br(), br(), br(),
   hr(style = "border-top: 1px solid #858585;"),
   actionButton(

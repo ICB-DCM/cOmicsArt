@@ -6,6 +6,7 @@ enrichment_analysis_geneset_server <- function(
     function(input,output,session){
       file_path <- paste0("/www/",session$token,"/")
       if(is.null(result)){
+        output$EnrichmentInfo <- renderText("Press 'Get Enrichment Analysis' to start. Note that this analysis is only meaningful for gene sets at the moment.")
         output$EnrichmentFailure <- renderText("Currently there is no result to display.")
         hideElement(id = "EnrichmentPlot")
         hideElement(id = "only2Report")

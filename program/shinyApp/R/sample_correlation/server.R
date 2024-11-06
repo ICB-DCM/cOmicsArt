@@ -39,6 +39,11 @@ sample_correlation_server <- function(id, data, params){
         })
       })
       
+      # Add initial text to help boxes
+      output$SampleCorr_Info <- renderText({
+        "Press 'Get Sample Correlation' to start!"
+      })
+      
       # Do sample correlation plot 
       toListen2CorrelationPlot <- reactive({list(
         input$Do_SampleCorrelation,
