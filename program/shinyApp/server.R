@@ -74,6 +74,7 @@ server <- function(input,output,session){
   shinyjs::hide("mainPanel_DataSelection")
   shinyjs::hideElement(id = "data_summary")
   shinyjs::hideElement(id = "div_sampleCorrelation_main_panel")
+  shinyjs::hideElement(id = "PCA_main_panel_div")
   
 # Init res_tmp and par_tmp objects if they do not yet exist ----
   if(!exists("res_tmp")){

@@ -25,6 +25,7 @@ pca_Server <- function(id, data, params, row_select){
       ## UI Section ----
       observeEvent(input$refreshUI, {
         req(data_input_shiny())
+        shinyjs::showElement(id = "PCA_main_panel_div")
         print("Refreshing UI Heatmap")
         data <- update_data(session$token)
 
