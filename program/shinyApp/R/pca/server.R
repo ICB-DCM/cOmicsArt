@@ -25,7 +25,6 @@ pca_Server <- function(id, data, params, row_select){
       ## UI Section ----
       observeEvent(input$refreshUI, {
         req(data_input_shiny())
-        shinyjs::showElement(id = "PCA_main_panel_div")
         print("Refreshing UI Heatmap")
         data <- update_data(session$token)
 
@@ -131,6 +130,7 @@ pca_Server <- function(id, data, params, row_select){
       # only when we click on Do_PCA, we set the calculate to 1
       session$userData$clicks_observer <- observeEvent(input$Do_PCA,{
         req(input$Do_PCA > pca_reactives$counter)
+        shinyjs::showElement(id = "PCA_main_panel_div", asis = TRUE)
         pca_reactives$counter <- input$Do_PCA
         check <- check_calculations(list(
           sample_selection_pca = input$sample_selection_pca,
