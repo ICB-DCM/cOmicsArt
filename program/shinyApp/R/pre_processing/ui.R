@@ -38,7 +38,6 @@ pre_processing_main_panel <- mainPanel(
   # Statistics to the data
   div(
     id="data_summary",
-    helpText("General statistics to the input data, stuff like dimensions"),
     htmlOutput(outputId = "Statisitcs_Data"),
     HTML(text = "<br>"),
     fluidRow(
