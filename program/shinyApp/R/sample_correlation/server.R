@@ -54,6 +54,7 @@ sample_correlation_server <- function(id, data, params){
         req(selectedData_processed())
         req(input$SampleAnnotationChoice)
         req(input$Do_SampleCorrelation > 0)
+        shinyjs::showElement(id = "div_sampleCorrelation_main_panel")
         waiter <- Waiter$new(
           html = LOADING_SCREEN,
           color="#A208BA35"

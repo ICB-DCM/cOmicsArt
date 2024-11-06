@@ -73,6 +73,7 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
   shinyjs::hide("mainPanel_DataSelection")
   shinyjs::hideElement(id = "data_summary")
+  shinyjs::hideElement(id = "div_sampleCorrelation_main_panel")
   
 # Init res_tmp and par_tmp objects if they do not yet exist ----
   if(!exists("res_tmp")){
