@@ -246,75 +246,73 @@ guide <<- cicerone::Cicerone$
   new(keyboard_control = TRUE)$
   step(
     el = "sidebar_help_tab",
-    title = "Sidebar",
-    description = "This is the sidebar where you can select images and adjust settings. We will go through the elements step by step in a second.",
+    title = "This is the Sidebar",
+    position = "right",
+    description = HTML("Always start here to give cOmicsArt tasks.<br>We will go through the elements step by step."),
   )$
   step(
     el = "mainPanel_help_tab",
-    title = "Main Panel",
-    description = "This is the main panel where you can view the output based on your input in the sidepanel. We will go through the elements step by step in a second."
+    title = "This is the main panel",
+    description = HTML("Here your output is displayed.<br>We will go through the elements step by step in a second.")
   )$
   step(
     el = "ImageSelectArea",
     position = "right",
-    title = "Selecting the required options",
-    description = "In this little tutorial we have one parameter to set, which we can select from the dropdown menu. Click on the little arrow down to see the options. Select 'Youtube Tutorial'"
+    title = "Important parameters for the analysis",
+    description = HTML("Here we have 1 parameter to set.<br> Select 'Youtube Tutorial' from the dropdown menu.")
   )$
   step(
     el = "horizontalLine",
     title = "An important line",
-    description = "This line separates the sidebar. All options above this line require your input (selecting your desired option and pressing the 'GO!' button). All options below this line can be first left as they are. 
-    Their changes are directly applied to the output and do not require any re-computation. We will come back to those later."
+    description = HTML("All options above this line require re-computation, which is done by pressing the 'GO!' button. <br>All options below this line can be always changed.")
   )$
   step(
     el = "get_help",
-    title = "Starting the analysis",
-    description = "After you have selected your options (or sometimes stick with the pre-selected option) you have to press this button to ensure your selection is now actually carried out. Press it now to continue."
+    title = "The Go button evokes (re-)computation",
+    description = "Press it now to continue."
   )$
   step(
     el ="mainPanel_help_tab",
-    title = "Main Panel",
+    title = "Display of computed results",
     position = "mid-center",
-    description = "Remember this? This is the main Panel. If you have selected Youtube Tutorial AND pressed the 'GO' button you will see a video here (You might want to watch it after this little guide to get introduced to the analysis features).
-    If you don't see a video here, you might have missed to press the 'GO' button or selected a different option. Click onto previous to correct your mistakes.
-    If you see the video click next."
+    description = HTML("If you have selected Youtube Tutorial AND pressed the 'GO' button you will see a video here. <br>You might want to watch it after this little guide to get introduced to the analysis features).")
   )$
   step(
     el = "help_tab_info",
-    title = "Information",
-    description = "This grey box will contain information about the performed analysis. For example: It will notify you if the analysis was successful or if there were any warning. It is always a good idea to pay attention to the output here."
+    title = "Information box",
+    description = HTML("Contains information about the performed analysis.<br> For example: It will notify you if the analysis was successful or if there were any warning.<br> **It is always a good idea to pay attention to the output here.**")
   )$
   step(
     el = "options",
-    title = "Parameters of the visulaization",
-    description = "The options below the line are applied to the generated output and hence immediately applied. Here, we have the options the adjust the width and height of the image. You can adjust them to your liking."
+    title = "Here you can play around",
+    description = "Here, we have the options the adjust the width and height of the image.<br>A change will be reflected in the output immediately."
   )$
   step(
     el = "NextPanel",
     title = "Next Panel",
-    description = "This button will take you to the next panel where you can perfomr the Data upload and selection. You can navigate between the tabs by also simply clicking on the tab names. Click on 'Next' to see more details."
+    description = "This button will take you to the next panel to start."
   )$
   step(
     el = "tabsetPanel1",
-    title = "Analysis Tabs",
-    description = "These are the different tabs currently available. You can switch between them by clicking on the tab names. Each tab has a different purpose. Note, that more tabs will appear after the mandatory tabs Data selection and Pre-processing (not visible yet).
-    As soon as the Pre-processing is done the analysis tabs will appear - those do not have to be completed in a specific order - they work independently from each other."
+    title = "currently available Analysis Tabs",
+    description = HTML("You can switch between them by clicking on the tab names.<br>Note, that more tabs will appear after the mandatory tabs:<br>1. Data selection <br>2. Pre-processing (not visible yet).<br>
+    As soon as the Pre-processing is done the analysis tabs will appear. They work independently from each other.")
   )$
   step(
     el = "firstQ",
-    title = "Question Marks",
-    description = "Click on theese to get more help on the particular tagged item. (Do not click on this during this guide, you can try it out afterwards) "
+    title = "Question Marks lead to help",
+    description = "Useful to get more help on the particular tagged item."
   )$
   step(
     el = "UsefulLinks",
-    title = "Useful Links",
-    description = "Here are two helpful links - the top one let's you get the automatic generated report. The bottom one redirects you to the extensive Documentation (opens a new tab). Note, that you can search through the enitre documentation for keywords! This links are always present."
+    title = "Very Useful Links",
+    description = HTML("The top one let's you get the automatic generated report.<br> The bottom leads you to the *extensive* Documentation. <br>Note, that you can search through the entire documentation for keywords! <br>This links are always present.")
   )$
   step(
     el = "WelcomePage_ui",
     title = "The End",
     description = "
-    <p>This is the end of the little tutorial. If you'd like more specific help about cOmicsART in action, check out the <a href='https://www.youtube.com/watch?v=pTGjtIYQOak&t=2s' target='_blank'>YouTube Tutorial</a>!</p>
+    <p>This is the end of the little tutorial. If you'd like more specific help about cOmicsArt in action, check out the <a href='https://www.youtube.com/watch?v=pTGjtIYQOak&t=2s' target='_blank'>YouTube Tutorial</a>!</p>
     <p>You can also visit the <a href='https://icb-dcm.github.io/cOmicsArt/' target='_blank'>documentation</a> for more detailed information.</p>
     <p>After this tutorial, you should be able to find the link within the interface on your own. Happy exploring! <i class='fas fa-cat'></i> </p>
   "
