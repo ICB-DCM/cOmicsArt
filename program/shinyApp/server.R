@@ -72,6 +72,7 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
   shinyjs::hide("mainPanel_DataSelection")
+  shinyjs::hideElement(id = "data_summary")
   
 # Init res_tmp and par_tmp objects if they do not yet exist ----
   if(!exists("res_tmp")){
@@ -913,6 +914,7 @@ server <- function(input,output,session){
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     # only enter this when you actually click data
     req(input$Do_preprocessing > 0)
+    shinyjs::showElement(id = "data_summary")
     waiter <- Waiter$new(
       html = LOADING_SCREEN,
       color = "#3897F147",
