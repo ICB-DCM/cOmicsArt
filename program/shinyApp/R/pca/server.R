@@ -55,6 +55,10 @@ pca_Server <- function(id, data, params, row_select){
             step = 1
           )
         })
+        
+        output$PCA_Info <- renderText({
+          "Press 'Get PCA' to start!"
+        })
 
         ## Data Selection UI ---
         observe({

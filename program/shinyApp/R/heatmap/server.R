@@ -107,6 +107,10 @@ heatmap_server <- function(id, data, params, updates){
           )
         })
       })
+      
+      output$Heatmap_Info <- renderText({
+        "Press 'Get Heatmap' to start!"
+      })
 
       ## Do Heatmap
       toListen2Heatmap <- reactive({
@@ -196,6 +200,7 @@ heatmap_server <- function(id, data, params, updates){
             removeModal()
           })
         } else if (nrow(data2plot) > 100) {
+          waiter$hide()
           showModal(modalDialog(
             title = "Warning",
             "The dataset has more than 100 rows. This may cause a high runtime. Do you want to continue?",

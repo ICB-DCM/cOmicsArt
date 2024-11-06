@@ -910,6 +910,10 @@ server <- function(input,output,session){
   })
 
 ## Do preprocessing ----  
+  # Add initial text to help boxes
+  output$Statisitcs_Data <- renderText({
+    "Press 'Get-Preprocessing' to start!"
+  })
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     # only enter this when you actually click data
     req(input$Do_preprocessing > 0)

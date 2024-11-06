@@ -103,6 +103,9 @@ single_gene_visualisation_server <- function(id, data){
             )
           }
         })
+        output$SingleGene_Info <- renderText({
+          "Press 'Get Single Gene Visualisation' to start!"
+        })
       })
      
       toListen <- reactive({
