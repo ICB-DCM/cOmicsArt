@@ -179,7 +179,23 @@ heatmap_server <- function(id, data, params, updates){
 
         proceed_with_heatmap <- reactiveVal(FALSE)
         # Check for data rows and show modal if necessary
-        if (nrow(data2plot) > 100) {
+        if(nrow(data2plot) < 2){
+          waiter$hide()
+          showModal(modalDialog(
+            title = "Warning",
+            "The selection results in only one row. Please revise to have at least two. For single gene visualisation check out the tab Single gene visualisation.",
+            footer = tagList(
+              actionButton(ns("cancel_heatmap"), "Cancel")
+            )
+          ))
+          observeEvent(input$cancel_heatmap, {
+            output$Heatmap_Info <- renderText({
+              paste0("The heatmap not calculated due to low number of selected entities to show.")
+            })
+            proceed_with_heatmap(FALSE)
+            removeModal()
+          })
+        } else if (nrow(data2plot) > 100) {
           showModal(modalDialog(
             title = "Warning",
             "The dataset has more than 100 rows. This may cause a high runtime. Do you want to continue?",
@@ -191,16 +207,25 @@ heatmap_server <- function(id, data, params, updates){
 
           observeEvent(input$continue_heatmap, {
             proceed_with_heatmap(TRUE)
+            output$Heatmap_Info <- renderText({
+              paste0("The heatmap is being calculated and displays a matrix with: ", nrow(data2plot), " rows and ", ncol(data2plot), " columns.")
+            })
             removeModal()
           })
 
           observeEvent(input$cancel_heatmap, {
             waiter$hide()
             proceed_with_heatmap(FALSE)
+            output$Heatmap_Info <- renderText({
+              paste0("The heatmap not calculated due to user's choice.")
+            })
             removeModal()
           })
         } else {
           proceed_with_heatmap(TRUE)
+          output$Heatmap_Info <- renderText({
+            paste0("The heatmap is being calculated and displays a matrix with: ", nrow(data2plot), " rows and ", ncol(data2plot), " columns.")
+          })
         }
 
         observeEvent(proceed_with_heatmap(), {
