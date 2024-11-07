@@ -251,11 +251,6 @@ guide <<- cicerone::Cicerone$
     description = HTML("Always start here to give cOmicsArt tasks.<br>We will go through the elements step by step."),
   )$
   step(
-    el = "mainPanel_help_tab",
-    title = "This is the main panel",
-    description = HTML("Here your output is displayed.<br>We will go through the elements step by step in a second.")
-  )$
-  step(
     el = "ImageSelectArea",
     position = "right",
     title = "Important parameters for the analysis",
@@ -272,15 +267,20 @@ guide <<- cicerone::Cicerone$
     description = "Press it now to continue."
   )$
   step(
-    el ="mainPanel_help_tab",
-    title = "Display of computed results",
-    position = "mid-center",
-    description = HTML("If you have selected Youtube Tutorial AND pressed the 'GO' button you will see a video here. <br>You might want to watch it after this little guide to get introduced to the analysis features).")
+    el = "mainPanel_help_tab",
+    title = "This is the main panel",
+    description = HTML("Here your output is displayed.<br>We will go through the elements step by step in a second.")
   )$
   step(
     el = "help_tab_info",
     title = "Information box",
     description = HTML("Contains information about the performed analysis.<br> For example: It will notify you if the analysis was successful or if there were any warning.<br> **It is always a good idea to pay attention to the output here.**")
+  )$
+  step(
+    el ="mainPanel_help_tab",
+    title = "Display of computed results",
+    position = "mid-center",
+    description = HTML("If you have selected Youtube Tutorial AND pressed the 'GO' button you will see a video here. <br>You might want to watch it after this little guide to get introduced to the analysis features).")
   )$
   step(
     el = "options",
@@ -306,7 +306,7 @@ guide <<- cicerone::Cicerone$
   step(
     el = "UsefulLinks",
     title = "Very Useful Links",
-    description = HTML("The top one let's you get the automatic generated report.<br> The bottom leads you to the *extensive* Documentation. Click it now! <br>Note, that you can search through the entire documentation for keywords!")
+description = HTML("The top one let's you get the automatic generated report.<br> The bottom leads you to the *extensive* Documentation. Click it now!")
   )$
   step(
     el = "WelcomePage_ui",

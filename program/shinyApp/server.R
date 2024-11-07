@@ -115,7 +115,6 @@ server <- function(input,output,session){
     print("Next")
     shinyjs::runjs("document.querySelector('.driver-close-btn').click();")
     showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
-    #showTab(inputId = "tabsetPanel1", target = "Data selection")
   })
 
   output$help_tab_info <- renderText({
@@ -146,7 +145,7 @@ server <- function(input,output,session){
       output$help_tab_info <- renderText({
         HTML(
           paste0(
-            "As you selected the WelcomePage on the **left**, you can see a ccreenshot of the WelcomePage below.<br>",
+"As you selected the WelcomePage on the **left**, you can see a screenshot of the WelcomePage below.<br>",
             "If you want to see the full documentation, click ",
             "<a href='https://icb-dcm.github.io/cOmicsArt/' target='_blank'>here</a>",
             ".<br>or click on the link on the top left of the screen 'Go To Documentation'.<br><br>",
