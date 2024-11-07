@@ -104,16 +104,19 @@ ui <- shiny::fluidPage(
         background-color: grey;
         opacity: 1;
         z-index: 99999 !important;
-      }
-      #shiny-disconnected-overlay::after {
-        content: 'Connection lost. You need to refresh the page. You will need to start again. There can be multiple reasons, such as instable internet connection. If you reproduce this behaviour please report the steps/ clicks you took and report them! This would help all of us, developers, contributors and users <3';
         color: white;
         font-size: 20px;
-        position: absolute;
-        top: 50%; /* Center the text vertically */
-        left: 50%; /* Center the text horizontally */
-        transform: translate(-50%, -50%);
         text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;  /* Allow pointer events */
+        padding: 20px;
+        line-height: 1.5;
+      }
+      #shiny-disconnected-overlay a {
+        color: #add8e6;  /* Light blue color for links */
+        text-decoration: underline;
       }
       #sidebar_data_selection {
           background-color: #70BF4F47;
@@ -203,7 +206,29 @@ ui <- shiny::fluidPage(
         background-color: #A208BA !important; /* Strong Purple */
         color: white !important;
       }
-  "))
+    ")),
+    tags$script(HTML("
+      $(document).on('shiny:disconnected', function(event) {
+        function checkOverlay() {
+          var overlay = $('#shiny-disconnected-overlay');
+          if (overlay.length) {
+            console.log('Overlay found, updating content');  // Debugging line
+            overlay.html(
+              '<div style=\"text-align: center; line-height: 1.5;\">' +
+              'Connection lost.<br>You need to <a href=\"#\" onclick=\"location.reload();\" style=\"color: #add8e6;\">refresh the page</a> to start again.<br>' +
+              'There can be multiple reasons, such as an unstable internet connection. If you reproduce this behavior, ' +
+              'please report the steps/clicks you took!<br>This would help all of us—developers, contributors, and users ❤️<br>' +
+              'Report best through <a href=\"https://github.com/ICB-DCM/cOmicsArt/issues/new/choose\" target=\"_blank\" style=\"color: #add8e6; margin: 0 5px;\">GitHub</a> ' +
+              'or email to <a href=\"mailto:cOmicsArtist@outlook.de\" style=\"color: #add8e6; margin: 0 5px;\">cOmicsArtist@outlook.de</a>.' +
+              '</div>'
+            );
+          } else {
+            setTimeout(checkOverlay, 100);  // Retry after 100ms
+          }
+        }
+        checkOverlay();
+      });
+    "))
   ),
   ##########
   use_cicerone(),
