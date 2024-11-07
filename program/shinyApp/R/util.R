@@ -2,6 +2,9 @@
 
 # tryCatch modal dialog
 error_modal <- function(e, additional_text = NULL){
+  # test if there is a waiter if yes remove it
+
+  runjs("$('.waiter-overlay.waiter-fullscreen').hide();")
   if (is.null(e$message)){
     e$message <- "An unknown error occured"
   }
