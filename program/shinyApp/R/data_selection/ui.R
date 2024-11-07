@@ -144,20 +144,26 @@ data_selection_main_panel <- mainPanel(
     uiOutput("AddGeneSymbols_organism_ui"),
     uiOutput("AddGeneSymbols_ui")
   ),
+  
   fluidRow(
-    column(6, actionButton(
-      "select_data", "Select Data",
-      width = "100%",
-      icon = icon('filter'),
-      style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
+    column(5,
+           actionButton(
+            "select_data", "Select Data",
+            width = "100%",
+            icon = icon('filter'),
+            style = "color: #fffff; background-color: white; border-color: #000000"
+            )
     )),
-    column(6,actionButton(
-      "use_full_data", "Use Full Dataset",
-      width = "100%",
-      icon = icon('rocket'),
-      style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
-    ))
-  ),
+  br(),
+  fluidRow(
+    column(5,
+           actionButton(
+            "use_full_data", "Use Full Dataset",
+            width = "100%",
+            icon = icon('rocket'),
+            style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
+            )
+           )),
   conditionalPanel(
     condition = "input.select_data % 2 == 1",
     hr(style = "border-top: 1px solid #858585;"),
