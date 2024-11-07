@@ -1,6 +1,7 @@
 # Keep here for now. Needs to be replaced i guess at some point.
 library(waiter)
 library(ggplot2)
+library(cicerone)
 ### Global Constants will be saved here
 NOTES_PlACEHOLDER <<- "Notes you want to take alongside the plot (will be saved in the report) \nYou can use markdown syntax for your notes "
 NOTES_HELP <<- HTML("<a href='https://www.markdownguide.org/cheat-sheet/' target='_blank'>Here you can find a Markdown Cheat Sheet</a> \n
@@ -238,3 +239,81 @@ LOADING_SCREEN <- tagList(
     )
   )
 )
+
+
+
+guide <<- cicerone::Cicerone$
+  new(keyboard_control = TRUE)$
+  step(
+    el = "sidebar_help_tab",
+    title = "This is the Sidebar",
+    position = "right",
+    description = HTML("Always start here to give cOmicsArt tasks.<br>We will go through the elements step by step."),
+  )$
+  step(
+    el = "ImageSelectArea",
+    position = "right",
+    title = "Important parameters for the analysis",
+    description = HTML("Here we have 1 parameter to set.<br> Select 'Youtube Tutorial' from the dropdown menu.")
+  )$
+  step(
+    el = "horizontalLine",
+    title = "An important line",
+    description = HTML("All options above this line require re-computation, which is done by pressing the 'GO!' button. <br>All options below this line can be always changed.")
+  )$
+  step(
+    el = "get_help",
+    title = "The Go button evokes (re-)computation",
+    description = "Press it now to continue."
+  )$
+  step(
+    el = "mainPanel_help_tab",
+    title = "This is the main panel",
+    description = HTML("Here your output is displayed.<br>We will go through the elements step by step in a second.")
+  )$
+  step(
+    el = "help_tab_info",
+    title = "Information box",
+    description = HTML("Contains information about the performed analysis.<br> For example: It will notify you if the analysis was successful or if there were any warning.<br> **It is always a good idea to pay attention to the output here.**")
+  )$
+  step(
+    el ="mainPanel_help_tab",
+    title = "Display of computed results",
+    position = "mid-center",
+    description = HTML("If you have selected Youtube Tutorial AND pressed the 'GO' button you will see a video here. <br>You might want to watch it after this little guide to get introduced to the analysis features).")
+  )$
+  step(
+    el = "options",
+    title = "Here you can play around",
+    description = "Here, we have the options the adjust the width and height of the image.<br>A change will be reflected in the output immediately."
+  )$
+  step(
+    el = "NextPanel",
+    title = "Next Panel",
+    description = "This button will take you to the next panel to start."
+  )$
+  step(
+    el = "tabsetPanel1",
+    title = "currently available Analysis Tabs",
+    description = HTML("You can switch between them by clicking on the tab names.<br>Note, that more tabs will appear after the mandatory tabs:<br>1. Data selection <br>2. Pre-processing (not visible yet).<br>
+    As soon as the Pre-processing is done the analysis tabs will appear. They work independently from each other.")
+  )$
+  step(
+    el = "firstQ",
+    title = "Question Marks lead to help",
+    description = "Useful to get more help on the particular tagged item."
+  )$
+  step(
+    el = "UsefulLinks",
+    title = "Very Useful Links",
+description = HTML("The top one let's you get the automatic generated report.<br> The bottom leads you to the *extensive* Documentation. Click it now!")
+  )$
+  step(
+    el = "WelcomePage_ui",
+    title = "The End",
+    description = "
+    <p>This is the end of the little tutorial. If you'd like more specific help about cOmicsArt in action, check out the <a href='https://www.youtube.com/watch?v=pTGjtIYQOak&t=2s' target='_blank'>YouTube Tutorial</a>!</p>
+    <p>You can also visit the <a href='https://icb-dcm.github.io/cOmicsArt/' target='_blank'>documentation</a> for more detailed information.</p>
+    <p>After this tutorial, you should be able to find the link within the interface on your own. Happy exploring! <i class='fas fa-cat'></i> </p>
+  "
+    )

@@ -50,6 +50,7 @@ library(reshape2)
 source("R/C.R")
 source("R/module_DownloadReport.R",local=T)
 # source the uis for each panel here
+source("R/help_tab/ui.R",local=T)
 source("R/data_selection/ui.R",local=T)
 source("R/pre_processing/ui.R",local=T)
 source("R/pca/ui.R",local=T)
@@ -66,6 +67,7 @@ ui <- shiny::fluidPage(
   # Loading Bars?
   # useWaitress(),
   useWaiter(),
+  use_cicerone(),
   # JS to reset input values
   tags$script("
     Shiny.addCustomMessageHandler('resetValue', function(variableName) {
@@ -93,6 +95,10 @@ ui <- shiny::fluidPage(
       .custom-modal .modal-dialog {
         width: 90%;
         max-width: 90%;
+      }
+      .shinyhelper-container {
+        font-size: 24px;
+        color: darkred !important;
       }
       #sidebar_data_selection {
           background-color: #70BF4F47;
@@ -202,15 +208,18 @@ ui <- shiny::fluidPage(
       column(width=1, tags$img(src = "Logo_cOmicsArt_clear.png", height="100%", width="100%")),
       h1(HTML('<span style="color:#EC0014">c</span><span style="color:#FD8D33">O</span><span style="color:#3897F1">m</span><span style="color:#FFD335">i</span><span style="color:#A208BA">c</span><span style="color:#EF0089">s</span><span style="color:#EC0014">A</span><span style="color:#FD8D33">r</span><span style="color:#3897F1">t</span>'))
   ),
-  splitLayout(
-    cellWidths = c("75%", "10%", "15%"),
-    DownloadReport_ui("DownloadTestModule"),
-    NULL
-  ),
-  splitLayout(
-    cellWidths = c("75%", "10%", "15%"),
-    tags$a(href = "https://icb-dcm.github.io/cOmicsArt/", "Go To Documentation", target = "_blank"),
-    NULL
+  div(
+    id = "UsefulLinks",
+    splitLayout(
+      cellWidths = c("75%", "10%", "15%"),
+      DownloadReport_ui("DownloadTestModule"),
+      NULL
+    ),
+    splitLayout(
+      cellWidths = c("75%", "10%", "15%"),
+      tags$a(href = "https://icb-dcm.github.io/cOmicsArt/", "Go To Documentation", target = "_blank"),
+      NULL
+    )
   ),
 
   tabsetPanel(
@@ -218,6 +227,7 @@ ui <- shiny::fluidPage(
     ################################################################################
     # Tab Selection w Upload
     ################################################################################
+    help_tab_panel,
     data_selection_panel,
     pre_processing_panel,
     sampleCorrelation_UI("sample_correlation"),
