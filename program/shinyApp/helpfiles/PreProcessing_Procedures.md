@@ -1,4 +1,6 @@
 ## Data Preprocessing
+***
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/pre-processing.html" target="_blank">here</a>.
 
 **Step 1: General Data Cleaning**
 
