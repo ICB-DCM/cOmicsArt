@@ -6,7 +6,6 @@ geneset_panel_UI <- function(
 
   tabPanel(
     title = id_wo_ns,
-    #textOutput(outputId = ns("EnrichmentInfo"), container = pre),
     tabsetPanel(
       tabPanel(
         title = paste(id_wo_ns, " Enrichment"),

@@ -17,7 +17,6 @@ enrichment_analysis_geneset_server <- function(
       }else{
         print(paste(id, "Enrichment Done"))
         print(result)
-        browser()
         # Enrichment Result Plot
         # only plot if the best found adjustment value is significant
         if(nrow(result@result) > 0){
@@ -46,7 +45,6 @@ enrichment_analysis_geneset_server <- function(
           output$EnrichmentFailure <- renderText("No significant result found. For further details check the table.")
           ea_scenario <- 0
         }
-
 
         # download R Code for further plotting
         output$getR_Code <- downloadHandler(
