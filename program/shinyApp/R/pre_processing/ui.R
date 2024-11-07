@@ -36,10 +36,9 @@ pre_processing_sidebar_panel <- sidebarPanel(
 pre_processing_main_panel <- mainPanel(
   id = "mainpanel_pre_processing",
   # Statistics to the data
+  htmlOutput(outputId = "Statisitcs_Data", container = pre),
   div(
-    id="data_summary",
-    helpText("General statistics to the input data, stuff like dimensions"),
-    htmlOutput(outputId = "Statisitcs_Data"),
+    id = "data_summary",
     HTML(text = "<br>"),
     fluidRow(
       column(
@@ -104,7 +103,8 @@ pre_processing_main_panel <- mainPanel(
       NULL
     )
   )
-)
+  )
+
 
 
 pre_processing_panel <- tabPanel(

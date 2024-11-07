@@ -29,61 +29,63 @@ sampleCorrelation_main_panel <- function(ns){
   mainPanel(
   id = "main_sampleCorrelation",
   textOutput(outputId = ns("SampleCorr_Info"), container = pre),
-  splitLayout(
-    style = "border: 1px solid silver:", cellWidths = c("100%"),
-    plotOutput(
-      outputId = ns("SampleCorrelationPlot")
-    )
-  ),
-  splitLayout(
-    style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-    NULL,
-    actionButton(
-      inputId = ns("only2Report_SampleCorrelation"),
-      label = "Send only to Report",
-      class = "btn-info"
-    )
-  ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
-  splitLayout(
-    style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-    NULL,
-    downloadButton(
-      outputId = ns("getR_SampleCorrelation"),
-      label = "Get underlying R code and data",
-      icon = icon(name = "code")
-    )
-  ),
-  splitLayout(
-    style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-    NULL,
-    downloadButton(
-      outputId = ns("SavePlot_SampleCorrelation"),
-      label = "Save plot",
-      class = "btn-info"
-    )
-  ),
-  splitLayout(
-    style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-    NULL,
-    radioGroupButtons(
-      inputId = ns("file_ext_SampleCorrelation"), 
-      label = "File Type:",
-      choices = c(".png", ".tiff", ".pdf"), 
-      selected = ".png"
-    )
-  ),
-  splitLayout(
-    style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-    cellArgs = list(style = "padding: 5px"),
-    div(textAreaInput(
-      inputId = ns("NotesSampleCorrelation"),
-      label = "Notes:",
-      placeholder = NOTES_PlACEHOLDER,
-      width = "1000px"
-    ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
-    helpText(NOTES_HELP)),
-    NULL
-  ),
+  div(id = "div_sampleCorrelation_main_panel",
+    splitLayout(
+      style = "border: 1px solid silver:", cellWidths = c("100%"),
+      plotOutput(
+        outputId = ns("SampleCorrelationPlot")
+      )
+    ),
+    splitLayout(
+      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+      NULL,
+      actionButton(
+        inputId = ns("only2Report_SampleCorrelation"),
+        label = "Send only to Report",
+        class = "btn-info"
+      )
+    ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+    splitLayout(
+      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+      NULL,
+      downloadButton(
+        outputId = ns("getR_SampleCorrelation"),
+        label = "Get underlying R code and data",
+        icon = icon(name = "code")
+      )
+    ),
+    splitLayout(
+      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+      NULL,
+      downloadButton(
+        outputId = ns("SavePlot_SampleCorrelation"),
+        label = "Save plot",
+        class = "btn-info"
+      )
+    ),
+    splitLayout(
+      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+      NULL,
+      radioGroupButtons(
+        inputId = ns("file_ext_SampleCorrelation"), 
+        label = "File Type:",
+        choices = c(".png", ".tiff", ".pdf"), 
+        selected = ".png"
+      )
+    ),
+    splitLayout(
+      style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+      cellArgs = list(style = "padding: 5px"),
+      div(textAreaInput(
+        inputId = ns("NotesSampleCorrelation"),
+        label = "Notes:",
+        placeholder = NOTES_PlACEHOLDER,
+        width = "1000px"
+      ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
+      helpText(NOTES_HELP)),
+      NULL
+    ),
+  )
 )
 }
 

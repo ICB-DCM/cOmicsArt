@@ -72,13 +72,20 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
   shinyjs::hide("mainPanel_DataSelection")
+  shinyjs::hideElement(id = "data_summary")
+  shinyjs::hideElement(id = "div_sampleCorrelation_main_panel")
+  shinyjs::hideElement(id = "PCA_main_panel_div")
+  shinyjs::hideElement(id = "Significance_div")
+  shinyjs::hideElement(id = "Heatmap_div")
+  shinyjs::hideElement(id = "SingleGene_div")
+  shinyjs::hideElement(id = "enrichment_div")
 
 # Set Up ad Show user Landing page ----
 # TODO: SetUp cookie usage to land on second page
   # Define the guide
   # Note do this in here to avoid setting a global upon close
   guide_welcome <- Cicerone$
-    new(id = "guide", 
+    new(id = "guide",
         opacity = 0.9,
         padding = 10,
         keyboard_control = TRUE)$
@@ -101,16 +108,16 @@ server <- function(input,output,session){
       title = "Welcome to cOmicsArt!",
       description = "You pressed next - redirection triggered",
     )
-  
+
   guide_welcome$init()$start()
-  
+
   # Start the tour when the "Start Tour" button is clicked
   observeEvent(input$start_tour, {
     print("Star Tour")
     shinyjs::runjs("document.querySelector('.driver-close-btn').click();")
     guide$init()$start()
   })
-  
+
   observeEvent(input$guide_cicerone_next, {
     print("Next")
     shinyjs::runjs("document.querySelector('.driver-close-btn').click();")
@@ -123,11 +130,11 @@ server <- function(input,output,session){
     "To confirm your selection click the button labelled 'GO show me help!' within the sidebar."
     ))
   })
-  
+
   output$WelcomePage_ui <- renderUI({
     imageOutput("WelcomePage")
   })
-  
+
   observeEvent(input$get_help,{
     if(input$ImageSelect == "WelcomePage"){
       output$WelcomePage_ui <- renderUI({
@@ -176,12 +183,12 @@ server <- function(input,output,session){
       output$WelcomePage_ui <- renderUI({NULL})
     }
   })
-  
+
   observeEvent(input$NextPanel,{
     showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
   })
 
-  
+
 
 # Init res_tmp and par_tmp objects if they do not yet exist ----
   if(!exists("res_tmp")){
@@ -282,6 +289,11 @@ server <- function(input,output,session){
         selected = "Mouse genes (GRCm39)"
       )})
     }
+  })
+
+  # Show or hide the gene annotation options based on the button click
+  observeEvent(input$geneAnno_toggle_button, {
+    shinyjs::toggle(id = "geneAnno_toggle")  # Toggle the div on button click
   })
 
   observeEvent(input$AddGeneSymbols, {
@@ -1020,9 +1032,14 @@ server <- function(input,output,session){
   })
 
 ## Do preprocessing ----  
+  # Add initial text to help boxes
+  output$Statisitcs_Data <- renderText({
+    "Press 'Get-Preprocessing' to start!"
+  })
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     # only enter this when you actually click data
     req(input$Do_preprocessing > 0)
+    shinyjs::showElement(id = "data_summary")
     waiter <- Waiter$new(
       html = LOADING_SCREEN,
       color = "#3897F147",
@@ -1150,14 +1167,22 @@ server <- function(input,output,session){
       shinyjs::click("PCA-refreshUI",asis = T)
       shinyjs::click("sample_correlation-refreshUI",asis = T)
       paste0(
-        addWarning,
         "The data has the dimensions of: ",
         paste0(dim(res_tmp[[session$token]]$data),collapse = ", "),
         "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
-        "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
+        "<br","If logX was chosen, in case of 0's present logX(data+1) is done",
         "<br","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(res_tmp[[session$token]]$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
+    # set the warning as toast
+    show_toast(
+      title = "Attention",
+      text = HTML(addWarning),
+      position = "top",
+      timer = 2500,
+      timerProgressBar = T
+    )
+
     output$raw_violin_plot <- renderPlot({
       violin_plot(res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
                   color_by = input$violin_color)

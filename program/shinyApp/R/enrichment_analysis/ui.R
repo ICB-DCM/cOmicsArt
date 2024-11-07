@@ -120,65 +120,67 @@ ea_sidebar <- function(ns){
 ea_main <- function(ns){
   mainPanel(
     textOutput(outputId = ns("EnrichmentInfo"), container = pre),
-    tabsetPanel(
-      id = ns("EnrichmentTabs"),
-      geneset_panel_UI(ns("Hallmarks")),
-      geneset_panel_UI(ns("C1")),
-      geneset_panel_UI(ns("C2")),
-      geneset_panel_UI(ns("CGP")),
-      geneset_panel_UI(ns("CP")),
-      geneset_panel_UI(ns("BIOCARTA")),
-      geneset_panel_UI(ns("KEGG")),
-      geneset_panel_UI(ns("PID")),
-      geneset_panel_UI(ns("REACTOME")),
-      geneset_panel_UI(ns("WIKIPATHWAYS")),
-      geneset_panel_UI(ns("C3")),
-      geneset_panel_UI(ns("MIRDB")),
-      geneset_panel_UI(ns("MIR_Legacy")),
-      geneset_panel_UI(ns("GTRD")),
-      geneset_panel_UI(ns("TFT_Legacy")),
-      geneset_panel_UI(ns("C4")),
-      geneset_panel_UI(ns("CGN")),
-      geneset_panel_UI(ns("CM")),
-      geneset_panel_UI(ns("C5")),
-      geneset_panel_UI(ns("GO")),
-      geneset_panel_UI(ns("GO_BP")),
-      geneset_panel_UI(ns("GO_CC")),
-      geneset_panel_UI(ns("GO_MF")),
-      geneset_panel_UI(ns("HPO")),
-      geneset_panel_UI(ns("C6")),
-      geneset_panel_UI(ns("C7")),
-      geneset_panel_UI(ns("IMMUNESIGDB")),
-      geneset_panel_UI(ns("VAX")),
-      geneset_panel_UI(ns("C8")),
-      tabPanel(
-        title = "KeggPathwayOutput",
-        helpText("Specificy on the left which pathway (all sig. enriched) to display in picture-format"),
-        actionButton(
-          inputId = ns("OverlayOnPathway"),
-          label = "Show overlay on Pathway"
-        ),
-        selectInput(
-          inputId = ns("plotOnTopOption"),
-          label = "Specifiy the what the colored overlay should indicate",
-          choices = c("LFC", "presence"),
-          selected = "presence"
-        ),
-        uiOutput(outputId = ns("sample_anno_types_KEGG_ui")),
-        uiOutput(outputId = ns("ComparisonOptionsCRTL_ui")),
-        uiOutput(outputId = ns("ComparisonOptionsCOMP_ui")),
-        uiOutput(outputId = ns("psig_KEGG_ui")),
-        sliderInput(
-          inputId = ns("imageWidth"),
-          label = "Adjust Width",
-          min = 400, max = 1500, step = 20, value = 1000
-        ),
-        sliderInput(
-          inputId = ns("imageHeight"),
-          label = "Adjust Height",
-          min = 400, max = 1500, step = 20, value = 640
-        ),
-        imageOutput(outputId = ns("KeggPathwayOutput_img"))
+    div(id = "enrichment_div",
+      tabsetPanel(
+        id = ns("EnrichmentTabs"),
+        geneset_panel_UI(ns("Hallmarks")),
+        geneset_panel_UI(ns("C1")),
+        geneset_panel_UI(ns("C2")),
+        geneset_panel_UI(ns("CGP")),
+        geneset_panel_UI(ns("CP")),
+        geneset_panel_UI(ns("BIOCARTA")),
+        geneset_panel_UI(ns("KEGG")),
+        geneset_panel_UI(ns("PID")),
+        geneset_panel_UI(ns("REACTOME")),
+        geneset_panel_UI(ns("WIKIPATHWAYS")),
+        geneset_panel_UI(ns("C3")),
+        geneset_panel_UI(ns("MIRDB")),
+        geneset_panel_UI(ns("MIR_Legacy")),
+        geneset_panel_UI(ns("GTRD")),
+        geneset_panel_UI(ns("TFT_Legacy")),
+        geneset_panel_UI(ns("C4")),
+        geneset_panel_UI(ns("CGN")),
+        geneset_panel_UI(ns("CM")),
+        geneset_panel_UI(ns("C5")),
+        geneset_panel_UI(ns("GO")),
+        geneset_panel_UI(ns("GO_BP")),
+        geneset_panel_UI(ns("GO_CC")),
+        geneset_panel_UI(ns("GO_MF")),
+        geneset_panel_UI(ns("HPO")),
+        geneset_panel_UI(ns("C6")),
+        geneset_panel_UI(ns("C7")),
+        geneset_panel_UI(ns("IMMUNESIGDB")),
+        geneset_panel_UI(ns("VAX")),
+        geneset_panel_UI(ns("C8")),
+        tabPanel(
+          title = "KeggPathwayOutput",
+          helpText("Specificy on the left which pathway (all sig. enriched) to display in picture-format"),
+          actionButton(
+            inputId = ns("OverlayOnPathway"),
+            label = "Show overlay on Pathway"
+          ),
+          selectInput(
+            inputId = ns("plotOnTopOption"),
+            label = "Specifiy the what the colored overlay should indicate",
+            choices = c("LFC", "presence"),
+            selected = "presence"
+          ),
+          uiOutput(outputId = ns("sample_anno_types_KEGG_ui")),
+          uiOutput(outputId = ns("ComparisonOptionsCRTL_ui")),
+          uiOutput(outputId = ns("ComparisonOptionsCOMP_ui")),
+          uiOutput(outputId = ns("psig_KEGG_ui")),
+          sliderInput(
+            inputId = ns("imageWidth"),
+            label = "Adjust Width",
+            min = 400, max = 1500, step = 20, value = 1000
+          ),
+          sliderInput(
+            inputId = ns("imageHeight"),
+            label = "Adjust Height",
+            min = 400, max = 1500, step = 20, value = 640
+          ),
+          imageOutput(outputId = ns("KeggPathwayOutput_img"))
+        )
       )
     )
   )
@@ -194,7 +196,6 @@ enrichment_analysis_UI <- function(id){
     #########################################
     # Enrichment
     #########################################
-    h4("NOTE THAT THIS ONLY MAKES SENSE FOR TRANSCRIPTOMICS DATA AT THE MOMENT!"),
     ea_sidebar(ns),
     ea_main(ns),
   )

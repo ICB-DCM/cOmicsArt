@@ -103,6 +103,9 @@ single_gene_visualisation_server <- function(id, data){
             )
           }
         })
+        output$SingleGene_Info <- renderText({
+          "Press 'Get Single Gene Visualisation' to start!"
+        })
       })
      
       toListen <- reactive({
@@ -116,6 +119,7 @@ single_gene_visualisation_server <- function(id, data){
       observeEvent(toListen(),{
         req(input$singleGeneGo>0)
         print(input$Select_Gene)
+        shinyjs::showElement(id = "SingleGene_div", asis = TRUE)
         # update the data
         data <- update_data(session$token)
 
@@ -168,6 +172,9 @@ single_gene_visualisation_server <- function(id, data){
             GeneData <- GeneData[,ncol(GeneData),drop=F]
             GeneData$rowMedian <- GeneData_medians
             GeneData <- GeneData[,c("rowMedian","anno")]
+            data_note <- "You chose a group rather than a single entitie, the y-axis-values shown are summarized by taking the median."
+          }else{
+            data_note <- ""
           }
           GeneData$anno <- as.factor(GeneData$anno)
 
@@ -186,7 +193,10 @@ single_gene_visualisation_server <- function(id, data){
           
           # check if it is more than 3 points per group, to draw boxplots as well
           if(any(table(GeneData$anno)>3)){
+            boxplot_note <-  "The dotted line represents the mean of the data."
             P_boxplots <- P_boxplots + geom_boxplot(alpha = 0.5) 
+          }else{
+            boxplot_note <- "Note, that you only see boxplots if you have more than 3 samples per group. The dotted line represents the mean of the data."
           }
           testMethod <- "t.test"
           scenario <- 13
@@ -226,6 +236,12 @@ single_gene_visualisation_server <- function(id, data){
             }
           )
           output$SingleGenePlot <- renderPlot(P_boxplots)
+          output$SingleGene_Info <- renderText({
+            paste0(
+              boxplot_note,"\n",
+              data_note
+            )
+          })
         } else {
           output$SingleGenePlot <- renderPlot(ggplot() + theme_void())
         }
