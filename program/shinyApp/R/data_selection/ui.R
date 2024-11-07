@@ -89,7 +89,7 @@ data_selection_sidebar_panel <- sidebarPanel(
           label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv" download>Download example data (Transcriptomics, human)</a></small>'),
           accept = c(".csv", ".xlsx"),
           width = "80%"
-        ) %>% helper(type = "markdown", content = "DataSelection_MetaData"),
+        ) %>% helper(type = "markdown", content = "DataSelection_MetaData",style = "font-size: 24px;"),
         shiny::fileInput(
           inputId = "metadataInput",
           label = HTML("Upload your Meta Data Sheet <small>(currently replaces sample annotation)</small>"),

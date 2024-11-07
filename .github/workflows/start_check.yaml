@@ -103,6 +103,7 @@ jobs:
         if (result == "Success") {
           cat("Test passed")
         } else {
+        cat(result)
            cat("Test failed: Output is 'failure'\n")
           quit(status = 1)
         }

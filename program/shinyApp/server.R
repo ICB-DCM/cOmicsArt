@@ -79,6 +79,117 @@ server <- function(input,output,session){
   shinyjs::hideElement(id = "Heatmap_div")
   shinyjs::hideElement(id = "SingleGene_div")
   shinyjs::hideElement(id = "enrichment_div")
+
+# Set Up ad Show user Landing page ----
+# TODO: SetUp cookie usage to land on second page
+  # Define the guide
+  # Note do this in here to avoid setting a global upon close
+  guide_welcome <- Cicerone$
+    new(id = "guide",
+        opacity = 0.9,
+        padding = 10,
+        keyboard_control = TRUE)$
+    step(
+      el = "start_tour",
+      title = "Welcome to cOmicsArt!",
+      position = "right-center",
+      description = HTML("
+      <div style='min-width: 300px; min-height: 150px; padding: 10px;'>
+        <img src='Logo_cOmicsArt_clear.png' alt='cOmicsArt Logo' style='max-width:90%;'>
+        <div style='font-size: 18px; margin-top: 10px;'>
+          <p><i class='fas fa-question-circle'></i> Need help? Press the blue button</p>
+          <p><i class='fas fa-rocket'></i> Want to start directly? Click 'Next'.</p>
+        </div>
+      </div>
+    ")
+  )$
+    step(
+      el = "tabsetPanel1",
+      title = "Welcome to cOmicsArt!",
+      description = "You pressed next - redirection triggered",
+    )
+
+  guide_welcome$init()$start()
+
+  # Start the tour when the "Start Tour" button is clicked
+  observeEvent(input$start_tour, {
+    print("Star Tour")
+    shinyjs::runjs("document.querySelector('.driver-close-btn').click();")
+    guide$init()$start()
+  })
+
+  observeEvent(input$guide_cicerone_next, {
+    print("Next")
+    shinyjs::runjs("document.querySelector('.driver-close-btn').click();")
+    showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
+  })
+
+  output$help_tab_info <- renderText({
+    HTML(paste0(
+    "Please select an image to display within the sidebar(left)<br>",
+    "To confirm your selection click the button labelled 'GO show me help!' within the sidebar."
+    ))
+  })
+
+  output$WelcomePage_ui <- renderUI({
+    imageOutput("WelcomePage")
+  })
+
+  observeEvent(input$get_help,{
+    if(input$ImageSelect == "WelcomePage"){
+      output$WelcomePage_ui <- renderUI({
+        imageOutput("WelcomePage")
+      })
+      output$WelcomePage <- renderImage({
+        # Path to the image file
+        list(
+          src = "www/WelcomPage.png",
+          contentType = "image/png",
+          width = paste0(input$ImageWidth,"%"), # Adjust as needed
+          height = input$ImageHeight # Adjust as needed
+        )
+      }, deleteFile = FALSE) # Set deleteFile to FALSE to keep the image file
+      output$help_tab_info <- renderText({
+        HTML(
+          paste0(
+"As you selected the WelcomePage on the **left**, you can see a screenshot of the WelcomePage below.<br>",
+            "If you want to see the full documentation, click ",
+            "<a href='https://icb-dcm.github.io/cOmicsArt/' target='_blank'>here</a>",
+            ".<br>or click on the link on the top left of the screen 'Go To Documentation'.<br><br>",
+            "Within cOmicsArt this box will display information depending on the current tab you are in.<br> A tab represents an analysis."
+          )
+        )
+        }
+      )
+    } else if(input$ImageSelect == "YouTube Tutorial"){
+      output$WelcomePage_ui <- renderUI({
+        tags$iframe(
+          width = paste0(input$ImageWidth,"%"), # Adjust as needed
+          height = input$ImageHeight, # Adjust as needed
+          src = "https://www.youtube.com/embed/pTGjtIYQOak",
+          frameborder = "0",
+          allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+          allowfullscreen = TRUE
+        )
+      })
+    } else if(input$ImageSelect == "nothing selected"){
+      output$help_tab_info <- renderText({
+        HTML(paste0(
+          "You have selected 'nothing selected' - hence there is nothing to show<br>.",
+          "Do you want to see something else? Try to select a different Image (Select Image) on the left!<br>",
+          "Did you maybe just press the button?"
+        ))
+      })
+      output$WelcomePage_ui <- renderUI({NULL})
+    }
+  })
+
+  observeEvent(input$NextPanel,{
+    showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
+  })
+
+
+
 # Init res_tmp and par_tmp objects if they do not yet exist ----
   if(!exists("res_tmp")){
     res_tmp <<- list()
@@ -179,7 +290,7 @@ server <- function(input,output,session){
       )})
     }
   })
-  
+
   # Show or hide the gene annotation options based on the button click
   observeEvent(input$geneAnno_toggle_button, {
     shinyjs::toggle(id = "geneAnno_toggle")  # Toggle the div on button click
@@ -1071,7 +1182,7 @@ server <- function(input,output,session){
       timer = 2500,
       timerProgressBar = T
     )
-    
+
     output$raw_violin_plot <- renderPlot({
       violin_plot(res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
                   color_by = input$violin_color)
