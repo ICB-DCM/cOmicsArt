@@ -13,25 +13,17 @@ A design matrix is a mathematical representation that describes how the experime
 
 #### Choosing Factors for the Design Matrix
 
-In DESeq2, you typically need to specify two types of factors:
+In DESeq2, you typically need to specify factors that explain your data.
 
-1. **Main Factor**: This is the primary variable of interest. For example, if you are interested in the effect of a treatment, the treatment condition would be the main factor.
-2. **Other Factors**: These are additional variables that might affect the outcome but are not the primary focus of the study. These could include batch effects, sequencing depth, or other covariates.
-
-#### How to Create the Design Formula
-
-The design formula in DESeq2 is created by combining the main factor with other factors. The formula is typically written in the form:
+The design formula in DESeq2 is created by combining the factors. The formula is typically written in the form:
 ```R
-~ main_factor + other_factors
+~ factor_1 + factor_2 + etc
 ```
+This describes that the factors contribute to the data fitting independently from each 
+other.
 
-Here’s a step-by-step guide on how the design matrix is formed from the selected factors:
-
-1. **Select Main Factor**: Choose the primary experimental condition you are interested in.
-2. **Select Other Factors**: Choose any additional factors that need to be accounted for in the analysis.
-3. **Combine Factors**: Combine the main factor and other factors into a formula.
-
-For example, if your main factor is `treatment` and you have two additional factors `batch` and `sequencing_depth`, the design formula would be:
+For example, if your main factors are `treatment`, `batch` and `sequencing_depth`, the 
+design formula would be:
 
 ```R
 ~ treatment + batch + sequencing_depth
@@ -49,9 +41,8 @@ The design matrix allows DESeq2 to model the counts data while considering the s
 
 Let's say you have an RNA-seq experiment with two conditions (Control and Treatment) and two additional factors (Batch and Sequencing Depth). You want to analyze the effect of the treatment while accounting for batch effects and sequencing depth. Here's how you can set it up:
 
-1. **Main Factor**: Treatment
-2. **Other Factors**: Batch, Sequencing Depth
-3. **Design Formula**: `~ treatment + batch + sequencing_depth`
+1. **Factors**: Treatment, Batch, Sequencing Depth
+2. **Design Formula**: `~ treatment + batch + sequencing_depth`
 
 The design matrix will help DESeq2 to:
 

@@ -993,7 +993,7 @@ server <- function(input,output,session){
       length(unique(colData(res_tmp[[session$token]]$data_original)[[col]])) < nrow(colData(res_tmp[[session$token]]$data_original))
     })]
     if (input$PreProcessing_Procedure == "vst_DESeq") {
-      filtered_column_names <- filtered_column_names[!filtered_column_names %in% c(input$DESeq_formula_main, input$DESeq_formula_sub)]
+      filtered_column_names <- filtered_column_names[!filtered_column_names %in% c(input$DESeq_formula_sub)]
     }
     selectInput(
       inputId = "BatchEffect_Column",
@@ -1002,33 +1002,19 @@ server <- function(input,output,session){
       selected = "NULL"
     )
   })
-  output$DESeq_formula_main_ui <- renderUI({
-    req(data_input_shiny())
-    req(input$PreProcessing_Procedure == "vst_DESeq")
-    selectInput(
-      inputId = "DESeq_formula_main",
-      label = paste0(
-        "Choose main factor for desing formula in DESeq pipeline ",
-        "(App might crash if your factor as only 1 sample per level)"
-      ),
-      choices = c(colnames(colData(res_tmp[[session$token]]$data))),
-      multiple = F,
-      selected = "condition"
-    ) %>% helper(type = "markdown", content = "PreProcessing_DESeqMain")
-  })
   output$DESeq_formula_sub_ui <- renderUI({
     req(data_input_shiny())
     req(input$PreProcessing_Procedure == "vst_DESeq")
     selectInput(
       inputId = "DESeq_formula_sub",
       label = paste0(
-        "Choose other factors to account for",
-        "(App might crash if your factor as only 1 sample per level)"
+        "Choose factors to account for ",
+        "(App might crash if your factor has only 1 sample per level)"
       ),
       choices = c(colnames(colData(res_tmp[[session$token]]$data))),
       multiple = T,
       selected = "condition"
-    ) %>% helper(type = "markdown", content = "PreProcessing_DESeqSub")
+    ) %>% helper(type = "markdown", content = "PreProcessing_DESeq")
   })
 
 ## Do preprocessing ----  
@@ -1070,7 +1056,6 @@ server <- function(input,output,session){
         res_tmp[[session$token]]$data <<- deseq_processing(
             data = res_tmp[[session$token]]$data,
             omic_type = par_tmp[[session$token]]$omic_type,
-            formula_main = input$DESeq_formula_main,
             formula_sub = input$DESeq_formula_sub,
             session_token = session$token,
             batch_correct = F
@@ -1106,7 +1091,6 @@ server <- function(input,output,session){
         res_tmp[[session$token]]$data_batch_corrected <<- deseq_processing(
           data = tmp_data_selected,
           omic_type = par_tmp[[session$token]]$omic_type,
-          formula_main = input$DESeq_formula_main,
           formula_sub = c(input$DESeq_formula_sub, input$BatchEffect_Column),
           session_token = session$token,
           batch_correct = T
@@ -1218,7 +1202,9 @@ server <- function(input,output,session){
       message = paste0(
         "**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",
         ifelse(input$PreProcessing_Procedure == "vst_DESeq",
-               paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),
+               paste0(
+                 input$PreProcessing_Procedure,
+                 " ~ ",paste(input$DESeq_formula_sub, collapse=" + ")),
                input$PreProcessing_Procedure)
       )
     )

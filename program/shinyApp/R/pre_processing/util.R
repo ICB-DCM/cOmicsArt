@@ -94,39 +94,26 @@ ln_normalisation <- function(data, omic_type, logarithm_procedure){
 
 
 deseq_processing <- function(
-  data, omic_type, formula_main, formula_sub, session_token, batch_correct
+  data, omic_type, formula_sub, session_token, batch_correct
 ){
   # Center and scale the data
   # prefilter the data
   data <- prefiltering(data, omic_type)
   # DESeq2
   if(omic_type == "Transcriptomics"){
-    design_formula <- paste("~", formula_main)
-    # only do this locally
-    colData(data)[,formula_main] <- as.factor(
-      colData(data)[,formula_main]
-    )
-    if(length(formula_sub) > 0){
-      design_formula <- paste(
-        design_formula, " + ",
-        paste(formula_sub, collapse = " + ")
-      )
-      # turn each factor into a factor
-      for(i in formula_sub){
-        colData(data)[,i] <- as.factor(
-          colData(data)[,i]
-        )
-      }
-      par_tmp[[session_token]][["DESeq_factors"]] <<- c(
-        formula_main,formula_sub
+    if(length(formula_sub) <= 0){
+      stop(
+        "Please select at least one factor for the DESeq2 analysis.",
+        class = "InvalidInputError"
       )
     }
-    else{
-      par_tmp[[session_token]][["DESeq_factors"]] <<- c(formula_main)
+    design_formula <- paste("~", paste(formula_sub, collapse = " + "))
+    # turn each factor into a factor
+    for(i in formula_sub){
+      colData(data)[,i] <- as.factor(colData(data)[,i])
     }
+    par_tmp[[session_token]][["DESeq_factors"]] <<- c(formula_sub)
     print(design_formula)
-    # on purpose local
-    print(colData(data)[,formula_main])
 
     dds <- DESeq2::DESeqDataSetFromMatrix(
       countData = assay(data),
