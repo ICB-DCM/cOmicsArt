@@ -168,15 +168,17 @@ data_selection_main_panel <- mainPanel(
             )
     )),
   br(),
-  fluidRow(
-    column(5,
-           actionButton(
-            "use_full_data", "Use Full Dataset",
-            width = "100%",
-            icon = icon('rocket'),
-            style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
-            )
-           )),
+  conditionalPanel(
+    condition = "input.select_data % 2 == 0",
+    fluidRow(column(5,
+        actionButton(
+          "use_full_data", "Use Full Dataset",
+          width = "100%",
+          icon = icon('rocket'),
+          style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
+        )
+    ))
+  ),
   conditionalPanel(
     condition = "input.select_data % 2 == 1",
     hr(style = "border-top: 1px solid #858585;"),
@@ -195,16 +197,14 @@ data_selection_main_panel <- mainPanel(
                  uiOutput("sample_selection_ui")
              ))
     ),
-    hr(style = "border-top: 1px solid #858585;"),
     div(
       id = "SaveInputAsRDS",
+      hr(style = "border-top: 1px solid #858585;"),
       downloadButton(
         outputId = "SaveInputAsList",
         label = "Save file input to upload later"
       ) %>% helper(type = "markdown", content = "DataSelection_compilation_help")
     ),
-    htmlOutput(outputId = "debug", container = pre),
-    br(), br(), br(),
     hr(style = "border-top: 1px solid #858585;"),
     actionButton(
       inputId = "NextPanel",
