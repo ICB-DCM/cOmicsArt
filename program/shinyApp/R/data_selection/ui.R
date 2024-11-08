@@ -89,7 +89,7 @@ data_selection_sidebar_panel <- sidebarPanel(
           label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv" download>Download example data (Transcriptomics, human)</a></small>'),
           accept = c(".csv", ".xlsx"),
           width = "80%"
-        ) %>% helper(type = "markdown", content = "DataSelection_MetaData"),
+        ) %>% helper(type = "markdown", content = "DataSelection_MetaData",style = "font-size: 24px;"),
         shiny::fileInput(
           inputId = "metadataInput",
           label = HTML("Upload your Meta Data Sheet <small>(currently replaces sample annotation)</small>"),
@@ -139,12 +139,24 @@ data_selection_sidebar_panel <- sidebarPanel(
 
 data_selection_main_panel <- mainPanel(
   id = "mainPanel_DataSelection",
-  div(
+  div(id ="InfoBox_DataSelection",
+      htmlOutput(outputId = "debug", container = pre)
+      ),
+  # add link to toggle on the div geneAnno_toggle
+  actionButton(
+    inputId = "geneAnno_toggle_button",
+    label = "(show/hide) Further entitie Annotation options",
+    icon = icon('plus'),
+    style = "color: #000000; background-color: transparent; border-color: transparent"
+  ),
+  div( 
+    id  = "geneAnno_toggle",
+    style = "display: none;",
     class = "AddGeneSymbols_ui",
     uiOutput("AddGeneSymbols_organism_ui"),
-    uiOutput("AddGeneSymbols_ui")
+    uiOutput("AddGeneSymbols_ui"),
+    hr(style = "border-top: 1px solid #858585;")
   ),
-  hr(style = "border-top: 1px solid #858585;"),
   fluidRow(
     column(5,
            div(class = "DataSelection",
@@ -160,7 +172,6 @@ data_selection_main_panel <- mainPanel(
                uiOutput("sample_selection_ui")
            ))
   ),
-  hr(style = "border-top: 1px solid #858585;"),
   div(
     id = "SaveInputAsRDS",
     downloadButton(
@@ -168,7 +179,6 @@ data_selection_main_panel <- mainPanel(
       label = "Save file input to upload later"
     ) %>% helper(type = "markdown", content = "DataSelection_compilation_help")
   ),
-  htmlOutput(outputId = "debug", container = pre),
   br(), br(), br(),
   hr(style = "border-top: 1px solid #858585;"),
   actionButton(

@@ -19,23 +19,28 @@ enrichment_analysis_geneset_server <- function(
         print(result)
         # Enrichment Result Plot
         # only plot if the best found adjustment value is significant
-        if(result@result$p.adjust[1] < 0.05){
-          showElement(id = "EnrichmentPlot")
-          showElement(id = "only2Report")
-          showElement(id = "getR_Code")
-          showElement(id = "SavePlot")
-          showElement(id = "file_ext")
-          showElement(id = "Notes")
-          showElement(id = "NotesHelper")
-          hideElement(id = "EnrichmentFailure")
-          output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result) + CUSTOM_THEME})
-          if(ea_type == "GeneSetEnrichment"){
-            ea_scenario <- 15
-          }else{
-            ea_scenario <- 14
+        if(nrow(result@result) > 0){
+          if(result@result$p.adjust[1] < 0.05){
+            showElement(id = "EnrichmentPlot")
+            showElement(id = "only2Report")
+            showElement(id = "getR_Code")
+            showElement(id = "SavePlot")
+            showElement(id = "file_ext")
+            showElement(id = "Notes")
+            showElement(id = "NotesHelper")
+            hideElement(id = "EnrichmentFailure")
+            output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result) + CUSTOM_THEME})
+            if(ea_type == "GeneSetEnrichment"){
+              ea_scenario <- 15
+            }else{
+              ea_scenario <- 14
+            }
+          }else{ # print that no significant result was found
+            showElement(id = "EnrichmentFailure")
+            output$EnrichmentFailure <- renderText("No significant result found. For further details check the table.")
+            ea_scenario <- 0
           }
-        }
-        else{ # print that no significant result was found
+        }else{ # print that no significant result was found
           showElement(id = "EnrichmentFailure")
           output$EnrichmentFailure <- renderText("No significant result found. For further details check the table.")
           ea_scenario <- 0
@@ -209,6 +214,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         organism = NULL
       )
       ns <- session$ns
+      output$EnrichmentInfo <- renderText({"Press 'Get Enrichment Analysis' to start. Note that this analysis is only meaningful for gene sets at the moment."})
       ## initialize result as NULL
       ea_reactives$enrichment_results <- ENRICHMENT_RESULT_RESET
       # TODO: Call this in a loop.
@@ -494,6 +500,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         geneSetChoice_tmp
       })
       observeEvent(input$enrichmentGO,{
+        shinyjs::showElement(id = "enrichment_div", asis = TRUE)
         ea_reactives$ea_info <- "Enrichment is running..."
         waiter <- Waiter$new(
           html = LOADING_SCREEN,

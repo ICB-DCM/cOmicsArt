@@ -1,5 +1,8 @@
 ## DESeq Factor Choices
 
+***
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/pre-processing.html" target="_blank">here</a>.
+
 ### Understanding the Design Matrix in DESeq2
 
 The design matrix in DESeq2 is a fundamental component used to specify the experimental design of your RNA-seq dataset. It helps in determining the relationship between the observed counts and the experimental conditions. Here's a detailed explanation:

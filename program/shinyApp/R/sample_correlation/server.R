@@ -39,6 +39,11 @@ sample_correlation_server <- function(id, data, params){
         })
       })
       
+      # Add initial text to help boxes
+      output$SampleCorr_Info <- renderText({
+        "Press 'Get Sample Correlation' to start!"
+      })
+      
       # Do sample correlation plot 
       toListen2CorrelationPlot <- reactive({list(
         input$Do_SampleCorrelation,
@@ -49,6 +54,7 @@ sample_correlation_server <- function(id, data, params){
         req(selectedData_processed())
         req(input$SampleAnnotationChoice)
         req(input$Do_SampleCorrelation > 0)
+        shinyjs::showElement(id = "div_sampleCorrelation_main_panel", asis = T)
         waiter <- Waiter$new(
           html = LOADING_SCREEN,
           color="#A208BA35"
