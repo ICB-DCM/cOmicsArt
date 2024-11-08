@@ -1,6 +1,7 @@
 ### Data Quality Check - Visual Inspection
 
 ***
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/selection.html#file-input-%EF%B8%8F" target="_blank">here</a>.
 
 Using the `Upload visual inspection` tab, you can see the uploaded data and perform a 
 data quality check.

@@ -1,6 +1,7 @@
 ## Additional Row Selection Options
 
 ---
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/heatmap.html#conditional-options-for-select-based-on-annotation" target="_blank">here</a>.
 
 These options only make sense if you selected `rowAnno_based` in the `Row Selection`. 
 They serve to filter the row entities which to include in the heatmap.

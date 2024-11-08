@@ -55,6 +55,10 @@ pca_Server <- function(id, data, params, row_select){
             step = 1
           )
         })
+        
+        output$PCA_Info <- renderText({
+          "Press 'Get PCA' to start!"
+        })
 
         ## Data Selection UI ---
         observe({
@@ -126,6 +130,7 @@ pca_Server <- function(id, data, params, row_select){
       # only when we click on Do_PCA, we set the calculate to 1
       session$userData$clicks_observer <- observeEvent(input$Do_PCA,{
         req(input$Do_PCA > pca_reactives$counter)
+        shinyjs::showElement(id = "PCA_main_panel_div", asis = TRUE)
         pca_reactives$counter <- input$Do_PCA
         check <- check_calculations(list(
           sample_selection_pca = input$sample_selection_pca,
@@ -286,10 +291,21 @@ pca_Server <- function(id, data, params, row_select){
         )
         #LoadingsDF$Loading=scale(LoadingsDF$Loading)
         LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
-        LoadingsDF <- rbind(
-          LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - input$bottomSlider),],
-          LoadingsDF[input$topSlider:1,]
-        )
+        
+        # need to test if default of slider is below the number of entities
+        if(input$topSlider + input$bottomSlider > nrow(LoadingsDF)){
+          LoadingsDF
+          output$PCA_Info <- renderText({
+            paste0("Within Loadings visualisations:
+the requested number of entities to show is higher than the number of entities in the data.
+Hence, all entities are shown. The total number of entities is: ", length(rownames(pca$rotation)))})
+        }else{
+          LoadingsDF <- rbind(
+            LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - input$bottomSlider),],
+            LoadingsDF[input$topSlider:1,]
+          )
+        }
+        
         LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
         if(!is.null(input$EntitieAnno_Loadings)){
           req(data_input_shiny())

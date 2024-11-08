@@ -1,7 +1,7 @@
-
----
-
 ## Row Selection Options
+
+***
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/heatmap.html#side-panel-" target="_blank">here</a>.
 
 **1. Row Selection Options:**
 

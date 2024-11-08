@@ -1,6 +1,7 @@
 ## Download Helper
 
 ***
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details.html#features-across-tabs" target="_blank">here</a>.
 
 These buttons serve for various downloading purposes.
 

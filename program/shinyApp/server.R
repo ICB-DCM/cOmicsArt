@@ -72,7 +72,124 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
   shinyjs::hide("mainPanel_DataSelection")
-  
+  shinyjs::hideElement(id = "data_summary")
+  shinyjs::hideElement(id = "div_sampleCorrelation_main_panel")
+  shinyjs::hideElement(id = "PCA_main_panel_div")
+  shinyjs::hideElement(id = "Significance_div")
+  shinyjs::hideElement(id = "Heatmap_div")
+  shinyjs::hideElement(id = "SingleGene_div")
+  shinyjs::hideElement(id = "enrichment_div")
+
+# Set Up ad Show user Landing page ----
+# TODO: SetUp cookie usage to land on second page
+  # Define the guide
+  # Note do this in here to avoid setting a global upon close
+  guide_welcome <- Cicerone$
+    new(id = "guide",
+        opacity = 0.9,
+        padding = 10,
+        keyboard_control = TRUE)$
+    step(
+      el = "start_tour",
+      title = "Welcome to cOmicsArt!",
+      position = "right-center",
+      description = HTML("
+      <div style='min-width: 300px; min-height: 150px; padding: 10px;'>
+        <img src='Logo_cOmicsArt_clear.png' alt='cOmicsArt Logo' style='max-width:90%;'>
+        <div style='font-size: 18px; margin-top: 10px;'>
+          <p><i class='fas fa-question-circle'></i> Need help? Press the blue button</p>
+          <p><i class='fas fa-rocket'></i> Want to start directly? Click 'Next'.</p>
+        </div>
+      </div>
+    ")
+  )$
+    step(
+      el = "tabsetPanel1",
+      title = "Welcome to cOmicsArt!",
+      description = "You pressed next - redirection triggered",
+    )
+
+  guide_welcome$init()$start()
+
+  # Start the tour when the "Start Tour" button is clicked
+  observeEvent(input$start_tour, {
+    print("Star Tour")
+    shinyjs::runjs("document.querySelector('.driver-close-btn').click();")
+    guide$init()$start()
+  })
+
+  observeEvent(input$guide_cicerone_next, {
+    print("Next")
+    shinyjs::runjs("document.querySelector('.driver-close-btn').click();")
+    showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
+  })
+
+  output$help_tab_info <- renderText({
+    HTML(paste0(
+    "Please select an image to display within the sidebar(left)<br>",
+    "To confirm your selection click the button labelled 'GO show me help!' within the sidebar."
+    ))
+  })
+
+  output$WelcomePage_ui <- renderUI({
+    imageOutput("WelcomePage")
+  })
+
+  observeEvent(input$get_help,{
+    if(input$ImageSelect == "WelcomePage"){
+      output$WelcomePage_ui <- renderUI({
+        imageOutput("WelcomePage")
+      })
+      output$WelcomePage <- renderImage({
+        # Path to the image file
+        list(
+          src = "www/WelcomPage.png",
+          contentType = "image/png",
+          width = paste0(input$ImageWidth,"%"), # Adjust as needed
+          height = input$ImageHeight # Adjust as needed
+        )
+      }, deleteFile = FALSE) # Set deleteFile to FALSE to keep the image file
+      output$help_tab_info <- renderText({
+        HTML(
+          paste0(
+"As you selected the WelcomePage on the **left**, you can see a screenshot of the WelcomePage below.<br>",
+            "If you want to see the full documentation, click ",
+            "<a href='https://icb-dcm.github.io/cOmicsArt/' target='_blank'>here</a>",
+            ".<br>or click on the link on the top left of the screen 'Go To Documentation'.<br><br>",
+            "Within cOmicsArt this box will display information depending on the current tab you are in.<br> A tab represents an analysis."
+          )
+        )
+        }
+      )
+    } else if(input$ImageSelect == "YouTube Tutorial"){
+      output$WelcomePage_ui <- renderUI({
+        tags$iframe(
+          width = paste0(input$ImageWidth,"%"), # Adjust as needed
+          height = input$ImageHeight, # Adjust as needed
+          src = "https://www.youtube.com/embed/pTGjtIYQOak",
+          frameborder = "0",
+          allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+          allowfullscreen = TRUE
+        )
+      })
+    } else if(input$ImageSelect == "nothing selected"){
+      output$help_tab_info <- renderText({
+        HTML(paste0(
+          "You have selected 'nothing selected' - hence there is nothing to show<br>.",
+          "Do you want to see something else? Try to select a different Image (Select Image) on the left!<br>",
+          "Did you maybe just press the button?"
+        ))
+      })
+      output$WelcomePage_ui <- renderUI({NULL})
+    }
+  })
+
+  observeEvent(input$NextPanel,{
+    showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
+  })
+
+
+
 # Init res_tmp and par_tmp objects if they do not yet exist ----
   if(!exists("res_tmp")){
     res_tmp <<- list()
@@ -172,6 +289,11 @@ server <- function(input,output,session){
         selected = "Mouse genes (GRCm39)"
       )})
     }
+  })
+
+  # Show or hide the gene annotation options based on the button click
+  observeEvent(input$geneAnno_toggle_button, {
+    shinyjs::toggle(id = "geneAnno_toggle")  # Toggle the div on button click
   })
 
   observeEvent(input$AddGeneSymbols, {
@@ -871,7 +993,7 @@ server <- function(input,output,session){
       length(unique(colData(res_tmp[[session$token]]$data_original)[[col]])) < nrow(colData(res_tmp[[session$token]]$data_original))
     })]
     if (input$PreProcessing_Procedure == "vst_DESeq") {
-      filtered_column_names <- filtered_column_names[!filtered_column_names %in% c(input$DESeq_formula_main, input$DESeq_formula_sub)]
+      filtered_column_names <- filtered_column_names[!filtered_column_names %in% c(input$DESeq_formula_sub)]
     }
     selectInput(
       inputId = "BatchEffect_Column",
@@ -880,39 +1002,30 @@ server <- function(input,output,session){
       selected = "NULL"
     )
   })
-  output$DESeq_formula_main_ui <- renderUI({
-    req(data_input_shiny())
-    req(input$PreProcessing_Procedure == "vst_DESeq")
-    selectInput(
-      inputId = "DESeq_formula_main",
-      label = paste0(
-        "Choose main factor for desing formula in DESeq pipeline ",
-        "(App might crash if your factor as only 1 sample per level)"
-      ),
-      choices = c(colnames(colData(res_tmp[[session$token]]$data))),
-      multiple = F,
-      selected = "condition"
-    ) %>% helper(type = "markdown", content = "PreProcessing_DESeqMain")
-  })
   output$DESeq_formula_sub_ui <- renderUI({
     req(data_input_shiny())
     req(input$PreProcessing_Procedure == "vst_DESeq")
     selectInput(
       inputId = "DESeq_formula_sub",
       label = paste0(
-        "Choose other factors to account for",
-        "(App might crash if your factor as only 1 sample per level)"
+        "Choose factors to account for ",
+        "(App might crash if your factor has only 1 sample per level)"
       ),
       choices = c(colnames(colData(res_tmp[[session$token]]$data))),
       multiple = T,
       selected = "condition"
-    ) %>% helper(type = "markdown", content = "PreProcessing_DESeqSub")
+    ) %>% helper(type = "markdown", content = "PreProcessing_DESeq")
   })
 
 ## Do preprocessing ----  
+  # Add initial text to help boxes
+  output$Statisitcs_Data <- renderText({
+    "Press 'Get-Preprocessing' to start!"
+  })
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     # only enter this when you actually click data
     req(input$Do_preprocessing > 0)
+    shinyjs::showElement(id = "data_summary")
     waiter <- Waiter$new(
       html = LOADING_SCREEN,
       color = "#3897F147",
@@ -943,7 +1056,6 @@ server <- function(input,output,session){
         res_tmp[[session$token]]$data <<- deseq_processing(
             data = res_tmp[[session$token]]$data,
             omic_type = par_tmp[[session$token]]$omic_type,
-            formula_main = input$DESeq_formula_main,
             formula_sub = input$DESeq_formula_sub,
             session_token = session$token,
             batch_correct = F
@@ -979,7 +1091,6 @@ server <- function(input,output,session){
         res_tmp[[session$token]]$data_batch_corrected <<- deseq_processing(
           data = tmp_data_selected,
           omic_type = par_tmp[[session$token]]$omic_type,
-          formula_main = input$DESeq_formula_main,
           formula_sub = c(input$DESeq_formula_sub, input$BatchEffect_Column),
           session_token = session$token,
           batch_correct = T
@@ -1040,14 +1151,22 @@ server <- function(input,output,session){
       shinyjs::click("PCA-refreshUI",asis = T)
       shinyjs::click("sample_correlation-refreshUI",asis = T)
       paste0(
-        addWarning,
         "The data has the dimensions of: ",
         paste0(dim(res_tmp[[session$token]]$data),collapse = ", "),
         "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
-        "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
+        "<br","If logX was chosen, in case of 0's present logX(data+1) is done",
         "<br","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(res_tmp[[session$token]]$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
+    # set the warning as toast
+    show_toast(
+      title = "Attention",
+      text = HTML(addWarning),
+      position = "top",
+      timer = 2500,
+      timerProgressBar = T
+    )
+
     output$raw_violin_plot <- renderPlot({
       violin_plot(res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
                   color_by = input$violin_color)
@@ -1083,7 +1202,9 @@ server <- function(input,output,session){
       message = paste0(
         "**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",
         ifelse(input$PreProcessing_Procedure == "vst_DESeq",
-               paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),
+               paste0(
+                 input$PreProcessing_Procedure,
+                 " ~ ",paste(input$DESeq_formula_sub, collapse=" + ")),
                input$PreProcessing_Procedure)
       )
     )

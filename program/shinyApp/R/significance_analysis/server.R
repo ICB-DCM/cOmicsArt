@@ -185,7 +185,7 @@ significance_analysis_server <- function(id, data, params){
       })
       # Analysis initial info
       observeEvent(input$significanceGo,{
-
+        shinyjs::showElement(id = "Significance_div", asis = T)
         # also here to ensure to get sidepanel Inputs
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
