@@ -149,7 +149,7 @@ data_selection_main_panel <- mainPanel(
     icon = icon('plus'),
     style = "color: #000000; background-color: transparent; border-color: transparent"
   ),
-  div( 
+  div(
     id  = "geneAnno_toggle",
     style = "display: none;",
     class = "AddGeneSymbols_ui",
@@ -157,36 +157,62 @@ data_selection_main_panel <- mainPanel(
     uiOutput("AddGeneSymbols_ui"),
     hr(style = "border-top: 1px solid #858585;")
   ),
+
   fluidRow(
     column(5,
-           div(class = "DataSelection",
-               h4("Row selection - biochemical entities"),
-               uiOutput("providedRowAnnotationTypes_ui"),
-               uiOutput("row_selection_ui"),
-               uiOutput("propensityChoiceUser_ui")
-           )),
-    column(6,
-           div(class = "SampleSelection",
-               h4("Sample selection") %>% helper(type = "markdown", content = "DataSelection_RowSelection"),
-               uiOutput("providedSampleAnnotationTypes_ui"),
-               uiOutput("sample_selection_ui")
-           ))
+           actionButton(
+            "select_data", "Select Data",
+            width = "100%",
+            icon = icon('filter'),
+            style = "color: #fffff; background-color: white; border-color: #000000"
+            )
+    )),
+  br(),
+  conditionalPanel(
+    condition = "input.select_data % 2 == 0",
+    fluidRow(column(5,
+        actionButton(
+          "use_full_data", "Use Full Dataset",
+          width = "100%",
+          icon = icon('rocket'),
+          style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
+        )
+    ))
   ),
-  div(
-    id = "SaveInputAsRDS",
-    downloadButton(
-      outputId = "SaveInputAsList",
-      label = "Save file input to upload later"
-    ) %>% helper(type = "markdown", content = "DataSelection_compilation_help")
-  ),
-  br(), br(), br(),
-  hr(style = "border-top: 1px solid #858585;"),
-  actionButton(
-    inputId = "NextPanel",
-    label = "Start the Journey",
-    width = "100%",
-    icon = icon('rocket'),
-    style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
+  conditionalPanel(
+    condition = "input.select_data % 2 == 1",
+    hr(style = "border-top: 1px solid #858585;"),
+    fluidRow(
+      column(5,
+             div(class = "DataSelection",
+                 h4("Row selection - biochemical entities"),
+                 uiOutput("providedRowAnnotationTypes_ui"),
+                 uiOutput("row_selection_ui"),
+                 uiOutput("propensityChoiceUser_ui")
+             )),
+      column(6,
+             div(class = "SampleSelection",
+                 h4("Sample selection") %>% helper(type = "markdown", content = "DataSelection_RowSelection"),
+                 uiOutput("providedSampleAnnotationTypes_ui"),
+                 uiOutput("sample_selection_ui")
+             ))
+    ),
+    div(
+      id = "SaveInputAsRDS",
+      hr(style = "border-top: 1px solid #858585;"),
+      downloadButton(
+        outputId = "SaveInputAsList",
+        label = "Save file input to upload later"
+      ) %>% helper(type = "markdown", content = "DataSelection_compilation_help")
+    ),
+    hr(style = "border-top: 1px solid #858585;"),
+    actionButton(
+      inputId = "NextPanel",
+      label = "Start the Journey",
+      width = "100%",
+      icon = icon('rocket'),
+      style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
+    ),
   ),
   # hidden button
   hidden(actionButton(
