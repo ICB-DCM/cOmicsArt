@@ -184,7 +184,7 @@ server <- function(input,output,session){
     }
   })
 
-  observeEvent(input$NextPanel,{
+  observeEvent(input$NextPanel_tutorial,{
     showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
   })
 
@@ -924,26 +924,29 @@ server <- function(input,output,session){
   
   ## Do Selection ----  
   selectedData <- reactive({
-    shiny::req(input$row_selection, input$sample_selection)
-    par_tmp[[session$token]][["row_selection"]] <<- input$row_selection
-    par_tmp[[session$token]][["sample_selection"]] <<- input$sample_selection
-    par_tmp[[session$token]][["providedRowAnnotationTypes"]] <<- input$providedRowAnnotationTypes
+    req(data_input_shiny())
+    row_selection <- input$row_selection %||% "all"
+    sample_selection <- input$sample_selection %||% "all"
+    providedRowAnnotationTypes <- input$providedRowAnnotationTypes %||% c(colnames(rowData(res_tmp[[session$token]]$data_original)))[1]
+    par_tmp[[session$token]][["row_selection"]] <<- row_selection
+    par_tmp[[session$token]][["sample_selection"]] <<- sample_selection
+    par_tmp[[session$token]][["providedRowAnnotationTypes"]] <<- providedRowAnnotationTypes
     print("Alright do Row selection")
 
     selected <- c()
 
-    if(any(input$row_selection == "all")){
+    if(any(row_selection == "all")){
       selected <- rownames(rowData(res_tmp[[session$token]]$data_original))
-    } else if(!(length(input$row_selection) == 1 & any(input$row_selection == "High Values+IQR"))){
+    } else if(!(length(row_selection) == 1 & any(row_selection == "High Values+IQR"))){
       selected <- unique(c(
         selected,
         rownames(rowData(res_tmp[[session$token]]$data_original))[
-          which(rowData(res_tmp[[session$token]]$data_original)[,input$providedRowAnnotationTypes]%in%input$row_selection)
+          which(rowData(res_tmp[[session$token]]$data_original)[,providedRowAnnotationTypes]%in%row_selection)
         ]
       ))
     }
-    if(any(input$row_selection == "High Values+IQR")){
-      if(length(input$row_selection) == 1){
+    if(any(row_selection == "High Values+IQR")){
+      if(length(row_selection) == 1){
         toKeep <- filter_rna(
           rna = assay(res_tmp[[session$token]]$data_original),
           prop = input$propensityChoiceUser
@@ -964,13 +967,13 @@ server <- function(input,output,session){
 
     # Column Selection
     samples_selected <- c()
-    if(any(input$sample_selection == "all")){
+    if(any(sample_selection == "all")){
       samples_selected <- colnames(assay(res_tmp[[session$token]]$data_original))
     }else{
       samples_selected <- c(
         samples_selected,
         rownames(colData(res_tmp[[session$token]]$data_original))[which(
-          colData(res_tmp[[session$token]]$data_original)[,input$providedSampleAnnotationTypes] %in% input$sample_selection
+          colData(res_tmp[[session$token]]$data_original)[,input$providedSampleAnnotationTypes] %in% sample_selection
           )]
         )
     }
