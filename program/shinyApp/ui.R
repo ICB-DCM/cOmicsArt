@@ -228,6 +228,36 @@ ui <- shiny::fluidPage(
         }
         checkOverlay();
       });
+    
+    // Function to get a cookie value by name
+    function getCookie(name) {
+      const cname = name + '=';
+      const decodedCookie = decodeURIComponent(document.cookie);
+      const ca = decodedCookie.split(';');
+      for(let i = 0; i < ca.length; i++) {
+        let c = ca[i].trim();
+        if (c.indexOf(cname) == 0) return c.substring(cname.length, c.length);
+      }
+      return '';
+    }
+
+    // Function to set a cookie
+    function setCookie(name, value, days) {
+      const d = new Date();
+      d.setTime(d.getTime() + (days*24*60*60*1000));
+      const expires = 'expires=' + d.toUTCString();
+      document.cookie = name + '=' + value + ';' + expires + ';path=/';
+    }
+
+    // Function to delete a cookie
+    function deleteCookie(name) {
+      document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    }
+
+    // Check if the 'hasBeenBefore' cookie is present
+    function checkHasBeenBeforeCookie() {
+      return getCookie('hasBeenBefore') === 'true';
+    }
     "))
   ),
   ##########
@@ -236,12 +266,13 @@ ui <- shiny::fluidPage(
   shinyjs::useShinyjs(),
   ##########
   div(
-    style = "display:inline-block; float:right",
-    actionButton(
-    inputId = "Quit_App",
-    label = "Quit App",
-    class = "btn-secondary"
-    )
+    style = "display: inline-block; float:right;",
+    # Quit App Button
+      actionButton(
+        inputId = "Quit_App",
+        label = "Quit App",
+        class = "btn-secondary"
+      )
   ),
   div(
       id = "TitleID_normal",
@@ -251,9 +282,17 @@ ui <- shiny::fluidPage(
   div(
     id = "UsefulLinks",
     splitLayout(
-      cellWidths = c("75%", "10%", "15%"),
+      cellWidths = c("75%", "5%", "20%"),
       DownloadReport_ui("DownloadTestModule"),
-      NULL
+      NULL,
+      div(
+        style = "display: inline-block; float:left;",
+        actionLink(
+          inputId = "set_cookie",
+          label = "Delete 'Skip first help' cookie",
+          style = "font-size: 0.9em; color: #555; text-decoration: underline;"
+        )
+      )
     ),
     splitLayout(
       cellWidths = c("75%", "10%", "15%"),
