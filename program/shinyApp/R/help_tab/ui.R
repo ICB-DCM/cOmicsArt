@@ -57,7 +57,7 @@ help_tab_main_panel <- mainPanel(
   div(
     # Action button
     actionButton(
-      inputId = "NextPanel",
+      inputId = "NextPanel_tutorial",
       label = "Take me to the Analysis Start",
       width = "100%",
       icon = icon('rocket'),
