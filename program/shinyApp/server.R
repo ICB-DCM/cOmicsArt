@@ -102,10 +102,13 @@ server <- function(input,output,session){
         <div style='font-size: 18px; margin-top: 10px;'>
           <p><i class='fas fa-question-circle'></i> Need help? Press the blue button</p>
           <p><i class='fas fa-rocket'></i> Want to start directly? Click 'Next'.</p>
+            <div style='font-size: 14px; color: #777; margin-top: 15px;'>
+              <p><input type='checkbox' id='set_cookie_checkbox'> Do not show next time (sets a cookie)</p>
+            </div>
         </div>
       </div>
     ")
-  )$
+    )$
     step(
       el = "tabsetPanel1",
       title = "Welcome to cOmicsArt!",
@@ -117,14 +120,13 @@ server <- function(input,output,session){
   observe({
     shinyjs::runjs("
       if (!checkHasBeenBeforeCookie()) {
-        setCookie('hasBeenBefore', 'true', 30);
         Shiny.setInputValue('first_visit', true);
       } else {
         Shiny.setInputValue('first_visit', false);
       }
     ")
   })
-  
+
   # If it is the user's first visit, start the guide
   observeEvent(input$first_visit, {
     if (input$first_visit) {

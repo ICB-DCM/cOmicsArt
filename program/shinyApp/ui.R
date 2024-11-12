@@ -258,6 +258,18 @@ ui <- shiny::fluidPage(
     function checkHasBeenBeforeCookie() {
       return getCookie('hasBeenBefore') === 'true';
     }
+    
+   // Listen for changes on the checkbox and set the cookie if checked
+    document.addEventListener('click', function(event) {
+      if (event.target && event.target.id === 'set_cookie_checkbox') {
+        const isChecked = document.getElementById('set_cookie_checkbox').checked;
+        if (isChecked) {
+          setCookie('hasBeenBefore', 'true', 30);
+        } else {
+          deleteCookie('hasBeenBefore');
+        }
+      }
+    });
     "))
   ),
   ##########
