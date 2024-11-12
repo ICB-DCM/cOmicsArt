@@ -124,6 +124,7 @@ data_selection_sidebar_panel <- sidebarPanel(
               width = "80%"
             )
         ),
+      uiOutput("testdata_help_text"),
         br(),
         actionButton(
           inputId = "EasyTestForUser",
