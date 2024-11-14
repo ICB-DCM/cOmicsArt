@@ -2,7 +2,7 @@
 title: "Data Selection"
 layout: default
 parent: Interface Details
-nav_order: 1
+nav_order: 2
 ---
 
 # Data Selection
@@ -12,7 +12,7 @@ The Data Selection tab is the initial step to upload and manage your data in cOm
 ## Side Panel 📚
 
 The side panel offers several tabs for different data input methods. The data Upload 
-and possible structure are detailed in the [Data Input](required-data-input.md). 
+and possible structure are detailed in the [Data Input](01-required-data-input.md). 
 Nonetheless, here is a short overview:
 
 ### File Input 🛠️
@@ -95,8 +95,25 @@ The main panel provides options for detailed data selection:
 ### Start the Journey 🚀
 
 - **Start the Journey**: Click this button to proceed with the analysis. This will 
-  automatically bring you to the [Pre-processing tab](pre-processing.md).
+  automatically bring you to the [Pre-processing tab](03-pre-processing.md).
 
 ### Other Notes 📌
 
 - **Question Marks**: The displayed question marks provide quick and immediate help. They offer guidance and additional information about the options available.
+
+---
+
+## Further Navigation
+
+Do you want to...
+
+- Learn how to upload your data? → Go to [Data Input](01-required-data-input.md)
+- Discover the pre-processing options available? → Go to [Pre-processing](03-pre-processing.md)
+- Explore how to correlate your samples? → Go to [Sample Correlation](04-sample-correlation.md)
+- Perform significance analysis on your data? → Go to [Significance Analysis](05-significance-analysis.md)
+- Conduct Principal Component Analysis? → Go to [PCA](06-pca.md)
+- Visualize your data with heatmaps? → Go to [Heatmap](07-heatmap.md)
+- Visualize individual genes? → Go to [Single Gene Visualisations](08-single-gene-visualisations.md)
+- Perform enrichment analysis on your data? → Go to [Enrichment Analysis](09-enrichment-analysis.md)
+
+---

@@ -50,6 +50,3 @@ To get more information on the tabs, navigate to the respective documentation us
 5. **Get Underlying R Code and Data:** Upon button click, the R script and respective data to generate the shown plot will be available for download. The script includes data selection, preprocessing, and analysis. For more details, refer to [Code and Data](code-and-data.md).
 
 6. **Notes:** At the bottom of each tab, there is a Notes field where you can enter text that will be saved within the report. You can use [markdown syntax](https://www.markdownguide.org/cheat-sheet/) here.
-   
-
-

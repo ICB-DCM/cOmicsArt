@@ -2,7 +2,7 @@
 title: "Sample Correlation"
 layout: default
 parent: Interface Details
-nav_order: 3
+nav_order: 4
 ---
 
 # Sample Correlation
@@ -24,7 +24,7 @@ In the side panel, you have the following options:
 
 - **Choose the color annotation for the samples**: Below the horizontal line, you can choose different options to color the rows. These options come from the sample annotations provided initially. This can help to potentially explain clustering behavior observed in the heatmap.
 
-  More details on these options can be found under [Required Data Input](required-data-input.md) or [Showcase A](../showcases/showcase-a.md).
+  More details on these options can be found under [Required Data Input](01-required-data-input.md) or [Showcase A](../showcases/showcase-a.md).
 
 ## Main Panel 💡
 
@@ -39,4 +39,21 @@ The main panel displays the correlation heatmap. Here are some key points:
 
 - **Question Marks**: The displayed question marks provide quick and immediate help. However, since you are reading this documentation, you found the extensive version. Hope it helped!
 - **Clustering Behavior**: Observing the clustering in the heatmap can give insights into the relationships between different samples based on the selected annotation.
+
+---
+
+## Further Navigation
+
+Do you want to...
+
+- Learn how to upload your data? → Go to [Data Input](01-required-data-input.md)
+- Understand how to select and filter your data? → Go to [Data selection](02-selection.md)
+- Discover the pre-processing options available? → Go to [Pre-processing](03-pre-processing.md)
+- Perform significance analysis on your data? → Go to [Significance Analysis](05-significance-analysis.md)
+- Conduct Principal Component Analysis? → Go to [PCA](06-pca.md)
+- Visualize your data with heatmaps? → Go to [Heatmap](07-heatmap.md)
+- Visualize individual genes? → Go to [Single Gene Visualisations](08-single-gene-visualisations.md)
+- Perform enrichment analysis on your data? → Go to [Enrichment Analysis](09-enrichment-analysis.md)
+
+---
 

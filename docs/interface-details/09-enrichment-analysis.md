@@ -2,7 +2,7 @@
 title: "Enrichment Analysis"
 layout: default
 parent: Interface Details
-nav_order: 8
+nav_order: 9
 ---
 
 # Enrichment Analysis
@@ -14,7 +14,7 @@ The Enrichment Analysis tab allows you to perform enrichment analysis specifical
 In the side panel, you have the following options:
 
 - **Choose an organism**: If you haven't added annotation in the [initial data 
-  selection](selection.md), you may choose the organism your data stems from. This is 
+  selection](02-selection.md), you may choose the organism your data stems from. This is 
   necessary for correct data translation.
   
 - **Choose type of Analysis**: You can choose between Gene Set Enrichment (GSEA) and 
@@ -43,7 +43,7 @@ In the side panel, you have the following options:
     own** genes from data, before or after preprocessing.
   - **Choose a gene set to hand over to enrich**: either you provide your own set, in 
     which case you will be asked to **select a file** or you can use genes that you 
-    have previously used in the [heatmap tab](heatmap.md). Keep in mind however, that 
+    have previously used in the [heatmap tab](07-heatmap.md). Keep in mind however, that 
     you need to have sent it over with the `Save genes shown in Heatmap as list`-button.
 
 In both cases GSEA and ORA, you will have the following additional options:
@@ -79,4 +79,21 @@ The main panel displays the results of the enrichment analysis. Here are some ke
 - **Question Marks**: The displayed question marks provide quick and immediate help. They offer guidance and additional information about the options available.
 
 - **Structure Notes**: For structural reasons, it is recommended to start with Heading Level 4 (e.g., #### My personal Title).
+
+---
+
+## Further Navigation
+
+Do you want to...
+
+- Learn how to upload your data? → Go to [Data Input](01-required-data-input.md)
+- Understand how to select and filter your data? → Go to [Data selection](02-selection.md)
+- Discover the pre-processing options available? → Go to [Pre-processing](03-pre-processing.md)
+- Explore how to correlate your samples? → Go to [Sample Correlation](04-sample-correlation.md)
+- Perform significance analysis on your data? → Go to [Significance Analysis](05-significance-analysis.md)
+- Conduct Principal Component Analysis? → Go to [PCA](06-pca.md)
+- Visualize your data with heatmaps? → Go to [Heatmap](07-heatmap.md)
+- Visualize individual genes? → Go to [Single Gene Visualisations](08-single-gene-visualisations.md)
+
+---
 
