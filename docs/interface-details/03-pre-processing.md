@@ -22,7 +22,7 @@ In the side panel, you have the following options:
     choices are taken from the sample annotation columns. **Important**: This step is 
     optional, as sometimes no batches need to be accounted for. Additionally, in the 
     very first run, batch effects might not be know, thus using no batch effects and 
-    looking at correlations and PCA plots can help to identify them.
+    looking at correlations and PCA plots can help to identify them. To learn more about batch effects - how they appear and how to identify them you can start by checking out [this website ](https://bigomics.ch/blog/the-tricky-problem-of-batch-effects-in-biological-data/)
 
 -   **Get Pre-Processing**: Clicking this button will apply the selected pre-processing procedure to the data.
 

@@ -6,7 +6,7 @@ nav_order: 1
 ---
 
 # The Very Start 🚀
-To start your own analysis, you need to pass the first hurdle - Uploading your data. (Note: If you want to check out what the app is capable of, you might want to use the Test data. For detailed instructions, check out [Interface Details](interface-details/selection.md)).
+To start your own analysis, you need to pass the first hurdle - Uploading your data. (Note: If you want to check out what the app is capable of, you might want to use the Test data. For detailed instructions, check out [Interface Details](interface-details/02-selection.md)).
 
 Within cOmicsART, you have several options to do so:
 
