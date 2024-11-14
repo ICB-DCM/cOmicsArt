@@ -81,7 +81,10 @@ server <- function(input,output,session){
   shinyjs::hideElement(id = "enrichment_div")
 
 # Set Up ad Show user Landing page ----
-# TODO: SetUp cookie usage to land on second page
+# SetUp cookie usage to land on second page
+
+
+  
   # Define the guide
   # Note do this in here to avoid setting a global upon close
   guide_welcome <- Cicerone$
@@ -99,17 +102,46 @@ server <- function(input,output,session){
         <div style='font-size: 18px; margin-top: 10px;'>
           <p><i class='fas fa-question-circle'></i> Need help? Press the blue button</p>
           <p><i class='fas fa-rocket'></i> Want to start directly? Click 'Next'.</p>
+            <div style='font-size: 14px; color: #777; margin-top: 15px;'>
+              <p><input type='checkbox' id='set_cookie_checkbox'> Do not show next time (sets a cookie)</p>
+            </div>
         </div>
       </div>
     ")
-  )$
+    )$
     step(
       el = "tabsetPanel1",
       title = "Welcome to cOmicsArt!",
       description = "You pressed next - redirection triggered",
     )
+  
+  # Check if the cookie is present and update the output
+  # On page load, check if the cookie exists
+  observe({
+    shinyjs::runjs("
+      if (!checkHasBeenBeforeCookie()) {
+        Shiny.setInputValue('first_visit', true);
+      } else {
+        Shiny.setInputValue('first_visit', false);
+      }
+    ")
+  })
 
-  guide_welcome$init()$start()
+  # If it is the user's first visit, start the guide
+  observeEvent(input$first_visit, {
+    if (input$first_visit) {
+      guide_welcome$init()$start()
+    } else {
+      showTab(inputId = "tabsetPanel1", target = "Data selection", select = TRUE)
+    }
+  })
+  
+  # Delete the cookie if the toggle input is checked
+  observeEvent(input$set_cookie, {
+      shinyjs::runjs("deleteCookie('hasBeenBefore')")
+      showNotification("Cookie 'hasBeenBefore' deleted. Please refresh the page.")
+  })
+  
 
   # Start the tour when the "Start Tour" button is clicked
   observeEvent(input$start_tour, {
