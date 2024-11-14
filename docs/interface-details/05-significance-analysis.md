@@ -2,7 +2,7 @@
 title: "Significance Analysis"
 layout: default
 parent: Interface Details
-nav_order: 4
+nav_order: 5
 ---
 
 # Significance Analysis
@@ -20,7 +20,7 @@ In the side panel, you have the following options:
 - **Test method**: You can select the statistical test method to use. You can choose 
   between [T-test](https://en.wikipedia.org/wiki/Student%27s_t-test), [Wilcoxon Rank 
   Sum Test](https://en.wikipedia.org/wiki/Mann–Whitney_U_test), and [Welch's T-test](https://en.wikipedia.org/wiki/Welch%27s_t-test). 
-  If you used `vst_DESeq` as the [preprocessing method](pre-processing.md), DESeq2 
+  If you used `vst_DESeq` as the [preprocessing method](03-pre-processing.md), DESeq2 
   will use the [Wald test](https://en.wikipedia.org/wiki/Wald_test).
 
 - **Significance level**: This slider allows you to set the significance level for the analysis, ranging from 0.005 to 0.1.
@@ -72,3 +72,20 @@ The main panel displays the results of the significance analysis. The main panel
   changes between the compared groups. Adjusting the significance level and thresholds 
   can help in identifying the most relevant results. Checking the intersections can 
   point towards commonalities between the groups.
+
+---
+
+## Further Navigation
+
+Do you want to...
+
+- Learn how to upload your data? → Go to [Data Input](01-required-data-input.md)
+- Understand how to select and filter your data? → Go to [Data selection](02-selection.md)
+- Discover the pre-processing options available? → Go to [Pre-processing](03-pre-processing.md)
+- Explore how to correlate your samples? → Go to [Sample Correlation](04-sample-correlation.md)
+- Conduct Principal Component Analysis? → Go to [PCA](06-pca.md)
+- Visualize your data with heatmaps? → Go to [Heatmap](07-heatmap.md)
+- Visualize individual genes? → Go to [Single Gene Visualisations](08-single-gene-visualisations.md)
+- Perform enrichment analysis on your data? → Go to [Enrichment Analysis](09-enrichment-analysis.md)
+
+---

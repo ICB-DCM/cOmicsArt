@@ -5,9 +5,8 @@ parent: Interface Details
 nav_order: 1
 ---
 
-
 # The Very Start 🚀
-To start your own analysis, you need to pass the first hurdle - Uploading your data. (Note: If you want to check out what the app is capable of, you might want to use the Test data. For detailed instructions, check out [Interface Details](interface-details/selection.md)).
+To start your own analysis, you need to pass the first hurdle - Uploading your data. (Note: If you want to check out what the app is capable of, you might want to use the Test data. For detailed instructions, check out [Interface Details](interface-details/02-selection.md)).
 
 Within cOmicsART, you have several options to do so:
 
@@ -29,12 +28,12 @@ When you have only your omics data table (referred to as the Data Matrix), ensur
 ### Creating a Sample Table 🔧
 Having the data matrix, you need to create a fitting Sample table.🖇️ A fitting sample table has the column names of the data matrix in its row names. Each additional column in the sample table carries additional information about the samples (referred to as sample annotation). Examples are condition, height, or phenotype. You are not limited to the number of columns, hence to the number of information you can supply to your samples. 
 
-Within cOmicsART, this information is used, for example, to perform batch correction, data selection, or to visualize respective groups of samples. If this sounds confusing, don't worry - it becomes clearer throughout usage and this documentation. Make sure to check out the [data selection](selection.md) to see how your sample data is utilized in the data selection process.
+Within cOmicsART, this information is used, for example, to perform batch correction, data selection, or to visualize respective groups of samples. If this sounds confusing, don't worry - it becomes clearer throughout usage and this documentation. Make sure to check out the [data selection](02-selection.md) to see how your sample data is utilized in the data selection process.
 
 ### Creating an Annotation Table 🔧
 Having the data matrix, you need to create a fitting annotation table.🖇️ A fitting annotation table has the row names of the data matrix in its row names. Each additional column in the annotation table carries additional information about the entities (referred to as row annotation). Examples are gene type, lipid class, or other IDs. You are not limited to the number of columns, hence to the number of information you can supply to your entities.
 
-Within cOmicsART, this information can be used within the data selection or to be visualized instead of the row index. For some examples of the data selection, go to [data selection](selection.md).
+Within cOmicsART, this information can be used within the data selection or to be visualized instead of the row index. For some examples of the data selection, go to [data selection](02-selection.md).
 
 ### All in Short 🎁
 The files must be in the following format:<br>
@@ -67,8 +66,24 @@ The Metadatasheet enables biomedical researchers to organize their data and meta
 ### Creating an Annotation Table 🔧
 Having the data matrix, you need to create a fitting annotation table. A fitting annotation table has the row names of the data matrix in its row names. Each additional column in the annotation table carries additional information about the entities (referred to as row annotation). Examples are gene type, lipid class, or other IDs. You are not limited to the number of columns, hence to the number of information you can supply to your entities.
 
-Within cOmicsArt, this information can be used within the data selection or to be visualized instead of the row index. For some examples of the data selection, go to [data selection](selection.md).
+Within cOmicsArt, this information can be used within the data selection or to be visualized instead of the row index. For some examples of the data selection, go to [data selection](02-selection.md).
 
 ## Starting with an RDS Object 
-Once you have uploaded your three data tables to the app, you can click on 'save as RDS Object'. This is an R-specific object that saves all three files in one object. Hence, for any new analysis, you can just upload this single file and not multiple to save yourself some time. Note that the RDS object is in general not a standardardized format, which means that you cannot upload any RDS object. 
+Once you have uploaded your three data tables to the app, you can click on 'save as RDS Object'. This is an R-specific object that saves all three files in one object. Hence, for any new analysis, you can just upload this single file and not multiple to save yourself some time. Note that the RDS object is in general not a standardardized format, which means that you cannot upload any RDS object.
 
+---
+
+## Further Navigation
+
+Do you want to...
+
+- Understand how to select and filter your data? → Go to [Data selection](02-selection.md)
+- Discover the pre-processing options available? → Go to [Pre-processing](03-pre-processing.md)
+- Explore how to correlate your samples? → Go to [Sample Correlation](04-sample-correlation.md)
+- Perform significance analysis on your data? → Go to [Significance Analysis](05-significance-analysis.md)
+- Conduct Principal Component Analysis? → Go to [PCA](06-pca.md)
+- Visualize your data with heatmaps? → Go to [Heatmap](07-heatmap.md)
+- Visualize individual genes? → Go to [Single Gene Visualisations](08-single-gene-visualisations.md)
+- Perform enrichment analysis on your data? → Go to [Enrichment Analysis](09-enrichment-analysis.md)
+
+---
