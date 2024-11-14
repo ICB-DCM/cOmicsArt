@@ -119,7 +119,7 @@ pca_main_panel <- function(ns){
           ),
           splitLayout(
             style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-            cellArgs = list(style = "padding: 5px"),
+            cellArgs = list(style = "padding: 15px"),
             div(textAreaInput(
               inputId = ns("NotesPCA"),
               label = "Notes:",
