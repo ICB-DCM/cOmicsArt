@@ -306,6 +306,7 @@ server <- function(input,output,session){
   observeEvent(omic_type(),{
     output$AddGeneSymbols_ui <- NULL
     output$AddGeneSymbols_organism_ui <- NULL
+    
     if(omic_type() == "Transcriptomics"){
       output$AddGeneSymbols_ui <- renderUI({
         actionButton(
@@ -328,6 +329,28 @@ server <- function(input,output,session){
     shinyjs::toggle(id = "geneAnno_toggle")  # Toggle the div on button click
   })
 
+  observeEvent(input$omic_type_testdata,{
+    if(input$omic_type_testdata == "Transcriptomics"){
+      output$testdata_help_text <- renderUI({
+        HTML("
+        <div style='text-align: justify;'>
+            The underlying test data comes from a human cell line of airway smooth muscle cells, based on the airway package. Below are a few points about this data:
+            <ul>
+                <li>Gene annotation is added already</li>
+                <li>You may want to investigate differences within the condition between treated and untreated samples</li>
+                <li>You can use the data as provided or apply filters, such as selecting only protein-coding transcripts based on the gene biotype</li>
+            </ul>
+            For more information, please visit the following resources:
+            <ul>
+                <li> <a href='https://bioconductor.riken.jp/packages/3.1/data/experiment/vignettes/airway/inst/doc/airway.html' target='_blank'>Airway package documentation</a></li>
+                <li> <a href='https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE52778' target='_blank'>Original data on the GEO database</a></li>
+            </ul>
+        </div>
+    ")
+      })
+      }
+    })
+  
   observeEvent(input$AddGeneSymbols, {
     req(data_input_shiny())
     req(res_tmp[[session$token]]$data_original)
@@ -340,6 +363,7 @@ server <- function(input,output,session){
       HTML(paste0(
         "We tried to find an appropriate annotation and ",
         if (is.null(annotation_name)) {
+          
           "found nothing."
         } else {
           paste0("might have found <strong>", annotation_name, "</strong> in <strong>", column_name, "</strong>. Is that correct?")
