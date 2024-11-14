@@ -13,6 +13,10 @@ significance_analysis_server <- function(id, data, params){
       )
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
+      hideTab(
+        inputId = "significance_analysis_results",
+        target = "Multiple_Comparisons_Visualizations"
+      )
 
       ## Sidebar UI section
       observeEvent(input$refreshUI, {
@@ -186,6 +190,17 @@ significance_analysis_server <- function(id, data, params){
       # Analysis initial info
       observeEvent(input$significanceGo,{
         shinyjs::showElement(id = "Significance_div", asis = T)
+        if(length(input$comparisons) <= 1){
+          hideTab(
+            inputId = "significance_analysis_results",
+            target = "Multiple_Comparisons_Visualizations"
+          )
+        } else {
+          showTab(
+            inputId = "significance_analysis_results",
+            target = "Multiple_Comparisons_Visualizations"
+          )
+        }
         # also here to ensure to get sidepanel Inputs
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
