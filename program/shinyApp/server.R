@@ -1072,6 +1072,7 @@ server <- function(input,output,session){
       }
     }, error = function(e){
       error_modal(e)
+      waiter$hide()
       req(FALSE)
     })
     
@@ -1087,6 +1088,7 @@ server <- function(input,output,session){
         error_modal(
           e, additional_text = "Batch correction failed. Make sure the batch effect column is correct!"
         )
+        waiter$hide()
         req(FALSE)
       })
     } else if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure == "vst_DESeq"){
@@ -1107,6 +1109,7 @@ server <- function(input,output,session){
             "that the design matrix is not singular!"
           )
         )
+        waiter$hide()
         req(FALSE)
       })
     } else {

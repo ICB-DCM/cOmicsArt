@@ -293,6 +293,7 @@ heatmap_server <- function(id, data, params, updates){
             # waitress$inc(20)
           }, error = function(e) {
             error_modal(e)
+            waiter$hide()
             return(NULL)
           })
 
@@ -304,7 +305,6 @@ heatmap_server <- function(id, data, params, updates){
           tmp <- getUserReactiveValues(input)
           par_tmp[[session$token]]$Heatmap[names(tmp)] <<- tmp
           waiter$hide()
-          
         })
 
 

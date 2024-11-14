@@ -115,6 +115,7 @@ sample_correlation_server <- function(id, data, params){
           }
         }, error = function(e){
           error_modal(e)
+          waiter$hide()
           return(NULL)
         })
 
