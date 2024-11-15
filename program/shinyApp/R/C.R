@@ -254,7 +254,7 @@ guide <<- cicerone::Cicerone$
     el = "ImageSelectArea",
     position = "right",
     title = "Important parameters for the analysis",
-    description = HTML("Here we have 1 parameter to set.<br>Select <strong>Youtube Tutorial<\strong> from the dropdown menu.")
+    description = HTML("Here we have 1 parameter to set.<br>Select <strong>Youtube Tutorial</strong> from the dropdown menu.")
   )$
   step(
     el = "horizontalLine",
