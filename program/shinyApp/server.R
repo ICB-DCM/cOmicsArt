@@ -81,10 +81,6 @@ server <- function(input,output,session){
   shinyjs::hideElement(id = "enrichment_div")
 
 # Set Up ad Show user Landing page ----
-# SetUp cookie usage to land on second page
-
-
-  
   # Define the guide
   # Note do this in here to avoid setting a global upon close
   guide_welcome <- Cicerone$
