@@ -240,6 +240,21 @@ LOADING_SCREEN <- tagList(
   )
 )
 
+EXAMPLE_RNA_DESCRIPTION <- 
+  "<div style='text-align: justify;'>
+            The underlying test data comes from a human cell line of airway smooth muscle cells, based on the airway package. Below are a few points about this data:
+            <ul>
+                <li>Gene annotation is added already</li>
+                <li>You may want to investigate differences within the condition between treated and untreated samples</li>
+                <li>You can use the data as provided or apply filters, such as selecting only protein-coding transcripts based on the gene biotype</li>
+            </ul>
+            For more information, please visit the following resources:
+            <ul>
+                <li> <a href='https://bioconductor.riken.jp/packages/3.1/data/experiment/vignettes/airway/inst/doc/airway.html' target='_blank'>Airway package documentation</a></li>
+                <li> <a href='https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE52778' target='_blank'>Original data on the GEO database</a></li>
+            </ul>
+        </div>
+    "
 
 
 guide <<- cicerone::Cicerone$

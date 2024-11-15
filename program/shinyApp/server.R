@@ -274,6 +274,7 @@ server <- function(input,output,session){
   observeEvent(omic_type(),{
     output$AddGeneSymbols_ui <- NULL
     output$AddGeneSymbols_organism_ui <- NULL
+    
     if(omic_type() == "Transcriptomics"){
       output$AddGeneSymbols_ui <- renderUI({
         actionButton(
@@ -296,6 +297,14 @@ server <- function(input,output,session){
     shinyjs::toggle(id = "geneAnno_toggle")  # Toggle the div on button click
   })
 
+  observeEvent(input$omic_type_testdata,{
+    if(input$omic_type_testdata == "Transcriptomics"){
+      output$testdata_help_text <- renderUI({
+        HTML(EXAMPLE_RNA_DESCRIPTION)
+      })
+      }
+    })
+  
   observeEvent(input$AddGeneSymbols, {
     req(data_input_shiny())
     req(res_tmp[[session$token]]$data_original)
@@ -308,6 +317,7 @@ server <- function(input,output,session){
       HTML(paste0(
         "We tried to find an appropriate annotation and ",
         if (is.null(annotation_name)) {
+          
           "found nothing."
         } else {
           paste0("might have found <strong>", annotation_name, "</strong> in <strong>", column_name, "</strong>. Is that correct?")
