@@ -51,7 +51,7 @@ significance_analysis_main_ui <- function(ns){
           # UI to select comparisons to visualize
           splitLayout(  # Only used for questionmark
             cellWidths = c("26%", "74%"),
-            cellArgs = list(style = "padding: 5px"),
+            cellArgs = list(style = "padding: 15px"),
             h4("Visualization Choices") %>% helper(type = "markdown", content = "SigAna_Vis"),
             NULL
           ),
@@ -63,7 +63,7 @@ significance_analysis_main_ui <- function(ns){
           # Choose intersections to highlight
           splitLayout(
             cellWidths = c("33%", "67%"),
-            cellArgs = list(style = "padding: 5px"),
+            cellArgs = list(style = "padding: 15px"),
             uiOutput(
               outputId = ns("chooseIntersections_ui")
             ),
@@ -113,7 +113,7 @@ significance_analysis_main_ui <- function(ns){
           ),
           splitLayout(
             style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-            cellArgs = list(style = "padding: 5px"),
+            cellArgs = list(style = "padding: 15px"),
             div(textAreaInput(
               inputId = ns("NotesSigAna"),
               label = "Notes:",
