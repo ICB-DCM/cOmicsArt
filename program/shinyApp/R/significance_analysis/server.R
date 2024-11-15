@@ -312,6 +312,7 @@ significance_analysis_server <- function(id, data, params){
             sig_ana_reactive$sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
           }, error = function(e){
             error_modal(e)
+            waiter$hide()
             return(NULL)
           })
         }

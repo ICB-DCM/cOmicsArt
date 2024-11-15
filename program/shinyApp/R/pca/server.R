@@ -209,6 +209,7 @@ pca_Server <- function(id, data, params, row_select){
             )
           }, error = function(e){
             error_modal(e)
+            waiter$hide()
             return(NULL)
           })
           # how much variance is explained by each PC
