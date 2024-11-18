@@ -47,6 +47,7 @@ significance_analysis_main_ui <- function(ns){
         id = ns("significance_analysis_results"),
         tabPanel(
           title = "Result Visualization",
+          value = "Multiple_Comparisons_Visualizations",
           plotOutput(outputId = ns("Significant_Plot_final")),
           # UI to select comparisons to visualize
           splitLayout(  # Only used for questionmark
