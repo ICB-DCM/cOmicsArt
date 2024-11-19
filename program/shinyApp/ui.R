@@ -310,6 +310,11 @@ ui <- shiny::fluidPage(
       cellWidths = c("75%", "10%", "15%"),
       tags$a(href = "https://icb-dcm.github.io/cOmicsArt/", "Go To Documentation", target = "_blank"),
       NULL
+    ),
+    splitLayout(
+      cellWidths = c("75%", "10%", "15%"),
+      tags$a(href = "https://lea-orga.notion.site/12eab506afb581bf8ecfeeb2bb07c319", "Give Us Feedback!", target = "_blank"),
+      NULL
     )
   ),
 
