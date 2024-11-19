@@ -1,7 +1,7 @@
 ## Log Fold Change (LFC) Ordering Options
 
 ***
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/heatmap.html#conditional-options-for-top-k" target="_blank">here</a>.
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/07-heatmap.html#conditional-options-for-top-k" target="_blank">here</a>.
 
 **1. Choose Type for LFC-Based Ordering:**
 

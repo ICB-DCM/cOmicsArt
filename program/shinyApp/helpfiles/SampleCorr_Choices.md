@@ -1,7 +1,7 @@
 ## Correlation method
 
 ***
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/sample-correlation.html" target="_blank">here</a>.
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/04-sample-correlation.html" target="_blank">here</a>.
 
 Choose **one** of the following correlation methods. These correlation methods provide 
 insights into different aspects of relationships between variables. Understanding 

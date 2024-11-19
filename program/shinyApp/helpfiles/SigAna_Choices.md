@@ -1,7 +1,7 @@
 ## Significance Analysis Options
 
 ***
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/significance-analysis.html#main-panel-" target="_blank">here</a>.
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/05-significance-analysis.html#main-panel-" target="_blank">here</a>.
 
 **1. Choose Groups to Compare:**
 

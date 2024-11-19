@@ -1,7 +1,7 @@
 ## Single Gene Visualization Options
 
 ---
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/single-gene-visualisations.html#side-panel-" target="_blank">here</a>.
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/08-single-gene-visualisations.html#side-panel-" target="_blank">here</a>.
 
 **1. Choose Data Type:**
 

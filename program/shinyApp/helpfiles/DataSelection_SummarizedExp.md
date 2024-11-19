@@ -1,7 +1,7 @@
 ### Data Upload via Precompiled Data
 
 ***
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/required-data-input.html#starting-with-an-rds-object" target="_blank">here</a>.
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/01-required-data-input.html#starting-with-an-rds-object" target="_blank">here</a>.
 
 With this option, you can upload previously used data. This allows you to upload 
 everything at once. Additionally, you can upload results from previous analyses. It is 
