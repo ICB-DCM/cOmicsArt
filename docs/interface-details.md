@@ -49,4 +49,62 @@ To get more information on the tabs, navigate to the respective documentation us
 
 5. **Get Underlying R Code and Data:** Upon button click, the R script and respective data to generate the shown plot will be available for download. The script includes data selection, preprocessing, and analysis. For more details, refer to [Code and Data](code-and-data.md).
 
-6. **Notes:** At the bottom of each tab, there is a Notes field where you can enter text that will be saved within the report. You can use [markdown syntax](https://www.markdownguide.org/cheat-sheet/) here.
+6. **Notes:** At the bottom of each tab, there is a Notes field where you can enter text that will be saved within the report. (<span id="toggle-button" style="color: blue; cursor: pointer;" onclick="toggleInfoBox()">Learn more</span>)
+<div id="info-box" style="display: none; margin-top: 10px; padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9; width: auto; max-width: 100%;">
+<h2>Personal Note Taking</h2>
+<p>
+ This section is for your Notes. It can be as easy as just a keyword or as complex as an entire figure description or even an entire book (however, I do think there are better tools for this).
+ To enable possibilities to structure your text, involving headings, bullet points, or colored chunks, <code>markdown</code> syntax can be used.
+ <br><br>
+ >Click <a href="https://www.markdownguide.org/basic-syntax/" target="_blank">here</a> for their detailed documentation.
+</p>
+<p>To get you quickly started, here is a snippet that uses headings, bullet points, and some bold text:</p>
+<pre style="background-color: rgba(173, 216, 230, 0.5); border: 2px solid rgba(173, 216, 230, 0.8); padding: 10px; border-radius: 5px;">
+<code>
+#### Remarks:
+- Plot looks fine
+- sample xxxx is candidate for an outlier **Needs Further check**
+
+#### What came to my mind not directly related to the plot:
+##### Literature I still need to read
+[Seep et al](https://doi.org/10.1038/s41598-021-87643-8)
+
+##### Further procedure
+1. Check next plot
+2. combine plots
+3. Have a coffee
+</code>
+</pre>
+<p>The above shown will output in the Report the following:</p>
+<p><strong>Remarks:</strong></p>
+<ul>
+ <li>Plot looks fine</li>
+ <li>Sample xxxx potentially candidate for an outlier <strong>Needs Further check</strong></li>
+</ul>
+<p><strong>What came to my mind not directly related to the plot:</strong></p>
+<h5>Literature I still need to read</h5>
+<p>
+ <a href="https://doi.org/10.1038/s41598-021-87643-8" target="_blank">Seep et al</a>
+</p>
+<h5>Further procedure</h5>
+<ol>
+ <li>Check next plot</li>
+ <li>Combine plots</li>
+ <li>Have a coffee</li>
+</ol>
+</div>
+
+<script>
+  function toggleInfoBox() {
+    const infoBox = document.getElementById('info-box');
+    const toggleButton = document.getElementById('toggle-button');
+    
+    if (infoBox.style.display === 'none' || infoBox.style.display === '') {
+      infoBox.style.display = 'block';
+      toggleButton.textContent = 'Show less';
+    } else {
+      infoBox.style.display = 'none';
+      toggleButton.textContent = 'Learn more';
+    }
+  }
+</script>
