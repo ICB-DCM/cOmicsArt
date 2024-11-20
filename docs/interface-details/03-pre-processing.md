@@ -44,16 +44,101 @@ The options (and steps) of preprocessing are as follows:
 
 - **DESeq2 pre-processing (including variance stabilising transformation)**
   - For transcriptomics data, DESeq2 is used for normalization and VST transformation.
-  - The formula for analysis is determined based on user-specified factors (`additional 
-    option`).
+- The formula for analysis is determined based on user-specified factors. (<span id="toggle-button" style="color: blue; cursor: pointer;" onclick="toggleInfoBox()">Learn more</span>).
+  <div id="info-box" style="display: none; margin-top: 10px; padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9; width: auto; max-width: 100%;">
+    <h2>Understanding the Design Matrix in DESeq2</h2>
+    <p>
+      The design matrix in DESeq2 is a fundamental component used to specify the experimental 
+      design of your RNA-seq dataset. It helps in determining the relationship between the observed 
+      counts and the experimental conditions. Here's a detailed explanation:
+    </p>
+      
+    <strong>What is a Design Matrix?</strong>
+    <p>
+      A design matrix is a mathematical representation that describes how the experimental conditions 
+      (factors) are associated with the observed data. In the context of DESeq2, it is used to model 
+      the relationship between the counts (gene expression levels) and the experimental factors 
+      (conditions, treatments, etc.).
+    </p>
+      
+    <p><strong>Choosing Factors for the Design Matrix</strong></p>
+    <p>
+      In DESeq2, you typically need to specify factors that explain your data.
+    </p>
+    <p>
+      The design formula in DESeq2 is created by combining the factors. The formula is typically written in the form:
+    </p>
+    <pre><code>~ factor_1 + factor_2 + etc</code></pre>
+    <p>
+      This describes that the factors contribute to the data fitting independently from each other.
+    </p>
+    <p>
+      For example, if your main factors are <code>treatment</code>, <code>batch</code>, and <code>sequencing_depth</code>, 
+      the design formula would be:
+    </p>
+    <pre><code>~ treatment + batch + sequencing_depth</code></pre>
+      
+    <p><strong>What Does the Design Matrix Do?</strong></p>
+    <p>
+      The design matrix allows DESeq2 to model the counts data while considering the specified experimental design. 
+      It helps in:
+    </p>
+    <ul>
+      <li><strong>Normalization</strong>: Adjusting for differences in sequencing depth or other technical biases.</li>
+      <li><strong>Variance Stabilization</strong>: Ensuring that the variance is stabilized across the range of mean values.</li>
+      <li><strong>Differential Expression Analysis</strong>: Identifying genes that are differentially expressed between the levels of the main factor while controlling for other factors.</li>
+    </ul>
+      
+    <p><strong>Example</strong></p>
+    <p>
+      Let's say you have an RNA-seq experiment with two conditions (Control and Treatment) and two additional factors 
+      (Batch and Sequencing Depth). You want to analyze the effect of the treatment while accounting for batch effects 
+      and sequencing depth. Here's how you can set it up:
+    </p>
+    <ol>
+      <li><strong>Factors</strong>: Treatment, Batch, Sequencing Depth</li>
+      <li><strong>Design Formula</strong>: <code>~ treatment + batch + sequencing_depth</code></li>
+    </ol>
+    <p>
+      The design matrix will help DESeq2 to:
+    </p>
+    <ul>
+      <li>Compare gene expression between Control and Treatment groups.</li>
+      <li>Adjust for any variability introduced by different batches.</li>
+      <li>Account for differences in sequencing depth across samples.</li>
+    </ul>
+      
+    <p><strong>Conclusion</strong></p>
+    <p>
+      The design matrix in DESeq2 is crucial for accurately modeling your RNA-seq data and identifying differentially 
+      expressed genes. By carefully selecting and combining the main and other factors, you can ensure that your analysis 
+      accounts for all relevant variables and provides reliable results.
+    </p>
+  </div>
   - DESeq2 performs a negative binomial test to estimate the variance and stabilize the data.
   - The variance-stabilized data is then used for downstream analysis.
-  - **Notes:** 
+  - **Notes:**
     - This option is **only suggested** for transcriptomics data.
-    - Internally a `DESeq object` is created, which is used for the downstream 
-      analysis. The vst transformation is used for visualizations such as the PCA.
-    - The formulas supported are only simple ones for now. For a more complex 
-      analysis, we suggest to write your own script.
+    - Internally a `DESeq object` is created, which is used for the downstream analysis. 
+      The VST transformation is used for visualizations such as the PCA.
+    - The formulas supported are only simple ones for now. For a more complex analysis, we suggest writing your own script.
+
+
+
+<script>
+  function toggleInfoBox() {
+    const infoBox = document.getElementById('info-box');
+    const toggleButton = document.getElementById('toggle-button');
+    
+    if (infoBox.style.display === 'none' || infoBox.style.display === '') {
+      infoBox.style.display = 'block';
+      toggleButton.textContent = 'Show less';
+    } else {
+      infoBox.style.display = 'none';
+      toggleButton.textContent = 'Learn more';
+    }
+  }
+</script>
 
 - **centering to 0 and scaling**
   - The data is centered and scaled.
@@ -134,3 +219,54 @@ Do you want to...
 - Perform enrichment analysis on your data? → Go to [Enrichment Analysis](09-enrichment-analysis.md)
 
 ---
+
+### Understanding the Design Matrix in DESeq2
+
+The design matrix in DESeq2 is a fundamental component used to specify the experimental design of your RNA-seq dataset. It helps in determining the relationship between the observed counts and the experimental conditions. Here's a detailed explanation:
+
+#### What is a Design Matrix?
+
+A design matrix is a mathematical representation that describes how the experimental conditions (factors) are associated with the observed data. In the context of DESeq2, it is used to model the relationship between the counts (gene expression levels) and the experimental factors (conditions, treatments, etc.).
+
+#### Choosing Factors for the Design Matrix
+
+In DESeq2, you typically need to specify factors that explain your data.
+
+The design formula in DESeq2 is created by combining the factors. The formula is typically written in the form:
+```R
+~ factor_1 + factor_2 + etc
+```
+This describes that the factors contribute to the data fitting independently from each 
+other.
+
+For example, if your main factors are `treatment`, `batch` and `sequencing_depth`, the 
+design formula would be:
+
+```R
+~ treatment + batch + sequencing_depth
+```
+
+#### What Does the Design Matrix Do?
+
+The design matrix allows DESeq2 to model the counts data while considering the specified experimental design. It helps in:
+
+- **Normalization**: Adjusting for differences in sequencing depth or other technical biases.
+- **Variance Stabilization**: Ensuring that the variance is stabilized across the range of mean values.
+- **Differential Expression Analysis**: Identifying genes that are differentially expressed between the levels of the main factor while controlling for other factors.
+
+#### Example
+
+Let's say you have an RNA-seq experiment with two conditions (Control and Treatment) and two additional factors (Batch and Sequencing Depth). You want to analyze the effect of the treatment while accounting for batch effects and sequencing depth. Here's how you can set it up:
+
+1. **Factors**: Treatment, Batch, Sequencing Depth
+2. **Design Formula**: `~ treatment + batch + sequencing_depth`
+
+The design matrix will help DESeq2 to:
+
+- Compare gene expression between Control and Treatment groups.
+- Adjust for any variability introduced by different batches.
+- Account for differences in sequencing depth across samples.
+
+#### Conclusion
+
+The design matrix in DESeq2 is crucial for accurately modeling your RNA-seq data and identifying differentially expressed genes. By carefully selecting and combining the main and other factors, you can ensure that your analysis accounts for all relevant variables and provides reliable results.
