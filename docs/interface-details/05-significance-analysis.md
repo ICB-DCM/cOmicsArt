@@ -13,21 +13,80 @@ The Significance Analysis tab is divided into two main sections: the side panel 
 
 In the side panel, you have the following options:
 
-- **Choose groups to compare**: This allows you to select the groups you want to compare.
-- **Select your desired comparisons**: Here you input the specific comparisons you 
-  want to make. You enter the groups in the format `Treatment:Control`. Multiple 
-  comparison pairs can be entered at once.
-- **Test method**: You can select the statistical test method to use. You can choose 
-  between [T-test](https://en.wikipedia.org/wiki/Student%27s_t-test), [Wilcoxon Rank 
-  Sum Test](https://en.wikipedia.org/wiki/Mann–Whitney_U_test), and [Welch's T-test](https://en.wikipedia.org/wiki/Welch%27s_t-test). 
-  If you used `vst_DESeq` as the [preprocessing method](03-pre-processing.md), DESeq2 
-  will use the [Wald test](https://en.wikipedia.org/wiki/Wald_test).
+### 1. Choose Groups to Compare
+Select the groups from your data for which you want to perform significance analysis.
 
-- **Significance level**: This slider allows you to set the significance level for the analysis, ranging from 0.005 to 0.1.
+- For DESeq preprocessing, select from predefined factors.
+- For other preprocessing methods, choose from available sample annotation columns.
 
-- **Test correction**: You can choose the method for multiple testing correction.
+### 2. Choose Comparisons
+Select the specific pairings of groups for which you want to perform significance analysis.
 
-- **Get Significance Analysis**: Clicking this button will perform the significance analysis based on the selected parameters.
+- Automatically generates possible pairings based on selected groups.
+- Notation is "Treatment:Control" and indicates the direction of the comparison.
+
+### 3. Choose Test Method
+Select the statistical test method for significance analysis.
+
+- For DESeq preprocessing, a Wald test statistic is used. For more information [read here](https://en.wikipedia.org/wiki/Wald_test) or [check out the original paper](http://www.jstor.org/stable/1990256).
+- For other preprocessing methods, choose from:
+  - Wilcoxon rank sum test (Mann-Whitney U test). [Read more here](https://en.wikipedia.org/wiki/Mann–Whitney_U_test)
+  - T-Test. [Read more here](https://en.wikipedia.org/wiki/Student%27s_t-test)
+  - Welch-Test. [Read more here](https://en.wikipedia.org/wiki/Welch%27s_t-test)
+
+### 4. Choose Significance Level
+Set the desired significance level (alpha) for hypothesis testing.
+
+- Slider input allowing selection between 0.005 and 0.1 with a default value of 0.05.
+
+### 5. Choose Test Correction
+Select the method for correcting p-values to account for multiple testing.
+
+<div style="margin-left: 20px;">
+
+<details>
+<summary>1. None</summary>
+No correction is applied to p-values. Each test is considered independently.
+</details>
+
+<details>
+<summary>2. Bonferroni</summary>
+Adjusts the significance level by dividing it by the number of tests. Controls the family-wise error rate.
+</details>
+
+<details>
+<summary>3. Benjamini-Hochberg</summary>
+Controls the false discovery rate (FDR) by adjusting p-values. Often more powerful than Bonferroni.
+</details>
+
+<details>
+<summary>4. Benjamini Yekutieli</summary>
+An extension of Benjamini-Hochberg for controlling the FDR under dependence. Suitable when tests are correlated.
+</details>
+
+<details>
+<summary>5. Holm</summary>
+A step-down method that controls the family-wise error rate. Adjusts p-values sequentially.
+</details>
+
+<details>
+<summary>6. Hommel</summary>
+A method that controls the family-wise error rate and is more powerful than Bonferroni. Accounts for arbitrary dependency structures.
+</details>
+
+<details>
+<summary>7. Hochberg</summary>
+A step-up method that controls the family-wise error rate. Adjusts p-values sequentially.
+</details>
+
+<details>
+<summary>8. FDR (False Discovery Rate)</summary>
+Controls the expected proportion of falsely rejected null hypotheses. More liberal than family-wise error rate methods.
+</details>
+
+For a bit more information on multiple testing correction, [read here](https://en.wikipedia.org/wiki/Multiple_comparisons_problem).
+
+</div>
 
 ## Main Panel 💡
 
