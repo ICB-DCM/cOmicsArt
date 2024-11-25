@@ -1,7 +1,7 @@
 ## DESeq Factor Choices
 
 ***
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/pre-processing.html" target="_blank">here</a>.
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/03-pre-processing.html" target="_blank">here</a>.
 
 ### Understanding the Design Matrix in DESeq2
 

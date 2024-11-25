@@ -67,9 +67,11 @@ Very similar to the `File Input`, but replacing the sample annotation with the
 
 The main panel provides options for detailed data selection:
 
-- **Adding Gene Annotation**: In case of transcriptomics data, you can add gene 
-  annotation to your sample. For this you only need to choose **Which Organism?** and 
-  click the **Add Gene Annotation** button.
+- **(Optional) Adding Gene Annotation**: In case of transcriptomics data, you can add 
+  gene annotation to your sample. For this you only need to choose **Which Organism?
+  ** and click the **Add Gene Annotation** button. This will add the entrez gene ids, 
+  ensemble gene ids, gene symbols and gene biotype (e.g. protein coding, etc.) to your 
+  data.
 
 ### Row Selection - Biochemical Entities
 

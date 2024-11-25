@@ -1,7 +1,7 @@
 ## Enrichment Analysis Options
 
----
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/enrichment-analysis.html" target="_blank">here</a>.
+***
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/09-enrichment-analysis.html" target="_blank">here</a>.
 
 In cOmicsArt you can do either a gene set enrichment analysis or an over-representation analysis. The options for both analyses are described below.
 For more details read here on

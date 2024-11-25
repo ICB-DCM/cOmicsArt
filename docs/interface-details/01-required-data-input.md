@@ -10,7 +10,7 @@ To start your own analysis, you need to pass the first hurdle - Uploading your d
 
 Within cOmicsART, you have several options to do so:
 
-- **You have at least a data matrix of your measurements.** Then start [here](#starting-with-a-single-table).
+- **You have at least a data matrix of your measurements.** Then start [here](#starting-with-a-single-table---data-matrix-).
   - A data matrix can be, e.g., a count-table or measured concentrations for multiple entities and samples. "At least" means you might also have a sample table and/or a measurement table.
 - **You have a data matrix and a [Metadatasheet](https://www.nature.com/articles/s41597-024-03349-2).**
   - A Metadatasheet is a handy way to organize not only your data but also your group's, developed within the [Hasenauer Lab](https://www.mathematics-and-life-sciences.uni-bonn.de/en/research/hasenauer-group). Currently, the Metadatasheet can be supplied instead of a sample table. We are planning to expand the connection between the Metadatasheet and cOmicsART - stay tuned.

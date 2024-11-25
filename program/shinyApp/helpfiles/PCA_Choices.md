@@ -1,7 +1,7 @@
 ## Principal Component Analysis (PCA) Options
 
 ***
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/pca.html#side-panel-" target="_blank">here</a>.
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/06-pca.html#side-panel-" target="_blank">here</a>.
 
 A principal component analysis (PCA) is a linear dimensionality reduction technique to 
 visualize clusters within your data. For a small introduction on PCAs, please refer to 

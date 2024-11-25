@@ -1,7 +1,7 @@
 ### Data Upload via File Input
 
 ***
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/required-data-input.html" target="_blank">here</a>.
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/01-required-data-input.html" target="_blank">here</a>.
 
 With `Data upload` you can upload your data to the server via explicit csv files.<br>
 The files must be in the following format:<br>

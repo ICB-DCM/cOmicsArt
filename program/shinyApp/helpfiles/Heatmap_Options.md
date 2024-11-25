@@ -1,30 +1,20 @@
 ## Row Selection Options
 
 ***
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/heatmap.html#side-panel-" target="_blank">here</a>.
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/07-heatmap.html#side-panel-" target="_blank">here</a>.
 
-**1. Row Selection Options:**
+1. **Batch Correction**: Use batch-corrected data if available (set in Pre-processing).
 
-- **Description**
-  - Choose the method(s) for selecting rows in the heatmap.
-
-- **Options**
-  - _all_: Display all rows in the heatmap.
-  - _TopK_: Show the top K rows based on the specified criteria. If rows are ordered, 
-    it displays the top K, hence if K = 10 you selected the Top 10; otherwise, it shows all rows. **Only makes sense in 
-    conjunction with "significant_LFC" or "LFC_onlySig" row selection methods.**
-  - _significant_LFC_: Display rows sorted based on the significance of log fold changes. Requires specifying control and comparison groups.
-  - _LFC_onlySig_: Display rows with significant log fold changes based on a specified significance threshold. Then ordered after log2 Fold changes. Requires specifying control and comparison groups.
-  - _rowAnno_based_: Customize row selection based on additional row annotation factors. Select specific factors for tailored row display.
-
-**2. Show Log Fold Changes:**
-
-- **Description:**
-  - Decide whether to display log fold changes in the heatmap.
-
-- **Options:**
-  - Checkbox input with "Show log Fold Changes" label.
-  - Toggle between displaying or hiding log fold changes.
+2. **Select Entities**: Choose which entities to display:
+   - All: Shows all entities.
+   - Based on Annotation: Filter rows using provided annotations.
+   - Top K: Display top entities based on criteria (e.g., LogFoldChange, significance).
+   Set criteria, number of entities (K), reference, treatment group, and p-value threshold.
+   
+**Conditional Options**: conditional option and helper questions will show up for the selected option.
+   - Annotation-based Selection: Filter rows by variables in row annotations.
+   - Top K Selection: Order entities by LogFoldChange or significance and specify 
+     thresholds.
 
 **Note:**
 - Optimize row selection options to focus on specific subsets of data, such as significant changes or custom annotation-based criteria.
