@@ -580,7 +580,10 @@ server <- function(input,output,session){
              colsWithNa <- c(colsWithNa,i)
            }
         }
-        check5 <- paste0(snippetNo,"\n\tFollowing columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
+        check5 <- paste0(snippetNo,
+                         "\n\tFollowing columns are *potentially* problematic: ",
+                         "\n\t",paste0(colsWithNa, collapse = ", "),
+                         "\n\tNa's will be replaced by rownames per default")
       }
       if(check6 == snippetNo){
         # add option to user for automatic column name correction
