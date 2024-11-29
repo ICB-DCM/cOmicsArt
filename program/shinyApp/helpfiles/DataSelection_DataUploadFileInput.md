@@ -20,6 +20,8 @@ The files must be in the following format:<br>
   - must have the **same** naming as in data-matrix (1.rownames) in the rownames<br>
   - if you do not have any information just add a column with the gene-names<br>
 
+Need help to prepare your data? Check out our Excel Workbook: <a href="https://github.com/ICB-DCM/cOmicsArt/blob/main/UploadHelpcOmicsArt.xlsx" target="_blank">UploadeHelpcOmicsArt.xlsx</a>.
+
 Some pitfalls you may fall into:
 * The files must be uploaded at their respective position (**data matrix, 
   sample annotation, entities annotation**).
