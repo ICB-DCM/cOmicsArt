@@ -494,10 +494,22 @@ server <- function(input,output,session){
       ),
       htmlOutput(outputId = "OverallChecks", container = pre),
       easyClose = TRUE,
-      footer = modalButton("Close"),
+      footer = tagList(
+        actionButton("usingVIdata", "Use the adjusted Data"),
+        actionButton("CloseVI","Close")
+        ),
       size = "l", # large modal
       class = "custom-modal" # custom class for this modal
     ))
+  })
+  
+  observeEvent(input$usingVIdata,{
+    uploaded_from("VI_data")
+    removeModal()
+    shinyjs::click("refresh1")
+  })
+  observeEvent(input$CloseVI,{
+    removeModal()
   })
   
   observeEvent(input$DoVisualDataInspection,{
@@ -829,6 +841,7 @@ server <- function(input,output,session){
         isTruthy(input$data_row_anno_metadata) &
         uploaded_from() == "file_input"
       ) |
+      uploaded_from() == "VI_data" |
       # Is Test Data used?
       uploaded_from() == "testdata"
     )){
@@ -859,7 +872,11 @@ server <- function(input,output,session){
           "**DataInput** - The used data was precompiled. Filename: \n\t",
           input$data_preDone$name
         ))
-      } else {
+      } else if(uploaded_from() == "VI_data"){
+        fun_LogIt(message = paste0(
+          "**DataInput** - The used data was uploaded for visual inspection and changed within.")
+        )
+        }else {
         fun_LogIt(message = paste0(
           "The following data was used: \n\t",
           input$data_matrix1$name,"\n\t",
