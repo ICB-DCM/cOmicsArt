@@ -559,6 +559,8 @@ server <- function(input,output,session){
       check4 <- ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes)
       check5 <- ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes)
       check6 <- ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo)
+      
+      check7 <- ifelse(all(sapply(Matrix,is.numeric)),snippetYes,snippetNo)
 
       if(check0 == snippetNo){
         # add help text
@@ -580,6 +582,7 @@ server <- function(input,output,session){
         check5 <- paste0(snippetNo,"\n\tFollowing columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
       }
       if(check6 == snippetNo){
+      
         # add help text
         check6 <- paste0(
           snippetNo,
@@ -589,10 +592,20 @@ server <- function(input,output,session){
           "Remember to change the Sample ID everywhere (Matrix & Sample Table)."
         )
       }
+      if(check7 == snippetNo){
+        # add help text
+        propblem_columns <- colnames(Matrix)[!sapply(Matrix,is.numeric)]
+        check7 <- paste0(
+          snippetNo,
+          "\n\tThe data has columns with non-numeric values.\n\t",
+          "\n\t Following ",length(propblem_columns)," columns are potentially problematic: ",paste0(propblem_columns, collapse = ", ")
+        )
+      }
       output$OverallChecks <- renderText({
          paste0(
            "Some overall Checks have been run:\n",
            "Data Matrix is a real csv (has ',' as separators:): ",check0,"\n",
+           "Data Matrix has only numeric values: ",check7,"\n",
            "Rownames of Matrix are the same as rownames of entitie table ",check1,"\n",
            "Colnames of Matrix are same as rownames of sample table ",check2," \n",
            "Matrix has no na ",check3,"\n",
