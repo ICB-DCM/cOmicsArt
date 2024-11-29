@@ -681,11 +681,7 @@ server <- function(input,output,session){
             )
           ))
 
-          output$DataMatrix_VI <- DT::renderDataTable({DT::datatable(data = Matrix)})
-          output$SampleMatrix_VI <- DT::renderDataTable({DT::datatable(data = sample_table)})
-          output$EntitieMatrix_VI <- DT::renderDataTable({
-            DT::datatable(data = annotation_rows)
-          })
+
           # Handle data download
           output$DownloadUpdatedMatrix <- downloadHandler(
             filename = function() {
@@ -714,12 +710,16 @@ server <- function(input,output,session){
           observeEvent(input$close_modal_VI, {
             removeModal()  # Close the modal
             # Redo relevant checks
-            browser()
             check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
             check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
             check6 <- ifelse(all(colnames(Matrix) == colnames(Matrix)),snippetYes,snippetNo)
             # Add any additional actions you want to perform
             shinyjs::click(id = "inspect_data")
+            output$DataMatrix_VI <- DT::renderDataTable({DT::datatable(data = Matrix)})
+            output$SampleMatrix_VI <- DT::renderDataTable({DT::datatable(data = sample_table)})
+            output$EntitieMatrix_VI <- DT::renderDataTable({
+              DT::datatable(data = annotation_rows)
+            })
             showNotification("Check if now you pass all tests")
             output$OverallChecks <- renderText({
               paste0(
