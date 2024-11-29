@@ -635,7 +635,7 @@ server <- function(input,output,session){
           if(any(grepl("^[X0-9_.]", rownames(annotation_rows)))){
             idxTochange <- grepl("^[X0-9_.]", rownames(annotation_rows))
             oldnames_entitie <- rownames(annotation_rows)[idxTochange]
-            rownames(annotation_rows)[idxTochange] <- paste0("sample_", rownames(annotation_rows)[idxTochange])
+            rownames(annotation_rows)[idxTochange] <- paste0("entite_", rownames(annotation_rows)[idxTochange])
             newNames_entitie <- rownames(annotation_rows)[idxTochange]
             info_snippet_entitie <- paste0("Changes: \n Entitie Table: Number of rownames changed: ",length(oldnames_entitie),"\n",
                      " e.g. oldnames " ,paste0(head(oldnames_entitie,3), collapse = ","),"\n",
@@ -714,12 +714,26 @@ server <- function(input,output,session){
           observeEvent(input$close_modal_VI, {
             removeModal()  # Close the modal
             # Redo relevant checks
+            browser()
             check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
             check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
-            check6 <- ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo)
+            check6 <- ifelse(all(colnames(Matrix) == colnames(Matrix)),snippetYes,snippetNo)
             # Add any additional actions you want to perform
             shinyjs::click(id = "inspect_data")
             showNotification("Check if now you pass all tests")
+            output$OverallChecks <- renderText({
+              paste0(
+                "Some overall Checks have been run:\n",
+                "Data Matrix is a real csv (has ',' as separators:): ",check0,"\n",
+                "Data Matrix has only numeric values: ",check7,"\n",
+                "Rownames of Matrix are the same as rownames of entitie table ",check1,"\n",
+                "Colnames of Matrix are same as rownames of sample table ",check2," \n",
+                "Matrix has no na ",check3,"\n",
+                "Sample table no na ",check4,"\n",
+                "Entitie table no na ",check5,"\n",
+                "Sample IDs have valid names ", check6, "\n"
+              )
+            })
             
           })
 
