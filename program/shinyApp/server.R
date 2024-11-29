@@ -510,8 +510,8 @@ server <- function(input,output,session){
     if(!(isTruthy(input$data_matrix1) & 
          (isTruthy(input$data_sample_anno1)|isTruthy(input$metadataInput)) & 
          isTruthy(input$data_row_anno1))){
-      output$DataMatrix_VI_Info <- renderText(
-        "The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!"
+      output$OverallChecks <- renderText(
+        "<font color=\"#ab020a\"><b>The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!</b></font>"
         )
     } else {
       flag_csv <- F
@@ -557,7 +557,7 @@ server <- function(input,output,session){
       check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
       check3 <- ifelse(any(is.na(Matrix) == T),snippetOrangeNo,snippetYes)
       check4 <- ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes)
-      check5 <- ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes)
+      check5 <- ifelse(any(is.na(annotation_rows) == T),snippetOrangeNo,snippetYes)
       check6 <- ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo)
       
       check7 <- ifelse(all(sapply(Matrix,is.numeric)),snippetYes,snippetNo)
@@ -731,9 +731,9 @@ server <- function(input,output,session){
                 "Data Matrix has only numeric values: ",check7,"\n",
                 "Rownames of Matrix are the same as rownames of entitie table ",check1,"\n",
                 "Colnames of Matrix are same as rownames of sample table ",check2," \n",
-                "Matrix has no na ",check3,"\n",
-                "Sample table no na ",check4,"\n",
-                "Entitie table no na ",check5,"\n",
+                "Matrix has no na (missing values) ",check3,"\n",
+                "Sample table no na (missing values) ",check4,"\n",
+                "Entitie table no na  (missing values) ",check5,"\n",
                 "Sample IDs have valid names ", check6, "\n"
               )
             })
