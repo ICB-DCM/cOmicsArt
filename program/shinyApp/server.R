@@ -582,7 +582,19 @@ server <- function(input,output,session){
         check5 <- paste0(snippetNo,"\n\tFollowing columns are potentially problematic: ",paste0(colsWithNa, collapse = ", "))
       }
       if(check6 == snippetNo){
-      
+        # add option to user for automatic column name correction
+        showModal(modalDialog(
+          title = "Column Name Correction",
+          helpText("Your column names are not syntactically valid. Do you want to try to correct them within cOmicsArt?"),
+          actionButton(
+            inputId = "correct_column_names",
+            label = "Correct column names"
+          ),
+          footer = tagList(
+            modalButton("Close")
+          )
+        ))
+        browser()
         # add help text
         check6 <- paste0(
           snippetNo,
@@ -597,8 +609,9 @@ server <- function(input,output,session){
         propblem_columns <- colnames(Matrix)[!sapply(Matrix,is.numeric)]
         check7 <- paste0(
           snippetNo,
-          "\n\tThe data has columns with non-numeric values.\n\t",
-          "\n\t Following ",length(propblem_columns)," columns are potentially problematic: ",paste0(propblem_columns, collapse = ", ")
+          "\n\tThe data has columns with non-numeric values.",
+          "\n\tFollowing ",length(propblem_columns)," columns are potentially problematic: ",
+          paste0("\n\t",propblem_columns, collapse = ", ")
         )
       }
       output$OverallChecks <- renderText({
