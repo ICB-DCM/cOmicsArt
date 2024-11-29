@@ -557,7 +557,7 @@ server <- function(input,output,session){
       check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
       check3 <- ifelse(any(is.na(Matrix) == T),snippetOrangeNo,snippetYes)
       check4 <- ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes)
-      check5 <- ifelse(any(is.na(annotation_rows) == T),snippetOrangeNo,snippetYes)
+      check5 <- ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes)
       check6 <- ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo)
       
       check7 <- ifelse(all(sapply(Matrix,is.numeric)),snippetYes,snippetNo)
@@ -580,7 +580,7 @@ server <- function(input,output,session){
              colsWithNa <- c(colsWithNa,i)
            }
         }
-        check5 <- paste0(snippetNo,
+        check5 <- paste0("<font color=\"#FFA500\"><b>No</b></font>",
                          "\n\tFollowing columns are *potentially* problematic: ",
                          "\n\t",paste0(colsWithNa, collapse = ", "),
                          "\n\tNa's will be replaced by rownames per default")
