@@ -226,7 +226,7 @@ server <- function(input,output,session){
   # create an empty list in res/par_tmp[[session$token]]
   res_tmp[[session$token]] <<- list()
   par_tmp[[session$token]] <<- list()
-  
+  res_tmp[[session$token]]$passedVI <<- F
   # On session end, remove the list from res/par_tmp
   session$onSessionEnded(function() {
     res_tmp[[session$token]] <<- NULL
@@ -504,9 +504,23 @@ server <- function(input,output,session){
   })
   
   observeEvent(input$usingVIdata,{
-    uploaded_from("VI_data")
-    removeModal()
-    shinyjs::click("refresh1")
+    if(res_tmp[[session$token]]$passedVI){
+      uploaded_from("VI_data")
+      removeModal()
+      # take specification from file_input as only here VI applicable
+      par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_file_input")]]
+      omic_type(input[[paste0("omic_type_file_input")]])
+      shinyjs::click("refresh1")
+    }else{
+      show_toast(
+        title = "Data did not passed visual inspection. Data is not used and needs adjustments before reuploading and usage within cOmicsArt!",
+        type = "error",
+        position = "top",
+        timerProgressBar = FALSE,
+        width = "100%"
+      )
+    }
+
   })
   observeEvent(input$CloseVI,{
     removeModal()
@@ -749,6 +763,18 @@ server <- function(input,output,session){
                 "Sample IDs have valid names ", check6, "\n"
               )
             })
+            if(grepl(snippetYes,check0) & 
+               grepl(snippetYes,check1) & 
+               grepl(snippetYes,check2) & 
+               grepl(snippetYes,check3) & 
+               grepl(snippetYes,check4) & # not crucial
+              # grepl(snippetYes,check5) & # not crucial
+               grepl(snippetYes,check6) &
+               grepl(snippetYes,check7)){
+              res_tmp[[session$token]]$passedVI <<- T
+            } else {
+              res_tmp[[session$token]]$passedVI <<- F
+            }
             
           })
 
@@ -756,7 +782,6 @@ server <- function(input,output,session){
           })
 
         if(check6 == "No"){
-          browser()
           # add help text
           check6 <- paste0(
             snippetNo,
@@ -815,11 +840,15 @@ server <- function(input,output,session){
     shinyjs::click("refresh1")
   })
   
+  
 ## Do Upload ----
   observeEvent(input$refresh1,{
     req(data_input_shiny())
-    par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
-    omic_type(input[[paste0("omic_type_", uploaded_from())]])
+    if(!isTruthy(par_tmp[[session$token]]['omic_type'])){
+      par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
+      omic_type(input[[paste0("omic_type_", uploaded_from())]])
+    }
+
     par_tmp[[session$token]]['addedGeneAnno'] <<- FALSE
     fun_LogIt(message = "## Data Selection {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
@@ -912,12 +941,13 @@ server <- function(input,output,session){
         uploaded_from() == "file_input"
       ) |
       # Is Test Data used?
-      uploaded_from() == "testdata"
+      (uploaded_from() == "testdata") |
+      (uploaded_from() == "VI_data")
     )
     # initialize empty data_input object
     data_input <- list()
     # upload depending on where the button was clicked
-    if(uploaded_from()=="file_input"){
+    if(uploaded_from() == "file_input"){
       data_input <- list(
         Matrix = read_file(input$data_matrix1$datapath, check.names=T),
         sample_table = read_file(input$data_sample_anno1$datapath, check.names=T),
@@ -972,6 +1002,12 @@ server <- function(input,output,session){
       fun_LogIt(
         message = paste0("<font color=\"#FF0000\"><b>**Attention** - Test Data set used</b></font>")
       )
+    } else if(uploaded_from() == "VI_data"){
+      data_input <- list(
+        Matrix = read_file(paste0("www/",session$token,"/updatedMatrix.csv"), check.names=T),
+        sample_table = read_file(paste0("www/",session$token,"/updatedSampleTable.csv"), check.names=T),
+        annotation_rows = read_file(paste0("www/",session$token,"/updatedEntitieAnnotation.csv"), check.names=T)
+      )
     } else {
       output$debug <- renderText({
         "<font color=\"#FF0000\"><b>Upload failed, please check your input.</b></font>"
@@ -1001,12 +1037,14 @@ server <- function(input,output,session){
       if(is.null(summarized_experiment)){
         return(NULL)
       } else {
-        data_input[[paste0(input[[paste0("omic_type_", uploaded_from())]],"_SumExp")]] <- summarized_experiment
+        #data_input[[paste0(input[[paste0("omic_type_", uploaded_from())]],"_SumExp")]] <- summarized_experiment
+        data_input[[paste0(omic_type(),"_SumExp")]] <- summarized_experiment
       }
       #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
     }
     # TODO SumExp only needed hence more restructuring needed
-    res_tmp[[session$token]][['data_original']] <<- data_input[[paste0(input[[paste0("omic_type_", uploaded_from())]],"_SumExp")]]
+
+    res_tmp[[session$token]][['data_original']] <<- data_input[[paste0(omic_type(),"_SumExp")]]
     # Make a copy, to leave original data untouched
     res_tmp[[session$token]][['data']] <<- res_tmp[[session$token]]$data_original
     # Count up updating
