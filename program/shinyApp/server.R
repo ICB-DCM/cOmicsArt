@@ -541,20 +541,49 @@ server <- function(input,output,session){
         )
     } else {
       flag_csv <- F
+
       tryCatch(
         expr = {
           Matrix <- read_file(input$data_matrix1$datapath, check.names=T)
           Matrix2 <- read_file(input$data_matrix1$datapath, check.names=F)
           flag_csv <- T
         },
-        error = function(){
+        error = function(e){
           print("Not a real csv file!")
-          Matrix <- read.table(input$data_matrix1$datapath,check.names = T)
-          Matrix2 <- read.table(input$data_matrix1$datapath, check.names = F)
+          output$OverallChecks <- renderText(
+            "<font color=\"#ab020a\"><b>Not a real csv file!</b></font>"
+          )
         }
       )
+      
+      if(flag_csv == F){
+        tryCatch(
+          expr = {
+            Matrix <- read.table(input$data_matrix1$datapath,check.names = T)
+            Matrix2 <- read.table(input$data_matrix1$datapath, check.names = F)
+          },
+          error = function(e){
+            output$OverallChecks <- renderText(
+              "<font color=\"#ab020a\"><b>Data Matrix upload failed. Most likely reasons are duplicated row.names. </b></font>"
+            )
+            Matrix <- readLines(input$data_matrix1$datapath,warn=F)
+            Matrix2 <- readLines(input$data_matrix1$datapath,n=10,warn=F) # ensure 'Matrices' are not the same to evoke all related tests to fail
+            #put into dataframe to ensure test run smoothly
+            Matrix <- data.frame(Matrix)
+            Matrix2 <- data.frame(Matrix2)
+          }
+        )
+      }
 
-      output$DataMatrix_VI <- DT::renderDataTable({DT::datatable(data = Matrix)})
+      tryCatch(
+        epxr = {
+          output$DataMatrix_VI <- DT::renderDataTable({DT::datatable(data = Matrix)})
+          },
+        error = function(e){
+          output$DataMatrix_VI <- DT::renderDataTable({DT::datatable(data = NULL)})
+        }
+      )
+      browser()
       output$DataMatrix_VI_INFO <- renderText({"Matrix:"})
       if(isTruthy(input$data_sample_anno1)){
         sample_table <- read_file(input$data_sample_anno1$datapath, check.names=T)
@@ -578,15 +607,15 @@ server <- function(input,output,session){
       snippetNo <-  "<font color=\"#ab020a\"><b>No</b></font>"
       snippetOrangeNo <- "<font color=\"#FFA500\"><b>No</b></font> But if you use any preprocessing other than `None`, those NAs will be removed"
 
-      check0 <- ifelse(flag_csv,snippetYes,snippetNo)
-      check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
-      check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
-      check3 <- ifelse(any(is.na(Matrix) == T),snippetOrangeNo,snippetYes)
-      check4 <- ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes)
-      check5 <- ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes)
-      check6 <- ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo)
+      check0 <- tryCatch(ifelse(flag_csv,snippetYes,snippetNo),error = function(e) snippetNo)
+      check1 <- tryCatch(ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo),error = function(e) snippetNo)
+      check2 <- tryCatch(ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo),error = function(e) snippetNo)
+      check3 <- tryCatch(ifelse(any(is.na(Matrix) == T),snippetOrangeNo,snippetYes),error = function(e) snippetNo)
+      check4 <- tryCatch(ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes),error = function(e) snippetNo)
+      check5 <- tryCatch(ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes),error = function(e) snippetNo)
+      check6 <- tryCatch(ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo),error = function(e) snippetNo)
       
-      check7 <- ifelse(all(sapply(Matrix,is.numeric)),snippetYes,snippetNo)
+      check7 <- tryCatch(ifelse(all(sapply(Matrix,is.numeric)),snippetYes,snippetNo),error = function(e) snippetNo)
       #TODO ensure that if there are e.g. invalid sample names but als different sample names in data and annotation tables that we catch this
 
       if(check0 == snippetNo){
@@ -611,7 +640,8 @@ server <- function(input,output,session){
                          "\n\t",paste0(colsWithNa, collapse = ", "),
                          "\n\tNa's will be replaced by rownames per default")
       }
-      if(check6 == snippetNo){
+      # ensuring we try to rescue names only if crucial checks pass
+      if(check6 == snippetNo & check0 == snippetYes & check7==snippetYes ){
         # add option to user for automatic column name correction
         showModal(modalDialog(
           title = "Column Name Correction",
@@ -630,9 +660,9 @@ server <- function(input,output,session){
             oldnames_matrix <- rownames(Matrix)[idxTochange]
             rownames(Matrix)[idxTochange] <- paste0("entite_", rownames(Matrix)[idxTochange])
             newName_matrix <- rownames(Matrix)[idxTochange]
-            info_snippet_matrix_row <- paste0("Changes: \n Matrix: Number of rownames changed: ",length(oldnames_matrix),"\n",
-                                          " e.g. oldnames " ,paste0(head(oldnames_matrix,3), collapse = ","),"\n",
-                                          " changed to ",paste0(head(newName_matrix,3), collapse = ","),"\n")
+            info_snippet_matrix_row <- paste0("Changes: <br> Matrix: Number of rownames changed: ",length(oldnames_matrix),"<br>",
+                                          " e.g. old names: " ,paste0(head(oldnames_matrix,3), collapse = ", "),"<br>",
+                                          " changed to: ",paste0(head(newName_matrix,3), collapse = ", "),"<br>")
           }else{
             info_snippet_matrix_row <- ""
           }
@@ -644,9 +674,9 @@ server <- function(input,output,session){
               }
             colnames(Matrix)[idxTochange] <- paste0("sample_", colnames(Matrix)[idxTochange])
             newName_matrix <- colnames(Matrix)[idxTochange]
-            info_snippet_matrix_column <- paste0("Changes: \n Matrix: Number of colnames changed: ",length(oldnames_matrix),"\n",
-                     " e.g. oldnames " ,paste0(head(oldnames_matrix,3), collapse = ","),"\n",
-                     " changed to ",paste0(head(newName_matrix,3), collapse = ","),"\n")
+            info_snippet_matrix_column <- paste0("Changes: <br> Matrix: Number of colnames changed: ",length(oldnames_matrix),"<br>",
+                     " e.g. old names: " ,paste0(head(oldnames_matrix,3), collapse = ", "),"<br>",
+                     " changed to: ",paste0(head(newName_matrix,3), collapse = ", "),"<br>")
           }else{
             info_snippet_matrix_column <- ""
           }
@@ -655,9 +685,9 @@ server <- function(input,output,session){
             oldnames_sample <- rownames(sample_table)[idxTochange]
             rownames(sample_table)[idxTochange] <- paste0("sample_", rownames(sample_table)[idxTochange])
             newName_sample <- rownames(sample_table)[idxTochange]
-            info_snippet_sample <- paste0("Changes: \n Sample Table: Number of rownames changed: ",length(oldnames_sample),"\n",
-                     " e.g. oldnames " ,paste0(head(oldnames_sample,3), collapse = ","),"\n",
-                     " changed to ",paste0(head(newName_sample,3), collapse = ","),"\n")
+            info_snippet_sample <- paste0("Changes: <br> Sample Table: Number of rownames changed: ",length(oldnames_sample),"<br>",
+                     " e.g. old names: " ,paste0(head(oldnames_sample,3), collapse = ", "),"<br>",
+                     " changed to: ",paste0(head(newName_sample,3), collapse = ", "),"<br>")
           }else{
             info_snippet_sample <- ""
           }
@@ -666,9 +696,9 @@ server <- function(input,output,session){
             oldnames_entitie <- rownames(annotation_rows)[idxTochange]
             rownames(annotation_rows)[idxTochange] <- paste0("entite_", rownames(annotation_rows)[idxTochange])
             newNames_entitie <- rownames(annotation_rows)[idxTochange]
-            info_snippet_entitie <- paste0("Changes: \n Entitie Table: Number of rownames changed: ",length(oldnames_entitie),"\n",
-                     " e.g. oldnames " ,paste0(head(oldnames_entitie,3), collapse = ","),"\n",
-                     " changed to ",paste0(head(newNames_entitie,3), collapse = ","),"\n")
+            info_snippet_entitie <- paste0("Changes: <br> Entitie Table: Number of rownames changed: ",length(oldnames_entitie),"<br>",
+                     " e.g. oldnames " ,paste0(head(oldnames_entitie,3), collapse = ","),"<br>",
+                     " changed to ",paste0(head(newNames_entitie,3), collapse = ","),"<br>")
           }else{
             info_snippet_entitie <- ""
           }
@@ -684,12 +714,10 @@ server <- function(input,output,session){
           
           showModal(modalDialog(
             title = "Download Updated Data",
-            helpText(
-              paste0("Please download your updated data for reuploading correct data.\n",  
-                     "Changes: \n ",
-                     info_snippet_matrix_row,"\n",
-                     info_snippet_matrix_column,"\n",
-                     info_snippet_sample,"\n",
+              HTML(paste0("You can download your updated data for later reupload.<br>",
+                     info_snippet_matrix_row,"<br>",
+                     info_snippet_matrix_column,"<br>",
+                     info_snippet_sample,"<br>",
                      info_snippet_entitie
                      )
               ),
@@ -793,7 +821,7 @@ server <- function(input,output,session){
         }
 
       }
-      if(check7 == snippetNo){
+      if(check7 == snippetNo & check0 == snippetYes){
         # add help text
         propblem_columns <- colnames(Matrix)[!sapply(Matrix,is.numeric)]
         check7 <- paste0(
