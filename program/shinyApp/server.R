@@ -495,7 +495,7 @@ server <- function(input,output,session){
       htmlOutput(outputId = "OverallChecks", container = pre),
       easyClose = TRUE,
       footer = tagList(
-        actionButton("usingVIdata", "Use the adjusted Data"),
+        actionButton("usingVIdata", "Use the Data"),
         actionButton("CloseVI","Close")
         ),
       size = "l", # large modal
@@ -527,6 +527,7 @@ server <- function(input,output,session){
   })
   
   observeEvent(input$DoVisualDataInspection,{
+    tryCatch({
     if(isTruthy(input$data_preDone)){
       output$DataMatrix_VI_Info <- renderText({
         "Visual Inspection only for primary data, not for precompiled set possible!"
@@ -583,7 +584,7 @@ server <- function(input,output,session){
           output$DataMatrix_VI <- DT::renderDataTable({DT::datatable(data = NULL)})
         }
       )
-      browser()
+
       output$DataMatrix_VI_INFO <- renderText({"Matrix:"})
       if(isTruthy(input$data_sample_anno1)){
         sample_table <- read_file(input$data_sample_anno1$datapath, check.names=T)
@@ -845,6 +846,16 @@ server <- function(input,output,session){
          )
       })
     }
+      },
+    error = function(e){
+      show_toast(
+        title = "Data did not passed visual inspection. Please refer to the Documentation to readjust and then reupload your data accordinlgy.",
+        type = "error",
+        position = "top",
+        timerProgressBar = FALSE,
+        width = "100%"
+      )
+    })
   })
   
 
