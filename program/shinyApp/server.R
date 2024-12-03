@@ -883,11 +883,6 @@ server <- function(input,output,session){
 ## Do Upload ----
   observeEvent(input$refresh1,{
     req(data_input_shiny())
-    if(!isTruthy(par_tmp[[session$token]]['omic_type'])){
-      par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
-      omic_type(input[[paste0("omic_type_", uploaded_from())]])
-    }
-
     par_tmp[[session$token]]['addedGeneAnno'] <<- FALSE
     fun_LogIt(message = "## Data Selection {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
@@ -965,6 +960,11 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
+    if(is.null(unlist(par_tmp[[session$token]]['omic_type']))){
+      par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
+      omic_type(input[[paste0("omic_type_", uploaded_from())]])
+    }
+    
     req(
       (isTruthy(input$data_preDone) & uploaded_from() == "precompiled") |
       # Is File Input used?
@@ -997,9 +997,7 @@ server <- function(input,output,session){
       if(ncol(data_input$annotation_rows) < 2){
         data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
       }
-      
-      
-      
+
     } else if(uploaded_from() == "metadata"){
       tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
       test_data_upload <- function(){
@@ -1088,7 +1086,7 @@ server <- function(input,output,session){
     res_tmp[[session$token]][['data']] <<- res_tmp[[session$token]]$data_original
     # Count up updating
     updating$count <- updating$count + 1
-
+    # Check if the data is a SummarizedExperiment
     colData(res_tmp[[session$token]]$data) <- DataFrame(
       as.data.frame(colData(res_tmp[[session$token]]$data)) %>%
       purrr::keep(~length(unique(.x)) != 1)
