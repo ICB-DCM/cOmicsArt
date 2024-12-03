@@ -12,7 +12,7 @@ data_selection_sidebar_panel <- sidebarPanel(
               width = "80%"
             )
         ),
-      HTML('<span style="font-size: 20px; font-weight: bold;">Upload</span> <small><a href="https://github.com/ICB-DCM/cOmicsArt/blob/main/UploadHelpcOmicsArt.xlsx" download>Download an example Excel Workbook to prepare data upload</a></small>'),
+      HTML('<span style="font-size: 20px; font-weight: bold;">Upload</span> <small><a href="https://github.com/ICB-DCM/cOmicsArt/blob/main/UploadHelpcOmicsArt.xlsx" target="_blank" download>Download an example Excel Workbook to prepare data upload</a></small>'),
       br(),br(),
         shiny::fileInput(
           inputId = "data_matrix1",
