@@ -684,52 +684,78 @@ server <- function(input,output,session){
         # Handle "Yes" button click
         observeEvent(input$yes_correct_column_names, {
           removeModal() # Close the modal
+          invalidStart_regex <- "^[X0-9_.]"
+          space_regex <- "\\s"
           # test if rownames are valid
-          if(any(grepl("^[X0-9_.]", rownames(Matrix)))){
+          if(any(grepl(invalidStart_regex, rownames(Matrix))) | any(grepl(space_regex, rownames(Matrix)))){
             # save orig rownmaes to entite anno
             annotation_rows$original_rownames <- as.character(rownames(Matrix))
-            idxTochange <- grepl("^[X0-9_.]", rownames(Matrix))
-            oldnames_matrix <- rownames(Matrix)[idxTochange]
+            idxTochange <- grepl(invalidStart_regex, rownames(Matrix))
             rownames(Matrix)[idxTochange] <- paste0("entite_", rownames(Matrix)[idxTochange])
-            newName_matrix <- rownames(Matrix)[idxTochange]
+            
+            idxTochange_space <- grepl(space_regex, rownames(Matrix))
+            rownames(Matrix)[idxTochange_space] <- gsub(space_regex,".",rownames(Matrix)[idxTochange_space])
+            
+            allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
+            
+            oldnames_matrix <- rownames(Matrix)[allIdx_changes]
+            newName_matrix <- rownames(Matrix)[allIdx_changes]
             info_snippet_matrix_row <- paste0("Changes: <br> Matrix: Number of rownames changed: ",length(oldnames_matrix),"<br>",
                                           " e.g. old names: " ,paste0(head(oldnames_matrix,3), collapse = ", "),"<br>",
                                           " changed to: ",paste0(head(newName_matrix,3), collapse = ", "),"<br>")
           }else{
             info_snippet_matrix_row <- ""
           }
-          if(any(grepl("^[X0-9_.]", colnames(Matrix)))){
+          if(any(grepl(invalidStart_regex, colnames(Matrix))) | any(grepl(space_regex, colnames(Matrix)))){
             # save orig colnames to sample anno
             sample_table$original_colnames <- as.character(colnames(Matrix))
-            idxTochange <- grepl("^[X0-9_.]", colnames(Matrix))
-            oldnames_matrix <- colnames(Matrix)[idxTochange]
+            idxTochange <- grepl(invalidStart_regex, colnames(Matrix))
             if(any(grepl("^X", colnames(Matrix)))){
               colnames(Matrix) <- gsub("^X","",colnames(Matrix))
-              }
+            }
             colnames(Matrix)[idxTochange] <- paste0("sample_", colnames(Matrix)[idxTochange])
-            newName_matrix <- colnames(Matrix)[idxTochange]
+            
+            idxTochange_space <- grepl(space_regex, colnames(Matrix))
+            colnames(Matrix)[idxTochange_space] <- gsub(space_regex,".",colnames(Matrix)[idxTochange_space])
+            
+            allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
+            
+            oldnames_matrix <- colnames(Matrix)[allIdx_changes]
+            newName_matrix <- colnames(Matrix)[allIdx_changes]
             info_snippet_matrix_column <- paste0("Changes: <br> Matrix: Number of colnames changed: ",length(oldnames_matrix),"<br>",
                      " e.g. old names: " ,paste0(head(oldnames_matrix,3), collapse = ", "),"<br>",
                      " changed to: ",paste0(head(newName_matrix,3), collapse = ", "),"<br>")
           }else{
             info_snippet_matrix_column <- ""
           }
-          if(any(grepl("^[X0-9_.]", rownames(sample_table)))){
-            idxTochange <- grepl("^[X0-9_.]", rownames(sample_table))
-            oldnames_sample <- rownames(sample_table)[idxTochange]
+          if(any(grepl(invalidStart_regex, rownames(sample_table))) | any(grepl(space_regex, rownames(sample_table)))){
+            idxTochange <- grepl(invalidStart_regex, rownames(sample_table))
             rownames(sample_table)[idxTochange] <- paste0("sample_", rownames(sample_table)[idxTochange])
-            newName_sample <- rownames(sample_table)[idxTochange]
+            
+            idxTochange_space <- grepl(space_regex, rownames(sample_table))
+            rownames(sample_table)[idxTochange_space] <- gsub(space_regex,".",rownames(sample_table)[idxTochange_space])
+            
+            allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
+            
+            oldnames_sample <- rownames(sample_table)[allIdx_changes]
+            newName_sample <- rownames(sample_table)[allIdx_changes]
             info_snippet_sample <- paste0("Changes: <br> Sample Table: Number of rownames changed: ",length(oldnames_sample),"<br>",
                      " e.g. old names: " ,paste0(head(oldnames_sample,3), collapse = ", "),"<br>",
                      " changed to: ",paste0(head(newName_sample,3), collapse = ", "),"<br>")
           }else{
             info_snippet_sample <- ""
           }
-          if(any(grepl("^[X0-9_.]", rownames(annotation_rows)))){
-            idxTochange <- grepl("^[X0-9_.]", rownames(annotation_rows))
-            oldnames_entitie <- rownames(annotation_rows)[idxTochange]
+          if(any(grepl(invalidStart_regex, rownames(annotation_rows))) | any(grepl(space_regex, rownames(annotation_rows)))){
+            idxTochange <- grepl(invalidStart_regex, rownames(annotation_rows))
             rownames(annotation_rows)[idxTochange] <- paste0("entite_", rownames(annotation_rows)[idxTochange])
-            newNames_entitie <- rownames(annotation_rows)[idxTochange]
+            
+            idxTochange_space <- grepl(space_regex, rownames(annotation_rows))
+            rownames(annotation_rows)[idxTochange_space] <- gsub(space_regex,".",rownames(annotation_rows)[idxTochange_space])
+            
+            allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
+            
+            oldnames_entitie <- rownames(annotation_rows)[allIdx_changes]
+            newNames_entitie <- rownames(annotation_rows)[allIdx_changes]
             info_snippet_entitie <- paste0("Changes: <br> Entitie Table: Number of rownames changed: ",length(oldnames_entitie),"<br>",
                      " e.g. oldnames " ,paste0(head(oldnames_entitie,3), collapse = ","),"<br>",
                      " changed to ",paste0(head(newNames_entitie,3), collapse = ","),"<br>")
