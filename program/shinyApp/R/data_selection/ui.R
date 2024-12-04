@@ -12,22 +12,24 @@ data_selection_sidebar_panel <- sidebarPanel(
               width = "80%"
             )
         ),
+      HTML('<span style="font-size: 20px; font-weight: bold;">Upload</span> <small><a href="https://github.com/ICB-DCM/cOmicsArt/blob/main/UploadHelpcOmicsArt.xlsx" target="_blank" download>Download an example Excel Workbook to prepare data upload</a></small>'),
+      br(),br(),
         shiny::fileInput(
           inputId = "data_matrix1",
-          label = HTML('Upload data matrix <br/><small>(rows entities, cols samples) <br/><a href="airway-read-counts-LS.csv" download>Download example data (Transcriptomics, human)</a></small>'),
-          accept = c(".csv", ".xlsx"),
+          label = HTML('Data matrix <small><a href="airway-read-counts-LS.csv" download>Download example data</a></small>'),
+          accept = c(".csv"),
           width = "80%"
         ) %>% helper(type = "markdown", content = "DataSelection_DataUploadFileInput"),
         shiny::fileInput(
           inputId = "data_sample_anno1",
-          label = HTML('Upload sample annotation <br/><small>(rows must be samples)<br/><a href="airway-sample-sheet-LS.csv" download>Download example data</a></small>'),
-          accept = c(".csv", ".xlsx"),
+          label = HTML('Sample annotation <small><a href="airway-sample-sheet-LS.csv" download>Download example data</a></small>'),
+          accept = c(".csv"),
           width = "80%"
         ),
         shiny::fileInput(
           inputId = "data_row_anno1",
-          label = HTML('Upload entities annotation matrix <br/><small>(rows must be entities)<br/><a href="airway-entitie_description-LS.csv" download>Download example data</a></small>'),
-          accept = c(".csv", ".xlsx"),
+          label = HTML('Entities annotation <small><a href="airway-entitie_description-LS.csv" download>Download example data</a></small>'),
+          accept = c(".csv"),
           width = "80%"
         ),
         actionButton(

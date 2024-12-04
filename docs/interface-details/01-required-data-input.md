@@ -25,6 +25,8 @@ cOmicsART expects three data tables, which can be supplied in different ways, ho
 ## Starting with a Single Table - Data Matrix 📝
 When you have only your omics data table (referred to as the Data Matrix), ensure that entities are organized in rows and samples in columns. There are no limitations on the number of rows and columns (e.g., genes and samples), but you should have more than two entities and samples for meaningful analysis. While cOmicsART is designed for omics analysis, you can upload any type of measurements arranged in a data matrix format. However, please note that some analyses, such as enrichment analysis, might not be meaningful with non-omics data. Also, some provided pre-processing options then might not be relevant - you have the option to select 'None' as pre-processing, giving you the option to perform pre-processing beforehand and upload and analyze the uploaded data.
 
+**If you have access to Excel you might want to checkout [this Excel Workbook](https://github.com/ICB-DCM/cOmicsArt/blob/main/UploadHelpcOmicsArt.xlsx) that helps you to prepare your data for cOmicsArt.**
+
 ### Creating a Sample Table 🔧
 Having the data matrix, you need to create a fitting Sample table.🖇️ A fitting sample table has the column names of the data matrix in its row names. Each additional column in the sample table carries additional information about the samples (referred to as sample annotation). Examples are condition, height, or phenotype. You are not limited to the number of columns, hence to the number of information you can supply to your samples. 
 
