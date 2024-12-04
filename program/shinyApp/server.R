@@ -686,6 +686,8 @@ server <- function(input,output,session){
           removeModal() # Close the modal
           # test if rownames are valid
           if(any(grepl("^[X0-9_.]", rownames(Matrix)))){
+            # save orig rownmaes to entite anno
+            annotation_rows$original_rownames <- as.character(rownames(Matrix))
             idxTochange <- grepl("^[X0-9_.]", rownames(Matrix))
             oldnames_matrix <- rownames(Matrix)[idxTochange]
             rownames(Matrix)[idxTochange] <- paste0("entite_", rownames(Matrix)[idxTochange])
@@ -697,6 +699,8 @@ server <- function(input,output,session){
             info_snippet_matrix_row <- ""
           }
           if(any(grepl("^[X0-9_.]", colnames(Matrix)))){
+            # save orig colnames to sample anno
+            sample_table$original_colnames <- as.character(colnames(Matrix))
             idxTochange <- grepl("^[X0-9_.]", colnames(Matrix))
             oldnames_matrix <- colnames(Matrix)[idxTochange]
             if(any(grepl("^X", colnames(Matrix)))){
