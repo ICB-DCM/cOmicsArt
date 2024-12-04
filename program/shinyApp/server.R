@@ -550,7 +550,6 @@ server <- function(input,output,session){
           flag_csv <- T
         },
         error = function(e){
-          print("Not a real csv file!")
           output$OverallChecks <- renderText(
             "<font color=\"#ab020a\"><b>Not a real csv file!</b></font>"
           )
