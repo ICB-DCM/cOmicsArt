@@ -576,15 +576,32 @@ server <- function(input,output,session){
       }
 
       tryCatch(
-        epxr = {
-          output$DataMatrix_VI <- DT::renderDataTable({DT::datatable(data = Matrix)})
-          },
-        error = function(e){
-          output$DataMatrix_VI <- DT::renderDataTable({DT::datatable(data = NULL)})
+        expr = {
+          withCallingHandlers(
+            {
+              dim(Matrix) # to envoke an error if it is not present 
+              # (needed sometime as DT sometimes seem to handle errors internally and does not throw an error)
+              # not the cleanest but works
+              output$DataMatrix_VI <- DT::renderDataTable({
+                DT::datatable(data = Matrix)
+              })
+            },
+            warning = function(w) {
+              # Optionally handle warnings here
+              output$DataMatrix_VI_Info <- renderText({paste0("Warning captured: ",conditionMessage(w))})
+            }
+          )
+        },
+        error = function(e) {
+          browser()
+          # Handle errors specifically
+          output$DataMatrix_VI <- DT::renderDataTable({
+            DT::datatable(data = data.frame(Error = "Invalid data for display"))
+          })
         }
       )
 
-      output$DataMatrix_VI_INFO <- renderText({"Matrix:"})
+      output$DataMatrix_VI_Info <- renderText({"Matrix:"})
       if(isTruthy(input$data_sample_anno1)){
         sample_table <- read_file(input$data_sample_anno1$datapath, check.names=T)
       } else if(isTruthy(input$metadataInput)){
@@ -594,13 +611,13 @@ server <- function(input,output,session){
       }
 
       output$SampleMatrix_VI <- DT::renderDataTable({DT::datatable(data = sample_table)})
-      output$SampleMatrix_VI_INFO <- renderText({"Sample table:"})
+      output$SampleMatrix_VI_Info <- renderText({"Sample table:"})
 
-      annotation_rows <- read_file(input$data_row_anno1$datapath, check.names=T)
+      annotation_rows <- read_file(input$data_row_anno1$datapath, check.names = T)
       output$EntitieMatrix_VI <- DT::renderDataTable({
         DT::datatable(data = annotation_rows)
       })
-      output$EntitieMatrix_VI_INFO <- renderText({"Entitie table:"})
+      output$EntitieMatrix_VI_Info <- renderText({"Entitie table:"})
 
       ## Do some checking
       snippetYes <- "<font color=\"#00851d\"><b>Yes</b></font>"
@@ -616,6 +633,19 @@ server <- function(input,output,session){
       check6 <- tryCatch(ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo),error = function(e) snippetNo)
       
       check7 <- tryCatch(ifelse(all(sapply(Matrix,is.numeric)),snippetYes,snippetNo),error = function(e) snippetNo)
+      
+      if(grepl(snippetYes,check0) & 
+         grepl(snippetYes,check1) & 
+         grepl(snippetYes,check2) & 
+         grepl(snippetYes,check3) & 
+         grepl(snippetYes,check4) & # not crucial
+         # grepl(snippetYes,check5) & # not crucial
+         grepl(snippetYes,check6) &
+         grepl(snippetYes,check7)){
+        res_tmp[[session$token]]$passedVI <<- T
+      } else {
+        res_tmp[[session$token]]$passedVI <<- F
+      }
       #TODO ensure that if there are e.g. invalid sample names but als different sample names in data and annotation tables that we catch this
 
       if(check0 == snippetNo){
