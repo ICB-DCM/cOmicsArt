@@ -1,5 +1,8 @@
 ### general utility functions will be defined here
 
+# Utility function for is.null checks
+`%||%` <- function(a, b) if (!is.null(a)) a else b
+
 # tryCatch modal dialog
 error_modal <- function(e, additional_text = NULL){
   if (is.null(e$message)){

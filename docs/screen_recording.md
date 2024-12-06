@@ -1,14 +1,20 @@
 ---
-title: "Screenrecording"
+title: "Video Tutorial"
 layout: default
 nav_order: 8
 ---
 
 ![A comic about a cat finding cOmicsART](/cOmicsArt/assets/images/cOmicsRabbit.png) *Image generated using DALL-E by OpenAI. Adjusted by Lea Seep*
 
-# Screenrecording 🎥
+# Video Tutorial 🎥
 
 We’ve created a detailed screen recording to guide you through the navigation of cOmicsArt. This video covers all available panels, highlighting the most crucial elements to help you to get started.
+
+👉 [Watch the video here on YouTube](https://www.youtube.com/watch?v=pTGjtIYQOak)
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/pTGjtIYQOak?si=7Xu54qSF-YVIcWsH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+
+</iframe>
 
 ✨ To make your journey even smoother, we’ve provided time stamps below so you can jump directly to the steps that interest you the most:
 
@@ -26,10 +32,12 @@ We’ve created a detailed screen recording to guide you through the navigation 
 
 We hope this helps you navigate cOmicsArt with ease! 😊
 
-👉 [Watch the video here on YouTube](https://www.youtube.com/watch?v=pTGjtIYQOak)
-
 (Note, the timestamps are also given within the video description)
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/pTGjtIYQOak?si=7Xu54qSF-YVIcWsH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+---
 
-</iframe>
+## Written Tutorial 📝
+
+Are you not a friend of video tutorials? No worries! We have two written showcases for 
+you. [Showcase A](../showcases/showcase-a.md) and [Showcase B](../showcases/showcase-b.md)
+will guide you through the main functionalities of cOmicsArt along a real-life example.

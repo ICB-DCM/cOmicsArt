@@ -9,15 +9,16 @@ nav_order: 1
 ![A comic about a cat finding cOmicsART](/cOmicsArt/assets/images/cOmicsCat.png)
 *Image generated using DALL-E by OpenAI. Adjusted by Lea Seep*
 
-If you are looking for the web app, please visit: 🌐 [cOmicsART Web App](https://comicsart.org/)
+If you are looking for the web app, please visit: 🌐 [cOmicsART Web App](https://shiny.iaas.uni-bonn.de/cOmicsArt/)
 
-Otherwise, you can navigate through the documentation using the sidebar on the left. If you’re searching for something specific, try using the search bar at the top. 🔍 It can search through the entire documentation and guide you to the relevant section.
+Otherwise, you can navigate through the documentation using the sidebar on the left. **If you’re searching for something specific, try using the search bar at the top.** 🔍 It can search through the entire documentation and guide you to the relevant section.
 
 **Have fun exploring!** 🎉
 
 ### Quick Links to Get You Started:
 
--  📚 Want to know the required data and format? Visit [Interface Details](interface-details/required-data-input.md).
+-  📚 Want to know the required data and format? Visit [Interface Details](interface-details/01-required-data-input.md).\n
+OR get stared with our Excel Workbook to prepare your data for cOmicsArt: [UploadeHelpcOmicsArt.xlsx](https://github.com/ICB-DCM/cOmicsArt/blob/main/UploadHelpcOmicsArt.xlsx).
 - 🔧 Need to run the app locally? Check out the [Installation Guide](installation.md).
 - 💡 Looking for customization inspiration? Explore our [Customization Examples](code-and-data/examples.md).
-- 📊 Want to know more about the significance analysis? Visit [Significance Analysis](interface-details/significance-analysis.md)
+- 📊 Want to know more about the significance analysis? Visit [Significance Analysis](interface-details/05-significance-analysis.md)

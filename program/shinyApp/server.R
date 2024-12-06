@@ -72,7 +72,152 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
   shinyjs::hide("mainPanel_DataSelection")
+  shinyjs::hideElement(id = "data_summary")
+  shinyjs::hideElement(id = "div_sampleCorrelation_main_panel")
+  shinyjs::hideElement(id = "PCA_main_panel_div")
+  shinyjs::hideElement(id = "Significance_div")
+  shinyjs::hideElement(id = "Heatmap_div")
+  shinyjs::hideElement(id = "SingleGene_div")
+  shinyjs::hideElement(id = "enrichment_div")
+
+# Set Up ad Show user Landing page ----
+  # Define the guide
+  # Note do this in here to avoid setting a global upon close
+  guide_welcome <- Cicerone$
+    new(id = "guide",
+        opacity = 0.9,
+        padding = 10,
+        keyboard_control = TRUE)$
+    step(
+      el = "start_tour",
+      title = "Welcome to cOmicsArt!",
+      position = "right-center",
+      description = HTML("
+      <div style='min-width: 300px; min-height: 150px; padding: 10px;'>
+        <img src='Logo_cOmicsArt_clear.png' alt='cOmicsArt Logo' style='max-width:90%;'>
+        <div style='font-size: 18px; margin-top: 10px;'>
+          <p><i class='fas fa-question-circle'></i> Need help? Press the blue button</p>
+          <p><i class='fas fa-rocket'></i> Want to start directly? Click 'Next'.</p>
+            <div style='font-size: 14px; color: #777; margin-top: 15px;'>
+              <p><input type='checkbox' id='set_cookie_checkbox'> Do not show next time (sets a cookie)</p>
+            </div>
+        </div>
+      </div>
+    ")
+    )$
+    step(
+      el = "tabsetPanel1",
+      title = "Welcome to cOmicsArt!",
+      description = "You pressed next - redirection triggered",
+    )
   
+  # Check if the cookie is present and update the output
+  # On page load, check if the cookie exists
+  observe({
+    shinyjs::runjs("
+      if (!checkHasBeenBeforeCookie()) {
+        Shiny.setInputValue('first_visit', true);
+      } else {
+        Shiny.setInputValue('first_visit', false);
+      }
+    ")
+  })
+
+  # If it is the user's first visit, start the guide
+  observeEvent(input$first_visit, {
+    if (input$first_visit) {
+      guide_welcome$init()$start()
+    } else {
+      showTab(inputId = "tabsetPanel1", target = "Data selection", select = TRUE)
+    }
+  })
+  
+  # Delete the cookie if the toggle input is checked
+  observeEvent(input$set_cookie, {
+      shinyjs::runjs("deleteCookie('hasBeenBefore')")
+      showNotification("Cookie 'hasBeenBefore' deleted. Please refresh the page.")
+  })
+  
+
+  # Start the tour when the "Start Tour" button is clicked
+  observeEvent(input$start_tour, {
+    print("Star Tour")
+    shinyjs::runjs("document.querySelector('.driver-close-btn').click();")
+    guide$init()$start()
+  })
+
+  observeEvent(input$guide_cicerone_next, {
+    print("Next")
+    shinyjs::runjs("document.querySelector('.driver-close-btn').click();")
+    showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
+  })
+
+  output$help_tab_info <- renderText({
+    HTML(paste0(
+    "Please select an image to display within the sidebar(left)<br>",
+    "To confirm your selection click the button labelled 'GO show me help!' within the sidebar."
+    ))
+  })
+
+  output$WelcomePage_ui <- renderUI({
+    imageOutput("WelcomePage")
+  })
+
+  observeEvent(input$get_help,{
+    if(input$ImageSelect == "WelcomePage"){
+      output$WelcomePage_ui <- renderUI({
+        imageOutput("WelcomePage")
+      })
+      output$WelcomePage <- renderImage({
+        # Path to the image file
+        list(
+          src = "www/WelcomPage.png",
+          contentType = "image/png",
+          width = paste0(input$ImageWidth,"%"), # Adjust as needed
+          height = input$ImageHeight # Adjust as needed
+        )
+      }, deleteFile = FALSE) # Set deleteFile to FALSE to keep the image file
+      output$help_tab_info <- renderText({
+        HTML(
+          paste0(
+"As you selected the WelcomePage on the **left**, you can see a screenshot of the WelcomePage below.<br>",
+            "If you want to see the full documentation, click ",
+            "<a href='https://icb-dcm.github.io/cOmicsArt/' target='_blank'>here</a>",
+            ".<br>or click on the link on the top left of the screen 'Go To Documentation'.<br><br>",
+            "Within cOmicsArt this box will display information depending on the current tab you are in.<br> A tab represents an analysis."
+          )
+        )
+        }
+      )
+    } else if(input$ImageSelect == "YouTube Tutorial"){
+      output$WelcomePage_ui <- renderUI({
+        tags$iframe(
+          width = paste0(input$ImageWidth,"%"), # Adjust as needed
+          height = input$ImageHeight, # Adjust as needed
+          src = "https://www.youtube.com/embed/pTGjtIYQOak",
+          frameborder = "0",
+          allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+          allowfullscreen = TRUE
+        )
+      })
+    } else if(input$ImageSelect == "nothing selected"){
+      output$help_tab_info <- renderText({
+        HTML(paste0(
+          "You have selected 'nothing selected' - hence there is nothing to show<br>.",
+          "Do you want to see something else? Try to select a different Image (Select Image) on the left!<br>",
+          "Did you maybe just press the button?"
+        ))
+      })
+      output$WelcomePage_ui <- renderUI({NULL})
+    }
+  })
+
+  observeEvent(input$NextPanel_tutorial,{
+    showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
+  })
+
+
+
 # Init res_tmp and par_tmp objects if they do not yet exist ----
   if(!exists("res_tmp")){
     res_tmp <<- list()
@@ -81,6 +226,7 @@ server <- function(input,output,session){
   # create an empty list in res/par_tmp[[session$token]]
   res_tmp[[session$token]] <<- list()
   par_tmp[[session$token]] <<- list()
+  
   # On session end, remove the list from res/par_tmp
   session$onSessionEnded(function() {
     res_tmp[[session$token]] <<- NULL
@@ -156,6 +302,7 @@ server <- function(input,output,session){
   observeEvent(omic_type(),{
     output$AddGeneSymbols_ui <- NULL
     output$AddGeneSymbols_organism_ui <- NULL
+    
     if(omic_type() == "Transcriptomics"){
       output$AddGeneSymbols_ui <- renderUI({
         actionButton(
@@ -173,6 +320,19 @@ server <- function(input,output,session){
     }
   })
 
+  # Show or hide the gene annotation options based on the button click
+  observeEvent(input$geneAnno_toggle_button, {
+    shinyjs::toggle(id = "geneAnno_toggle")  # Toggle the div on button click
+  })
+
+  observeEvent(input$omic_type_testdata,{
+    if(input$omic_type_testdata == "Transcriptomics"){
+      output$testdata_help_text <- renderUI({
+        HTML(EXAMPLE_RNA_DESCRIPTION)
+      })
+      }
+    })
+  
   observeEvent(input$AddGeneSymbols, {
     req(data_input_shiny())
     req(res_tmp[[session$token]]$data_original)
@@ -185,6 +345,7 @@ server <- function(input,output,session){
       HTML(paste0(
         "We tried to find an appropriate annotation and ",
         if (is.null(annotation_name)) {
+          
           "found nothing."
         } else {
           paste0("might have found <strong>", annotation_name, "</strong> in <strong>", column_name, "</strong>. Is that correct?")
@@ -494,11 +655,18 @@ server <- function(input,output,session){
     )){
       output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
     } else if (uploaded_from() == "testdata"){
+      show_toast(
+        title = paste(par_tmp[[session$token]]['omic_type'],"Example Upload"),
+        text = paste(par_tmp[[session$token]]['omic_type'],"- Example upload was successful"),
+        position = "top",
+        timer = 1500,
+        timerProgressBar = T
+      )
       output$debug <- renderText({"The Test Data Set was used"})
     } else {
       show_toast(
         title = paste(par_tmp[[session$token]]['omic_type'],"Data Upload"),
-        text = paste(par_tmp[[session$token]]['omic_type'],"-data upload was successful"),
+        text = paste(par_tmp[[session$token]]['omic_type'],"- data upload was successful"),
         position = "top",
         timer = 1500,
         timerProgressBar = T
@@ -527,6 +695,7 @@ server <- function(input,output,session){
         
       }
       showTab(inputId = "tabsetPanel1", target = "Pre-processing")
+
     }
   })
 
@@ -679,7 +848,6 @@ server <- function(input,output,session){
       "Number. of anno options annotation_rows lost: ",
       nrow(res_tmp[[session$token]]$data_original) - nrow(res_tmp[[session$token]]$data)
     ))
-
     return("DataUploadSuccesful")
   })
   #data_input_shiny = is the res object now which is global => not needed ?!
@@ -761,7 +929,7 @@ server <- function(input,output,session){
   })
   
 ## Log Selection ----
-  observeEvent(input$NextPanel,{
+  observeEvent(c(input$NextPanel, input$use_full_data),{
     # Do actual selection before logging
     print(selectedData())
     # add row and col selection options
@@ -794,26 +962,29 @@ server <- function(input,output,session){
   
   ## Do Selection ----  
   selectedData <- reactive({
-    shiny::req(input$row_selection, input$sample_selection)
-    par_tmp[[session$token]][["row_selection"]] <<- input$row_selection
-    par_tmp[[session$token]][["sample_selection"]] <<- input$sample_selection
-    par_tmp[[session$token]][["providedRowAnnotationTypes"]] <<- input$providedRowAnnotationTypes
+    req(data_input_shiny())
+    row_selection <- input$row_selection %||% "all"
+    sample_selection <- input$sample_selection %||% "all"
+    providedRowAnnotationTypes <- input$providedRowAnnotationTypes %||% c(colnames(rowData(res_tmp[[session$token]]$data_original)))[1]
+    par_tmp[[session$token]][["row_selection"]] <<- row_selection
+    par_tmp[[session$token]][["sample_selection"]] <<- sample_selection
+    par_tmp[[session$token]][["providedRowAnnotationTypes"]] <<- providedRowAnnotationTypes
     print("Alright do Row selection")
 
     selected <- c()
 
-    if(any(input$row_selection == "all")){
+    if(any(row_selection == "all")){
       selected <- rownames(rowData(res_tmp[[session$token]]$data_original))
-    } else if(!(length(input$row_selection) == 1 & any(input$row_selection == "High Values+IQR"))){
+    } else if(!(length(row_selection) == 1 & any(row_selection == "High Values+IQR"))){
       selected <- unique(c(
         selected,
         rownames(rowData(res_tmp[[session$token]]$data_original))[
-          which(rowData(res_tmp[[session$token]]$data_original)[,input$providedRowAnnotationTypes]%in%input$row_selection)
+          which(rowData(res_tmp[[session$token]]$data_original)[,providedRowAnnotationTypes]%in%row_selection)
         ]
       ))
     }
-    if(any(input$row_selection == "High Values+IQR")){
-      if(length(input$row_selection) == 1){
+    if(any(row_selection == "High Values+IQR")){
+      if(length(row_selection) == 1){
         toKeep <- filter_rna(
           rna = assay(res_tmp[[session$token]]$data_original),
           prop = input$propensityChoiceUser
@@ -834,13 +1005,13 @@ server <- function(input,output,session){
 
     # Column Selection
     samples_selected <- c()
-    if(any(input$sample_selection == "all")){
+    if(any(sample_selection == "all")){
       samples_selected <- colnames(assay(res_tmp[[session$token]]$data_original))
     }else{
       samples_selected <- c(
         samples_selected,
         rownames(colData(res_tmp[[session$token]]$data_original))[which(
-          colData(res_tmp[[session$token]]$data_original)[,input$providedSampleAnnotationTypes] %in% input$sample_selection
+          colData(res_tmp[[session$token]]$data_original)[,input$providedSampleAnnotationTypes] %in% sample_selection
           )]
         )
     }
@@ -863,7 +1034,7 @@ server <- function(input,output,session){
       length(unique(colData(res_tmp[[session$token]]$data_original)[[col]])) < nrow(colData(res_tmp[[session$token]]$data_original))
     })]
     if (input$PreProcessing_Procedure == "vst_DESeq") {
-      filtered_column_names <- filtered_column_names[!filtered_column_names %in% c(input$DESeq_formula_main, input$DESeq_formula_sub)]
+      filtered_column_names <- filtered_column_names[!filtered_column_names %in% c(input$DESeq_formula_sub)]
     }
     selectInput(
       inputId = "BatchEffect_Column",
@@ -872,44 +1043,35 @@ server <- function(input,output,session){
       selected = "NULL"
     )
   })
-  output$DESeq_formula_main_ui <- renderUI({
-    req(data_input_shiny())
-    req(input$PreProcessing_Procedure == "vst_DESeq")
-    selectInput(
-      inputId = "DESeq_formula_main",
-      label = paste0(
-        "Choose main factor for desing formula in DESeq pipeline ",
-        "(App might crash if your factor as only 1 sample per level)"
-      ),
-      choices = c(colnames(colData(res_tmp[[session$token]]$data))),
-      multiple = F,
-      selected = "condition"
-    ) %>% helper(type = "markdown", content = "PreProcessing_DESeqMain")
-  })
   output$DESeq_formula_sub_ui <- renderUI({
     req(data_input_shiny())
     req(input$PreProcessing_Procedure == "vst_DESeq")
     selectInput(
       inputId = "DESeq_formula_sub",
       label = paste0(
-        "Choose other factors to account for",
-        "(App might crash if your factor as only 1 sample per level)"
+        "Choose factors to account for ",
+        "(App might crash if your factor has only 1 sample per level)"
       ),
       choices = c(colnames(colData(res_tmp[[session$token]]$data))),
       multiple = T,
       selected = "condition"
-    ) %>% helper(type = "markdown", content = "PreProcessing_DESeqSub")
+    ) %>% helper(type = "markdown", content = "PreProcessing_DESeq")
   })
 
 ## Do preprocessing ----  
+  # Add initial text to help boxes
+  output$Statisitcs_Data <- renderText({
+    "Press 'Get-Preprocessing' to start!"
+  })
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     # only enter this when you actually click data
     req(input$Do_preprocessing > 0)
+    shinyjs::showElement(id = "data_summary")
     waiter <- Waiter$new(
-      id="data_summary",
       html = LOADING_SCREEN,
-      color="#3897F147",
-      hide_on_render=FALSE
+      color = "#3897F147",
+      hide_on_render = FALSE
+
     )
     waiter$show()
     print("Do Preprocessing")
@@ -935,7 +1097,6 @@ server <- function(input,output,session){
         res_tmp[[session$token]]$data <<- deseq_processing(
             data = res_tmp[[session$token]]$data,
             omic_type = par_tmp[[session$token]]$omic_type,
-            formula_main = input$DESeq_formula_main,
             formula_sub = input$DESeq_formula_sub,
             session_token = session$token,
             batch_correct = F
@@ -949,6 +1110,7 @@ server <- function(input,output,session){
       }
     }, error = function(e){
       error_modal(e)
+      waiter$hide()
       req(FALSE)
     })
     
@@ -964,6 +1126,7 @@ server <- function(input,output,session){
         error_modal(
           e, additional_text = "Batch correction failed. Make sure the batch effect column is correct!"
         )
+        waiter$hide()
         req(FALSE)
       })
     } else if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure == "vst_DESeq"){
@@ -971,7 +1134,6 @@ server <- function(input,output,session){
         res_tmp[[session$token]]$data_batch_corrected <<- deseq_processing(
           data = tmp_data_selected,
           omic_type = par_tmp[[session$token]]$omic_type,
-          formula_main = input$DESeq_formula_main,
           formula_sub = c(input$DESeq_formula_sub, input$BatchEffect_Column),
           session_token = session$token,
           batch_correct = T
@@ -985,6 +1147,7 @@ server <- function(input,output,session){
             "that the design matrix is not singular!"
           )
         )
+        waiter$hide()
         req(FALSE)
       })
     } else {
@@ -1032,14 +1195,22 @@ server <- function(input,output,session){
       shinyjs::click("PCA-refreshUI",asis = T)
       shinyjs::click("sample_correlation-refreshUI",asis = T)
       paste0(
-        addWarning,
         "The data has the dimensions of: ",
         paste0(dim(res_tmp[[session$token]]$data),collapse = ", "),
         "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
-        "<br","If log10 was chosen, in case of 0's present log10(data+1) is done",
+        "<br","If logX was chosen, in case of 0's present logX(data+1) is done",
         "<br","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(res_tmp[[session$token]]$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
+    # set the warning as toast
+    show_toast(
+      title = "Attention",
+      text = HTML(addWarning),
+      position = "top",
+      timer = 2500,
+      timerProgressBar = T
+    )
+
     output$raw_violin_plot <- renderPlot({
       violin_plot(res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
                   color_by = input$violin_color)
@@ -1075,7 +1246,9 @@ server <- function(input,output,session){
       message = paste0(
         "**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",
         ifelse(input$PreProcessing_Procedure == "vst_DESeq",
-               paste0(input$PreProcessing_Procedure, "~",input$DESeq_formula_main),
+               paste0(
+                 input$PreProcessing_Procedure,
+                 " ~ ",paste(input$DESeq_formula_sub, collapse=" + ")),
                input$PreProcessing_Procedure)
       )
     )
@@ -1247,6 +1420,12 @@ server <- function(input,output,session){
       paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
     content = function(file) {
+      waiter <- Waiter$new(
+        html = LOADING_SCREEN,
+        color = "#3897F147",
+        hide_on_render = FALSE
+      )
+      waiter$show()
       envList <- list(
         res_tmp = res_tmp[[session$token]],
         par_tmp = par_tmp[[session$token]]
@@ -1266,6 +1445,7 @@ server <- function(input,output,session){
         files = dir(temp_directory),
         root = temp_directory
       )
+      waiter$hide()
     },
     contentType = "application/zip"
   )

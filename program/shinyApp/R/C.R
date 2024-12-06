@@ -1,6 +1,7 @@
 # Keep here for now. Needs to be replaced i guess at some point.
 library(waiter)
 library(ggplot2)
+library(cicerone)
 ### Global Constants will be saved here
 NOTES_PlACEHOLDER <<- "Notes you want to take alongside the plot (will be saved in the report) \nYou can use markdown syntax for your notes "
 NOTES_HELP <<- HTML("<a href='https://www.markdownguide.org/cheat-sheet/' target='_blank'>Here you can find a Markdown Cheat Sheet</a> \n
@@ -34,7 +35,7 @@ MANUALLY <- FALSE # change to TRUE, if you want to set the paths manually
 
 if(MANUALLY){
   # Adjust the path to the data file
-  envList <- readRDS('path/to/Data.rds')
+  envList <- readRDS('path/to/Data.RDS')
   # Adjust the path to the utils.R file
   source('path/to/utils.R')
   print('Path manually set')
@@ -42,7 +43,7 @@ if(MANUALLY){
   # if you get an error try to set paths manually
   # remember to set MANUALLY <- TRUE
   direcoty_of_files <- dirname(rstudioapi::getSourceEditorContext()$path)
-  envList <- readRDS(paste0(direcoty_of_files,'/','Data.rds'))
+  envList <- readRDS(paste0(direcoty_of_files,'/','Data.RDS'))
   if('utils.R' %in% list.files(direcoty_of_files)){
     source(file.path(direcoty_of_files,'utils.R'))
   }
@@ -220,21 +221,113 @@ CUSTOM_THEME <<- theme_bw(base_size = 15) +
     plot.title = element_text(size = 17, face = "bold")  # Plot title
   )
 
-
-
-LOADING_SCREEN <<- tagList(
+LOADING_SCREEN <- tagList(
   div(
-    style = "position: relative; display: flex; justify-content: center; align-items: center;",
+    style = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; padding: 0; margin: 0; box-sizing: border-box; overflow: hidden; background-color: rgba(225, 225, 225, 0.5);", # Light background color
     div(
-      style = "display: flex;",
-      img(src = "bored_panda_11.png", style = "max-width: 100%; height: auto;"),
-      img(src = "bored_panda_12.png", style = "max-width: 100%; height: auto;")
-    ),
-    div(
-      style = "position: absolute; top: 20%; left: 60%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; color: white; font-size: 24px; font-weight: bold;",
-      spin_flower(),
-      span("Computing...")
+      style = "display: flex; flex-direction: column; align-items: center; width: auto; height: auto; padding: 20px; margin: 0; box-sizing: border-box; background-color: rgba(225, 225, 225, 0); border-radius: 10px;", # Slightly darker background behind images
+      # Centered Images
+      img(src = "bored_panda_11.png", style = "width: 50%; height: auto; object-fit: contain; margin-bottom: 10px; padding: 0;"),
+      img(src = "bored_panda_12.png", style = "width: 50%; height: auto; object-fit: contain; margin: 0; padding: 0;"),
+      
+      # Centered Spinner and Text
+      div(
+        style = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; color: white; font-size: 24px; font-weight: bold;",
+        spin_flower(),
+        span("Computing...")
+      )
     )
   )
 )
 
+EXAMPLE_RNA_DESCRIPTION <- 
+  "<div style='text-align: justify;'>
+            The underlying test data comes from a human cell line of airway smooth muscle cells, based on the airway package. Below are a few points about this data:
+            <ul>
+                <li>Gene annotation is added already</li>
+                <li>You may want to investigate differences within the condition between treated and untreated samples</li>
+                <li>You can use the data as provided or apply filters, such as selecting only protein-coding transcripts based on the gene biotype</li>
+            </ul>
+            For more information, please visit the following resources:
+            <ul>
+                <li> <a href='https://bioconductor.riken.jp/packages/3.1/data/experiment/vignettes/airway/inst/doc/airway.html' target='_blank'>Airway package documentation</a></li>
+                <li> <a href='https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE52778' target='_blank'>Original data on the GEO database</a></li>
+            </ul>
+        </div>
+    "
+
+
+guide <<- cicerone::Cicerone$
+  new(keyboard_control = TRUE)$
+  step(
+    el = "sidebar_help_tab",
+    title = "This is the Sidebar",
+    position = "right",
+    description = HTML("Always start here to give cOmicsArt tasks.<br>We will go through the elements step by step.")
+  )$
+  step(
+    el = "ImageSelectArea",
+    position = "right",
+    title = "Important parameters for the analysis",
+    description = HTML("Here we have 1 parameter to set.<br>Select <strong>Youtube Tutorial</strong> from the dropdown menu.")
+  )$
+  step(
+    el = "horizontalLine",
+    title = "An important line",
+    description = HTML("All options above this line require re-computation, which is done by pressing the 'GO!' button.<br>All options below this line can always be changed.")
+  )$
+  step(
+    el = "get_help",
+    title = "The Go button evokes (re-)computation",
+    description = HTML("Press it now to continue.")
+  )$
+  step(
+    el = "mainPanel_help_tab",
+    title = "This is the main panel",
+    description = HTML("Here your output is displayed.<br>We will go through the elements step by step in a second.")
+  )$
+  step(
+    el = "help_tab_info",
+    title = "Information box",
+    description = HTML("Contains information about the performed analysis.<br>For example: It will notify you if the analysis was successful or if there were any warnings.<br><strong>It is always a good idea to pay attention to the output here.</strong>")
+  )$
+  step(
+    el = "mainPanel_help_tab",
+    title = "Display of computed results",
+    position = "mid-center",
+    description = HTML("If you have selected Youtube Tutorial AND pressed the 'GO' button, you will see a video here.<br>You might want to watch it after this little guide to get introduced to the analysis features.")
+  )$
+  step(
+    el = "options",
+    title = "Here you can play around",
+    description = HTML("Here, we have the options to adjust the width and height of the image.<br>A change will be reflected in the output immediately.")
+  )$
+  step(
+    el = "NextPanel_tutorial",
+    title = "Next Panel",
+    description = HTML("This button will take you to the next panel to start.")
+  )$
+  step(
+    el = "tabsetPanel1",
+    title = "Currently Available Analysis Tabs",
+    description = HTML("You can switch between them by clicking on the tab names.<br>Note that more tabs will appear after the mandatory tabs:<br>1. Data selection<br>2. Pre-processing (not visible yet).<br>As soon as the Pre-processing is done, the analysis tabs will appear. They work independently from each other.")
+  )$
+  step(
+    el = "firstQ",
+    title = "Question Marks Lead to Help",
+    description = HTML("Useful to get more help on the particular tagged item.")
+  )$
+  step(
+    el = "UsefulLinks",
+    title = "Very Useful Links",
+    description = HTML("The top one lets you get the automatically generated report.<br>The bottom link leads you to the <strong>extensive</strong> documentation. Click it now!")
+  )$
+  step(
+    el = "WelcomePage_ui",
+    title = "The End",
+    description = HTML("
+      <p>This is the end of the little tutorial. If you'd like more specific help about cOmicsArt in action, check out the <a href='https://www.youtube.com/watch?v=pTGjtIYQOak&t=2s' target='_blank'>YouTube Tutorial</a>!</p>
+      <p>You can also visit the <a href='https://icb-dcm.github.io/cOmicsArt/' target='_blank'>documentation</a> for more detailed information.</p>
+      <p>After this tutorial, you should be able to find the link within the interface on your own. Happy exploring! <i class='fas fa-cat'></i></p>
+    ")
+  )

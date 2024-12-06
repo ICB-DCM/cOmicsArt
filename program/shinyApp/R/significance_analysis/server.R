@@ -13,6 +13,10 @@ significance_analysis_server <- function(id, data, params){
       )
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
+      hideTab(
+        inputId = "significance_analysis_results",
+        target = "Multiple_Comparisons_Visualizations"
+      )
 
       ## Sidebar UI section
       observeEvent(input$refreshUI, {
@@ -185,7 +189,18 @@ significance_analysis_server <- function(id, data, params){
       })
       # Analysis initial info
       observeEvent(input$significanceGo,{
-
+        shinyjs::showElement(id = "Significance_div", asis = T)
+        if(length(input$comparisons) <= 1){
+          hideTab(
+            inputId = "significance_analysis_results",
+            target = "Multiple_Comparisons_Visualizations"
+          )
+        } else {
+          showTab(
+            inputId = "significance_analysis_results",
+            target = "Multiple_Comparisons_Visualizations"
+          )
+        }
         # also here to ensure to get sidepanel Inputs
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
@@ -196,7 +211,6 @@ significance_analysis_server <- function(id, data, params){
       observeEvent(sig_ana_reactive$start_analysis,{
         req(sig_ana_reactive$start_analysis > 0)
         waiter <- Waiter$new(
-          id=ns("significance_analysis_results"),
           html = LOADING_SCREEN,
           color="#70BF4F47",
           hide_on_render=F
@@ -229,7 +243,7 @@ significance_analysis_server <- function(id, data, params){
             }
             removeTab(
               inputId = "significance_analysis_results",
-              target = sig_ana_reactive$significance_tabs_to_delete[[i]]
+              target = paste0("Significance_", i)
             )
           }
         }
@@ -313,6 +327,7 @@ significance_analysis_server <- function(id, data, params){
             sig_ana_reactive$sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
           }, error = function(e){
             error_modal(e)
+            waiter$hide()
             return(NULL)
           })
         }
@@ -325,7 +340,8 @@ significance_analysis_server <- function(id, data, params){
             contrast = contrasts[[i]],
             alpha = input$significance_level,
             ns = ns,
-            preprocess_method = params$PreProcessing_Procedure
+            preprocess_method = params$PreProcessing_Procedure,
+            value = paste0("Significance_", i)
           )
           sig_ana_reactive$significance_tabs_to_delete[[i]] <- input$comparisons[i]
         }
@@ -333,6 +349,19 @@ significance_analysis_server <- function(id, data, params){
         # update plot
         sig_ana_reactive$update_plot_post_ana <- sig_ana_reactive$update_plot_post_ana + 1
         sig_ana_reactive$comparisons_for_plot <- input$comparisons
+        if (length(input$comparisons) > 1) {
+          showTab(
+            inputId = "significance_analysis_results",
+            target = "Multiple_Comparisons_Visualizations",
+            select = TRUE
+          )
+        } else {
+          showTab(
+            inputId = "significance_analysis_results",
+            target = "Significance_1",
+            select = TRUE
+          )
+        }
         waiter$hide()
       })
       # update the plot whenever the user changes the visualization method
@@ -520,6 +549,12 @@ significance_analysis_server <- function(id, data, params){
           paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
         },
         content = function(file){
+          waiter <- Waiter$new(
+            html = LOADING_SCREEN,
+            color = "#3897F147",
+            hide_on_render = FALSE
+          )
+          waiter$show()
           tmp <- getUserReactiveValues(input)
           par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
           
@@ -579,6 +614,7 @@ significance_analysis_server <- function(id, data, params){
             files = dir(temp_directory),
             root = temp_directory
           )
+          waiter$hide()
         },
         contentType = "application/zip"
       )

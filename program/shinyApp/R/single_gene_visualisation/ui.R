@@ -5,7 +5,6 @@ single_gene_visualisation_sidebar_ui<- function(ns){
     uiOutput(outputId = ns("type_of_visualitsation_ui")),
     uiOutput(outputId = ns("Select_GeneAnno_ui")),
     uiOutput(outputId = ns("Select_Gene_ui")),
-    helpText("Note: if you choose a group rather than a single entitie, the values will be summarized by taking the median"),
 
     actionButton(
       inputId = ns("singleGeneGo"), 
@@ -24,66 +23,69 @@ single_gene_visualisation_sidebar_ui<- function(ns){
 single_gene_visualisation_main_ui <- function(ns){
   mainPanel(
     id = "main_single_gene_visualisation",
-    splitLayout(
-      style = "border: 1px solid silver:",
-      cellWidths = c("50%", "50%"),
-      plotOutput(outputId = ns("SingleGenePlot")),
-      textOutput(outputId = ns("InfoText"))
-    ),
-    h5(HTML("Note, that you only see boxplots if you have more than 3 samples per group")),
-    uiOutput(outputId = ns("chooseComparisons_ui")),
-    splitLayout(
-      style = "border: 1px solid silver:",
-      cellWidths = c("70%", "30%"),
-      NULL,
-      actionButton(
-        inputId = ns("only2Report_SingleEntities"),
-        label = "Send only to Report",
-        class = "btn-info"
-      )
-    ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
-    splitLayout(
-      style = "border: 1px solid silver:",
-      cellWidths = c("70%", "30%"),
-      NULL,
-      downloadButton(
-        outputId = ns("getR_Code_SingleEntities"),
-        label = "Get underlying R code and data",
-        icon = icon("code")
-      )
-    ),
-    splitLayout(
-      style = "border: 1px solid silver:",
-      cellWidths = c("70%", "30%"),
-      NULL,
-      downloadButton(
-        outputId = ns("SavePlot_singleGene"),
-        label = "Save plot",
-        class = "btn-info"
-      )
-    ),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-      NULL,
-      radioGroupButtons(
-        inputId = ns("file_ext_singleGene"),
-        label = "File Type:",
-        choices = c(".png", ".tiff", ".pdf", ".svg"),
-        selected = ".png"
-      )
-    ),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-      cellArgs = list(style = "padding: 5px"),
-      div(textAreaInput(
-        inputId = ns("NotesSingleEntities"),
-        label = "Notes:",
-        placeholder = NOTES_PlACEHOLDER,
-        width = "1000px"
-      ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
-      helpText(NOTES_HELP)),
-      NULL
-    ),
+    textOutput(outputId = ns("SingleGene_Info"), container = pre),
+      div(id = "SingleGene_div",
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("50%", "50%"),
+        plotOutput(outputId = ns("SingleGenePlot")),
+        textOutput(outputId = ns("InfoText"))
+      ),
+      #h5(HTML("Note, that you only see boxplots if you have more than 3 samples per group")),
+      uiOutput(outputId = ns("chooseComparisons_ui")),
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        actionButton(
+          inputId = ns("only2Report_SingleEntities"),
+          label = "Send only to Report",
+          class = "btn-info"
+        )
+      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        downloadButton(
+          outputId = ns("getR_Code_SingleEntities"),
+          label = "Get underlying R code and data",
+          icon = icon("code")
+        )
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        downloadButton(
+          outputId = ns("SavePlot_singleGene"),
+          label = "Save plot",
+          class = "btn-info"
+        )
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        NULL,
+        radioGroupButtons(
+          inputId = ns("file_ext_singleGene"),
+          label = "File Type:",
+          choices = c(".png", ".tiff", ".pdf", ".svg"),
+          selected = ".png"
+        )
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+        cellArgs = list(style = "padding: 15px"),
+        div(textAreaInput(
+          inputId = ns("NotesSingleEntities"),
+          label = "Notes:",
+          placeholder = NOTES_PlACEHOLDER,
+          width = "1000px"
+        ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
+        helpText(NOTES_HELP)),
+        NULL
+      ),
+    )
   )
 }
 

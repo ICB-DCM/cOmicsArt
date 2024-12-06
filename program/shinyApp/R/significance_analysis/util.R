@@ -16,20 +16,20 @@ filter_significant_result <- function(result, alpha, filter_type){
 }
 
 
-create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns, preprocess_method){
+create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns, preprocess_method, value){
   # call create_new_tab based on preprocess_method used
   # preprocess_method: preprocess_method used
   # for other parameters see create_new_tab_*
   if (preprocess_method == "vst_DESeq"){
-      create_new_tab_DESeq(title, targetPanel, result, contrast, alpha, ns)
+      create_new_tab_DESeq(title, targetPanel, result, contrast, alpha, ns, value)
   }
   else{
-      create_new_tab_manual(title, targetPanel, result, contrast, alpha, ns)
+      create_new_tab_manual(title, targetPanel, result, contrast, alpha, ns, value)
   }
 }
 
 
-create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, ns){
+create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, ns, value){
   # create a new tabPanel for manual preprocessing
   # title: title of the tabPanel
   # targetPanel: name of the targetPanel under which the tabPanel should be created
@@ -68,6 +68,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     inputId = targetPanel,
     tabPanel(
       title = title,
+      value = value,
       tabsetPanel(
         # Table
         tabPanel(
@@ -398,6 +399,12 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
       },
       content = function(file){
+        waiter <- Waiter$new(
+          html = LOADING_SCREEN,
+          color = "#3897F147",
+          hide_on_render = FALSE
+        )
+        waiter$show()
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
         par_tmp[[session$token]]$SigAna$contrast <<- contrast
@@ -441,6 +448,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           files = dir(temp_directory),
           root = temp_directory
         )
+        waiter$hide()
       },
       contentType = "application/zip"
     )
@@ -451,6 +459,12 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
       },
       content = function(file){
+        waiter <- Waiter$new(
+          html = LOADING_SCREEN,
+          color = "#3897F147",
+          hide_on_render = FALSE
+        )
+        waiter$show()
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
         par_tmp[[session$token]]$SigAna$contrast <<- contrast
@@ -494,6 +508,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           files = dir(temp_directory),
           root = temp_directory
         )
+        waiter$hide()
       },
       contentType = "application/zip"
     )
@@ -555,7 +570,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
 }
 
 
-create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns){
+create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns, value){
   # create a new tabPanel for DESeq2 preprocessing
   # title: title of the tabPanel
   # targetPanel: name of the targetPanel under which the tabPanel should be created
@@ -611,6 +626,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     inputId = targetPanel,
     tabPanel(
       title = title,
+      value = value,
       tabsetPanel(
         # Table
         tabPanel(
@@ -930,6 +946,12 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
     content = function(file){
+      waiter <- Waiter$new(
+        html = LOADING_SCREEN,
+        color = "#3897F147",
+        hide_on_render = FALSE
+      )
+      waiter$show()
       tmp <- getUserReactiveValues(input)
       par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
       par_tmp[[session$token]]$SigAna$contrast <<- contrast
@@ -973,6 +995,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         files = dir(temp_directory),
         root = temp_directory
       )
+      waiter$hide()
     },
     contentType = "application/zip"
   )
@@ -983,6 +1006,12 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
     content = function(file){
+      waiter <- Waiter$new(
+        html = LOADING_SCREEN,
+        color = "#3897F147",
+        hide_on_render = FALSE
+      )
+      waiter$show()
       tmp <- getUserReactiveValues(input)
       par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
       par_tmp[[session$token]]$SigAna$contrast <<- contrast
@@ -1026,6 +1055,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         files = dir(temp_directory),
         root = temp_directory
       )
+      waiter$hide()
     },
     contentType = "application/zip"
   )
