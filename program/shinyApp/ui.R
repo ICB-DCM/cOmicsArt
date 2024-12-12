@@ -50,6 +50,7 @@ library(reshape2)
 source("R/C.R")
 source("R/module_DownloadReport.R",local=T)
 # source the uis for each panel here
+source("R/help_tab/ui.R",local=T)
 source("R/data_selection/ui.R",local=T)
 source("R/pre_processing/ui.R",local=T)
 source("R/pca/ui.R",local=T)
@@ -66,6 +67,7 @@ ui <- shiny::fluidPage(
   # Loading Bars?
   # useWaitress(),
   useWaiter(),
+  use_cicerone(),
   # JS to reset input values
   tags$script("
     Shiny.addCustomMessageHandler('resetValue', function(variableName) {
@@ -93,6 +95,28 @@ ui <- shiny::fluidPage(
       .custom-modal .modal-dialog {
         width: 90%;
         max-width: 90%;
+      }
+      .shinyhelper-container {
+        font-size: 24px;
+        color: darkred !important;
+      }
+      #shiny-disconnected-overlay {
+        background-color: grey;
+        opacity: 1;
+        z-index: 99999 !important;
+        color: white;
+        font-size: 20px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;  /* Allow pointer events */
+        padding: 20px;
+        line-height: 1.5;
+      }
+      #shiny-disconnected-overlay a {
+        color: #add8e6;  /* Light blue color for links */
+        text-decoration: underline;
       }
       #sidebar_data_selection {
           background-color: #70BF4F47;
@@ -182,7 +206,71 @@ ui <- shiny::fluidPage(
         background-color: #A208BA !important; /* Strong Purple */
         color: white !important;
       }
-  "))
+    ")),
+    tags$script(HTML("
+      $(document).on('shiny:disconnected', function(event) {
+        function checkOverlay() {
+          var overlay = $('#shiny-disconnected-overlay');
+          if (overlay.length) {
+            console.log('Overlay found, updating content');  // Debugging line
+            overlay.html(
+              '<div style=\"text-align: center; line-height: 1.5;\">' +
+              'Connection lost.<br>You need to <a href=\"#\" onclick=\"location.reload();\" style=\"color: #add8e6;\">refresh the page</a> to start again.<br>' +
+              'There can be multiple reasons, such as an unstable internet connection. If you reproduce this behavior, ' +
+              'please report the steps/clicks you took!<br>This would help all of us—developers, contributors, and users ❤️<br>' +
+              'Report best through <a href=\"https://github.com/ICB-DCM/cOmicsArt/issues/new/choose\" target=\"_blank\" style=\"color: #add8e6; margin: 0 5px;\">GitHub</a> ' +
+              'or email to <a href=\"mailto:cOmicsArtist@outlook.de\" style=\"color: #add8e6; margin: 0 5px;\">cOmicsArtist@outlook.de</a>.' +
+              '</div>'
+            );
+          } else {
+            setTimeout(checkOverlay, 100);  // Retry after 100ms
+          }
+        }
+        checkOverlay();
+      });
+    
+    // Function to get a cookie value by name
+    function getCookie(name) {
+      const cname = name + '=';
+      const decodedCookie = decodeURIComponent(document.cookie);
+      const ca = decodedCookie.split(';');
+      for(let i = 0; i < ca.length; i++) {
+        let c = ca[i].trim();
+        if (c.indexOf(cname) == 0) return c.substring(cname.length, c.length);
+      }
+      return '';
+    }
+
+    // Function to set a cookie
+    function setCookie(name, value, days) {
+      const d = new Date();
+      d.setTime(d.getTime() + (days*24*60*60*1000));
+      const expires = 'expires=' + d.toUTCString();
+      document.cookie = name + '=' + value + ';' + expires + ';path=/';
+    }
+
+    // Function to delete a cookie
+    function deleteCookie(name) {
+      document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    }
+
+    // Check if the 'hasBeenBefore' cookie is present
+    function checkHasBeenBeforeCookie() {
+      return getCookie('hasBeenBefore') === 'true';
+    }
+    
+   // Listen for changes on the checkbox and set the cookie if checked
+    document.addEventListener('click', function(event) {
+      if (event.target && event.target.id === 'set_cookie_checkbox') {
+        const isChecked = document.getElementById('set_cookie_checkbox').checked;
+        if (isChecked) {
+          setCookie('hasBeenBefore', 'true', 30);
+        } else {
+          deleteCookie('hasBeenBefore');
+        }
+      }
+    });
+    "))
   ),
   ##########
   use_cicerone(),
@@ -190,27 +278,44 @@ ui <- shiny::fluidPage(
   shinyjs::useShinyjs(),
   ##########
   div(
-    style = "display:inline-block; float:right",
-    actionButton(
-    inputId = "Quit_App",
-    label = "Quit App",
-    class = "btn-secondary"
-    )
+    style = "display: inline-block; float:right;",
+    # Quit App Button
+      actionButton(
+        inputId = "Quit_App",
+        label = "Quit App",
+        class = "btn-secondary"
+      )
   ),
   div(
       id = "TitleID_normal",
       column(width=1, tags$img(src = "Logo_cOmicsArt_clear.png", height="100%", width="100%")),
       h1(HTML('<span style="color:#EC0014">c</span><span style="color:#FD8D33">O</span><span style="color:#3897F1">m</span><span style="color:#FFD335">i</span><span style="color:#A208BA">c</span><span style="color:#EF0089">s</span><span style="color:#EC0014">A</span><span style="color:#FD8D33">r</span><span style="color:#3897F1">t</span>'))
   ),
-  splitLayout(
-    cellWidths = c("75%", "10%", "15%"),
-    DownloadReport_ui("DownloadTestModule"),
-    NULL
-  ),
-  splitLayout(
-    cellWidths = c("75%", "10%", "15%"),
-    tags$a(href = "https://icb-dcm.github.io/cOmicsArt/", "Go To Documentation", target = "_blank"),
-    NULL
+  div(
+    id = "UsefulLinks",
+    splitLayout(
+      cellWidths = c("75%", "5%", "20%"),
+      DownloadReport_ui("DownloadTestModule"),
+      NULL,
+      div(
+        style = "display: inline-block; float:left;",
+        actionLink(
+          inputId = "set_cookie",
+          label = "Delete 'Skip first help' cookie",
+          style = "font-size: 0.9em; color: #555; text-decoration: underline;"
+        )
+      )
+    ),
+    splitLayout(
+      cellWidths = c("75%", "10%", "15%"),
+      tags$a(href = "https://icb-dcm.github.io/cOmicsArt/", "Go To Documentation", target = "_blank"),
+      NULL
+    ),
+    splitLayout(
+      cellWidths = c("75%", "10%", "15%"),
+      tags$a(href = "https://lea-orga.notion.site/12eab506afb581bf8ecfeeb2bb07c319", "Give Us Feedback!", target = "_blank"),
+      NULL
+    )
   ),
 
   tabsetPanel(
@@ -218,6 +323,7 @@ ui <- shiny::fluidPage(
     ################################################################################
     # Tab Selection w Upload
     ################################################################################
+    help_tab_panel,
     data_selection_panel,
     pre_processing_panel,
     sampleCorrelation_UI("sample_correlation"),

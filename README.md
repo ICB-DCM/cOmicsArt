@@ -33,5 +33,9 @@ General Test:
 -   A snapshot upon publication can be found on Zenodo: <https://zenodo.org/records/13740904>
     Note, that you can find within the branches the Zenodo based
     branches.
+    
+-   The Excel Workbook 'UploadeHelpcOmicsArt.xlsx' can help you to prepare your data for cOmicsArt:
+    <https://github.com/ICB-DCM/cOmicsArt/blob/main/UploadHelpcOmicsArt.xlsx> 
+    To download click on the three dots on the right side of the page and then click on 'Download'.
 
 Have fun!

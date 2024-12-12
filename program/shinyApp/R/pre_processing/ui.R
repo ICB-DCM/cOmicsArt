@@ -14,12 +14,12 @@ pre_processing_sidebar_panel <- sidebarPanel(
       "centering to 0 and scaling" = "simpleCenterScaling",
       "scaling values to be within 0 and 1" = "Scaling_0_1",
       "log10" = "log10",
+      "log2" = "log2",
       "Pareto scaling (mean-centered and scaled by the square root of the standard deviation)" = "pareto_scaling",
       "natural logarithm" = "ln"
     ),
     selected = "none"
   ) %>% helper(type = "markdown", content = "PreProcessing_Procedures"),
-  uiOutput(outputId = "DESeq_formula_main_ui"),
   uiOutput(outputId = "DESeq_formula_sub_ui"),
   uiOutput(outputId = "batch_effect_ui"),
   actionButton(
@@ -35,10 +35,9 @@ pre_processing_sidebar_panel <- sidebarPanel(
 pre_processing_main_panel <- mainPanel(
   id = "mainpanel_pre_processing",
   # Statistics to the data
+  htmlOutput(outputId = "Statisitcs_Data", container = pre),
   div(
-    id="data_summary",
-    helpText("General statistics to the input data, stuff like dimensions"),
-    htmlOutput(outputId = "Statisitcs_Data"),
+    id = "data_summary",
     HTML(text = "<br>"),
     fluidRow(
       column(
@@ -92,7 +91,7 @@ pre_processing_main_panel <- mainPanel(
     ),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-      cellArgs = list(style = "padding: 5px"),
+      cellArgs = list(style = "padding: 15px"),
       div(textAreaInput(
         inputId = "NotesPreprocessedData",
         label = "Notes:",
@@ -103,7 +102,8 @@ pre_processing_main_panel <- mainPanel(
       NULL
     )
   )
-)
+  )
+
 
 
 pre_processing_panel <- tabPanel(

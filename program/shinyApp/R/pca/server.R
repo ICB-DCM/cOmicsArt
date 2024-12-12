@@ -55,6 +55,10 @@ pca_Server <- function(id, data, params, row_select){
             step = 1
           )
         })
+        
+        output$PCA_Info <- renderText({
+          "Press 'Get PCA' to start!"
+        })
 
         ## Data Selection UI ---
         observe({
@@ -126,11 +130,13 @@ pca_Server <- function(id, data, params, row_select){
       # only when we click on Do_PCA, we set the calculate to 1
       session$userData$clicks_observer <- observeEvent(input$Do_PCA,{
         req(input$Do_PCA > pca_reactives$counter)
+        shinyjs::showElement(id = "PCA_main_panel_div", asis = TRUE)
         pca_reactives$counter <- input$Do_PCA
         check <- check_calculations(list(
           sample_selection_pca = input$sample_selection_pca,
           SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca,
-          batch = ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
+          batch = ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F),
+          scale_data = input$scale_data
         ), "PCA")
         if (check == "No Result yet"){
           output$PCA_Info <- renderText("PCA computed.")
@@ -157,7 +163,6 @@ pca_Server <- function(id, data, params, row_select){
         req(data$data)
         req(input$Do_PCA[1] > 0)
         waiter <- Waiter$new(
-          id="plot_panels_pca",
           html = LOADING_SCREEN,
           color="#70BF4F47"
         )
@@ -200,10 +205,11 @@ pca_Server <- function(id, data, params, row_select){
             pca <- prcomp(
               x = as.data.frame(t(as.data.frame(assay(data2plot)))),
               center = T,
-              scale. = FALSE
+              scale. = ifelse(input$scale_data == "Yes",T,F)
             )
           }, error = function(e){
             error_modal(e)
+            waiter$hide()
             return(NULL)
           })
           # how much variance is explained by each PC
@@ -223,7 +229,9 @@ pca_Server <- function(id, data, params, row_select){
           # assign par_temp as empty list
           par_tmp[[session$token]][["PCA"]] <<- list(
             sample_selection_pca = input$sample_selection_pca,
-            SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca
+            SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca,
+            batch = ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F),
+            scale_data = input$scale_data
           )
         } else {
           # otherwise read the reactive values
@@ -284,10 +292,21 @@ pca_Server <- function(id, data, params, row_select){
         )
         #LoadingsDF$Loading=scale(LoadingsDF$Loading)
         LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
-        LoadingsDF <- rbind(
-          LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - input$bottomSlider),],
-          LoadingsDF[input$topSlider:1,]
-        )
+        
+        # need to test if default of slider is below the number of entities
+        if(input$topSlider + input$bottomSlider > nrow(LoadingsDF)){
+          LoadingsDF
+          output$PCA_Info <- renderText({
+            paste0("Within Loadings visualisations:
+the requested number of entities to show is higher than the number of entities in the data.
+Hence, all entities are shown. The total number of entities is: ", length(rownames(pca$rotation)))})
+        }else{
+          LoadingsDF <- rbind(
+            LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - input$bottomSlider),],
+            LoadingsDF[input$topSlider:1,]
+          )
+        }
+        
         LoadingsDF$entitie <- factor(LoadingsDF$entitie,levels = rownames(LoadingsDF))
         if(!is.null(input$EntitieAnno_Loadings)){
           req(data_input_shiny())
@@ -472,13 +491,17 @@ pca_Server <- function(id, data, params, row_select){
         par_tmp[[session$token]]$PCA[names(tmp)] <<- tmp
         par_tmp[[session$token]]$PCA$colorTheme <<- colorTheme
 
-
-
         output$getR_Code_PCA <- downloadHandler(
           filename = function(){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
+            waiter <- Waiter$new(
+              html = LOADING_SCREEN,
+              color = "#3897F147",
+              hide_on_render = FALSE
+            )
+            waiter$show()
             envList <- list(
               res_tmp = res_tmp[[session$token]],
               par_tmp = par_tmp[[session$token]]
@@ -494,7 +517,9 @@ pca_Server <- function(id, data, params, row_select){
               files = dir(temp_directory),
               root = temp_directory
             )
+            waiter$hide()
           },
+
           contentType = "application/zip"
         )
 
@@ -574,6 +599,12 @@ pca_Server <- function(id, data, params, row_select){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
+            waiter <- Waiter$new(
+              html = LOADING_SCREEN,
+              color = "#3897F147",
+              hide_on_render = FALSE
+            )
+            waiter$show()
 
             envList <- list(
               res_tmp = res_tmp[[session$token]],
@@ -592,6 +623,7 @@ pca_Server <- function(id, data, params, row_select){
               files = dir(temp_directory),
               root = temp_directory
             )
+            waiter$hide()
           },
           contentType = "application/zip"
         )
@@ -651,6 +683,12 @@ pca_Server <- function(id, data, params, row_select){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
+            waiter <- Waiter$new(
+              html = LOADING_SCREEN,
+              color = "#3897F147",
+              hide_on_render = FALSE
+            )
+            waiter$show()
             envList <- list(
 
               res_tmp = res_tmp[[session$token]],
@@ -669,6 +707,7 @@ pca_Server <- function(id, data, params, row_select){
               files = dir(temp_directory),
               root = temp_directory
             )
+            waiter$hide()
           },
           contentType = "application/zip"
         )
@@ -736,6 +775,12 @@ pca_Server <- function(id, data, params, row_select){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
+            waiter <- Waiter$new(
+              html = LOADING_SCREEN,
+              color = "#3897F147",
+              hide_on_render = FALSE
+            )
+            waiter$show()
             envList <- list(
 
               res_tmp = res_tmp[[session$token]],
@@ -754,6 +799,7 @@ pca_Server <- function(id, data, params, row_select){
               files = dir(temp_directory),
               root = temp_directory
             )
+            waiter$hide()
           },
           contentType = "application/zip"
         )

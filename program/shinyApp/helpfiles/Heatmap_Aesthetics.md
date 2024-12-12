@@ -1,6 +1,8 @@
 ## Heatmap Aesthetics Options
 
 ---
+💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/07-heatmap.html#aesthetics-options" target="_blank">here</a>.
+
 **1. Choose Variable to Color the Samples After:**
 
 - **Description:**

@@ -102,76 +102,78 @@ heatmap_main <- function(ns){
   mainPanel(
     id = "main_heatmap",
     textOutput(outputId = ns("Heatmap_Info"), container = pre),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("100%"),
-      plotOutput(
-        outputId = ns("HeatmapPlot")
-      )
-    ),
-    textOutput(outputId = ns("Options_selected_out_3"), container = pre),
-    uiOutput(outputId = ns("row_label_options_ui")),
-    numericInput(
-      inputId = ns("row_label_no"),
-      label = "Threshold upon which explicit labels are shown",
-      min = 0, 
-      step = 1, 
-      value = 25
-    ),
-    actionButton(
-      inputId = ns("SaveGeneList_Heatmap"),
-      label = "Save genes shown in Heatmap for OA within Enrichment Analysis tab",
-      icon = icon('seedling'),
-      style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
-    ),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-      NULL,
+    div(id = "Heatmap_div",
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("100%"),
+        plotOutput(
+          outputId = ns("HeatmapPlot")
+        )
+      ),
+      textOutput(outputId = ns("Options_selected_out_3"), container = pre),
+      uiOutput(outputId = ns("row_label_options_ui")),
+      numericInput(
+        inputId = ns("row_label_no"),
+        label = "Threshold upon which explicit labels are shown",
+        min = 0, 
+        step = 1, 
+        value = 25
+      ),
       actionButton(
-        inputId = ns("only2Report_Heatmap"),
-        label = "Send only to Report",
-        class = "btn-info"
-      )
-    ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-      NULL,
-      downloadButton(
-        outputId = ns("getR_Code_Heatmap"),
-        label = "Get underlying R code and data",
-        icon = icon(name = "code")
-      )
-    ),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-      NULL,
-      downloadButton(
-        outputId = ns("SavePlot_Heatmap"),
-        label = "Save plot",
-        class = "btn-info"
-      )
-    ),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-      NULL,
-      radioGroupButtons(
-        inputId = ns("file_ext_Heatmap"), 
-        label = "File Type:",
-        choices = c(".png", ".tiff", ".pdf"), 
-        selected = ".png"
-      )
-    ),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
-      cellArgs = list(style = "padding: 5px"),
-      div(textAreaInput(
-        inputId = ns("NotesHeatmap"),
-        label = "Notes:",
-        placeholder = NOTES_PlACEHOLDER,
-        width = "1000px"
-      ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
-      helpText(NOTES_HELP)),
-      NULL
-    ),
+        inputId = ns("SaveGeneList_Heatmap"),
+        label = "Save genes shown in Heatmap for OA within Enrichment Analysis tab",
+        icon = icon('seedling'),
+        style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        NULL,
+        actionButton(
+          inputId = ns("only2Report_Heatmap"),
+          label = "Send only to Report",
+          class = "btn-info"
+        )
+      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        NULL,
+        downloadButton(
+          outputId = ns("getR_Code_Heatmap"),
+          label = "Get underlying R code and data",
+          icon = icon(name = "code")
+        )
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        NULL,
+        downloadButton(
+          outputId = ns("SavePlot_Heatmap"),
+          label = "Save plot",
+          class = "btn-info"
+        )
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        NULL,
+        radioGroupButtons(
+          inputId = ns("file_ext_Heatmap"), 
+          label = "File Type:",
+          choices = c(".png", ".tiff", ".pdf"), 
+          selected = ".png"
+        )
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
+        cellArgs = list(style = "padding: 15px"),
+        div(textAreaInput(
+          inputId = ns("NotesHeatmap"),
+          label = "Notes:",
+          placeholder = NOTES_PlACEHOLDER,
+          width = "1000px"
+        ) %>% helper(type = "markdown", content = "TakingNotesMD_help"),
+        helpText(NOTES_HELP)),
+        NULL
+      ),
+    )
   )
 }
  

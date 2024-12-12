@@ -1,5 +1,7 @@
 ## Gene Sets for Enrichment Analysis
 
+***
+
 You can choose a variety of gene sets for enrichment analysis. Here you find a 
 description of the gene sets. The information was taken from the
 [MSigDB database](https://www.gsea-msigdb.org/gsea/msigdb/collections.jsp), where you 
