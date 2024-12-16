@@ -308,7 +308,8 @@ ui <- shiny::fluidPage(
       style = "background: linear-gradient(to right, #EC0014 8%, #FD8D33 10%, #3897F1 12%, #FFD335 14%, #A208BA 16%, #EF0089 18%, #EC0014 20%);
       background-size: 100%;
       -webkit-background-clip: text; 
-      -webkit-text-fill-color: transparent;"
+      -webkit-text-fill-color: transparent;
+      font-weight: bold;"
     )
   ),
   div(
