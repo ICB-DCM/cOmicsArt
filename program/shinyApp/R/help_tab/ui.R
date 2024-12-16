@@ -17,7 +17,7 @@ help_tab_sidebar_panel <- sidebarPanel(
      inputId = "get_help",
      label = "GO!",
      icon = icon('paper-plane'),
-     style = "color: #fffff; background-color: #90DBF4; border-color: #000000"
+     style = "color: black; background-color: white; border-color: black;"
    ),
   div(
     id = "horizontalLine",

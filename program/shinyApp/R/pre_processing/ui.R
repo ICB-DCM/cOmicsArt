@@ -25,7 +25,7 @@ pre_processing_sidebar_panel <- sidebarPanel(
   actionButton(
     inputId = "Do_preprocessing",
     label = "Get Pre-Processing",
-    icon(name = "fas fa-laptop-code")
+    icon(name = "fas fa-mouse-pointer")
   ),
   hr(style = "border-top: 1px solid #000000;"),
   uiOutput("violin_plot_color_ui")
