@@ -71,7 +71,7 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
-  shinyjs::hide("mainPanel_DataSelection")
+  shinyjs::hideElement(id = "mainPanel_other")
   shinyjs::hideElement(id = "data_summary")
   shinyjs::hideElement(id = "div_sampleCorrelation_main_panel")
   shinyjs::hideElement(id = "PCA_main_panel_div")
@@ -461,9 +461,11 @@ server <- function(input,output,session){
   observe({
       if (input$refresh1 > 0) {
         req(data_input_shiny() == "DataUploadSuccesful")
-        shinyjs::show("mainPanel_DataSelection")
+        shinyjs::showElement("InfoBox_DataSelection")
+        shinyjs::showElement("mainPanel_other")
       } else {
-        shinyjs::hide("mainPanel_DataSelection")
+        shinyjs::showElement("InfoBox_DataSelection")
+        shinyjs::hideElement("mainPanel_other")
       }
   })
   
@@ -1046,17 +1048,27 @@ server <- function(input,output,session){
     data_input <- list()
     # upload depending on where the button was clicked
     if(uploaded_from() == "file_input"){
-      data_input <- list(
-        Matrix = read_file(input$data_matrix1$datapath, check.names=T),
-        sample_table = read_file(input$data_sample_anno1$datapath, check.names=T),
-        annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
-      )
-      # check if only 1 col in anno row,
-      # add dummy col to ensure R does not turn it into a vector
-      if(ncol(data_input$annotation_rows) < 2){
-        data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
-      }
+      tryCatch({
+        data_input <- list(
+          Matrix = read_file(input$data_matrix1$datapath, check.names=T),
+          sample_table = read_file(input$data_sample_anno1$datapath, check.names=T),
+          annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
+        )
+        # check if only 1 col in anno row,
+        # add dummy col to ensure R does not turn it into a vector
+        if(ncol(data_input$annotation_rows) < 2){
+          data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
+        }
 
+      },error = function(e){
+        output$debug <- renderText({
+          "<font color=\"#FF0000\"><b>Upload failed, please check your input.</b></font>"
+        })
+        reset('data_matrix1')
+        reset('data_sample_anno1')
+        reset('data_row_anno1')
+        return(NULL)
+      })
     } else if(uploaded_from() == "metadata"){
       tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
       test_data_upload <- function(){
@@ -1124,8 +1136,11 @@ server <- function(input,output,session){
         },
         error = function(e){
           print("Error! Uploading via file input failed")
+          custom_error <- list()
+          custom_error[["message"]] <- "Uploading via file input failed"
+          error_modal(custom_error)
           output$debug <- renderText({
-            "<font color=\"#FF0000\"><b>Uploading failed</b></font>: The uplaoded files could not be put into a SummarizedExperiment. Try the 'Inspect data' button for potential errors."
+            "<font color=\"#FF0000\"><b>Uploading failed</b></font>: The uploaded files could not be put into a SummarizedExperiment. Try the 'Inspect data' button for potential errors."
           })
           NULL
         }
