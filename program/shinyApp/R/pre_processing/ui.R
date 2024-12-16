@@ -21,7 +21,7 @@ pre_processing_sidebar_panel <- sidebarPanel(
     selected = "none"
   ) %>% helper(type = "markdown", content = "PreProcessing_Procedures"),
   uiOutput(outputId = "DESeq_formula_sub_ui"),
-  uiOutput(outputId = "batch_effect_ui"),
+  uiOutput(outputId = "batch_effect_ui") %>% helper(type = "markdown", content = "PreProcessing_Batch"),
   actionButton(
     inputId = "Do_preprocessing",
     label = "Get Pre-Processing",
