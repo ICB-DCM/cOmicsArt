@@ -1419,11 +1419,15 @@ server <- function(input,output,session){
     # new object Created for res_tmp[[session$token]]
     res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data[rownames(res_tmp[[session$token]]$data),]
     par_tmp[[session$token]]['BatchColumn'] <<- input$BatchEffect_Column
-
     # preprocessing
     print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
+    
+    # Check for DESeq option if more than 100 genes avail as it is for omics!
+
     tryCatch({
-      if(input$PreProcessing_Procedure == "vst_DESeq"){
+      if(input$PreProcessing_Procedure == "vst_DESeq" & nrow(res_tmp[[session$token]]$data) < 100){
+        stop("DESeq Preprocessing is only recommended for omics (here for data with more than 100 genes). Change Pre-processing or your data input!")
+      }else if(input$PreProcessing_Procedure == "vst_DESeq"& nrow(res_tmp[[session$token]]$data) >= 100){
         res_tmp[[session$token]]$data <<- deseq_processing(
             data = res_tmp[[session$token]]$data,
             omic_type = par_tmp[[session$token]]$omic_type,
@@ -1440,6 +1444,12 @@ server <- function(input,output,session){
       }
     }, error = function(e){
       error_modal(e)
+      output$Statisitcs_Data <- renderText({
+        HTML("<span style='color: red;'>There has been an error</span><br><br>
+        The current data might not be what you expect.<br>
+        Ensure you change something within the data or the Pre-Processing,<br>
+        and click 'Get Pre-Processing'.")
+      })
       waiter$hide()
       req(FALSE)
     })
@@ -1454,9 +1464,15 @@ server <- function(input,output,session){
         )
       }, error = function(e){
         error_modal(
-          e, additional_text = "Batch correction failed. Make sure the batch effect column is correct!"
+          e, additional_text = "Batch correction failed. Make sure the batch effect column is correct or NULL!"
         )
         waiter$hide()
+        output$Statisitcs_Data <- renderText({
+          HTML("<span style='color: red;'>There has been an error</span><br><br>
+        The current data might not be what you expect.<br>
+        Ensure you change something within the data or the Pre-Processing,<br>
+        and click 'Get Pre-Processing'.")
+        })
         req(FALSE)
       })
     } else if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure == "vst_DESeq"){
@@ -1478,6 +1494,12 @@ server <- function(input,output,session){
           )
         )
         waiter$hide()
+        output$Statisitcs_Data <- renderText({
+          HTML("<span style='color: red;'>There has been an error</span><br><br>
+        The current data might not be what you expect.<br>
+        Ensure you change something within the data or the Pre-Processing,<br>
+        and click 'Get Pre-Processing'.")
+        })
         req(FALSE)
       })
     } else {
