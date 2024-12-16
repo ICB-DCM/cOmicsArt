@@ -1,6 +1,6 @@
 ## Single Gene Visualization Options
 
----
+***
 <div style="border: 2px solid #ffcf30; background-color: #fff0bf; padding: 10px; border-radius: 8px; font-size: 15px;">
 <span style="font-size: 20px;">💡</span>  <strong>Tip:</strong> For more detailed information, please visit 
 <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/08-single-gene-visualisations.html#side-panel-" target="_blank" style="font-weight: bold;">this page</a>.
