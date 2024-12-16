@@ -46,7 +46,17 @@ help_tab_sidebar_panel <- sidebarPanel(
 help_tab_main_panel <- mainPanel(
   id = "mainPanel_help_tab",
   h4("Main Panel",id = "Test"),
-  actionButton("start_tour", span(icon("hand-pointer"),"Tour around cOmicsArt"),style = "background-color: #00c6ff; color: white; padding: 10px 20px; border-radius: 10px; transition: transform 0.2s;"),
+  actionButton(
+    "start_tour", 
+    span(icon("hand-pointer"),"Tour around cOmicsArt"),
+    style = "
+    background-color: #00c6ff; 
+    color: white; 
+    padding: 10px 20px; 
+    border-radius: 10px; 
+    font-size: 15px;
+    font-weight: bold;
+    transition: transform 0.2s;"),
   div(
     id = "help_tab_info",
     htmlOutput(outputId = "help_tab_info", container = pre),

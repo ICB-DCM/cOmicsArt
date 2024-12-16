@@ -106,7 +106,7 @@ ui <- shiny::fluidPage(
       border: 2px solid darkgrey;
       font-size: 15px;
       font-weight: bold;
-      box-shadow: 3px 3px 5px rgba(255, 0, 0, 0.9);
+      box-shadow: 3px 3px 5px rgba(255, 0, 0, 0.8);
       padding: 5px 5px;
       border-radius: 10px;
       }
