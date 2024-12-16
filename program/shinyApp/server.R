@@ -1368,7 +1368,7 @@ server <- function(input,output,session){
     }
     selectInput(
       inputId = "BatchEffect_Column",
-      label = "Select Batch Effect Column",
+      label = "[optional] Select Batch Effect Column",
       choices = c("NULL", filtered_column_names),
       selected = "NULL"
     )
