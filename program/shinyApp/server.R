@@ -1445,11 +1445,15 @@ server <- function(input,output,session){
     }, error = function(e){
       error_modal(e)
       output$Statisitcs_Data <- renderText({
-        HTML("<span style='color: red;'>There has been an error</span><br><br>
-        The current data might not be what you expect.<br>
-        Ensure you change something within the data or the Pre-Processing,<br>
-        and click 'Get Pre-Processing'.")
+        HTML("<span style='color: red;'>There has been an error</span><br>The current data might not be what you expect.<br>Ensure you change something within the data or the Pre-Processing,<br>and click 'Get Pre-Processing' again.<br><span style='color: red;'>You should not see this message before moving to analysis!</span><br>")
       })
+      hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
+      hideTab(inputId = "tabsetPanel1", target = "Significance Analysis")
+      hideTab(inputId = "tabsetPanel1", target = "PCA")
+      hideTab(inputId = "tabsetPanel1", target = "Heatmap")
+      hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
+      hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+      
       waiter$hide()
       req(FALSE)
     })
@@ -1468,11 +1472,14 @@ server <- function(input,output,session){
         )
         waiter$hide()
         output$Statisitcs_Data <- renderText({
-          HTML("<span style='color: red;'>There has been an error</span><br><br>
-        The current data might not be what you expect.<br>
-        Ensure you change something within the data or the Pre-Processing,<br>
-        and click 'Get Pre-Processing'.")
+          HTML("<span style='color: red;'>There has been an error</span><br>The current data might not be what you expect.<br>Ensure you change something within the data or the Pre-Processing,<br>and click 'Get Pre-Processing' again.<br><span style='color: red;'>You should not see this message before moving to analysis!</span><br>")
         })
+        hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
+        hideTab(inputId = "tabsetPanel1", target = "Significance Analysis")
+        hideTab(inputId = "tabsetPanel1", target = "PCA")
+        hideTab(inputId = "tabsetPanel1", target = "Heatmap")
+        hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
+        hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
         req(FALSE)
       })
     } else if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure == "vst_DESeq"){
@@ -1495,11 +1502,14 @@ server <- function(input,output,session){
         )
         waiter$hide()
         output$Statisitcs_Data <- renderText({
-          HTML("<span style='color: red;'>There has been an error</span><br><br>
-        The current data might not be what you expect.<br>
-        Ensure you change something within the data or the Pre-Processing,<br>
-        and click 'Get Pre-Processing'.")
+          HTML("<span style='color: red;'>There has been an error</span><br>The current data might not be what you expect.<br>Ensure you change something within the data or the Pre-Processing,<br>and click 'Get Pre-Processing' again.<br><span style='color: red;'>You should not see this message before moving to analysis!</span><br>")
         })
+        hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
+        hideTab(inputId = "tabsetPanel1", target = "Significance Analysis")
+        hideTab(inputId = "tabsetPanel1", target = "PCA")
+        hideTab(inputId = "tabsetPanel1", target = "Heatmap")
+        hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
+        hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
         req(FALSE)
       })
     } else {
