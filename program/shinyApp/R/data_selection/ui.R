@@ -144,6 +144,7 @@ data_selection_main_panel <- mainPanel(
   div(id ="InfoBox_DataSelection",
       htmlOutput(outputId = "debug", container = pre)
       ),
+  div(id = "mainPanel_other",
   # add link to toggle on the div geneAnno_toggle
   actionButton(
     inputId = "geneAnno_toggle_button",
@@ -229,6 +230,7 @@ data_selection_main_panel <- mainPanel(
     inputId = "refresh1",
     label = "YOu should not be seeing this"
   ))
+  )
 )
 
 
