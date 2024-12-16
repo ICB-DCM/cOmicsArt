@@ -298,9 +298,18 @@ ui <- shiny::fluidPage(
       )
   ),
   div(
-      id = "TitleID_normal",
-      column(width=1, tags$img(src = "Logo_cOmicsArt_clear.png", height="100%", width="100%")),
-      h1(HTML('<span style="color:#EC0014">c</span><span style="color:#FD8D33">O</span><span style="color:#3897F1">m</span><span style="color:#FFD335">i</span><span style="color:#A208BA">c</span><span style="color:#EF0089">s</span><span style="color:#EC0014">A</span><span style="color:#FD8D33">r</span><span style="color:#3897F1">t</span>'))
+    id = "TitleID_normal",
+    column(
+      width = 1,
+      tags$img(src = "Logo_cOmicsArt_clear.png", height = "100%", width = "100%")
+    ),
+    h1(
+      "cOmicsArt",
+      style = "background: linear-gradient(to right, #EC0014 8%, #FD8D33 10%, #3897F1 12%, #FFD335 14%, #A208BA 16%, #EF0089 18%, #EC0014 20%);
+      background-size: 100%;
+      -webkit-background-clip: text; 
+      -webkit-text-fill-color: transparent;"
+    )
   ),
   div(
     id = "UsefulLinks",
