@@ -171,7 +171,7 @@ The options (and steps) of preprocessing are as follows:
 
 ---
 
-### Select Batch Effect Column
+### [optional] Select Batch Effect Column
 
 Choose a batch effect if applicable. Possible choices are taken from the sample 
 annotation columns. **Important**: This step is **optional**, as sometimes no batches need 
