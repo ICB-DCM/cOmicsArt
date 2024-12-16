@@ -5,7 +5,8 @@ DownloadReport_ui <- function(id){
   tagList(
     actionLink(
       inputId = ns("DownloadReport"),
-      label = "Download Report (as html)"
+      label = tagList(icon("download"), "Download Report (as html)"),
+      style = "font-size: 18px; font-weight: bold;  color: black;text-decoration: underline;"
     )
   )
 }
