@@ -1,7 +1,10 @@
 ## Correlation Method  
 ***  
-💡 **Tip**: For details, visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/04-sample-correlation.html" target="_blank">this link</a>.  
-
+<div style="border: 2px solid #ffcf30; background-color: #fff0bf; padding: 10px; border-radius: 8px; font-size: 15px;">
+<span style="font-size: 20px;">💡</span>  <strong>Tip:</strong> For more detailed information, please visit 
+<a href="https://icb-dcm.github.io/cOmicsArt/interface-details/04-sample-correlation.html" target="_blank" style="font-weight: bold;">this page</a>.
+</div>
+<br>
 ### Methods:  
 
 1. **Pearson:**  

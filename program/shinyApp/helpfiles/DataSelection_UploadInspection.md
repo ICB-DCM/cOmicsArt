@@ -1,7 +1,11 @@
 ### Data Quality Check - Visual Inspection
 
 ***
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/02-selection.html#file-input-%EF%B8%8F" target="_blank">here</a>.
+<div style="border: 2px solid #ffcf30; background-color: #fff0bf; padding: 10px; border-radius: 8px; font-size: 15px;">
+<span style="font-size: 20px;">💡</span>  <strong>Tip:</strong> For more detailed information, please visit 
+<a href="https://icb-dcm.github.io/cOmicsArt/interface-details/02-selection.html#file-input-%EF%B8%8F" target="_blank" style="font-weight: bold;">this page</a>.
+</div>
+<br>
 
 Using the `Upload visual inspection` tab, you can see the uploaded data and perform a 
 data quality check.

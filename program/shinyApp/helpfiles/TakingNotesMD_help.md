@@ -1,7 +1,11 @@
 ## Personal Note Taking
 
 ***
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details.html#features-across-tabs" target="_blank">here</a>.
+<div style="border: 2px solid #ffcf30; background-color: #fff0bf; padding: 10px; border-radius: 8px; font-size: 15px;">
+<span style="font-size: 20px;">💡</span>  <strong>Tip:</strong> For more detailed information, please visit 
+<a href="https://icb-dcm.github.io/cOmicsArt/interface-details.html#features-across-tabs" target="_blank" style="font-weight: bold;">this page</a>.
+</div>
+<br>
 
 This Section is here for your Notes. It can be as easy as just a keyword or as complex as an entire figure description or even an entire book (however I do think there are better tools for this).
 To enable possibilities to structure your text, involving headings, bullets points or colored chunks `markdown` syntax can be used. 
