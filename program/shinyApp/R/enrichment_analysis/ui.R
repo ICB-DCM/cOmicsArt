@@ -105,7 +105,8 @@ ea_sidebar <- function(ns){
     uiOutput(outputId = ns("UniverseOfGene_ui")),
     actionButton(
       inputId = ns("enrichmentGO"),
-      label = "Get Enrichment Analysis"
+      label = "Get Enrichment Analysis",
+      icon = icon("fas fa-mouse-pointer")
     ),
     hr(style = "border-top: 1px solid #000000;"),
     uiOutput(outputId = ns("KeggPathwayID_ui")),

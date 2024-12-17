@@ -61,7 +61,7 @@ Very similar to the `File Input`, but replacing the sample annotation with the
 
 - **Omic Type that is uploaded**: Select the type of omics data you are uploading (Transcriptomics, Lipidomics, Metabolomics).
 
-- **Start straight away with a test-dataset!**: Click this button to start with a test dataset.
+- **Upload data**: Click this button to start with a test dataset.
 
 ## Main Panel 💡
 

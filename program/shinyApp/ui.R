@@ -100,6 +100,17 @@ ui <- shiny::fluidPage(
         font-size: 24px;
         color: darkred !important;
       }
+      .well button {
+      background-color: white;
+      color: black;
+      border: 2px solid darkgrey;
+      font-size: 15px;
+      font-weight: bold;
+      box-shadow: 3px 3px 5px rgba(255, 0, 0, 0.8);
+      padding: 5px 5px;
+      border-radius: 10px;
+      }
+
       #shiny-disconnected-overlay {
         background-color: grey;
         opacity: 1;
@@ -287,9 +298,19 @@ ui <- shiny::fluidPage(
       )
   ),
   div(
-      id = "TitleID_normal",
-      column(width=1, tags$img(src = "Logo_cOmicsArt_clear.png", height="100%", width="100%")),
-      h1(HTML('<span style="color:#EC0014">c</span><span style="color:#FD8D33">O</span><span style="color:#3897F1">m</span><span style="color:#FFD335">i</span><span style="color:#A208BA">c</span><span style="color:#EF0089">s</span><span style="color:#EC0014">A</span><span style="color:#FD8D33">r</span><span style="color:#3897F1">t</span>'))
+    id = "TitleID_normal",
+    column(
+      width = 1,
+      tags$img(src = "Logo_cOmicsArt_clear.png", height = "100%", width = "100%")
+    ),
+    h1(
+      "cOmicsArt",
+      style = "background: linear-gradient(to right, #EC0014 8%, #FD8D33 10%, #3897F1 12%, #FFD335 14%, #A208BA 16%, #EF0089 18%, #EC0014 20%);
+      background-size: 100%;
+      -webkit-background-clip: text; 
+      -webkit-text-fill-color: transparent;
+      font-weight: bold;"
+    )
   ),
   div(
     id = "UsefulLinks",
@@ -308,12 +329,28 @@ ui <- shiny::fluidPage(
     ),
     splitLayout(
       cellWidths = c("75%", "10%", "15%"),
-      tags$a(href = "https://icb-dcm.github.io/cOmicsArt/", "Go To Documentation", target = "_blank"),
+      tags$a(
+        href = "https://icb-dcm.github.io/cOmicsArt/", 
+        target = "_blank",
+        tagList(
+          icon("book"),  # Replace "book" with any other suitable icon
+          span("Go To Documentation", style = "margin-left: 5px;")
+        ),
+        style = "font-size: 18px; color: black; text-decoration: underline;"
+      ),
       NULL
     ),
     splitLayout(
       cellWidths = c("75%", "10%", "15%"),
-      tags$a(href = "https://lea-orga.notion.site/12eab506afb581bf8ecfeeb2bb07c319", "Give Us Feedback!", target = "_blank"),
+      tags$a(
+        href = "https://lea-orga.notion.site/12eab506afb581bf8ecfeeb2bb07c319", 
+        target = "_blank",
+        tagList(
+          icon("comment-dots"),  # Replace "comment-dots" with another icon if desired
+          span("Give Us Feedback!", style = "margin-left: 5px;")
+        ),
+        style = "font-size: 18px; color: black;text-decoration: underline;"
+      ),
       NULL
     )
   ),

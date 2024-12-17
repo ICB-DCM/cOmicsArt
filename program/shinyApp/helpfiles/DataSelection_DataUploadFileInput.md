@@ -1,10 +1,14 @@
 ### Data Upload via File Input
 
 ***
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/01-required-data-input.html" target="_blank">here</a>.
+<div style="border: 2px solid #ffcf30; background-color: #fff0bf; padding: 10px; border-radius: 8px; font-size: 15px;">
+<span style="font-size: 20px;">💡</span>  <strong>Tip:</strong> For more detailed information, please visit 
+<a href="https://icb-dcm.github.io/cOmicsArt/interface-details/01-required-data-input.html" target="_blank" style="font-weight: bold;">this page</a>.
+</div>
+<br>
 
 With `Data upload` you can upload your data to the server via explicit csv files.<br>
-The files must be in the following format:<br>
+<strong>The files must be in the following format:</strong><br>
 1. data-matrix (.csv) <br>
   - contains the actual data, e.g. counts<br>
   - must have the samples (e.g. mouse 1) in the columns and a **unique** naming as 
@@ -22,7 +26,7 @@ The files must be in the following format:<br>
 
 Need help to prepare your data? Check out our Excel Workbook: <a href="https://github.com/ICB-DCM/cOmicsArt/blob/main/UploadHelpcOmicsArt.xlsx" target="_blank">UploadeHelpcOmicsArt.xlsx</a>.
 
-Some pitfalls you may fall into:
+<strong>Some pitfalls you may fall into:</strong>
 * The files must be uploaded at their respective position (**data matrix, 
   sample annotation, entities annotation**).
 * The files need to be **.csv** files, which also means that they need to be comma 

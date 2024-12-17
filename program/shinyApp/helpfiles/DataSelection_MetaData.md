@@ -1,7 +1,11 @@
 ### Data Upload via File Input + Meta Data Sheet
 
 ***
-💡 **Tip**: For more detailed information, please visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/01-required-data-input.html#starting-with-a-single-table-and-a-metadatasheet-" target="_blank">here</a>.
+<div style="border: 2px solid #ffcf30; background-color: #fff0bf; padding: 10px; border-radius: 8px; font-size: 15px;">
+<span style="font-size: 20px;">💡</span>  <strong>Tip:</strong> For more detailed information, please visit 
+<a href="https://icb-dcm.github.io/cOmicsArt/interface-details/01-required-data-input.html#starting-with-a-single-table-and-a-metadatasheet-" target="_blank" style="font-weight: bold;">this page</a>.
+</div>
+<br>
 
 With `Data upload` you can upload your data to the server via explicit csv files.<br>
 The files must be in the following format:<br>
