@@ -595,7 +595,6 @@ server <- function(input,output,session){
           )
         },
         error = function(e) {
-          browser()
           # Handle errors specifically
           output$DataMatrix_VI <- DT::renderDataTable({
             DT::datatable(data = data.frame(Error = "Invalid data for display"))
@@ -950,6 +949,7 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**DataInput** - Uploaded Omic Type: ", par_tmp[[session$token]]['omic_type'])
     )
+
     if(!(
       # Is Precompiled data used?
       (isTruthy(input$data_preDone) & uploaded_from() == "precompiled") |
@@ -1024,6 +1024,19 @@ server <- function(input,output,session){
     if(is.null(unlist(par_tmp[[session$token]]['omic_type']))){
       par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
       omic_type(input[[paste0("omic_type_", uploaded_from())]])
+    }
+    # catch if only one file is uploaded
+    if(uploaded_from() == "file_input"){
+      if(isTruthy(input$data_matrix1) & !isTruthy(input$data_sample_anno1) & !isTruthy(input$data_row_anno1)){
+        output$debug <- renderText({
+          "<font color=\"#FF0000\"><b>Upload failed, please check your input.</b></font>"
+        })
+        reset('data_matrix1')
+        reset('data_sample_anno1')
+        reset('data_row_anno1')
+
+        return(NULL)
+      }
     }
     
     req(
