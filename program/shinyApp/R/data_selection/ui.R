@@ -44,7 +44,7 @@ data_selection_sidebar_panel <- sidebarPanel(
           label = "Upload new data",
           width = "80%",
           icon = icon('paper-plane'),
-          style = "color: #fffff; background-color: #90DBF4; border-color: #000000"
+          style = "color: black; background-color: white; border-color: black;"
         ),
         hr(style = "border-top: 1px solid #858585;")
       ),
@@ -71,7 +71,7 @@ data_selection_sidebar_panel <- sidebarPanel(
           label = "Upload new data",
           width = "80%",
           icon = icon('paper-plane'),
-          style = "color: #fffff; background-color: #90DBF4; border-color: #000000",
+          style = "color: black; background-color: white; border-color: black;"
         ),
         hr(style = "border-top: 1px solid #858585;")
       ),
@@ -111,7 +111,7 @@ data_selection_sidebar_panel <- sidebarPanel(
           label = "Upload new data",
           width = "80%",
           icon = icon('paper-plane'),
-          style = "color: #fffff; background-color: #90DBF4; border-color: #000000",
+          style = "color: black; background-color: white; border-color: black;"
         ),
         hr(style = "border-top: 1px solid #858585;")
       ),
@@ -130,9 +130,8 @@ data_selection_sidebar_panel <- sidebarPanel(
         br(),
         actionButton(
           inputId = "EasyTestForUser",
-          label = "Start straight away with a test-dataset!",
-          icon = icon('paper-plane'),
-          style = "color: #fffff; background-color: #90DBF4; border-color: #000000"
+          label = "Upload test data",
+          style = "color: black; background-color: white; border-color: black;"
         ),
         hr(style = "border-top: 1px solid #858585;")
       )
@@ -145,6 +144,7 @@ data_selection_main_panel <- mainPanel(
   div(id ="InfoBox_DataSelection",
       htmlOutput(outputId = "debug", container = pre)
       ),
+  div(id = "mainPanel_other",
   # add link to toggle on the div geneAnno_toggle
   actionButton(
     inputId = "geneAnno_toggle_button",
@@ -164,7 +164,7 @@ data_selection_main_panel <- mainPanel(
   fluidRow(
     column(5,
            actionButton(
-            "select_data", "Select Data",
+            "select_data", "[optional] Select Data",
             width = "100%",
             icon = icon('filter'),
             style = "color: #fffff; background-color: white; border-color: #000000"
@@ -175,10 +175,18 @@ data_selection_main_panel <- mainPanel(
     condition = "input.select_data % 2 == 0",
     fluidRow(column(5,
         actionButton(
-          "use_full_data", "Use Full Dataset",
+          "use_full_data", "Go to Preprocessing",
           width = "100%",
-          icon = icon('rocket'),
-          style = "color: #fffff; background-color: #70BF4F47; border-color: #000000"
+          icon = icon("fas fa-mouse-pointer"),
+          style = "
+          background-color: white;
+          color: black;
+          border: 2px solid darkgrey;
+          font-size: 15px;
+          font-weight: bold;
+          box-shadow: 3px 3px 5px rgba(255, 0, 0, 0.8);
+          padding: 5px 5px;
+          border-radius: 10px;"
         )
     ))
   ),
@@ -222,6 +230,7 @@ data_selection_main_panel <- mainPanel(
     inputId = "refresh1",
     label = "YOu should not be seeing this"
   ))
+  )
 )
 
 

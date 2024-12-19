@@ -12,7 +12,7 @@ sampleCorrelation_sidebar_panel <- function(ns){
     actionButton(
       inputId = ns("Do_SampleCorrelation"),
       label = "Get Sample Correlation",
-      icon("fas fa-laptop-code")
+      icon("fas fa-mouse-pointer")
     ),
     hr(style = "border-top: 1px solid #000000;"),
     uiOutput(outputId = ns("SampleAnnotationChoice_ui")) %>% helper(type = "markdown", content = "SampleCorr_Color"),

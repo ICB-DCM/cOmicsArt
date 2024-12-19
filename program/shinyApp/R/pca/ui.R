@@ -17,41 +17,41 @@ pca_sidebar_panel <- function(ns){
     uiOutput(outputId = ns("SampleAnnotationTypes_pca_ui")),
     uiOutput(outputId = ns("sample_selection_pca_ui")),
     # Scale data to unit variance y/n
-    radioGroupButtons(
+    radioButtons(
       inputId = ns("scale_data"),
       label = "Scale data to unit variance?",
       choices = c("Yes","No"),
-      direction = "horizontal",
+      # direction = "horizontal",
       selected = "No"
     ),
     ### start pca ---
     actionButton(
       inputId = ns("Do_PCA"),
       label = "Get PCA",
-      icon("fas fa-laptop-code")
+      icon("fas fa-mouse-pointer")
     ),
     ### further visualizations
     hr(style = "border-top: 1px solid #000000;"),
     uiOutput(outputId = ns("coloring_options_ui")),
-    radioGroupButtons(
+    radioButtons(
       inputId = ns("x_axis_selection"),
       label = "PC for x-Axis",
       choices = c("PC1","PC2", "PC3", "PC4"),
-      direction = "vertical",
+      # direction = "horizontal",
       selected = "PC1"
     ),
-    radioGroupButtons(
+    radioButtons(
       inputId = ns("y_axis_selection"),
       label = "PC for y-Axis",
       choices = c("PC1","PC2", "PC3", "PC4"),
-      direction = "vertical",
+      # direction = "horizontal",
       selected = "PC2"
     ),
-    radioGroupButtons(
+    radioButtons(
       inputId = ns("Show_loadings"),
       label = "Plot Loadings on top? (currently top 5)",
       choices = c("Yes","No"),
-      direction = "horizontal",
+      # direction = "horizontal",
       selected = "No"
     ),
     helpText("Note: if you would like to change the annotation of the indicated loading vectors please select an option the the tab Loadings"),

@@ -56,7 +56,7 @@ heatmap_sidebar<- function(ns){
     actionButton(
       inputId = ns("Do_Heatmap"),
       label = "Get Heatmap",
-      icon(name = "fas fa-laptop-code")
+      icon(name = "fas fa-mouse-pointer")
     ),
     hr(style = "border-top: 1px solid #000000;"),
     h5("Aesthetics") %>% helper(type = "markdown", content = "Heatmap_Aesthetics"),

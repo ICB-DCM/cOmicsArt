@@ -1,6 +1,9 @@
 ## Significance Analysis Options
-
-💡 **Tip**: For more details, visit <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/05-significance-analysis.html#main-panel-" target="_blank">here</a>.
+<div style="border: 2px solid #ffcf30; background-color: #fff0bf; padding: 10px; border-radius: 8px; font-size: 15px;">
+<span style="font-size: 20px;">💡</span>  <strong>Tip:</strong> For more detailed information, please visit 
+<a href="https://icb-dcm.github.io/cOmicsArt/interface-details/05-significance-analysis.html#main-panel-" target="_blank" style="font-weight: bold;">this page</a>.
+</div>
+<br>
 
 1. **Groups to Compare**  
    - Select groups for significance analysis based on predefined factors (for DESeq) or sample annotations.
