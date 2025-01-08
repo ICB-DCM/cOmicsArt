@@ -39,5 +39,5 @@ We hope this helps you navigate cOmicsArt with ease! 😊
 ## Written Tutorial 📝
 
 Are you not a friend of video tutorials? No worries! We have two written showcases for 
-you. [Showcase A](../showcases/showcase-a.md) and [Showcase B](../showcases/showcase-b.md)
+you. [Showcase A](showcases/showcase-a.md) and [Showcase B](showcases/showcase-b.md)
 will guide you through the main functionalities of cOmicsArt along a real-life example.
