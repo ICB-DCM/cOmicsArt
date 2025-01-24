@@ -1,32 +1,32 @@
 ---
-title: "Significance Analysis"
+title: "Differential Analysis"
 layout: default
 parent: Interface Details
 nav_order: 5
 ---
 
-# Significance Analysis
+# Differential Analysis
 
-The Significance Analysis tab is divided into two main sections: the side panel and the main panel.
+The Differential Analysis tab is divided into two main sections: the side panel and the main panel.
 
 ## Side Panel 📚
 
 In the side panel, you have the following options:
 
 ### 1. Choose Groups to Compare
-Select the groups from your data for which you want to perform significance analysis.
+Select the groups from your data for which you want to perform differential analysis.
 
 - For DESeq preprocessing, select from predefined factors.
 - For other preprocessing methods, choose from available sample annotation columns.
 
 ### 2. Choose Comparisons
-Select the specific pairings of groups for which you want to perform significance analysis.
+Select the specific pairings of groups for which you want to perform differential analysis.
 
 - Automatically generates possible pairings based on selected groups.
 - Notation is "Treatment:Control" and indicates the direction of the comparison.
 
 ### 3. Choose Test Method
-Select the statistical test method for significance analysis.
+Select the statistical test method for differential analysis.
 
 - For DESeq preprocessing, a Wald test statistic is used. For more information [read here](https://en.wikipedia.org/wiki/Wald_test) or [check out the original paper](http://www.jstor.org/stable/1990256).
 - For other preprocessing methods, choose from:
