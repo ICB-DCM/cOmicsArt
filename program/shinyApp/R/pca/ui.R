@@ -113,7 +113,7 @@ pca_main_panel <- function(ns){
             radioGroupButtons(
               inputId = ns("file_ext_plot1"),
               label = "File Type:",
-              choices = c(".png", ".tiff", ".pdf"),
+              choices = c(".png", ".tiff", ".pdf", ".svg"),
               selected = ".png"
             )
           ),
@@ -192,7 +192,7 @@ pca_main_panel <- function(ns){
             radioGroupButtons(
               inputId = ns("file_ext_Loadings"),
               label = "File Type:",
-              choices = c(".png", ".tiff", ".pdf"),
+              choices = c(".png", ".tiff", ".pdf", ".svg"),
               selected = ".png"
             )
           )
@@ -208,7 +208,7 @@ pca_main_panel <- function(ns){
           ),
           uiOutput(outputId = ns("EntitieAnno_Loadings_matrix_ui")),
           uiOutput(outputId = ns("nPCAs_to_look_at_ui")),
-  
+
           sliderInput(
             inputId = ns("filterValue"),
             label = "absolute Loading threshold to filter entities with low impact",
@@ -254,7 +254,7 @@ pca_main_panel <- function(ns){
             radioGroupButtons(
               inputId = ns("file_ext_Loadings_matrix"),
               label = "File Type:",
-              choices = c(".png", ".tiff", ".pdf"),
+              choices = c(".png", ".tiff", ".pdf", ".svg"),
               selected = ".png"
             )
           )
@@ -304,7 +304,7 @@ pca_main_panel <- function(ns){
             radioGroupButtons(
               inputId = ns("file_ext_Scree"),
               label = "File Type:",
-              choices = c(".png", ".tiff", ".pdf"),
+              choices = c(".png", ".tiff", ".pdf", ".svg"),
               selected = ".png"
             )
           )

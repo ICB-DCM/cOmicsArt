@@ -114,8 +114,8 @@ heatmap_main <- function(ns){
       numericInput(
         inputId = ns("row_label_no"),
         label = "Threshold upon which explicit labels are shown",
-        min = 0, 
-        step = 1, 
+        min = 0,
+        step = 1,
         value = 25
       ),
       actionButton(
@@ -155,9 +155,9 @@ heatmap_main <- function(ns){
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         NULL,
         radioGroupButtons(
-          inputId = ns("file_ext_Heatmap"), 
+          inputId = ns("file_ext_Heatmap"),
           label = "File Type:",
-          choices = c(".png", ".tiff", ".pdf"), 
+          choices = c(".png", ".tiff", ".pdf", ".svg"),
           selected = ".png"
         )
       ),

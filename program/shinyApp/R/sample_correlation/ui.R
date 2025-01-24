@@ -67,9 +67,9 @@ sampleCorrelation_main_panel <- function(ns){
       style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
       NULL,
       radioGroupButtons(
-        inputId = ns("file_ext_SampleCorrelation"), 
+        inputId = ns("file_ext_SampleCorrelation"),
         label = "File Type:",
-        choices = c(".png", ".tiff", ".pdf"), 
+        choices = c(".png", ".tiff", ".pdf", ".svg"),
         selected = ".png"
       )
     ),

@@ -202,7 +202,7 @@ sample_correlation_server <- function(id, data, params){
       
       output$SavePlot_SampleCorrelation <- downloadHandler(
         filename = function() {
-          paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), input$file_ext_Heatmap)
+          paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), input$file_ext_SampleCorrelation)
         },
         content = function(file){
           save_pheatmap(par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,filename = file,type=gsub("\\.","",input$file_ext_SampleCorrelation))
