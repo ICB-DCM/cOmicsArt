@@ -5,7 +5,7 @@ significance_analysis_server <- function(id, data, params){
       sig_ana_reactive <- reactiveValues(
         start_analysis = 0,
         update_plot_post_ana = 0,
-        info_text = "Press 'Get significance analysis' to start!",
+        info_text = "Press 'Get Differential Analysis' to start!",
         dds = NULL,
         scenario = 0,
         comparisons_for_plot = "all",
@@ -642,16 +642,16 @@ significance_analysis_server <- function(id, data, params){
         print(sig_ana_reactive$plot_last)
         dev.off()
         
-        fun_LogIt(message = "## Significance analysis {.tabset .tabset-fade}")
+        fun_LogIt(message = "## Differential analysis {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         # log which tests were performed
         if(params$PreProcessing_Procedure == "vst_DESeq"){
           fun_LogIt(
-            message = "- Significance Analysis was performed using DESeq2 pipeline"
+            message = "- Differential Analysis was performed using DESeq2 pipeline"
           )
         } else {
           fun_LogIt(message = paste(
-            "- Significance Analysis was performed using", input$test_method
+            "- Differential Analysis was performed using", input$test_method
           ))
         }
         # log the significance level
@@ -732,7 +732,7 @@ significance_analysis_server <- function(id, data, params){
           input$comparisons_to_visualize,")."
         ))
         fun_LogIt(message = paste0(
-          "**Overview Plot** - ![Significance Analysis](",tmp_filename,")"
+          "**Overview Plot** - ![Differential Analysis](",tmp_filename,")"
         ))
         if(isTruthy(input$NotesSigAna) & !(isEmpty(input$NotesSigAna))){
           fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")

@@ -355,7 +355,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_val", sep = "_")]])){
           req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_val", sep = "_")]])
       }
-      fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
       fun_LogIt(message = "### Info")
       log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
       fun_LogIt(message = "### Publication Snippet")
@@ -369,7 +369,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_both_val", sep = "_")]])){
         req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_both", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_both_val", sep = "_")]])
       }
-      fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
       fun_LogIt(message = "### Info")
       log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
                            sig_ana_reactive$data4Volcano, contrast, file_path)
@@ -385,7 +385,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_raw_val", sep = "_")]])){
         req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_raw", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_raw_val", sep = "_")]])
       }
-      fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
       fun_LogIt(message = "### Info")
       log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
       fun_LogIt(message = "### Publication Snippet")
@@ -522,7 +522,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
-        fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
@@ -539,7 +539,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         device = gsub("\\.","",input[[ns("file_ext_Volcano_raw")]])
         )
       on.exit({
-        fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
@@ -556,7 +556,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
-        fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
                              sig_ana_reactive$data4Volcano, contrast, file_path)
@@ -913,7 +913,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
 
   # downloadhandlers
   observeEvent(input[[ns("only2Report_Volcano")]],{
-    fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+    fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
     log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
     fun_LogIt(message = "### Publication Snippet")
@@ -922,7 +922,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   })
 
   observeEvent(input[[ns("only2Report_Volcano_both")]],{
-    fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+    fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
     log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot)
                          , sig_ana_reactive$data4Volcano, contrast, file_path)
@@ -933,7 +933,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   })
 
   observeEvent(input[[ns("only2Report_Volcano_raw")]],{
-    fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+    fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
     log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
     fun_LogIt(message = "### Publication Snippet")
@@ -1069,7 +1069,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
-        fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
@@ -1086,7 +1086,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         device = gsub("\\.","",input[[ns("file_ext_Volcano_raw")]])
         )
       on.exit({
-        fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
@@ -1104,7 +1104,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
-        fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot)
                              , sig_ana_reactive$data4Volcano, contrast, file_path)
