@@ -174,19 +174,17 @@ significance_analysis_server <- function(id, data, params){
           )
         })
       })
-      # keep updating the info panel while executing
-      observe(
-        shinyjs::html(
-          id = 'significance_analysis_info',
-          sig_ana_reactive$info_text
-        )
-      )
       # refresh the UI/data if needed
       observeEvent(input$refreshUI, {
         data <- update_data(session$token)
         params <- update_params(session$token)
         sig_ana_reactive$coldata <- colData(data$data)
       })
+
+      output$significance_analysis_info <- renderText(
+        sig_ana_reactive$info_text
+      )
+
       # Analysis initial info
       observeEvent(input$significanceGo,{
         shinyjs::showElement(id = "Significance_div", asis = T)
