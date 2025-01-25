@@ -313,13 +313,12 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       scale_color_manual(values=colorScheme2, name="") +
       xlab("Log FoldChange") +
       ylab("-log10(p_adj-value)") +
-      theme(legend.position = "none") +
       ggtitle(label="Corrected p-Values")
-      CUSTOM_THEME +
-      theme(legend.position = "none")
+      CUSTOM_THEME
     
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
-      sig_ana_reactive$VolcanoPlot,
+      sig_ana_reactive$VolcanoPlot +
+      theme(legend.position = "none"),
       legendgroup="color"
     )})
     sig_ana_reactive$VolcanoPlot_raw <- ggplot(
@@ -514,7 +513,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       contentType = "application/zip"
     )
 
-  output[[ns("SavePlot_Volcano")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano", sep = "_"))]] <- downloadHandler(
     filename = function() {paste0("VOLCANO_", Sys.time(), input[[ns("file_ext_Volcano")]])},
     content = function(file){
       ggsave(
@@ -531,7 +530,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
                                            params = par_tmp[[session$token]]))
       })
     })
-  output[[ns("SavePlot_Volcano_raw")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_raw", sep = "_"))]] <- downloadHandler(
     filename = function() { paste("raw_VOLCANO",Sys.time(),input[[ns("file_ext_Volcano_raw")]],sep="") },
     content = function(file){
       ggsave(
@@ -548,7 +547,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
                                            params = par_tmp[[session$token]]))
       })
     })
-  output[[ns("SavePlot_Volcano_both")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_both", sep = "_"))]] <- downloadHandler(
     filename = function() { paste0("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]]) },
     content = function(file){
       ggsave(
@@ -703,17 +702,17 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
             downloadButton(
-              outputId = ns("SavePlot_Volcano"),
+              outputId = ns(paste(contrast[1], contrast[2], "SavePlot_Volcano", sep = "_")),
               label = "Save plot",
               class = "btn-info"
             ),
             downloadButton(
-              outputId = ns("SavePlot_Volcano_both"),
+              outputId = ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_both", sep = "_")),
               label = "Save plot",
               class = "btn-info"
             ),
             downloadButton(
-              outputId = ns("SavePlot_Volcano_raw"),
+              outputId = ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_raw", sep = "_")),
               label = "Save plot",
               class = "btn-info"
             )
@@ -874,13 +873,11 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       scale_color_manual(values=colorScheme2, name="") +
       xlab("Log FoldChange") +
       ylab("-log10(p_adj-value)") +
-      theme(legend.position = "none") +
       ggtitle(label="Corrected p-Values") +
-      CUSTOM_THEME +
-      theme(legend.position = "none")
+      CUSTOM_THEME
     
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
-      sig_ana_reactive$VolcanoPlot,
+      sig_ana_reactive$VolcanoPlot  + theme(legend.position = "none"),
       tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
       legendgroup="color"
     )})
@@ -1066,19 +1063,19 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     contentType = "application/zip"
   )
 
-  output[[ns("SavePlot_Volcano")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano", sep = "_"))]] <- downloadHandler(
     filename = function() { paste("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]],sep="") },
     content = function(file){
       ggsave(
         filename = file,
-        plot = sig_ana_reactive$VolcanoPlot + theme(legend.position = "right"),
+        plot = sig_ana_reactive$VolcanoPlot,
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
         fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         log_messages_volcano(
-          sig_ana_reactive$VolcanoPlot + theme(legend.position = "right"),
+          sig_ana_reactive$VolcanoPlot,
           sig_ana_reactive$data4Volcano, contrast, file_path
         )
         fun_LogIt(message = "### Publication Snippet")
@@ -1086,7 +1083,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
                                            params = par_tmp[[session$token]]))
       })
     })
-  output[[ns("SavePlot_Volcano_raw")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_raw", sep = "_"))]] <- downloadHandler(
     filename = function() { paste("raw_VOLCANO",Sys.time(),input[[ns("file_ext_Volcano_raw")]],sep="") },
     content = function(file){
       ggsave(
@@ -1104,7 +1101,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
 
       })
     })
-  output[[ns("SavePlot_Volcano_both")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_both", sep = "_"))]] <- downloadHandler(
     filename = function() { paste0("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]]) },
     content = function(file){
       ggsave(
