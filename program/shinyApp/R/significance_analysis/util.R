@@ -917,7 +917,11 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   observeEvent(input[[ns("only2Report_Volcano")]],{
     fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
+    log_messages_volcano(
+      sig_ana_reactive$VolcanoPlot + theme(legend.position = "right"),
+      sig_ana_reactive$data4Volcano,
+      contrast, file_path
+    )
     fun_LogIt(message = "### Publication Snippet")
     fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                        params = par_tmp[[session$token]]))
@@ -1067,13 +1071,16 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     content = function(file){
       ggsave(
         filename = file,
-        plot = sig_ana_reactive$VolcanoPlot,
+        plot = sig_ana_reactive$VolcanoPlot + theme(legend.position = "right"),
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
         fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
+        log_messages_volcano(
+          sig_ana_reactive$VolcanoPlot + theme(legend.position = "right"),
+          sig_ana_reactive$data4Volcano, contrast, file_path
+        )
         fun_LogIt(message = "### Publication Snippet")
         fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                            params = par_tmp[[session$token]]))
