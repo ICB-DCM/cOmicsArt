@@ -314,8 +314,9 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       xlab("Log FoldChange") +
       ylab("-log10(p_adj-value)") +
       theme(legend.position = "none") +
-      ggtitle(label="Corrected p-Values") +
-      CUSTOM_THEME
+      ggtitle(label="Corrected p-Values")
+      CUSTOM_THEME +
+      theme(legend.position = "none")
     
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot,
@@ -875,7 +876,8 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       ylab("-log10(p_adj-value)") +
       theme(legend.position = "none") +
       ggtitle(label="Corrected p-Values") +
-      CUSTOM_THEME
+      CUSTOM_THEME +
+      theme(legend.position = "none")
     
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot,
