@@ -1610,7 +1610,7 @@ server <- function(input,output,session){
     print(colnames(res_tmp[[session$token]]$data))
 
     showTab(inputId = "tabsetPanel1", target = "Sample Correlation")
-    showTab(inputId = "tabsetPanel1", target = "Significance Analysis")
+    showTab(inputId = "tabsetPanel1", target = "Differential Analysis")
     showTab(inputId = "tabsetPanel1", target = "PCA")
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
