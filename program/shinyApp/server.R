@@ -66,7 +66,7 @@ server <- function(input,output,session){
 # Layout upon Start ----
   hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
   hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
-  hideTab(inputId = "tabsetPanel1", target = "Significance Analysis")
+  hideTab(inputId = "tabsetPanel1", target = "Differential Analysis")
   hideTab(inputId = "tabsetPanel1", target = "PCA")
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
