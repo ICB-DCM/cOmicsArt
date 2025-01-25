@@ -475,10 +475,6 @@ server <- function(input,output,session){
       title = "Upload Visual Inspection",
       helpText("If you have uploaded your data, you might want to visually check the tables to confirm the correct data format. If you notice irregualarities you will need to correct the input data - this cannot be done in cOmicsArt, See the help on how your data is expected."),
       br(),
-      actionButton(
-        inputId = "DoVisualDataInspection",
-        label = "Upload data for visual inspection"
-      ) %>% helper(type = "markdown", content = "DataSelection_UploadInspection"),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         DT::dataTableOutput("DataMatrix_VI"),
@@ -503,32 +499,7 @@ server <- function(input,output,session){
       size = "l", # large modal
       class = "custom-modal" # custom class for this modal
     ))
-  })
-  
-  observeEvent(input$usingVIdata,{
-    if(res_tmp[[session$token]]$passedVI){
-      uploaded_from("VI_data")
-      removeModal()
-      # take specification from file_input as only here VI applicable
-      par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_file_input")]]
-      omic_type(input[[paste0("omic_type_file_input")]])
-      shinyjs::click("refresh1")
-    }else{
-      show_toast(
-        title = "Data did not passed visual inspection. Data is not used and needs adjustments before reuploading and usage within cOmicsArt!",
-        type = "error",
-        position = "top",
-        timerProgressBar = FALSE,
-        width = "100%"
-      )
-    }
 
-  })
-  observeEvent(input$CloseVI,{
-    removeModal()
-  })
-  
-  observeEvent(input$DoVisualDataInspection,{
     tryCatch({
     if(isTruthy(input$data_preDone)){
       output$DataMatrix_VI_Info <- renderText({
@@ -536,8 +507,8 @@ server <- function(input,output,session){
       })
       req(F)
     }
-    if(!(isTruthy(input$data_matrix1) & 
-         (isTruthy(input$data_sample_anno1)|isTruthy(input$metadataInput)) & 
+    if(!(isTruthy(input$data_matrix1) &
+         (isTruthy(input$data_sample_anno1)|isTruthy(input$metadataInput)) &
          isTruthy(input$data_row_anno1))){
       output$OverallChecks <- renderText(
         "<font color=\"#ab020a\"><b>The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!</b></font>"
@@ -557,7 +528,7 @@ server <- function(input,output,session){
           )
         }
       )
-      
+
       if(flag_csv == F){
         tryCatch(
           expr = {
@@ -581,7 +552,7 @@ server <- function(input,output,session){
         expr = {
           withCallingHandlers(
             {
-              dim(Matrix) # to envoke an error if it is not present 
+              dim(Matrix) # to envoke an error if it is not present
               # (needed sometime as DT sometimes seem to handle errors internally and does not throw an error)
               # not the cleanest but works
               output$DataMatrix_VI <- DT::renderDataTable({
@@ -633,13 +604,13 @@ server <- function(input,output,session){
       check4 <- tryCatch(ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes),error = function(e) snippetNo)
       check5 <- tryCatch(ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes),error = function(e) snippetNo)
       check6 <- tryCatch(ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo),error = function(e) snippetNo)
-      
+
       check7 <- tryCatch(ifelse(all(sapply(Matrix,is.numeric)),snippetYes,snippetNo),error = function(e) snippetNo)
-      
-      if(grepl(snippetYes,check0) & 
-         grepl(snippetYes,check1) & 
-         grepl(snippetYes,check2) & 
-         grepl(snippetYes,check3) & 
+
+      if(grepl(snippetYes,check0) &
+         grepl(snippetYes,check1) &
+         grepl(snippetYes,check2) &
+         grepl(snippetYes,check3) &
          grepl(snippetYes,check4) & # not crucial
          # grepl(snippetYes,check5) & # not crucial
          grepl(snippetYes,check6) &
@@ -694,12 +665,12 @@ server <- function(input,output,session){
             annotation_rows$original_rownames <- as.character(rownames(Matrix))
             idxTochange <- grepl(invalidStart_regex, rownames(Matrix))
             rownames(Matrix)[idxTochange] <- paste0("entite_", rownames(Matrix)[idxTochange])
-            
+
             idxTochange_space <- grepl(space_regex, rownames(Matrix))
             rownames(Matrix)[idxTochange_space] <- gsub(space_regex,".",rownames(Matrix)[idxTochange_space])
-            
+
             allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
-            
+
             oldnames_matrix <- rownames(Matrix)[allIdx_changes]
             newName_matrix <- rownames(Matrix)[allIdx_changes]
             info_snippet_matrix_row <- paste0("Changes: <br> Matrix: Number of rownames changed: ",length(oldnames_matrix),"<br>",
@@ -716,12 +687,12 @@ server <- function(input,output,session){
               colnames(Matrix) <- gsub("^X","",colnames(Matrix))
             }
             colnames(Matrix)[idxTochange] <- paste0("sample_", colnames(Matrix)[idxTochange])
-            
+
             idxTochange_space <- grepl(space_regex, colnames(Matrix))
             colnames(Matrix)[idxTochange_space] <- gsub(space_regex,".",colnames(Matrix)[idxTochange_space])
-            
+
             allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
-            
+
             oldnames_matrix <- colnames(Matrix)[allIdx_changes]
             newName_matrix <- colnames(Matrix)[allIdx_changes]
             info_snippet_matrix_column <- paste0("Changes: <br> Matrix: Number of colnames changed: ",length(oldnames_matrix),"<br>",
@@ -733,12 +704,12 @@ server <- function(input,output,session){
           if(any(grepl(invalidStart_regex, rownames(sample_table))) | any(grepl(space_regex, rownames(sample_table)))){
             idxTochange <- grepl(invalidStart_regex, rownames(sample_table))
             rownames(sample_table)[idxTochange] <- paste0("sample_", rownames(sample_table)[idxTochange])
-            
+
             idxTochange_space <- grepl(space_regex, rownames(sample_table))
             rownames(sample_table)[idxTochange_space] <- gsub(space_regex,".",rownames(sample_table)[idxTochange_space])
-            
+
             allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
-            
+
             oldnames_sample <- rownames(sample_table)[allIdx_changes]
             newName_sample <- rownames(sample_table)[allIdx_changes]
             info_snippet_sample <- paste0("Changes: <br> Sample Table: Number of rownames changed: ",length(oldnames_sample),"<br>",
@@ -750,12 +721,12 @@ server <- function(input,output,session){
           if(any(grepl(invalidStart_regex, rownames(annotation_rows))) | any(grepl(space_regex, rownames(annotation_rows)))){
             idxTochange <- grepl(invalidStart_regex, rownames(annotation_rows))
             rownames(annotation_rows)[idxTochange] <- paste0("entite_", rownames(annotation_rows)[idxTochange])
-            
+
             idxTochange_space <- grepl(space_regex, rownames(annotation_rows))
             rownames(annotation_rows)[idxTochange_space] <- gsub(space_regex,".",rownames(annotation_rows)[idxTochange_space])
-            
+
             allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
-            
+
             oldnames_entitie <- rownames(annotation_rows)[allIdx_changes]
             newNames_entitie <- rownames(annotation_rows)[allIdx_changes]
             info_snippet_entitie <- paste0("Changes: <br> Entitie Table: Number of rownames changed: ",length(oldnames_entitie),"<br>",
@@ -764,16 +735,16 @@ server <- function(input,output,session){
           }else{
             info_snippet_entitie <- ""
           }
-          
+
           # TODO if rownames updated put also to report
-          
+
           # Write the matrices to csv's to allow reupload for later
           write.csv(Matrix, file = paste0("www/",session$token,"/updatedMatrix.csv"), row.names = T)
           write.csv(sample_table, file = paste0("www/",session$token,"/updatedSampleTable.csv"), row.names = T)
           write.csv(annotation_rows, file = paste0("www/",session$token,"/updatedEntitieAnnotation.csv"), row.names = T)
 
           # TODO also set flag to update matrixes upon 'upload new data' within app for this round
-          
+
           showModal(modalDialog(
             title = "Download Updated Data",
               HTML(paste0("You can download your updated data for later reupload.<br>",
@@ -853,10 +824,10 @@ server <- function(input,output,session){
                 "Sample IDs have valid names ", check6, "\n"
               )
             })
-            if(grepl(snippetYes,check0) & 
-               grepl(snippetYes,check1) & 
-               grepl(snippetYes,check2) & 
-               grepl(snippetYes,check3) & 
+            if(grepl(snippetYes,check0) &
+               grepl(snippetYes,check1) &
+               grepl(snippetYes,check2) &
+               grepl(snippetYes,check3) &
                grepl(snippetYes,check4) & # not crucial
               # grepl(snippetYes,check5) & # not crucial
                grepl(snippetYes,check6) &
@@ -865,10 +836,10 @@ server <- function(input,output,session){
             } else {
               res_tmp[[session$token]]$passedVI <<- F
             }
-            
+
           })
 
-          
+
           })
 
         if(check6 == "No"){
@@ -917,6 +888,29 @@ server <- function(input,output,session){
         width = "100%"
       )
     })
+  })
+  
+  observeEvent(input$usingVIdata,{
+    if(res_tmp[[session$token]]$passedVI){
+      uploaded_from("VI_data")
+      removeModal()
+      # take specification from file_input as only here VI applicable
+      par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_file_input")]]
+      omic_type(input[[paste0("omic_type_file_input")]])
+      shinyjs::click("refresh1")
+    }else{
+      show_toast(
+        title = "Data did not passed visual inspection. Data is not used and needs adjustments before reuploading and usage within cOmicsArt!",
+        type = "error",
+        position = "top",
+        timerProgressBar = FALSE,
+        width = "100%"
+      )
+    }
+
+  })
+  observeEvent(input$CloseVI,{
+    removeModal()
   })
   
 
