@@ -1,30 +1,34 @@
 ---
-title: "R Notebook"
+title: "Transcript of Tutorial"
 output: html_notebook
 ---
-Welcome to cOmicsArt customizable comic analysis and reporting tool. going to show you how to use this application to Aid in your statistical analysis.
+Welcome to cOmicsArt - Customizable Omic Analysis and Reporting Tool. This tutorial is going to show you how to use this application to aid in your statistical analysis.
+This tutorial is self-contained but can also be used to follow along with the YouTube tutorial.
 
-Comics art is designed is in a tabular format. In the beginning you only see the data selection but if you upload your data and go through the steps progressively more tabs will be shown. 
-Let us start by uploading our data.
+Comics art is designed is in a tabular format. In the beginning you only see the data selection but if you upload your data and go through the steps progressively more 
+tabs will be shown. Let us start by uploading our data.
 
 [Picture of the welcome page]
 
 ## Uploading Data ##
 
+The data will be uploaded with three CSV files. The first one is the data matrix showing the counts on the rows there are the entities for example genes on the columns 
+they are the samples. The sample table shows you meta information on the samples while the entity table shows you any information on the entities you have. 
+
 [Pictures highlighting browse for the three CSV and upload data tab]
 
-The data will be uploaded with three CSV files. The first one is the data matrix showing the counts on the rows there are the entities for example genes on the columns they are the samples. the sample table shows you meta information on the samples while the entity table shows you any information on the entities you have. 
+If you need to access the documentation, you can click on "Go to Documentation" from any page which will bring you to our website with an extensive documentation on what to do.
 
-[Highlighted Go-To Documentation] [Website Interface Documentation picture]
+Another option is to click on the helper buttons these small question marks wherever they are. They'll show you some kind of help for whatever you're doing.
 
-If this was too fast and you need more information you can always throughout all the sessions and wherever you are right now click on the documentation it will bring you to our website with an extensive documentation on what to do.
+[Highlighted Go-To Documentation] [Website Interface Documentation picture] [Highlight question mark picture]
 
-[Highlight question mark picture] 
+Right now in this example it shows you how to upload your data via the file input. It shows you again what it should look like what it contains. [Bold?] 
+And what is important is that the rows of the data Matrix correspond to the rows of the row annotation while the Columns of the data Matrix correspond to the rows of the sample 
+table okay so let's just upload our data.
 
-Another option is to click on the helper buttons these small question marks wherever they are. They'll show you some kind of help for whatever you're doing. 
-Right now in this example it shows you how to upload your data via the file input. It shows you again what it should look like what it contains. [Bold?] And what is important is that the rows of the data Matrix correspond to the rows of the row annotation while the Columns of the data Matrix correspond to the rows of the sample table okay so let's just upload our data.
-
-We choose an example data set you can also download this. We just choose the read counts the sample table it's sample sheet and the entity annotation. When we've uploaded this the first thing we want to do is we might want to check how is our data interpreted in this program for this we click on "inspect data". 
+We choose an example data set you can also download this. We just choose the read counts the sample table it's sample sheet and the entity annotation. 
+When we've uploaded this the first thing we want to do is we might want to check how is our data interpreted in this program for this we click on "inspect data". 
 
 [Highlight inspect data]
 
@@ -36,32 +40,37 @@ Pitfalls are here for example if we choose the wrong separator then it will only
 
 Does it show all the other information and then down here there are a multitude of checks where you can check whether your data looks as it should be.
 
-Green means fine red means you need to go into your data and change things while Orange means yeah it's not good but we can handle it for example in this case it's an a values or missing values in the data the the application will just remove those entities from the table.
+Green means fine red means you need to go into your data and change things while Orange means yeah it's not good but we can handle it for example in this case it's an 
+a values or missing values in the data the the application will just remove those entities from the table.
 
 And then we just click on "upload new data".
 
 [Highlight upload new data]
 
-
 And as you can see we now see our result part of the design which in this case is the data selection.
 
 [Highlight changes to interface ?]
 
-The first thing we can do is we can add annotation to the data if we didn't do that. We did this already so we don't need to do it and you can choose the organism to add the annotation. 
+The first thing we can do is we can add annotation to the data if we didn't do that. We did this already so we don't need to do it and you can choose the organism to 
+add the annotation. 
 
 [Add Gene Annotation highlight]
 
 And then you choose row or samples. 
-For the sample selection you first choose among the columns that you have in your sample table. For example you can choose the cells, you can also choose the condition or you choose the experiment or the sample and you might want to select only specific samples you want to include the data. 
+For the sample selection you first choose among the columns that you have in your sample table. For example you can choose the cells, you can also choose the condition or 
+you choose the experiment or the sample and you might want to select only specific samples you want to include the data. 
 
 [Highlight specific sample selection]
 
 Perhaps there are strong reasons to exclude some and you just click on them you remove them all and will only
 use these data sets you can do the same for the condition. Here it's treated or untreated if you have multiple
 conditions you might want to only check one of them. We want to use all data the same can be done with Gene with the
-row selection and you can choose either the gene names here in Ensemble genes you might not know those Gene names all by hard so select the symbols and you can select which ones you want to use.
+row selection and you can choose either the gene names here in Ensemble genes you might not know those Gene names all by hard so select the symbols and you can select which 
+ones you want to use.
 
-You can also use the Gene B biotype and which shows you functionals. So for example in transcriptomics you sometimes only want to use the protein coding genes so you can select protein coding and we'll only use all of the protein coding genes that you have within your data matrix you can do the same for prois pseudo genes and it will select all the process pseudo gen.
+You can also use the Gene B biotype and which shows you functionals. So for example in transcriptomics you sometimes only want to use the protein coding genes so you can select 
+protein coding and we'll only use all of the protein coding genes that you have within your data matrix you can do the same for prois pseudo genes and it will select all the 
+process pseudo gen.
 
 In our case we want to use all our data so we just start our journey by clicking on this button. 
 
