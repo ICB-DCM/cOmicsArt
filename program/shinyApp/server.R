@@ -847,10 +847,11 @@ server <- function(input,output,session){
                 "Data Matrix has only numeric values: ",check7,"\n",
                 "Rownames of Matrix are the same as rownames of entitie table ",check1,"\n",
                 "Colnames of Matrix are same as rownames of sample table ",check2," \n",
+                "Sample IDs have valid names ", check6, "\n\n",
+                "<b>OPTIONAL</b>:\n",
                 "Matrix has no na (missing values) ",check3,"\n",
                 "Sample table no na (missing values) ",check4,"\n",
-                "Entitie table no na  (missing values) ",check5,"\n",
-                "Sample IDs have valid names ", check6, "\n"
+                "Entitie table no na  (missing values) ",check5,"\n"
               )
             })
             if(grepl(snippetYes,check0) & 
@@ -900,10 +901,11 @@ server <- function(input,output,session){
            "Data Matrix has only numeric values: ",check7,"\n",
            "Rownames of Matrix are the same as rownames of entitie table ",check1,"\n",
            "Colnames of Matrix are same as rownames of sample table ",check2," \n",
-           "Matrix has no na ",check3,"\n",
-           "Sample table no na ",check4,"\n",
-           "Entitie table no na ",check5,"\n",
-           "Sample IDs have valid names ", check6, "\n"
+           "Sample IDs have valid names ", check6, "\n",
+           "<b>OPTIONAL</b>:\n",
+           "Matrix has no na (missing values) ",check3,"\n",
+           "Sample table no na (missing values) ",check4,"\n",
+           "Entitie table no na  (missing values) ",check5,"\n"
          )
       })
     }
