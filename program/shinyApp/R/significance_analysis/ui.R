@@ -27,7 +27,7 @@ significance_analysis_sidebar_ui<- function(ns){
     # Button to start analysis
     actionButton(
       inputId = ns("significanceGo"),
-      label = "Get Significance Analysis",
+      label = "Get Differential Analysis",
       icon = icon("fas fa-mouse-pointer")
     ),
     hidden(actionButton(
@@ -136,10 +136,10 @@ significance_analysis_UI <- function(id){
   ns <- NS(id)
 
   tabPanel(
-    title = "Significance Analysis",
+    title = "Differential Analysis",
     id = "significance_analysis",
     fluid = T,
-    h4("Significance Analysis"),
+    h4("Differential Analysis"),
     # sidebar
     significance_analysis_sidebar_ui(ns),
     # main

@@ -186,7 +186,7 @@ ui <- shiny::fluidPage(
         background-color: #FD8D33 !important; /* Strong Orange */
         color: white !important;
       }
-      .tabbable > .nav > li > a[data-value='Significance Analysis'] {
+      .tabbable > .nav > li > a[data-value='Differential Analysis'] {
         background-color: #FFD33547 !important; /* Lighter Yellow */
         color: black !important;
       }
@@ -214,7 +214,7 @@ ui <- shiny::fluidPage(
         background-color: #A208BA35 !important; /* Lighter Purple */
         color: black !important;
       }
-      .tabbable > .nav > li[class=active] > a[data-value='Significance Analysis'] {
+      .tabbable > .nav > li[class=active] > a[data-value='Differential Analysis'] {
         background-color: #A208BA !important; /* Strong Purple */
         color: white !important;
       }
