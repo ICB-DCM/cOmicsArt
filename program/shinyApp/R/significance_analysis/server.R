@@ -338,7 +338,7 @@ significance_analysis_server <- function(id, data, params){
             contrast = contrasts[[i]],
             alpha = input$significance_level,
             ns = ns,
-            preprocess_method = params$PreProcessing_Procedure,
+            preprocess_method = par_tmp[[session$token]]$PreProcessing_Procedure,
             value = paste0("Significance_", i)
           )
           sig_ana_reactive$significance_tabs_to_delete[[i]] <- input$comparisons[i]
