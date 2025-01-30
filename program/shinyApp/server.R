@@ -1447,17 +1447,9 @@ server <- function(input,output,session){
     print(selectedData())
     addWarning <- ""
     par_tmp[[session$token]]['PreProcessing_Procedure'] <<- input$PreProcessing_Procedure
+    par_tmp[[session$token]]['BatchColumn'] <<- input$BatchEffect_Column
     # reset data to the selection that was done
     res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]]
-
-    print("Remove all entities which are constant over all samples")
-    res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data[rownames(res_tmp[[session$token]]$data[which(apply(assay(res_tmp[[session$token]]$data),1,sd) != 0),]),]
-
-    print(dim(res_tmp[[session$token]]$data))
-    # explicitly set rownames to avoid any errors.
-    # new object Created for res_tmp[[session$token]]
-    res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data[rownames(res_tmp[[session$token]]$data),]
-    par_tmp[[session$token]]['BatchColumn'] <<- input$BatchEffect_Column
     # preprocessing
     print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
     
@@ -1498,6 +1490,7 @@ server <- function(input,output,session){
     })
     
     # Batch correction after preprocessing
+    res_tmp[[session$token]]$data_batch_corrected <<- NULL
     if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure != "vst_DESeq") {
       tryCatch({
         res_tmp[[session$token]]$data_batch_corrected <<- res_tmp[[session$token]]$data
@@ -1551,8 +1544,6 @@ server <- function(input,output,session){
         hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
         req(FALSE)
       })
-    } else {
-      res_tmp[[session$token]]$data_batch_corrected <<- NULL
     }
 
     if(input$PreProcessing_Procedure == "filterOnly"){

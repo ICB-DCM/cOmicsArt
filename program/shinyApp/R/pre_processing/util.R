@@ -1,6 +1,8 @@
 # preprocessing procedures
 
 preprocessing <- function(data, omic_type, procedure){
+  print("Remove all entities which are constant over all samples")
+  data <- data[rownames(data[which(apply(assay(data),1,sd) != 0),]),]
   if(procedure == "filterOnly"){
     return(prefiltering(data, omic_type))
   }
@@ -21,6 +23,7 @@ preprocessing <- function(data, omic_type, procedure){
 }
 
 prefiltering <- function(data, omic_type){
+  # TODO: will be replaced with general "at least x in y samples" filter
   # Filter out low abundant genes for Metabol- and Transcriptmics.
   if(omic_type == "Transcriptomics"){
     print("Remove anything of rowCount <=10")
@@ -96,7 +99,8 @@ ln_normalisation <- function(data, omic_type, logarithm_procedure){
 deseq_processing <- function(
   data, omic_type, formula_sub, session_token, batch_correct
 ){
-  # Center and scale the data
+  print("Remove all entities which are constant over all samples")
+  data <- data[rownames(data[which(apply(assay(data),1,sd) != 0),]),]
   # prefilter the data
   data <- prefiltering(data, omic_type)
   # DESeq2
