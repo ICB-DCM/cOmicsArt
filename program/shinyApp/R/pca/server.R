@@ -183,19 +183,19 @@ pca_Server <- function(id, data, params, row_select){
           # update the data
           useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
           data2plot <- update_data(session$token)
-          # select the neccesary data
-          if(input$data_selection_pca){
-            data2plot <- select_data(
-              data2plot,
-              input$sample_selection_pca,
-              input$SampleAnnotationTypes_pca,
-              useBatch
-            )
-          }
           if(useBatch){
               data2plot <- data2plot$data_batch_corrected
           } else {
               data2plot <- data2plot$data
+          }
+          # select the neccesary data
+          if(input$data_selection_pca){
+            res_select <- select_data(
+              data2plot,
+              input$sample_selection_pca,
+              input$SampleAnnotationTypes_pca
+            )
+            data2plot <- res_select$data
           }
           # set the counter to -1 to prevent any further plotting
           pca_reactives$calculate <- -1

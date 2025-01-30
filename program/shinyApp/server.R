@@ -125,6 +125,7 @@ server <- function(input,output,session){
 
   # If it is the user's first visit, start the guide
   observeEvent(input$first_visit, {
+    # TODO: Should we switch to showing data selection by default?
     if (input$first_visit) {
       guide_welcome$init()$start()
     } else {
@@ -137,7 +138,6 @@ server <- function(input,output,session){
       shinyjs::runjs("deleteCookie('hasBeenBefore')")
       showNotification("Cookie 'hasBeenBefore' deleted. Please refresh the page.")
   })
-  
 
   # Start the tour when the "Start Tour" button is clicked
   observeEvent(input$start_tour, {
@@ -180,7 +180,7 @@ server <- function(input,output,session){
       output$help_tab_info <- renderText({
         HTML(
           paste0(
-"As you selected the WelcomePage on the **left**, you can see a screenshot of the WelcomePage below.<br>",
+            "As you selected the WelcomePage on the **left**, you can see a screenshot of the WelcomePage below.<br>",
             "If you want to see the full documentation, click ",
             "<a href='https://icb-dcm.github.io/cOmicsArt/' target='_blank'>here</a>",
             ".<br>or click on the link on the top left of the screen 'Go To Documentation'.<br><br>",
@@ -918,6 +918,8 @@ server <- function(input,output,session){
       )
     })
   })
+
+  # Visual Inspection ends here
   
 
   observeEvent(input$refresh_file_input, {
@@ -1365,60 +1367,27 @@ server <- function(input,output,session){
     req(data_input_shiny())
     row_selection <- input$row_selection %||% "all"
     sample_selection <- input$sample_selection %||% "all"
-    providedRowAnnotationTypes <- input$providedRowAnnotationTypes %||% c(colnames(rowData(res_tmp[[session$token]]$data_original)))[1]
+    sample_type <- input$providedSampleAnnotationTypes %||% c(colnames(colData(res_tmp[[session$token]]$data_original)))[1]
+    row_type <- input$providedRowAnnotationTypes %||% c(colnames(rowData(res_tmp[[session$token]]$data_original)))[1]
+    propensity <- input$propensityChoiceUser %||% 1
     par_tmp[[session$token]][["row_selection"]] <<- row_selection
     par_tmp[[session$token]][["sample_selection"]] <<- sample_selection
-    par_tmp[[session$token]][["providedRowAnnotationTypes"]] <<- providedRowAnnotationTypes
+    par_tmp[[session$token]][["row_type"]] <<- row_type
+    par_tmp[[session$token]][["sample_type"]] <<- sample_type
+    par_tmp[[session$token]]['propensity'] <<- propensity
     print("Alright do Row selection")
-
-    selected <- c()
-
-    if(any(row_selection == "all")){
-      selected <- rownames(rowData(res_tmp[[session$token]]$data_original))
-    } else if(!(length(row_selection) == 1 & any(row_selection == "High Values+IQR"))){
-      selected <- unique(c(
-        selected,
-        rownames(rowData(res_tmp[[session$token]]$data_original))[
-          which(rowData(res_tmp[[session$token]]$data_original)[,providedRowAnnotationTypes]%in%row_selection)
-        ]
-      ))
-    }
-    if(any(row_selection == "High Values+IQR")){
-      if(length(row_selection) == 1){
-        toKeep <- filter_rna(
-          rna = assay(res_tmp[[session$token]]$data_original),
-          prop = input$propensityChoiceUser
-        )
-        filteredIQR_Expr <- assay(res_tmp[[session$token]]$data_original)[toKeep,]
-        selected <- rownames(filteredIQR_Expr)
-      } else {
-        toKeep <- filter_rna(
-          rna = assay(res_tmp[[session$token]]$data_original)[selected,],
-          prop = input$propensityChoiceUser
-        )
-        filteredIQR_Expr <- assay(res_tmp[[session$token]]$data_original)[toKeep,]
-        selected <- intersect(selected, rownames(filteredIQR_Expr))
-      }
-      par_tmp[[session$token]]['propensity'] <<- input$propensityChoiceUser
-      remove(filteredIQR_Expr)
-    }
-
-    # Column Selection
-    samples_selected <- c()
-    if(any(sample_selection == "all")){
-      samples_selected <- colnames(assay(res_tmp[[session$token]]$data_original))
-    }else{
-      samples_selected <- c(
-        samples_selected,
-        rownames(colData(res_tmp[[session$token]]$data_original))[which(
-          colData(res_tmp[[session$token]]$data_original)[,input$providedSampleAnnotationTypes] %in% sample_selection
-          )]
-        )
-    }
     # Data set selection
-    res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data_original[selected,samples_selected]
-    par_tmp[[session$token]][['samples_selected']] <<- samples_selected
-    par_tmp[[session$token]][['entities_selected']] <<- selected
+    res_select <<- select_data(
+        data = res_tmp[[session$token]]$data_original,
+        selected_rows = row_selection,
+        selected_samples = sample_selection,
+        row_type = row_type,
+        sample_type = sample_type,
+        propensity = propensity
+    )
+    res_tmp[[session$token]]$data <<- res_select$data
+    par_tmp[[session$token]][['samples_selected']] <<- res_select$samples_selected
+    par_tmp[[session$token]][['entities_selected']] <<- res_select$rows_selected
     return("Selection Success")
   })
   

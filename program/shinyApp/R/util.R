@@ -36,26 +36,53 @@ update_data <- function(session_id){
 }
 
 
-select_data <- function(data, selected_samples, sample_type, useBatch = F){
-  # select data for e.g. pca's or alike
-  if(useBatch){
-    data_entry <- "data_batch_corrected"
-  } else {
-    data_entry <- "data"
+select_data <- function(
+  data, selected_samples, sample_type, selected_rows = "all", row_type = NULL, propensity = 1
+){
+  # select data based on selected samples
+  if(is.null(row_type)) {
+    row_type <- c(colnames(colData(data)))[1]
   }
   samples_selected <- c()
-  if(any(selected_samples == "all")){
-    samples_selected <- colnames(assay(data[[data_entry]]))
-  }else{
-    samples_selected <- c(
+  if(any(selected_samples == "all")) {
+    samples_selected <- colnames(assay(data))
+  } else {
+    samples_selected <- unique(c(
       samples_selected,
-      rownames(colData(data[[data_entry]]))[which(
-        colData(data[[data_entry]])[,sample_type] %in% selected_samples
+      rownames(colData(data))[which(
+        colData(data)[,sample_type] %in% selected_samples
         )]
-      )
+      ))
   }
-  data[[data_entry]] <- data[[data_entry]][,samples_selected]
-  return(data)
+  rows_selected <- c()
+  if(any(selected_rows == "all")){
+    rows_selected <- rownames(data)
+  } else if ("High Values+IQR" %in% selected_rows && length(selected_rows) == 1) {
+    # Do nothing, as we don't want to modify `selected` in this case
+  } else {
+    rows_selected <- unique(c(
+      rows_selected,
+      rownames(rowData(data))[
+        rowData(data)[, row_type] %in% selected_rows
+      ]
+    ))
+  }
+  if (any(selected_rows == "High Values+IQR")) {
+     if(length(row_selection) == 1) {
+       prefiltered_data <- assay(data)
+       rows_selected <- rownames(data)
+     } else {
+       prefiltered_data <- assay(data)[rows_selected, ]
+     }
+    toKeep <- filter_rna(prefiltered_data, propensity)
+    rows_selected <- intersect(rows_selected, toKeep)
+  }
+  data <- data[rows_selected,samples_selected]
+  return(list(
+    data = data,
+    samples_selected = samples_selected,
+    rows_selected = rows_selected
+  ))
 }
 
 
