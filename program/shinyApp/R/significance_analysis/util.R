@@ -374,13 +374,15 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot,
-      legendgroup="color"
+      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
+      legendgroup = "color"
     ) %>% layout(
       showlegend = TRUE
     )})
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
-      legendgroup="color"
+      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
+      legendgroup = "color"
     ) %>% layout(
       showlegend = TRUE
     )})
@@ -675,20 +677,32 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         ),
         tabPanel(
           title = "Volcano",
-          splitLayout(
-            style = "border: 1px solid silver:",
-            cellWidths = c("40%", "60%"),
-            plotlyOutput(
-              outputId = ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))
-            ),
-            plotlyOutput(
-              outputId = ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))
-            )
+          plotlyOutput(
+            outputId = ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))
+          ),
+          plotlyOutput(
+            outputId = ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))
           ),
           hr(style = "border-top: 1px solid #000000;"),
-          uiOutput(outputId = ns(paste(contrast[1], contrast[2], "psig_th_ui", sep = "_"))),
-          uiOutput(outputId = ns(paste(contrast[1], contrast[2], "lfc_th_ui", sep = "_"))),
-          uiOutput(outputId = ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_"))),
+          fluidRow(
+            id = ns("aligned_row"),  # Assign an ID to apply CSS
+            class = "align-bottom",
+            column(3, uiOutput(outputId = ns(paste(contrast[1], contrast[2], "psig_th_ui", sep = "_")))),
+            column(3, uiOutput(outputId = ns(paste(contrast[1], contrast[2], "lfc_th_ui", sep = "_")))),
+            column(3, uiOutput(outputId = ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_")))),
+            column(3,
+             checkboxInput(
+                ns(paste(contrast[1], contrast[2], "show_legend_adj", sep = "_")),
+                "Show Legend Corrected",
+                value = TRUE
+             ),
+             checkboxInput(
+                ns(paste(contrast[1], contrast[2], "show_legend_raw", sep = "_")),
+                "Show Legend Uncorrected",
+                value = TRUE
+             ),
+            )
+          ),
           splitLayout(
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
@@ -813,6 +827,9 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   psig_th <- ns(paste(contrast[1], contrast[2], "psig_th", sep = "_"))
   lfc_th <- ns(paste(contrast[1], contrast[2], "lfc_th", sep = "_"))
   Volcano_anno_tooltip <- ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip", sep = "_"))
+  show_legend_adj <- ns(paste(contrast[1], contrast[2], "show_legend_adj", sep = "_"))
+  show_legend_raw <- ns(paste(contrast[1], contrast[2], "show_legend_raw", sep = "_"))
+
   output[[ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_"))]] <- renderUI({
     selectInput(
       inputId = Volcano_anno_tooltip,
@@ -847,6 +864,16 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       input[[psig_th]],
       input[[lfc_th]]
     )
+  })
+  observeEvent(input[[show_legend_adj]], {
+    print("Show legend adjusted")
+    plotlyProxy(paste(contrast[1], contrast[2], "Volcano", sep = "_")) %>%
+      plotlyProxyInvoke(method = "relayout", list(showlegend = input[[show_legend_adj]]))
+  })
+  observeEvent(input[[show_legend_raw]], {
+    print("Show legend raw")
+    plotlyProxy(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_")) %>%
+      plotlyProxyInvoke(method = "relayout", list(showlegend = input[[show_legend_raw]]))
   })
   observeEvent(toPlotVolcano(), {
     req(input[[psig_th]], input[[lfc_th]])
@@ -894,55 +921,61 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       aes(label=chosenAnno)
     ) +
       geom_point(aes(
-        x = log2FoldChange,
-        y = -log10(padj),
+        x = -log10(padj),
+        y = log2FoldChange,
         colour = combined
       )) +
-      geom_hline(
-        yintercept = -log10(sig_ana_reactive$th_psig),
+      geom_vline(
+        xintercept = -log10(sig_ana_reactive$th_psig),
         color="lightgrey"
         ) +
-      geom_vline(
-        xintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
+      geom_hline(
+        yintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
         color="lightgrey"
         ) +
       scale_color_manual(values=colorScheme2, name="") +
-      xlab("Log FoldChange") +
-      ylab("-log10(p_adj-value)") +
+      ylab("Log FoldChange") +
+      xlab("-log10(p_adj-value)") +
       ggtitle(label="Corrected p-Values") +
       CUSTOM_THEME
-    
-    output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
-      sig_ana_reactive$VolcanoPlot  + theme(legend.position = "none"),
-      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
-      legendgroup="color"
-    )})
+
+
     sig_ana_reactive$VolcanoPlot_raw <- ggplot(
       sig_ana_reactive$data4Volcano,
       aes(label=chosenAnno)
     ) +
       geom_point(aes(
-          x = log2FoldChange,
-          y = -log10(pvalue),
+          x = -log10(pvalue),
+          y = log2FoldChange,
           colour = combined_raw)) +
-      geom_hline(
-          yintercept = -log10(sig_ana_reactive$th_psig),
+      geom_vline(
+          xintercept = -log10(sig_ana_reactive$th_psig),
           color="lightgrey"
       ) +
-      geom_vline(
-          xintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
+      geom_hline(
+          yintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
           color="lightgrey"
       ) +
       scale_color_manual(values=colorScheme2, name="") +
-      xlab("Log FoldChange") +
-      ylab("-log10(p-value)") +
-      ggtitle(label="Uncorrected p-Values")+
+      ylab("Log FoldChange") +
+      xlab("-log10(p-value)") +
+      ggtitle(label="Uncorrected p-Values") +
       CUSTOM_THEME
     
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
       tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
       legendgroup = "color"
+    ) %>% layout(
+      showlegend = TRUE
+    )})
+
+    output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
+      sig_ana_reactive$VolcanoPlot  + theme(legend.position = "none"),
+      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
+      legendgroup="color"
+    ) %>% layout(
+      showlegend = TRUE
     )})
   })
 
