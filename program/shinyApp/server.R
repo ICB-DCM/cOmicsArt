@@ -595,7 +595,6 @@ server <- function(input,output,session){
           )
         },
         error = function(e) {
-          browser()
           # Handle errors specifically
           output$DataMatrix_VI <- DT::renderDataTable({
             DT::datatable(data = data.frame(Error = "Invalid data for display"))
@@ -1490,7 +1489,6 @@ server <- function(input,output,session){
     
     # Batch correction after preprocessing
     tryCatch({
-      browser()
       res_batch <- batch_correction(
         data = if(preprocessing_procedure == "vst_DESeq"){data_selected}else{data},
         preprocessing_procedure = preprocessing_procedure,
