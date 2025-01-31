@@ -49,7 +49,7 @@ Do you want to...
 - Learn how to upload your data? → Go to [Data Input](01-required-data-input.md)
 - Understand how to select and filter your data? → Go to [Data selection](02-selection.md)
 - Discover the pre-processing options available? → Go to [Pre-processing](03-pre-processing.md)
-- Perform significance analysis on your data? → Go to [Significance Analysis](05-significance-analysis.md)
+- Perform differential analysis on your data? → Go to [Differential Analysis](05-significance-analysis.md)
 - Conduct Principal Component Analysis? → Go to [PCA](06-pca.md)
 - Visualize your data with heatmaps? → Go to [Heatmap](07-heatmap.md)
 - Visualize individual genes? → Go to [Single Gene Visualisations](08-single-gene-visualisations.md)

@@ -81,21 +81,32 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         ),
         tabPanel(
           title = "Volcano",
-          splitLayout(
-            id=ns(paste(contrast[1], contrast[2], "test", sep = "_")),
-            style = "border: 1px solid silver:",
-            cellWidths = c("40%", "60%"),
-            plotlyOutput(
-              outputId = ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))
-            ),
-            plotlyOutput(
-              outputId = ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))
-            )
+          plotlyOutput(
+            outputId = ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))
+          ),
+          plotlyOutput(
+            outputId = ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))
           ),
           hr(style = "border-top: 1px solid #000000;"),
-          uiOutput(outputId = ns(paste(contrast[1], contrast[2], "psig_th_ui", sep = "_"))),
-          uiOutput(outputId = ns(paste(contrast[1], contrast[2], "lfc_th_ui", sep = "_"))),
-          uiOutput(outputId = ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_"))),
+          fluidRow(
+            id = ns("aligned_row"),  # Assign an ID to apply CSS
+            class = "align-bottom",
+            column(3, uiOutput(outputId = ns(paste(contrast[1], contrast[2], "psig_th_ui", sep = "_")))),
+            column(3, uiOutput(outputId = ns(paste(contrast[1], contrast[2], "lfc_th_ui", sep = "_")))),
+            column(3, uiOutput(outputId = ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_")))),
+            column(3,
+             checkboxInput(
+                ns(paste(contrast[1], contrast[2], "show_legend_adj", sep = "_")),
+                "Show Legend Corrected",
+                value = TRUE
+             ),
+             checkboxInput(
+                ns(paste(contrast[1], contrast[2], "show_legend_raw", sep = "_")),
+                "Show Legend Uncorrected",
+                value = TRUE
+             ),
+            )
+          ),
           splitLayout(
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
@@ -215,6 +226,9 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   psig_th <- ns(paste(contrast[1], contrast[2], "psig_th", sep = "_"))
   lfc_th <- ns(paste(contrast[1], contrast[2], "lfc_th", sep = "_"))
   Volcano_anno_tooltip <- ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip", sep = "_"))
+  show_legend_adj <- ns(paste(contrast[1], contrast[2], "show_legend_adj", sep = "_"))
+  show_legend_raw <- ns(paste(contrast[1], contrast[2], "show_legend_raw", sep = "_"))
+  
   output[[ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_"))]] <- renderUI({
     selectInput(
     inputId = Volcano_anno_tooltip,
@@ -251,6 +265,16 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       input[[Volcano_anno_tooltip]]
     )
   })
+  observeEvent(input[[show_legend_adj]], {
+    print("Show legend adjusted")
+    plotlyProxy(paste(contrast[1], contrast[2], "Volcano", sep = "_")) %>%
+      plotlyProxyInvoke(method = "relayout", list(showlegend = input[[show_legend_adj]]))
+  })
+  observeEvent(input[[show_legend_raw]], {
+    print("Show legend raw")
+    plotlyProxy(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_")) %>%
+      plotlyProxyInvoke(method = "relayout", list(showlegend = input[[show_legend_raw]]))
+  })
   observeEvent(toPlotVolcano(), {
     print("Plot volcano")
     req(input[[psig_th]], input[[lfc_th]], input[[Volcano_anno_tooltip]])
@@ -272,22 +296,31 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     # plot volcano plot
     data4Volcano <- result
     data4Volcano$probename <- rownames(data4Volcano)
-    data4Volcano$threshold <- ifelse(data4Volcano$padj>sig_ana_reactive$th_psig,"non-significant","significant")
-    data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>sig_ana_reactive$th_psig,"non-significant","significant")
+    data4Volcano$threshold <- ifelse(data4Volcano$padj>sig_ana_reactive$th_psig,"Non-Sig","Sig")
+    data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>sig_ana_reactive$th_psig,"Non-Sig","Sig")
     data4Volcano$threshold_fc <- ifelse(
       data4Volcano$log2FoldChange>sig_ana_reactive$th_lfc,
-      "up-regulated",
+      "Up",
       ifelse(
         data4Volcano$log2FoldChange<(-sig_ana_reactive$th_lfc),
-        "down-regulated", " "
+        "Down", " "
       )
     )
-    data4Volcano$combined <- paste0(data4Volcano$threshold," + ",data4Volcano$threshold_fc)
-    data4Volcano$combined_raw <- paste0(data4Volcano$threshold_raw," + ",data4Volcano$threshold_fc)
+    data4Volcano$combined <- ifelse(
+      data4Volcano$threshold_fc == " ",
+      data4Volcano$threshold,
+      paste(data4Volcano$threshold, data4Volcano$threshold_fc, sep = " + ")
+    )
+
+    data4Volcano$combined_raw <- ifelse(
+      data4Volcano$threshold_fc == " ",
+      data4Volcano$threshold_raw,
+      paste(data4Volcano$threshold_raw, data4Volcano$threshold_fc, sep = " + ")
+    )
     colorScheme2 <- c("#cf0e5bCD", "#0e5bcfCD", "#939596CD","#cf0e5b1A", "#0e5bcf1A", "#9395961A")
     names(colorScheme2) <- c(
-      "significant + up-regulated", "significant + down-regulated", "significant +  ",
-      "non-significant + up-regulated", "non-significant + down-regulated", "non-significant +  "
+      "Sig + Up", "Sig + Down", "Sig",
+      "Non-Sig + Up", "Non-Sig + Down", "Non-Sig"
     )
 
     # remove NA values
@@ -298,55 +331,60 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       aes(label=chosenAnno)
     ) +
       geom_point(aes(
-        x = log2FoldChange,
-        y = -log10(padj),
+        x = -log10(padj),
+        y = log2FoldChange,
         colour = combined
       )) +
-      geom_hline(
-        yintercept = -log10(sig_ana_reactive$th_psig),
+      geom_vline(
+        xintercept = -log10(sig_ana_reactive$th_psig),
         color="lightgrey"
         ) +
-      geom_vline(
-        xintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
+      geom_hline(
+        yintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
         color="lightgrey"
         ) +
       scale_color_manual(values=colorScheme2, name="") +
-      xlab("Log FoldChange") +
-      ylab("-log10(p_adj-value)") +
-      theme(legend.position = "none") +
+      ylab("Log FoldChange") +
+      xlab("-log10(p_adj-value)") +
       ggtitle(label="Corrected p-Values") +
       CUSTOM_THEME
-    
-    output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
-      sig_ana_reactive$VolcanoPlot,
-      legendgroup="color"
-    )})
+
+
     sig_ana_reactive$VolcanoPlot_raw <- ggplot(
       sig_ana_reactive$data4Volcano,
       aes(label=chosenAnno)
     ) +
       geom_point(aes(
-          x = log2FoldChange,
-          y = -log10(pvalue),
+          x = -log10(pvalue),
+          y = log2FoldChange,
           colour = combined_raw)) +
-      geom_hline(
-          yintercept = -log10(sig_ana_reactive$th_psig),
+      geom_vline(
+          xintercept = -log10(sig_ana_reactive$th_psig),
           color="lightgrey"
       ) +
-      geom_vline(
-          xintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
+      geom_hline(
+          yintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
           color="lightgrey"
       ) +
       scale_color_manual(values=colorScheme2, name="") +
-      xlab("Log FoldChange") +
-      ylab("-log10(p-value)") +
+      ylab("Log FoldChange") +
+      xlab("-log10(p-value)") +
       ggtitle(label="Uncorrected p-Values") +
       CUSTOM_THEME
     
-      output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
-
+    output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
+      sig_ana_reactive$VolcanoPlot,
+      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
+      legendgroup = "color"
+    ) %>% layout(
+      showlegend = TRUE
+    )})
+    output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
-      legendgroup="color"
+      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
+      legendgroup = "color"
+    ) %>% layout(
+      showlegend = TRUE
     )})
   })
 
@@ -355,7 +393,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_val", sep = "_")]])){
           req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_val", sep = "_")]])
       }
-      fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
       fun_LogIt(message = "### Info")
       log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
       fun_LogIt(message = "### Publication Snippet")
@@ -369,7 +407,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_both_val", sep = "_")]])){
         req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_both", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_both_val", sep = "_")]])
       }
-      fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
       fun_LogIt(message = "### Info")
       log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
                            sig_ana_reactive$data4Volcano, contrast, file_path)
@@ -385,7 +423,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_raw_val", sep = "_")]])){
         req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_raw", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_raw_val", sep = "_")]])
       }
-      fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
       fun_LogIt(message = "### Info")
       log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
       fun_LogIt(message = "### Publication Snippet")
@@ -513,7 +551,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       contentType = "application/zip"
     )
 
-  output[[ns("SavePlot_Volcano")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano", sep = "_"))]] <- downloadHandler(
     filename = function() {paste0("VOLCANO_", Sys.time(), input[[ns("file_ext_Volcano")]])},
     content = function(file){
       ggsave(
@@ -522,7 +560,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
-        fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
@@ -530,7 +568,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
                                            params = par_tmp[[session$token]]))
       })
     })
-  output[[ns("SavePlot_Volcano_raw")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_raw", sep = "_"))]] <- downloadHandler(
     filename = function() { paste("raw_VOLCANO",Sys.time(),input[[ns("file_ext_Volcano_raw")]],sep="") },
     content = function(file){
       ggsave(
@@ -539,7 +577,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         device = gsub("\\.","",input[[ns("file_ext_Volcano_raw")]])
         )
       on.exit({
-        fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
@@ -547,7 +585,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
                                            params = par_tmp[[session$token]]))
       })
     })
-  output[[ns("SavePlot_Volcano_both")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_both", sep = "_"))]] <- downloadHandler(
     filename = function() { paste0("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]]) },
     content = function(file){
       ggsave(
@@ -556,7 +594,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
-        fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
                              sig_ana_reactive$data4Volcano, contrast, file_path)
@@ -639,42 +677,54 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         ),
         tabPanel(
           title = "Volcano",
-          splitLayout(
-            style = "border: 1px solid silver:",
-            cellWidths = c("40%", "60%"),
-            plotlyOutput(
-              outputId = ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))
-            ),
-            plotlyOutput(
-              outputId = ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))
-            )
+          plotlyOutput(
+            outputId = ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))
+          ),
+          plotlyOutput(
+            outputId = ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))
           ),
           hr(style = "border-top: 1px solid #000000;"),
-          uiOutput(outputId = ns(paste(contrast[1], contrast[2], "psig_th_ui", sep = "_"))),
-          uiOutput(outputId = ns(paste(contrast[1], contrast[2], "lfc_th_ui", sep = "_"))),
-          uiOutput(outputId = ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_"))),
+          fluidRow(
+            id = ns("aligned_row"),  # Assign an ID to apply CSS
+            class = "align-bottom",
+            column(3, uiOutput(outputId = ns(paste(contrast[1], contrast[2], "psig_th_ui", sep = "_")))),
+            column(3, uiOutput(outputId = ns(paste(contrast[1], contrast[2], "lfc_th_ui", sep = "_")))),
+            column(3, uiOutput(outputId = ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_")))),
+            column(3,
+             checkboxInput(
+                ns(paste(contrast[1], contrast[2], "show_legend_adj", sep = "_")),
+                "Show Legend Corrected",
+                value = TRUE
+             ),
+             checkboxInput(
+                ns(paste(contrast[1], contrast[2], "show_legend_raw", sep = "_")),
+                "Show Legend Uncorrected",
+                value = TRUE
+             ),
+            )
+          ),
           splitLayout(
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
             h5("Volcano plot padj"),
             h5("Both Volcano plots"),
             h5("Volcano plot pvalue")
-          ),
+          ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
           splitLayout(
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
             actionButton(
-              inputId = ns("only2Report_Volcano"),
+              inputId = ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_")),
               label = "Send only to Report",
               class = "btn-info"
             ),
             actionButton(
-              inputId = ns("only2Report_Volcano_both"),
+              inputId = ns(paste(contrast[1], contrast[2], "only2Report_Volcano_both", sep = "_")),
               label = "Send only to Report",
               class = "btn-info"
             ),
             actionButton(
-              inputId = ns("only2Report_Volcano_raw"),
+              inputId = ns(paste(contrast[1], contrast[2], "only2Report_Volcano_raw", sep = "_")),
               label = "Send only to Report",
               class = "btn-info"
             )
@@ -687,11 +737,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
               label = "Get underlying R code and data",
               icon = icon("code")
             ),
-            downloadButton(
-              outputId = ns("getR_Code_Volcano_both"),
-              label = "Get underlying R code and data",
-              icon = icon("code")
-            ),
+            NULL,
             downloadButton(
               outputId = ns("getR_Code_Volcano_raw"),
               label = "Get underlying R code and data",
@@ -702,17 +748,17 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
             downloadButton(
-              outputId = ns("SavePlot_Volcano"),
+              outputId = ns(paste(contrast[1], contrast[2], "SavePlot_Volcano", sep = "_")),
               label = "Save plot",
               class = "btn-info"
             ),
             downloadButton(
-              outputId = ns("SavePlot_Volcano_both"),
+              outputId = ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_both", sep = "_")),
               label = "Save plot",
               class = "btn-info"
             ),
             downloadButton(
-              outputId = ns("SavePlot_Volcano_raw"),
+              outputId = ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_raw", sep = "_")),
               label = "Save plot",
               class = "btn-info"
             )
@@ -777,6 +823,9 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   psig_th <- ns(paste(contrast[1], contrast[2], "psig_th", sep = "_"))
   lfc_th <- ns(paste(contrast[1], contrast[2], "lfc_th", sep = "_"))
   Volcano_anno_tooltip <- ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip", sep = "_"))
+  show_legend_adj <- ns(paste(contrast[1], contrast[2], "show_legend_adj", sep = "_"))
+  show_legend_raw <- ns(paste(contrast[1], contrast[2], "show_legend_raw", sep = "_"))
+
   output[[ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_"))]] <- renderUI({
     selectInput(
       inputId = Volcano_anno_tooltip,
@@ -812,6 +861,16 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       input[[lfc_th]]
     )
   })
+  observeEvent(input[[show_legend_adj]], {
+    print("Show legend adjusted")
+    plotlyProxy(paste(contrast[1], contrast[2], "Volcano", sep = "_")) %>%
+      plotlyProxyInvoke(method = "relayout", list(showlegend = input[[show_legend_adj]]))
+  })
+  observeEvent(input[[show_legend_raw]], {
+    print("Show legend raw")
+    plotlyProxy(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_")) %>%
+      plotlyProxyInvoke(method = "relayout", list(showlegend = input[[show_legend_raw]]))
+  })
   observeEvent(toPlotVolcano(), {
     req(input[[psig_th]], input[[lfc_th]])
     waiter <- Waiter$new(
@@ -831,22 +890,22 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     # plot volcano plot
     data4Volcano <- as.data.frame(result)
     data4Volcano$probename <- rownames(data4Volcano)
-    data4Volcano$threshold <- ifelse(data4Volcano$padj>sig_ana_reactive$th_psig,"non-significant","significant")
-    data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>sig_ana_reactive$th_psig,"non-significant","significant")
+    data4Volcano$threshold <- ifelse(data4Volcano$padj>sig_ana_reactive$th_psig,"Non-Sig","significant")
+    data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>sig_ana_reactive$th_psig,"Non-Sig","significant")
     data4Volcano$threshold_fc <- ifelse(
       data4Volcano$log2FoldChange>sig_ana_reactive$th_lfc,
-      "up-regulated",
+      "Up",
       ifelse(
         data4Volcano$log2FoldChange<(-sig_ana_reactive$th_lfc),
-        "down-regulated", " "
+        "Down", " "
       )
     )
     data4Volcano$combined <- paste0(data4Volcano$threshold," + ",data4Volcano$threshold_fc)
     data4Volcano$combined_raw <- paste0(data4Volcano$threshold_raw," + ",data4Volcano$threshold_fc)
     colorScheme2 <- c("#cf0e5bCD", "#0e5bcfCD", "#939596CD","#cf0e5b1A", "#0e5bcf1A", "#9395961A")
     names(colorScheme2) <- c(
-      "significant + up-regulated", "significant + down-regulated", "significant +  ",
-      "non-significant + up-regulated", "non-significant + down-regulated", "non-significant +  "
+      "significant + Up", "significant + Down", "significant +  ",
+      "Non-Sig + Up", "Non-Sig + Down", "Non-Sig +  "
     )
 
     # remove NA values
@@ -858,88 +917,108 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       aes(label=chosenAnno)
     ) +
       geom_point(aes(
-        x = log2FoldChange,
-        y = -log10(padj),
+        x = -log10(padj),
+        y = log2FoldChange,
         colour = combined
       )) +
-      geom_hline(
-        yintercept = -log10(sig_ana_reactive$th_psig),
+      geom_vline(
+        xintercept = -log10(sig_ana_reactive$th_psig),
         color="lightgrey"
         ) +
-      geom_vline(
-        xintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
+      geom_hline(
+        yintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
         color="lightgrey"
         ) +
       scale_color_manual(values=colorScheme2, name="") +
-      xlab("Log FoldChange") +
-      ylab("-log10(p_adj-value)") +
-      theme(legend.position = "none") +
+      ylab("Log FoldChange") +
+      xlab("-log10(p_adj-value)") +
       ggtitle(label="Corrected p-Values") +
       CUSTOM_THEME
-    
-    output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
-      sig_ana_reactive$VolcanoPlot,
-      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
-      legendgroup="color"
-    )})
+
+
     sig_ana_reactive$VolcanoPlot_raw <- ggplot(
       sig_ana_reactive$data4Volcano,
       aes(label=chosenAnno)
     ) +
       geom_point(aes(
-          x = log2FoldChange,
-          y = -log10(pvalue),
+          x = -log10(pvalue),
+          y = log2FoldChange,
           colour = combined_raw)) +
-      geom_hline(
-          yintercept = -log10(sig_ana_reactive$th_psig),
+      geom_vline(
+          xintercept = -log10(sig_ana_reactive$th_psig),
           color="lightgrey"
       ) +
-      geom_vline(
-          xintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
+      geom_hline(
+          yintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
           color="lightgrey"
       ) +
       scale_color_manual(values=colorScheme2, name="") +
-      xlab("Log FoldChange") +
-      ylab("-log10(p-value)") +
-      ggtitle(label="Uncorrected p-Values")+
+      ylab("Log FoldChange") +
+      xlab("-log10(p-value)") +
+      ggtitle(label="Uncorrected p-Values") +
       CUSTOM_THEME
     
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
       sig_ana_reactive$VolcanoPlot_raw,
       tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
       legendgroup = "color"
+    ) %>% layout(
+      showlegend = TRUE
+    )})
+
+    output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
+      sig_ana_reactive$VolcanoPlot  + theme(legend.position = "none"),
+      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
+      legendgroup="color"
+    ) %>% layout(
+      showlegend = TRUE
     )})
   })
 
   # downloadhandlers
-  observeEvent(input[[ns("only2Report_Volcano")]],{
-    fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
-    fun_LogIt(message = "### Publication Snippet")
-    fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                       params = par_tmp[[session$token]]))
-  })
+  session$userData[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_"))]] <- observeEvent(
+    input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_"))]], {
+      if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_val", sep = "_")]])){
+          req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_val", sep = "_")]])
+      }
+      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(message = "### Info")
+      log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
+      fun_LogIt(message = "### Publication Snippet")
+      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
+                                         params = par_tmp[[session$token]]))
+    }
+  )
 
-  observeEvent(input[[ns("only2Report_Volcano_both")]],{
-    fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot)
-                         , sig_ana_reactive$data4Volcano, contrast, file_path)
-   # log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
-    fun_LogIt(message = "### Publication Snippet")
-    fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                       params = par_tmp[[session$token]]))
-  })
+  session$userData[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_both", sep = "_"))]] <- observeEvent(
+    input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_both", sep = "_"))]],{
+      if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_both_val", sep = "_")]])){
+        req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_both", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_both_val", sep = "_")]])
+      }
+      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(message = "### Info")
+      log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
+                           sig_ana_reactive$data4Volcano, contrast, file_path)
+      #log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
+      fun_LogIt(message = "### Publication Snippet")
+      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
+                                         params = par_tmp[[session$token]]))
+    }
+  )
 
-  observeEvent(input[[ns("only2Report_Volcano_raw")]],{
-    fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
-    fun_LogIt(message = "### Publication Snippet")
-    fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                       params = par_tmp[[session$token]]))
-  })
+  session$userData[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_raw", sep = "_"))]] <- observeEvent(
+    input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_raw", sep = "_"))]],{
+      if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_raw_val", sep = "_")]])){
+        req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_raw", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_raw_val", sep = "_")]])
+      }
+      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(message = "### Info")
+      log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
+      fun_LogIt(message = "### Publication Snippet")
+      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
+                                         params = par_tmp[[session$token]]))
+    }
+  )
 
   output[[ns("getR_Code_Volcano")]] <- downloadHandler(
     filename = function(){
@@ -1060,7 +1139,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     contentType = "application/zip"
   )
 
-  output[[ns("SavePlot_Volcano")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano", sep = "_"))]] <- downloadHandler(
     filename = function() { paste("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]],sep="") },
     content = function(file){
       ggsave(
@@ -1069,15 +1148,18 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
-        fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
-        log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
+        log_messages_volcano(
+          sig_ana_reactive$VolcanoPlot,
+          sig_ana_reactive$data4Volcano, contrast, file_path
+        )
         fun_LogIt(message = "### Publication Snippet")
         fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
                                            params = par_tmp[[session$token]]))
       })
     })
-  output[[ns("SavePlot_Volcano_raw")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_raw", sep = "_"))]] <- downloadHandler(
     filename = function() { paste("raw_VOLCANO",Sys.time(),input[[ns("file_ext_Volcano_raw")]],sep="") },
     content = function(file){
       ggsave(
@@ -1086,7 +1168,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         device = gsub("\\.","",input[[ns("file_ext_Volcano_raw")]])
         )
       on.exit({
-        fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
@@ -1095,7 +1177,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
 
       })
     })
-  output[[ns("SavePlot_Volcano_both")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_both", sep = "_"))]] <- downloadHandler(
     filename = function() { paste0("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]]) },
     content = function(file){
       ggsave(
@@ -1104,7 +1186,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
         )
       on.exit({
-        fun_LogIt(message = "## Significance analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot)
                              , sig_ana_reactive$data4Volcano, contrast, file_path)

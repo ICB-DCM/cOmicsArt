@@ -45,6 +45,7 @@ library(gridExtra)
 library(sva)
 library(pcaPP) # requires gfortran. Not sure how to install on server
 library(reshape2)
+library(cowplot)  # already imported but now we use it explicitly
 # library(svglite)
 
 source("R/C.R")
@@ -185,7 +186,7 @@ ui <- shiny::fluidPage(
         background-color: #FD8D33 !important; /* Strong Orange */
         color: white !important;
       }
-      .tabbable > .nav > li > a[data-value='Significance Analysis'] {
+      .tabbable > .nav > li > a[data-value='Differential Analysis'] {
         background-color: #FFD33547 !important; /* Lighter Yellow */
         color: black !important;
       }
@@ -213,9 +214,19 @@ ui <- shiny::fluidPage(
         background-color: #A208BA35 !important; /* Lighter Purple */
         color: black !important;
       }
-      .tabbable > .nav > li[class=active] > a[data-value='Significance Analysis'] {
+      .tabbable > .nav > li[class=active] > a[data-value='Differential Analysis'] {
         background-color: #A208BA !important; /* Strong Purple */
         color: white !important;
+      }
+      .align-bottom {
+        display: flex;
+        align-items: flex-end;  /* Ensures bottoms align */
+      }
+      .align-bottom > div {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        height: 100%; /* Ensures they stretch equally */
       }
     ")),
     tags$script(HTML("

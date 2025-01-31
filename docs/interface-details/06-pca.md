@@ -58,7 +58,7 @@ Do you want to...
 - Understand how to select and filter your data? → Go to [Data selection](02-selection.md)
 - Discover the pre-processing options available? → Go to [Pre-processing](03-pre-processing.md)
 - Explore how to correlate your samples? → Go to [Sample Correlation](04-sample-correlation.md)
-- Perform significance analysis on your data? → Go to [Significance Analysis](05-significance-analysis.md)
+- Perform differential analysis on your data? → Go to [Differential Analysis](05-significance-analysis.md)
 - Visualize your data with heatmaps? → Go to [Heatmap](07-heatmap.md)
 - Visualize individual genes? → Go to [Single Gene Visualisations](08-single-gene-visualisations.md)
 - Perform enrichment analysis on your data? → Go to [Enrichment Analysis](09-enrichment-analysis.md)
