@@ -314,3 +314,43 @@ check_and_install_package <- function(package_name) {
   return(snippet)
 }
 
+hide_tabs <- function(){
+  hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
+  hideTab(inputId = "tabsetPanel1", target = "Differential Analysis")
+  hideTab(inputId = "tabsetPanel1", target = "PCA")
+  hideTab(inputId = "tabsetPanel1", target = "Heatmap")
+  hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
+  hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+}
+
+show_tabs <- function(){
+  showTab(inputId = "tabsetPanel1", target = "Sample Correlation")
+  showTab(inputId = "tabsetPanel1", target = "Differential Analysis")
+  showTab(inputId = "tabsetPanel1", target = "PCA")
+  showTab(inputId = "tabsetPanel1", target = "Heatmap")
+  showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
+  showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+}
+
+create_warning_preproc <- function(data, preprocessing_procedure){
+  if(preprocessing_procedure == "filterOnly"){
+    addWarning <- "<font color=\"#000000\"><b>Only Filtering of low abundant is done only if Transcriptomics or Metabolomics was chosen</b></font><br>"
+  } else if(preprocessing_procedure == "none"){
+    addWarning <- "<font color=\"#000000\"><b>No Pre-Processing done. Use on your own accord.</b></font><br>"
+  } else{
+    addWarning <- "<font color=\"#000000\"><b>Pre Filtering to remove low abundant entities done if Transcriptomics or Metabolomics was chosen</b></font><br>"
+  }
+
+  if(any(is.na(assay(data)))){
+    print("This might be problem due to mismatched Annotation Data?!")
+    nrow_before <- nrow(assay(data))
+    nrow_after <- nrow(
+      data[complete.cases(assay(data)),]
+    )
+    addWarning <- paste0(addWarning, "<font color=\"#FF0000\"><b>There were NA's after pre-processing, any row containg such was completly removed! (before/after): ",nrow_before,"/",nrow_after,"</b></font><br>")
+    if(!(nrow_after > 0)){
+      addWarning <- paste0(addWarning, "<br> <font color=\"#FF0000\"><b>There is nothing left, choose different pre-processing other-wise App will crash!</b></font><br>")
+    }
+  }
+  return(addWarning)
+}

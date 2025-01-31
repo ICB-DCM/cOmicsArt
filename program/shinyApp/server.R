@@ -1430,11 +1430,11 @@ server <- function(input,output,session){
     ) %>% helper(type = "markdown", content = "PreProcessing_DESeq")
   })
 
-## Do preprocessing ----  
-  # Add initial text to help boxes
   output$Statisitcs_Data <- renderText({
     "Press 'Get-Preprocessing' to start!"
   })
+
+## Preprocessing ----
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
     # only enter this when you actually click data
     req(input$Do_preprocessing > 0)
@@ -1446,138 +1446,80 @@ server <- function(input,output,session){
 
     )
     waiter$show()
-    print("Do Preprocessing")
     print(selectedData())
-    addWarning <- ""
-    par_tmp[[session$token]]['PreProcessing_Procedure'] <<- input$PreProcessing_Procedure
-    par_tmp[[session$token]]['BatchColumn'] <<- input$BatchEffect_Column
+    # ---- Value Assignment and Parameter Saving for later use ----
+    preprocessing_procedure <- input$PreProcessing_Procedure
+    batch_column <- input$BatchEffect_Column %||% "NULL"
+    omic_type <- par_tmp[[session$token]]$omic_type
+    deseq_factors <- input$DESeq_formula_sub %||% NULL
+    rows_selected <- par_tmp[[session$token]][['entities_selected']]
+    samples_selected <- par_tmp[[session$token]][['samples_selected']]
     # reset data to the selection that was done
-    res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]]
+    data <- res_tmp[[session$token]]$data_original[rows_selected,samples_selected]
+    data_selected <- data  # needed for batch correction with DESeq
+    par_tmp[[session$token]]['BatchColumn'] <<- batch_column
     # preprocessing
-    print(paste0("Do chosen Preprocessing:",input$PreProcessing_Procedure))
+    print(paste0("Do chosen Preprocessing:",preprocessing_procedure))
     
     # Check for DESeq option if more than 100 genes avail as it is for omics!
-
     tryCatch({
-      if(input$PreProcessing_Procedure == "vst_DESeq" & nrow(res_tmp[[session$token]]$data) < 100){
-        stop("DESeq Preprocessing is only recommended for omics (here for data with more than 100 genes). Change Pre-processing or your data input!")
-      }else if(input$PreProcessing_Procedure == "vst_DESeq"& nrow(res_tmp[[session$token]]$data) >= 100){
-        res_tmp[[session$token]]$data <<- deseq_processing(
-            data = res_tmp[[session$token]]$data,
-            omic_type = par_tmp[[session$token]]$omic_type,
-            formula_sub = input$DESeq_formula_sub,
-            session_token = session$token,
-            batch_correct = F
-          )
-      } else {
-        res_tmp[[session$token]]$data <<- preprocessing(
-          data = res_tmp[[session$token]]$data,
-          omic_type = par_tmp[[session$token]]$omic_type,
-          procedure = input$PreProcessing_Procedure
-        )
+      preprocess_res <<- preprocessing(
+        data = data,
+        omic_type = omic_type,
+        procedure = preprocessing_procedure,
+        deseq_factors = deseq_factors
+      )
+      par_tmp[[session$token]]['PreProcessing_Procedure'] <<- preprocessing_procedure
+      data <- preprocess_res$data
+      if(preprocessing_procedure == "vst_DESeq"){
+        res_tmp[[session$token]]$DESeq_obj <<- preprocess_res$DESeq_obj
+        par_tmp[[session$token]]["DESeq_formula"] <<- paste("~", paste(deseq_factors, collapse = " + "))
+        par_tmp[[session$token]]["DESeq_factors"] <<- deseq_factors
       }
     }, error = function(e){
       error_modal(e)
-      output$Statisitcs_Data <- renderText({
-        HTML("<span style='color: red;'>There has been an error</span><br>The current data might not be what you expect.<br>Ensure you change something within the data or the Pre-Processing,<br>and click 'Get Pre-Processing' again.<br><span style='color: red;'>You should not see this message before moving to analysis!</span><br>")
-      })
-      hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
-      hideTab(inputId = "tabsetPanel1", target = "Significance Analysis")
-      hideTab(inputId = "tabsetPanel1", target = "PCA")
-      hideTab(inputId = "tabsetPanel1", target = "Heatmap")
-      hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
-      hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
-      
+      output$Statisitcs_Data <- renderText({ERROR_PREPROC})
+      hide_tabs()
       waiter$hide()
       req(FALSE)
     })
+
+    # Checks and Warnings
+    addWarning <- create_warning_preproc(data, preprocessing_procedure)
+    data <- data[complete.cases(assay(data)),]
     
     # Batch correction after preprocessing
-    res_tmp[[session$token]]$data_batch_corrected <<- NULL
-    if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure != "vst_DESeq") {
-      tryCatch({
-        res_tmp[[session$token]]$data_batch_corrected <<- res_tmp[[session$token]]$data
-        assay(res_tmp[[session$token]]$data_batch_corrected) <<- sva::ComBat(
-          dat = assay(res_tmp[[session$token]]$data_batch_corrected),
-          batch = as.factor(colData(res_tmp[[session$token]]$data_batch_corrected)[,input$BatchEffect_Column])
-        )
-      }, error = function(e){
-        error_modal(
-          e, additional_text = "Batch correction failed. Make sure the batch effect column is correct or NULL!"
-        )
-        waiter$hide()
-        output$Statisitcs_Data <- renderText({
-          HTML("<span style='color: red;'>There has been an error</span><br>The current data might not be what you expect.<br>Ensure you change something within the data or the Pre-Processing,<br>and click 'Get Pre-Processing' again.<br><span style='color: red;'>You should not see this message before moving to analysis!</span><br>")
-        })
-        hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
-        hideTab(inputId = "tabsetPanel1", target = "Significance Analysis")
-        hideTab(inputId = "tabsetPanel1", target = "PCA")
-        hideTab(inputId = "tabsetPanel1", target = "Heatmap")
-        hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
-        hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
-        req(FALSE)
-      })
-    } else if (input$BatchEffect_Column != "NULL" & input$PreProcessing_Procedure == "vst_DESeq"){
-      tryCatch({
-        res_tmp[[session$token]]$data_batch_corrected <<- deseq_processing(
-          data = tmp_data_selected,
-          omic_type = par_tmp[[session$token]]$omic_type,
-          formula_sub = c(input$DESeq_formula_sub, input$BatchEffect_Column),
-          session_token = session$token,
-          batch_correct = T
-        )
-      }, error = function(e){
-        error_modal(
-          e, additional_text = paste0(
-            "Batch correction using DESeq failed. Most likely due to linear dependencies ",
-            "in the design matrix (one or more factors informing about another one).",
-            "Make sure the batch effect column is correct and ",
-            "that the design matrix is not singular!"
-          )
-        )
-        waiter$hide()
-        output$Statisitcs_Data <- renderText({
-          HTML("<span style='color: red;'>There has been an error</span><br>The current data might not be what you expect.<br>Ensure you change something within the data or the Pre-Processing,<br>and click 'Get Pre-Processing' again.<br><span style='color: red;'>You should not see this message before moving to analysis!</span><br>")
-        })
-        hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
-        hideTab(inputId = "tabsetPanel1", target = "Significance Analysis")
-        hideTab(inputId = "tabsetPanel1", target = "PCA")
-        hideTab(inputId = "tabsetPanel1", target = "Heatmap")
-        hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
-        hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
-        req(FALSE)
-      })
-    }
-
-    if(input$PreProcessing_Procedure == "filterOnly"){
-      addWarning <- "<font color=\"#000000\"><b>Only Filtering of low abundant is done only if Transcriptomics or Metabolomics was chosen</b></font><br>"
-    } else if(input$PreProcessing_Procedure == "none"){
-      addWarning <- "<font color=\"#000000\"><b>No Pre-Processing done. Use on your own accord.</b></font><br>"
-    } else{
-      addWarning <- "<font color=\"#000000\"><b>Pre Filtering to remove low abundant entities done if Transcriptomics or Metabolomics was chosen</b></font><br>"
-    }
-    print(dim(res_tmp[[session$token]]$data))
-
-    if(any(is.na(assay(res_tmp[[session$token]]$data)))){
-      print("This might be problem due to mismatched Annotation Data?!")
-      nrow_before <- nrow(assay(res_tmp[[session$token]]$data))
-      nrow_after <- nrow(
-        res_tmp[[session$token]]$data[complete.cases(assay(res_tmp[[session$token]]$data)),]
+    tryCatch({
+      browser()
+      res_batch <- batch_correction(
+        data = if(preprocessing_procedure == "vst_DESeq"){data_selected}else{data},
+        preprocessing_procedure = preprocessing_procedure,
+        batch_column = batch_column,
+        deseq_factors = deseq_factors,
+        omic_type = omic_type
       )
-      addWarning <- paste0(addWarning, "<font color=\"#FF0000\"><b>There were NA's after pre-processing, any row containg such was completly removed! (before/after): ",nrow_before,"/",nrow_after,"</b></font><br>")
-      if(!(nrow_after > 0)){
-        addWarning <- paste0(addWarning, "<br> <font color=\"#FF0000\"><b>There is nothing left, choose different pre-processing other-wise App will crash!</b></font><br>")
+      res_tmp[[session$token]]$data_batch_corrected <<- res_batch$data
+      if(preprocessing_procedure == "vst_DESeq"){
+          res_tmp[[session$token]]$DESeq_obj_batch_corrected <<- res_batch$DESeq_obj
+          par_tmp[[session$token]]["DESeq_formula_batch"] <<- paste(
+            "~", paste(c(deseq_factors, batch_column), collapse = " + ")
+          )
       }
-      res_tmp[[session$token]]$data <<- res_tmp[[session$token]]$data[complete.cases(assay(res_tmp[[session$token]]$data)),]
-    }
-    print(colnames(res_tmp[[session$token]]$data))
+    }, error = function(e){
+      error_modal(
+        e, additional_text = ifelse(
+          preprocessing_procedure == "vst_DESeq", ERROR_BATCH_DESEQ, ERROR_BATCH_CORR
+        )
+      )
+      output$Statisitcs_Data <- renderText({ERROR_PREPROC})
+      hide_tabs()
+      waiter$hide()
+      req(FALSE)
+    })
+    # assign res_tmp finally
+    res_tmp[[session$token]]$data <<- data
 
-    showTab(inputId = "tabsetPanel1", target = "Sample Correlation")
-    showTab(inputId = "tabsetPanel1", target = "Differential Analysis")
-    showTab(inputId = "tabsetPanel1", target = "PCA")
-    showTab(inputId = "tabsetPanel1", target = "Heatmap")
-    showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
-    showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+    show_tabs()
     
     # Count up updating
     updating$count <- updating$count + 1
@@ -1591,11 +1533,11 @@ server <- function(input,output,session){
       shinyjs::click("sample_correlation-refreshUI",asis = T)
       paste0(
         "The data has the dimensions of: ",
-        paste0(dim(res_tmp[[session$token]]$data),collapse = ", "),
+        paste0(dim(data),collapse = ", "),
         "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
         "<br","If logX was chosen, in case of 0's present logX(data+1) is done",
         "<br","See help for details",
-        "<br>",ifelse(any(as.data.frame(assay(res_tmp[[session$token]]$data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
+        "<br>",ifelse(any(as.data.frame(assay(data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
     })
     # set the warning as toast
     show_toast(
