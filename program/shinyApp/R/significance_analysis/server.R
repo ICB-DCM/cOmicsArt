@@ -39,11 +39,11 @@ significance_analysis_server <- function(id, data, params){
             sig_ana_reactive$coldata <- colData(data$data)
           }
           req(sig_ana_reactive$coldata)
-          if(params$PreProcessing_Procedure == "vst_DESeq"){
+          if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
             selectInput(
               inputId = ns("sample_annotation_types_cmp"),
               label = "Choose groups to compare",
-              choices = params$DESeq_factors,
+              choices = par_tmp[[session$token]]$DESeq_factors,
               multiple = F,
               selected = NULL
             )
@@ -84,7 +84,7 @@ significance_analysis_server <- function(id, data, params){
         })
         # UI to choose test method
         output$chooseTest_ui <- renderUI({
-          if(params$PreProcessing_Procedure == "vst_DESeq"){
+          if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
             renderText(
               expr = "DESeq is using a Wald test statistic.\nWe are using the same here.",
               outputArgs = list(container = pre)
@@ -131,7 +131,7 @@ significance_analysis_server <- function(id, data, params){
         output$chooseGenesToLookAt_ui <- renderUI({
           req(input$comparisons_to_visualize)
           # choices dependent on preprocess_method
-          if(params$PreProcessing_Procedure == "vst_DESeq"){
+          if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
             choices <- c(
               "Significant",
               "Upregulated",
@@ -174,19 +174,17 @@ significance_analysis_server <- function(id, data, params){
           )
         })
       })
-      # keep updating the info panel while executing
-      observe(
-        shinyjs::html(
-          id = 'significance_analysis_info',
-          sig_ana_reactive$info_text
-        )
-      )
       # refresh the UI/data if needed
       observeEvent(input$refreshUI, {
         data <- update_data(session$token)
         params <- update_params(session$token)
         sig_ana_reactive$coldata <- colData(data$data)
       })
+
+      output$significance_analysis_info <- renderText(
+        sig_ana_reactive$info_text
+      )
+
       # Analysis initial info
       observeEvent(input$significanceGo,{
         shinyjs::showElement(id = "Significance_div", asis = T)
@@ -248,7 +246,7 @@ significance_analysis_server <- function(id, data, params){
           }
         }
         # if preproccesing method was DESeq2, then use DESeq2 for testing
-        if(params$PreProcessing_Procedure == "vst_DESeq"){
+        if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
           if (useBatch){
             dds <- data$DESeq_obj_batch_corrected
           } else {
@@ -340,7 +338,7 @@ significance_analysis_server <- function(id, data, params){
             contrast = contrasts[[i]],
             alpha = input$significance_level,
             ns = ns,
-            preprocess_method = params$PreProcessing_Procedure,
+            preprocess_method = par_tmp[[session$token]]$PreProcessing_Procedure,
             value = paste0("Significance_", i)
           )
           sig_ana_reactive$significance_tabs_to_delete[[i]] <- input$comparisons[i]
@@ -572,7 +570,7 @@ significance_analysis_server <- function(id, data, params){
 
           )
           
-          if(params$PreProcessing_Procedure == "vst_DESeq"){
+          if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
             envList$dds <- data$DESeq_obj
           }
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
@@ -645,7 +643,7 @@ significance_analysis_server <- function(id, data, params){
         fun_LogIt(message = "## Differential analysis {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         # log which tests were performed
-        if(params$PreProcessing_Procedure == "vst_DESeq"){
+        if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
           fun_LogIt(
             message = "- Differential Analysis was performed using DESeq2 pipeline"
           )
@@ -694,7 +692,7 @@ significance_analysis_server <- function(id, data, params){
             )
           ))
           # log the top 5 significant genes
-          if(params$PreProcessing_Procedure == "vst_DESeq" & "result" %in% names(sig_ana_reactive$sig_results[[comparisons[i]]])){
+          if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq" & "result" %in% names(sig_ana_reactive$sig_results[[comparisons[i]]])){
             top5 <- head(
                 sig_ana_reactive$sig_results[[comparisons[i]]]@result[order(
                   sig_ana_reactive$sig_results[[comparisons[i]]]@result$p.adjust,
