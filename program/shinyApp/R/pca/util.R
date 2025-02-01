@@ -10,3 +10,17 @@ check_calculations <- function(current_parameters, module){
   # which will trigger an alert
   return(FALSE)
 }
+
+create_default_title_pca <- function(pcs, preprocessing){
+    # Create a default title for the correlation plot
+    # Parameters:
+    #   correlation_method: character, method used for correlation
+    #   preprocessing: character, preprocessing method
+    # Returns:
+    #   character, default title
+    return(paste0(
+      pcs, " -",
+      "- preprocessing: ",
+      preprocessing
+    ))
+}

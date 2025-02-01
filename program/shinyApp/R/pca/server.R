@@ -1,10 +1,9 @@
 pca_Server <- function(id, data, params, row_select){
-
   moduleServer(
     id,
     function(input,output,session){
       pca_reactives <- reactiveValues(
-        calculate = 0,
+        calculate = -1,
         counter = 0,
         percentVar = NULL,
         pcaData = NULL,
@@ -54,10 +53,6 @@ pca_Server <- function(id, data, params, row_select){
             value = 4,
             step = 1
           )
-        })
-        
-        output$PCA_Info <- renderText({
-          "Press 'Get PCA' to start!"
         })
 
         ## Data Selection UI ---
@@ -112,9 +107,11 @@ pca_Server <- function(id, data, params, row_select){
         )})
       })
 
+      output$PCA_Info <- renderText({
+        pca_reactives$info_text
+      })
 
       toListen2PCA <- reactive({list(
-        input$Do_PCA,
         input$x_axis_selection,
         input$y_axis_selection,
         input$coloring_options,
@@ -127,11 +124,13 @@ pca_Server <- function(id, data, params, row_select){
         input$filterValue,
         input$nPCAs_to_look_at
       )})
+
       # only when we click on Do_PCA, we set the calculate to 1
       session$userData$clicks_observer <- observeEvent(input$Do_PCA,{
         req(input$Do_PCA > pca_reactives$counter)
         shinyjs::showElement(id = "PCA_main_panel_div", asis = TRUE)
         pca_reactives$counter <- input$Do_PCA
+
         check <- check_calculations(list(
           sample_selection_pca = input$sample_selection_pca,
           SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca,
@@ -139,29 +138,24 @@ pca_Server <- function(id, data, params, row_select){
           scale_data = input$scale_data
         ), "PCA")
         if (check == "No Result yet"){
-          output$PCA_Info <- renderText("PCA computed.")
+          pca_reactives$info_text <- "PCA computed."
           pca_reactives$calculate <- 1
         } else if (check == "Result exists"){
-          output$PCA_Info <- renderText(
-            "PCA was already computed, no need to click the Button again."
-          )
+          pca_reactives$info_text <- "PCA was already computed, no need to click the Button again."
           pca_reactives$calculate <- -1
         } else if (check == "Overwrite"){
-          output$PCA_Info <- renderText(
-            "PCA result overwritten with different parameters."
-          )
+          pca_reactives$info_text <- "PCA result overwritten with different parameters."
           pca_reactives$calculate <- 1
         }
-        
-
       })
 
-      observeEvent(toListen2PCA(),{
+      observeEvent(input$Do_PCA,{
         req(input$x_axis_selection)
         req(input$y_axis_selection)
         req(input$coloring_options)
         req(data$data)
         req(input$Do_PCA[1] > 0)
+
         waiter <- Waiter$new(
           html = LOADING_SCREEN,
           color="#70BF4F47"
@@ -169,81 +163,81 @@ pca_Server <- function(id, data, params, row_select){
         waiter$show()
 
         print("PCA analysis on pre-selected data")
-        customTitle <- paste0(
-          "PCA - ", params$omic_type, "-",
-          paste0("entities:",row_select(),collapse = "_"),
-          "-samples",
-          ifelse(any(input$sample_selection != "all"),paste0(" (with: ",paste0(input$sample_selection,collapse = ", "),")"),""),
-          "-preprocessing: ",
-          input$PreProcessing_Procedure
+
+        # assign variables to be used
+        useBatch <- ifelse(
+          par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",
+          TRUE,FALSE
         )
-        print(customTitle)
-        # only calculate PCA, Score and Loadings if the counter is >= 0
-        if(pca_reactives$calculate >= 0){
-          # update the data
-          useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
-          data2plot <- update_data(session$token)
-          if(useBatch){
-              data2plot <- data2plot$data_batch_corrected
-          } else {
-              data2plot <- data2plot$data
-          }
-          # select the neccesary data
-          if(input$data_selection_pca){
-            res_select <- select_data(
-              data2plot,
-              input$sample_selection_pca,
-              input$SampleAnnotationTypes_pca
-            )
-            data2plot <- res_select$data
-          }
-          # set the counter to -1 to prevent any further plotting
-          pca_reactives$calculate <- -1
-          print("Calculate PCA")
-          # PCA, for safety measures, wrap in tryCatch
-          tryCatch({
-            pca <- prcomp(
-              x = as.data.frame(t(as.data.frame(assay(data2plot)))),
-              center = T,
-              scale. = ifelse(input$scale_data == "Yes",T,F)
-            )
-          }, error = function(e){
-            error_modal(e)
-            waiter$hide()
-            return(NULL)
-          })
-          # how much variance is explained by each PC
-          explVar <- pca$sdev^2/sum(pca$sdev^2)
-          names(explVar) <- colnames(pca$x)
-          # transform variance to percent
-          percentVar <- round(100 * explVar, digits = 1)
-
-          # Define data for plotting
-          pcaData <- data.frame(pca$x,colData(data2plot))
-          pca_reactives$pcaData <- pcaData
-          pca_reactives$percentVar <- percentVar
-          pca_reactives$data2plot <- data2plot
-
-          # assign res_temp
-          res_tmp[[session$token]][["PCA"]] <<- pca
-          # assign par_temp as empty list
-          par_tmp[[session$token]][["PCA"]] <<- list(
-            sample_selection_pca = input$sample_selection_pca,
-            SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca,
-            batch = ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F),
-            scale_data = input$scale_data
-          )
+        sample_types <- input$sample_selection_pca %||% c(colnames(colData(data$data)))[1]
+        sample_selection <- input$sample_selection_pca %||% "all"
+        scale_data <- as.logical(input$scale_data)
+        data <- update_data(session$token)
+        if(useBatch){
+            data <- data$data_batch_corrected
         } else {
-          # otherwise read the reactive values
-          percentVar <- pca_reactives$percentVar
-          pcaData <- pca_reactives$pcaData
-          pca <- res_tmp[[session$token]][["PCA"]]
-          data2plot <- pca_reactives$data2plot
+            data <- data$data
         }
+        # TODO: Move this into the PCA function
+        data <- select_data(data, sample_selection, sample_types)$data
 
+        print("Calculate PCA")
+        # PCA, for safety measures, wrap in tryCatch
+        tryCatch({
+          pca <- prcomp(
+            x = as.data.frame(t(as.data.frame(assay(data)))),
+            center = T,
+            scale. = scale_data
+          )
+        }, error = function(e){
+          error_modal(e)
+          waiter$hide()
+          return(NULL)
+        })
+        # how much variance is explained by each PC
+        explVar <- pca$sdev^2/sum(pca$sdev^2)
+        names(explVar) <- colnames(pca$x)
+        # transform variance to percent
+        percentVar <- round(100 * explVar, digits = 1)
 
+        # Define data for plotting
+        pcaData <- data.frame(pca$x,colData(data))
+        pca_reactives$pcaData <- pcaData
+        pca_reactives$percentVar <- percentVar
+        pca_reactives$data <- data
 
+        # assign res_temp
+        res_tmp[[session$token]][["PCA"]] <<- pca
+        # assign par_temp as empty list
+        par_tmp[[session$token]][["PCA"]] <<- list(
+          sample_selection_pca = input$sample_selection_pca,
+          SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca,
+          batch = ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F),
+          scale_data = scale_data
+        )
+        print("PCA computing done")
+        waiter$hide()
+      })
+
+      observeEvent(toListen2PCA(),{
+        req(
+          input$Do_PCA > 0,
+          input$x_axis_selection,
+          input$y_axis_selection,
+          pca_reactives$percentVar,
+          pca_reactives$pcaData,
+          pca_reactives$data
+        )
+        print("PCA plotting")
+        percentVar <- pca_reactives$percentVar
+        pcaData <- pca_reactives$pcaData
+        pca <- res_tmp[[session$token]][["PCA"]]
+        data <- pca_reactives$data
         df_out_r <- NULL
+        customTitle <- create_default_title_pca(
+          pcs = paste0(input$x_axis_selection," vs ",input$y_axis_selection),
+          preprocessing = "None"
+        )
         if(input$Show_loadings == "Yes"){
           df_out <- pca$x
           df_out_r <- as.data.frame(pca$rotation)
@@ -273,8 +267,8 @@ pca_Server <- function(id, data, params, row_select){
           if(!is.null(input$EntitieAnno_Loadings)){
             req(data_input_shiny())
             df_out_r$chosenAnno <- factor(
-              make.unique(as.character(rowData(data2plot)[rownames(df_out_r),input$EntitieAnno_Loadings])),
-              levels = make.unique(as.character(rowData(data2plot)[rownames(df_out_r),input$EntitieAnno_Loadings]))
+              make.unique(as.character(rowData(data)[rownames(df_out_r),input$EntitieAnno_Loadings])),
+              levels = make.unique(as.character(rowData(data)[rownames(df_out_r),input$EntitieAnno_Loadings]))
             )
           }
         }
@@ -311,8 +305,8 @@ Hence, all entities are shown. The total number of entities is: ", length(rownam
         if(!is.null(input$EntitieAnno_Loadings)){
           req(data_input_shiny())
           LoadingsDF$entitie <- factor(
-            make.unique(as.character(rowData(data2plot)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
-            levels = make.unique(as.character(rowData(data2plot)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
+            make.unique(as.character(rowData(data)[rownames(LoadingsDF),input$EntitieAnno_Loadings])),
+            levels = make.unique(as.character(rowData(data)[rownames(LoadingsDF),input$EntitieAnno_Loadings]))
           )
         }
         # Loadings Matrix plot
@@ -338,8 +332,8 @@ Hence, all entities are shown. The total number of entities is: ", length(rownam
           if(!is.null(input$EntitieAnno_Loadings_matrix)){
             req(data_input_shiny())
             df_loadings$chosenAnno <- factor(
-              make.unique(as.character(rowData(data2plot)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix])),
-              levels = make.unique(as.character(rowData(data2plot)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix]))
+              make.unique(as.character(rowData(data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix])),
+              levels = make.unique(as.character(rowData(data)[unique(df_loadings$entity),input$EntitieAnno_Loadings_matrix]))
             )
           } else{
             df_loadings$chosenAnno <- df_loadings$entity
@@ -768,7 +762,6 @@ Hence, all entities are shown. The total number of entities is: ", length(rownam
 
         tmp <- getUserReactiveValues(input)
         par_tmp[[session$token]]$PCA[names(tmp)] <<- tmp
-        waiter$hide()
 
         output$getR_Code_Loadings_matrix <- downloadHandler(
           filename = function(){
