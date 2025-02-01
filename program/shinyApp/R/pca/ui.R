@@ -20,9 +20,9 @@ pca_sidebar_panel <- function(ns){
     radioButtons(
       inputId = ns("scale_data"),
       label = "Scale data to unit variance?",
-      choices = c("Yes","No"),
+      choices = c("Yes" = TRUE, "No" = FALSE),
       # direction = "horizontal",
-      selected = "No"
+      selected = FALSE
     ),
     ### start pca ---
     actionButton(
