@@ -16,7 +16,11 @@ pca_Server <- function(id, data, params, row_select){
         PCA_plot = NULL,
         Scree_plot = NULL,
         Loadings_plot = NULL,
-        LoadingsMatrix_plot = NULL
+        LoadingsMatrix_plot = NULL,
+        waiter = Waiter$new(
+          html = LOADING_SCREEN,
+          color="#70BF4F47"
+        )
       )
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
@@ -150,18 +154,9 @@ pca_Server <- function(id, data, params, row_select){
       })
 
       observeEvent(input$Do_PCA,{
-        req(input$x_axis_selection)
-        req(input$y_axis_selection)
-        req(input$coloring_options)
-        req(data$data)
-        req(input$Do_PCA[1] > 0)
+        req(data_input_shiny()) # for now, probably better one soon
 
-        waiter <- Waiter$new(
-          html = LOADING_SCREEN,
-          color="#70BF4F47"
-        )
-        waiter$show()
-
+        pca_reactives$waiter$show()
         print("PCA analysis on pre-selected data")
 
         # assign variables to be used
@@ -216,7 +211,7 @@ pca_Server <- function(id, data, params, row_select){
           scale_data = scale_data
         )
         print("PCA computing done")
-        waiter$hide()
+        pca_reactives$waiter$hide()
       })
 
       observeEvent(toListen2PCA(),{
