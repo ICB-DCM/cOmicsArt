@@ -84,7 +84,7 @@ sample_correlation_server <- function(id){
         useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
         sample_annotations <- input$SampleAnnotationChoice
         correlation_method <- input$corrMethod
-        customTitleSampleCorrelation <- create_default_title(
+        customTitleSampleCorrelation <- create_default_title_sc(
           correlation_method, par_tmp[[session$token]]$PreProcessing_Procedure
         )
         data <- update_data(session$token)

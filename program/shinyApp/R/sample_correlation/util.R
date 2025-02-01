@@ -25,7 +25,7 @@ assign_colors_SampleCorr <- function(annotation_df) {
   return(anno_colors)
 }  # Currently not used
 
-create_default_title <- function(correlation_method, preprocessing){
+create_default_title_sc <- function(correlation_method, preprocessing){
     # Create a default title for the correlation plot
     # Parameters:
     #   correlation_method: character, method used for correlation
