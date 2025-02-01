@@ -169,7 +169,14 @@ save.function.from.env <- function(wanted,file="utils.R")
   print(paste("A total of ", length(funs), " Functions where written into utils"))
 }
 
-
+save_complex_heatmap <- function(x, filename, type = "pdf") {
+  # Saves a heatmap to a file in different formats
+  stopifnot(!missing(x))
+  stopifnot(!missing(filename))
+  SAVE_FUNCTION[[type]](filename)
+  draw(x)
+  dev.off()
+}
 
 
 save_pheatmap <- function(x, filename, type = "pdf") {

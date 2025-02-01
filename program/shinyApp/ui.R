@@ -46,6 +46,7 @@ library(sva)
 library(pcaPP) # requires gfortran. Not sure how to install on server
 library(reshape2)
 library(cowplot)  # already imported but now we use it explicitly
+library("ComplexHeatmap")
 # library(svglite)
 
 source("R/C.R")

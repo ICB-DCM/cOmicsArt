@@ -1788,11 +1788,7 @@ server <- function(input,output,session){
   # Sample Correlation ----
   # calling server without reactive it will be init upon start, with no update
   # of respective data inputs hence need of at least one reactive!
-  sample_correlation_server(
-    id = "sample_correlation",
-    data = res_tmp[[session$token]],
-    params = par_tmp[[session$token]]
-  )
+  sample_correlation_server(id = "sample_correlation")
   # significance analysis ----
   significance_analysis_server(
     id = 'SignificanceAnalysis',

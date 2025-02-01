@@ -218,6 +218,14 @@ CUSTOM_THEME <<- theme_bw(base_size = 15) +
     plot.title = element_text(size = 17, face = "bold")  # Plot title
   )
 
+# Saving Functions for non ggplots, names list with functions
+SAVE_FUNCTION <<- list(
+  "pdf" = pdf,
+  "png" = png,
+  "tiff" = tiff,
+  "svg" = svglite::svglite
+)
+
 LOADING_SCREEN <- tagList(
   div(
     style = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; padding: 0; margin: 0; box-sizing: border-box; overflow: hidden; background-color: rgba(225, 225, 225, 0.5);", # Light background color
