@@ -173,41 +173,26 @@ pca_Server <- function(id, data, params, row_select){
         } else {
             data <- data$data
         }
-        # TODO: Move this into the PCA function
-        data <- select_data(data, sample_selection, sample_types)$data
-
         print("Calculate PCA")
         # PCA, for safety measures, wrap in tryCatch
         tryCatch({
-          pca <- prcomp(
-            x = as.data.frame(t(as.data.frame(assay(data)))),
-            center = T,
-            scale. = scale_data
-          )
+          pca_res <- get_pca(data, scale_data, sample_types, sample_selection)
+          pca <- pca_res$pca
+          pcaData <- pca_res$pcaData
+          percentVar <- pca_res$percentVar
         }, error = function(e){
           error_modal(e)
-          waiter$hide()
+          pca_reactives$waiter$hide()
           return(NULL)
         })
-        # how much variance is explained by each PC
-        explVar <- pca$sdev^2/sum(pca$sdev^2)
-        names(explVar) <- colnames(pca$x)
-        # transform variance to percent
-        percentVar <- round(100 * explVar, digits = 1)
-
-        # Define data for plotting
-        pcaData <- data.frame(pca$x,colData(data))
-        pca_reactives$pcaData <- pcaData
-        pca_reactives$percentVar <- percentVar
-        pca_reactives$data <- data
 
         # assign res_temp
         res_tmp[[session$token]][["PCA"]] <<- pca
         # assign par_temp as empty list
         par_tmp[[session$token]][["PCA"]] <<- list(
-          sample_selection_pca = input$sample_selection_pca,
-          SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca,
-          batch = ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F),
+          sample_selection = sample_selection,
+          sample_types = sample_types,
+          useBatch = useBatch,
           scale_data = scale_data
         )
         print("PCA computing done")
@@ -227,7 +212,7 @@ pca_Server <- function(id, data, params, row_select){
         percentVar <- pca_reactives$percentVar
         pcaData <- pca_reactives$pcaData
         pca <- res_tmp[[session$token]][["PCA"]]
-        data <- pca_reactives$data
+        data <- select_data(data, sample_selection, sample_types)$data
         df_out_r <- NULL
         customTitle <- create_default_title_pca(
           pcs = paste0(input$x_axis_selection," vs ",input$y_axis_selection),
