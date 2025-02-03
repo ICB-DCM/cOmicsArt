@@ -939,7 +939,6 @@ server <- function(input,output,session){
 ## Do Upload ----
   observeEvent(input$refresh1,{
     req(data_input_shiny())
-    print("This sould be seond")
     par_tmp[[session$token]]['addedGeneAnno'] <<- FALSE
     fun_LogIt(message = "## Data Selection {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
@@ -1017,7 +1016,6 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
-    print("This sould be first")
     if(is.null(unlist(par_tmp[[session$token]]['omic_type']))){
       par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
       omic_type(input[[paste0("omic_type_", uploaded_from())]])
