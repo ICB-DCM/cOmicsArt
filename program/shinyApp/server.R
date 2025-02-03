@@ -1532,7 +1532,6 @@ server <- function(input,output,session){
       paste0(
         "The data has the dimensions of: ",
         paste0(dim(data),collapse = ", "),
-        "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
         "<br","If logX was chosen, in case of 0's present logX(data+1) is done",
         "<br","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
