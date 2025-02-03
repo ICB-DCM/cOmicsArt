@@ -49,6 +49,7 @@ library(cowplot)  # already imported but now we use it explicitly
 # library(svglite)
 
 source("R/C.R")
+source("R/C_strings.R")
 source("R/module_DownloadReport.R",local=T)
 # source the uis for each panel here
 source("R/help_tab/ui.R",local=T)

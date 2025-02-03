@@ -1,26 +1,42 @@
 # preprocessing procedures
 
-preprocessing <- function(data, omic_type, procedure){
+preprocessing <- function(data, omic_type, procedure, deseq_factors = NULL){
+  print("Remove all entities which are constant over all samples")
+  data <- data[rownames(data[which(apply(assay(data),1,sd) != 0),]),]
+  if(procedure == "vst_DESeq"){
+      return(deseq_processing(data, omic_type, deseq_factors))
+  }
   if(procedure == "filterOnly"){
-    return(prefiltering(data, omic_type))
+    return(list(
+      data = prefiltering(data, omic_type)
+    ))
   }
   if(procedure == "simpleCenterScaling"){
-    return(simple_center_scaling(data, omic_type))
+    return(list(
+      data = simple_center_scaling(data, omic_type)
+    ))
   }
   if(procedure %in% c("Scaling_0_1", "pareto_scaling")){
-    return(scaling_normalisation(data, omic_type, procedure))
+    return(list(
+      data = scaling_normalisation(data, omic_type, procedure)
+    ))
   }
   if(procedure %in% c("log10", "ln", "log2")){
-    return(ln_normalisation(data, omic_type, procedure))
+    return(list(
+      data = ln_normalisation(data, omic_type, procedure)
+    ))
   }
   if(procedure == "none"){
-    return(data)
+    return(list(
+      data = data
+    ))
   }
   # if nothing is chosen, raise an error
   stop("No valid Preprocessing procedure chosen")
 }
 
 prefiltering <- function(data, omic_type){
+  # TODO: will be replaced with general "at least x in y samples" filter
   # Filter out low abundant genes for Metabol- and Transcriptmics.
   if(omic_type == "Transcriptomics"){
     print("Remove anything of rowCount <=10")
@@ -94,47 +110,75 @@ ln_normalisation <- function(data, omic_type, logarithm_procedure){
 
 
 deseq_processing <- function(
-  data, omic_type, formula_sub, session_token, batch_correct
+  data, omic_type, deseq_factors
 ){
-  # Center and scale the data
-  # prefilter the data
-  data <- prefiltering(data, omic_type)
-  # DESeq2
-  if(omic_type == "Transcriptomics"){
-    if(length(formula_sub) <= 0){
-      stop(
-        "Please select at least one factor for the DESeq2 analysis.",
-        class = "InvalidInputError"
-      )
-    }
-    design_formula <- paste("~", paste(formula_sub, collapse = " + "))
-    # turn each factor into a factor
-    for(i in formula_sub){
-      colData(data)[,i] <- as.factor(colData(data)[,i])
-    }
-    par_tmp[[session_token]][["DESeq_factors"]] <<- c(formula_sub)
-    print(design_formula)
-
-    dds <- DESeq2::DESeqDataSetFromMatrix(
-      countData = assay(data),
-      colData = colData(data),
-      design = as.formula(design_formula)
-      )
-    
-    de_seq_result <- DESeq2::DESeq(dds)
-    if (batch_correct){
-      res_tmp[[session_token]]$DESeq_obj_batch_corrected <<- de_seq_result
-      par_tmp[[session_token]]["DESeq_formula"] <<- design_formula
-    } else {
-      res_tmp[[session_token]]$DESeq_obj <<- de_seq_result
-      par_tmp[[session_token]]["DESeq_formula_batch"] <<- design_formula
-    }
-    dds_vst <- vst(
-      object = de_seq_result,
-      blind = TRUE
+  # --- Sanity checks ---
+  if(nrow(data) < 100){
+    stop(
+      "The number of samples is too low for a DESeq2 analysis. Please select at least 100 samples.",
     )
-    assay(data) <- as.data.frame(assay(dds_vst))
-    return(data)
   }
-  return(data)
+  if (omic_type != "Transcriptomics"){
+    stop(
+      "DESeq2 is only available for Transcriptomics data.",
+    )
+  }
+  if(length(deseq_factors) <= 0){
+    stop(
+      "Please select at least one factor for the DESeq2 analysis.",
+      class = "InvalidInputError"
+    )
+  }
+  # --- DESeq2 preprocessing ---
+  data <- prefiltering(data, omic_type)
+  design_formula <- paste("~", paste(deseq_factors, collapse = " + "))
+  # turn each factor into a factor
+  for(i in deseq_factors){
+    colData(data)[,i] <- as.factor(colData(data)[,i])
+  }
+  print(design_formula)
+
+  dds <- DESeq2::DESeqDataSetFromMatrix(
+    countData = assay(data),
+    colData = colData(data),
+    design = as.formula(design_formula)
+    )
+
+  de_seq_result <- DESeq2::DESeq(dds)
+  dds_vst <- vst(
+    object = de_seq_result,
+    blind = TRUE
+  )
+  assay(data) <- as.data.frame(assay(dds_vst))
+  return(list(
+    data = data,
+    DESeq_obj = de_seq_result
+  ))
+}
+
+batch_correction <- function(
+  data, preprocessing_procedure, batch_column, deseq_factors = NULL, omic_type = NULL
+){
+  if (batch_column == "NULL"){
+    return(list(
+      data = NULL
+    ))
+  }
+  batch_res <- list()
+  if(preprocessing_procedure == "vst_DESeq"){
+    batch_res <- deseq_processing(
+      data = data,
+      omic_type = omic_type,
+      deseq_factors = c(deseq_factors, batch_column)
+    )
+    data <- batch_res$data
+  }
+  assay(data) <- sva::ComBat(
+    dat = assay(data),
+    batch = as.factor(colData(data)[,batch_column])
+  )
+  # only use complete cases
+  data <- data[complete.cases(assay(data)),]
+  batch_res$data <- data
+  return(batch_res)
 }
