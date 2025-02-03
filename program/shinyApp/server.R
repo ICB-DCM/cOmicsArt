@@ -566,7 +566,6 @@ server <- function(input,output,session){
           )
         },
         error = function(e) {
-          browser()
           # Handle errors specifically
           output$DataMatrix_VI <- DT::renderDataTable({
             DT::datatable(data = data.frame(Error = "Invalid data for display"))
@@ -619,6 +618,7 @@ server <- function(input,output,session){
       } else {
         res_tmp[[session$token]]$passedVI <<- F
       }
+      res_tmp[[session$token]]$changedDuringVI <<- F
       #TODO ensure that if there are e.g. invalid sample names but als different sample names in data and annotation tables that we catch this
 
       if(check0 == snippetNo){
@@ -644,7 +644,7 @@ server <- function(input,output,session){
                          "\n\tNa's will be replaced by rownames per default")
       }
       # ensuring we try to rescue names only if crucial checks pass
-      if(check6 == snippetNo & check0 == snippetYes & check7==snippetYes ){
+      if(check6 == snippetNo & check0 == snippetYes & check7 == snippetYes ){
         # add option to user for automatic column name correction
         showModal(modalDialog(
           title = "Column Name Correction",
@@ -742,6 +742,7 @@ server <- function(input,output,session){
           write.csv(Matrix, file = paste0("www/",session$token,"/updatedMatrix.csv"), row.names = T)
           write.csv(sample_table, file = paste0("www/",session$token,"/updatedSampleTable.csv"), row.names = T)
           write.csv(annotation_rows, file = paste0("www/",session$token,"/updatedEntitieAnnotation.csv"), row.names = T)
+          res_tmp[[session$token]]$changedDuringVI <<- T
 
           # TODO also set flag to update matrixes upon 'upload new data' within app for this round
 
@@ -938,6 +939,7 @@ server <- function(input,output,session){
 ## Do Upload ----
   observeEvent(input$refresh1,{
     req(data_input_shiny())
+    print("This sould be seond")
     par_tmp[[session$token]]['addedGeneAnno'] <<- FALSE
     fun_LogIt(message = "## Data Selection {.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
@@ -1015,6 +1017,7 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
+    print("This sould be first")
     if(is.null(unlist(par_tmp[[session$token]]['omic_type']))){
       par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
       omic_type(input[[paste0("omic_type_", uploaded_from())]])
@@ -1160,11 +1163,24 @@ server <- function(input,output,session){
         message = paste0("<font color=\"#FF0000\"><b>**Attention** - Test Data set used</b></font>")
       )
     } else if(uploaded_from() == "VI_data"){
-      data_input <- list(
-        Matrix = read_file(paste0("www/",session$token,"/updatedMatrix.csv"), check.names=T),
-        sample_table = read_file(paste0("www/",session$token,"/updatedSampleTable.csv"), check.names=T),
-        annotation_rows = read_file(paste0("www/",session$token,"/updatedEntitieAnnotation.csv"), check.names=T)
-      )
+      if(res_tmp[[session$token]]$changedDuringVI){
+        data_input <- list(
+          Matrix = read_file(paste0("www/",session$token,"/updatedMatrix.csv"), check.names=T),
+          sample_table = read_file(paste0("www/",session$token,"/updatedSampleTable.csv"), check.names=T),
+          annotation_rows = read_file(paste0("www/",session$token,"/updatedEntitieAnnotation.csv"), check.names=T)
+        )
+      }else{
+        data_input <- list(
+          Matrix = read_file(input$data_matrix1$datapath, check.names=T),
+          sample_table = read_file(input$data_sample_anno1$datapath, check.names=T),
+          annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
+        )
+        # check if only 1 col in anno row,
+        # add dummy col to ensure R does not turn it into a vector
+        if(ncol(data_input$annotation_rows) < 2){
+          data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
+        }
+      }
     } else {
       output$debug <- renderText({
         "<font color=\"#FF0000\"><b>Upload failed, please check your input.</b></font>"
