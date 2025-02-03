@@ -66,7 +66,7 @@ server <- function(input,output,session){
 # Layout upon Start ----
   hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
   hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
-  hideTab(inputId = "tabsetPanel1", target = "Significance Analysis")
+  hideTab(inputId = "tabsetPanel1", target = "Differential Analysis")
   hideTab(inputId = "tabsetPanel1", target = "PCA")
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
@@ -815,14 +815,16 @@ server <- function(input,output,session){
             output$OverallChecks <- renderText({
               paste0(
                 "Some overall Checks have been run:\n",
+                "<b>REQUIRED</b> (must all be Yes):\n",
                 "Data Matrix is a real csv (has ',' as separators:): ",check0,"\n",
                 "Data Matrix has only numeric values: ",check7,"\n",
                 "Rownames of Matrix are the same as rownames of entitie table ",check1,"\n",
                 "Colnames of Matrix are same as rownames of sample table ",check2," \n",
+                "Sample IDs have valid names ", check6, "\n\n",
+                "<b>OPTIONAL</b> (Yes is optimal but optional; Will result in slight data changes):\n",
                 "Matrix has no na (missing values) ",check3,"\n",
                 "Sample table no na (missing values) ",check4,"\n",
-                "Entitie table no na  (missing values) ",check5,"\n",
-                "Sample IDs have valid names ", check6, "\n"
+                "Entitie table no na  (missing values) ",check5,"\n"
               )
             })
             if(grepl(snippetYes,check0) &
@@ -872,10 +874,11 @@ server <- function(input,output,session){
            "Data Matrix has only numeric values: ",check7,"\n",
            "Rownames of Matrix are the same as rownames of entitie table ",check1,"\n",
            "Colnames of Matrix are same as rownames of sample table ",check2," \n",
-           "Matrix has no na ",check3,"\n",
-           "Sample table no na ",check4,"\n",
-           "Entitie table no na ",check5,"\n",
-           "Sample IDs have valid names ", check6, "\n"
+           "Sample IDs have valid names ", check6, "\n",
+           "<b>OPTIONAL</b>:\n",
+           "Matrix has no na (missing values) ",check3,"\n",
+           "Sample table no na (missing values) ",check4,"\n",
+           "Entitie table no na  (missing values) ",check5,"\n"
          )
       })
     }
@@ -1618,7 +1621,7 @@ server <- function(input,output,session){
     print(colnames(res_tmp[[session$token]]$data))
 
     showTab(inputId = "tabsetPanel1", target = "Sample Correlation")
-    showTab(inputId = "tabsetPanel1", target = "Significance Analysis")
+    showTab(inputId = "tabsetPanel1", target = "Differential Analysis")
     showTab(inputId = "tabsetPanel1", target = "PCA")
     showTab(inputId = "tabsetPanel1", target = "Heatmap")
     showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")

@@ -23,7 +23,7 @@ To recreate this example **within** cOmicsArt, use the following steps:
 2. We want to use all the data, so we will not filter the data. Hence, directly click `"Start 
    the Journey"`
 3. Select `DESeq2` as the pre-processing method with `condition` as the main factor
-4. In the `Significance Analysis`, run the significance analysis for `trt:untrt`, Significance 
+4. In the `Differential Analysis`, run the differential analysis for `trt:untrt`, significance 
    level: `0.05` and test-correction: `Benjamini-Hochberg`
 5. Select now the `trt:untrt` tab, in that the `Volcano` tab
 6. Download the data and code by clicking on `Get underlying R code and data` under 
@@ -58,7 +58,7 @@ the steps to follow:
 var images = [
     {src: "/cOmicsArt/assets/images/Slideshow1.png", subtitle: "1. Select Testdata, 2.1 Choose all data, 2.2 Start the Journey"},
     {src: "/cOmicsArt/assets/images/Slideshow2.png", subtitle: "3.1 Select DESeq2 as pre-processing method, 3.2 Select condition as main factor, 3.3 Run the pre-processing"},
-    {src: "/cOmicsArt/assets/images/Slideshow3.png", subtitle: "4.1 Select trt:untrt 4.2 Run the significance analysis, 5. Select trt:untrt tab"},
+    {src: "/cOmicsArt/assets/images/Slideshow3.png", subtitle: "4.1 Select trt:untrt 4.2 Run the differential analysis, 5. Select trt:untrt tab"},
     {src: "/cOmicsArt/assets/images/Slideshow4.png", subtitle: "5.2 Select Volcano tab, 6. Download the data and code"},
 ];
 var currentIndex = 0;

@@ -41,7 +41,7 @@ To get more information on the tabs, navigate to the respective documentation us
    
 ![The design of the side panel](/cOmicsArt/assets/images/design_principleSidePanel.png)
    
-2. **Main Panel Structure:** Each main panel contains the visualization of the analysis results. Some panels are further subdivided to show multiple results, for example, the Significance Analysis tab.
+2. **Main Panel Structure:** Each main panel contains the visualization of the analysis results. Some panels are further subdivided to show multiple results, for example, the Differential Analysis tab.
 
 3. **Picture Download Options:** Users can download visualizations and results in common formats (e.g., PNG, TIFF, PDF). There are respective buttons to select the file format. Upon 'Save plot' the file is downloaded to the local machine.
 

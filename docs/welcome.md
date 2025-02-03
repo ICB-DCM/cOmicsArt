@@ -21,4 +21,4 @@ Otherwise, you can navigate through the documentation using the sidebar on the l
 OR get stared with our Excel Workbook to prepare your data for cOmicsArt: [UploadeHelpcOmicsArt.xlsx](https://github.com/ICB-DCM/cOmicsArt/blob/main/UploadHelpcOmicsArt.xlsx).
 - 🔧 Need to run the app locally? Check out the [Installation Guide](installation.md).
 - 💡 Looking for customization inspiration? Explore our [Customization Examples](code-and-data/examples.md).
-- 📊 Want to know more about the significance analysis? Visit [Significance Analysis](interface-details/05-significance-analysis.md)
+- 📊 Want to know more about the differential analysis? Visit [Differential Analysis](interface-details/05-significance-analysis.md)
