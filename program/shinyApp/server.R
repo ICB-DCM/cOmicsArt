@@ -1379,7 +1379,7 @@ server <- function(input,output,session){
     par_tmp[[session$token]]['propensity'] <<- propensity
     print("Alright do Row selection")
     # Data set selection
-    res_select <<- select_data(
+    res_select <- select_data(
         data = res_tmp[[session$token]]$data_original,
         selected_rows = row_selection,
         selected_samples = sample_selection,
