@@ -5,6 +5,11 @@ single_gene_visualisation_server <- function(id, data){
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
 
+      # reactive values
+      single_gene_reactives <- reactiveValues(
+        GeneData = NULL
+      )
+
       # Refresh UI /Data
       observeEvent(input$refreshUI,{
         print("Refresh UI Single Gene")
@@ -245,6 +250,9 @@ single_gene_visualisation_server <- function(id, data){
         } else {
           output$SingleGenePlot <- renderPlot(ggplot() + theme_void())
         }
+
+        # assign reactive value
+        single_gene_reactives$GeneData <- GeneData
         
         if(GeneDataFlag){
           customTitle_boxplot <- paste0(
@@ -322,35 +330,7 @@ single_gene_visualisation_server <- function(id, data){
               device = gsub("\\.","",input$file_ext_singleGene)
             )
             
-            on.exit({
-              tmp_filename <- paste0(
-                getwd(),
-                file_path,
-                paste0(
-                  par_tmp[[session$token]]$SingleEntVis$SingleEnt_customTitle_boxplot,
-                  " ", Sys.time(), input$file_ext_singleGene
-                )
-              )
-              ggsave(
-                filename = tmp_filename,
-                plot = res_tmp[[session$token]]$SingleEntVis,
-                device = gsub("\\.","",input$file_ext_singleGene)
-              )
-              
-              fun_LogIt(message = "## Single Entitie{.tabset .tabset-fade}")
-              fun_LogIt(message = "### Info")
-              fun_LogIt(message = paste0("**Single Entitie** - The following single entitie was plotted: ",input$Select_Gene))
-              fun_LogIt(message = paste0("**Single Entitie** - Values shown are: ",input$type_of_data_gene, " data input"))
-              fun_LogIt(message = paste0("**Single Entitie** - Values are grouped for all levels within: ",input$accross_condition, " (",paste0(levels(GeneData$anno),collapse = ";"),")"))
-              fun_LogIt(message = paste0("**Single Entitie** - Test for differences: ",testMethod))
-
-              fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
-
-              fun_LogIt(message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")"))
-              fun_LogIt(message = "### Publication Snippet")
-              fun_LogIt(message = snippet_SingleGene(data = res_tmp[[session$token]],
-                                                  params = par_tmp[[session$token]]))
-            })
+            on.exit({shinyjs::click(ns(only2Report_SingleEntities))})
           }
         )
       })
@@ -376,24 +356,15 @@ single_gene_visualisation_server <- function(id, data){
         fun_LogIt(message = "### Info")
         fun_LogIt(message = paste0(
           "**Single Entitie** - The following single entitie was plotted: ",
-          par_tmp[[session$token]]$SingleEntVis$SingleEnt_Select_Gene
+          input$Select_Gene
         ))
         fun_LogIt(message = paste0(
           "**Single Entitie** - Values shown are: ",
-          par_tmp[[session$token]]$SingleEntVis$SingleEnt_type_of_data_gene, " data input"
+          input$type_of_data_gene, " data input"
         ))
         fun_LogIt(message = paste0(
-          "**Single Entitie** - Values are grouped for all levels within: ",
-          par_tmp[[session$token]]$SingleEntVis$SingleEnt_accross_condition,
-          " (",
-          paste0(levels(par_tmp[[session$token]]$SingleEntVis$SingleEnt_GeneData_anno),collapse = ";")
-          ,")"
-        ))
-        fun_LogIt(message = paste0(
-          "**Single Entitie** - Test for differences: ",
-          par_tmp[[session$token]]$SingleEntVis$SingleEnt_testMethod
-        ))
-        
+          "**Single Entitie** - Values are grouped for all levels within: ", input$accross_condition, " (",paste0(levels(single_gene_reactives$GeneData$anno),collapse = ";"),")"))
+        fun_LogIt(message = "**Single Entitie** - Test for differences: T-Test")  # For now only test method we do
         fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
         
         fun_LogIt(
