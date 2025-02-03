@@ -1,4 +1,4 @@
-pca_Server <- function(id, data, params, row_select){
+pca_Server <- function(id){
   moduleServer(id, function(input,output,session){
     pca_reactives <- reactiveValues(
       calculate = -1,
@@ -135,46 +135,12 @@ pca_Server <- function(id, data, params, row_select){
       pca_reactives$LoadingsMatrix_plot
     })
 
-    toListen2PCA <- reactive({list(
-      input$x_axis_selection,
-      input$y_axis_selection,
-      input$coloring_options,
-      input$bottomSlider,
-      input$topSlider,
-      input$Show_loadings,
-      input$PCA_anno_tooltip,
-      input$EntitieAnno_Loadings,
-      input$EntitieAnno_Loadings_matrix,
-      input$filterValue,
-      input$nPCAs_to_look_at
-    )})
-
-    # only when we click on Do_PCA, we set the calculate to 1
-    session$userData$clicks_observer <- observeEvent(input$Do_PCA,{
-      req(input$Do_PCA > pca_reactives$counter)
-      shinyjs::showElement(id = "PCA_main_panel_div", asis = TRUE)
-      pca_reactives$counter <- input$Do_PCA
-
-      check <- check_calculations(list(
-        sample_selection_pca = input$sample_selection_pca,
-        SampleAnnotationTypes_pca = input$SampleAnnotationTypes_pca,
-        batch = ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F),
-        scale_data = input$scale_data
-      ), "PCA")
-      if (check == "No Result yet"){
-        pca_reactives$info_text <- "PCA computed."
-        pca_reactives$calculate <- 1
-      } else if (check == "Result exists"){
-        pca_reactives$info_text <- "PCA was already computed, no need to click the Button again."
-        pca_reactives$calculate <- -1
-      } else if (check == "Overwrite"){
-        pca_reactives$info_text <- "PCA result overwritten with different parameters."
-        pca_reactives$calculate <- 1
-      }
-    })
-
     observeEvent(input$Do_PCA,{  # Calculate values needed for PCA
-      req(data_input_shiny()) # for now, probably better one soon
+      req(
+        data_input_shiny(),
+        input$Do_PCA > 0
+      ) # for now, probably better one soon
+      shinyjs::showElement(id = "PCA_main_panel_div", asis = TRUE)
 
       pca_reactives$waiter$show()
       print("PCA analysis on pre-selected data")
@@ -184,15 +150,15 @@ pca_Server <- function(id, data, params, row_select){
         par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",
         TRUE,FALSE
       )
-      sample_types <- input$sample_selection_pca %||% c(colnames(colData(data$data)))[1]
-      sample_selection <- input$sample_selection_pca %||% "all"
-      scale_data <- as.logical(input$scale_data)
       data <- update_data(session$token)
       if(useBatch){
           data <- data$data_batch_corrected
       } else {
           data <- data$data
       }
+      sample_types <- input$sample_selection_pca %||% c(colnames(colData(data)))[1]
+      sample_selection <- input$sample_selection_pca %||% "all"
+      scale_data <- as.logical(input$scale_data)
       print("Calculate PCA")
       # PCA, for safety measures, wrap in tryCatch
       tryCatch({
@@ -218,6 +184,7 @@ pca_Server <- function(id, data, params, row_select){
       pca_reactives$percentVar <- percentVar
       pca_reactives$pcaData <- pcaData
       print("PCA computing done")
+      pca_reactives$info_text <- "PCA computed."
       pca_reactives$waiter$hide()
     })
 

@@ -1796,12 +1796,7 @@ server <- function(input,output,session){
     params = par_tmp[[session$token]]
   )
   # PCA ----
-  pca_Server(
-    id = "PCA",
-    data = res_tmp[[session$token]],
-    params = par_tmp[[session$token]],
-    reactive(input$row_selection)
-  )
+  pca_Server(id = "PCA")
   # Heatmap ----
   heatmap_server(
     id = 'Heatmap',
