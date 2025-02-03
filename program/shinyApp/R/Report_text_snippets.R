@@ -119,7 +119,7 @@ snippet_PCA <- function(
   #ifelse(input$Show_loadings == "Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
   snippet <- c()
   snippet <- paste0(snippet, "Principal component analysis (PCA) was performed on the centered and scaled data, implemented within the stats package (v.",packageVersion("stats"),") (",print(clean_citation(citation('stats')), style = "text"),"). ")
-  snippet <- paste0(snippet,  if(params$PCA$Show_loadings != "No"){"The top 5 loadings were identified based on the largest Euclidean distances spanned by any two loading vectors. "})
+  snippet <- paste0(snippet,  if(params$PCA$show_loadings){"The top 5 loadings were identified based on the largest Euclidean distances spanned by any two loading vectors. "})
   return(snippet)
 }
 

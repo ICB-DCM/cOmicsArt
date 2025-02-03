@@ -241,12 +241,12 @@ pca_Server <- function(id, data, params, row_select){
       show_loadings <- as.logical(input$Show_loadings %||% FALSE)
       entitie_anno <- input$EntitieAnno_Loadings
       tooltip_var <- input$PCA_anno_tooltip %||% NULL
+
       data <- update_data(session$token)$data
       customTitle <- create_default_title_pca(
         pcs = paste0(x_axis," vs ",y_axis),
-        preprocessing = "None"
+        preprocessing = par_tmp[[session$token]]['PreProcessing_Procedure']
       )
-      # TODO: add here function for loadings if needed
       coloring <- prepare_coloring_pca(pcaData, color_by)
       color_theme <- coloring$color_theme
       pcaData <- coloring$pcaData
@@ -293,6 +293,13 @@ pca_Server <- function(id, data, params, row_select){
         ggtitle(customTitle) +
         pca_loadings(pcaData, x_axis, y_axis, show_loadings, entitie_anno, data)
       pca_reactives$PCA_plot <- pca_plot
+      # Update par_tmp
+      par_tmp[[session$token]][["PCA"]]$color_by <<- color_by
+      par_tmp[[session$token]][["PCA"]]$x_axis <<- x_axis
+      par_tmp[[session$token]][["PCA"]]$y_axis <<- y_axis
+      par_tmp[[session$token]][["PCA"]]$show_loadings <<- show_loadings
+      par_tmp[[session$token]][["PCA"]]$entitie_anno <<- entitie_anno
+      par_tmp[[session$token]][["PCA"]]$tooltip_var <<- tooltip_var  # Needed for ggplot?
     })
 
     observeEvent(list(  # Update the Loadings Plot
@@ -345,6 +352,11 @@ pca_Server <- function(id, data, params, row_select){
         ggtitle(paste0("Loadings for ", x_axis)) +
         CUSTOM_THEME
       pca_reactives$Loadings_plot <- plotOut
+      # update par_tmp
+      par_tmp[[session$token]][["PCA"]]$n_top <<- n_top
+      par_tmp[[session$token]][["PCA"]]$n_bottom <<- n_bottom
+      par_tmp[[session$token]][["PCA"]]$entitie_anno <<- entitie_anno
+      par_tmp[[session$token]][["PCA"]]$x_axis <<- x_axis
     })
 
     observeEvent(list(  # Update the Scree Plot
@@ -429,376 +441,201 @@ pca_Server <- function(id, data, params, row_select){
         ggtitle("Loadings Matrix") +
         CUSTOM_THEME
       pca_reactives$LoadingsMatrix_plot <- loadings_matirx
+      # update par_tmp
+      par_tmp[[session$token]][["PCA"]]$cutoff <<- cutoff
+      par_tmp[[session$token]][["PCA"]]$n_pcs <<- n_pcs
+      par_tmp[[session$token]][["PCA"]]$entitie_anno <<- entitie_anno
     })
 
-    observeEvent(toListen2PCA(),{
-      req(
-        input$Do_PCA > 0,
-        input$x_axis_selection,
-        input$y_axis_selection,
-        pca_reactives$percentVar,
-        pca_reactives$pcaData
-      )
-      req(FALSE)
-      percentVar <- pca_reactives$percentVar
-      pcaData <- pca_reactives$pcaData
-      pca <- res_tmp[[session$token]][["PCA"]]
-      data <- update_data(session$token)$data
-      customTitle <- create_default_title_pca(
-        pcs = paste0(input$x_axis_selection," vs ",input$y_axis_selection),
-        preprocessing = "None"
-      )
-      # Actual Plotting
-
-      output$getR_Code_PCA <- downloadHandler(
-        filename = function(){
-          paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
-        },
-        content = function(file){
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
-          waiter$show()
-          envList <- list(
-            res_tmp = res_tmp[[session$token]],
-            par_tmp = par_tmp[[session$token]]
-          )
-
-
-          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-          dir.create(temp_directory)
-          write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
-          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-          zip::zip(
-            zipfile = file,
-            files = dir(temp_directory),
-            root = temp_directory
-          )
-          waiter$hide()
-        },
-
-        contentType = "application/zip"
-      )
-
-      output$SavePlot_pos1 <- downloadHandler(
-        filename = function() {
-          paste0(pca_reactives$customTitle, Sys.time(), input$file_ext_plot1)
-          },
-        # cannot get the final destination as this is a download on server side
-        content = function(file){
-          ggsave(
-            filename = file,
-            plot = pca_plot_final,
-            device = gsub("\\.","",input$file_ext_plot1)
-          )
-          on.exit({
-            pca_report_path <- paste0(
-              getwd(), file_path, pca_reactives$customTitle, Sys.time(), input$file_ext_plot1
-            )
-            ggsave(
-              filename = pca_report_path,
-              plot = pca_plot_final,
-              device = gsub("\\.","",input$file_ext_plot1)
-            )
-            # Add Log Messages
-            fun_LogIt(message = "## PCA {.tabset .tabset-fade}")
-            fun_LogIt(message = "### Info")
-            if(input$data_selection_pca){
-              if(input$sample_selection_pca !="all"){
-                fun_LogIt(
-                  message = paste0("**PCA** - The following PCA-plot is based on a selection on: ", input$sample_selection_pca)
-                )
-                fun_LogIt(message = "**PCA** - All samples with",input$SampleAnnotationTypes_pca," being ",paste(input$SampleAnnotationTypes_pca,collapse = ", "),"were selected.")
-              }
-            }else{
-              fun_LogIt(message = "**PCA** - The PCA was computed on the entire dataset.")
-            }
-
-            fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
-            ifelse(input$Show_loadings == "Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
-            fun_LogIt(message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
-
-            fun_LogIt(message = "### Publication Snippet")
-            fun_LogIt(message = snippet_PCA(data = res_tmp[[session$token]],
-                                            params = par_tmp[[session$token]]))
-
-          })
-        }
-      )
-
-      ### Do Scree plot ----
-
-      output$getR_Code_Scree_Plot <- downloadHandler(
-        filename = function(){
-          paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
-        },
-        content = function(file){
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
-          waiter$show()
-
-          envList <- list(
-            res_tmp = res_tmp[[session$token]],
-            par_tmp = par_tmp[[session$token]]
-          )
-
-
-          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-          dir.create(temp_directory)
-
-          write(getPlotCode(Scree_scenario), file.path(temp_directory, "Code.R"))
-
-          saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
-          zip::zip(
-            zipfile = file,
-            files = dir(temp_directory),
-            root = temp_directory
-          )
-          waiter$hide()
-        },
-        contentType = "application/zip"
-      )
-
-      output$SavePlot_Scree <- downloadHandler(
-        filename = function() {
-          paste0(pca_reactives$customTitle, Sys.time(), input$file_ext_Scree)
-        },
-        content = function(file){
-          ggsave(file, plot = scree_plot, device = gsub("\\.","",input$file_ext_Scree))
-          on.exit({
-            tmp_filename <- paste0(
-              getwd(),file_path,
-              "Scree", pca_reactives$customTitle, Sys.time(), input$file_ext_Scree
-            )
-            ggsave(tmp_filename, plot=scree_plot, device = gsub("\\.","",input$file_ext_Scree))
-
-            # Add Log Messages
-            fun_LogIt(message = "## PCA ScreePlot{.tabset .tabset-fade}")
-            fun_LogIt(message = "### Info")
-            fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
-            fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
-            fun_LogIt(message = "### Publication Snippet")
-            fun_LogIt(message = snippet_PCAscree(data = res_tmp[[session$token]],
-                                                 params = par_tmp[[session$token]]))
-          })
-        }
-      )
-
-  ### Do Loadings Plot ----
-      output$getR_Code_Loadings <- downloadHandler(
-        filename = function(){
-          paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
-        },
-        content = function(file){
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
-          waiter$show()
-          envList <- list(
-
-            res_tmp = res_tmp[[session$token]],
-            par_tmp = par_tmp[[session$token]]
-
-          )
-
-          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-          dir.create(temp_directory)
-
-          write(getPlotCode(Loading_scenario), file.path(temp_directory, "Code.R"))
-
-          saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
-          zip::zip(
-            zipfile = file,
-            files = dir(temp_directory),
-            root = temp_directory
-          )
-          waiter$hide()
-        },
-        contentType = "application/zip"
-      )
-
-      output$SavePlot_Loadings <- downloadHandler(
-        filename = function() { paste0("LOADINGS_PCA_", Sys.time(), input$file_ext_Loadings) },
-        content = function(file){
-          ggsave(
-            file,
-            plot = plotOut,
-            device = gsub("\\.","",input$file_ext_Loadings),
-            dpi = "print"
-          )
-          on.exit({
-            tmp_filename <- paste0(
-              getwd(), file_path, "LOADINGS_PCA_", Sys.time(), input$file_ext_Loadings
-            )
-            ggsave(
-              tmp_filename,
-              plot = plotOut,
-              device = gsub("\\.","",input$file_ext_Loadings),
-              dpi = "print"
-            )
-            # Add Log Messages
-            fun_LogIt(message = "## PCA Loadings{.tabset .tabset-fade}")
-            fun_LogIt(message = "### Info")
-
-            fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",input$x_axis_selection))
-            fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSlider," Loadings"))
-            fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
-            fun_LogIt(message = "### Publication Snippet")
-            fun_LogIt(message = snippet_PCAloadings(data = res_tmp[[session$token]],
-                                                  params = par_tmp[[session$token]]))
-          })
-        }
-      )
-
-      ### Do Loadings Plot Matrix ----
-      output$getR_Code_Loadings_matrix <- downloadHandler(
-        filename = function(){
-          paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
-        },
-        content = function(file){
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
-          waiter$show()
-          envList <- list(
-
-            res_tmp = res_tmp[[session$token]],
-            par_tmp = par_tmp[[session$token]]
-
-          )
-
-          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-          dir.create(temp_directory)
-
-          write(getPlotCode(scenario), file.path(temp_directory, "Code.R"))
-
-          saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
-          zip::zip(
-            zipfile = file,
-            files = dir(temp_directory),
-            root = temp_directory
-          )
-          waiter$hide()
-        },
-        contentType = "application/zip"
-      )
-
-      output$SavePlot_Loadings_matrix <- downloadHandler(
-        filename = function() { paste0("LOADINGS_Matrix_PCA_", Sys.time(), input$file_ext_Loadings_matrix) },
-
-        content = function(file){
-          ggsave(
-            file,
-            plot = pca_reactives$LoadingsMatrix_plot,
-            device = gsub("\\.","",input$file_ext_Loadings_matrix),
-            dpi = "print"
-          )
-          on.exit({
-            tmp_filename <- paste0(
-              getwd(), file_path,
-              "LOADINGS_Matrix_PCA_", Sys.time(), input$file_ext_Loadings_matrix
-            )
-            ggsave(
-              tmp_filename,
-              plot = pca_reactives$LoadingsMatrix_plot,
-              device = gsub("\\.","",input$file_ext_Loadings),
-              dpi = "print"
-            )
-            # Add Log Messages
-            fun_LogIt(message = "## PCA Loadings Matrix{.tabset .tabset-fade}")
-            fun_LogIt(message = "### Info")
-            fun_LogIt(message = paste0("**PCALoadingsMatrix** - Loadings plot for Principle Components 1 till ",input$x_axis_selection))
-            fun_LogIt(message = paste0("**PCALoadingsMatrix** - Showing all entities which have an absolute Loadings value of at least", input$filterValue))
-            fun_LogIt(message = paste0("**PCALoadingsMatrix** - The corresponding Loadings Matrix plot - ![PCALoadingsMatrix](",tmp_filename,")"))
-
-            fun_LogIt(message = "### Publication Snippet")
-            fun_LogIt(message = snippet_PCAloadingsMatrix(data = res_tmp[[session$token]],
-                                                  params = par_tmp[[session$token]]))
-
-          })
-        }
-      )
-    })
-
-
-    ## Log it ----
-    observeEvent(input$only2Report_pca,{
-        # needs global var ?! do we want that?
-        notificationID <- showNotification("Saving...",duration = 0)
-        pca_report_path <- paste0(getwd(), file_path, pca_reactives$customTitle, Sys.time(), ".png")
-        ggsave(
-          pca_report_path,
-          plot = pca_reactives$PCA_plot,
-          device = "png"
+    ## R Code Download ----
+    # TODO: Fix Scenario Problem (not needed as Code generation will be reworked)
+    output$getR_Code_PCA <- downloadHandler(  # Download the R code for PCA
+      filename = function(){
+        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      },
+      content = function(file){
+        waiter <- Waiter$new(
+          html = LOADING_SCREEN,
+          color = "#3897F147",
+          hide_on_render = FALSE
         )
-        # Add Log Messages
-        fun_LogIt(message = "## PCA {.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
-        if(input$data_selection_pca){
-          fun_LogIt(
-            message = paste0("**PCA** - The following PCA-plot is based on a selection of the data. ")
-          )
-          fun_LogIt(message = "**PCA** - All samples with",input$SampleAnnotationTypes_pca,"being ",paste(input$sample_selection_pca,collapse = ", "),"were selected.")
+        waiter$show()
+        envList <- list(
+          res_tmp = res_tmp[[session$token]],
+          par_tmp = par_tmp[[session$token]]
+        )
 
-        }else{
-          fun_LogIt(message = "**PCA** - The PCA was computed on the entire dataset.")
-        }
-        fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
-        ifelse(input$Show_loadings == "Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
-        fun_LogIt(message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+        write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
+        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+        waiter$hide()
+      },
+      contentType = "application/zip"
+    )
 
-        if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
-          fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
-          fun_LogIt(message = paste0(
-            "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
-            input$NotesPCA,
-            "</div>"
-          ))
-        }
+    output$getR_Code_Scree_Plot <- downloadHandler(  # Download the R code for Scree Plot
+      filename = function(){
+        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      },
+      content = function(file){
+        waiter <- Waiter$new(
+          html = LOADING_SCREEN,
+          color = "#3897F147",
+          hide_on_render = FALSE
+        )
+        waiter$show()
+        envList <- list(
+          res_tmp = res_tmp[[session$token]],
+          par_tmp = par_tmp[[session$token]]
+        )
 
-        fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_PCA(data = res_tmp[[session$token]],
-                                        params = par_tmp[[session$token]]))
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+        write(getPlotCode(Scree_scenario), file.path(temp_directory, "Code.R"))
+        saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+        waiter$hide()
+      },
+      contentType = "application/zip"
+    )
 
+    output$getR_Code_Loadings <- downloadHandler(  # Download the R code for Loadings
+      filename = function(){
+        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      },
+      content = function(file){
+        waiter <- Waiter$new(
+          html = LOADING_SCREEN,
+          color = "#3897F147",
+          hide_on_render = FALSE
+        )
+        waiter$show()
+        envList <- list(
+          res_tmp = res_tmp[[session$token]],
+          par_tmp = par_tmp[[session$token]]
+        )
 
-        removeNotification(notificationID)
-        showNotification("Saved!",type = "message", duration = 1)
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+        write(getPlotCode(Loading_scenario), file.path(temp_directory, "Code.R"))
+        saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+        waiter$hide()
+      },
+      contentType = "application/zip"
+    )
+
+    output$getR_Code_Loadings_matrix <- downloadHandler(
+      filename = function(){
+        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      },
+      content = function(file){
+        waiter <- Waiter$new(
+          html = LOADING_SCREEN,
+          color = "#3897F147",
+          hide_on_render = FALSE
+        )
+        waiter$show()
+        envList <- list(
+          res_tmp = res_tmp[[session$token]],
+          par_tmp = par_tmp[[session$token]]
+        )
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+        write(getPlotCode(scenario), file.path(temp_directory, "Code.R"))
+        saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+        waiter$hide()
+      },
+      contentType = "application/zip"
+    )
+
+    ## Report generators ----
+    observeEvent(input$only2Report_pca, {
+      notificationID <- showNotification("Saving...",duration = 0)
+      pca_report_path <- paste0(getwd(), file_path, "PCA_plot_", Sys.time(), ".png")
+      ggsave(
+        pca_report_path,
+        plot = pca_reactives$PCA_plot,
+        device = "png"
+      )
+      # Add Log Messages
+      fun_LogIt(message = "## PCA {.tabset .tabset-fade}")
+      fun_LogIt(message = "### Info")
+      if(input$data_selection_pca && input$sample_selection_pca !="all"){
+        fun_LogIt(
+          message = paste0("**PCA** - The following PCA-plot is based on a selection of the data. ")
+        )
+        fun_LogIt(
+          message = paste0("**PCA** - All samples with",input$SampleAnnotationTypes_pca,"being ",paste(input$sample_selection_pca,collapse = ", "),"were selected.")
+        )
+      }else{
+        fun_LogIt(message = "**PCA** - The PCA was computed on the entire dataset.")
+      }
+      fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
+      ifelse(input$Show_loadings == "Yes",fun_LogIt(message = "PCA - Added top 5 loadings"),print(""))
+      fun_LogIt(message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
+
+      if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
+        fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
+        fun_LogIt(message = paste0(
+          "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
+          input$NotesPCA,
+          "</div>"
+        ))
+      }
+      fun_LogIt(message = "### Publication Snippet")
+      fun_LogIt(message = snippet_PCA(
+        data = res_tmp[[session$token]],
+        params = par_tmp[[session$token]])
+      )
+      removeNotification(notificationID)
+      showNotification("Saved!",type = "message", duration = 1)
     })
 
-    observeEvent(input$only2Report_Scree_Plot,{
+    observeEvent(input$only2Report_Scree_Plot, {
       notificationID <- showNotification("Saving...",duration = 0)
       tmp_filename <- paste0(
-        getwd(), file_path, "Scree", pca_reactives$customTitle, Sys.time(), ".png"
+        getwd(), file_path, "ScreePlot", Sys.time(), ".png"
       )
       ggsave(
         tmp_filename,
         plot=pca_reactives$Scree_plot,
         device = "png"
       )
-
       # Add Log Messages
       fun_LogIt(message = "## PCA ScreePlot{.tabset .tabset-fade}")
       fun_LogIt(message = "### Info")
       fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
       fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
       fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_PCAscree(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
-
+      fun_LogIt(message = snippet_PCAscree(
+        data = res_tmp[[session$token]],
+        params = par_tmp[[session$token]])
+      )
       removeNotification(notificationID)
       showNotification("Saved!",type = "message", duration = 1)
     })
 
-    observeEvent(input$only2Report_Loadings,{
+    observeEvent(input$only2Report_Loadings, {
       notificationID <- showNotification("Saving...",duration = 0)
       tmp_filename <- paste0(
         getwd(), file_path, "LOADINGS_PCA_", Sys.time(), ".png"
@@ -808,26 +645,23 @@ pca_Server <- function(id, data, params, row_select){
         plot = pca_reactives$Loadings_plot,
         device = "png"
       )
-
-      # Add Log Messages
       # Add Log Messages
       fun_LogIt(message = "## PCA Loadings{.tabset .tabset-fade}")
       fun_LogIt(message = "### Info")
-
-      fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for Principle Component: ",pca_reactives$Loadings_x_axis))
-      fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",pca_reactives$Loadings_topSlider," and the lowest ",pca_reactives$Loadings_bottomSlider," Loadings"))
+      fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for ", input$x_axis_selection))
+      fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSliders," Loadings"))
       fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
       fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_PCAloadings(data = res_tmp[[session$token]],
-                                              params = par_tmp[[session$token]]))
-
+      fun_LogIt(message = snippet_PCAloadings(
+        data = res_tmp[[session$token]],
+        params = par_tmp[[session$token]])
+      )
       removeNotification(notificationID)
       showNotification("Saved!",type = "message", duration = 1)
     })
 
     observeEvent(input$only2Report_Loadings_matrix,{
       notificationID <- showNotification("Saving...",duration = 0)
-
       tmp_filename <- paste0(
           getwd(), file_path,
           "LOADINGS_Matrix_PCA_", Sys.time(), input$file_ext_Loadings_matrix
@@ -846,11 +680,71 @@ pca_Server <- function(id, data, params, row_select){
       fun_LogIt(message = paste0("**PCALoadingsMatrix** - The corresponding Loadings Matrix plot - ![PCALoadingsMatrix](",tmp_filename,")"))
 
       fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_PCAloadingsMatrix(data = res_tmp[[session$token]],
-                                                    params = par_tmp[[session$token]]))
-
+      fun_LogIt(message = snippet_PCAloadingsMatrix(
+        data = res_tmp[[session$token]],
+        params = par_tmp[[session$token]])
+      )
       removeNotification(notificationID)
       showNotification("Saved!",type = "message", duration = 1)
     })
+
+    ## Download Handlers ----
+
+    output$SavePlot_pos1 <- downloadHandler(
+      filename = function() {
+        paste0(create_default_title_pca(
+          pcs = paste0(input$x_axis_selection," vs ",input$y_axis_selection),
+          preprocessing = par_tmp[[session$token]]['PreProcessing_Procedure']
+        ), Sys.time(), input$file_ext_plot1)
+      },
+      content = function(file){
+        ggsave(
+          filename = file,
+          plot = pca_reactives$PCA_plot,
+          device = gsub("\\.","",input$file_ext_plot1)
+        )
+        on.exit({shinyjs::click(ns("only2Report_pca"))})
+      }
+    )
+
+    output$SavePlot_Scree <- downloadHandler(
+      filename = function() {
+        paste0("Scree_Plot_", Sys.time(), input$file_ext_Scree)
+      },
+      content = function(file){
+        ggsave(
+          filename = file,
+          plot = pca_reactives$Scree_plot,
+          device = gsub("\\.","",input$file_ext_Scree)
+        )
+        on.exit({shinyjs::click(ns("only2Report_Scree_Plot"))})
+      }
+    )
+
+    output$SavePlot_Loadings <- downloadHandler(
+      filename = function() { paste0("LOADINGS_PCA_", Sys.time(), input$file_ext_Loadings) },
+      content = function(file){
+        ggsave(
+          file,
+          plot = pca_reactives$Loadings_plot,
+          device = gsub("\\.","",input$file_ext_Loadings),
+          dpi = "print"
+        )
+        on.exit({shinyjs::click(ns("only2Report_Loadings"))})
+      }
+    )
+
+    output$SavePlot_Loadings_matrix <- downloadHandler(
+      filename = function() { paste0("LOADINGS_Matrix_PCA_", Sys.time(), input$file_ext_Loadings_matrix) },
+      content = function(file){
+        ggsave(
+          file,
+          plot = pca_reactives$LoadingsMatrix_plot,
+          device = gsub("\\.","",input$file_ext_Loadings_matrix),
+          dpi = "print"
+        )
+        on.exit({shinyjs::click(ns("only2Report_Loadings_matrix"))})
+      }
+    )
   })
 }
