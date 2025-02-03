@@ -334,7 +334,8 @@ single_gene_visualisation_server <- function(id, data){
           }
         )
       })
-      
+
+
       ## download only to report
       observeEvent(input$only2Report_SingleEntities,{
         notificationID <- showNotification("Saving...",duration = 0)
@@ -366,12 +367,12 @@ single_gene_visualisation_server <- function(id, data){
           "**Single Entitie** - Values are grouped for all levels within: ", input$accross_condition, " (",paste0(levels(single_gene_reactives$GeneData$anno),collapse = ";"),")"))
         fun_LogIt(message = "**Single Entitie** - Test for differences: T-Test")  # For now only test method we do
         fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
-        
+
         fun_LogIt(
           message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")")
         )
-        
-        if(isTruthy(input$NotesSingleEntities) & 
+
+        if(isTruthy(input$NotesSingleEntities) &
            !(isEmpty(input$NotesSingleEntities))){
           fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
           fun_LogIt(message = paste0(
@@ -380,7 +381,7 @@ single_gene_visualisation_server <- function(id, data){
             "</div>"
           ))
         }
-        
+
         fun_LogIt(message = "### Publication Snippet")
         fun_LogIt(message = snippet_SingleGene(data = res_tmp[[session$token]],
                                                params = par_tmp[[session$token]]))
