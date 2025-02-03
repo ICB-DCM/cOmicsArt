@@ -349,7 +349,7 @@ create_warning_preproc <- function(data, preprocessing_procedure){
     )
     addWarning <- paste0(addWarning, "<font color=\"#FF0000\"><b>There were NA's after pre-processing, any row containg such was completly removed! (before/after): ",nrow_before,"/",nrow_after,"</b></font><br>")
     if(!(nrow_after > 0)){
-      addWarning <- paste0(addWarning, "<br> <font color=\"#FF0000\"><b>There is nothing left, choose different pre-processing other-wise App will crash!</b></font><br>")
+      addWarning <- paste0(addWarning, "<br> <font color=\"#FF0000\"><b>There is nothing left, choose different pre-processing other-wise cOmicsArt will crash!</b></font><br>")
     }
   }
   return(addWarning)
