@@ -192,25 +192,64 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   output[[ns(paste(contrast[1], contrast[2], "summary", sep = "_"))]] <- renderText(
     paste(resume, collapse = "<br>")
   )
-  output[[ns(paste(contrast[1], contrast[2], "table", sep = "_"))]] <- DT::renderDataTable({DT::datatable(
-    data = result,
-    extensions = 'Buttons',
-    filter = 'top',
-    rownames = T,
-    colnames = c('Gene' = 1),
-    options = list(
-      paging = TRUE,
-      searching = TRUE,
-      fixedColumns = TRUE,
-      autoWidth = TRUE,
-      ordering = TRUE,
-      order = list(list(4, 'asc'), list(5, 'asc')),  # 4=padj, 5=pvalue
-      dom = 'Bfrtip',
-      lengthMenu = c(10, 25, 50, 100, -1),
-      buttons = c('pageLength', 'copy', 'csv', 'excel')
-    ),
-    class = "cell-border compact stripe hover order-column"
-  )})
+  
+  result <- addStars(result)
+  
+  brks_log2FC_neg <- seq(min(result$log2FoldChange) -1, 0, length.out = 100) # -1 for towning down color match
+  brks_log2FC_pos <- seq(0, max(result$log2FoldChange) +1 , length.out = 100) # +a for towning down color match
+  brks <- c(brks_log2FC_neg, brks_log2FC_pos)
+  clrs <- colorRampPalette(c("#0e5bcfCD","#fafafa","#cf0e5bCD"))(length(brks) + 1)
+  
+  brks_padj_sig <- seq(0, par_tmp[[session$token]]$SigAna$significance_level, length.out = 10)
+  brks_padj_unsig <- seq(par_tmp[[session$token]]$SigAna$significance_level,1, length.out = 10)
+  brks_padj <- c(brks_padj_sig, brks_padj_unsig)
+  clrs_padj <- colorRampPalette(c("#ffce78","#fafafa","#fafafa"))(length(brks_padj) + 1)
+  
+  output[[ns(paste(contrast[1], contrast[2], "table", sep = "_"))]] <- 
+    DT::renderDataTable({
+      DT::datatable(
+        data = result,
+        extensions = 'Buttons',
+        filter = 'top',
+        rownames = TRUE,
+        colnames = c('Gene' = 1),
+        options = list(
+          paging = TRUE,
+          searching = TRUE,
+          fixedColumns = TRUE,
+          autoWidth = TRUE,
+          ordering = TRUE,
+          order = list(list(7, 'asc'), list(3, 'desc')),  # 6=padj, 2=log2FoldChange
+          dom = 'Bfrtip',
+          lengthMenu = c(10, 25, 50, 100, -1),
+          buttons = list(
+            list(extend = 'colvis', text = 'Show/Hide Columns'),
+            'pageLength', 'copy', 'csv', 'excel'),
+          columnDefs = list(
+            list(searchable = FALSE, targets = which(colnames(result) == "sig_level")),  # Disable filter for "sig_level"
+            list(visible = FALSE, targets = c(2, 4, 5, 6))  # Hide specific columns initially 
+          )
+        ),
+        escape = F,
+        class = "cell-border compact stripe hover order-column"
+      ) %>%
+        formatStyle(
+          c("log2FoldChange"), 
+          backgroundColor = styleInterval(brks, clrs)
+        ) %>%
+        formatStyle(
+          c("padj","pvalue"),
+          backgroundColor = styleInterval(brks_padj, clrs_padj)
+        ) %>%
+        formatSignif(
+          c("log2FoldChange","baseMean","lfcSE","stat","pvalue","padj"),
+          digits = 4,
+          interval = 3,
+          dec.mark = getOption("OutDec"),
+          zero.print = NULL,
+          rows = NULL
+        )
+    })
 
   psig_th <- ns(paste(contrast[1], contrast[2], "psig_th", sep = "_"))
   lfc_th <- ns(paste(contrast[1], contrast[2], "lfc_th", sep = "_"))
@@ -284,11 +323,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     )
     data4Volcano$combined <- paste0(data4Volcano$threshold," + ",data4Volcano$threshold_fc)
     data4Volcano$combined_raw <- paste0(data4Volcano$threshold_raw," + ",data4Volcano$threshold_fc)
-    colorScheme2 <- c("#cf0e5bCD", "#0e5bcfCD", "#939596CD","#cf0e5b1A", "#0e5bcf1A", "#9395961A")
-    names(colorScheme2) <- c(
-      "significant + up-regulated", "significant + down-regulated", "significant +  ",
-      "non-significant + up-regulated", "non-significant + down-regulated", "non-significant +  "
-    )
+
 
     # remove NA values
     sig_ana_reactive$data4Volcano <- data4Volcano[complete.cases(data4Volcano),]
@@ -754,25 +789,64 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   output[[ns(paste(contrast[1], contrast[2], "summary", sep = "_"))]] <- renderText(
     paste(resume, collapse = "<br>")
   )
-  output[[ns(paste(contrast[1], contrast[2], "table", sep = "_"))]] <- DT::renderDataTable({DT::datatable(
-    data = as.data.frame(result),
-    extensions = 'Buttons',
-    filter = 'top',
-    rownames = TRUE,
-    colnames = c('Gene' = 1),
-    options = list(
-      paging = TRUE,
-      searching = TRUE,
-      fixedColumns = TRUE,
-      autoWidth = TRUE,
-      ordering = TRUE,
-      order = list(list(6, 'asc'), list(2, 'desc')),  # 6=padj, 2=log2FoldChange
-      dom = 'Bfrtip',
-      lengthMenu = c(10, 25, 50, 100, -1),
-      buttons = c('pageLength', 'copy', 'csv', 'excel')
-    ),
-    class = "cell-border compact stripe hover order-column"
-  )})
+
+  result <- addStars(result)
+
+  brks_log2FC_neg <- seq(min(result$log2FoldChange) -1, 0, length.out = 100) # -1 for towning down color match
+  brks_log2FC_pos <- seq(0, max(result$log2FoldChange) +1 , length.out = 100) # +a for towning down color match
+  brks <- c(brks_log2FC_neg, brks_log2FC_pos)
+  clrs <- colorRampPalette(c("#0e5bcfCD","#fafafa","#cf0e5bCD"))(length(brks) + 1)
+
+  brks_padj_sig <- seq(0, par_tmp[[session$token]]$SigAna$significance_level, length.out = 10)
+  brks_padj_unsig <- seq(par_tmp[[session$token]]$SigAna$significance_level,1, length.out = 10)
+  brks_padj <- c(brks_padj_sig, brks_padj_unsig)
+  clrs_padj <- colorRampPalette(c("#ffce78","#fafafa","#fafafa"))(length(brks_padj) + 1)
+  
+  output[[ns(paste(contrast[1], contrast[2], "table", sep = "_"))]] <- 
+    DT::renderDataTable({
+      DT::datatable(
+        data = result,
+        extensions = 'Buttons',
+        filter = 'top',
+        rownames = TRUE,
+        colnames = c('Gene' = 1),
+        options = list(
+          paging = TRUE,
+          searching = TRUE,
+          fixedColumns = TRUE,
+          autoWidth = TRUE,
+          ordering = TRUE,
+          order = list(list(7, 'asc'), list(3, 'desc')),  # 6=padj, 2=log2FoldChange
+          dom = 'Bfrtip',
+          lengthMenu = c(10, 25, 50, 100, -1),
+          buttons = list(
+            list(extend = 'colvis', text = 'Show/Hide Columns'),
+            'pageLength', 'copy', 'csv', 'excel'),
+          columnDefs = list(
+            list(searchable = FALSE, targets = which(colnames(result) == "sig_level")),  # Disable filter for "sig_level"
+            list(visible = FALSE, targets = c(2, 4, 5, 6))  # Hide specific columns initially 
+          )
+        ),
+        escape = F,
+        class = "cell-border compact stripe hover order-column"
+      ) %>%
+        formatStyle(
+          c("log2FoldChange"), 
+          backgroundColor = styleInterval(brks, clrs)
+          ) %>%
+        formatStyle(
+          c("padj","pvalue"),
+          backgroundColor = styleInterval(brks_padj, clrs_padj)
+          ) %>%
+        formatSignif(
+          c("log2FoldChange","baseMean","lfcSE","stat","pvalue","padj"),
+          digits = 4,
+          interval = 3,
+          dec.mark = getOption("OutDec"),
+          zero.print = NULL,
+          rows = NULL
+        )
+      })
 
   psig_th <- ns(paste(contrast[1], contrast[2], "psig_th", sep = "_"))
   lfc_th <- ns(paste(contrast[1], contrast[2], "lfc_th", sep = "_"))
@@ -1324,4 +1398,20 @@ log_messages_volcano<- function(plot, table, contrast, file_path){
 
   removeNotification(notificationID)
   showNotification("Saved!",type = "message", duration = 1)
+}
+
+
+addStars <- function(result){ # assumes padj column present
+  result <- as.data.frame(result) %>%
+    mutate(sig_level = case_when(
+      padj < 0.0001 ~ as.character(HTML(paste0(icon("star", lib = "font-awesome"),
+                                               icon("star", lib = "font-awesome"),
+                                               icon("star", lib = "font-awesome")))),  # Three stars for padj < 0.0001
+      padj < 0.001 ~ as.character(HTML(paste0(icon("star", lib = "font-awesome"),
+                                              icon("star", lib = "font-awesome")))),  # Two stars for padj < 0.001
+      padj < par_tmp[[session$token]]$SigAna$significance_level ~ as.character(icon("star", lib = "font-awesome")),  # One star if below significance threshold
+      padj >= par_tmp[[session$token]]$SigAna$significance_level ~ as.character(icon("minus", lib = "font-awesome"))  # Default case
+    ))
+  result <- result[,c("sig_level", colnames(result)[1:(ncol(result)-1)])] 
+  return(result)
 }
