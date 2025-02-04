@@ -30,7 +30,6 @@ error_modal <- function(e, additional_text = NULL){
 
 update_data <- function(session_id){
   # for stability reasons, data is ALWAYS pulled here
-  print("Updating data...")
   data <- res_tmp[[session_id]]
   return(data)
 }
