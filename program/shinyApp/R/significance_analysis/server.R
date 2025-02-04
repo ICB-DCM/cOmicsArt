@@ -11,6 +11,12 @@ significance_analysis_server <- function(id, data, params){
         comparisons_for_plot = "all",
         coldata = NULL
       )
+      # make waiter a reactive value and assign it
+      waiter <- reactiveVal(Waiter$new(
+        html = LOADING_SCREEN,
+        color = "#70BF4F47",
+        hide_on_render = F
+      ))
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
       hideTab(
@@ -22,7 +28,6 @@ significance_analysis_server <- function(id, data, params){
       observeEvent(input$refreshUI, {
         print("Refreshing UI Heatmap")
         data <- update_data(session$token)
-        params <- update_params(session$token)
 
         output$UseBatch_ui <- renderUI({
         req(par_tmp[[session$token]]$BatchColumn != "NULL")
@@ -35,10 +40,6 @@ significance_analysis_server <- function(id, data, params){
         })
         output$type_of_comparison_ui <- renderUI({
           req(data_input_shiny())
-          if(is.null(sig_ana_reactive$coldata)){
-            sig_ana_reactive$coldata <- colData(data$data)
-          }
-          req(sig_ana_reactive$coldata)
           if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
             selectInput(
               inputId = ns("sample_annotation_types_cmp"),
@@ -51,7 +52,7 @@ significance_analysis_server <- function(id, data, params){
             selectInput(
               inputId = ns("sample_annotation_types_cmp"),
               label = "Choose groups to compare",
-              choices = c(colnames(sig_ana_reactive$coldata)),
+              choices = c(colnames(colData(data$data))),
               multiple = F ,
               selected = NULL
             )
@@ -60,7 +61,7 @@ significance_analysis_server <- function(id, data, params){
         # UI to choose comparisons
         output$chooseComparisons_ui <- renderUI({
           req(input$sample_annotation_types_cmp)
-          annoToSelect <- sig_ana_reactive$coldata[,input$sample_annotation_types_cmp]
+          annoToSelect <- colData(data$data)[,input$sample_annotation_types_cmp]
           if(length(annoToSelect) == length(unique(annoToSelect))){
             # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
             helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
@@ -174,12 +175,6 @@ significance_analysis_server <- function(id, data, params){
           )
         })
       })
-      # refresh the UI/data if needed
-      observeEvent(input$refreshUI, {
-        data <- update_data(session$token)
-        params <- update_params(session$token)
-        sig_ana_reactive$coldata <- colData(data$data)
-      })
 
       output$significance_analysis_info <- renderText(
         sig_ana_reactive$info_text
@@ -208,11 +203,6 @@ significance_analysis_server <- function(id, data, params){
       # Do the analysis
       observeEvent(sig_ana_reactive$start_analysis,{
         req(sig_ana_reactive$start_analysis > 0)
-        waiter <- Waiter$new(
-          html = LOADING_SCREEN,
-          color="#70BF4F47",
-          hide_on_render=F
-        )
         waiter$show()
         if(input$significanceGo == 1){
           sig_ana_reactive$significance_tabs_to_delete <- NULL
@@ -226,7 +216,6 @@ significance_analysis_server <- function(id, data, params){
         } else {
             data_calculate <- data$data
         }
-        sig_ana_reactive$coldata <- colData(data_calculate)
         # delete old panels
         if(!is.null(sig_ana_reactive$significance_tabs_to_delete)){
           for (i in seq_along(sig_ana_reactive$significance_tabs_to_delete)) {
@@ -547,11 +536,6 @@ significance_analysis_server <- function(id, data, params){
           paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
         },
         content = function(file){
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
           waiter$show()
           tmp <- getUserReactiveValues(input)
           par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
