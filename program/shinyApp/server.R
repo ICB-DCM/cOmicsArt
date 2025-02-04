@@ -922,7 +922,7 @@ server <- function(input,output,session){
   })
 
   # Visual Inspection ends here
-  
+
 
   observeEvent(input$refresh_file_input, {
     uploaded_from("file_input")
@@ -1379,7 +1379,7 @@ server <- function(input,output,session){
     par_tmp[[session$token]]['propensity'] <<- propensity
     print("Alright do Row selection")
     # Data set selection
-    res_select <<- select_data(
+    res_select <- select_data(
         data = res_tmp[[session$token]]$data_original,
         selected_rows = row_selection,
         selected_samples = sample_selection,
@@ -1486,7 +1486,7 @@ server <- function(input,output,session){
     # Checks and Warnings
     addWarning <- create_warning_preproc(data, preprocessing_procedure)
     data <- data[complete.cases(assay(data)),]
-    
+
     # Batch correction after preprocessing
     tryCatch({
       res_batch <- batch_correction(
@@ -1532,7 +1532,6 @@ server <- function(input,output,session){
       paste0(
         "The data has the dimensions of: ",
         paste0(dim(data),collapse = ", "),
-        "<br>","Be aware that depending on omic-Type, basic pre-processing has been done anyway even when selecting none",
         "<br","If logX was chosen, in case of 0's present logX(data+1) is done",
         "<br","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
