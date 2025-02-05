@@ -47,6 +47,7 @@ library(pcaPP) # requires gfortran. Not sure how to install on server
 library(reshape2)
 library(cowplot)  # already imported but now we use it explicitly
 # library(svglite)
+library(formattable)
 
 source("R/C.R")
 source("R/C_strings.R")
