@@ -174,6 +174,9 @@ significance_analysis_server <- function(id, data, params){
       output$significance_analysis_info <- renderText(
         sig_ana_reactive$info_text
       )
+      output$Significant_Plot_final <- renderPlot({
+          print(sig_ana_reactive$plot_last)
+      })
 
       # Analysis initial info
       observeEvent(input$significanceGo,{
@@ -397,9 +400,6 @@ significance_analysis_server <- function(id, data, params){
             set_name_size = 3
           )
         }
-        output$Significant_Plot_final <- renderPlot({
-            print(sig_ana_reactive$plot_last)
-        })
         sig_ana_reactive$results_for_plot <- res2plot
       })
       # if we want to change the highlighting
