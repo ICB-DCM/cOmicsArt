@@ -379,7 +379,8 @@ plot_significant_results <- function(
     return(list(
       plot = plot_obj,
       info_text = ifelse(info_text == "", "Analysis is Done!", info_text),
-      intersect_names = intersect_names
+      intersect_names = intersect_names,
+      overlap_list = overlap_list
     ))
   } else if (visualization_method == "Venn diagram") {
     # Create a Venn diagram
@@ -394,4 +395,63 @@ plot_significant_results <- function(
   } else {
     return(list(plot = NULL, info_text = "Unknown visualization method."))
   }
+}
+
+volcano_plot <- function(
+  result, th_psig, th_lfc, anno_vector, raw = FALSE
+) {
+  # Plot a volcano plot for the given result.
+  # Parameters:
+  # result: a data frame with the results of a significance analysis
+  # th_psig: the threshold where to consider a p-value significant
+  # th_lfc: the threshold for the log2 fold change
+  # anno_vector: a named vector with annotations for each gene (needed for plotly)
+  # raw: whether to use raw p-values or adjusted p-values (default: FALSE)
+
+  # Prepare data for plotting
+  data <- result
+  data$probename <- rownames(data)
+
+  # Compute significance thresholds and fold-change categories
+  data$threshold      <- ifelse(data$padj > th_psig, "Non-Sig", "Sig")
+  data$threshold_raw  <- ifelse(data$pvalue > th_psig, "Non-Sig", "Sig")
+  data$threshold_fc   <- ifelse(data$log2FoldChange > th_lfc, "Up",
+                           ifelse(data$log2FoldChange < -th_lfc, "Down", " "))
+  data$combined       <- ifelse(data$threshold_fc == " ", data$threshold,
+                           paste(data$threshold, data$threshold_fc, sep = " + "))
+  data$combined_raw   <- ifelse(data$threshold_fc == " ", data$threshold_raw,
+                           paste(data$threshold_raw, data$threshold_fc, sep = " + "))
+
+  # Remove any rows with missing values
+  data <- data[complete.cases(data), ]
+
+  # Annotate points using the provided annotation vector
+  data$chosenAnno <- anno_vector[rownames(data)]
+
+  # Define the color scheme (names must match the levels produced above)
+  colorScheme2 <- c(
+    "Sig + Up"      = "#cf0e5bCD",
+    "Sig + Down"    = "#0e5bcfCD",
+    "Sig"           = "#939596CD",
+    "Non-Sig + Up"  = "#cf0e5b1A",
+    "Non-Sig + Down"= "#0e5bcf1A",
+    "Non-Sig"       = "#9395961A"
+  )
+
+  # Create the volcano plot
+  volcano_plt <- ggplot(data, aes(label = chosenAnno)) +
+    geom_point(aes(
+      x = if (raw) -log10(pvalue) else -log10(padj),
+      y = log2FoldChange,
+      colour = if(raw) combined_raw else combined
+    )) +
+    geom_vline(xintercept = -log10(th_psig), color = "lightgrey") +
+    geom_hline(yintercept = c(-th_lfc, th_lfc), color = "lightgrey") +
+    scale_color_manual(values = colorScheme2, name = "") +
+    ylab("Log FoldChange") +
+    xlab(paste0("-log10(", ifelse(raw, "p-value)", "adj. p-value)"))) +
+    ggtitle(paste0(ifelse(raw, "C", "Unc"),"orrected p-Values")) +
+    CUSTOM_THEME
+
+  return(list(volcano_plt = volcano_plt, data = data))
 }

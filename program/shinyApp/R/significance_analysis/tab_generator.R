@@ -303,117 +303,49 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   })
   observeEvent(toPlotVolcano(), {
     print("Plot volcano")
+
+    # Ensure required inputs are available
     req(input[[psig_th]], input[[lfc_th]], input[[Volcano_anno_tooltip]])
+
+    # Create a loading screen using a Waiter
     waiter <- Waiter$new(
-      id=ns(paste(contrast[1], contrast[2], "test", sep = "_")),
+      id = ns(paste(contrast[1], contrast[2], "test", sep = "_")),
       html = LOADING_SCREEN,
-      color="#70BF4F47",
-      hide_on_render=FALSE
+      color = "#70BF4F47",
+      hide_on_render = FALSE
     )
     waiter$show()
-    on.exit({
-      waiter$hide()
+    on.exit(waiter$hide())
+
+    # Read input values locally
+    th_psig       <- input[[psig_th]]
+    th_lfc        <- input[[lfc_th]]
+    anno_col_name <- input[[Volcano_anno_tooltip]]
+
+    # Assume 'result' is defined elsewhere (e.g. from your analysis)
+    # and 'res_tmp[[session$token]]$data' contains rowData with annotation information.
+    anno_vector <- rowData(res_tmp[[session$token]]$data)[, anno_col_name]
+
+    # Generate the volcano plots using the helper function.
+    volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
+    volcano_obj_raw <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = TRUE)
+    sig_ana_reactive$data4Volcano <- volcano_obj$data
+    sig_ana_reactive$VolcanoPlot <- volcano_obj$volcano_plt
+    sig_ana_reactive$VolcanoPlot_raw <- volcano_obj_raw$volcano_plt
+
+    # Render the corrected volcano plot as a Plotly object
+    output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({
+      ggplotly(volcano_obj$volcano_plt,
+               tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")) %>%
+        layout(showlegend = TRUE)
     })
-    # workaround, as somehow the input values dont show up unless we change it in the shiny
-    # TODO: fix this (@Lea?)
-    sig_ana_reactive$th_psig <- input[[psig_th]]
-    sig_ana_reactive$th_lfc <- input[[lfc_th]]
-    sig_ana_reactive$Volcano_anno_tooltip <- input[[Volcano_anno_tooltip]]
-    # plot volcano plot
-    data4Volcano <- result
-    data4Volcano$probename <- rownames(data4Volcano)
-    data4Volcano$threshold <- ifelse(data4Volcano$padj>sig_ana_reactive$th_psig,"Non-Sig","Sig")
-    data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>sig_ana_reactive$th_psig,"Non-Sig","Sig")
-    data4Volcano$threshold_fc <- ifelse(
-      data4Volcano$log2FoldChange>sig_ana_reactive$th_lfc,
-      "Up",
-      ifelse(
-        data4Volcano$log2FoldChange<(-sig_ana_reactive$th_lfc),
-        "Down", " "
-      )
-    )
 
-    data4Volcano$combined <- ifelse(
-      data4Volcano$threshold_fc == " ",
-      data4Volcano$threshold,
-      paste(data4Volcano$threshold, data4Volcano$threshold_fc, sep = " + ")
-    )
-
-    data4Volcano$combined_raw <- ifelse(
-      data4Volcano$threshold_fc == " ",
-      data4Volcano$threshold_raw,
-      paste(data4Volcano$threshold_raw, data4Volcano$threshold_fc, sep = " + ")
-    )
-    colorScheme2 <- c("#cf0e5bCD", "#0e5bcfCD", "#939596CD","#cf0e5b1A", "#0e5bcf1A", "#9395961A")
-    names(colorScheme2) <- c(
-      "Sig + Up", "Sig + Down", "Sig",
-      "Non-Sig + Up", "Non-Sig + Down", "Non-Sig"
-    )
-
-
-    # remove NA values
-    sig_ana_reactive$data4Volcano <- data4Volcano[complete.cases(data4Volcano),]
-    sig_ana_reactive$data4Volcano$chosenAnno <- rowData(res_tmp[[session$token]]$data)[rownames(sig_ana_reactive$data4Volcano),input[[Volcano_anno_tooltip]]]
-    sig_ana_reactive$VolcanoPlot <- ggplot(
-      sig_ana_reactive$data4Volcano,
-      aes(label=chosenAnno)
-    ) +
-      geom_point(aes(
-        x = -log10(padj),
-        y = log2FoldChange,
-        colour = combined
-      )) +
-      geom_vline(
-        xintercept = -log10(sig_ana_reactive$th_psig),
-        color="lightgrey"
-        ) +
-      geom_hline(
-        yintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
-        color="lightgrey"
-        ) +
-      scale_color_manual(values=colorScheme2, name="") +
-      ylab("Log FoldChange") +
-      xlab("-log10(p_adj-value)") +
-      ggtitle(label="Corrected p-Values") +
-      CUSTOM_THEME
-
-
-    sig_ana_reactive$VolcanoPlot_raw <- ggplot(
-      sig_ana_reactive$data4Volcano,
-      aes(label=chosenAnno)
-    ) +
-      geom_point(aes(
-          x = -log10(pvalue),
-          y = log2FoldChange,
-          colour = combined_raw)) +
-      geom_vline(
-          xintercept = -log10(sig_ana_reactive$th_psig),
-          color="lightgrey"
-      ) +
-      geom_hline(
-          yintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
-          color="lightgrey"
-      ) +
-      scale_color_manual(values=colorScheme2, name="") +
-      ylab("Log FoldChange") +
-      xlab("-log10(p-value)") +
-      ggtitle(label="Uncorrected p-Values") +
-      CUSTOM_THEME
-
-    output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
-      sig_ana_reactive$VolcanoPlot,
-      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
-      legendgroup = "color"
-    ) %>% layout(
-      showlegend = TRUE
-    )})
-    output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
-      sig_ana_reactive$VolcanoPlot_raw,
-      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
-      legendgroup = "color"
-    ) %>% layout(
-      showlegend = TRUE
-    )})
+    # Render the uncorrected volcano plot as a Plotly object
+    output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({
+      ggplotly(volcano_obj_raw$volcano_plt,
+               tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")) %>%
+        layout(showlegend = TRUE)
+    })
   })
 
   session$userData[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_"))]] <- observeEvent(
@@ -942,107 +874,48 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       plotlyProxyInvoke(method = "relayout", list(showlegend = input[[show_legend_raw]]))
   })
   observeEvent(toPlotVolcano(), {
-    req(input[[psig_th]], input[[lfc_th]])
+    print("Plot volcano")
+
+    # Ensure required inputs are available
+    req(input[[psig_th]], input[[lfc_th]], input[[Volcano_anno_tooltip]])
+
+    # Create a loading screen using a Waiter
     waiter <- Waiter$new(
-      id=ns(paste(contrast[1], contrast[2], "test", sep = "_")),
+      id = ns(paste(contrast[1], contrast[2], "test", sep = "_")),
       html = LOADING_SCREEN,
-      color="#70BF4F47",
-      hide_on_render=FALSE
+      color = "#70BF4F47",
+      hide_on_render = FALSE
     )
     waiter$show()
-    on.exit({
-      waiter$hide()
+    on.exit(waiter$hide())
+
+    # Read input values locally
+    th_psig       <- input[[psig_th]]
+    th_lfc        <- input[[lfc_th]]
+    anno_col_name <- input[[Volcano_anno_tooltip]]
+
+    # Assume 'result' is defined elsewhere (e.g. from your analysis)
+    # and 'res_tmp[[session$token]]$data' contains rowData with annotation information.
+    anno_vector <- rowData(res_tmp[[session$token]]$data)[, anno_col_name]
+
+    # Generate the volcano plots using the helper function.
+    volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = TRUE)
+    volcano_obj_raw <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
+    sig_ana_reactive$data4Volcano <- volcano_obj$data
+
+    # Render the corrected volcano plot as a Plotly object
+    output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({
+      ggplotly(volcano_obj$volcano_plt,
+               tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")) %>%
+        layout(showlegend = TRUE)
     })
-    # work
-    sig_ana_reactive$th_psig <- input[[psig_th]]
-    sig_ana_reactive$th_lfc <- input[[lfc_th]]
-    sig_ana_reactive$annotip <- input[[Volcano_anno_tooltip]]
-    # plot volcano plot
-    data4Volcano <- as.data.frame(result)
-    data4Volcano$probename <- rownames(data4Volcano)
-    data4Volcano$threshold <- ifelse(data4Volcano$padj>sig_ana_reactive$th_psig,"Non-Sig","significant")
-    data4Volcano$threshold_raw <- ifelse(data4Volcano$pvalue>sig_ana_reactive$th_psig,"Non-Sig","significant")
-    data4Volcano$threshold_fc <- ifelse(
-      data4Volcano$log2FoldChange>sig_ana_reactive$th_lfc,
-      "Up",
-      ifelse(
-        data4Volcano$log2FoldChange<(-sig_ana_reactive$th_lfc),
-        "Down", " "
-      )
-    )
-    data4Volcano$combined <- paste0(data4Volcano$threshold," + ",data4Volcano$threshold_fc)
-    data4Volcano$combined_raw <- paste0(data4Volcano$threshold_raw," + ",data4Volcano$threshold_fc)
-    colorScheme2 <- c("#cf0e5bCD", "#0e5bcfCD", "#939596CD","#cf0e5b1A", "#0e5bcf1A", "#9395961A")
-    names(colorScheme2) <- c(
-      "significant + Up", "significant + Down", "significant +  ",
-      "Non-Sig + Up", "Non-Sig + Down", "Non-Sig +  "
-    )
 
-    # remove NA values
-    sig_ana_reactive$data4Volcano <- data4Volcano[complete.cases(data4Volcano),]
-    sig_ana_reactive$data4Volcano$chosenAnno <- rowData(res_tmp[[session$token]]$data)[rownames(sig_ana_reactive$data4Volcano),input[[Volcano_anno_tooltip]]]
-
-    sig_ana_reactive$VolcanoPlot <- ggplot(
-      sig_ana_reactive$data4Volcano,
-      aes(label=chosenAnno)
-    ) +
-      geom_point(aes(
-        x = -log10(padj),
-        y = log2FoldChange,
-        colour = combined
-      )) +
-      geom_vline(
-        xintercept = -log10(sig_ana_reactive$th_psig),
-        color="lightgrey"
-        ) +
-      geom_hline(
-        yintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
-        color="lightgrey"
-        ) +
-      scale_color_manual(values=colorScheme2, name="") +
-      ylab("Log FoldChange") +
-      xlab("-log10(p_adj-value)") +
-      ggtitle(label="Corrected p-Values") +
-      CUSTOM_THEME
-
-
-    sig_ana_reactive$VolcanoPlot_raw <- ggplot(
-      sig_ana_reactive$data4Volcano,
-      aes(label=chosenAnno)
-    ) +
-      geom_point(aes(
-          x = -log10(pvalue),
-          y = log2FoldChange,
-          colour = combined_raw)) +
-      geom_vline(
-          xintercept = -log10(sig_ana_reactive$th_psig),
-          color="lightgrey"
-      ) +
-      geom_hline(
-          yintercept = c(-sig_ana_reactive$th_lfc,sig_ana_reactive$th_lfc),
-          color="lightgrey"
-      ) +
-      scale_color_manual(values=colorScheme2, name="") +
-      ylab("Log FoldChange") +
-      xlab("-log10(p-value)") +
-      ggtitle(label="Uncorrected p-Values") +
-      CUSTOM_THEME
-
-    output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({ggplotly(
-      sig_ana_reactive$VolcanoPlot_raw,
-      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
-      legendgroup = "color"
-    ) %>% layout(
-      showlegend = TRUE
-    )})
-
-    output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({ggplotly(
-      sig_ana_reactive$VolcanoPlot  + theme(legend.position = "none"),
-      tooltip = ifelse(is.null(sig_ana_reactive$Volcano_anno_tooltip),"all","chosenAnno"),
-      legendgroup="color"
-    ) %>% layout(
-      showlegend = TRUE
-    )})
+    # Render the uncorrected volcano plot as a Plotly object
+    output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({
+      ggplotly(volcano_obj_raw$volcano_plt,
+               tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")) %>%
+        layout(showlegend = TRUE)
+    })
   })
 
   # downloadhandlers

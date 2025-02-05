@@ -351,8 +351,10 @@ significance_analysis_server <- function(id, data, params){
         sig_ana_reactive$info_text <- plot_data$info_text
         sig_ana_reactive$plot_last <- plot_data$plot
         # Update additional reactive values as needed.
-        if (!is.null(plot_data$intersect_names))
+        if (!is.null(plot_data$intersect_names)){
           sig_ana_reactive$intersect_names <- plot_data$intersect_names
+          sig_ana_reactive$overlap_list <- plot_data$overlap_list
+        }
       })
       # if we want to change the highlighting
       observeEvent(input$intersection_high,{
