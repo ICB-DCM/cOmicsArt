@@ -48,6 +48,7 @@ library(reshape2)
 library(cowplot)  # already imported but now we use it explicitly
 library("ComplexHeatmap")
 # library(svglite)
+library(formattable)
 
 source("R/C.R")
 source("R/C_strings.R")
