@@ -77,6 +77,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           h4(paste("Summary of the results comparing ", contrast[1], " and ", contrast[2])),
           htmlOutput(outputId = ns(paste(contrast[1], contrast[2], "summary", sep = "_")), container = pre),
           # create table with results, that allows filtering
+          p("Note that the sig_level column will not show icons if downloaded"),
           DT::dataTableOutput(outputId = ns(paste(contrast[1], contrast[2], "table", sep = "_")))
         ),
         tabPanel(
@@ -718,6 +719,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
           h4(paste("Summary of the results comparing ", contrast[1], " and ", contrast[2])),
           htmlOutput(outputId = ns(paste(contrast[1], contrast[2], "summary", sep = "_")), container = pre),
           # create table with results, that allows filtering
+          p("Note that the sig_level column will not show icons if downloaded"),
           DT::dataTableOutput(outputId = ns(paste(contrast[1], contrast[2], "table", sep = "_")))
         ),
         tabPanel(
