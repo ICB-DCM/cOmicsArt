@@ -333,6 +333,10 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     sig_ana_reactive$VolcanoPlot <- volcano_obj$volcano_plt
     sig_ana_reactive$VolcanoPlot_raw <- volcano_obj_raw$volcano_plt
 
+    par_tmp[[session$token]]$SigAna$th_psig <<- th_psig
+    par_tmp[[session$token]]$SigAna$th_lfc <<- th_lfc
+    par_tmp[[session$token]]$SigAna$anno_vector <<- anno_vector
+
     # Render the corrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({
       ggplotly(volcano_obj$volcano_plt,

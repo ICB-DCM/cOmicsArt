@@ -232,7 +232,7 @@ significance_analysis_server <- function(id, data, params){
         # Update res_-/par_tmp
         # MAYBE TODO: refine the list to be able to store more than one result
         res_tmp[[session$token]]$SigAna[[compare_within]] <<- sig_results
-        par_tmp[[session$token]]$SigAna[[compare_within]] <<- list(
+        par_tmp[[session$token]]$SigAna <<- list(
           preprocessing = preprocessing,
           comparisons = comparisons,
           compare_within = compare_within,
@@ -322,17 +322,17 @@ significance_analysis_server <- function(id, data, params){
         )
 
         # --- Assign input values to local variables ---
-        vis_method   <- input$visualization_method
-        comps_to_vis <- input$comparisons_to_visualize
-        sig_look     <- input$sig_to_look_at
-        sig_level    <- input$significance_level
-        sample_cmp   <- input$sample_annotation_types_cmp
+        visualization_method   <- input$visualization_method
+        comparisons_to_visualize <- input$comparisons_to_visualize
+        sig_to_look_at     <- input$sig_to_look_at
+        significance_level    <- input$significance_level
+        compare_within   <- input$sample_annotation_types_cmp
 
         # Retrieve the significance results (for safety, as in your original code)
-        sig_results <- res_tmp[[session$token]]$SigAna[[sample_cmp]]
+        sig_results <- res_tmp[[session$token]]$SigAna[[compare_within]]
 
         # --- Set scenario based on the visualization method ---
-        if (vis_method == "Venn diagram") {
+        if (visualization_method == "Venn diagram") {
           sig_ana_reactive$scenario <- 20
         } else {
           sig_ana_reactive$scenario <- 21
@@ -341,10 +341,10 @@ significance_analysis_server <- function(id, data, params){
         # --- Call the plotting helper function ---
         plot_data <- plot_significant_results(
           sig_results           = sig_results,
-          comparisons_to_visualize = comps_to_vis,
-          visualization_method  = vis_method,
-          significance_level    = sig_level,
-          sig_to_look_at        = sig_look
+          comparisons_to_visualize = comparisons_to_visualize,
+          visualization_method  = visualization_method,
+          significance_level    = significance_level,
+          sig_to_look_at        = sig_to_look_at
         )
 
         # Update info text for the user
@@ -355,6 +355,9 @@ significance_analysis_server <- function(id, data, params){
           sig_ana_reactive$intersect_names <- plot_data$intersect_names
           sig_ana_reactive$overlap_list <- plot_data$overlap_list
         }
+        par_tmp[[session$token]]$SigAna$comparisons_to_visualize <<- comparisons_to_visualize
+        par_tmp[[session$token]]$SigAna$sig_to_look_at <<- sig_to_look_at
+        par_tmp[[session$token]]$SigAna$visualization_method <<- visualization_method
       })
       # if we want to change the highlighting
       observeEvent(input$intersection_high,{
