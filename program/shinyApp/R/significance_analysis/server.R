@@ -41,22 +41,17 @@ significance_analysis_server <- function(id, data, params){
         output$type_of_comparison_ui <- renderUI({
           req(data_input_shiny())
           if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
-            selectInput(
-              inputId = ns("sample_annotation_types_cmp"),
-              label = "Choose groups to compare",
-              choices = par_tmp[[session$token]]$DESeq_factors,
-              multiple = F,
-              selected = NULL
-            )
+            choices <- par_tmp[[session$token]]$DESeq_factors
           } else {
-            selectInput(
-              inputId = ns("sample_annotation_types_cmp"),
-              label = "Choose groups to compare",
-              choices = c(colnames(colData(data$data))),
-              multiple = F ,
-              selected = NULL
-            )
+            choices <- c(colnames(colData(data$data)))
           }
+          selectInput(
+            inputId = ns("sample_annotation_types_cmp"),
+            label = "Choose groups to compare",
+            choices = choices,
+            multiple = F,
+            selected = NULL
+          )
         })
         # UI to choose comparisons
         output$chooseComparisons_ui <- renderUI({
@@ -194,149 +189,103 @@ significance_analysis_server <- function(id, data, params){
             target = "Multiple_Comparisons_Visualizations"
           )
         }
-        # also here to ensure to get sidepanel Inputs
-        tmp <- getUserReactiveValues(input)
-        par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
         sig_ana_reactive$info_text <- "Analysis is running..."
         sig_ana_reactive$start_analysis <- sig_ana_reactive$start_analysis + 1
       })
       # Do the analysis
       observeEvent(sig_ana_reactive$start_analysis,{
         req(sig_ana_reactive$start_analysis > 0)
-        waiter$show()
-        if(input$significanceGo == 1){
-          sig_ana_reactive$significance_tabs_to_delete <- NULL
-        }
+        waiter()$show()
         print("Start the Significance Analysis")
+
+        # define variables to be used
+        useBatch <- par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes"
+        preprocessing <- par_tmp[[session$token]]$PreProcessing_Procedure
+        comparisons <- input$comparisons
+        test_correction <- input$test_correction
+        significance_level <- input$significance_level
+        compare_within <- input$sample_annotation_types_cmp
+        test_method <- input$test_method
         # update the data if needed
         data <- update_data(session$token)
-        useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
-        if(useBatch){
-            data_calculate <- data$data_batch_corrected
-        } else {
-            data_calculate <- data$data
-        }
-        # delete old panels
-        if(!is.null(sig_ana_reactive$significance_tabs_to_delete)){
-          for (i in seq_along(sig_ana_reactive$significance_tabs_to_delete)) {
-            # destroy old report buttons
-            con <- unlist(strsplit(x = sig_ana_reactive$significance_tabs_to_delete[[i]],split = ":"))
-            name <- paste(con[1], con[2], "only2Report_Volcano", sep = "_")
-            for (button in c("", "_both", "_raw")){
-              session$userData[[paste0(name, button, "_val")]] <- isolate(
-                input[[paste0(name, button)]]
-              )
-              session$userData[[ns(paste0(name, button))]]$destroy()
-            }
-            removeTab(
-              inputId = "significance_analysis_results",
-              target = paste0("Significance_", i)
-            )
-          }
-        }
-        # if preproccesing method was DESeq2, then use DESeq2 for testing
-        if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
-          if (useBatch){
-            dds <- data$DESeq_obj_batch_corrected
-          } else {
-            dds <- data$DESeq_obj
-          }
-          # rewind the comparisons again
-          newList <- input$comparisons
-          contrasts <- vector("list", length(input$comparisons))
-          for (i in seq_along(newList)) {
-            contrasts[[i]] <- unlist(strsplit(x = input$comparisons[i],split = ":"))
-          }
-          # get the results for each contrast and put it all in a big results object
-          sig_ana_reactive$sig_results <- list()
-          for (i in seq_along(contrasts)) {
-            if(identical(
-              list(
-                test_method = "Wald",
-                test_correction = PADJUST_METHOD[[input$test_correction]],
-                batch_corrected = useBatch
-              ),
-              par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
-            )){
-              print("Results exists, skipping calculations.")
-              sig_ana_reactive$sig_results[[input$comparisons[i]]] <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
-              next
-            }
-            sig_ana_reactive$sig_results[[input$comparisons[i]]] <- DESeq2::results(
-              dds,
-              contrast = c(
-                input$sample_annotation_types_cmp,
-                contrasts[[i]][1],
-                contrasts[[i]][2]
-              ),
-              pAdjustMethod = PADJUST_METHOD[[input$test_correction]]
-            )
-            # fill in res_tmp[[session$token]], par_tmp[[session$token]]
-            res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- sig_ana_reactive$sig_results[[input$comparisons[i]]]
-            par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- list(
-              test_method = "Wald",
-              test_correction = PADJUST_METHOD[[input$test_correction]],
-              batch_corrected = useBatch
-            )
-          }
-        } else {  # all other methods require manual testing
-          # rewind the comparisons again
-          newList <- input$comparisons
-          contrasts <- vector("list", length(input$comparisons))
-          contrasts_all <- list()
-          for (i in seq_along(newList)) {
-            contrasts[[i]] <- unlist(strsplit(x = input$comparisons[i],split = ":"))
-            contrasts_all <- append(contrasts_all, contrasts[[i]])
-          }
-          # make all contrasts unique
-          contrasts_all <- unique(unlist(contrasts_all))
-          # name the contrasts with the comparison names
-          names(contrasts) <- input$comparisons
-          # get names of columns we want to choose:
-          index_comparisons <- which(
-            colData(data_calculate)[,input$sample_annotation_types_cmp] %in% contrasts_all
+        data_calculate <- if (useBatch) data$data_batch_corrected else data$data
+
+        # perform the analysis
+        sig_results <- tryCatch({
+          performSigAnalysis(
+            data = data_calculate,
+            preprocessing = preprocessing,
+            comparisons = comparisons,
+            compare_within = compare_within,
+            test_method = test_method,
+            useBatch = useBatch,
+            padjust_method = PADJUST_METHOD[[test_correction]]
           )
-          samples_selected <- colData(data_calculate)[index_comparisons,]
-          # get the data
-          data_selected <- as.matrix(assay(data_calculate))[,index_comparisons]
-          # significance analysis saved the result in res_tmp.
-          # as it is a custom function, wrap in tryCatch
-          tryCatch({
-            significance_analysis(
-              df = as.data.frame(data_selected),
-              samples = as.data.frame(samples_selected),
-              contrasts = contrasts,
-              method = input$test_method,
-              correction = PADJUST_METHOD[[input$test_correction]],
-              contrast_level = input$sample_annotation_types_cmp,
-              batch_corrected = useBatch
-            )
-            sig_ana_reactive$sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
-          }, error = function(e){
-            error_modal(e)
-            waiter$hide()
-            return(NULL)
+        }, error = function(e) {
+          error_modal(e)
+          waiter()$hide()
+          req(FALSE)
+        })
+        sig_ana_reactive$sig_results <- sig_results
+        # Update res_-/par_tmp
+        # MAYBE TODO: refine the list to be able to store more than one result
+        res_tmp[[session$token]]$SigAna[[compare_within]] <<- sig_results
+        par_tmp[[session$token]]$SigAna[[compare_within]] <<- list(
+          preprocessing = preprocessing,
+          comparisons = comparisons,
+          compare_within = compare_within,
+          test_method = test_method,
+          useBatch = useBatch,
+          padjust_method = PADJUST_METHOD[[test_correction]]
+        )
+
+        ## Tab Management
+        contrast_list <- lapply(comparisons, function(comp) unlist(strsplit(comp, ":")))
+        new_tabs <- setdiff(comparisons, sig_ana_reactive$active_tabs)
+        old_tabs <- setdiff(sig_ana_reactive$active_tabs, comparisons)
+
+        # Helper function to clean up tabs and associated elements
+        cleanup_tab <- function(comp) {
+          con <- unlist(strsplit(comp, ":"))
+          name <- paste(con[1], con[2], "only2Report_Volcano", sep = "_")
+
+          lapply(c("", "_both", "_raw"), function(button) {
+            input_id <- paste0(name, button)
+            session$userData[[paste0(input_id, "_val")]] <- isolate(input[[input_id]])
+            session$userData[[ns(input_id)]]$destroy()
           })
+
+          removeTab("significance_analysis_results", target = paste0("Significance_", which(sig_ana_reactive$active_tabs == comp)))
         }
-        # for each result create a tabPanel
-        for (i in seq_along(input$comparisons)) {
+
+        # Remove old tabs
+        invisible(lapply(old_tabs, cleanup_tab))
+
+        # Helper function to create new tabs
+        create_tab <- function(comp) {
+          idx <- which(comparisons == comp)
           create_new_tab(
-            title = input$comparisons[i],
+            title = comp,
             targetPanel = "significance_analysis_results",
-            result = sig_ana_reactive$sig_results[[input$comparisons[i]]],
-            contrast = contrasts[[i]],
-            alpha = input$significance_level,
+            result = sig_ana_reactive$sig_results[[comp]],
+            contrast = contrast_list[[idx]],
+            alpha = significance_level,
             ns = ns,
-            preprocess_method = par_tmp[[session$token]]$PreProcessing_Procedure,
-            value = paste0("Significance_", i)
+            preprocess_method = preprocessing,
+            value = paste0("Significance_", idx)
           )
-          sig_ana_reactive$significance_tabs_to_delete[[i]] <- input$comparisons[i]
         }
+
+        # Add new tabs
+        invisible(lapply(new_tabs, create_tab))
+
+        # Update the list of active tabs
+        sig_ana_reactive$active_tabs <- comparisons
         sig_ana_reactive$info_text <- "Analysis is Done!"
         # update plot
         sig_ana_reactive$update_plot_post_ana <- sig_ana_reactive$update_plot_post_ana + 1
-        sig_ana_reactive$comparisons_for_plot <- input$comparisons
-        if (length(input$comparisons) > 1) {
+        sig_ana_reactive$comparisons_for_plot <- comparisons
+        if (length(comparisons) > 1) {
           showTab(
             inputId = "significance_analysis_results",
             target = "Multiple_Comparisons_Visualizations",
@@ -349,7 +298,7 @@ significance_analysis_server <- function(id, data, params){
             select = TRUE
           )
         }
-        waiter$hide()
+        waiter()$hide()
       })
       # update the plot whenever the user changes the visualization method
       # or the comparisons to visualize
@@ -536,7 +485,7 @@ significance_analysis_server <- function(id, data, params){
           paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
         },
         content = function(file){
-          waiter$show()
+          waiter()$show()
           tmp <- getUserReactiveValues(input)
           par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
           
@@ -596,7 +545,7 @@ significance_analysis_server <- function(id, data, params){
             files = dir(temp_directory),
             root = temp_directory
           )
-          waiter$hide()
+          waiter()$hide()
         },
         contentType = "application/zip"
       )
