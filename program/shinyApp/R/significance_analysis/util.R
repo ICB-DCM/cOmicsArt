@@ -53,10 +53,11 @@ performSigAnalysis <- function(
       })
     }, error = function(e) {
       # extend the error message to include the contrast that caused the error
-      stop(paste("Error in DESeq2::results for contrast:", contrast_vals, "\n", e))
+      stop(paste("Error in DESeq2::results for contrasts:", contrasts, "\n", e))
     })
   } else {
     # Find all unique contrast levels and select the corresponding columns from the data:
+    data <- if (useBatch) data$data_batch_corrected else data$data
     contrasts_all <- unique(unlist(contrasts))
     index_comparisons <- which(colData(data)[, compare_within] %in% contrasts_all)
     samples_selected <- colData(data)[index_comparisons, ]
@@ -306,4 +307,91 @@ addStars <- function(result){ # assumes padj column present
     ))
   result <- result[,c("sig_level", colnames(result)[1:(ncol(result)-1)])] 
   return(result)
+}
+
+plot_significant_results <- function(
+  sig_results,           # List of significance results, keyed by comparison.
+  comparisons_to_visualize,  # Vector of comparisons to visualize (or "all")
+  visualization_method,  # "UpSetR plot" or "Venn diagram"
+  significance_level,    # e.g. input$significance_level
+  sig_to_look_at        # e.g. input$sig_to_look_at
+) {
+  # Initialize info message (empty if no issues)
+  info_text <- ""
+
+  # --- Validate that there are at least two comparisons to visualize ---
+  if (length(comparisons_to_visualize) == 1 && comparisons_to_visualize[1] != "all") {
+    info_text <- "You tried to compare only one set. Please choose at least two comparisons."
+    return(list(plot = NULL, info_text = info_text))
+  }
+
+  # --- Determine the set of comparisons to plot ---
+  if (any(comparisons_to_visualize == "all")) {
+    chosenVizSet <- names(sig_results)
+    if (length(chosenVizSet) > 4) {
+      chosenVizSet <- chosenVizSet[1:2]
+      info_text <- paste0(
+        "Note: Although you chose 'all' to visualize, only the first 2 comparisons are shown to avoid ",
+        "unwanted computational overhead (you got more than 4 comparisons). Please choose precisely ",
+        "the comparisons for visualization."
+      )
+    }
+  } else {
+    chosenVizSet <- comparisons_to_visualize
+  }
+
+  # --- Filter significant results for each chosen comparison ---
+  res2plot <- list()
+  for (comp in chosenVizSet) {
+    filtered <- filter_significant_result(
+      result = sig_results[[comp]],
+      alpha = significance_level,
+      filter_type = sig_to_look_at
+    )
+    rows_found <- rownames(filtered)
+    if (length(rows_found) > 0) {
+      res2plot[[comp]] <- rows_found
+    }
+  }
+
+  # --- Ensure that there is more than one (nonempty) comparison ---
+  if (length(res2plot) <= 1) {
+    info_text <- "You either have no significant results or only significant results in one comparison."
+    if (sig_to_look_at == "Significant") {
+      info_text <- paste0(
+        info_text,
+        "\nYou tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level."
+      )
+    }
+    return(list(plot = NULL, info_text = info_text))
+  }
+
+  # --- Create the desired plot based on the visualization method ---
+  if (visualization_method == "UpSetR plot") {
+    # Prepare data for an UpSet plot
+    overlap_list <- prepare_upset_plot(res2plot = res2plot)
+    plot_obj <- ComplexUpset::upset(
+      overlap_list,
+      colnames(overlap_list),
+      themes = list(default = CUSTOM_THEME)
+    )
+    intersect_names <- ggplot_build(plot_obj)$layout$panel_params[[1]]$x$get_labels()
+    return(list(
+      plot = plot_obj,
+      info_text = ifelse(info_text == "", "Analysis is Done!", info_text),
+      intersect_names = intersect_names
+    ))
+  } else if (visualization_method == "Venn diagram") {
+    # Create a Venn diagram
+    plot_obj <- ggvenn::ggvenn(
+      res2plot,
+      fill_color = c("#44af69", "#f8333c", "#fcab10", "#2b9eb3"),
+      set_name_size = 3
+    )
+    return(list(
+      plot = plot_obj, info_text = ifelse(info_text == "", "Analysis is Done!", info_text)
+    ))
+  } else {
+    return(list(plot = NULL, info_text = "Unknown visualization method."))
+  }
 }

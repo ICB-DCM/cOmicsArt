@@ -211,12 +211,11 @@ significance_analysis_server <- function(id, data, params){
         test_method <- input$test_method
         # update the data if needed
         data <- update_data(session$token)
-        data_calculate <- if (useBatch) data$data_batch_corrected else data$data
 
         # perform the analysis
         sig_results <- tryCatch({
           performSigAnalysis(
-            data = data_calculate,
+            data = data,
             preprocessing = preprocessing,
             comparisons = comparisons,
             compare_within = compare_within,
@@ -313,7 +312,7 @@ significance_analysis_server <- function(id, data, params){
           input$sig_to_look_at
         )
       })
-      observeEvent(to_update_significance_plot(),{
+      observeEvent(to_update_significance_plot(), {
         req(
           input$significanceGo,
           input$visualization_method,
@@ -322,85 +321,39 @@ significance_analysis_server <- function(id, data, params){
           sig_ana_reactive$update_plot_post_ana > 0
         )
 
-        # assign significance_results again, for safety measures
-        sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
-        # assign scenario=20 for Venn Diagram and scenario=21 for UpSetR
-        if(input$visualization_method == "Venn Diagram"){
+        # --- Assign input values to local variables ---
+        vis_method   <- input$visualization_method
+        comps_to_vis <- input$comparisons_to_visualize
+        sig_look     <- input$sig_to_look_at
+        sig_level    <- input$significance_level
+        sample_cmp   <- input$sample_annotation_types_cmp
+
+        # Retrieve the significance results (for safety, as in your original code)
+        sig_results <- res_tmp[[session$token]]$SigAna[[sample_cmp]]
+
+        # --- Set scenario based on the visualization method ---
+        if (vis_method == "Venn diagram") {
           sig_ana_reactive$scenario <- 20
         } else {
           sig_ana_reactive$scenario <- 21
         }
 
-        # get the results
-        res2plot <- list()
-        # check that you have more than one comparison
-        if(length(input$comparisons_to_visualize) == 1 & input$comparisons_to_visualize[1]!="all"){
-          sig_ana_reactive$info_text <- "You tried to compare only one set. Please choose at least two comparisons."
-          # clear the plot
-          output$Significant_Plot_final <- renderPlot({})
-          return(NULL)
-        }
-        sig_ana_reactive$info_text <- "Analysis is Done!"
+        # --- Call the plotting helper function ---
+        plot_data <- plot_significant_results(
+          sig_results           = sig_results,
+          comparisons_to_visualize = comps_to_vis,
+          visualization_method  = vis_method,
+          significance_level    = sig_level,
+          sig_to_look_at        = sig_look,
+          custom_theme          = CUSTOM_THEME
+        )
 
-        if(any(input$comparisons_to_visualize == "all")){
-          # show all comparisons if no more than 4
-          if(length(input$comparisons) < 5){
-            chosenVizSet <- input$comparisons
-          } else {
-            chosenVizSet <-  input$comparisons[c(1,2)]
-            sig_ana_reactive$info_text <- "Note: Although you choose 'all' to visualize only first 2 comparisons are shown to avoid unwanted computational overhead,
-            as you got more than 4 comparisons. Please choose precisely the comparisons for visualisation."
-          }
-        }else{
-          chosenVizSet <- input$comparisons_to_visualize
-        }
-        for (i in seq_along(chosenVizSet)) {
-          to_add_tmp <- rownames(
-            filter_significant_result(
-              result = sig_ana_reactive$sig_results[[chosenVizSet[i]]],
-              alpha = input$significance_level,
-              filter_type = input$sig_to_look_at
-            )
-          )
-          # only add if the result is not empty
-          if(length(to_add_tmp) > 0){
-            res2plot[[chosenVizSet[i]]] <- to_add_tmp
-          }
-        }
-        # check that you have more than one comparison
-        if(length(res2plot) <= 1){
-          sig_ana_reactive$info_text <- "You either have no significant results or only significant results in one comparison."
-          # if current plots to llok at are adjusted pvalues, suggest to look at raw pvalues
-          if(input$sig_to_look_at == "Significant"){
-              sig_ana_reactive$info_text <- paste0(
-                sig_ana_reactive$info_text,
-                "\nYou tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level."
-              )
-          }
-          # clear the plot
-          output$Significant_Plot_final <- renderPlot({})
-          return(NULL)
-        }
-
-        # plot the results
-        if(input$visualization_method == "UpSetR plot"){
-          sig_ana_reactive$overlap_list <- prepare_upset_plot(res2plot=res2plot)
-          sig_ana_reactive$plot_last <- ComplexUpset::upset(
-            sig_ana_reactive$overlap_list,
-            colnames(sig_ana_reactive$overlap_list),
-            themes=list(default=CUSTOM_THEME)
-          )
-          sig_ana_reactive$intersect_names <-  ggplot_build(
-            sig_ana_reactive$plot_last
-          )$layout$panel_params[[1]]$x$get_labels()
-        } else if(input$visualization_method == "Venn diagram"){
-          # set colors for each comparison
-          sig_ana_reactive$plot_last <- ggvenn::ggvenn(
-            res2plot, fill_color=c("#44af69", "#f8333c", "#fcab10", "#2b9eb3"),
-            set_name_size = 3
-          )
-        }
-        sig_ana_reactive$results_for_plot <- res2plot
+        # Update info text for the user
+        sig_ana_reactive$info_text <- plot_data$info_text
+        sig_ana_reactive$plot_last <- plot_data$plot
+        # Update additional reactive values as needed.
+        if (!is.null(plot_data$intersect_names))
+          sig_ana_reactive$intersect_names <- plot_data$intersect_names
       })
       # if we want to change the highlighting
       observeEvent(input$intersection_high,{
