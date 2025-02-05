@@ -235,7 +235,11 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           lengthMenu = c(10, 25, 50, 100, -1),
           buttons = list(
             list(extend = 'colvis', text = 'Show/Hide Columns'),
-            'pageLength', 'copy', 'csv', 'excel'),
+            'pageLength', 
+            'copy',
+            list(extend = 'csv', filename = 'significance_table'), 
+            list(extend = 'excel', filename = 'significance_table')
+            ),
           columnDefs = list(
             list(searchable = FALSE, targets = which(colnames(result) == "sig_level")),  # Disable filter for "sig_level"
             list(visible = FALSE, targets = c(3, 4))  # Hide specific columns initially 
@@ -872,7 +876,10 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
           lengthMenu = c(10, 25, 50, 100, -1),
           buttons = list(
             list(extend = 'colvis', text = 'Show/Hide Columns'),
-            'pageLength', 'copy', 'csv', 'excel'),
+            'pageLength', 'copy', 
+            list(extend = 'csv', text = 'CSV', filename = 'significance_table'), 
+            list(extend = 'excel', text = 'xlsx', filename = 'significance_table')
+          ),
           columnDefs = list(
             list(searchable = FALSE, targets = which(colnames(result) == "sig_level")),  # Disable filter for "sig_level"
             list(visible = FALSE, targets = c(2, 4, 5, 6))  # Hide specific columns initially 
