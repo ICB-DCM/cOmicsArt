@@ -344,8 +344,7 @@ significance_analysis_server <- function(id, data, params){
           comparisons_to_visualize = comps_to_vis,
           visualization_method  = vis_method,
           significance_level    = sig_level,
-          sig_to_look_at        = sig_look,
-          custom_theme          = CUSTOM_THEME
+          sig_to_look_at        = sig_look
         )
 
         # Update info text for the user

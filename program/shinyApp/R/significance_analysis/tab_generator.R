@@ -187,16 +187,15 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   output[[ns(paste(contrast[1], contrast[2], "summary", sep = "_"))]] <- renderText(
     paste(resume, collapse = "<br>")
   )
-
-  result <- addStars(result)
+  result <- addStars(result, alpha)
 
   brks_log2FC_neg <- seq(min(result$log2FoldChange, na.rm = T) -1 , 0, length.out = 100) # -1 for towning down color match
   brks_log2FC_pos <- seq(0, max(result$log2FoldChange, na.rm = T) +1 , length.out = 100) # +a for towning down color match
   brks <- c(brks_log2FC_neg, brks_log2FC_pos)
   clrs <- colorRampPalette(c("#0e5bcfCD","#fafafa","#cf0e5bCD"))(length(brks) + 1)
 
-  brks_padj_sig <- seq(0, par_tmp[[session$token]]$SigAna$significance_level, length.out = 10)
-  brks_padj_unsig <- seq(par_tmp[[session$token]]$SigAna$significance_level,1, length.out = 10)
+  brks_padj_sig <- seq(0, alpha, length.out = 10)
+  brks_padj_unsig <- seq(alpha,1, length.out = 10)
   brks_padj <- c(brks_padj_sig, brks_padj_unsig)
   clrs_padj <- colorRampPalette(c("#ffce78","#fafafa","#fafafa"))(length(brks_padj) + 1)
 

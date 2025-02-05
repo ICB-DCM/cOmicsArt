@@ -294,7 +294,7 @@ log_messages_volcano<- function(plot, table, contrast, file_path){
 }
 
 
-addStars <- function(result){ # assumes padj column present
+addStars <- function(result, alpha){ # assumes padj column present
   result <- as.data.frame(result) %>%
     mutate(sig_level = case_when(
       padj < 0.0001 ~ as.character(HTML(paste0(icon("star", lib = "font-awesome"),
@@ -302,8 +302,8 @@ addStars <- function(result){ # assumes padj column present
                                                icon("star", lib = "font-awesome")))),  # Three stars for padj < 0.0001
       padj < 0.001 ~ as.character(HTML(paste0(icon("star", lib = "font-awesome"),
                                               icon("star", lib = "font-awesome")))),  # Two stars for padj < 0.001
-      padj < par_tmp[[session$token]]$SigAna$significance_level ~ as.character(icon("star", lib = "font-awesome")),  # One star if below significance threshold
-      padj >= par_tmp[[session$token]]$SigAna$significance_level ~ as.character(icon("minus", lib = "font-awesome"))  # Default case
+      padj < alpha ~ as.character(icon("star", lib = "font-awesome")),  # One star if below significance threshold
+      padj >= alpha ~ as.character(icon("minus", lib = "font-awesome"))  # Default case
     ))
   result <- result[,c("sig_level", colnames(result)[1:(ncol(result)-1)])] 
   return(result)
