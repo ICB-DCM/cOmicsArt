@@ -203,11 +203,11 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   output[[ns(paste(contrast[1], contrast[2], "summary", sep = "_"))]] <- renderText(
     paste(resume, collapse = "<br>")
   )
-  
+
   result <- addStars(result)
   
-  brks_log2FC_neg <- seq(min(result$log2FoldChange) -1, 0, length.out = 100) # -1 for towning down color match
-  brks_log2FC_pos <- seq(0, max(result$log2FoldChange) +1 , length.out = 100) # +a for towning down color match
+  brks_log2FC_neg <- seq(min(result$log2FoldChange, na.rm = T) -1 , 0, length.out = 100) # -1 for towning down color match
+  brks_log2FC_pos <- seq(0, max(result$log2FoldChange, na.rm = T) +1 , length.out = 100) # +a for towning down color match
   brks <- c(brks_log2FC_neg, brks_log2FC_pos)
   clrs <- colorRampPalette(c("#0e5bcfCD","#fafafa","#cf0e5bCD"))(length(brks) + 1)
   
@@ -230,7 +230,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           fixedColumns = TRUE,
           autoWidth = TRUE,
           ordering = TRUE,
-          order = list(list(7, 'asc'), list(3, 'desc')),  # 6=padj, 2=log2FoldChange
+          order = list(list(5, 'asc'), list(6, 'desc')),  
           dom = 'Bfrtip',
           lengthMenu = c(10, 25, 50, 100, -1),
           buttons = list(
@@ -238,7 +238,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
             'pageLength', 'copy', 'csv', 'excel'),
           columnDefs = list(
             list(searchable = FALSE, targets = which(colnames(result) == "sig_level")),  # Disable filter for "sig_level"
-            list(visible = FALSE, targets = c(2, 4, 5, 6))  # Hide specific columns initially 
+            list(visible = FALSE, targets = c(3, 4))  # Hide specific columns initially 
           )
         ),
         escape = F,
@@ -253,7 +253,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           backgroundColor = styleInterval(brks_padj, clrs_padj)
         ) %>%
         formatSignif(
-          c("log2FoldChange","baseMean","lfcSE","stat","pvalue","padj"),
+          c("log2FoldChange","baseMean","stat","pvalue","padj"), # lfcStat only avail for DESeq
           digits = 4,
           interval = 3,
           dec.mark = getOption("OutDec"),
@@ -841,11 +841,10 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   output[[ns(paste(contrast[1], contrast[2], "summary", sep = "_"))]] <- renderText(
     paste(resume, collapse = "<br>")
   )
-
   result <- addStars(result)
 
-  brks_log2FC_neg <- seq(min(result$log2FoldChange) -1, 0, length.out = 100) # -1 for towning down color match
-  brks_log2FC_pos <- seq(0, max(result$log2FoldChange) +1 , length.out = 100) # +a for towning down color match
+  brks_log2FC_neg <- seq(min(result$log2FoldChange, na.rm = T) -1, 0, length.out = 100) # -1 for towning down color match
+  brks_log2FC_pos <- seq(0, max(result$log2FoldChange, na.rm = T) +1 , length.out = 100) # +a for towning down color match
   brks <- c(brks_log2FC_neg, brks_log2FC_pos)
   clrs <- colorRampPalette(c("#0e5bcfCD","#fafafa","#cf0e5bCD"))(length(brks) + 1)
 
@@ -1333,6 +1332,7 @@ significance_analysis <- function(
     )
   }
   sig_results <- list()
+
   # for each comparison get the data and do the test
   # introduce a running parameter alongside the loop for the name
   comp_name <- 1
