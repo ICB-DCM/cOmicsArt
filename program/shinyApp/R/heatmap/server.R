@@ -4,7 +4,8 @@ heatmap_server <- function(id, data, params, updates){
     function(input,output,session){
       # Heatmap ----
       heatmap_reactives <- reactiveValues(
-        customTitle = NULL
+        customTitle = NULL,
+        info_text = "Press 'Get Heatmap' to start!",
       )
       ## UI Section ----
       ns <- session$ns
@@ -109,7 +110,7 @@ heatmap_server <- function(id, data, params, updates){
       })
       
       output$Heatmap_Info <- renderText({
-        "Press 'Get Heatmap' to start!"
+        heatmap_reactives$info_text
       })
 
       ## Do Heatmap
@@ -194,9 +195,7 @@ heatmap_server <- function(id, data, params, updates){
             )
           ))
           observeEvent(input$cancel_heatmap, {
-            output$Heatmap_Info <- renderText({
-              paste0("The heatmap not calculated due to low number of selected entities to show.")
-            })
+            heatmap_reactives$info_text <- paste0("The heatmap not calculated due to low number of selected entities to show.")
             proceed_with_heatmap(FALSE)
             removeModal()
           })
@@ -213,25 +212,19 @@ heatmap_server <- function(id, data, params, updates){
 
           observeEvent(input$continue_heatmap, {
             proceed_with_heatmap(TRUE)
-            output$Heatmap_Info <- renderText({
-              paste0("The heatmap is being calculated and displays a matrix with: ", nrow(data2plot), " rows and ", ncol(data2plot), " columns.")
-            })
+            heatmap_reactives$info_text <- paste0("The heatmap is being calculated and displays a matrix with: ", nrow(data2plot), " rows and ", ncol(data2plot), " columns.")
             removeModal()
           })
 
           observeEvent(input$cancel_heatmap, {
             waiter$hide()
             proceed_with_heatmap(FALSE)
-            output$Heatmap_Info <- renderText({
-              paste0("The heatmap not calculated due to user's choice.")
-            })
+            heatmap_reactives$info_text <- paste0("The heatmap not calculated due to user's choice.")
             removeModal()
           })
         } else {
           proceed_with_heatmap(TRUE)
-          output$Heatmap_Info <- renderText({
-            paste0("The heatmap is being calculated and displays a matrix with: ", nrow(data2plot), " rows and ", ncol(data2plot), " columns.")
-          })
+          heatmap_reactives$info_text <- paste0("The heatmap is being calculated and displays a matrix with: ", nrow(data2plot), " rows and ", ncol(data2plot), " columns.")
         }
 
         observeEvent(proceed_with_heatmap(), {
