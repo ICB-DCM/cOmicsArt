@@ -7,6 +7,12 @@ heatmap_server <- function(id, data, params, updates){
         customTitle = NULL,
         info_text = "Press 'Get Heatmap' to start!",
       )
+      # make waiter a reactive value and assign it
+      waiter <- reactiveVal(Waiter$new(
+        html = LOADING_SCREEN,
+        color = "#70BF4F47",
+        hide_on_render = F
+      ))
       ## UI Section ----
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
@@ -141,11 +147,7 @@ heatmap_server <- function(id, data, params, updates){
           input$row_label_options
         )
         req(selectedData_processed())
-        waiter <- Waiter$new(
-          html = LOADING_SCREEN,
-          color="#70BF4F47"
-        )
-        waiter$show()
+        waiter()$show()
 
         # update the data
         data <- update_data(session$token)
@@ -186,7 +188,7 @@ heatmap_server <- function(id, data, params, updates){
         proceed_with_heatmap <- reactiveVal(FALSE)
         # Check for data rows and show modal if necessary
         if(nrow(data2plot) < 2){
-          waiter$hide()
+          waiter()$hide()
           showModal(modalDialog(
             title = "Warning",
             "The selection results in only one row. Please revise to have at least two. For single gene visualisation check out the tab Single gene visualisation.",
@@ -200,7 +202,7 @@ heatmap_server <- function(id, data, params, updates){
             removeModal()
           })
         } else if (nrow(data2plot) > 100) {
-          waiter$hide()
+          waiter()$hide()
           showModal(modalDialog(
             title = "Warning",
             "The dataset has more than 100 rows. This may cause a high runtime. Do you want to continue?",
@@ -217,12 +219,13 @@ heatmap_server <- function(id, data, params, updates){
           })
 
           observeEvent(input$cancel_heatmap, {
-            waiter$hide()
+            waiter()$hide()
             proceed_with_heatmap(FALSE)
             heatmap_reactives$info_text <- paste0("The heatmap not calculated due to user's choice.")
             removeModal()
           })
         } else {
+          waiter()$hide()  # Hide the waiter to streamline with showing it again in the heatmap calculation
           proceed_with_heatmap(TRUE)
           heatmap_reactives$info_text <- paste0("The heatmap is being calculated and displays a matrix with: ", nrow(data2plot), " rows and ", ncol(data2plot), " columns.")
         }
@@ -236,6 +239,7 @@ heatmap_server <- function(id, data, params, updates){
             input$anno_options,
             input$row_anno_options
           )
+          waiter()$show()
           annotation_col <- NA
           annotation_row <- NA
           if(!("None" %in% input$anno_options)){
@@ -286,7 +290,7 @@ heatmap_server <- function(id, data, params, updates){
             # waitress$inc(20)
           }, error = function(e) {
             error_modal(e)
-            waiter$hide()
+            waiter()$hide()
             return(NULL)
           })
 
@@ -297,7 +301,7 @@ heatmap_server <- function(id, data, params, updates){
           res_tmp[[session$token]][["Heatmap"]]$plot <<- heatmap_plot
           tmp <- getUserReactiveValues(input)
           par_tmp[[session$token]]$Heatmap[names(tmp)] <<- tmp
-          waiter$hide()
+          waiter()$hide()
         })
 
 
@@ -307,12 +311,7 @@ heatmap_server <- function(id, data, params, updates){
             paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
-            waiter <- Waiter$new(
-              html = LOADING_SCREEN,
-              color = "#3897F147",
-              hide_on_render = FALSE
-            )
-            waiter$show()
+            waiter()$show()
             envList <- list(
               res_tmp = res_tmp[[session$token]],
               par_tmp = par_tmp[[session$token]]
@@ -340,7 +339,7 @@ heatmap_server <- function(id, data, params, updates){
                 files = dir(temp_directory),
                 root = temp_directory
               )
-              waiter$hide()
+              waiter()$hide()
             },
             contentType = "application/zip"
           )
