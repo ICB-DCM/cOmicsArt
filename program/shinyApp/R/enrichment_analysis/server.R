@@ -430,15 +430,15 @@ enrichment_analysis_Server <- function(id, data, params, updates){
                 ea_reactives$data <- translate_genes_ea(
                   data = ea_reactives$data,
                   annotation_results = anno_results,
-                  input = input
+                  organism = ea_reactives$organism
                 )
               }else{
                 ea_reactives$tmp_genes <- translate_genes_oa(
                   annotation_results = anno_results,
-                  input = input,
                   geneSetChoice = ea_reactives$tmp_genes,
                   geneSet2Enrich = input$GeneSet2Enrich,
-                  data = ea_reactives$data
+                  data = ea_reactives$data,
+                  organism = ea_reactives$organism
                 )
               }
               ea_reactives$can_start <- TRUE

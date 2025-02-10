@@ -1,9 +1,9 @@
-translate_genes_ea <- function(data, annotation_results, input){
+translate_genes_ea <- function(data, annotation_results, organism){
   if(annotation_results$no_ann){
     # copy rownames with corresponding annotation as columnname
     rowData(data)[[annotation_results$base_annotation]] <- rownames(rowData(data))  # can this be just data?
   }
-  if(par_tmp[[session$token]]['organism'] == "Human genes (GRCh38.p14)"){
+  if(organism == "Human genes (GRCh38.p14)"){
     ensembl_slot <- "hsapiens_gene_ensembl"
   }else{
     ensembl_slot <- "mmusculus_gene_ensembl"
@@ -43,13 +43,13 @@ translate_genes_ea <- function(data, annotation_results, input){
 
 translate_genes_oa <- function(
   annotation_results,
-  input,
   geneSetChoice,
   geneSet2Enrich,
-  data
+  data,
+  organism
 ){
   # translate to entrez id, currently only Humand and Mouse supported
-  if(par_tmp[[session$token]]['organism'] == "Human genes (GRCh38.p14)"){
+  if(organism == "Human genes (GRCh38.p14)"){
     ensembl_slot <- "hsapiens_gene_ensembl"
   }else{
     ensembl_slot <- "mmusculus_gene_ensembl"
@@ -59,8 +59,8 @@ translate_genes_oa <- function(
   if(geneSet2Enrich == "heatmap_genes"){
     if(annotation_results$no_ann){
       # copy rownames with corresponding annotation as columnname
-      rowData(data)[[input$AnnotationSelection]] <- rownames(rowData(data))
-      annotation_results$base_annotation <- input$AnnotationSelection
+      rowData(data)[[anno_results$base_annotation]] <- rownames(rowData(data))
+      annotation_results$base_annotation <- anno_results$base_annotation
     }
     out <- getBM(
       attributes = c("ensembl_gene_id", "gene_biotype", "external_gene_name", "entrezgene_id"),
