@@ -24,4 +24,3 @@ ERROR_PREPROC <<- HTML(paste0(
   "and click 'Get Pre-Processing' again.<br>",
   "<span style='color: red;'>You should not see this message before moving to analysis!</span><br>"
 ))  # Error shown in the info box upon failed preprocessing
-

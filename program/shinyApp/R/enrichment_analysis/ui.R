@@ -152,36 +152,7 @@ ea_main <- function(ns){
         geneset_panel_UI(ns("C7")),
         geneset_panel_UI(ns("IMMUNESIGDB")),
         geneset_panel_UI(ns("VAX")),
-        geneset_panel_UI(ns("C8")),
-        tabPanel(
-          title = "KeggPathwayOutput",
-          helpText("Specificy on the left which pathway (all sig. enriched) to display in picture-format"),
-          actionButton(
-            inputId = ns("OverlayOnPathway"),
-            label = "Show overlay on Pathway"
-          ),
-          selectInput(
-            inputId = ns("plotOnTopOption"),
-            label = "Specifiy the what the colored overlay should indicate",
-            choices = c("LFC", "presence"),
-            selected = "presence"
-          ),
-          uiOutput(outputId = ns("sample_anno_types_KEGG_ui")),
-          uiOutput(outputId = ns("ComparisonOptionsCRTL_ui")),
-          uiOutput(outputId = ns("ComparisonOptionsCOMP_ui")),
-          uiOutput(outputId = ns("psig_KEGG_ui")),
-          sliderInput(
-            inputId = ns("imageWidth"),
-            label = "Adjust Width",
-            min = 400, max = 1500, step = 20, value = 1000
-          ),
-          sliderInput(
-            inputId = ns("imageHeight"),
-            label = "Adjust Height",
-            min = 400, max = 1500, step = 20, value = 640
-          ),
-          imageOutput(outputId = ns("KeggPathwayOutput_img"))
-        )
+        geneset_panel_UI(ns("C8"))
       )
     )
   )
