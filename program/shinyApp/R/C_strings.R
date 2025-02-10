@@ -26,7 +26,7 @@ ERROR_PREPROC <<- HTML(paste0(
 ))  # Error shown in the info box upon failed preprocessing
 
 # --- Error messages Heatmap ---
-ERROR_SEND_GENES_ADD <- "You only need to change the labels of the rows to portray ENSEMBL IDs ('Choose the label of rows')"
+ERROR_SEND_GENES_ADD <<- "You only need to change the labels of the rows to portray ENSEMBL IDs ('Choose the label of rows')"
 
 # --- Error messages Enrichment Analysis ---
 ERROR_INVALID_ANALYSIS <<- "EnrichmentAnalysis type must be either 'GeneSetEnrichment' or 'OverRepresentation_Analysis'"
@@ -34,3 +34,4 @@ ERROR_NO_GENESET <<- "No gene set provided for enrichment analysis"
 ERROR_NON_ENSEMBL_GENES <<- "Provided gene set must be in ENSEMBL-IDs format"
 ERROR_NO_HEATMAP_GENES <<- "No heatmap genes provided for enrichment analysis"
 ERROR_HEATMAP_IN_APP <<- "Change to 'Heatmap' tab, produce a heatmap and save the genes to use for enrichment analysis via button below the plot."
+ERROR_LFCS_EMPTY <<- "The fold-change calculation returned NULL. Check the compare_within, reference and treatment groups."

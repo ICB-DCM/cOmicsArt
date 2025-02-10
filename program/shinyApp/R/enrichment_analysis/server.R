@@ -320,96 +320,51 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         }
       })
       ## Do enrichment ----
-      geneSetChoice <- reactive({
-        if(isTruthy(input$GeneSet2Enrich) & input$ORA_or_GSE == "OverRepresentation_Analysis" ){
-          # TODO: Add DE genes
-          if(input$GeneSet2Enrich == "ProvidedGeneSet"){
-            if(!is.null(input$UploadedGeneSet)){
-              Tmp <- read.csv(input$UploadedGeneSet$datapath, header = F)
-              # check take first column as a character vector
-              geneSetChoice_tmp <- Tmp$V1
-              ## Here somehow if value next to gene provided needs to be considered further down
-              # Check if they start with "ENS.."
-              if(!length(which(grepl("ENS.*",geneSetChoice_tmp) == TRUE)) == length(geneSetChoice_tmp)){
-                ea_reactives$ea_info <- "Check your input format, should be only gene names ENSMBL-IDs"
-                geneSetChoice_tmp <- NULL
-              }else{
-                geneSetChoice_tmp <- geneSetChoice_tmp
-              }
-
-            }else{
-              req(FALSE)
-            }
-          }
-          if(input$GeneSet2Enrich == "heatmap_genes"){
-            geneSetChoice_tmp <- res_tmp[[session$token]]$Heatmap$gene_list
-          }
-        }else{
-          if(input$ValueToAttach == "LFC" | input$ValueToAttach == "LFC_abs" | input$ValueToAttach == "statistic_value"){
-            #takes all genes after preprocessing
-            #get LFC
-            ctrl_samples_idx <- which(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_ref_GSEA)
-            comparison_samples_idx <- which(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA] %in% input$Groups2Compare_treat_GSEA)
-
-            Data2Plot <- tryCatch(
-              {
-                getLFCs(
-                  assays(ea_reactives$data)$raw,
-                  ctrl_samples_idx,
-                  comparison_samples_idx
-                )
-              },
-              error=function(e){
-                showModal(modalDialog(
-                  title = HTML("<font color='red'>An Error occured</font>"),
-                  footer = tagList(
-                    modalButton("Close")
-                  ),
-                  HTML(paste0(
-                    "<font color='red'>Error: ",e$message,"</font><br><br>",
-                    "The Error occured during fold change calculation. ",
-                    "Did you choose the right comparison groups?"
-                  ))
-                ))
-              }
-            )
-            if (is.null(Data2Plot)){
-              return(NULL)
-            }
-
-            Data2Plot_tmp <- Data2Plot
-            if(input$ValueToAttach == "LFC"){
-              geneSetChoice_tmp <- Data2Plot_tmp$LFC
-            } else if(input$ValueToAttach == "statistic_value"){
-              geneSetChoice_tmp <- Data2Plot_tmp$statistic
-            } else if(input$ValueToAttach == "LFC_abs"){
-              geneSetChoice_tmp <- abs(Data2Plot_tmp$LFC)
-            }
-
-            if(length(geneSetChoice_tmp) < 1){
-              print("Nothing significant!")
-              geneSetChoice_tmp <- NULL
-            } else {
-              names(geneSetChoice_tmp) <- Data2Plot_tmp$probename
-            }
-          }
-        }
-        geneSetChoice_tmp
-      })
       observeEvent(input$enrichmentGO,{
         shinyjs::showElement(id = "enrichment_div", asis = TRUE)
-        ea_reactives$ea_info <- "Enrichment is running..."
         waiter <- Waiter$new(
           html = LOADING_SCREEN,
           color="#70BF4F47"
         )
         waiter$show()
-        print("Start Enrichment")
+        message("Start Enrichment")
 
+        # assign variables to be used in the enrichment analysis
+        ora_or_gse <- input$ORA_or_GSE %||% "GeneSetEnrichment"
+        ora_gene_set_type <- input$GeneSet2Enrich %||% NULL
+        uploaded_gene_set <- input$UploadedGeneSet %||% NULL
+        heatmap_genes <- res_tmp[[session$token]]$Heatmap$gene_list %||% NULL
+        gse_gene_set_type <- input$ValueToAttach %||% "LFC"
+        data <- ea_reactives$data
+        compare_within <- input$sample_annotation_types_cmp_GSEA
+        reference <- input$Groups2Compare_ref_GSEA
+        treatment <- input$Groups2Compare_treat_GSEA
+        ea_reactives$tmp_genes <- get_gene_set_choice(
+          ora_or_gse = ora_or_gse,
+          ora_gene_set_type = ora_gene_set_type,
+          uploaded_gene_set = uploaded_gene_set,
+          heatmap_genes = heatmap_genes,
+          gse_gene_set_type = gse_gene_set_type,
+          data = data,
+          compare_within = compare_within,
+          reference = reference,
+          treatment = treatment
+        )
+        # Save par_tmp values
+        update_par_tmp <- list(
+          "ora_or_gse" = ora_or_gse,
+          "ora_gene_set_type" = ora_gene_set_type,
+          "uploaded_gene_set" = uploaded_gene_set,
+          "heatmap_genes" = heatmap_genes,
+          "gse_gene_set_type" = gse_gene_set_type,
+          "data" = data,
+          "compare_within" = compare_within,
+          "reference" = reference,
+          "treatment" = treatment
+        )
+        par_tmp[[session$token]]$Enrichment[names(new_pars)] <<- update_par_tmp
         fun_LogIt(message = "## Enrichment{.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
-        req(geneSetChoice())
-        ea_reactives$tmp_genes <- geneSetChoice()
         par_tmp[[session$token]]$Enrichment$tmp_genes <<- ea_reactives$tmp_genes
         par_tmp[[session$token]]$Enrichment$enrichments2do <<- ea_reactives$enrichments2do
         # Check whether the necessary annotation is available
@@ -533,8 +488,19 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               input$Groups2Compare_treat_GSEA,
               input$ValueToAttach
             )
-            tmp <- getUserReactiveValues(input)
-            par_tmp[[session$token]]$Enrichment[names(tmp)] <<- tmp
+            # update par_tmp, TODO: not pressing but update and align with other functions
+            update_par_tmp <- list(
+              "organism" = ea_reactives$organism,
+              "tmp_genes" = ea_reactives$tmp_genes,
+              "enrichments2do" = ea_reactives$enrichments2do,
+              "data" = ea_reactives$data,
+              "test_correction" = input$test_correction,
+              "sample_annotation_types_cmp_GSEA" = input$sample_annotation_types_cmp_GSEA,
+              "Groups2Compare_ref_GSEA" = input$Groups2Compare_ref_GSEA,
+              "Groups2Compare_treat_GSEA" = input$Groups2Compare_treat_GSEA,
+              "ValueToAttach" = input$ValueToAttach
+            )
+            par_tmp[[session$token]]$Enrichment[names(update_par_tmp)] <<- update_par_tmp
 
             fun_LogIt(message = paste0("**GSEA** Gene Set enrichment analysis was perfomed."))
             fun_LogIt(message = paste0("**GSEA** The genes were sorted by: ",input$ValueToAttach))
@@ -557,6 +523,15 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               enrichments2do = ea_reactives$enrichments2do,
               adjustMethod = input$test_correction
             )
+            # update par_tmp, TODO: not pressing but update and align with other functions
+            update_par_tmp <- list(
+              "organism" = ea_reactives$organism,
+              "tmp_genes" = ea_reactives$tmp_genes,
+              "enrichments2do" = ea_reactives$enrichments2do,
+              "data" = ea_reactives$data,
+              "test_correction" = input$test_correction
+            )
+            par_tmp[[session$token]]$Enrichment[names(update_par_tmp)] <<- update_par_tmp
             fun_LogIt(message = paste0("**ORA** Overrepresentation analysis was perfomed."))
             fun_LogIt(message = paste0("**ORA** The genes were taken from: ",input$ValueToAttach))
             if(input$GeneSet2Enrich =="ProvidedGeneSet"){
@@ -565,8 +540,6 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             fun_LogIt(message = paste0("**ORA** The adj. p-value threshold was set to 0.05,
                                        whereby mutliple testing correction was : ",
                                        input$test_correction))
-            tmp <- getUserReactiveValues(input)
-            par_tmp[[session$token]]$Enrichment[names(tmp)] <<- tmp
           }
           fun_LogIt(message = "### Publication Snippet")
           fun_LogIt(message = snippet_Enrichment(data = res_tmp[[session$token]],

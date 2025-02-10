@@ -41,7 +41,6 @@ translate_genes_ea <- function(data, annotation_results, input){
   return(data)
 }
 
-# input$GeneSet2Enrich
 translate_genes_oa <- function(
   annotation_results,
   input,
@@ -51,10 +50,8 @@ translate_genes_oa <- function(
 ){
   # translate to entrez id, currently only Humand and Mouse supported
   if(par_tmp[[session$token]]['organism'] == "Human genes (GRCh38.p14)"){
-    orgDb <- org.Hs.eg.db::org.Hs.eg.db
     ensembl_slot <- "hsapiens_gene_ensembl"
   }else{
-    orgDb <- org.Mm.eg.db::org.Mm.eg.db
     ensembl_slot <- "mmusculus_gene_ensembl"
   }
   ensembl <- loadedVersion[[ensembl_slot]]$ensmbl
