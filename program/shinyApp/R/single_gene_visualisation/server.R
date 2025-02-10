@@ -1,4 +1,4 @@
-single_gene_visualisation_server <- function(id, data){
+single_gene_visualisation_server <- function(id){
   moduleServer(
     id,
     function(input,output,session){

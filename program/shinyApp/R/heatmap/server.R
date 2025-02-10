@@ -1,4 +1,4 @@
-heatmap_server <- function(id, data, params, updates){
+heatmap_server <- function(id){
   moduleServer(
     id,
     function(input,output,session){

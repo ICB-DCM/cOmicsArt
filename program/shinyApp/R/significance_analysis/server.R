@@ -1,4 +1,4 @@
-significance_analysis_server <- function(id, data, params){
+significance_analysis_server <- function(id){
   moduleServer(
     id,
     function(input,output,session){

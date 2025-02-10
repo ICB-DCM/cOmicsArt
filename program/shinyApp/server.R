@@ -1798,25 +1798,13 @@ server <- function(input,output,session){
   # of respective data inputs hence need of at least one reactive!
   sample_correlation_server(id = "sample_correlation")
   # significance analysis ----
-  significance_analysis_server(
-    id = 'SignificanceAnalysis',
-    data = res_tmp[[session$token]],
-    params = par_tmp[[session$token]]
-  )
+  significance_analysis_server(id = 'SignificanceAnalysis')
   # PCA ----
   pca_Server(id = "PCA")
   # Heatmap ----
-  heatmap_server(
-    id = 'Heatmap',
-    data = res_tmp[[session$token]],
-    params = par_tmp[[session$token]],
-    reactive(updating$count)
-    )
+  heatmap_server(id = 'Heatmap')
   # Single Gene Visualisations ----
-  single_gene_visualisation_server(
-    id = 'single_gene_visualisation',
-    data = res_tmp[[session$token]]
-  )
+  single_gene_visualisation_server(id = 'single_gene_visualisation')
 
   # Enrichment Analysis ----
   enrichment_analysis_Server(
