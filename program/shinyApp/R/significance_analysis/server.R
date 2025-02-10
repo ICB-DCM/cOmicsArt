@@ -224,7 +224,7 @@ significance_analysis_server <- function(id){
             padjust_method = PADJUST_METHOD[[test_correction]]
           )
         }, error = function(e) {
-          error_modal(e)
+          error_modal(e$message)
           waiter()$hide()
           req(FALSE)
         })

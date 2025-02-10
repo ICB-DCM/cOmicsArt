@@ -164,7 +164,7 @@ single_gene_visualisation_server <- function(id){
             post_selection_check = post_selection_check
           )
         }, error = function(e){
-          error_modal(e)
+          error_modal(e$message)
         })
         single_gene_reactives$gene_data <- gene_data
         res_tmp[[session$token]]$SingleGeneVis <- gene_data

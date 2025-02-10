@@ -129,7 +129,16 @@ heatmap_server <- function(id){
 
       observeEvent(input$SaveGeneList_Heatmap, {
         # Save the gene list to res_tmp separately when asked
-        res_tmp[[session$token]][["Heatmap"]]$gene_list <<- par_tmp[[session$token]]$Heatmap$row_labels
+        genes2send <- par_tmp[[session$token]]$Heatmap$row_labels
+        if(!length(which(grepl("ENS.*",genes2send) == TRUE)) == length(genes2send)){
+          error_modal(
+            error_message = paste("No genes were saved.", ERROR_NON_ENSEMBL_GENES),
+            additional_text = ERROR_SEND_GENES_ADD
+          )
+          req(FALSE)
+        }
+        res_tmp[[session$token]][["Heatmap"]]$gene_list <<- genes2send
+        showNotification("Heatmap Genes Saved!",type = "message", duration = 2)
       })
 
       # Worflow:
@@ -294,7 +303,7 @@ heatmap_server <- function(id){
             col_anno = col_anno
           )
         }, error = function(e) {
-          error_modal(e, additional_text = "Something went wrong with the heatmap plot. Please check your data selection and settings")
+          error_modal(e$message, additional_text = "Something went wrong with the heatmap plot. Please check your data selection and settings")
           waiter()$hide()
           return(NULL)
         })
