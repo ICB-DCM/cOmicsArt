@@ -85,12 +85,59 @@ ea_sidebar <- function(ns){
       selected = "GeneSetEnrichment"
     ),
     uiOutput(outputId = ns("UseBatch_ui")),
-    uiOutput(outputId = ns("ValueToAttach_ui")),
-    uiOutput(outputId = ns("sample_annotation_types_cmp_GSEA_ui")),
-    uiOutput(outputId = ns("Groups2Compare_ref_GSEA_ui")),
-    uiOutput(outputId = ns("Groups2Compare_treat_GSEA_ui")),
-    uiOutput(outputId = ns("psig_threhsold_GSEA_ui")),
-    uiOutput(outputId = ns("GeneSetChoice_ui")) %>% helper(type = "markdown", content = "EA_GeneSets"),
+    conditionalPanel(
+      condition = sprintf("input['%s'] == 'GeneSetEnrichment'", ns("ORA_or_GSE")),
+      selectInput(
+        inputId = ns("ValueToAttach"),
+        label = "Select the metric to sort the genes after",
+        choices = list(
+          "log fold change (LFC)" = "LFC",
+          "absolute LFC" = "LFC_abs",
+          "t-statistic value" = "statistic_value"
+        )
+      ),
+      uiOutput(outputId = ns("sample_annotation_types_cmp_GSEA_ui")),
+      uiOutput(outputId = ns("Groups2Compare_ref_GSEA_ui")),
+      uiOutput(outputId = ns("Groups2Compare_treat_GSEA_ui"))
+    ),
+    conditionalPanel(
+      condition = sprintf("input['%s'] == 'OverRepresentation_Analysis'", ns("ORA_or_GSE")),
+      selectInput(
+        inputId = ns("GeneSet2Enrich"),
+        label = "Choose a gene set to hand over to enrich",
+        choices = c(
+          "ProvidedGeneSet",
+          "heatmap_genes"
+        ),
+        multiple = F
+      ),
+      conditionalPanel(
+        condition = sprintf("input['%s'] == 'ProvidedGeneSet'", ns("GeneSet2Enrich")),
+        renderUI({shiny::fileInput(
+          inputId = ns("UploadedGeneSet"),
+          label = "Select a file (.csv, 1 column, ENSEMBL, e.g. ENSMUSG....)"
+        )})
+      ),
+      selectInput(
+        inputId = ns("UniverseOfGene"),
+        label = "Select an Universe for enrichment (default is clusterProfilers default",
+        choices = c(
+          "default",
+          "after_pre_process",
+          "before_pre_process"
+        ),
+        selected = "default"
+      )
+    ),
+    selectInput(
+      inputId = ns("GeneSetChoice"),
+      label = "Choose sets to do enrichment for",
+      choices = names(GENESETS_RESET),
+      multiple = T ,
+      selected = c(
+        "KEGG", "Hallmarks", "GO_CC"
+      )
+    ) %>% helper(type = "markdown", content = "EA_GeneSets"),
     selectInput(
         inputId = ns("test_correction"),
         label = "Test correction",
@@ -100,9 +147,6 @@ ea_sidebar <- function(ns){
         ),
         selected = "Benjamini-Hochberg"
     ),
-    uiOutput(outputId = ns("GeneSet2Enrich_ui")),
-    uiOutput(outputId = ns("UploadedGeneSet_ui")),
-    uiOutput(outputId = ns("UniverseOfGene_ui")),
     actionButton(
       inputId = ns("enrichmentGO"),
       label = "Get Enrichment Analysis",
