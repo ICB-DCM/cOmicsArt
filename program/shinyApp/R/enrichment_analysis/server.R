@@ -362,7 +362,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           "reference" = reference,
           "treatment" = treatment
         )
-        par_tmp[[session$token]]$Enrichment[names(new_pars)] <<- update_par_tmp
+        par_tmp[[session$token]]$Enrichment[names(update_par_tmp)] <<- update_par_tmp
         fun_LogIt(message = "## Enrichment{.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         par_tmp[[session$token]]$Enrichment$tmp_genes <<- ea_reactives$tmp_genes
@@ -482,11 +482,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               ea_reactives$tmp_genes,
               ea_reactives$data,
               ea_reactives$enrichments2do,
-              input$test_correction,
-              input$sample_annotation_types_cmp_GSEA,
-              input$Groups2Compare_ref_GSEA,
-              input$Groups2Compare_treat_GSEA,
-              input$ValueToAttach
+              input$test_correction
             )
             # update par_tmp, TODO: not pressing but update and align with other functions
             update_par_tmp <- list(
@@ -494,11 +490,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               "tmp_genes" = ea_reactives$tmp_genes,
               "enrichments2do" = ea_reactives$enrichments2do,
               "data" = ea_reactives$data,
-              "test_correction" = input$test_correction,
-              "sample_annotation_types_cmp_GSEA" = input$sample_annotation_types_cmp_GSEA,
-              "Groups2Compare_ref_GSEA" = input$Groups2Compare_ref_GSEA,
-              "Groups2Compare_treat_GSEA" = input$Groups2Compare_treat_GSEA,
-              "ValueToAttach" = input$ValueToAttach
+              "test_correction" = input$test_correction
             )
             par_tmp[[session$token]]$Enrichment[names(update_par_tmp)] <<- update_par_tmp
 
@@ -516,12 +508,12 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           }else{
             ea_reactives$tmp_genes <- rowData(data$data)[ea_reactives$tmp_genes,"entrezgene_id"]
             ea_reactives$enrichment_results <- over_representation_analysis(
-              input = input,
               organism = ea_reactives$organism,
               geneSetChoice = ea_reactives$tmp_genes,
               data = data,
               enrichments2do = ea_reactives$enrichments2do,
-              adjustMethod = input$test_correction
+              adjustMethod = input$test_correction,
+              input$UniverseOfGene %||% "default"
             )
             # update par_tmp, TODO: not pressing but update and align with other functions
             update_par_tmp <- list(
@@ -529,7 +521,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               "tmp_genes" = ea_reactives$tmp_genes,
               "enrichments2do" = ea_reactives$enrichments2do,
               "data" = ea_reactives$data,
-              "test_correction" = input$test_correction
+              "test_correction" = input$test_correction,
+              "UniverseOfGene" = input$UniverseOfGene %||% "default"
             )
             par_tmp[[session$token]]$Enrichment[names(update_par_tmp)] <<- update_par_tmp
             fun_LogIt(message = paste0("**ORA** Overrepresentation analysis was perfomed."))
