@@ -129,7 +129,7 @@ heatmap_server <- function(id){
 
       observeEvent(input$SaveGeneList_Heatmap, {
         # Save the gene list to res_tmp separately when asked
-        res_tmp[[session$token]][["Heatmap"]]$gene_list <<- rownames(res_tmp[[session$token]][["Heatmap"]]$data)
+        res_tmp[[session$token]][["Heatmap"]]$gene_list <<- par_tmp[[session$token]]$Heatmap$row_labels
       })
 
       # Worflow:
@@ -238,6 +238,7 @@ heatmap_server <- function(id){
       heatmap_row_anno <- reactive({
         req(isolate(selected_data()), heatmap_reactives$data, proceed_with_heatmap())
         if ("None" %in% input$row_anno_options) return(NULL)
+        if(is.null(input$row_anno_options)) return(NULL)
         row_anno <- rowData(heatmap_reactives$data$data)[rownames(isolate(selected_data())), input$row_anno_options]
         return(rowAnnotation(
           df = as.data.frame(row_anno),
@@ -253,6 +254,7 @@ heatmap_server <- function(id){
       heatmap_col_anno <- reactive({
         req(isolate(selected_data()), heatmap_reactives$data, proceed_with_heatmap())
         if ("None" %in% input$anno_options) return(NULL)
+        if(is.null(input$anno_options)) return(NULL)
         col_anno <- colData(heatmap_reactives$data$data)[, input$anno_options]
         return(columnAnnotation(
         df = as.data.frame(col_anno),
@@ -268,10 +270,10 @@ heatmap_server <- function(id){
       heatmap_plot <- reactive({
         req(proceed_with_heatmap())
         req(isolate(selected_data()))
+        req(input$row_label_options)
         waiter()$show()
 
-        # row_labels <- rowData(heatmap_reactives$data$data)[rownames(isolate(selected_data())), input$row_label_options]
-        row_labels <- NULL
+        row_labels <- rowData(heatmap_reactives$data$data)[rownames(isolate(selected_data())), input$row_label_options]
         cluster_rows <- input$cluster_rows %||% TRUE
         cluster_cols <- input$cluster_cols %||% TRUE
         scale_rows <- input$rowWiseScaled %||% FALSE
