@@ -4,22 +4,24 @@ pre_processing_sidebar_panel <- sidebarPanel(
   # Do Center & scaling + potential other pre-processing stuff
   #########################################
   # this could be enhanced with personalized procedures
-  radioButtons(
-    inputId = "PreProcessing_Procedure",
-    label = "Pre-Processing Procedures",
-    choices = list(
-      "No pre-processing" = "none",
-      "Omic-specific filtering of low abundance" = "filterOnly",
-      "DESeq2 pre-processing (including variance stabilising transformation)" = "vst_DESeq",
-      "centering to 0 and scaling" = "simpleCenterScaling",
-      "scaling values to be within 0 and 1" = "Scaling_0_1",
-      "log10" = "log10",
-      "log2" = "log2",
-      "Pareto scaling (mean-centered and scaled by the square root of the standard deviation)" = "pareto_scaling",
-      "natural logarithm" = "ln"
-    ),
-    selected = "none"
-  ) %>% helper(type = "markdown", content = "PreProcessing_Procedures"),
+  # First dropdown: Choose Processing Type
+  selectInput(
+    inputId = "processing_type",
+    label = "Choose Processing Type",
+    choices = c("No pre-processing",
+                "Filtering",
+                "Omic-Specific",
+                "Log-Based", 
+                "Miscellaneous"),
+    selected = NULL,
+    multiple = FALSE
+  )%>% helper(type = "markdown", content = "PreProcessing_Procedures"),
+  
+  # Second dropdown: Options based on Processing Type
+  uiOutput("dynamic_options"),
+  
+  # Additional UI elements based on the selected option
+  uiOutput("additional_inputs"),
   uiOutput(outputId = "DESeq_formula_sub_ui"),
   uiOutput(outputId = "batch_effect_ui") %>% helper(type = "markdown", content = "PreProcessing_Batch"),
   actionButton(

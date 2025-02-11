@@ -1406,6 +1406,42 @@ server <- function(input,output,session){
 # Set Selected Data as Head to allow reiteration of pre-processing
 
 ## UI section ----
+  # Dynamically update second dropdown based on Processing Type
+  output$dynamic_options <- renderUI({
+    req(input$processing_type)  # Ensure input exists
+    choices_list <- switch(input$processing_type,
+                           "No pre-processing" = c("No pre-processing" = "none"),
+                           "Filtering" = c("Filtering" = "filterOnly"),
+                           "Omic-Specific" = c("DESeq2 VST" = "vst_DESeq", 
+                                               "Centering & Scaling" = "simpleCenterScaling", 
+                                               "Scaling 0-1" = "Scaling_0_1"),
+                           "Log-Based" = c("log10" = "log10", "log2" = "log2", "Natural logarithm" = "ln"),
+                           "Miscellaneous" = c("Pareto scaling" = "pareto_scaling")
+    )
+    selectInput(
+      inputId = "processing_option",
+      label = "Choose Processing Option",
+      choices = choices_list,
+      selected = NULL,
+      multiple = FALSE
+    )
+  })
+  # Show additional numeric input if "Omic-specific filtering" is chosen
+  output$additional_inputs <- renderUI({
+    req(input$processing_option)
+    
+    if (input$processing_option == "filterOnly") {
+      numericInput(
+        inputId = "filter_threshold",
+        label = "Set Filtering Threshold",
+        value = 0.1,
+        min = 0,
+        max = 1,
+        step = 0.01
+      )
+    }
+  })
+  
   # Update the batch effect UI based on the available columns
   output$batch_effect_ui <- renderUI({
     req(data_input_shiny())
