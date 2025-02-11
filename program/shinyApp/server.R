@@ -1407,19 +1407,21 @@ server <- function(input,output,session){
 
 ## UI section ----
   # Dynamically update second dropdown based on Processing Type
-  output$dynamic_options <- renderUI({
+  output$dynamic_options_ui <- renderUI({
     req(input$processing_type)  # Ensure input exists
     choices_list <- switch(input$processing_type,
                            "No pre-processing" = c("No pre-processing" = "none"),
-                           "Filtering" = c("Filtering" = "filterOnly"),
-                           "Omic-Specific" = c("DESeq2 VST" = "vst_DESeq", 
-                                               "Centering & Scaling" = "simpleCenterScaling", 
-                                               "Scaling 0-1" = "Scaling_0_1"),
+                           "Filtering" = c("global Filtering" = "filterOnly",
+                                           "sample-wise Filtering" = "filterPerSample"),
+                           "Omic-Specific" = c("DESeq2" = "vst_DESeq",
+                                               "limma voom" = "limma_voom"),
                            "Log-Based" = c("log10" = "log10", "log2" = "log2", "Natural logarithm" = "ln"),
-                           "Miscellaneous" = c("Pareto scaling" = "pareto_scaling")
+                           "Miscellaneous" = c("Pareto scaling" = "pareto_scaling",
+                                               "Centering & Scaling" = "simpleCenterScaling", 
+                                               "Scaling 0-1" = "Scaling_0_1")
     )
     selectInput(
-      inputId = "processing_option",
+      inputId = "PreProcessing_Procedure",
       label = "Choose Processing Option",
       choices = choices_list,
       selected = NULL,
@@ -1427,17 +1429,37 @@ server <- function(input,output,session){
     )
   })
   # Show additional numeric input if "Omic-specific filtering" is chosen
-  output$additional_inputs <- renderUI({
-    req(input$processing_option)
-    
-    if (input$processing_option == "filterOnly") {
-      numericInput(
-        inputId = "filter_threshold",
-        label = "Set Filtering Threshold",
-        value = 0.1,
-        min = 0,
-        max = 1,
-        step = 0.01
+  output$additional_inputs_ui <- renderUI({
+    req(input$PreProcessing_Procedure)
+    print(input$PreProcessing_Procedure)
+    if (input$PreProcessing_Procedure == "filterOnly") {
+      tagList(
+        div(style = "margin-left: 30px;",  
+          numericInput(
+            inputId = "filter_threshold",
+            label = "Specifcy the minimum sum of counts/concentration accross all samples for an entitie to be kept in the analysis.",
+            value = 10,
+            min = 0
+          )
+        )
+      )
+    }else if (input$PreProcessing_Procedure == "filterPerSample"){
+      tagList(
+        div(style = "margin-left: 30px;",  
+        numericInput(
+            inputId = "filter_threshold_samplewise",
+            label = "Specifcy theFiltering threshold of counts/concentration for an entitie",
+            value = 10
+          ),
+        numericInput(
+            inputId = "filter_samplesize",
+            label = "Number of Samples that need to pass the Filtering threshold",
+            value = 3,
+            min = 1,
+            max = ncol(res_tmp[[session$token]]$data),
+            step = 1
+          )
+        )
       )
     }
   })
