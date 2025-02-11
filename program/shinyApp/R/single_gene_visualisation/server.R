@@ -1,4 +1,4 @@
-single_gene_visualisation_server <- function(id, data){
+single_gene_visualisation_server <- function(id){
   moduleServer(
     id,
     function(input,output,session){
@@ -164,7 +164,7 @@ single_gene_visualisation_server <- function(id, data){
             post_selection_check = post_selection_check
           )
         }, error = function(e){
-          error_modal(e)
+          error_modal(e$message)
         })
         single_gene_reactives$gene_data <- gene_data
         res_tmp[[session$token]]$SingleGeneVis <- gene_data

@@ -119,7 +119,7 @@ sample_correlation_server <- function(id){
             annotation_colors <- res$annotation_colors
             sample_corr_reactive$info_text <- "Correlation Matrix successfully computed."
           }, error = function(e){
-            error_modal(e)
+            error_modal(e$message)
             waiter$hide()
             req(FALSE)
           })

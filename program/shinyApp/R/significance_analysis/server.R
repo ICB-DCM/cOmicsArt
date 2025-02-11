@@ -1,4 +1,4 @@
-significance_analysis_server <- function(id, data, params){
+significance_analysis_server <- function(id){
   moduleServer(
     id,
     function(input,output,session){
@@ -224,7 +224,7 @@ significance_analysis_server <- function(id, data, params){
             padjust_method = PADJUST_METHOD[[test_correction]]
           )
         }, error = function(e) {
-          error_modal(e)
+          error_modal(e$message)
           waiter()$hide()
           req(FALSE)
         })

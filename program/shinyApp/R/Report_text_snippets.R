@@ -258,7 +258,7 @@ snippet_Enrichment <- function(
   # General Enrichment Information
   snippet <- paste0(snippet, "The analysis included a gene set size of ", length(params$Enrichment$tmp_genes), ". ")
   snippet <- paste0(snippet, "When necassary the provided IDs were translated to entrezID for ", 
-                    params$Enrichment$organism_choice_ea, ", 
+                    params$Enrichment$organism, ",
                     utilizing the R package biomaRt (v. ", packageVersion("biomaRt"), ") (", 
                     print(clean_citation(citation('biomaRt')), style = "text"), "). ")
   snippet <- paste0(snippet, "The predefined sets to test enrichment for were: ", 
@@ -269,7 +269,7 @@ snippet_Enrichment <- function(
                     )
   
   # Observe Event for Enrichment Analysis
-  if (params$Enrichment$ORA_or_GSE == "GeneSetEnrichment") {
+  if (params$Enrichment$ora_or_gse == "GeneSetEnrichment") {
     snippet <- paste0(snippet, "\nGene Set Enrichment Analysis (GSEA) was performed 
                       as implemented in the R package clusterProfilfer 
                       (v. ", packageVersion("clusterProfiler"), ") (", 
@@ -280,11 +280,11 @@ snippet_Enrichment <- function(
                       It considers the entire ranked list of genes, 
                       thus providing insights into pathways that might be enriched 
                       even if individual genes do not reach significance. ")
-    snippet <- paste0(snippet, "The genes were sorted by ", params$Enrichment$ValueToAttach, 
+    snippet <- paste0(snippet, "The genes were sorted by ", params$Enrichment$gse_gene_set_type,
                       ", whereby the calculation was done for ", 
-                      params$Enrichment$sample_annotation_types_cmp_GSEA, " for ", 
-                      params$Enrichment$Groups2Compare_treat_GSEA, " vs. ", 
-                      params$Enrichment$Groups2Compare_ref_GSEA, ". ")
+                      params$Enrichment$compare_within, " for ",
+                      params$Enrichment$treatment, " vs. ",
+                      params$Enrichment$reference, ". ")
     snippet <- paste0(snippet, 
                       "The adjusted p-value threshold was set to 0.05, 
                       with multiple testing correction applied using ", 
@@ -309,11 +309,9 @@ snippet_Enrichment <- function(
       snippet <- paste0(snippet, " the genes that were present before pre-processing. ")
       snippet <- paste0(snippet, " Resulting in a total of ", dim(data$data_original)[1], " genes. ")
     }
-    snippet <- paste0(snippet, "The genes were obtained from ", 
-                      params$Enrichment$ValueToAttach, ". ")
-    if (params$Enrichment$GeneSet2Enrich == "ProvidedGeneSet") {
+    if (params$Enrichment$ora_gene_set_type == "ProvidedGeneSet") {
       snippet <- paste0(snippet, "The gene set was provided via the file ", 
-                        params$Enrichment$UploadedGeneSet$name, ". ")
+                        params$Enrichment$uploaded_gene_set$name, ". ")
     }
     snippet <- paste0(snippet, "The adjusted p-value threshold was set to 0.05, 
                       with multiple testing correction applied using ", 

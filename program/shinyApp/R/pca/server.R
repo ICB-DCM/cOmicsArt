@@ -167,7 +167,7 @@ pca_Server <- function(id){
         pcaData <- pca_res$pcaData
         percentVar <- pca_res$percentVar
       }, error = function(e){
-        error_modal(e)
+        error_modal(e$message)
         pca_reactives$waiter$hide()
         return(NULL)
       })

@@ -4,9 +4,9 @@
 `%||%` <- function(a, b) if (!is.null(a)) a else b
 
 # tryCatch modal dialog
-error_modal <- function(e, additional_text = NULL){
-  if (is.null(e$message)){
-    e$message <- "An unknown error occured"
+error_modal <- function(error_message, additional_text = NULL){
+  if (is.null(error_message)){
+    error_message <- "An unknown error occured"
   }
   if (is.null(additional_text)){
     additional_text <- "Please check your data set and annotation and try again.<br><br>"
@@ -18,9 +18,9 @@ error_modal <- function(e, additional_text = NULL){
     "describing your problem."
   )
   showModal(modalDialog(
-    title = HTML("<font color='red'>An unknown Error occured</font>"),
+    title = HTML("<font color='red'>An Error occured</font>"),
     HTML(paste0(
-      "<font color='red'>Error: ",e$message,"</font><br><br>",
+      "<font color='red'>Error: ",error_message,"</font><br><br>",
       additional_text
     )),
     footer = modalButton("Close")

@@ -44,7 +44,7 @@ plot_heatmap <- function(
   heatmap_data <- as.matrix(selected_data)
   if (scale_rows) heatmap_data <- t(scale(t(heatmap_data)))
 
-  # rownames(heatmap_data) <- row_labels
+  rownames(heatmap_data) <- row_labels
 
   heatmap_plot <- Heatmap(
     matrix = heatmap_data,
@@ -52,7 +52,7 @@ plot_heatmap <- function(
     column_title = title,
     cluster_rows = cluster_rows,
     cluster_columns = cluster_cols,
-    show_row_names = n_max_row_labels < nrow(heatmap_data),
+    show_row_names = n_max_row_labels > nrow(heatmap_data),
     show_column_names = TRUE,
     top_annotation = col_annotation,
     right_annotation = row_annotation,
