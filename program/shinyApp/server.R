@@ -1630,12 +1630,13 @@ server <- function(input,output,session){
       shinyjs::click("Heatmap-refreshUI",asis = T)
       shinyjs::click("PCA-refreshUI",asis = T)
       shinyjs::click("sample_correlation-refreshUI",asis = T)
+      browser()
       paste0(
         "The data has the dimensions of: ",
         paste0(dim(data),collapse = ", "),
-        "<br>","If logX was chosen, in case of 0's present logX(data+1) is done",
+        "<br>",ifelse(input$processing_type == "Log-Based","In case of 0's present logX(data+1) is done",""),
         "<br>","See help for details",
-        "<br>",ifelse(any(as.data.frame(assay(data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated","")) ## IS THAT TRUE??
+        "<br>",ifelse(any(as.data.frame(assay(data)) < 0),"Be aware that processed data has negative values!","")) ## IS THAT TRUE??
     })
     # set the warning as toast
     show_toast(
