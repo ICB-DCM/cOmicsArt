@@ -1,0 +1,7 @@
+install.packages("shiny")
+install.packages("renv")
+renv::init(bioconductor = TRUE)
+renv::restore(lockfile='renv.lock')
+library(shiny)
+runApp()
+install.packages("zip")
