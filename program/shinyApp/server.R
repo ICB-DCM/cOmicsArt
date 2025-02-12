@@ -1630,7 +1630,6 @@ server <- function(input,output,session){
       shinyjs::click("Heatmap-refreshUI",asis = T)
       shinyjs::click("PCA-refreshUI",asis = T)
       shinyjs::click("sample_correlation-refreshUI",asis = T)
-      browser()
       paste0(
         "The data has the dimensions of: ",
         paste0(dim(data),collapse = ", "),
