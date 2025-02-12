@@ -469,20 +469,19 @@ gene_set_enrichment <- function(
   }
   # C7 subset IMMUNESIGDB
   if(enrichments2do$IMMUNESIGDB){
-      genesets4ea <- msigdbr(
-        species = species,
-        category = "C7",
-        subcategory = "IMMUNESIGDB"
-      ) %>% dplyr::select(gs_name, entrez_gene)
-      EnrichmentRes_IMMUNESIGDB <- GSEA(
-        geneSetChoice,
-        TERM2GENE = genesets4ea,
-        verbose = FALSE,
-        eps = 0,
-        pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
-        pvalueCutoff = 1
-      )
-    }
+    genesets4ea <- msigdbr(
+      species = species,
+      category = "C7",
+      subcategory = "IMMUNESIGDB"
+    ) %>% dplyr::select(gs_name, entrez_gene)
+    EnrichmentRes_IMMUNESIGDB <- GSEA(
+      geneSetChoice,
+      TERM2GENE = genesets4ea,
+      verbose = FALSE,
+      eps = 0,
+      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pvalueCutoff = 1
+    )
   }
   # C7 subset VAX
   if(enrichments2do$VAX){
@@ -499,7 +498,6 @@ gene_set_enrichment <- function(
       pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
       pvalueCutoff = 1
     )
-      
   }
 
 
