@@ -1,4 +1,4 @@
-significance_analysis_server <- function(id, data, params){
+significance_analysis_server <- function(id){
   moduleServer(
     id,
     function(input,output,session){
@@ -11,6 +11,12 @@ significance_analysis_server <- function(id, data, params){
         comparisons_for_plot = "all",
         coldata = NULL
       )
+      # make waiter a reactive value and assign it
+      waiter <- reactiveVal(Waiter$new(
+        html = LOADING_SCREEN,
+        color = "#70BF4F47",
+        hide_on_render = F
+      ))
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
       hideTab(
@@ -22,7 +28,6 @@ significance_analysis_server <- function(id, data, params){
       observeEvent(input$refreshUI, {
         print("Refreshing UI Heatmap")
         data <- update_data(session$token)
-        params <- update_params(session$token)
 
         output$UseBatch_ui <- renderUI({
         req(par_tmp[[session$token]]$BatchColumn != "NULL")
@@ -35,32 +40,23 @@ significance_analysis_server <- function(id, data, params){
         })
         output$type_of_comparison_ui <- renderUI({
           req(data_input_shiny())
-          if(is.null(sig_ana_reactive$coldata)){
-            sig_ana_reactive$coldata <- colData(data$data)
-          }
-          req(sig_ana_reactive$coldata)
           if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
-            selectInput(
-              inputId = ns("sample_annotation_types_cmp"),
-              label = "Choose groups to compare",
-              choices = par_tmp[[session$token]]$DESeq_factors,
-              multiple = F,
-              selected = NULL
-            )
+            choices <- par_tmp[[session$token]]$DESeq_factors
           } else {
-            selectInput(
-              inputId = ns("sample_annotation_types_cmp"),
-              label = "Choose groups to compare",
-              choices = c(colnames(sig_ana_reactive$coldata)),
-              multiple = F ,
-              selected = NULL
-            )
+            choices <- c(colnames(colData(data$data)))
           }
+          selectInput(
+            inputId = ns("sample_annotation_types_cmp"),
+            label = "Choose groups to compare",
+            choices = choices,
+            multiple = F,
+            selected = NULL
+          )
         })
         # UI to choose comparisons
         output$chooseComparisons_ui <- renderUI({
           req(input$sample_annotation_types_cmp)
-          annoToSelect <- sig_ana_reactive$coldata[,input$sample_annotation_types_cmp]
+          annoToSelect <- colData(data$data)[,input$sample_annotation_types_cmp]
           if(length(annoToSelect) == length(unique(annoToSelect))){
             # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
             helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
@@ -174,16 +170,13 @@ significance_analysis_server <- function(id, data, params){
           )
         })
       })
-      # refresh the UI/data if needed
-      observeEvent(input$refreshUI, {
-        data <- update_data(session$token)
-        params <- update_params(session$token)
-        sig_ana_reactive$coldata <- colData(data$data)
-      })
 
       output$significance_analysis_info <- renderText(
         sig_ana_reactive$info_text
       )
+      output$Significant_Plot_final <- renderPlot({
+          print(sig_ana_reactive$plot_last)
+      })
 
       # Analysis initial info
       observeEvent(input$significanceGo,{
@@ -199,155 +192,102 @@ significance_analysis_server <- function(id, data, params){
             target = "Multiple_Comparisons_Visualizations"
           )
         }
-        # also here to ensure to get sidepanel Inputs
-        tmp <- getUserReactiveValues(input)
-        par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
         sig_ana_reactive$info_text <- "Analysis is running..."
         sig_ana_reactive$start_analysis <- sig_ana_reactive$start_analysis + 1
       })
       # Do the analysis
       observeEvent(sig_ana_reactive$start_analysis,{
         req(sig_ana_reactive$start_analysis > 0)
-        waiter <- Waiter$new(
-          html = LOADING_SCREEN,
-          color="#70BF4F47",
-          hide_on_render=F
-        )
-        waiter$show()
-        if(input$significanceGo == 1){
-          sig_ana_reactive$significance_tabs_to_delete <- NULL
-        }
+        waiter()$show()
         print("Start the Significance Analysis")
+
+        # define variables to be used
+        useBatch <- par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes"
+        preprocessing <- par_tmp[[session$token]]$PreProcessing_Procedure
+        comparisons <- input$comparisons
+        test_correction <- input$test_correction
+        significance_level <- input$significance_level
+        compare_within <- input$sample_annotation_types_cmp
+        test_method <- input$test_method
         # update the data if needed
         data <- update_data(session$token)
-        useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
-        if(useBatch){
-            data_calculate <- data$data_batch_corrected
-        } else {
-            data_calculate <- data$data
-        }
-        sig_ana_reactive$coldata <- colData(data_calculate)
-        # delete old panels
-        if(!is.null(sig_ana_reactive$significance_tabs_to_delete)){
-          for (i in seq_along(sig_ana_reactive$significance_tabs_to_delete)) {
-            # destroy old report buttons
-            con <- unlist(strsplit(x = sig_ana_reactive$significance_tabs_to_delete[[i]],split = ":"))
-            name <- paste(con[1], con[2], "only2Report_Volcano", sep = "_")
-            for (button in c("", "_both", "_raw")){
-              session$userData[[paste0(name, button, "_val")]] <- isolate(
-                input[[paste0(name, button)]]
-              )
-              session$userData[[ns(paste0(name, button))]]$destroy()
-            }
-            removeTab(
-              inputId = "significance_analysis_results",
-              target = paste0("Significance_", i)
-            )
-          }
-        }
-        # if preproccesing method was DESeq2, then use DESeq2 for testing
-        if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
-          if (useBatch){
-            dds <- data$DESeq_obj_batch_corrected
-          } else {
-            dds <- data$DESeq_obj
-          }
-          # rewind the comparisons again
-          newList <- input$comparisons
-          contrasts <- vector("list", length(input$comparisons))
-          for (i in seq_along(newList)) {
-            contrasts[[i]] <- unlist(strsplit(x = input$comparisons[i],split = ":"))
-          }
-          # get the results for each contrast and put it all in a big results object
-          sig_ana_reactive$sig_results <- list()
-          for (i in seq_along(contrasts)) {
-            if(identical(
-              list(
-                test_method = "Wald",
-                test_correction = PADJUST_METHOD[[input$test_correction]],
-                batch_corrected = useBatch
-              ),
-              par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
-            )){
-              print("Results exists, skipping calculations.")
-              sig_ana_reactive$sig_results[[input$comparisons[i]]] <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]]
-              next
-            }
-            sig_ana_reactive$sig_results[[input$comparisons[i]]] <- DESeq2::results(
-              dds,
-              contrast = c(
-                input$sample_annotation_types_cmp,
-                contrasts[[i]][1],
-                contrasts[[i]][2]
-              ),
-              pAdjustMethod = PADJUST_METHOD[[input$test_correction]]
-            )
-            # fill in res_tmp[[session$token]], par_tmp[[session$token]]
-            res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- sig_ana_reactive$sig_results[[input$comparisons[i]]]
-            par_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]][[input$comparisons[i]]] <<- list(
-              test_method = "Wald",
-              test_correction = PADJUST_METHOD[[input$test_correction]],
-              batch_corrected = useBatch
-            )
-          }
-        } else {  # all other methods require manual testing
-          # rewind the comparisons again
-          newList <- input$comparisons
-          contrasts <- vector("list", length(input$comparisons))
-          contrasts_all <- list()
-          for (i in seq_along(newList)) {
-            contrasts[[i]] <- unlist(strsplit(x = input$comparisons[i],split = ":"))
-            contrasts_all <- append(contrasts_all, contrasts[[i]])
-          }
-          # make all contrasts unique
-          contrasts_all <- unique(unlist(contrasts_all))
-          # name the contrasts with the comparison names
-          names(contrasts) <- input$comparisons
-          # get names of columns we want to choose:
-          index_comparisons <- which(
-            colData(data_calculate)[,input$sample_annotation_types_cmp] %in% contrasts_all
+
+        # perform the analysis
+        sig_results <- tryCatch({
+          performSigAnalysis(
+            data = data,
+            preprocessing = preprocessing,
+            comparisons = comparisons,
+            compare_within = compare_within,
+            test_method = test_method,
+            useBatch = useBatch,
+            padjust_method = PADJUST_METHOD[[test_correction]]
           )
-          samples_selected <- colData(data_calculate)[index_comparisons,]
-          # get the data
-          data_selected <- as.matrix(assay(data_calculate))[,index_comparisons]
-          # significance analysis saved the result in res_tmp.
-          # as it is a custom function, wrap in tryCatch
-          tryCatch({
-            significance_analysis(
-              df = as.data.frame(data_selected),
-              samples = as.data.frame(samples_selected),
-              contrasts = contrasts,
-              method = input$test_method,
-              correction = PADJUST_METHOD[[input$test_correction]],
-              contrast_level = input$sample_annotation_types_cmp,
-              batch_corrected = useBatch
-            )
-            sig_ana_reactive$sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
-          }, error = function(e){
-            error_modal(e)
-            waiter$hide()
-            return(NULL)
+        }, error = function(e) {
+          error_modal(e$message)
+          waiter()$hide()
+          req(FALSE)
+        })
+        sig_ana_reactive$sig_results <- sig_results
+        # Update res_-/par_tmp
+        # MAYBE TODO: refine the list to be able to store more than one result
+        res_tmp[[session$token]]$SigAna[[compare_within]] <<- sig_results
+        par_tmp[[session$token]]$SigAna <<- list(
+          preprocessing = preprocessing,
+          comparisons = comparisons,
+          compare_within = compare_within,
+          test_method = test_method,
+          useBatch = useBatch,
+          padjust_method = PADJUST_METHOD[[test_correction]]
+        )
+
+        ## Tab Management
+        contrast_list <- lapply(comparisons, function(comp) unlist(strsplit(comp, ":")))
+        new_tabs <- setdiff(comparisons, sig_ana_reactive$active_tabs)
+        old_tabs <- setdiff(sig_ana_reactive$active_tabs, comparisons)
+
+        # Helper function to clean up tabs and associated elements
+        cleanup_tab <- function(comp) {
+          con <- unlist(strsplit(comp, ":"))
+          name <- paste(con[1], con[2], "only2Report_Volcano", sep = "_")
+
+          lapply(c("", "_both", "_raw"), function(button) {
+            input_id <- paste0(name, button)
+            session$userData[[paste0(input_id, "_val")]] <- isolate(input[[input_id]])
+            session$userData[[ns(input_id)]]$destroy()
           })
+
+          removeTab("significance_analysis_results", target = paste0("Significance_", which(sig_ana_reactive$active_tabs == comp)))
         }
-        # for each result create a tabPanel
-        for (i in seq_along(input$comparisons)) {
+
+        # Remove old tabs
+        invisible(lapply(old_tabs, cleanup_tab))
+
+        # Helper function to create new tabs
+        create_tab <- function(comp) {
+          idx <- which(comparisons == comp)
           create_new_tab(
-            title = input$comparisons[i],
+            title = comp,
             targetPanel = "significance_analysis_results",
-            result = sig_ana_reactive$sig_results[[input$comparisons[i]]],
-            contrast = contrasts[[i]],
-            alpha = input$significance_level,
+            result = sig_ana_reactive$sig_results[[comp]],
+            contrast = contrast_list[[idx]],
+            alpha = significance_level,
             ns = ns,
-            preprocess_method = par_tmp[[session$token]]$PreProcessing_Procedure,
-            value = paste0("Significance_", i)
+            preprocess_method = preprocessing,
+            value = paste0("Significance_", idx)
           )
-          sig_ana_reactive$significance_tabs_to_delete[[i]] <- input$comparisons[i]
         }
+
+        # Add new tabs
+        invisible(lapply(new_tabs, create_tab))
+
+        # Update the list of active tabs
+        sig_ana_reactive$active_tabs <- comparisons
         sig_ana_reactive$info_text <- "Analysis is Done!"
         # update plot
         sig_ana_reactive$update_plot_post_ana <- sig_ana_reactive$update_plot_post_ana + 1
-        sig_ana_reactive$comparisons_for_plot <- input$comparisons
-        if (length(input$comparisons) > 1) {
+        sig_ana_reactive$comparisons_for_plot <- comparisons
+        if (length(comparisons) > 1) {
           showTab(
             inputId = "significance_analysis_results",
             target = "Multiple_Comparisons_Visualizations",
@@ -360,7 +300,7 @@ significance_analysis_server <- function(id, data, params){
             select = TRUE
           )
         }
-        waiter$hide()
+        waiter()$hide()
       })
       # update the plot whenever the user changes the visualization method
       # or the comparisons to visualize
@@ -372,7 +312,7 @@ significance_analysis_server <- function(id, data, params){
           input$sig_to_look_at
         )
       })
-      observeEvent(to_update_significance_plot(),{
+      observeEvent(to_update_significance_plot(), {
         req(
           input$significanceGo,
           input$visualization_method,
@@ -381,88 +321,43 @@ significance_analysis_server <- function(id, data, params){
           sig_ana_reactive$update_plot_post_ana > 0
         )
 
-        # assign significance_results again, for safety measures
-        sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
-        # assign scenario=20 for Venn Diagram and scenario=21 for UpSetR
-        if(input$visualization_method == "Venn Diagram"){
+        # --- Assign input values to local variables ---
+        visualization_method   <- input$visualization_method
+        comparisons_to_visualize <- input$comparisons_to_visualize
+        sig_to_look_at     <- input$sig_to_look_at
+        significance_level    <- input$significance_level
+        compare_within   <- input$sample_annotation_types_cmp
+
+        # Retrieve the significance results (for safety, as in your original code)
+        sig_results <- res_tmp[[session$token]]$SigAna[[compare_within]]
+
+        # --- Set scenario based on the visualization method ---
+        if (visualization_method == "Venn diagram") {
           sig_ana_reactive$scenario <- 20
         } else {
           sig_ana_reactive$scenario <- 21
         }
 
-        # get the results
-        res2plot <- list()
-        # check that you have more than one comparison
-        if(length(input$comparisons_to_visualize) == 1 & input$comparisons_to_visualize[1]!="all"){
-          sig_ana_reactive$info_text <- "You tried to compare only one set. Please choose at least two comparisons."
-          # clear the plot
-          output$Significant_Plot_final <- renderPlot({})
-          return(NULL)
-        }
-        sig_ana_reactive$info_text <- "Analysis is Done!"
+        # --- Call the plotting helper function ---
+        plot_data <- plot_significant_results(
+          sig_results           = sig_results,
+          comparisons_to_visualize = comparisons_to_visualize,
+          visualization_method  = visualization_method,
+          significance_level    = significance_level,
+          sig_to_look_at        = sig_to_look_at
+        )
 
-        if(any(input$comparisons_to_visualize == "all")){
-          # show all comparisons if no more than 4
-          if(length(input$comparisons) < 5){
-            chosenVizSet <- input$comparisons
-          } else {
-            chosenVizSet <-  input$comparisons[c(1,2)]
-            sig_ana_reactive$info_text <- "Note: Although you choose 'all' to visualize only first 2 comparisons are shown to avoid unwanted computational overhead,
-            as you got more than 4 comparisons. Please choose precisely the comparisons for visualisation."
-          }
-        }else{
-          chosenVizSet <- input$comparisons_to_visualize
+        # Update info text for the user
+        sig_ana_reactive$info_text <- plot_data$info_text
+        sig_ana_reactive$plot_last <- plot_data$plot
+        # Update additional reactive values as needed.
+        if (!is.null(plot_data$intersect_names)){
+          sig_ana_reactive$intersect_names <- plot_data$intersect_names
+          sig_ana_reactive$overlap_list <- plot_data$overlap_list
         }
-        for (i in seq_along(chosenVizSet)) {
-          to_add_tmp <- rownames(
-            filter_significant_result(
-              result = sig_ana_reactive$sig_results[[chosenVizSet[i]]],
-              alpha = input$significance_level,
-              filter_type = input$sig_to_look_at
-            )
-          )
-          # only add if the result is not empty
-          if(length(to_add_tmp) > 0){
-            res2plot[[chosenVizSet[i]]] <- to_add_tmp
-          }
-        }
-        # check that you have more than one comparison
-        if(length(res2plot) <= 1){
-          sig_ana_reactive$info_text <- "You either have no significant results or only significant results in one comparison."
-          # if current plots to llok at are adjusted pvalues, suggest to look at raw pvalues
-          if(input$sig_to_look_at == "Significant"){
-              sig_ana_reactive$info_text <- paste0(
-                sig_ana_reactive$info_text,
-                "\nYou tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level."
-              )
-          }
-          # clear the plot
-          output$Significant_Plot_final <- renderPlot({})
-          return(NULL)
-        }
-
-        # plot the results
-        if(input$visualization_method == "UpSetR plot"){
-          sig_ana_reactive$overlap_list <- prepare_upset_plot(res2plot=res2plot)
-          sig_ana_reactive$plot_last <- ComplexUpset::upset(
-            sig_ana_reactive$overlap_list,
-            colnames(sig_ana_reactive$overlap_list),
-            themes=list(default=CUSTOM_THEME)
-          )
-          sig_ana_reactive$intersect_names <-  ggplot_build(
-            sig_ana_reactive$plot_last
-          )$layout$panel_params[[1]]$x$get_labels()
-        } else if(input$visualization_method == "Venn diagram"){
-          # set colors for each comparison
-          sig_ana_reactive$plot_last <- ggvenn::ggvenn(
-            res2plot, fill_color=c("#44af69", "#f8333c", "#fcab10", "#2b9eb3"),
-            set_name_size = 3
-          )
-        }
-        output$Significant_Plot_final <- renderPlot({
-            print(sig_ana_reactive$plot_last)
-        })
-        sig_ana_reactive$results_for_plot <- res2plot
+        par_tmp[[session$token]]$SigAna$comparisons_to_visualize <<- comparisons_to_visualize
+        par_tmp[[session$token]]$SigAna$sig_to_look_at <<- sig_to_look_at
+        par_tmp[[session$token]]$SigAna$visualization_method <<- visualization_method
       })
       # if we want to change the highlighting
       observeEvent(input$intersection_high,{
@@ -547,12 +442,7 @@ significance_analysis_server <- function(id, data, params){
           paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
         },
         content = function(file){
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
-          waiter$show()
+          waiter()$show()
           tmp <- getUserReactiveValues(input)
           par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
           
@@ -612,7 +502,7 @@ significance_analysis_server <- function(id, data, params){
             files = dir(temp_directory),
             root = temp_directory
           )
-          waiter$hide()
+          waiter()$hide()
         },
         contentType = "application/zip"
       )
