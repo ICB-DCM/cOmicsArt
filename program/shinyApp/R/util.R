@@ -36,11 +36,14 @@ update_data <- function(session_id){
 
 
 select_data <- function(
-  data, selected_samples, sample_type, selected_rows = "all", row_type = NULL, propensity = 1
+  data, selected_samples = "all", sample_type = NULL, selected_rows = "all", row_type = NULL, propensity = 1
 ){
   # select data based on selected samples
   if(is.null(row_type)) {
-    row_type <- c(colnames(colData(data)))[1]
+    row_type <- c(colnames(rowData(data)))[1]
+  }
+  if(is.null(sample_type)) {
+      sample_type <- c(colnames(colData(data)))[1]
   }
   samples_selected <- c()
   if(any(selected_samples == "all")) {
@@ -262,10 +265,11 @@ violin_plot <- function(data, color_by){
     geom_violin(trim = T, color = "black") +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    labs(title = "Count distribution per sample",
-         x = "Sample",
-         y = "Counts",
-         fill = color_by
+    labs(
+      title = "Count distribution per sample",
+      x = "Sample",
+      y = "Counts",
+      fill = color_by
     )
   return(plot2return)
 }

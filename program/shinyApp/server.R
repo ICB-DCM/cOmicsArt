@@ -1444,6 +1444,7 @@ server <- function(input,output,session){
 
 ## Preprocessing ----
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
+    browser()
     # only enter this when you actually click data
     req(input$Do_preprocessing > 0)
     shinyjs::showElement(id = "data_summary")
