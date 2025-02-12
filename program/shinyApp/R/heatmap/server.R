@@ -175,6 +175,7 @@ heatmap_server <- function(id){
           selection_type = selection_type,
           n_top_k = n_top_k,
           top_k_type = top_k_type,
+          top_k_type = top_k_type,
           select_by = select_by,
           selection = selection,
           compare_within = compare_within,
