@@ -1485,34 +1485,37 @@ server <- function(input,output,session){
     req(data_input_shiny())
     req(input$PreProcessing_Procedure)
     if(input$PreProcessing_Procedure == "vst_DESeq"){
-      selectInput(
-        inputId = "DESeq_formula_sub",
-        label = paste0(
-          "Choose factors to account for ",
-          "(App might crash if your factor has only 1 sample per level)"
-        ),
-        choices = c(colnames(colData(res_tmp[[session$token]]$data))),
-        multiple = T,
-        selected = "condition"
-      ) %>% helper(type = "markdown", content = "PreProcessing_DESeq")
+      div(style = "margin-left: 30px;",  
+        selectInput(
+          inputId = "DESeq_formula_sub",
+          label = paste0(
+            "Choose factors to account for ",
+            "(App might crash if your factor has only 1 sample per level)"
+          ),
+          choices = c(colnames(colData(res_tmp[[session$token]]$data))),
+          multiple = T,
+          selected = "condition"
+        )) %>% helper(type = "markdown", content = "PreProcessing_DESeq")
     }else if (input$PreProcessing_Procedure == "limma_voom"){
-      tagList(
-        # add a radiobutton whether one wants an intercept or not
-        radioButtons(
-          inputId = "limma_intercept",
-          label = "Include Intercept?",
-          choices = c("Yes" = "TRUE", "No" = "FALSE"),
-          selected = "TRUE"
-        ),
-      selectInput(
-        inputId = "limma_formula",
-        label = paste0(
-          "Choose the design formula for limma voom"
-        ),
-        choices = c(colnames(colData(res_tmp[[session$token]]$data))),
-        multiple = T,
-        selected = colnames(colData(res_tmp[[session$token]]$data))[1]
-      ) %>% helper(type = "markdown", content = "PreProcessing_voom")
+      div(style = "margin-left: 30px;",
+        tagList(
+          # add a radiobutton whether one wants an intercept or not
+          radioButtons(
+            inputId = "limma_intercept",
+            label = "Include Intercept?",
+            choices = c("Yes" = "TRUE", "No" = "FALSE"),
+            selected = "TRUE"
+          ),
+        selectInput(
+          inputId = "limma_formula",
+          label = paste0(
+            "Choose the design formula for limma voom"
+          ),
+          choices = c(colnames(colData(res_tmp[[session$token]]$data))),
+          multiple = T,
+          selected = colnames(colData(res_tmp[[session$token]]$data))[1]
+        ) %>% helper(type = "markdown", content = "PreProcessing_voom")
+        )
       )
     }
   })
@@ -1541,20 +1544,30 @@ server <- function(input,output,session){
     deseq_factors <- input$DESeq_formula_sub %||% NULL
     rows_selected <- par_tmp[[session$token]][['entities_selected']]
     samples_selected <- par_tmp[[session$token]][['samples_selected']]
+    filter_threshold <- input$filter_threshold %||% 10
+    filter_threshold_samplewise <- input$filter_threshold_samplewise %||% NULL
+    filter_samplesize <- input$filter_samplesize %||% NULL
+    limma_intercept <- input$limma_intercept %||% NULL
+    limma_formula <- input$limma_formula %||% NULL
     # reset data to the selection that was done
     data <- res_tmp[[session$token]]$data_original[rows_selected,samples_selected]
     data_selected <- data  # needed for batch correction with DESeq
     par_tmp[[session$token]]['BatchColumn'] <<- batch_column
     # preprocessing
     print(paste0("Do chosen Preprocessing:",preprocessing_procedure))
-    
+
     # Check for DESeq option if more than 100 genes avail as it is for omics!
     tryCatch({
       preprocess_res <<- preprocessing(
         data = data,
         omic_type = omic_type,
         procedure = preprocessing_procedure,
-        deseq_factors = deseq_factors
+        deseq_factors = deseq_factors,
+        filter_threshold = filter_threshold,
+        filter_threshold_samplewise = filter_threshold_samplewise,
+        filter_samplesize = filter_samplesize,
+        limma_intercept = limma_intercept,
+        limma_formula = limma_formula
       )
       par_tmp[[session$token]]['PreProcessing_Procedure'] <<- preprocessing_procedure
       data <- preprocess_res$data
@@ -1620,9 +1633,9 @@ server <- function(input,output,session){
       paste0(
         "The data has the dimensions of: ",
         paste0(dim(data),collapse = ", "),
-        "<br","If logX was chosen, in case of 0's present logX(data+1) is done",
-        "<br","See help for details",
-        "<br>",ifelse(any(as.data.frame(assay(data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated",""))
+        "<br>","If logX was chosen, in case of 0's present logX(data+1) is done",
+        "<br>","See help for details",
+        "<br>",ifelse(any(as.data.frame(assay(data)) < 0),"Be aware that processed data has negative values, hence no log fold changes can be calculated","")) ## IS THAT TRUE??
     })
     # set the warning as toast
     show_toast(

@@ -17,20 +17,22 @@ preprocessing <- function(
   }
   if(procedure == "limma_voom"){
     return(list(
-      data = limma_voom_processing(data, omic_type)
+      data = limma_voom_processing(data, omic_type,limma_intercept,limma_formula)
     ))
   }
   if(procedure == "filterOnly"){
     return(list(
-      data = prefiltering_user(data,omic_type,filter_threshold)
+      data = prefiltering_user(data,filter_threshold = filter_threshold)
     ))
   }
   if(procedure == "filterPerSample"){
     return(list(
-      data = prefiltering_user(data, 
-                               omic_type,
-                               filter_threshold_samplewise,
-                               filter_samplesize)
+      data = prefiltering_user(
+        data, 
+        filter_threshold = NULL, 
+        filter_threshold_samplewise = filter_threshold_samplewise,
+        filter_samplesize = filter_samplesize
+        )
     ))
   }
   if(procedure == "simpleCenterScaling"){
@@ -72,15 +74,15 @@ prefiltering <- function(data, omic_type){
 }
 
 prefiltering_user <- function(data, 
-                              filter_threshold, 
-                              filter_threshold_samplewise, 
-                              filter_samplesize){
-  if(is.null(filter_samplesize)){
+                              filter_threshold = NULL, 
+                              filter_threshold_samplewise = NULL, 
+                              filter_samplesize = NULL){
+  if(!is.null(filter_threshold)){
     print(paste0("Remove anything of rowCount <=",filter_threshold))
     return(data[which(rowSums(assay(data)) > filter_threshold),])
   } else{
-    print(paste0("Remove anything of rowCount <=",filter_threshold," in at least ",filter_samplesize," samples"))
-    return(data[which(rowSums(assay(data) > filter_threshold) >= filter_samplesize),])
+    print(paste0("Remove anything of rowCount <=",filter_threshold_samplewise," in at least ",filter_samplesize," samples"))
+    return(data[which(rowSums(assay(data) > filter_threshold_samplewise) >= filter_samplesize),])
   }
 }
 
@@ -200,19 +202,24 @@ limma_voom_processing <- function(data, omic_type,limma_intercept,limma_formula)
   }
  data <- prefiltering(data, omic_type)
   # limma-voom
- design_factors <- paste0(limma_formula, collapse = "+")
- browser()
+ limma_concat <- paste0(limma_formula, collapse = "+")
+
  if(limma_intercept){
-   design_mat <- model.matrix(~design_factors, data = colData(data))
+   design_factors <- paste0("~",limma_concat)
  }else{
-   design_mat <- model.matrix(~0+design_factors, data = colData(data))
+   design_factors <- paste0("~0+", limma_concat)
  }
+ 
+ design_mat <- model.matrix(as.formula(design_factors), data = colData(data))
+ 
 # TODO add limma plots to main panel
-  data <- limma::voom(
-    x = assay(data),
+  data_voom <- limma::voom(
+    counts = assay(data),
     design = design_mat,
     plot = FALSE
   )
+  
+  assay(data) <- as.data.frame(data_voom$E)
   return(data)
 }
 
