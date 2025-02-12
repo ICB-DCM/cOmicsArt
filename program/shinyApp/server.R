@@ -1481,19 +1481,40 @@ server <- function(input,output,session){
       selected = "NULL"
     )
   })
-  output$DESeq_formula_sub_ui <- renderUI({
+  output$formula_sub_ui <- renderUI({
     req(data_input_shiny())
-    req(input$PreProcessing_Procedure == "vst_DESeq")
-    selectInput(
-      inputId = "DESeq_formula_sub",
-      label = paste0(
-        "Choose factors to account for ",
-        "(App might crash if your factor has only 1 sample per level)"
-      ),
-      choices = c(colnames(colData(res_tmp[[session$token]]$data))),
-      multiple = T,
-      selected = "condition"
-    ) %>% helper(type = "markdown", content = "PreProcessing_DESeq")
+    req(input$PreProcessing_Procedure)
+    if(input$PreProcessing_Procedure == "vst_DESeq"){
+      selectInput(
+        inputId = "DESeq_formula_sub",
+        label = paste0(
+          "Choose factors to account for ",
+          "(App might crash if your factor has only 1 sample per level)"
+        ),
+        choices = c(colnames(colData(res_tmp[[session$token]]$data))),
+        multiple = T,
+        selected = "condition"
+      ) %>% helper(type = "markdown", content = "PreProcessing_DESeq")
+    }else if (input$PreProcessing_Procedure == "limma_voom"){
+      tagList(
+        # add a radiobutton whether one wants an intercept or not
+        radioButtons(
+          inputId = "limma_intercept",
+          label = "Include Intercept?",
+          choices = c("Yes" = "TRUE", "No" = "FALSE"),
+          selected = "TRUE"
+        ),
+      selectInput(
+        inputId = "limma_formula",
+        label = paste0(
+          "Choose the design formula for limma voom"
+        ),
+        choices = c(colnames(colData(res_tmp[[session$token]]$data))),
+        multiple = T,
+        selected = colnames(colData(res_tmp[[session$token]]$data))[1]
+      ) %>% helper(type = "markdown", content = "PreProcessing_voom")
+      )
+    }
   })
 
   output$Statisitcs_Data <- renderText({

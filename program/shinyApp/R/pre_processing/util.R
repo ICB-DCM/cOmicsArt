@@ -1,14 +1,36 @@
 # preprocessing procedures
 
-preprocessing <- function(data, omic_type, procedure, deseq_factors = NULL){
+preprocessing <- function(
+    data, 
+    omic_type, 
+    procedure, 
+    deseq_factors = NULL,
+    filter_threshold = 10, 
+    filter_threshold_samplewise = NULL,
+    filter_samplesize = NULL,
+    limma_intercept = NULL,
+    limma_formula = NULL){
   print("Remove all entities which are constant over all samples")
   data <- data[rownames(data[which(apply(assay(data),1,sd) != 0),]),]
   if(procedure == "vst_DESeq"){
       return(deseq_processing(data, omic_type, deseq_factors))
   }
+  if(procedure == "limma_voom"){
+    return(list(
+      data = limma_voom_processing(data, omic_type)
+    ))
+  }
   if(procedure == "filterOnly"){
     return(list(
-      data = prefiltering(data, omic_type)
+      data = prefiltering_user(data,omic_type,filter_threshold)
+    ))
+  }
+  if(procedure == "filterPerSample"){
+    return(list(
+      data = prefiltering_user(data, 
+                               omic_type,
+                               filter_threshold_samplewise,
+                               filter_samplesize)
     ))
   }
   if(procedure == "simpleCenterScaling"){
@@ -36,18 +58,31 @@ preprocessing <- function(data, omic_type, procedure, deseq_factors = NULL){
 }
 
 prefiltering <- function(data, omic_type){
-  # TODO: will be replaced with general "at least x in y samples" filter
-  # Filter out low abundant genes for Metabol- and Transcriptmics.
+  # Filter out low abundant genes for Metabol- and Transcriptomics.
+  # One could let this baseline filter also be user defined but for now it is fixed.
+  # Would require a workflow specification for the user
   if(omic_type == "Transcriptomics"){
-    print("Remove anything of rowCount <=10")
+    print(paste0("Remove anything of rowCount <= 10"))
     return(data[which(rowSums(assay(data)) > 10),])
   }
-  if(omic_type == "Metabolomics"){
+  if(omic_type %in% c("Metabolomics", "Lipidomics")){
     print("Remove anything which has a row median of 0")
-    return(data[which(apply(assay(data),1,median)!=0),])
+    return(data[which(apply(assay(data),1,median) != 0),])
   }
 }
 
+prefiltering_user <- function(data, 
+                              filter_threshold, 
+                              filter_threshold_samplewise, 
+                              filter_samplesize){
+  if(is.null(filter_samplesize)){
+    print(paste0("Remove anything of rowCount <=",filter_threshold))
+    return(data[which(rowSums(assay(data)) > filter_threshold),])
+  } else{
+    print(paste0("Remove anything of rowCount <=",filter_threshold," in at least ",filter_samplesize," samples"))
+    return(data[which(rowSums(assay(data) > filter_threshold) >= filter_samplesize),])
+  }
+}
 
 simple_center_scaling <- function(data, omic_type){
   # Center and scale the data
@@ -154,6 +189,31 @@ deseq_processing <- function(
     data = data,
     DESeq_obj = de_seq_result
   ))
+}
+
+limma_voom_processing <- function(data, omic_type,limma_intercept,limma_formula){
+  if(length(limma_formula) <= 0){
+    stop(
+      "Please select at least one factor for the limma voom design.",
+      class = "InvalidInputError"
+    )
+  }
+ data <- prefiltering(data, omic_type)
+  # limma-voom
+ design_factors <- paste0(limma_formula, collapse = "+")
+ browser()
+ if(limma_intercept){
+   design_mat <- model.matrix(~design_factors, data = colData(data))
+ }else{
+   design_mat <- model.matrix(~0+design_factors, data = colData(data))
+ }
+# TODO add limma plots to main panel
+  data <- limma::voom(
+    x = assay(data),
+    design = design_mat,
+    plot = FALSE
+  )
+  return(data)
 }
 
 batch_correction <- function(
