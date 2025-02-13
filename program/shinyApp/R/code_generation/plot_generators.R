@@ -10,3 +10,9 @@ SAMPLE_CORRELATION_PIPELINE <<- list(
   custom_sample_annotation_info,
   custom_heatmap_info
 )
+
+# --- Single Gene Visualisation ---
+SINGLE_GENE_VISUALISATION_PIPELINE <<- list(
+  get_single_gene_data_info,
+  single_gene_boxplot_info
+)
