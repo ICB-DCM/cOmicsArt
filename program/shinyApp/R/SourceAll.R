@@ -29,3 +29,4 @@ source("R/single_gene_visualisation/util.R",local = T)
 # Source for R code
 source("R/code_generation/function_infos.R",local = T)
 source("R/code_generation/util.R",local = T)
+source("R/code_generation/plot_generators.R",local = T)

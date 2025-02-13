@@ -4,9 +4,7 @@ clean_function_code <- function(f){
   # Captures a function with comments, returns function body without returns
   f_out <- capture.output(f)
   # check that last line contains "environment" and if yes remove it
-  if(grepl("environment", f_out[length(f_out)])){
-      f_out <- f_out[-length(f_out)]
-  }
+  f_out <- f_out[-length(f_out)]
   # combine the lines to a single string
   f_out <- paste(f_out, collapse = "\n")
   # check that only one return statement is present, otherwise call stop
@@ -33,9 +31,12 @@ clean_function_code <- function(f){
   return(f_out)
 }
 
-prepare_function_for_util <- function(f, f_name){
+prepare_function_for_util <- function(f, f_name = NULL){
   # Captures a function with comments, removes environment statement
   f_out <- capture.output(f)
+  if(is.null(f_name)){
+    f_name <- deparse(substitute(f))
+  }
   # check that last line contains "environment" and if yes remove it
   if(grepl("environment", f_out[length(f_out)])){
       f_out <- f_out[-length(f_out)]
@@ -68,12 +69,14 @@ variable_assignment <- function(f, par, par_mem = NULL){
   #   par_assign: character, code snippet that assigns the neccessary values from "par"
 
   param_list <- formals(f)
-  param_list <- param_list[!names(param_list) %in% c("data")]
+  param_list <- param_list[!names(param_list) %in% c("data", "cormat", "gene_data")]
   param_names <- names(param_list)
+
+  if (!is.null(par_mem) && !is.null(par)) par <- par[[par_mem]]
 
   # check that the parameters without default values are present in "par"
   non_default_params <- names(formals(f))[sapply(formals(f), function(x) identical(x, quote(expr=)))]
-  non_default_params <- setdiff(non_default_params, c("data", "cormat"))
+  non_default_params <- setdiff(non_default_params, c("data", "cormat", "gene_data"))
   default_params <- setdiff(param_names, non_default_params)
   missing_pars <- setdiff(non_default_params, names(par))
   if(length(missing_pars) > 0){
@@ -203,6 +206,19 @@ create_function_script <- function(foo_infos, par, par_mem = NULL, path_to_util=
   # Returns:
   #   function_script: character, the R script that contains the function definitions
   function_script <- variable_assignment(foo_infos$foo, par, par_mem)
+  # potentially write "additional functions" to util file
+  if (!is.null(foo_infos$additional_foos)){
+    foo_names <- names(foo_infos$additional_foos)
+    for (foo_name in foo_names){
+      foo <- foo_infos$additional_foos[[foo_name]]
+      cat(
+        prepare_function_for_util(foo, foo_name),
+        file = path_to_util,
+        append = TRUE,
+        sep = "\n\n"
+      )
+    }
+  }
   if (!foo_infos$to_util) {
     return(paste0(
       "# Function ", foo_infos$name, "\n",

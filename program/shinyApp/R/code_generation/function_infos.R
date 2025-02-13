@@ -62,7 +62,7 @@ custom_sample_annotation_info <<- list(
       data = "data"
   ),
   additional_foos = list(
-    assign_colors_SampleCorr
+    "assign_colors_SampleCorr" = assign_colors_SampleCorr
   ),
   to_util = FALSE
 )
@@ -76,4 +76,27 @@ custom_heatmap_info <<- list(
   ),
   to_util = FALSE,
   plot_name = "heatmap_plot + row_anno"
+)
+
+# --- Single Gene Visualisation ---
+get_single_gene_data_info <<- list(
+  foo = get_single_gene_data,
+  name = "get_single_gene_data",
+  input_mapping = list(
+      data = "data"
+  ),
+  output_name = "gene_data",
+  to_util = TRUE
+)
+single_gene_boxplot_info <<- list(
+  foo = single_gene_boxplot,
+  name = "single_gene_boxplot",
+  input_mapping = list(
+      gene_data = "gene_data"
+  ),
+  to_util = FALSE,
+  plot_name = "boxplot_plot",
+  additional_foos = list(
+      "maybe_add_test" = maybe_add_test
+  )
 )
