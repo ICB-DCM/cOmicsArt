@@ -245,8 +245,8 @@ create_function_script <- function(foo_infos, par, par_mem = NULL, path_to_util=
     collapse = ",\n  "
   )
   function_call <- paste0(
-    foo_infos$name, "(\n  ", args_input, ",\n  ",
-    ifelse(additional_assign != " = ", additional_assign, ""),
+    foo_infos$name, "(\n  ", args_input,
+    ifelse(additional_assign != " = ", paste0(",\n  ", additional_assign), ""),
     "\n)\n"
   )
   # write function to util file
@@ -269,7 +269,7 @@ create_function_script <- function(foo_infos, par, par_mem = NULL, path_to_util=
     post_res <- paste0(
       foo_infos$output_mapping, " <- tmp_res$", names(foo_infos$output_mapping), collapse = "\n"
     )
-    if(!is.null(foo_infos$plot_name)){
+    if(!is.null(foo_infos$output_name)){
       post_res <- paste0(
         foo_infos$output_mapping, " <- ", foo_infos$output_name, "$", names(foo_infos$output_mapping), collapse = "\n"
       )
