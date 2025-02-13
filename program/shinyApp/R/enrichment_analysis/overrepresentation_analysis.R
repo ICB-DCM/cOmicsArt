@@ -3,7 +3,7 @@ over_representation_analysis <- function(
   geneSetChoice,
   data,
   enrichments2do,
-  adjustMethod,
+  test_correction,
   UniverseOfGene
 ){
   # Overrepresentation analysis
@@ -75,7 +75,7 @@ over_representation_analysis <- function(
       gene = geneSetChoice,
       organism = ifelse(species=="Homo sapiens","hsa","mmu"),
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated
     )
   }
@@ -85,7 +85,7 @@ over_representation_analysis <- function(
       gene = geneSetChoice,
       ont = "ALL",
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       OrgDb = ifelse(species=="Homo sapiens","org.Hs.eg.db","org.Mm.eg.db")
     )
   }
@@ -94,7 +94,7 @@ over_representation_analysis <- function(
     EnrichmentRes_REACTOME <- ReactomePA::enrichPathway(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       organism = ifelse(species=="Homo sapiens","human","mouse"),
       universe = universeSelected_tranlsated,
       readable = T
@@ -109,7 +109,7 @@ over_representation_analysis <- function(
     EnrichmentRes_Hallmarks <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = Hallmarkset
     )
@@ -123,7 +123,7 @@ over_representation_analysis <- function(
     EnrichmentRes_C1 <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = C1set
     )
@@ -137,7 +137,7 @@ over_representation_analysis <- function(
     EnrichmentRes_C2 <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = C2set
     )
@@ -151,7 +151,7 @@ over_representation_analysis <- function(
     EnrichmentRes_C3 <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = C3set
     )
@@ -165,7 +165,7 @@ over_representation_analysis <- function(
     EnrichmentRes_C4 <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = C4set
     )
@@ -179,7 +179,7 @@ over_representation_analysis <- function(
     EnrichmentRes_C5 <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = C5set
     )
@@ -193,7 +193,7 @@ over_representation_analysis <- function(
     EnrichmentRes_C6 <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = C6set
     )
@@ -208,7 +208,7 @@ over_representation_analysis <- function(
     EnrichmentRes_C7 <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = C7set
     )
@@ -222,7 +222,7 @@ over_representation_analysis <- function(
     EnrichmentRes_C8 <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = C8set
     )
@@ -237,7 +237,7 @@ over_representation_analysis <- function(
     EnrichmentRes_CGP <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -252,7 +252,7 @@ over_representation_analysis <- function(
     EnrichmentRes_CP <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -267,7 +267,7 @@ over_representation_analysis <- function(
     EnrichmentRes_BIOCARTA <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -282,7 +282,7 @@ over_representation_analysis <- function(
     EnrichmentRes_PID <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -297,7 +297,7 @@ over_representation_analysis <- function(
     EnrichmentRes_REACTOME <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -312,7 +312,7 @@ over_representation_analysis <- function(
     EnrichmentRes_WIKIPATHWAYS <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -327,7 +327,7 @@ over_representation_analysis <- function(
     EnrichmentRes_MIRDB <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -342,7 +342,7 @@ over_representation_analysis <- function(
     EnrichmentRes_MIR_Legacy <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -357,7 +357,7 @@ over_representation_analysis <- function(
     EnrichmentRes_GTRD <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -372,7 +372,7 @@ over_representation_analysis <- function(
     EnrichmentRes_TFT_Legacy <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -387,7 +387,7 @@ over_representation_analysis <- function(
     EnrichmentRes_CGN <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -402,7 +402,7 @@ over_representation_analysis <- function(
     EnrichmentRes_CM <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -417,7 +417,7 @@ over_representation_analysis <- function(
     EnrichmentRes_GO_BP <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -432,7 +432,7 @@ over_representation_analysis <- function(
     EnrichmentRes_GO_CC <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -447,7 +447,7 @@ over_representation_analysis <- function(
     EnrichmentRes_GO_MF <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -462,7 +462,7 @@ over_representation_analysis <- function(
     EnrichmentRes_HPO <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -477,7 +477,7 @@ over_representation_analysis <- function(
     EnrichmentRes_IMMUNESIGDB <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )
@@ -492,7 +492,7 @@ over_representation_analysis <- function(
     EnrichmentRes_VAX <- clusterProfiler::enricher(
       gene = geneSetChoice,
       pvalueCutoff = 0.05,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       universe = universeSelected_tranlsated,
       TERM2GENE = genesets4ea
     )

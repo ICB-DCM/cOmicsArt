@@ -150,8 +150,10 @@ create_library_code <- function(foo_list){
     unique(pkgs)
   }
   all_packages <- unique(unlist(lapply(foo_list, function(fn_name){
-    foo <- get(fn_name)
-    get_function_packages(foo)
+    tryCatch({
+      foo <- get(fn_name)
+      return(get_function_packages(foo))
+    }, error = function(e) return("base"))
   })))
   all_packages <- setdiff(na.omit(all_packages), c("base", "", "package:base"))
   lib_sourcing <- paste(
@@ -236,13 +238,15 @@ create_function_script <- function(foo_infos, par, par_mem = NULL, path_to_util=
     names(foo_infos$input_mapping), " = ", foo_infos$input_mapping, collapse = ",\n  "
   )
   # function call, start with args_input, all other params are called param = param
+  additional_assign <- paste0(
+    names(formals(foo_infos$foo))[!names(formals(foo_infos$foo)) %in% names(foo_infos$input_mapping)],
+    " = ",
+    names(formals(foo_infos$foo))[!names(formals(foo_infos$foo)) %in% names(foo_infos$input_mapping)],
+    collapse = ",\n  "
+  )
   function_call <- paste0(
     foo_infos$name, "(\n  ", args_input, ",\n  ",
-    paste0(
-      names(formals(foo_infos$foo))[!names(formals(foo_infos$foo)) %in% names(foo_infos$input_mapping)],
-      " = ",
-      names(formals(foo_infos$foo))[!names(formals(foo_infos$foo)) %in% names(foo_infos$input_mapping)],
-      collapse = ",\n  "),
+    ifelse(additional_assign != " = ", additional_assign, ""),
     "\n)\n"
   )
   # write function to util file
@@ -259,9 +263,17 @@ create_function_script <- function(foo_infos, par, par_mem = NULL, path_to_util=
   post_res <- ""
   if(length(foo_infos$output_mapping) > 0){
     res <- "# tmp_res is used as intermediate as return value is a list\ntmp_res <- "
+    if(!is.null(foo_infos$output_name)){
+      res <- paste0(foo_infos$output_name, " <- ")
+    }
     post_res <- paste0(
       foo_infos$output_mapping, " <- tmp_res$", names(foo_infos$output_mapping), collapse = "\n"
     )
+    if(!is.null(foo_infos$plot_name)){
+      post_res <- paste0(
+        foo_infos$output_mapping, " <- ", foo_infos$output_name, "$", names(foo_infos$output_mapping), collapse = "\n"
+      )
+    }
   } else if(is.null(foo_infos$output_name)){
     stop("No output name or mapping provided for function ", foo_infos$name)
   } else {
