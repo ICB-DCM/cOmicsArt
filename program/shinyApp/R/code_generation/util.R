@@ -59,30 +59,32 @@ save_summarized_experiment <- function(se, path){
   write.csv(row_data, file = file.path(path, "row_annotation.csv"), row.names = TRUE)
 }
 
-variable_assignment <- function(f, par, par_mem = NULL){
-  # Extracts parameters of the function f and creates a code snippet that assigns the neccessary values from "par"
+variable_assignment <- function(foo_infos, par, par_mem = NULL){
+  # Extracts parameters of the function foo and creates a code snippet that assigns the neccessary values from "par"
   # Parameters:
-  #   f: function
+  #   foo_infos: function infos
   #   par: list, parameters to assign
   #   par_mem: in case the parameters are stored in a variable contained in "par"
   # Returns:
   #   par_assign: character, code snippet that assigns the neccessary values from "par"
+  exclusions <- names(foo_infos$input_mapping)
 
-  param_list <- formals(f)
-  param_list <- param_list[!names(param_list) %in% c("data", "cormat", "gene_data")]
+  param_list <- formals(foo_infos$foo)
+  param_list <- param_list[!names(param_list) %in% exclusions]
   param_names <- names(param_list)
 
   if (!is.null(par_mem) && !is.null(par)) par <- par[[par_mem]]
 
   # check that the parameters without default values are present in "par"
-  non_default_params <- names(formals(f))[sapply(formals(f), function(x) identical(x, quote(expr=)))]
-  non_default_params <- setdiff(non_default_params, c("data", "cormat", "gene_data"))
+  non_default_params <- names(formals(foo_infos$foo))[sapply(formals(foo_infos$foo), function(x) identical(x, quote(expr=)))]
+  non_default_params <- setdiff(non_default_params, exclusions)
   default_params <- setdiff(param_names, non_default_params)
+  default_params <- setdiff(default_params, exclusions)
   missing_pars <- setdiff(non_default_params, names(par))
   if(length(missing_pars) > 0){
     stop(paste(
     "The following parameters are missing in the parameter list of function",
-    deparse(substitute(f)), ":",
+    deparse(substitute(foo_infos$foo)), ":",
     paste(missing_pars, collapse = ", ")
     ))
   }
@@ -205,7 +207,7 @@ create_function_script <- function(foo_infos, par, par_mem = NULL, path_to_util=
   #   par: list, parameters to assign
   # Returns:
   #   function_script: character, the R script that contains the function definitions
-  function_script <- variable_assignment(foo_infos$foo, par, par_mem)
+  function_script <- variable_assignment(foo_infos, par, par_mem)
   # potentially write "additional functions" to util file
   if (!is.null(foo_infos$additional_foos)){
     foo_names <- names(foo_infos$additional_foos)

@@ -182,33 +182,33 @@ snippet_heatmap <- function(
 ){
   snippet <- c()
   # General heatmap construction details
-  if(params$Heatmap$row_selection_options == "all"){
+  if(params$Heatmap$selection_type == "all"){
     snippet <- paste0(snippet, "All entities were used for the heatmap. ")
-  } else if (params$Heatmap$row_selection_options == "Select based on Annotation") {
+  } else if (params$Heatmap$selection_type == "Select based on Annotation") {
     snippet <- paste0(snippet, "The heatmap shows all entities which ",
-                      params$Heatmap$anno_options_heatmap, 
+                      params$Heatmap$select_by,
                       " is part of the set of ",
-                      paste0(params$Heatmap$row_anno_options_heatmap,
+                      paste0(params$Heatmap$selection,
                              collapse = ","),
                       ". ")
-  } else if (!is.null(params$Heatmap$TopK)) {
+  } else if (!is.null(params$Heatmap$n_top_k)) {
     snippet <- paste0(snippet, "The heatmap was constructed based on the top ", 
-                      params$Heatmap$TopK, " entities. ")
+                      params$Heatmap$n_top_k, " entities. ")
     snippet <- paste0(snippet, "The order of the entities was determined by ", 
-                      params$Heatmap$TopK_order, ". ")
-    if(grepl("Significant",params$Heatmap$TopK_order)){
+                      params$Heatmap$top_k_type, ". ")
+    if(grepl("Significant",params$Heatmap$top_k_type)){
       snippet <- paste0(snippet, 
                         "An entities was deemed significant with a significance level of",
-                        params$Heatmap$psig_threhsold_heatmap,
+                        params$Heatmap$significance_level,
                         ". ")
     }
   }
   
   # Sample and entity coloring
-  if(any(params$Heatmap$anno_options != "None")){
+  if(any(params$Heatmap$col_annotations != "None")){
     snippet <- paste0(snippet, "The heatmap samples were colored after ", paste0(params$Heatmap$anno_options, collapse = ", "), ". ")
   }
-  if(any(params$Heatmap$row_anno_options != "None")){
+  if(any(params$Heatmap$row_annotations != "None")){
     snippet <- paste0(snippet, "The heatmap entities were colored after ", paste0(params$Heatmap$row_anno_options, collapse = ", "), ". ")
   }
   
