@@ -60,7 +60,6 @@ enrichment_analysis_geneset_server <- function(
             waiter$show()
             # add the id to par_tmp
             par_tmp[[session$token]]$Enrichment$enrich_set <<- id
-            browser()
             envList <- list(
               par_tmp = par_tmp[[session$token]]
             )
