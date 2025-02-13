@@ -58,35 +58,37 @@ enrichment_analysis_geneset_server <- function(
               hide_on_render = FALSE
             )
             waiter$show()
-          #  tmp <- getUserReactiveValues(input)
-           # par_tmp$Enrichment[names(tmp)] <<- tmp
-              envList <- list(
-                res_tmp = res_tmp[[session$token]],
-                par_tmp = par_tmp[[session$token]],
-                loadedVersion = loadedVersion
-              )
+            # add the id to par_tmp
+            par_tmp[[session$token]]$Enrichment$enrich_set <<- id
+            browser()
+            envList <- list(
+              par_tmp = par_tmp[[session$token]]
+            )
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
-
-            # functions needed
-            source("R/SourceAll.R")
-
-            save.function.from.env(
-              wanted = c(
-                "check_annotation_enrichment_analysis",
-                "translate_genes_ea",
-                "translate_genes_oa",
-                "gene_set_enrichment",
-                "over_representation_analysis",
-                "getLFCs"
+            # save csv files
+            save_summarized_experiment(
+              res_tmp[[session$token]]$data_original,
+              temp_directory
+            )
+            pipeline <- OA_PIPELINE
+            pipeline <- if(ea_type == "GeneSetEnrichment") EA_PIPELINE
+            write(
+              create_workflow_script(
+                pipeline_info = pipeline,
+                par = par_tmp[[session$token]],
+                par_mem = "Enrichment",
+                path_to_util = file.path(temp_directory, "util.R")
               ),
-              file = file.path(temp_directory, "utils.R")
+              file.path(temp_directory, "Code.R")
+            )
+            # get the EnsemblObjects.RDS from www and save it
+            file.copy(
+              from = "/www/EnsemblObjects.RDS",
+              to = file.path(temp_directory, "EnsemblObjects.rds")
             )
 
-
-            write(getPlotCode(ea_scenario), file.path(temp_directory, "Code.R"))
-
-            saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+            saveRDS(envList, file.path(temp_directory, "Data.rds"))
             zip::zip(
               zipfile = file,
               files = dir(temp_directory),
@@ -357,7 +359,6 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           "uploaded_gene_set" = uploaded_gene_set,
           "heatmap_genes" = heatmap_genes,
           "gse_gene_set_type" = gse_gene_set_type,
-          "data" = data,
           "compare_within" = compare_within,
           "reference" = reference,
           "treatment" = treatment
@@ -398,15 +399,15 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             ea_reactives$data <- translate_genes_ea(
               data = ea_reactives$data,
               annotation_results = anno_results,
-              input = input
+              organism = ea_reactives$organism
             )
           }else{
             ea_reactives$tmp_genes <- translate_genes_oa(
               annotation_results = anno_results,
-              input = input,
               geneSetChoice = ea_reactives$tmp_genes,
               geneSet2Enrich = input$GeneSet2Enrich,
-              data = ea_reactives$data
+              data = ea_reactives$data,
+              organism = ea_reactives$organism
             )
           }
 
@@ -482,15 +483,13 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               ea_reactives$tmp_genes,
               ea_reactives$data,
               ea_reactives$enrichments2do,
-              input$test_correction
+              PADJUST_METHOD[[input$test_correction]]
             )
             # update par_tmp, TODO: not pressing but update and align with other functions
             update_par_tmp <- list(
               "organism" = ea_reactives$organism,
-              "tmp_genes" = ea_reactives$tmp_genes,
               "enrichments2do" = ea_reactives$enrichments2do,
-              "data" = ea_reactives$data,
-              "test_correction" = input$test_correction
+              "test_correction" = PADJUST_METHOD[[input$test_correction]]
             )
             par_tmp[[session$token]]$Enrichment[names(update_par_tmp)] <<- update_par_tmp
 
@@ -512,16 +511,14 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               geneSetChoice = ea_reactives$tmp_genes,
               data = data,
               enrichments2do = ea_reactives$enrichments2do,
-              adjustMethod = input$test_correction,
+              test_correction = PADJUST_METHOD[[input$test_correction]],
               input$UniverseOfGene %||% "default"
             )
             # update par_tmp, TODO: not pressing but update and align with other functions
             update_par_tmp <- list(
               "organism" = ea_reactives$organism,
-              "tmp_genes" = ea_reactives$tmp_genes,
               "enrichments2do" = ea_reactives$enrichments2do,
-              "data" = ea_reactives$data,
-              "test_correction" = input$test_correction,
+              "test_correction" = PADJUST_METHOD[[input$test_correction]],
               "UniverseOfGene" = input$UniverseOfGene %||% "default"
             )
             par_tmp[[session$token]]$Enrichment[names(update_par_tmp)] <<- update_par_tmp

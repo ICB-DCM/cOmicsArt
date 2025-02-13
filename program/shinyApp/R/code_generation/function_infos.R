@@ -35,11 +35,11 @@ preprocessing_info <<- list(
   ),
   to_util = TRUE,
   additional_foos = list(
-    deseq_processing = "deseq_processing",
-    prefiltering = "prefiltering",
-    simple_center_scaling = "simple_center_scaling",
-    scaling_normalisation = "scaling_normalisation",
-    ln_normalisation = "ln_normalisation"
+    deseq_processing = deseq_processing,
+    prefiltering = prefiltering,
+    simple_center_scaling = simple_center_scaling,
+    scaling_normalisation = scaling_normalisation,
+    ln_normalisation = ln_normalisation
   )
 )
 violin_plot_info <<- list(
@@ -147,4 +147,86 @@ plot_heatmap_info <<- list(
   ),
   to_util = FALSE,
   plot_name = "heatmap_plot"
+)
+
+# --- Enrichment Analysis ---
+get_gene_set_choice_info <<- list(
+  foo = get_gene_set_choice,
+  name = "get_gene_set_choice",
+  input_mapping = list(
+      data = "data"
+  ),
+  output_name = "gene_set_choice",
+  to_util = TRUE,
+  additional_foos = list(
+      getLFCs = getLFCs
+  )
+)
+check_annotation_enrichment_analysis_info <<- list(
+  foo = check_annotation_enrichment_analysis,
+  name = "check_annotation_enrichment_analysis",
+  input_mapping = list(
+      data = "data"
+  ),
+  output_mapping = list(
+      new_data = "data"
+  ),
+  output_name = "anno_results",
+  to_util = TRUE
+)
+translate_genes_ea_info <<- list(
+  foo = translate_genes_ea,
+  name = "translate_genes_ea",
+  input_mapping = list(
+      data = "data",
+      annotation_results = "anno_results"
+  ),
+  output_name = "data",
+  to_util = TRUE
+)
+translate_genes_oa_info <<- list(
+  foo = translate_genes_oa,
+  name = "translate_genes_oa",
+  input_mapping = list(
+      annotation_results = "anno_results",
+      geneSetChoice = "gene_set_choice",
+      geneSet2Enrich = "ora_gene_set_type",
+      data = "data"
+  ),
+  output_name = "gene_set_choice",
+  to_util = TRUE
+)
+gene_set_enrichment_info <<- list(
+  foo = gene_set_enrichment,
+  name = "gene_set_enrichment",
+  input_mapping = list(
+      data = "data",
+      geneSetChoice = "gene_set_choice"
+  ),
+  output_name = "enrichment_results",
+  to_util = TRUE
+)
+over_representation_analysis_info <<- list(
+  foo = over_representation_analysis,
+  name = "over_representation_analysis",
+  input_mapping = list(
+      data = "data",
+      geneSetChoice = "gene_set_choice"
+  ),
+  output_name = "enrichment_results",
+  to_util = TRUE
+)
+plot_enrichment_results_info <<- list(
+  foo = function(enrichment_results, enrich_set){
+    enrichment_dotplot <- clusterProfiler::dotplot(
+      enrichment_results[[paste0("EnrichmentRes_", enrich_set)]]
+    ) + CUSTOM_THEME
+    return(enrichment_dotplot)
+  },
+  name = "plot_enrichment_results",
+  input_mapping = list(
+      enrichment_results = "enrichment_results"
+  ),
+  to_util = FALSE,
+  plot_name = "enrichment_dotplot"
 )

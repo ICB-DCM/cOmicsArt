@@ -24,3 +24,17 @@ HEATMAP_PIPELINE <<- list(
   custom_colAnnotation_info,
   plot_heatmap_info
 )
+
+# --- Enrichment Analysis ---
+OA_PIPELINE <<- list(
+  get_gene_set_choice_info,
+  check_annotation_enrichment_analysis_info,
+  over_representation_analysis_info,
+  plot_enrichment_results_info
+)
+EA_PIPELINE <<- list(
+  get_gene_set_choice_info,
+  check_annotation_enrichment_analysis_info,
+  gene_set_enrichment_info,
+  plot_enrichment_results_info
+)

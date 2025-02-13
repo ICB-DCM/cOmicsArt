@@ -71,3 +71,8 @@ get_gene_set_choice <- function(
   }
   stop(ERROR_INVALID_ANALYSIS)
 }
+
+plot_enrichment_results <- function(enrichment_result){
+  enrichment_dotplot <- clusterProfiler::dotplot(enrichment_result) + CUSTOM_THEME
+  return(enrichment_dotplot)
+}
