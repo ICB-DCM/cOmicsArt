@@ -33,7 +33,14 @@ preprocessing_info <<- list(
   output_mapping = list(
     data = "data"
   ),
-  to_util = TRUE
+  to_util = TRUE,
+  additional_foos = list(
+    deseq_processing = "deseq_processing",
+    prefiltering = "prefiltering",
+    simple_center_scaling = "simple_center_scaling",
+    scaling_normalisation = "scaling_normalisation",
+    ln_normalisation = "ln_normalisation"
+  )
 )
 violin_plot_info <<- list(
   foo = violin_plot,
@@ -99,4 +106,45 @@ single_gene_boxplot_info <<- list(
   additional_foos = list(
       "maybe_add_test" = maybe_add_test
   )
+)
+
+# --- Heatmap ---
+entitieSelection_info <<- list(
+  foo = entitieSelection,
+  name = "entitieSelection",
+  input_mapping = list(
+    data = "data"
+  ),
+  output_name = "selected_data",
+  to_util = TRUE
+)
+custom_rowAnnotation_info <<- list(
+  foo = custom_rowAnnotation,
+  name = "custom_rowAnnotation",
+  input_mapping = list(
+      data = "data",
+      row_selected = "rownames(selected_data)"
+  ),
+  output_name = "row_annotation",
+  to_util = TRUE
+)
+custom_colAnnotation_info <<- list(
+  foo = custom_colAnnotation,
+  name = "custom_colAnnotation",
+  input_mapping = list(
+      data = "data"
+  ),
+  output_name = "col_annotation",
+  to_util = TRUE
+)
+plot_heatmap_info <<- list(
+  foo = plot_heatmap,
+  name = "plot_heatmap",
+  input_mapping = list(
+      selected_data = "selected_data",
+      row_annotation = "row_annotation",
+      col_annotation = "col_annotation"
+  ),
+  to_util = FALSE,
+  plot_name = "heatmap_plot"
 )

@@ -16,3 +16,11 @@ SINGLE_GENE_VISUALISATION_PIPELINE <<- list(
   get_single_gene_data_info,
   single_gene_boxplot_info
 )
+
+# --- Heatmap ---
+HEATMAP_PIPELINE <<- list(
+  entitieSelection_info,
+  custom_rowAnnotation_info,
+  custom_colAnnotation_info,
+  plot_heatmap_info
+)
