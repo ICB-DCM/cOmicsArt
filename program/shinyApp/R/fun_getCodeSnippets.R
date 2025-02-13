@@ -1,5 +1,5 @@
 getPlotCode <- function(numberOfScenario) {
-  PreProcessing_Procedure <- par_tmp[[session$token]]$PreProcessing_Procedure
+  preprocessing_procedure <- par_tmp[[session$token]]$preprocessing_procedure
   row_selection <- par_tmp[[session$token]]$row_selection
   col_selection <- par_tmp[[session$token]]$sample_selection
   omic_type <- par_tmp[[session$token]]$omic_type
@@ -67,8 +67,8 @@ selected <- unique(
   }
  # Preprocessing ----
 
-  if(PreProcessing_Procedure != "none"){
-    if(PreProcessing_Procedure == "filterOnly"){
+  if(preprocessing_procedure != "none"){
+    if(preprocessing_procedure == "filterOnly"){
       if(omic_type == "Transcriptomics"){
         stringPreProcessing <- 'res_tmp$data <- tmp_data_selected[which(rowSums(assay(tmp_data_selected)) > 10),]'
       }
@@ -84,7 +84,7 @@ selected <- unique(
         prequel_stringPreProcessing <- 'res_tmp$data <- tmp_data_selected[which(apply(assay(tmp_data_selected),1,median)!=0),]'
       }
     }
-    if(PreProcessing_Procedure == "simpleCenterScaling"){
+    if(preprocessing_procedure == "simpleCenterScaling"){
         stringPreProcessing <- 'processedData <- as.data.frame(t(
     scale(
       x = as.data.frame(t(as.data.frame(assay(res_tmp$data)))),
@@ -96,7 +96,7 @@ selected <- unique(
     assay(res_tmp$data) <- as.data.frame(processedData)
     '
       }
-    if(PreProcessing_Procedure == "vst_DESeq"){
+    if(preprocessing_procedure == "vst_DESeq"){
       stringSource <- c(stringSource, "DESeq2")
         stringPreProcessing <- 'dds <- DESeq2::DESeqDataSetFromMatrix(
           countData = assay(res_tmp$data),
@@ -112,7 +112,7 @@ selected <- unique(
       assay(res_tmp$data) <- as.data.frame(assay(dds_vst))
       '
       }
-    if(PreProcessing_Procedure == "Scaling_0_1"){
+    if(preprocessing_procedure == "Scaling_0_1"){
       stringPreProcessing <- 'processedData <- as.data.frame(t(
       apply(assay(res_tmp$data),1,function(x){
       (x - min(x))/(max(x) - min(x))
@@ -121,14 +121,14 @@ selected <- unique(
       assay(res_tmp$data) <- as.data.frame(processedData)
       '
     }
-    if(PreProcessing_Procedure == "ln"){
+    if(preprocessing_procedure == "ln"){
       stringPreProcessing <- 'processedData <- as.data.frame(log(
         as.data.frame(assay(res_tmp$data))
       ))
       assay(res_tmp$data) <- as.data.frame(processedData)
       '
     }
-    if(PreProcessing_Procedure == "log10"){
+    if(preprocessing_procedure == "log10"){
       stringPreProcessing <- 'processedData <- as.data.frame(assay(res_tmp$data))
       if(any(processedData==0)){
         processedData <- as.data.frame(log10(
@@ -138,7 +138,7 @@ selected <- unique(
       }'
     }
     
-    if(PreProcessing_Procedure == "pareto_scaling"){
+    if(preprocessing_procedure == "pareto_scaling"){
       stringPreProcessing <- 'processedData <- as.data.frame(assay(res_tmp$data))
       centered <- as.data.frame(t(
         apply(processedData, 1, function(x){x - mean(x)})
@@ -154,7 +154,7 @@ selected <- unique(
     prequel_stringPreProcessing <- c("")
     stringPreProcessing <- 'res_tmp$data <- tmp_data_selected'
   }
-  if(par_tmp[[session$token]]['BatchColumn'] != "NULL" & PreProcessing_Procedure != "vst_DESeq"){
+  if(par_tmp[[session$token]]['BatchColumn'] != "NULL" & preprocessing_procedure != "vst_DESeq"){
     string_batchCorrection <- '
 res_tmp$data_batch_corrected <- res_tmp$data
 assay(res_tmp$data_batch_corrected) <- sva::ComBat(
@@ -162,7 +162,7 @@ assay(res_tmp$data_batch_corrected) <- sva::ComBat(
   batch = as.factor(colData(res_tmp$data_batch_corrected)[,par_tmp$BatchColumn])
 )
 '
-  } else if (par_tmp[[session$token]]['BatchColumn'] != "NULL" & PreProcessing_Procedure == "vst_DESeq") {
+  } else if (par_tmp[[session$token]]['BatchColumn'] != "NULL" & preprocessing_procedure == "vst_DESeq") {
     # TODO: formula needs to be updated
     string_batchCorrection <- '
 dds_batch <- DESeq2::DESeqDataSetFromMatrix(
@@ -733,7 +733,7 @@ if(numberOfScenario %in% c(14,15,16,17)){
     stringtosave <- 'annotationDF <- colData(res_tmp$data)[,par_tmp$SampleCorr$SampleAnnotationChoice,drop = F]
 cormat <- cor(
   x = as.matrix(assay(res_tmp$data)),
-  method = par_tmp$SampleCorr$corrMethod
+  method = par_tmp$SampleCorr$correlation_method
 )
 
 SampleCorrelationPlot <- pheatmap(
@@ -763,7 +763,7 @@ PADJUST_METHOD <- list(
 # get the results
 res2plot <- list()
 
-if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
+if(par_tmp$preprocessing_procedure == "vst_DESeq"){
   dds <- res_tmp$DESeq_obj
   
   # rewind the comparisons again

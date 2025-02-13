@@ -56,7 +56,7 @@ snippet_preprocessing <- function(
 ){
   # Conditional pre-processing procedure
   snippet <- c()
-  if (params$PreProcessing_Procedure == "filterOnly") {
+  if (params$preprocessing_procedure == "filterOnly") {
     # Conditional filtering based on omics type
     if (params$omic_type == "Transcriptomics") {
       snippet <- paste0(snippet, "The data was cleaned by removing constant entities across all samples and rows with all-zero values. Additionally, entities with total row counts less than or equal to 10 were removed.\n")
@@ -65,26 +65,26 @@ snippet_preprocessing <- function(
     }else{
       snippet <- c()
     }
-  } else if (params$PreProcessing_Procedure == "simpleCenterScaling") {
+  } else if (params$preprocessing_procedure == "simpleCenterScaling") {
     snippet <- paste0(snippet, "The data was centered and scaled. Centering involves subtracting the mean of each entity, and scaling involves dividing by the standard deviation.\n")
-  } else if (params$PreProcessing_Procedure == "vst_DESeq") {
+  } else if (params$preprocessing_procedure == "vst_DESeq") {
     snippet <- paste0(snippet, "For the transcriptomics data, DESeq2 was used for normalization and VST transformation applied for visualisation of the normalized data (not for statistical testing)",
                       "(v. ",packageVersion("DESeq2"),") (",print(clean_citation(citation('DESeq2')), style = "text"),"). ",
                       "The formula for analysis was ~",
                       params$DESeq_formula_batch,
-                      ifelse(params$DESeq_formula != "NULL",  params$DESeq_formula, ""),
+                      ifelse(params$deseq_formula != "NULL",  params$deseq_formula, ""),
                       ".\n")
-  } else if (params$PreProcessing_Procedure == "Scaling_0_1") {
+  } else if (params$preprocessing_procedure == "Scaling_0_1") {
     snippet <- paste0(snippet, "The data was scaled to fit within the range of 0 to 1. Each entity's values are hence transformed proportionally to ensure a consistent scale.\n")
-  } else if (params$PreProcessing_Procedure == "log10") {
+  } else if (params$preprocessing_procedure == "log10") {
     snippet <- paste0(snippet, "The base-10 logarithm of each data point was calculated. If a single zero value was present, 1 was added to all points to avoid undefined results.\n")
-  } else if (params$PreProcessing_Procedure == "ln") {
+  } else if (params$preprocessing_procedure == "ln") {
     snippet <- paste0(snippet, "The natural logarithm of each data point was calculated. If a single zero value was present, 1 was added to all points to avoid undefined results.\n")
-  } else if (params$PreProcessing_Procedure == "log2") {
+  } else if (params$preprocessing_procedure == "log2") {
     snippet <- paste0(snippet, "The base-2 logarithm of each data point was calculated. If a single zero value was present, 1 was added to all points to avoid undefined results.\n")
-  } else if (params$PreProcessing_Procedure == "pareto_scaling") {
+  } else if (params$preprocessing_procedure == "pareto_scaling") {
     snippet <- paste0(snippet, "The data was parteo scaled. Pareto scaling emphasizes the importance of small values by dividing each data point by the square root of its standard deviation.\n")
-  } else if(params$PreProcessing_Procedure == "None") {
+  } else if(params$preprocessing_procedure == "None") {
     snippet <- paste0(snippet, "No additional pre-processing was performed within cOmicsART.\n")
   }
   
@@ -105,7 +105,7 @@ snippet_sampleCorr <- function(
     params=par_tmp[[session$token]]
 ){
   snippet <- c()
-  snippet <- paste0(snippet, "The correlation between samples was calculated using the ", params$SampleCorr$corrMethod, " method. ")
+  snippet <- paste0(snippet, "The correlation between samples was calculated using the ", params$SampleCorr$correlation_method, " method. ")
   snippet <- paste0(snippet, "The resulting correlation matrix was visualized using the pheatmap package", "(v. ",packageVersion("pheatmap"),") (",print(clean_citation(citation('pheatmap')), style = "text"),"). ")
   snippet <- paste0(snippet, "The correlation matrix was clustered with the complete linkage method using correlation distance. ")
   return(snippet)
@@ -157,7 +157,7 @@ snippet_SigAna <- function(
 ){
   snippet <- c()
   # Transcriptomics with vst_DESeq
-  if (params$omic_type == "Transcriptomics" & params$PreProcessing_Procedure == "vst_DESeq") {
+  if (params$omic_type == "Transcriptomics" & params$preprocessing_procedure == "vst_DESeq") {
     snippet <- paste0(snippet, "Differential expression analysis was performed using the DESeq2 package (v. ", packageVersion("DESeq2"), ") (", print(clean_citation(citation('DESeq2')), style = "text"), "). ")
     snippet <- paste0(snippet, "The reported adjusted p-values were adjusted by ", params$SigAna$correction_method, ". ")
   } else {

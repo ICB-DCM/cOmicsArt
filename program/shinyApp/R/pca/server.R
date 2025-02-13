@@ -212,7 +212,7 @@ pca_Server <- function(id){
       data <- update_data(session$token)$data
       customTitle <- create_default_title_pca(
         pcs = paste0(x_axis," vs ",y_axis),
-        preprocessing = par_tmp[[session$token]]['PreProcessing_Procedure']
+        preprocessing = par_tmp[[session$token]]['preprocessing_procedure']
       )
       coloring <- prepare_coloring_pca(pcaData, color_by)
       color_theme <- coloring$color_theme
@@ -661,7 +661,7 @@ pca_Server <- function(id){
       filename = function() {
         paste0(create_default_title_pca(
           pcs = paste0(input$x_axis_selection," vs ",input$y_axis_selection),
-          preprocessing = par_tmp[[session$token]]['PreProcessing_Procedure']
+          preprocessing = par_tmp[[session$token]]['preprocessing_procedure']
         ), Sys.time(), input$file_ext_plot1)
       },
       content = function(file){
