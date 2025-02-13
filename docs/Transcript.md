@@ -8,93 +8,170 @@ This tutorial is self-contained but can also be used to follow along with the Yo
 Comics art is designed is in a tabular format. In the beginning you only see the data selection but if you upload your data and go through the steps progressively more 
 tabs will be shown. Let us start by uploading our data.
 
-[Picture of the welcome page]
-
 ## Uploading Data ##
 
-The data will be uploaded with three CSV files. The first one is the data matrix showing the counts on the rows there are the entities for example genes on the columns 
-they are the samples. The sample table shows you meta information on the samples while the entity table shows you any information on the entities you have. 
+The data will be uploaded with three CSV files. 
+1. The data matrix - shows the counts on the rows there are the entities - for example genes and on the columns they are the samples. 
+2. The sample table - shows meta information on the samples
+3. The entity table - shows any information on the entities
 
-[Pictures highlighting browse for the three CSV and upload data tab]
+Note : If you need to access the documentation, you can click on "Go to Documentation" from any page which will bring you to our website with an extensive documentation on what to do.
+Another option is to click on the helper buttons wherever they are. They'll show you some kind of help for whatever you're doing.
 
-If you need to access the documentation, you can click on "Go to Documentation" from any page which will bring you to our website with an extensive documentation on what to do.
+[Caption of screenshot] This documentation shows you how to upload your data via the file input. 
 
-Another option is to click on the helper buttons these small question marks wherever they are. They'll show you some kind of help for whatever you're doing.
+It is important that the rows of the data matrix correspond to the rows of the row annotation while the columns of the data matrix correspond to the rows of the sample table.
 
-[Highlighted Go-To Documentation] [Website Interface Documentation picture] [Highlight question mark picture]
+We choose an example data set which is also available for download. [For the data matrix we choose the "airway-read-counts-LS.csv" file, for sample annotation we upload the 
+"airway-sample-sheet-LS.csv" file, and for entities annotation we upload the "airway-entitie_description-LS.csv" file.]
 
-Right now in this example it shows you how to upload your data via the file input. It shows you again what it should look like what it contains. [Bold?] 
-And what is important is that the rows of the data Matrix correspond to the rows of the row annotation while the Columns of the data Matrix correspond to the rows of the sample 
-table okay so let's just upload our data.
+When we've uploaded all the files, the first thing we might want to check how is our data interpreted in this program. For this we click on "Inspect Data" followed by an additional 
+click on "Upload data for visual inspection".
 
-We choose an example data set you can also download this. We just choose the read counts the sample table it's sample sheet and the entity annotation. 
-When we've uploaded this the first thing we want to do is we might want to check how is our data interpreted in this program for this we click on "inspect data". 
+Some pitfalls to beware of here are for example if we choose the wrong separator then it will only have one column and you see that this will be interpreted as wrong.
+At the bottom of the screen there are a multitude of checks where you can check whether your data looks as it should be.
+Green signifies that the dataset is fine, whereas red means you need to go into your data and change things and orange means the dataset has some issues but the program can handle it - for example 
+this dataset contains some entries which are missing and the application will just remove those entities from the table.
 
-[Highlight inspect data]
+After the inspection of the data is complete, click on "Upload new data" and now you should see your result in the right hand section of the pane.
+The first thing we can do is we can add annotation by choosing the organism to add the annotation. to the data if we didn't do that already, but since we did this already so we don't need to do it again. 
 
-We need an additional click on "upload data for visual inspection" and then it will show us how does our program interpret our data. 
+Next we choose row or samples:
 
-[Highlight upload data]
+For the sample selection we first choose among the columns present in the sample table. For example we can choose the cells, condition, experiment or the sample. 
+If we select sample, additonally we might want to select only specific samples we want to include the data. Perhaps there are strong reasons to exclude some and by clicking on the specific 
+sample, it removes all other samples and will only uses these data sets.
+If we select condition, we can do a similar selection. Here it's treated or untreated but you have multiple conditions you might want to only check one of them. 
 
-Pitfalls are here for example if we choose the wrong separator then it will only have ever one column and you see that this will be interpreted as wrong. 
+For the row selection, the same can be done with genes and you can choose either the gene names here in Ensemble genes, or you might not know those gene names all by heart so you can select the symbols 
+and we can also select which ones we want to use.
+You can also use the gene biotype and which shows you functionals. For example in transcriptomics you sometimes only want to use the protein coding genes so we can select protein coding and the program 
+would thenonly use all of the protein coding genes that exists have within the data matrix. Similarly you can do this same for processed pseudo genes and it will select all the processed pseudo genes.
 
-Does it show all the other information and then down here there are a multitude of checks where you can check whether your data looks as it should be.
-
-Green means fine red means you need to go into your data and change things while Orange means yeah it's not good but we can handle it for example in this case it's an 
-a values or missing values in the data the the application will just remove those entities from the table.
-
-And then we just click on "upload new data".
-
-[Highlight upload new data]
-
-And as you can see we now see our result part of the design which in this case is the data selection.
-
-[Highlight changes to interface ?]
-
-The first thing we can do is we can add annotation to the data if we didn't do that. We did this already so we don't need to do it and you can choose the organism to 
-add the annotation. 
-
-[Add Gene Annotation highlight]
-
-And then you choose row or samples. 
-For the sample selection you first choose among the columns that you have in your sample table. For example you can choose the cells, you can also choose the condition or 
-you choose the experiment or the sample and you might want to select only specific samples you want to include the data. 
-
-[Highlight specific sample selection]
-
-Perhaps there are strong reasons to exclude some and you just click on them you remove them all and will only
-use these data sets you can do the same for the condition. Here it's treated or untreated if you have multiple
-conditions you might want to only check one of them. We want to use all data the same can be done with Gene with the
-row selection and you can choose either the gene names here in Ensemble genes you might not know those Gene names all by hard so select the symbols and you can select which 
-ones you want to use.
-
-You can also use the Gene B biotype and which shows you functionals. So for example in transcriptomics you sometimes only want to use the protein coding genes so you can select 
-protein coding and we'll only use all of the protein coding genes that you have within your data matrix you can do the same for prois pseudo genes and it will select all the 
-process pseudo gen.
-
-In our case we want to use all our data so we just start our journey by clicking on this button. 
-
-[Highlight button]
+In our case we want to use all our data so we just start our journey by clicking on "Start the Journey". 
 
 ## Pre-Processing ##
 
-Clicking on this button will directly bring you to the pre-processing. 
+Clicking on this button will directly bring us to the pre-processing window.
 
-Here you can see again the design choice on the left side we have the Side Bar with all the options that you can choose separated between things that you need to choose and then click on the button again (needs recomputing) or things down below this black line which you can just change (does not need recomputing). 
+Here you can see the design choice - on the left side we have the sidebar with all the available options. Options which need re-computation are separated from those which do not by a black line.
 
-For example if you choose the DC sequencing you can choose the genes if you want more information on what kind of pre-processing we can do you can click on the helper button or go to the documentation you can also choose batch effects from The Columns you already have in your data said though keep in mind usually batch effects are only done later when realizing that there are actually batch effects so in our case we want to do a log 10 scaling so we need to click on this before clicking this button 
+For example we can choose the vst_DESeq, and then choose the genes. [?]
+You can also choose batch effects from the columns already present in your data, but keep in mind that batch effects are ususally done later once we realize that there are batch effects.
 
-[Higjlight get preprocessing button] 
+In our case we want to do a log 10 scaling so we select the log 10 option followed by the "Get Pre-Processing" button.
+This will take a bit of time but once the computation is complete, the results will be shown in the right hand pane. 
 
-and then get the pre-processing this will take a bit of time but then when it is done the results will be shown in this case a distribution Matrix some kind of Statistics show you what changed from raw data to pre-processed data and as you can see above all the different tabs are now shown as well from sample correlation PCA significance analysis to Heatmaps.
+In this case a distribution matrix and some statistics show us what changed from the raw data to pre-processed data. 
 
-[Highlight tabs which are now visible]
+Once we have pre-processed the data, all the different tabs are now visible.
 
-To show you an example how the options below the bar work we just click on condition for example and without having to reclick the get pre-processing button in time directly the plot updates showing you potential similarities based on the sample condition you you selected to note that now that all the tops are shown we can always switch between any of them do the analysis and go to any other we we'll start with the sample correlation.
+To illustrate how the options below the bar work, we select condition and the plot updates instantaneously, showing you potential similarities based on the sample condition we selected.
+
+Note that now since all the tabs are visible we can always switch between any of them to do the analysis and switch to any other.
+
+We we'll start with sample correlation.
+
+[If you want more information on what kind of pre-processing we can do you can click on the helper button or go to the documentation].
 
 ## Sample Correlation ##
 
-Here Again by Design on the left side is the sidebar which lets you choose all the options for the plot in this case up above the button things that need recomputing you can always click on the help files if you are not quite sure which kind of correlation method for example in this case you want to choose and down below are things that can directly change the plot if we click on get sample correlation the sample correlation will be plotted and you can see it is already plotting the cells the samples by the cell names we can add the condition to see does a plot by anything else and see kind of clusters and patterns down below where we'll go next you can see that for each plot we'll have save plot sent only to report or get underlying AR save plot is fairly straightforward you choose the file type we click on Save the blot and will open up to just directly save it what you can also do is you can get the underlying R code and data to directly it gives you the exact R code you need to reproduce the the plot and then you can adjust it to your lighting or you can send the plot towards a report which will send the plot along with any kind of options you chose like the Person correlation that you color the samples by cell and condition along with notes that you can take manually towards an HTML report to save it for later this en enables you when you download the report as an HTML at the
-end of your statistical analysis to reproduce any kind of findings you had within the application so it shows you what kind of options did you choose what was the pre-processing how did you produce it and this send only to report get
-underlying R code and safe plot will always show up below any plot let's Principal Component Analysis (PCA) continue with the principal component analysis here again we can select data or we just get the principal components for now which will open the principal component plot now if we want to select data this is only advised for really looking at variance explained within specific data points but otherwise just get all the data get the principal components as you know it and then down below we can select what do we want to color them after what kind of principal components do we want to see what is the what do we want to show at the end tool to tip if we go over it to hover and see what are preps outliers again we have to send only to report get underlying our code and data and safe plot as everywhere we can take notes and then send it to the report if we want to or we can say well let's directly color it by the condition because if we had treated and untreated do we see a clustering here we can see more for clustering but it's not the first principle component the second one so we can just re select the principal components that we want to show on which
-axis we can also switch to the Loading plot which shows us for each principal component that we currently have selected on the x-axis the loadings again we can choose between the sample annotation meaning we can choose the Gene B tag we can use the gene symbols and everything else in General on the left side again for the design options to choose separated by the button with above the button these recp Computing below the button directly updates and on the right side there are the results for example in this case different kind of PCA plots like the PCA plot the loadings the loading Matrix or the street plot and below the plot sometimes are op additional options we can choose to change the blot and then lastly there's always the send only to report get underlying R code and data and save the plot in the significance Significance Analysis analysis we again start by choosing our \options in the sidebar choosing the level or of groups we want to compare like the condition treated or untreated or we choose the cells we can choose more than just one comparison and by clicking on the get significance analysis later it will directly do all the comparisons we need we can choose the test method the significance level and the test correction method and then just click on it and it directly runs all free comparisons we have selected up above where the analysis is running when it's done we can see okay it shows us we didn't find anything that was significant but in case we're in an exploratory case we can also have a look at the raw P values though we have to treat this with caution we can see here for each comparison we have a table or the volcano blood in the table we can sort by whatever means we want to for example the P adjusted values we see all of them are one but some P values are significant ific we can download those tables as CSV files as Excel files or we can copy them to the clipboard or we can have a look at the volcano plots in the volcano plots it shows us the volcano plots with corrected P values and uncorrected P values again we can interact with the plot we can choose different thresholds to show what are we considering as something noteworthy and as in every plot we can send it to the rep report get the underlying R code or save the plot in the result visualization which is currently empty it is empty because we have nothing significant but if we only look at Raw P values we can get a comparison and what it does is it shows us for all the free comparisons or any others we did shows us intersections of those significant genes in our case and then we can compare which of the genes for example we have 62 genes that are significant in all three comparisons does that tell us anything what are those 63 genes or what are the 105 genes in the second first and second comparison we can highlight this we can download the report and again for the complete plot send it to the report get underlying AR code and data we Single Gene Visualization continue if we have want to have a look at a specific  Gene for example we didn't find it we can select between Rob or preprocess dat and the single gene visualization and it draws us box plots or comparisons because if we only have two data points it doesn't draw box plots we can choose what do we group these things after and so if we go to treated and untreated now we see box plot and we see the comparison directly does the statistical test on this and we can also see how did pre-processing change our data or change anything again we can send the plot to the report another integral part of a Enrichment Analysis exploratory analysis is the enrichment analysis in our case we have the option between Gene set enrichment or over representation analysis in the case of the gene set enrichment analysis you'll be asked what to sort your genes after you can choose between Lo fold change or absolute Lo fold changes then again you have to choose by what do you want to compute the your Lo fold changes and then you can choose your Gene sets that you want to compare we have a wide variety of Gene sets the most standard ones known are kek Hall marks go and reactome and by clicking on the question mark again you can get any kind of information what the gene sets are what do they contain you also choose the test correction then for each gene set you you did the enrichment for you'll be shown a tab in which you can see the enrichment or you can select the table again for the tables you can download the tables and for the blots you have sent only through report get the underlying arod to reproduce this in R directly or save the blot as it is the Heatmap last analysis in comics art will be the heat map displaying the count Matrix in a clustered fashion where we now can select what kind of rows do we for example want to plot we only want to plot a few entities so we select the row annotation select the entities we want to plot well the first eight let's say and then just click on the button get heat map again get heat map just as it was get Gene set nutriment analysis get PCA get significance analysis if we don't see any differences we can also do a rowwise scaling to make differences more clear we can select what do we annotate the samples or the rows after and again can send everything to the report or save it as a plot as you can see all the design choices are the same f things that are above the button on the sidebar will need a recomputation things that are below don't need one but update the blood directly and the results we always see the plot or the table or multiple plots we can download them and send them to the report when we are done with our Report analysis we can download the report as an HTML which will create an HTML file which you can directly download and then open it when you open it you will see a report on everything you did and every choices you made enabling you to rec create everything you did in the application again making every result you did in comics art reproducible with this I want to thank you for your attention and I hope you enjoyed the application
+Here again on the left side is the sidebar with the available options for the plot. 
+
+in this case up above the button things that need recomputing you can always click 
+on the help files if you are not quite sure which kind of correlation method for example in this case you want to choose and down below are things that can directly change the plot 
+
+By selecting "Get Sample Correlation" the sample correlation will be plotted and we can see it is already plotting the samples by the cell names. We can also add the condition to check if it plots
+ by anything else and see the clusters and patterns.
+
+At the bottom of the screen, each plot we'll have: Save plot, Send Only to Report or Get Underlying R code and data. 
+
+1. Save plot is fairly straightforward - you can choose the file type and by selecting the "Save plot" button, which opens up a window where you can choose a custom file name which then directly 
+saves the plot. 
+2. Get the underlying R code and data - gives you the exact R code you need to reproduce the the plot or customize it to your liking
+3. Send only to Report - this sends the plot along with the options you chose - the correlation method and the color annotation along with notes that you can take manually towards an HTML report to save 
+it for later. This enables you to reproduce any kind of findings during your statistical analysis within the application. 
+
+Let's continue with Principal component analysis 
+
+## Principal Component Analysis ##
+
+We have the choice of selecting data, but for now we just get the principal components. This opens the principal component plot on the right hand pane.
+
+Selecting data which is only advised for looking at variance explained within specific data points. Otherwise it is recommended to just get all the data get the principal components as you know it. 
+Below the seperator line, we can select what do we want to color them after, what kind of principal components do we want to see. We can also select what we want to show at the end of the tool tip when 
+we hover over the plot see pheraps what are the outliers.
+
+Coloring by condition:
+If we want to color it by the condition because if we had treated and untreated we want to see if we see a clustering. Here we can see more clustering but it's not the first principle component but the 
+the second one. So we can re-select the principal components that we want to show as well as which axis we want to see it on. 
+When we switch to the Loading plot, which shows us the loadings[?] for each principal component that we currently have selected on the x-axis, we can choose between the sample annotation, that is, we can 
+choose the gene biotype we can use the gene symbols and everything else.
+
+As, before on the left side we have the options to modify the plot and these are separated by the line depending on wether we need to recompute the plot or not and on the right side is the resulting plot.
+We can switch between the different kinds of plots which are available for the Principal Component Analysis, like the PCA plot, the Loadings Plot, the Loadings Matrix and the Scree Plot.
+In additon to the ususal Save plot, Send Only to Report or Get Underlying R code and data options below the plot, there are options we can choose to change the plot.
+
+## Significance Analysis ##
+
+We start by choosing the groups we want to compare. For example, choosing condition allows comparsion across treated and untreaded observations. 
+We can also choose more than just one comparison and the program will directly calculate all the comparisons. We need also choose the test method, the significance level as well as the test correction method.
+Selecting the "Get Significance Analysis" starts the computation for all the comparisions we have selected. In case the program has no significant results, the Result Visualisation tab[?] is empty. 
+
+Each individual comparision tab has a table and a volcano plot:
+
+In the Table tab, we can have a look at the raw P values for each comparision (athough we have to treat this with caution). 
+In the table we can sort by any column for example adjusted p values (padj) or p values (pvalues). 
+These tables can be downloaded as CSV file, as Excel files or we can copy them to the clipboard.
+
+The Volcano tab shows us the volcano plots with corrected P values and uncorrected P values. We can interact with the plot by choosing different thresholds to show what are we considering as noteworthy 
+and as in every plot we can send it to the  report get the underlying R code or save the plot.
+
+As mentioned before, the result visualization is currently empty because we have nothing significant. But if we choose to look at raw P values by changing the type of significance to "significant unadusted", 
+for the comparisions we did, we can see the intersections of the genes (for this example) and then we can compare which of the genes (for example we have 62 genes) are significant in all the comparison or which
+of the genes are that are significant across the first and second comoparision (for example here we have 105 genes) as well as exactly which genes these are. Additionally we can highlight the plot bars before we
+decide to download the plot or send it to the report or get the underlying R code.
+
+## Single Gene Visualization ##
+
+If we have want to have a look at a specific gene. [for example we didn't find it] 
+
+We can select between raw or preprocessed data and on selecting the "Get Single Gene Visualisation", we get box plots or comparisons because if we only have two data points it doesn't draw box plots.
+We can choose what do we group these [things?] after and if we select conditon instead of cells, we can see the comparion between treated and untreated along with the statistical test.
+By changing the data selection from preprocessed to raw we can see if and how pre-processing changes our data.
+
+[Report?]
+
+## Enrichment Analysis ##
+
+Another integral part of exploratory analysis is the Enrichment Analysis. In our case we have the option between GeneSetEnrichment or OverRepresentation analysis. 
+
+GeneSetEnrichment: In the case of the GeneSetEnrichment analysis you'll be asked what to sort your genes after. Here you can choose between log Fold change or absolute log Fold change. We select the absolute 
+log Fold change. Following this you would need to choose by what do you want to compute the log Fold changes, and then you can choose your gene sets that you want to compare to.
+There are a wide variety of gene sets to choose from. The most standard ones known are KEGG HallMarks Go and Reactome [?]. [You can also choose the test correction.]
+
+For each gene set you do the enrichment for, a tab will be visible in which you can see the enrichment or you can select the table. 
+
+[Again for the tables you can download the tables and for the plots you have sent only through report get the underlying arod to reproduce this in R directly or save the plot as it is the]
+
+[By clicking on the question mark you can get any kind of information - what the gene sets, are what do and what do they contain]
+
+## Heatmap ##
+
+The last analysis [we cover?] in cOmicsArt will be the Heatmap, which displays the count matrix in a clustered fashion.
+We now can select what kind of rows we want to plot. For example if we only want to plot a few entities we can select the row annotation and then select the entities we want to plot.
+Here we select the first eight and then click "Get Heatmap".
+
+If no differeces are visible, we can also do a rowwise scaling to make the differences more clear. Additionally, we can select what do we annotate after - the samples or the rows.
+
+[and again can send everything to the report or save it as a plot]
+
+[Conclusion?]
+
+The design across all the tabs are the same - Options that are above the seperating line on the left hand sidebar will need recomputation things and the options which are below don't and update 
+the plot directly. The results always appear on the right hand which can be downloaded as well as sent to the report. 
+
+When we are done with our analysis we can download the report as an HTML file. This HTML file will contain a report on everything you did and all the choices you made, enabling you to recreate 
+everything you did in the application making every result reproducible.
+
+[With this I want to thank you for your attention and I hope you enjoyed the application]
