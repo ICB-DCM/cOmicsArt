@@ -26,3 +26,6 @@ source("R/significance_analysis/util.R", local = T)
 source("R/significance_analysis/tab_generator.R", local = T)
 source("R/pre_processing/util.R", local = T)
 source("R/single_gene_visualisation/util.R",local = T)
+# Source for R code
+source("R/code_generation/function_infos.R",local = T)
+source("R/code_generation/util.R",local = T)

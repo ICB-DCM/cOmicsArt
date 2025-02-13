@@ -416,7 +416,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           par_tmp = par_tmp[[session$token]]
         )
         useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
-        if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
+        if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
           if (useBatch) {
             envList$dds <- res_tmp[[session$token]]$DESeq_obj_batch_corrected
           } else {
@@ -476,7 +476,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           par_tmp = par_tmp[[session$token]]
         )
         useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
-        if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
+        if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
           if (useBatch) {
             envList$dds <- res_tmp[[session$token]]$DESeq_obj_batch_corrected
           } else {
@@ -987,7 +987,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         par_tmp = par_tmp[[session$token]]
       )
       useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
-      if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
+      if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
         if (useBatch) {
           envList$dds <- res_tmp[[session$token]]$DESeq_obj_batch_corrected
         } else {
@@ -1047,7 +1047,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         par_tmp = par_tmp[[session$token]]
       )
       useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
-      if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
+      if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
         if (useBatch) {
           envList$dds <- res_tmp[[session$token]]$DESeq_obj_batch_corrected
         } else {

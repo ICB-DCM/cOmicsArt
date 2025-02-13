@@ -33,13 +33,14 @@ clean_function_code <- function(f){
   return(f_out)
 }
 
-prepare_function_for_util <- function(f){
+prepare_function_for_util <- function(f, f_name){
   # Captures a function with comments, removes environment statement
   f_out <- capture.output(f)
   # check that last line contains "environment" and if yes remove it
   if(grepl("environment", f_out[length(f_out)])){
       f_out <- f_out[-length(f_out)]
   }
+  f_out[[1]] <- paste0(f_name, " <- ", f_out[[1]])
   f_out <- paste(f_out, collapse = "\n")
 }
 
@@ -57,10 +58,12 @@ save_summarized_experiment <- function(se, path){
   write.csv(row_data, file = file.path(path, "row_annotation.csv"), row.names = TRUE)
 }
 
-variable_assignment <- function(f, par){
+variable_assignment <- function(f, par, par_mem = NULL){
   # Extracts parameters of the function f and creates a code snippet that assigns the neccessary values from "par"
   # Parameters:
   #   f: function
+  #   par: list, parameters to assign
+  #   par_mem: in case the parameters are stored in a variable contained in "par"
   # Returns:
   #   par_assign: character, code snippet that assigns the neccessary values from "par"
 
@@ -70,7 +73,7 @@ variable_assignment <- function(f, par){
 
   # check that the parameters without default values are present in "par"
   non_default_params <- names(formals(f))[sapply(formals(f), function(x) identical(x, quote(expr=)))]
-  non_default_params <- setdiff(non_default_params, "data")
+  non_default_params <- setdiff(non_default_params, c("data", "cormat"))
   default_params <- setdiff(param_names, non_default_params)
   missing_pars <- setdiff(non_default_params, names(par))
   if(length(missing_pars) > 0){
@@ -81,15 +84,18 @@ variable_assignment <- function(f, par){
     ))
   }
   par_assign_nondefault <- ""
+  par_loc <- if (is.null(par_mem)) "parameters$" else paste0("parameters$", par_mem, "$")
   if (length(non_default_params) > 0) {
-    par_assign_nondefault <- paste0(non_default_params, " <- par$", non_default_params, collapse = "\n")
+    par_assign_nondefault <- paste0(
+      non_default_params, " <- ", par_loc, non_default_params, collapse = "\n"
+    )
   }
   par_assign_default <- ""
   if (length(default_params) > 0) {
     par_assign_default <- paste0(
       sapply(default_params, function(param) {
         default_value <- paste(deparse(param_list[[param]]), collapse = " ")
-        paste0(param, " <- par$", param, " %||% ", default_value)
+        paste0(param, " <- ", par_loc, param, " %||% ", default_value)
       }),
       collapse = "\n"
     )
@@ -104,7 +110,7 @@ variable_assignment <- function(f, par){
     "# Assign variables from parameter list or default values",
     par_assign_nondefault,
     par_assign_default,
-    "\n",
+    "",
     sep = "\n"
   )
   return(par_assign)
@@ -116,7 +122,10 @@ create_library_code <- function(foo_list){
   #   foo_list: list of function names
   # Returns:
   #   lib_sourcing: character, code snippet that sources all libraries
-  lib_sourcing <- "# Load all necessary libraries\nlibrary(rstudioapi)"
+
+  # Extend foo_list by "select_data" and "preprocessing" as they are always needed
+  foo_list <- c(foo_list, "select_data", "preprocessing")
+  lib_sourcing <- "# Load all necessary libraries\nlibrary(rstudioapi)\nlibrary(SummarizedExperiment)"
 
   # Helper function: given the name of a function, return the name of its package.
   get_pkg <- function(fun_name) {
@@ -149,13 +158,139 @@ create_library_code <- function(foo_list){
 }
 
 create_data_loading_code <- function(){
-    # Generate the part of the R script that loads the data and environment
-    # Returns:
-    #   data_loading: character, code snippet that loads the data
-    data_loading <- paste0(
-      "# --- Load the data and environment ---\n",
-      "# Define the path to the csv- and rds-files. If this fails, set the path manually.\n",
-      "file_path <- rstudioapi::getActiveDocumentContext()$path\n",
-      "file_dir <- dirname(file_path)\n",
+  # Generate the part of the R script that loads the data and environment
+  # Returns:
+  #   data_loading: character, code snippet that loads the data
+  base_prep <- paste0(
+    "# --- Load the data and environment ---\n",
+    "# Define the path to the csv- and rds-files. If this fails, set the path manually.\n",
+    "file_path <- rstudioapi::getActiveDocumentContext()$path\n",
+    "file_dir <- dirname(file_path)\n"
+  )
+  load_env <- paste0(
+    "# Load the used parameters and utility functions\n",
+    "source(file.path(file_dir, 'util.R'))\n",
+    "envList <- readRDS(file.path(file_dir, 'Data.rds'))\n",
+    "parameters <- envList$par_tmp"
+  )
+  csv_load <- paste0(
+    "data_matrix <- read.csv(file.path(file_dir, 'data_matrix.csv'), row.names = 1)\n",
+    "sample_annotation <- read.csv(file.path(file_dir, 'sample_annotation.csv'), row.names = 1)\n",
+    "row_annotation <- read.csv(file.path(file_dir, 'row_annotation.csv'), row.names = 1)\n"
+  )
+  se_creation <- paste0(
+    "data_orig <- SummarizedExperiment(\n",
+    "  assays = list(raw = as.matrix(data_matrix)),\n",
+    "  colData = sample_annotation,\n",
+    "  rowData = row_annotation[rownames(data_matrix),,drop=F]\n",
+    ")\n"
+  )
+  data_loading <- paste(base_prep, load_env, csv_load, se_creation, sep = "\n")
+  return(data_loading)
+}
+
+create_function_script <- function(foo_infos, par, par_mem = NULL, path_to_util=NULL){
+  # Generate the R script that contains the function definitions.
+  # Parameters:
+  #   foo_infos: list of function information, contains the following elements:
+  #     - foo: function, the function object
+  #     - name: character, the name of the function
+  #     - input_mapping: list, the input mapping that are non identical
+  #     - output_mapping: list, the output mapping
+  #     - output_name: (optional) character, the name of the output if output_mapping is empty
+  #     - to_util: logical, if the function should be saved in the util file
+  #   par: list, parameters to assign
+  # Returns:
+  #   function_script: character, the R script that contains the function definitions
+  function_script <- variable_assignment(foo_infos$foo, par, par_mem)
+  if (!foo_infos$to_util) {
+    return(paste0(
+      "# Function ", foo_infos$name, "\n",
+      function_script,
+      clean_function_code(foo_infos$foo),
+      ifelse(
+        !is.null(foo_infos$plot_name),
+        paste0("\n", foo_infos$plot_name),
+        "\n")
+    ))
+  }
+  args_input <- paste0(
+    names(foo_infos$input_mapping), " = ", foo_infos$input_mapping, collapse = ",\n  "
+  )
+  # function call, start with args_input, all other params are called param = param
+  function_call <- paste0(
+    foo_infos$name, "(\n  ", args_input, ",\n  ",
+    paste0(
+      names(formals(foo_infos$foo))[!names(formals(foo_infos$foo)) %in% names(foo_infos$input_mapping)],
+      " = ",
+      names(formals(foo_infos$foo))[!names(formals(foo_infos$foo)) %in% names(foo_infos$input_mapping)],
+      collapse = ",\n  "),
+    "\n)\n"
+  )
+  # write function to util file
+  if(!is.null(path_to_util)){
+    cat(
+      prepare_function_for_util(foo_infos$foo, foo_infos$name),
+      file = path_to_util,
+      append = TRUE,
+      sep = "\n\n"
     )
+  }
+  # determine the output
+  res <- ""
+  post_res <- ""
+  if(length(foo_infos$output_mapping) > 0){
+    res <- "# tmp_res is used as intermediate as return value is a list\ntmp_res <- "
+    post_res <- paste0(
+      foo_infos$output_mapping, " <- tmp_res$", names(foo_infos$output_mapping), collapse = "\n"
+    )
+  } else if(is.null(foo_infos$output_name)){
+    stop("No output name or mapping provided for function ", foo_infos$name)
+  } else {
+    res <- paste0(foo_infos$output_name, " <- ")
+  }
+  function_usage <- paste0(res, function_call, post_res)
+  function_script <- paste(function_script, function_usage, sep = "\n")
+  return(function_script)
+}
+
+preprocessing_base_script <- function(par, path_to_util = NULL){
+  # Generate the base script that contains the necessary functions and libraries
+  # Parameters:
+  #   path_to_util: character, path to the util file
+  # Returns:
+  #   prepare_data_script: character, the script to do data selection and processing
+
+  prepare_data_script <- create_data_loading_code()
+  data_select_process_script <- paste(
+    "\n",
+    "# --- Data Selection ---",
+    create_function_script(select_data_info, par, path_to_util = path_to_util),
+    "\n",
+    "# --- Preprocessing ---",
+    create_function_script(preprocessing_info, par, path_to_util = path_to_util),
+    sep = "\n"
+  )
+  prepare_data_script <- paste(prepare_data_script, data_select_process_script, sep = "\n")
+  return(prepare_data_script)
+}
+
+create_workflow_script <- function(pipeline_info, par, par_mem = NULL, path_to_util = NULL){
+  # Generate the R script that contains the workflow
+  # Parameters:
+  #   pipeline_info: list of function informations
+  #   path_to_util: character, path to the util file
+  # Returns:
+  #   workflow_script: character, the R script that contains the workflow
+  function_names <- sapply(pipeline_info, function(x) x$name)
+  workflow_script <- create_library_code(function_names)
+  workflow_script <- paste(
+    workflow_script,
+    preprocessing_base_script(par, path_to_util),
+    sep = "\n"
+  )
+  function_strings <- sapply(pipeline_info, function(x) create_function_script(x, par, par_mem, path_to_util))
+  function_strings <- paste(function_strings, collapse = "\n\n")
+  workflow_script <- paste(workflow_script, function_strings, sep = "\n\n")
+  return(workflow_script)
 }

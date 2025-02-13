@@ -1,32 +1,32 @@
 # preprocessing procedures
 
-preprocessing <- function(data, omic_type, procedure, deseq_factors = NULL){
+preprocessing <- function(data, omic_type, preprocessing_procedure, deseq_factors = NULL){
   print("Remove all entities which are constant over all samples")
   data <- data[rownames(data[which(apply(assay(data),1,sd) != 0),]),]
-  if(procedure == "vst_DESeq"){
+  if(preprocessing_procedure == "vst_DESeq"){
       return(deseq_processing(data, omic_type, deseq_factors))
   }
-  if(procedure == "filterOnly"){
+  if(preprocessing_procedure == "filterOnly"){
     return(list(
       data = prefiltering(data, omic_type)
     ))
   }
-  if(procedure == "simpleCenterScaling"){
+  if(preprocessing_procedure == "simpleCenterScaling"){
     return(list(
       data = simple_center_scaling(data, omic_type)
     ))
   }
-  if(procedure %in% c("Scaling_0_1", "pareto_scaling")){
+  if(preprocessing_procedure %in% c("Scaling_0_1", "pareto_scaling")){
     return(list(
-      data = scaling_normalisation(data, omic_type, procedure)
+      data = scaling_normalisation(data, omic_type, preprocessing_procedure)
     ))
   }
-  if(procedure %in% c("log10", "ln", "log2")){
+  if(preprocessing_procedure %in% c("log10", "ln", "log2")){
     return(list(
-      data = ln_normalisation(data, omic_type, procedure)
+      data = ln_normalisation(data, omic_type, preprocessing_procedure)
     ))
   }
-  if(procedure == "none"){
+  if(preprocessing_procedure == "none"){
     return(list(
       data = data
     ))

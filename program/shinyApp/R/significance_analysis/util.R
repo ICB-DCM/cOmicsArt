@@ -260,9 +260,9 @@ getLFC <- function(means){
     )
     return (df$LFC)
   }
-  if(par_tmp[[session$token]]$PreProcessing_Procedure == "log10"){
+  if(par_tmp[[session$token]]$preprocessing_procedure == "log10"){
     lfc_per_gene_log(means, log_base = 10)
-  }else if(par_tmp[[session$token]]$PreProcessing_Procedure == "ln"){
+  }else if(par_tmp[[session$token]]$preprocessing_procedure == "ln"){
     lfc_per_gene_log(means, log_base = exp(1))
   }else{
     lfc_per_gene(means)

@@ -255,13 +255,14 @@ detect_annotation <- function(data) {
   ))
 }
 
-violin_plot <- function(data, color_by){
+violin_plot <- function(data, violin_color){
   # create a violin plot based on the provided summarized experiment. Colors by
-  # the provided color_by column and returns the plot
+  # the provided violin_color column and returns the plot
+  # for raw plot replace data with data_orig[rows_selected,samples_selected]
   data_frame <- as.data.frame(assay(data))
   data_frame <- reshape2::melt(data_frame, variable.name="Sample", value.name="Counts")
   data_frame <- merge(data_frame, colData(data), by.x = "Sample", by.y = "row.names")
-  plot2return <- ggplot(data_frame, aes(x = Sample, y = Counts, fill = data_frame[[color_by]])) +
+  plot2return <- ggplot(data_frame, aes(x = Sample, y = Counts, fill = data_frame[[violin_color]])) +
     geom_violin(trim = T, color = "black") +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
@@ -269,7 +270,7 @@ violin_plot <- function(data, color_by){
       title = "Count distribution per sample",
       x = "Sample",
       y = "Counts",
-      fill = color_by
+      fill = violin_color
     )
   return(plot2return)
 }

@@ -40,7 +40,7 @@ significance_analysis_server <- function(id){
         })
         output$type_of_comparison_ui <- renderUI({
           req(data_input_shiny())
-          if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
+          if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
             choices <- par_tmp[[session$token]]$DESeq_factors
           } else {
             choices <- c(colnames(colData(data$data)))
@@ -80,7 +80,7 @@ significance_analysis_server <- function(id){
         })
         # UI to choose test method
         output$chooseTest_ui <- renderUI({
-          if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
+          if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
             renderText(
               expr = "DESeq is using a Wald test statistic.\nWe are using the same here.",
               outputArgs = list(container = pre)
@@ -127,7 +127,7 @@ significance_analysis_server <- function(id){
         output$chooseGenesToLookAt_ui <- renderUI({
           req(input$comparisons_to_visualize)
           # choices dependent on preprocess_method
-          if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
+          if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
             choices <- c(
               "Significant",
               "Upregulated",
@@ -203,7 +203,7 @@ significance_analysis_server <- function(id){
 
         # define variables to be used
         useBatch <- par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes"
-        preprocessing <- par_tmp[[session$token]]$PreProcessing_Procedure
+        preprocessing <- par_tmp[[session$token]]$preprocessing_procedure
         comparisons <- input$comparisons
         test_correction <- input$test_correction
         significance_level <- input$significance_level
@@ -460,7 +460,7 @@ significance_analysis_server <- function(id){
 
           )
           
-          if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
+          if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
             envList$dds <- data$DESeq_obj
           }
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
@@ -533,7 +533,7 @@ significance_analysis_server <- function(id){
         fun_LogIt(message = "## Differential analysis {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
         # log which tests were performed
-        if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq"){
+        if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
           fun_LogIt(
             message = "- Differential Analysis was performed using DESeq2 pipeline"
           )
@@ -582,7 +582,7 @@ significance_analysis_server <- function(id){
             )
           ))
           # log the top 5 significant genes
-          if(par_tmp[[session$token]]$PreProcessing_Procedure == "vst_DESeq" & "result" %in% names(sig_ana_reactive$sig_results[[comparisons[i]]])){
+          if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq" & "result" %in% names(sig_ana_reactive$sig_results[[comparisons[i]]])){
             top5 <- head(
                 sig_ana_reactive$sig_results[[comparisons[i]]]@result[order(
                   sig_ana_reactive$sig_results[[comparisons[i]]]@result$p.adjust,
