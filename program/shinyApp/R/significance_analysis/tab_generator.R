@@ -121,13 +121,13 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
             downloadButton(
-              outputId = ns("getR_Code_Volcano"),
+              outputId = ns(paste(contrast[1], contrast[2], "getR_Code_Volcano", sep = "_")),
               label = "Get underlying R code and data",
               icon = icon("code")
             ),
             NULL,
             downloadButton(
-              outputId = ns("getR_Code_Volcano_raw"),
+              outputId = ns(paste(contrast[1], contrast[2], "getR_Code_Volcano_raw", sep = "_")),
               label = "Get underlying R code and data",
               icon = icon("code")
             )
@@ -396,7 +396,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     }
   )
 
-  output[[ns("getR_Code_Volcano")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "getR_Code_Volcano", sep = "_"))]] <- downloadHandler(
       filename = function(){
         paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
       },
@@ -439,7 +439,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       contentType = "application/zip"
     )
 
-    output[[ns("getR_Code_Volcano_raw")]] <- downloadHandler(
+    output[[ns(paste(contrast[1], contrast[2], "getR_Code_Volcano_raw", sep = "_"))]] <- downloadHandler(
 
       filename = function(){
         paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
@@ -666,13 +666,13 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
             downloadButton(
-              outputId = ns("getR_Code_Volcano"),
+              outputId = ns(paste(contrast[1], contrast[2], "getR_Code_Volcano", sep = "_")),
               label = "Get underlying R code and data",
               icon = icon("code")
             ),
             NULL,
             downloadButton(
-              outputId = ns("getR_Code_Volcano_raw"),
+              outputId = ns(paste(contrast[1], contrast[2], "getR_Code_Volcano_raw", sep = "_")),
               label = "Get underlying R code and data",
               icon = icon("code")
             )
@@ -935,7 +935,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     }
   )
 
-  output[[ns("getR_Code_Volcano")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "getR_Code_Volcano", sep = "_"))]] <- downloadHandler(
     filename = function(){
       paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
@@ -978,7 +978,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     contentType = "application/zip"
   )
 
-  output[[ns("getR_Code_Volcano_raw")]] <- downloadHandler(
+  output[[ns(paste(contrast[1], contrast[2], "getR_Code_Volcano_raw", sep = "_"))]] <- downloadHandler(
 
     filename = function(){
       paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
