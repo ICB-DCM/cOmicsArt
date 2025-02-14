@@ -38,3 +38,5 @@ EA_PIPELINE <<- list(
   gene_set_enrichment_info,
   plot_enrichment_results_info
 )
+
+# --- Principal Component Analysis ---

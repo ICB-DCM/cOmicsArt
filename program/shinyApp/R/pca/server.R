@@ -200,6 +200,7 @@ pca_Server <- function(id){
       ),{
       req(pca_reactives$pcaData, pca_reactives$percentVar, input$coloring_options)
       # define the variables to be used
+      pca <- res_tmp[[session$token]][["PCA"]]
       percentVar <- pca_reactives$percentVar
       pcaData <- pca_reactives$pcaData
       x_axis <- input$x_axis_selection
@@ -258,7 +259,7 @@ pca_Server <- function(id){
         CUSTOM_THEME +
         theme(aspect.ratio = 1) +
         ggtitle(customTitle) +
-        pca_loadings(pcaData, x_axis, y_axis, show_loadings, entitie_anno, data)
+        pca_loadings(pca, x_axis, y_axis, show_loadings, entitie_anno, data)
       pca_reactives$PCA_plot <- pca_plot
       # Update par_tmp
       par_tmp[[session$token]][["PCA"]]$color_by <<- color_by
