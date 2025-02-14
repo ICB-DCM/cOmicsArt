@@ -78,9 +78,7 @@ custom_heatmap_info <<- list(
   foo = custom_heatmap,
   name = "custom_heatmap",
   input_mapping = list(
-      data = "data",
-      title = "title",
-      correlation_method = "correlation_method"
+      cormat = "cormat"
   ),
   to_util = FALSE,
   plot_name = "heatmap_plot + row_anno"
