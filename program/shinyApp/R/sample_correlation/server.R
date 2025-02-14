@@ -144,25 +144,32 @@ sample_correlation_server <- function(id){
           )
           waiter$show()
           envList <- list(
-
-            res_tmp = res_tmp[[session$token]],
             par_tmp = par_tmp[[session$token]]
-
           )
-          
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
-          sampleCorrelation_scenario <- 18
+          # save csv files
+          save_summarized_experiment(
+            res_tmp[[session$token]]$data_original,
+            temp_directory
+          )
 
-          write(getPlotCode(sampleCorrelation_scenario), file.path(temp_directory, "Code.R"))
-          
-          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+          write(
+            create_workflow_script(
+              pipeline_info = SAMPLE_CORRELATION_PIPELINE,
+              par = par_tmp[[session$token]],
+              par_mem = "SampleCorrelation",
+              path_to_util = file.path(temp_directory, "util.R")
+            ),
+            file.path(temp_directory, "Code.R")
+          )
+          saveRDS(envList, file.path(temp_directory, "Data.rds"))
           zip::zip(
             zipfile = file,
             files = dir(temp_directory),
             root = temp_directory
           )
-          waiter$hdie()
+          waiter$hide()
         },
         contentType = "application/zip"
       )
