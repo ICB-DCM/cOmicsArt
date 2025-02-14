@@ -33,6 +33,7 @@ preprocessing_info <<- list(
   output_mapping = list(
     data = "data"
   ),
+  output_name = "res_preprocess",
   to_util = TRUE,
   additional_foos = list(
     deseq_processing = deseq_processing,
@@ -290,4 +291,44 @@ plot_loadings_matrix_info <<- list(
   ),
   to_util = FALSE,
   plot_name = "loadings_matrix"
+)
+
+# --- Significance Analysis ---
+performSigAnalysis_info <<- list(
+  foo = performSigAnalysis,
+  name = "performSigAnalysis",
+  input_mapping = list(
+    data = "list(data = data, DESeq_obj = res_preprocess$DESeq_obj %||% NULL)",
+    preprocessing = "preprocessing_procedure"
+  ),
+  output_name = "sig_results",
+  to_util = TRUE,
+  additional_foos = list(
+      significance_analysis = significance_analysis
+  )
+)
+plot_significant_results_info <<- list(
+  foo = plot_significant_results,
+  name = "plot_significant_results",
+  input_mapping = list(
+    sig_results = "sig_results"
+  ),
+  to_util = TRUE,
+  output_mapping = list(
+    plot = "sig_ana_plot"
+  ),
+  additional_foos = list(
+      prepare_upset_plot = prepare_upset_plot,
+      filter_significant_result = filter_significant_result,
+      getLFC = getLFC
+  )
+)
+volcano_plot_info <<- list(
+  foo = volcano_plot,
+  name = "volcano_plot",
+  input_mapping = list(
+    result = "sig_results[[parameters$SigAna$comp]]"
+  ),
+  to_util = FALSE,
+  plot_name = "volcano_plt"
 )

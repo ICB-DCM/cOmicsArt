@@ -329,7 +329,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     # Generate the volcano plots using the helper function.
     volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
     volcano_obj_raw <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = TRUE)
-    sig_ana_reactive$data4Volcano <- volcano_obj$data
+    sig_ana_reactive$data4Volcano <- volcano_obj$data_volcano
     sig_ana_reactive$VolcanoPlot <- volcano_obj$volcano_plt
     sig_ana_reactive$VolcanoPlot_raw <- volcano_obj_raw$volcano_plt
 
@@ -407,44 +407,28 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           hide_on_render = FALSE
         )
         waiter$show()
-        tmp <- getUserReactiveValues(input)
-        par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
-        par_tmp[[session$token]]$SigAna$contrast <<- contrast
-
+        par_tmp[[session$token]]$SigAna$comp <<- title
+        par_tmp[[session$token]]$SigAna$raw <<- FALSE
         envList <- list(
-          res_tmp = res_tmp[[session$token]],
           par_tmp = par_tmp[[session$token]]
         )
-        useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
-        if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
-          if (useBatch) {
-            envList$dds <- res_tmp[[session$token]]$DESeq_obj_batch_corrected
-          } else {
-            envList$dds <- res_tmp[[session$token]]$DESeq_obj
-          }
-        }
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
-
+        # save csv files
+        save_summarized_experiment(
+          res_tmp[[session$token]]$data_original,
+          temp_directory
+        )
         write(
-          getPlotCode(22),
+          create_workflow_script(
+            pipeline_info = VOLCANO_PIPELINE,
+            par = par_tmp[[session$token]],
+            par_mem = "SigAna",
+            path_to_util = file.path(temp_directory, "util.R")
+          ),
           file.path(temp_directory, "Code.R")
         )
-        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-
-        #TODO
-        # Needs an extra sourcing to have in correct env - potential fix sourcing module specific functions within module
-        # instead of sourcing all - or having them all globablly source (like general utils)
-        source("R/significance_analysis/util.R")
-        source("R/SourceAll.R")
-
-        save.function.from.env(wanted = c("significance_analysis",
-                                          "filter_significant_result",
-                                          "getLFC",
-                                          "map_intersects_for_highlight",
-                                          "prepare_upset_plot",
-                                          "filter_rna"),
-                              file = file.path(temp_directory, "utils.R"))
+        saveRDS(envList, file.path(temp_directory, "Data.rds"))
         zip::zip(
           zipfile = file,
           files = dir(temp_directory),
@@ -467,44 +451,28 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           hide_on_render = FALSE
         )
         waiter$show()
-        tmp <- getUserReactiveValues(input)
-        par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
-        par_tmp[[session$token]]$SigAna$contrast <<- contrast
-
+        par_tmp[[session$token]]$SigAna$comp <<- title
+        par_tmp[[session$token]]$SigAna$raw <<- TRUE
         envList <- list(
-          res_tmp = res_tmp[[session$token]],
           par_tmp = par_tmp[[session$token]]
         )
-        useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
-        if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
-          if (useBatch) {
-            envList$dds <- res_tmp[[session$token]]$DESeq_obj_batch_corrected
-          } else {
-            envList$dds <- res_tmp[[session$token]]$DESeq_obj
-          }
-        }
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
-
+        # save csv files
+        save_summarized_experiment(
+          res_tmp[[session$token]]$data_original,
+          temp_directory
+        )
         write(
-          getPlotCode(23),
+          create_workflow_script(
+            pipeline_info = VOLCANO_PIPELINE,
+            par = par_tmp[[session$token]],
+            par_mem = "SigAna",
+            path_to_util = file.path(temp_directory, "util.R")
+          ),
           file.path(temp_directory, "Code.R")
         )
-        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-
-        #TODO
-        # Needs an extra sourcing to have in correct env - potential fix sourcing module specific functions within module
-        # instead of sourcing all - or having them all globablly source (like general utils)
-        source("R/significance_analysis/util.R")
-        source("R/SourceAll.R")
-
-        save.function.from.env(wanted = c("significance_analysis",
-                                          "filter_significant_result",
-                                          "getLFC",
-                                          "map_intersects_for_highlight",
-                                          "prepare_upset_plot",
-                                          "filter_rna"),
-                               file = file.path(temp_directory, "utils.R"))
+        saveRDS(envList, file.path(temp_directory, "Data.rds"))
         zip::zip(
           zipfile = file,
           files = dir(temp_directory),
@@ -978,44 +946,28 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         hide_on_render = FALSE
       )
       waiter$show()
-      tmp <- getUserReactiveValues(input)
-      par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
-      par_tmp[[session$token]]$SigAna$contrast <<- contrast
-
+      par_tmp[[session$token]]$SigAna$comp <<- title
+      par_tmp[[session$token]]$SigAna$raw <<- FALSE
       envList <- list(
-        res_tmp = res_tmp[[session$token]],
         par_tmp = par_tmp[[session$token]]
       )
-      useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
-      if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
-        if (useBatch) {
-          envList$dds <- res_tmp[[session$token]]$DESeq_obj_batch_corrected
-        } else {
-          envList$dds <- res_tmp[[session$token]]$DESeq_obj
-        }
-      }
       temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
       dir.create(temp_directory)
-
+      # save csv files
+      save_summarized_experiment(
+        res_tmp[[session$token]]$data_original,
+        temp_directory
+      )
       write(
-        getPlotCode(22),
+        create_workflow_script(
+          pipeline_info = VOLCANO_PIPELINE,
+          par = par_tmp[[session$token]],
+          par_mem = "SigAna",
+          path_to_util = file.path(temp_directory, "util.R")
+        ),
         file.path(temp_directory, "Code.R")
       )
-      saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-
-      #TODO
-      # Needs an extra sourcing to have in correct env - potential fix sourcing module specific functions within module
-      # instead of sourcing all - or having them all globablly source (like general utils)
-      source("R/significance_analysis/util.R")
-      source("R/SourceAll.R")
-
-      save.function.from.env(wanted = c("significance_analysis",
-                                        "filter_significant_result",
-                                        "getLFC",
-                                        "map_intersects_for_highlight",
-                                        "prepare_upset_plot",
-                                        "filter_rna"),
-                            file = file.path(temp_directory, "utils.R"))
+      saveRDS(envList, file.path(temp_directory, "Data.rds"))
       zip::zip(
         zipfile = file,
         files = dir(temp_directory),
@@ -1038,44 +990,28 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         hide_on_render = FALSE
       )
       waiter$show()
-      tmp <- getUserReactiveValues(input)
-      par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
-      par_tmp[[session$token]]$SigAna$contrast <<- contrast
-
+      par_tmp[[session$token]]$SigAna$comp <<- title
+      par_tmp[[session$token]]$SigAna$raw <<- TRUE
       envList <- list(
-        res_tmp = res_tmp[[session$token]],
         par_tmp = par_tmp[[session$token]]
       )
-      useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
-      if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
-        if (useBatch) {
-          envList$dds <- res_tmp[[session$token]]$DESeq_obj_batch_corrected
-        } else {
-          envList$dds <- res_tmp[[session$token]]$DESeq_obj
-        }
-      }
       temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
       dir.create(temp_directory)
-
+      # save csv files
+      save_summarized_experiment(
+        res_tmp[[session$token]]$data_original,
+        temp_directory
+      )
       write(
-        getPlotCode(23),
+        create_workflow_script(
+          pipeline_info = VOLCANO_PIPELINE,
+          par = par_tmp[[session$token]],
+          par_mem = "SigAna",
+          path_to_util = file.path(temp_directory, "util.R")
+        ),
         file.path(temp_directory, "Code.R")
       )
-      saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-
-      #TODO
-      # Needs an extra sourcing to have in correct env - potential fix sourcing module specific functions within module
-      # instead of sourcing all - or having them all globablly source (like general utils)
-      source("R/significance_analysis/util.R")
-      source("R/SourceAll.R")
-
-      save.function.from.env(wanted = c("significance_analysis",
-                                        "filter_significant_result",
-                                        "getLFC",
-                                        "map_intersects_for_highlight",
-                                        "prepare_upset_plot",
-                                        "filter_rna"),
-                             file = file.path(temp_directory, "utils.R"))
+      saveRDS(envList, file.path(temp_directory, "Data.rds"))
       zip::zip(
         zipfile = file,
         files = dir(temp_directory),

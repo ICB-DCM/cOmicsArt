@@ -331,13 +331,6 @@ significance_analysis_server <- function(id){
         # Retrieve the significance results (for safety, as in your original code)
         sig_results <- res_tmp[[session$token]]$SigAna[[compare_within]]
 
-        # --- Set scenario based on the visualization method ---
-        if (visualization_method == "Venn diagram") {
-          sig_ana_reactive$scenario <- 20
-        } else {
-          sig_ana_reactive$scenario <- 21
-        }
-
         # --- Call the plotting helper function ---
         plot_data <- plot_significant_results(
           sig_results           = sig_results,
@@ -358,6 +351,7 @@ significance_analysis_server <- function(id){
         par_tmp[[session$token]]$SigAna$comparisons_to_visualize <<- comparisons_to_visualize
         par_tmp[[session$token]]$SigAna$sig_to_look_at <<- sig_to_look_at
         par_tmp[[session$token]]$SigAna$visualization_method <<- visualization_method
+        par_tmp[[session$token]]$SigAna$significance_level <<- significance_level
       })
       # if we want to change the highlighting
       observeEvent(input$intersection_high,{
@@ -428,13 +422,6 @@ significance_analysis_server <- function(id){
           write.csv(tosave, file, row.names = FALSE)
         }
       )
-
-      # Download and Report Section
-      # TODO discuss placement! if here visit choices do not get updated
-      # for now placed in download section to avoid issues
-      # download R Code for further plotting
-      # tmp <- getUserReactiveValues(input)
-      # par_tmp$SigAna[names(tmp)] <<- tmp
       
       output$getR_Code_Sig <- downloadHandler(
 
@@ -443,65 +430,38 @@ significance_analysis_server <- function(id){
         },
         content = function(file){
           waiter()$show()
-          tmp <- getUserReactiveValues(input)
-          par_tmp[[session$token]]$SigAna[names(tmp)] <<- tmp
-          
-          # assign scenario=20 for Venn Diagram and scenario=21 for UpSetR
-          if(input$visualization_method == "Venn Diagram"){
-            sig_ana_reactive$scenario <- 20
-          }else{
-            sig_ana_reactive$scenario <- 21
-          }
-          
           envList <- list(
-
-            res_tmp = res_tmp[[session$token]],
             par_tmp = par_tmp[[session$token]]
-
           )
-          
-          if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
-            envList$dds <- data$DESeq_obj
-          }
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
-          
-
+          # save csv files
+          save_summarized_experiment(
+            res_tmp[[session$token]]$data_original,
+            temp_directory
+          )
           write(
-            getPlotCode(sig_ana_reactive$scenario),  # 20 for Venn diagram, 21 for UpSetR
+            create_workflow_script(
+              pipeline_info = UPSET_PLOT_PIPELINE,
+              par = par_tmp[[session$token]],
+              par_mem = "SigAna",
+              path_to_util = file.path(temp_directory, "util.R")
+            ),
             file.path(temp_directory, "Code.R")
           )
-          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
-          
-          #TODO
-          # Needs an extra sourcing to have in correct env - potential fix sourceing module specific functions within module
-          # instead of sourcing all - or having them all gloablly source (like general utils)
-          source("R/significance_analysis/util.R")
-          source("R/SourceAll.R")
-
-          save.function.from.env(wanted = c("significance_analysis",
-                                            "filter_significant_result",
-                                            "getLFC",
-                                            "map_intersects_for_highlight",
-                                            "prepare_upset_plot",
-                                             "filter_rna"), 
- # TODO How to handle constants? load into utils? (Issue : all constant not necassarily needed) - two type of constant scripts?
- # for ow constant copy pasted into code snippet
- 
- # TODO [Lea] - filter_rna this needs to be always downloaded if IQR chosen for selection. 
- # Should be added always - Idea:
- # upon an Rcode downloade - zip folder created based on selection and preprocessing
- # then user prompted choise of possible downloads for further bits
- # but this would need to be triggered above modules
- # or once hit after preprocessing temp folder created with first bit then added
- # depending on analyses down - pop up based what is present in res_tmp (for this scenarios should be added to par_tmp!)
-                                 file = file.path(temp_directory, "utils.R"))
-          
+          saveRDS(envList, file.path(temp_directory, "Data.rds"))
           zip::zip(
             zipfile = file,
             files = dir(temp_directory),
             root = temp_directory
           )
+          # TODO [Lea] - filter_rna this needs to be always downloaded if IQR chosen for selection.
+          # Should be added always - Idea:
+          # upon an Rcode downloade - zip folder created based on selection and preprocessing
+          # then user prompted choise of possible downloads for further bits
+          # but this would need to be triggered above modules
+          # or once hit after preprocessing temp folder created with first bit then added
+          # depending on analyses down - pop up based what is present in res_tmp (for this scenarios should be added to par_tmp!)
           waiter()$hide()
         },
         contentType = "application/zip"
