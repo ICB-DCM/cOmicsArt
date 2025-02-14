@@ -230,3 +230,64 @@ plot_enrichment_results_info <<- list(
   to_util = FALSE,
   plot_name = "enrichment_dotplot"
 )
+
+# --- Principal Component Analysis ---
+get_pca_info <<- list(
+  foo = get_pca,
+  name = "get_pca",
+  input_mapping = list(
+      data = "data"
+  ),
+  output_name = "pca_res",
+  output_mapping = list(
+      pca = "pca",
+      pcaData = "pcaData",
+      percentVar = "percentVar"
+  ),
+  to_util = TRUE
+)
+plot_pca_info <<- list(
+  foo = plot_pca,
+  name = "plot_pca",
+  input_mapping = list(
+    pca = "pca",
+    pcaData = "pcaData",
+    percentVar = "percentVar"
+  ),
+  to_util = FALSE,
+  plot_name = "pca_plot",
+  additional_foos = list(
+    prepare_coloring_pca = prepare_coloring_pca,
+    pca_loadings = pca_loadings
+  )
+)
+plot_pca_loadings_info <<- list(
+  foo = plot_pca_loadings,
+  name = "plot_pca_loadings",
+  input_mapping = list(
+    pca = "pca",
+    data = "data"
+  ),
+  to_util = FALSE,
+  plot_name = "loadings_plot"
+)
+plot_scree_pca_info <<- list(
+  foo = plot_scree_pca,
+  name = "plot_scree_pca",
+  input_mapping = list(
+    pca = "pca",
+    percentVar = "percentVar"
+  ),
+  to_util = FALSE,
+  plot_name = "scree_plot"
+)
+plot_loadings_matrix_info <<- list(
+  foo = plot_loadings_matrix,
+  name = "plot_loadings_matrix",
+  input_mapping = list(
+    pca = "pca",
+    data = "data"
+  ),
+  to_util = FALSE,
+  plot_name = "loadings_matrix"
+)

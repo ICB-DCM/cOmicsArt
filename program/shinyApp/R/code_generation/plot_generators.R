@@ -40,3 +40,19 @@ EA_PIPELINE <<- list(
 )
 
 # --- Principal Component Analysis ---
+PCA_PIPELINE <<- list(
+  get_pca_info,
+  plot_pca_info
+)
+PCA_LOADINGS_PIPELINE <<- list(
+  get_pca_info,
+  plot_pca_loadings_info
+)
+SCREE_PLOT_PIPELINE <<- list(
+  get_pca_info,
+  plot_scree_pca_info
+)
+LOADINGS_MATRIX_PIPELINE <<- list(
+  get_pca_info,
+  plot_loadings_matrix_info
+)

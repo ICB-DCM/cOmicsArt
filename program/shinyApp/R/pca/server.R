@@ -215,52 +215,18 @@ pca_Server <- function(id){
         pcs = paste0(x_axis," vs ",y_axis),
         preprocessing = par_tmp[[session$token]]['preprocessing_procedure']
       )
-      coloring <- prepare_coloring_pca(pcaData, color_by)
-      color_theme <- coloring$color_theme
-      pcaData <- coloring$pcaData
-        if(!is.null(tooltip_var)){
-          adj2colname <- gsub(" ",".",tooltip_var)
-          pcaData$chosenAnno <- pcaData[,adj2colname]
-        } else{
-          pcaData$chosenAnno <- pcaData$global_ID
-        }
-
-
-      # Plotting routine
-      pca_plot <- ggplot(
-          pcaData,
-          mapping = aes(
-            x = pcaData[,x_axis],
-            y = pcaData[,y_axis],
-            color = pcaData[,color_by],
-            label = global_ID,
-            global_ID = global_ID,
-            chosenAnno = chosenAnno
-          )
-        ) +
-        geom_point(size = 3) +
-        scale_color_manual(
-          values = color_theme,
-          name = color_by
-        ) +
-        xlab(paste0(
-          names(percentVar[x_axis]),
-          ": ",
-          round(percentVar[x_axis] * 100, 1),
-          "% variance"
-        )) +
-        ylab(paste0(
-          names(percentVar[y_axis]),
-          ": ",
-          round(percentVar[y_axis] * 100, 1),
-          "% variance"
-        )) +
-        coord_fixed() +
-        CUSTOM_THEME +
-        theme(aspect.ratio = 1) +
-        ggtitle(customTitle) +
-        pca_loadings(pca, x_axis, y_axis, show_loadings, entitie_anno, data)
-      pca_reactives$PCA_plot <- pca_plot
+      pca_reactives$PCA_plot <- plot_pca(
+        pca = pca,
+        pcaData = pcaData,
+        percentVar = percentVar,
+        x_axis = x_axis,
+        y_axis = y_axis,
+        color_by = color_by,
+        title = customTitle,
+        show_loadings = show_loadings,
+        entitie_anno = entitie_anno,
+        tooltip_var = tooltip_var
+      )
       # Update par_tmp
       par_tmp[[session$token]][["PCA"]]$color_by <<- color_by
       par_tmp[[session$token]][["PCA"]]$x_axis <<- x_axis
@@ -268,6 +234,7 @@ pca_Server <- function(id){
       par_tmp[[session$token]][["PCA"]]$show_loadings <<- show_loadings
       par_tmp[[session$token]][["PCA"]]$entitie_anno <<- entitie_anno
       par_tmp[[session$token]][["PCA"]]$tooltip_var <<- tooltip_var  # Needed for ggplot?
+      par_tmp[[session$token]][["PCA"]]$title <<- customTitle
     })
 
     observeEvent(list(  # Update the Loadings Plot
@@ -279,47 +246,22 @@ pca_Server <- function(id){
     ), {
       req(pca_reactives$pcaData, input$topSlider, input$bottomSlider)
       # define the variables to be used
-      percentVar <- pca_reactives$percentVar
+      percentVar <- pca_reactives$percentVar  # Only needed to update reactively
       x_axis <- input$x_axis_selection
       n_top <- input$topSlider
       n_bottom <- input$bottomSlider
       entitie_anno <- input$EntitieAnno_Loadings
       pca <- res_tmp[[session$token]][["PCA"]]
       data <- update_data(session$token)$data
-
-      LoadingsDF <- data.frame(
-        entitie = rownames(pca$rotation),
-        Loading = pca$rotation[,x_axis]
+      # Loadings plot
+      pca_reactives$Loadings_plot <- plot_pca_loadings(
+        pca = pca,
+        data = data,
+        x_axis = x_axis,
+        n_top = n_top,
+        n_bottom = n_bottom,
+        entitie_anno = entitie_anno
       )
-      LoadingsDF <- LoadingsDF[order(LoadingsDF$Loading,decreasing = T),]
-
-      # need to test if default of slider is below the number of entities
-      if(n_top + n_bottom < nrow(LoadingsDF)){
-        LoadingsDF <- rbind(
-          LoadingsDF[nrow(LoadingsDF):(nrow(LoadingsDF) - n_bottom),],
-          LoadingsDF[n_top:1,]
-        )
-      }
-
-      LoadingsDF$entitie <- factor(LoadingsDF$entitie, levels = rownames(LoadingsDF))
-      if(!is.null(entitie_anno)){
-        LoadingsDF$entitie <- factor(
-          make.unique(as.character(rowData(data)[rownames(LoadingsDF),entitie_anno])),
-          levels = make.unique(as.character(rowData(data)[rownames(LoadingsDF),entitie_anno]))
-        )
-      }
-      plotOut <- ggplot(LoadingsDF,mapping = aes(x = Loading,y = entitie)) +
-        geom_col(mapping = aes(fill = Loading)) +
-        scale_y_discrete(
-          breaks = LoadingsDF$entitie,
-          labels = stringr::str_wrap(gsub("\\.[0-9].*$","",LoadingsDF$entitie),20)
-        ) +
-        scale_fill_gradient2(low = "#277d6a",mid = "white",high = "orange") +
-        ylab(ifelse(is.null(entitie_anno),"",entitie_anno)) +
-        xlab(paste0("Loadings: ",x_axis)) +
-        ggtitle(paste0("Loadings for ", x_axis)) +
-        CUSTOM_THEME
-      pca_reactives$Loadings_plot <- plotOut
       # update par_tmp
       par_tmp[[session$token]][["PCA"]]$n_top <<- n_top
       par_tmp[[session$token]][["PCA"]]$n_bottom <<- n_bottom
@@ -334,27 +276,11 @@ pca_Server <- function(id){
       # define the variables to be used
       percentVar <- pca_reactives$percentVar
       pca <- res_tmp[[session$token]][["PCA"]]
-
-      var_explained_df <- data.frame(
-        PC = names(percentVar),
-        var_explained = percentVar
+      # Scree plot
+      pca_reactives$Scree_plot <- plot_scree_pca(
+        pca = pca,
+        percentVar = percentVar
       )
-      var_explained_df$Var <- paste0(
-        round(var_explained_df$var_explained,4)*100,"%"
-      )
-      var_explained_df$PC <- factor(
-        var_explained_df$PC,levels = paste0("PC", seq_len(ncol(pca$x)))
-      )
-      scree_plot <- ggplot(
-        var_explained_df,
-        mapping = aes(x = PC, y = var_explained, group = 1)
-      ) +
-        geom_point(size = 4) +
-        geom_line() +
-        ylab("Variance explained") +
-        ggtitle("Scree-Plot of PCA") +
-        CUSTOM_THEME
-      pca_reactives$Scree_plot <- scree_plot
     })
 
     observeEvent(list(  # Update the Loadings Matrix Plot
@@ -374,41 +300,13 @@ pca_Server <- function(id){
       n_pcs <- input$nPCAs_to_look_at %||% 2
       data <- update_data(session$token)$data
       # Loadings Matrix plot
-      n_pcs <- min(n_pcs, ncol(pca$rotation))
-      df_loadings <- data.frame(
-        entity = row.names(pca$rotation),
-        pca$rotation[, 1:n_pcs]
+      pca_reactives$LoadingsMatrix_plot <- plot_loadings_matrix(
+        pca = pca,
+        data = data,
+        entitie_anno = entitie_anno,
+        n_pcs = n_pcs,
+        cutoff = cutoff
       )
-      # Filter the loadings by cutoff value
-      loadings_filter <- apply(
-        as.matrix(df_loadings[,-1]) >= abs(cutoff), 1, any
-      )
-      df_loadings <- df_loadings[loadings_filter,] %>%
-        tidyr::gather(key = "PC", value = "loading", -entity)
-
-      if(!is.null(entitie_anno)){
-        df_loadings$chosenAnno <- factor(
-          make.unique(as.character(rowData(data)[unique(df_loadings$entity),entitie_anno])),
-          levels = make.unique(as.character(rowData(data)[unique(df_loadings$entity),entitie_anno]))
-        )
-      } else{
-        df_loadings$chosenAnno <- df_loadings$entity
-      }
-      # Change this to a complexHeatmap + ad possibility to cluster rows
-      loadings_matirx <- ggplot(df_loadings, mapping = aes(
-        x = PC,
-        y = chosenAnno,
-        fill = loading
-      )) +
-        geom_raster() +
-        scale_fill_gradientn(
-          colors = c("#277d6a", "white", "orange"),
-          limits = c(-max(df_loadings$loading),max(df_loadings$loading))
-        ) +
-        labs(x = "PCs", y = entitie_anno, fill = "Loading") +
-        ggtitle("Loadings Matrix") +
-        CUSTOM_THEME
-      pca_reactives$LoadingsMatrix_plot <- loadings_matirx
       # update par_tmp
       par_tmp[[session$token]][["PCA"]]$cutoff <<- cutoff
       par_tmp[[session$token]][["PCA"]]$n_pcs <<- n_pcs
@@ -416,7 +314,6 @@ pca_Server <- function(id){
     })
 
     ## R Code Download ----
-    # TODO: Fix Scenario Problem (not needed as Code generation will be reworked)
     output$getR_Code_PCA <- downloadHandler(  # Download the R code for PCA
       filename = function(){
         paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
@@ -429,14 +326,26 @@ pca_Server <- function(id){
         )
         waiter$show()
         envList <- list(
-          res_tmp = res_tmp[[session$token]],
           par_tmp = par_tmp[[session$token]]
         )
-
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
-        write(getPlotCode(PCA_scenario), file.path(temp_directory, "Code.R"))
-        saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+        # save csv files
+        save_summarized_experiment(
+          res_tmp[[session$token]]$data_original,
+          temp_directory
+        )
+        browser()
+        write(
+          create_workflow_script(
+            pipeline_info = PCA_PIPELINE,
+            par = par_tmp[[session$token]],
+            par_mem = "PCA",
+            path_to_util = file.path(temp_directory, "util.R")
+          ),
+          file.path(temp_directory, "Code.R")
+        )
+        saveRDS(envList, file.path(temp_directory, "Data.rds"))
         zip::zip(
           zipfile = file,
           files = dir(temp_directory),
@@ -459,14 +368,25 @@ pca_Server <- function(id){
         )
         waiter$show()
         envList <- list(
-          res_tmp = res_tmp[[session$token]],
           par_tmp = par_tmp[[session$token]]
         )
-
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
-        write(getPlotCode(Scree_scenario), file.path(temp_directory, "Code.R"))
-        saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
+        # save csv files
+        save_summarized_experiment(
+          res_tmp[[session$token]]$data_original,
+          temp_directory
+        )
+        write(
+          create_workflow_script(
+            pipeline_info = SCREE_PLOT_PIPELINE,
+            par = par_tmp[[session$token]],
+            par_mem = "PCA",
+            path_to_util = file.path(temp_directory, "util.R")
+          ),
+          file.path(temp_directory, "Code.R")
+        )
+        saveRDS(envList, file.path(temp_directory, "Data.rds"))
         zip::zip(
           zipfile = file,
           files = dir(temp_directory),
@@ -489,14 +409,25 @@ pca_Server <- function(id){
         )
         waiter$show()
         envList <- list(
-          res_tmp = res_tmp[[session$token]],
           par_tmp = par_tmp[[session$token]]
         )
-
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
-        write(getPlotCode(Loading_scenario), file.path(temp_directory, "Code.R"))
-        saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
+        # save csv files
+        save_summarized_experiment(
+          res_tmp[[session$token]]$data_original,
+          temp_directory
+        )
+        write(
+          create_workflow_script(
+            pipeline_info = PCA_LOADINGS_PIPELINE,
+            par = par_tmp[[session$token]],
+            par_mem = "PCA",
+            path_to_util = file.path(temp_directory, "util.R")
+          ),
+          file.path(temp_directory, "Code.R")
+        )
+        saveRDS(envList, file.path(temp_directory, "Data.rds"))
         zip::zip(
           zipfile = file,
           files = dir(temp_directory),
@@ -519,13 +450,25 @@ pca_Server <- function(id){
         )
         waiter$show()
         envList <- list(
-          res_tmp = res_tmp[[session$token]],
           par_tmp = par_tmp[[session$token]]
         )
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
-        write(getPlotCode(scenario), file.path(temp_directory, "Code.R"))
-        saveRDS(object = envList, file = file.path(temp_directory, "Data.RDS"))
+        # save csv files
+        save_summarized_experiment(
+          res_tmp[[session$token]]$data_original,
+          temp_directory
+        )
+        write(
+          create_workflow_script(
+            pipeline_info = LOADINGS_MATRIX_PIPELINE,
+            par = par_tmp[[session$token]],
+            par_mem = "PCA",
+            path_to_util = file.path(temp_directory, "util.R")
+          ),
+          file.path(temp_directory, "Code.R")
+        )
+        saveRDS(envList, file.path(temp_directory, "Data.rds"))
         zip::zip(
           zipfile = file,
           files = dir(temp_directory),
