@@ -180,6 +180,17 @@ create_data_loading_code <- function(){
   # Generate the part of the R script that loads the data and environment
   # Returns:
   #   data_loading: character, code snippet that loads the data
+  constant_def <- paste0(
+    "# Define Constants necessary for the script\n",
+    "# Custom theme for ggplot2. Any non ggplot is adjusted to closely match this theme.\n",
+    "CUSTOM_THEME <<- theme_bw(base_size = 15) +  theme(\n",
+    "  axis.title = element_text(size = 15),        # Axis labels\n",
+    "  axis.text = element_text(size = 15),         # Axis tick labels\n",
+    "  legend.text = element_text(size = 15),       # Legend text\n",
+    "  legend.title = element_text(size = 15),      # Legend title\n",
+    "  plot.title = element_text(size = 17, face = 'bold')  # Plot title\n",
+    ")\n"
+  )
   base_prep <- paste0(
     "# --- Load the data and environment ---\n",
     "# Define the path to the csv- and rds-files. If this fails, set the path manually.\n",
@@ -204,7 +215,9 @@ create_data_loading_code <- function(){
     "  rowData = row_annotation[rownames(data_matrix),,drop=F]\n",
     ")\n"
   )
-  data_loading <- paste(base_prep, load_env, csv_load, se_creation, sep = "\n")
+  data_loading <- paste(
+    constant_def, base_prep, load_env, csv_load, se_creation, sep = "\n"
+  )
   return(data_loading)
 }
 
