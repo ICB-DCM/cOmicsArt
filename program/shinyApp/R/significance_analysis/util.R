@@ -72,7 +72,7 @@ performSigAnalysis <- function(
         method = test_method,
         correction = padjust_method,
         contrast_level = compare_within,
-        batch_corrected = useBatch
+        preprocessing = preprocessing
       )
       # Assume that significance_analysis returns the results directly.
     }, error = function(e) {
@@ -84,16 +84,16 @@ performSigAnalysis <- function(
 
 
 significance_analysis <- function(
-  df, samples, contrasts, method, correction, contrast_level, batch_corrected = FALSE
+  df, samples, contrasts, method, correction, contrast_level, preprocessing
 ){
   # perform significance analysis
   # df: dataframe or matrix with the data
   # samples: dataframe with the samples
   # contrasts: list of contrasts to compare
   # method: method to use for the test
-  # alpha: significance level
   # correction: correction method to use
-  # get the test function
+  # contrast_level: the name of the column in samples to use for contrasts
+  # preprocessing: the preprocessing method used for the data
   if(method == "T-Test"){
     # TODO test for Varianz Homogenität (Levene Test) - 
     # intermediate Lösung könnte sein einfach standard abweichungen der Gruppen anzugeben
@@ -142,16 +142,6 @@ significance_analysis <- function(
   # introduce a running parameter alongside the loop for the name
   comp_name <- 1
   for(contrast in contrasts){
-    # skip if already there
-    if(identical(
-      list(test_method = method, test_correction = correction, batch_corrected=batch_corrected),
-      par_tmp[[session$token]]$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]
-    )){
-      print("Results exists, skipping calculations.")
-      sig_results[[names(contrasts)[comp_name]]] <- res_tmp[[session$token]]$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]
-      comp_name <- comp_name + 1
-      next
-    }
     # get the samples for the comparison
     idx <- rownames(samples[samples[contrast_level] == contrast[[1]],, drop = FALSE])
     idy <- rownames(samples[samples[contrast_level] == contrast[[2]],, drop = FALSE])
@@ -177,20 +167,13 @@ significance_analysis <- function(
     res <- subset(res, select = -c(treatMean))
     # create a dataframe with the results
     res$padj <- p.adjust(res$pvalue, method = correction)
-    res$log2FoldChange <- getLFC(means)
+    res$log2FoldChange <- getLFC(means, preprocessing)
     res <- transform(res, pvalue=as.numeric(pvalue),
                      baseMean=as.numeric(baseMean), stat=as.numeric(stat))
 
 
 
     sig_results[[names(contrasts)[comp_name]]] <- res
-    # fill res_tmp[[session$token]], par_tmp[[session$token]]
-    res_tmp[[session$token]]$SigAna[[contrast_level]][[names(contrasts)[comp_name]]] <<- res
-    par_tmp[[session$token]]$SigAna[[contrast_level]][[names(contrasts)[comp_name]]]  <<- list(
-      test_method = method,
-      test_correction = correction,
-      batch_corrected = batch_corrected
-    )
     comp_name <- comp_name + 1
   }
   return(sig_results)
@@ -227,7 +210,7 @@ map_intersects_for_highlight <- function(highlights, plot, overlap_list){
 }
 
 
-getLFC <- function(means){
+getLFC <- function(means, preprocessing){
   # define function to calculate LFC in case of ln or log10 preprocessing
   # and all other cases
   lfc_per_gene <- function(df){
@@ -260,9 +243,9 @@ getLFC <- function(means){
     )
     return (df$LFC)
   }
-  if(par_tmp[[session$token]]$preprocessing_procedure == "log10"){
+  if(preprocessing == "log10"){
     lfc_per_gene_log(means, log_base = 10)
-  }else if(par_tmp[[session$token]]$preprocessing_procedure == "ln"){
+  }else if(preprocessing == "ln"){
     lfc_per_gene_log(means, log_base = exp(1))
   }else{
     lfc_per_gene(means)
@@ -409,24 +392,24 @@ volcano_plot <- function(
   # raw: whether to use raw p-values or adjusted p-values (default: FALSE)
 
   # Prepare data for plotting
-  data <- result
-  data$probename <- rownames(data)
+  data_volcano <- result
+  data_volcano$probename <- rownames(data_volcano)
 
   # Compute significance thresholds and fold-change categories
-  data$threshold      <- ifelse(data$padj > th_psig, "Non-Sig", "Sig")
-  data$threshold_raw  <- ifelse(data$pvalue > th_psig, "Non-Sig", "Sig")
-  data$threshold_fc   <- ifelse(data$log2FoldChange > th_lfc, "Up",
-                           ifelse(data$log2FoldChange < -th_lfc, "Down", " "))
-  data$combined       <- ifelse(data$threshold_fc == " ", data$threshold,
-                           paste(data$threshold, data$threshold_fc, sep = " + "))
-  data$combined_raw   <- ifelse(data$threshold_fc == " ", data$threshold_raw,
-                           paste(data$threshold_raw, data$threshold_fc, sep = " + "))
+  data_volcano$threshold      <- ifelse(data_volcano$padj > th_psig, "Non-Sig", "Sig")
+  data_volcano$threshold_raw  <- ifelse(data_volcano$pvalue > th_psig, "Non-Sig", "Sig")
+  data_volcano$threshold_fc   <- ifelse(data_volcano$log2FoldChange > th_lfc, "Up",
+                           ifelse(data_volcano$log2FoldChange < -th_lfc, "Down", " "))
+  data_volcano$combined       <- ifelse(data_volcano$threshold_fc == " ", data_volcano$threshold,
+                           paste(data_volcano$threshold, data_volcano$threshold_fc, sep = " + "))
+  data_volcano$combined_raw   <- ifelse(data_volcano$threshold_fc == " ", data_volcano$threshold_raw,
+                           paste(data_volcano$threshold_raw, data_volcano$threshold_fc, sep = " + "))
 
   # Remove any rows with missing values
-  data <- data[complete.cases(data), ]
+  data_volcano <- data_volcano[complete.cases(data_volcano), ]
 
   # Annotate points using the provided annotation vector
-  data$chosenAnno <- anno_vector[rownames(data)]
+  data_volcano$chosenAnno <- anno_vector[rownames(data_volcano)]
 
   # Define the color scheme (names must match the levels produced above)
   colorScheme2 <- c(
@@ -439,7 +422,7 @@ volcano_plot <- function(
   )
 
   # Create the volcano plot
-  volcano_plt <- ggplot(data, aes(label = chosenAnno)) +
+  volcano_plt <- ggplot(data_volcano, aes(label = chosenAnno)) +
     geom_point(aes(
       x = if (raw) -log10(pvalue) else -log10(padj),
       y = log2FoldChange,
@@ -450,8 +433,8 @@ volcano_plot <- function(
     scale_color_manual(values = colorScheme2, name = "") +
     ylab("Log FoldChange") +
     xlab(paste0("-log10(", ifelse(raw, "p-value)", "adj. p-value)"))) +
-    ggtitle(paste0(ifelse(raw, "C", "Unc"),"orrected p-Values")) +
+    ggtitle(paste0(ifelse(raw, "Unc", "C"),"orrected p-Values")) +
     CUSTOM_THEME
 
-  return(list(volcano_plt = volcano_plt, data = data))
+  return(list(volcano_plt = volcano_plt, data_volcano = data_volcano))
 }

@@ -56,3 +56,13 @@ LOADINGS_MATRIX_PIPELINE <<- list(
   get_pca_info,
   plot_loadings_matrix_info
 )
+
+# --- Significance Analysis ---
+UPSET_PLOT_PIPELINE <<- list(
+  performSigAnalysis_info,
+  plot_significant_results_info
+)
+VOLCANO_PIPELINE <<- list(
+  performSigAnalysis_info,
+  volcano_plot_info
+)

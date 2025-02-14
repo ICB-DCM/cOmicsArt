@@ -37,8 +37,8 @@ prepare_function_for_util <- function(f, f_name = NULL){
   if(is.null(f_name)){
     f_name <- deparse(substitute(f))
   }
-  # check that last line contains "environment" and if yes remove it
-  if(grepl("environment", f_out[length(f_out)])){
+  # check that last line contains "environment" or "bytecode" and if yes remove it
+  if(grepl("environment", f_out[length(f_out)]) || grepl("bytecode", f_out[length(f_out)])){
       f_out <- f_out[-length(f_out)]
   }
   f_out[[1]] <- paste0(f_name, " <- ", f_out[[1]])
@@ -111,12 +111,24 @@ variable_assignment <- function(foo_infos, par, par_mem = NULL){
       sep = "\n"
     )
   }
-  par_assign <- paste(
-    "# Assign variables from parameter list or default values",
-    par_assign_nondefault,
-    par_assign_default,
-    "",
-    sep = "\n"
+  # assign input mapping in case the function does not go to util
+  par_assign_no_util <- ""
+  trivial_input <- all(sapply(names(foo_infos$input_mapping), function(param) {
+    foo_infos$input_mapping[[param]] == param
+  }))
+  if (!foo_infos$to_util && !trivial_input) {
+    par_assign_no_util <- paste0(
+      sapply(names(foo_infos$input_mapping), function(param) {
+          paste0(param, " <- ", foo_infos$input_mapping[[param]])
+      }),
+      collapse = "\n"
+    )
+  }
+  par_assign <- paste0(
+    "# Assign variables from parameter list or default values", "\n",
+    par_assign_nondefault, "\n",
+    par_assign_default, "\n",
+    par_assign_no_util, "\n"
   )
   return(par_assign)
 }
