@@ -1,62 +1,47 @@
-## Data Preprocessing
+## **Data Preprocessing**  
 ***  
 <div style="border: 2px solid #ffcf30; background-color: #fff0bf; padding: 10px; border-radius: 8px; font-size: 15px;">
-<span style="font-size: 20px;">💡</span>  <strong>Tip:</strong> For more detailed information, please visit 
+<span style="font-size: 20px;">💡</span>  <strong>Tip:</strong> For more details, visit  
 <a href="https://icb-dcm.github.io/cOmicsArt/interface-details/03-pre-processing.html" target="_blank" style="font-weight: bold;">this page</a>.
-</div>
+</div>  
 <br>
 
-### Key Steps:
+### **Key Steps**  
 
-The Data Pre-processing is a crucial step in data analyis as all the following analysis are based on the pre-processed data.
-We provide several Processing types which categorize different pre-processing options. Some of those options have additional arguments you must provide:
+**Data Preprocessing** is a crucial step, as all downstream analyses rely on pre-processed data. We provide different **Processing Types**, each with specific options. Constant entities across all samples are always removed. Some options require additional parameters.  
 
-1. First choose your ** Processing Type **
-  - No - pre-processing
-  - Filtering
-  - Omic- specific
-  - log-based
-  - miscellenous
+### **1. Choose Your Processing Type**  
+- **No Pre-processing**  
+- **Filtering**  
+- **Omic-Specific**  
+- **Log-Based**  
+- **Miscellaneous**  
 
-2. Then choose the precise option (dependent on your type)
-  - No - pre-processing
-    - No pre-processing 
-    Nothing is done to the data. This is useful if you have already pre-processed your data.
-  - Filtering:
-    - Global Filtering:
-    Useful to remove low abundant entities.
-    Define the minimal amount summed over all samples to keep the respective entitie. For Transcriptomics a common default is 10. 
-    - Sample-wise Filtering:
-    Useful to remove low abundant entities which are low abundant in a number of samples.
-    Define the minimial amount per sample, and the number of samples that have to have that amount. A common default is 10 and smallest group size (e.g.  you have 3 replicates of control and 4 of diseased the smallest group size is 3.)
-  - Omic-Specific:
-    - DESeq2:
-    Apply DESeq2's variance stabilizing transformation. This is useful only for transcriptomics data. You need to choose the factor of interest. You can choose multiple. These will intepreted as additive factors.
-    - limma voom:
-    Apply limma voom transformation. You need to choose the factor of interest. You can choose multiple. These will intepreted as additive factors. You can also specifc whether you want to include an intercept or not. Most often you want to keep an      intercept (default)
+All options (except "No Pre-processing") apply minimal **omics-specific filtering** to remove low-abundance entities:  
+- **Transcriptomics:** Remove rows where total counts across samples are **≤10**.  
+- **Metabolomics/Lipidomics:** Remove rows where the **median value across samples is 0**.  
 
+### **2. Select a Specific Option (Based on Type)**  
 
-                           "No pre-processing" = c("No pre-processing" = "none"),
-                           "Filtering" = c("global Filtering" = "filterOnly",
-                                           "sample-wise Filtering" = "filterPerSample"),
-                           "Omic-Specific" = c("DESeq2" = "vst_DESeq",
-                                               "limma voom" = "limma_voom"),
-                           "Log-Based" = c("log10" = "log10", "log2" = "log2", "Natural logarithm" = "ln"),
-                           "Miscellaneous" = c("Pareto scaling" = "pareto_scaling",
-                                               "Centering & Scaling" = "simpleCenterScaling", 
-                                               "Scaling 0-1" = "Scaling_0_1")
+#### **No Pre-processing**  
+- No changes are applied. Useful if data is already pre-processed.  
 
-1. **Cleaning:**  
-   - Remove constant entities and all-zero rows.  
+#### **Filtering**  
+- **Global Filtering:** Removes low-abundance entities by setting a **minimum total count** across samples (e.g., 10 for transcriptomics).  
+- **Sample-wise Filtering:** Removes entities that are low in a **minimum number of samples**. Requires setting:  
+  - **Minimum count per sample**  
+  - **Number of samples meeting this threshold** (e.g., smallest group size in replicates).  
 
-2. **Filtering**  
-   - Filter low-abundance entities (based on data type).  
+#### **Omic-Specific Processing**  
+- **DESeq2:** Applies **variance stabilizing transformation** (VST) for transcriptomics. Requires selecting one or more **factors of interest** (interpreted additively).  
+- **limma voom:** Transforms data for linear modeling. Choose **factors of interest** and whether to **include an intercept** (default: yes).  
+- **TMM Normalization:** Adjusts for sequencing depth and composition biases in RNA-Seq by **trimming extreme log-fold changes**. Returns **TMM-normalized counts per million (CPM)**.  
 
-3. **Transformation Options:**  
-   - **None/Filter Only:** Skip or apply filtering only, suitable for preprocessed data.  
-   - **Scaling:** Normalize data via Center Scaling, Pareto Scaling, or scaling (0-1).  
-   - **Logarithmic Transformations:** Apply `natural logarithm`, `log10`, or `log2` 
-     (handles zero values by adding +1).  
-   - **DESeq2 pre-processing:** For transcriptomics includes variance stabilizing transformation.  
+#### **Log-Based Scaling**  
+- Applies **log transformation** based on the selected logarithm base. If the data contains zeros, **log(x+1)** is used to avoid infinite values.  
 
---- 
+#### **Miscellaneous Scaling Methods**  
+Useful for already **normalized or pre-processed data**, these methods adjust for **distribution, variability, or scale differences**:  
+- **Pareto Scaling:** Divides values by the **square root of the standard deviation**.  
+- **Centering & Scaling:** **Subtracts the mean** and **divides by the standard deviation**.  
+- **Min-Max Scaling (0-1):** **Rescales values** between **0 and 1** by subtracting the minimum and dividing by the range.  
