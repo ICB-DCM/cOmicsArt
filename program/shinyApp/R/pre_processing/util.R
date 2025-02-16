@@ -267,3 +267,24 @@ batch_correction <- function(
   batch_res$data <- data
   return(batch_res)
 }
+
+add_normality_test <- function(data, omic_type){
+  data2test <- assay(data)
+  # Get feature names (e.g., genes)
+  feature_names <- rownames(data2test)
+  
+  # Function to perform the Shapiro-Wilk test per feature (row)
+  normality_test <- data.frame(
+    entity = feature_names,
+    p_value_shapiro = apply(data2test, 1, function(x) shapiro.test(x)$p.value) 
+  )
+  
+  # Apply multiple testing correction 
+  normality_test <- normality_test %>%
+    mutate(
+      p_adjusted_shapiro_FDR = p.adjust(p_value_shapiro, method = "fdr")
+    )
+
+  return(normality_test)
+}
+  

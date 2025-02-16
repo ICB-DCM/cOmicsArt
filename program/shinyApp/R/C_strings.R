@@ -24,4 +24,6 @@ ERROR_PREPROC <<- HTML(paste0(
   "and click 'Get Pre-Processing' again.<br>",
   "<span style='color: red;'>You should not see this message before moving to analysis!</span><br>"
 ))  # Error shown in the info box upon failed preprocessing
-
+ERROR_NORM_TEST <<- HTML(paste0(
+  "The testing of normalisation failed. This might be due to constant entities but does not necassrily harm your analysis"
+))  # Error shown in the info box upon failed normalization

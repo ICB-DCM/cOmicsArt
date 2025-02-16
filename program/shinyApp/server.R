@@ -1579,6 +1579,7 @@ server <- function(input,output,session){
         par_tmp[[session$token]]["DESeq_formula"] <<- paste("~", paste(deseq_factors, collapse = " + "))
         par_tmp[[session$token]]["DESeq_factors"] <<- deseq_factors
       }
+      
     }, error = function(e){
       error_modal(e)
       output$Statisitcs_Data <- renderText({ERROR_PREPROC})
@@ -1618,6 +1619,24 @@ server <- function(input,output,session){
       waiter$hide()
       req(FALSE)
     })
+    
+    # add per entities (to rowData) normality test outcome
+    tryCatch({
+      norm_res <- add_normality_test(data)
+      rowData(data) <- cbind(rowData(data), norm_res[rownames(data),c("p_value_shapiro","p_adjusted_shapiro_FDR")])
+      normality_test_stat <- 
+        paste0(
+          "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
+          "<br>Number of genes with p-value < 0.05: ",length(which(norm_res$p_value_shapiro < 0.05)), "/",nrow(data),
+          "<br>Number of genes with adj. p-value < 0.05: ",length(which(norm_res$p_value_shapiro_FDR < 0.05)), "/", nrow(data),
+          "<br> If p < 0.05 the normality assumption is violated."
+        )
+    }, error = function(e){
+      output$Statisitcs_Data <- renderText({ERROR_NORM_TEST})
+      waiter$hide()
+      req(FALSE)
+    })
+    
     # assign res_tmp finally
     res_tmp[[session$token]]$data <<- data
 
@@ -1638,7 +1657,9 @@ server <- function(input,output,session){
         paste0(dim(data),collapse = ", "),
         "<br>",ifelse(input$processing_type == "Log-Based","In case of 0's present logX(data+1) is done",""),
         "<br>","See help for details",
-        "<br>",ifelse(any(as.data.frame(assay(data)) < 0),"Be aware that processed data has negative values!","")) ## IS THAT TRUE??
+        "<br>",ifelse(any(as.data.frame(assay(data)) < 0),"Be aware that processed data has negative values!",""), ## IS THAT TRUE??
+        "<br>",normality_test_stat
+        )
     })
     # set the warning as toast
     show_toast(
