@@ -1414,18 +1414,21 @@ server <- function(input,output,session){
                            "Filtering" = c("global Filtering" = "filterOnly",
                                            "sample-wise Filtering" = "filterPerSample"),
                            "Omic-Specific" = c("DESeq2" = "vst_DESeq",
-                                               "limma voom" = "limma_voom"),
+                                               "limma voom" = "limma_voom",
+                                               "TMM" = "TMM"),
                            "Log-Based" = c("log10" = "log10", "log2" = "log2", "Natural logarithm" = "ln"),
                            "Miscellaneous" = c("Pareto scaling" = "pareto_scaling",
                                                "Centering & Scaling" = "simpleCenterScaling", 
                                                "Scaling 0-1" = "Scaling_0_1")
     )
-    selectInput(
-      inputId = "PreProcessing_Procedure",
-      label = "Choose Processing Option",
-      choices = choices_list,
-      selected = NULL,
-      multiple = FALSE
+    div(style = "margin-left: 15px;", 
+      selectInput(
+        inputId = "PreProcessing_Procedure",
+        label = "Choose Processing Option",
+        choices = choices_list,
+        selected = NULL,
+        multiple = FALSE
+      )
     )
   })
   # Show additional numeric input if "Omic-specific filtering" is chosen

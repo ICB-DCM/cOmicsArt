@@ -20,6 +20,11 @@ preprocessing <- function(
       data = limma_voom_processing(data, omic_type,limma_intercept,limma_formula)
     ))
   }
+  if(procedure == "TMM"){
+    return(list(
+      data = tmm_proccessing(data, omic_type)
+    ))
+  }
   if(procedure == "filterOnly"){
     return(list(
       data = prefiltering_user(data,filter_threshold = filter_threshold)
@@ -220,6 +225,19 @@ limma_voom_processing <- function(data, omic_type,limma_intercept,limma_formula)
   )
   
   assay(data) <- as.data.frame(data_voom$E)
+  return(data)
+}
+
+tmm_proccessing <- function(data, omic_type){
+  # TMM normalization
+  data <- prefiltering(data, omic_type)
+  # Create DGEList object
+  dge <- DGEList(counts = assay(data))
+  # TODO visulaize norn factor distribution
+  dge_norm <- edgeR::calcNormFactors(dge, method ="TMM")
+  # counts per millio
+  tmm_counts <- cpm(dge_norm, normalized.lib.sizes = TRUE)
+  assay(data) <- as.data.frame(tmm_counts)
   return(data)
 }
 
