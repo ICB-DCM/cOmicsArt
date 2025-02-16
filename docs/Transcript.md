@@ -1,52 +1,50 @@
 ---
 title: "Transcript of Tutorial"
 output: html_notebook
+editor_options: 
+  chunk_output_type: inline
 ---
-Welcome to cOmicsArt - Customizable Omic Analysis and Reporting Tool. This tutorial is going to show you how to use this application to aid in your statistical analysis.
+Welcome to cOmicsArt - Customizable Omic Analysis and Reporting Tool. This tutorial is going to show you how to use this application to aid in your omic analysis.
 This tutorial is self-contained but can also be used to follow along with the YouTube tutorial.
 
-Comics art is designed is in a tabular format. In the beginning you only see the data selection but if you upload your data and go through the steps progressively more 
-tabs will be shown. Let us start by uploading our data.
+cOmicsArt is designed to be modular. In the beginning you only see the data selection but if you upload your data and go through the steps progressively more tabs will be shown. Let us start by uploading our data.
 
 ## Uploading Data ##
 
-The data will be uploaded with three CSV files. 
-1. The data matrix - shows the counts on the rows there are the entities - for example genes and on the columns they are the samples. 
-2. The sample table - shows meta information on the samples
-3. The entity table - shows any information on the entities
+To upload your data, you'll need three CSV files:  
+- **The data matrix**, where rows represent entities (like genes) and columns represent samples. The values contain count data.  
+- **The sample table**, which includes metadata about the samples.  
+- **The entity table**, which contains additional information about the entities.  
 
-Note : If you need to access the documentation, you can click on "Go to Documentation" from any page which will bring you to our website with an extensive documentation on what to do.
+When uploading these files, it's important to ensure that the rows in your data matrix align with those in the entity table and that the columns in the data matrix match the rows in the sample table.  
+
+Note: If you need to access the documentation, you can click on "Go to Documentation" from any page which will bring you to our website with an extensive documentation on what to do.
 Another option is to click on the helper buttons wherever they are. They'll show you some kind of help for whatever you're doing.
 
 [Caption of screenshot] This documentation shows you how to upload your data via the file input. 
 
-It is important that the rows of the data matrix correspond to the rows of the row annotation while the columns of the data matrix correspond to the rows of the sample table.
+We choose an example data set which is also available for download: 
+- The **data matrix** file: `airway-read-counts-LS.csv`  
+- The **sample table** file: `airway-sample-sheet-LS.csv`  
+- The **entity table** file: `airway-entity_description-LS.csv`  
 
-We choose an example data set which is also available for download. [For the data matrix we choose the "airway-read-counts-LS.csv" file, for sample annotation we upload the 
-"airway-sample-sheet-LS.csv" file, and for entities annotation we upload the "airway-entitie_description-LS.csv" file.]
+When we've uploaded all the files, the first thing we might want to check how is our data interpreted by cOmicsArt. For this we click on "Inspect Data".
 
-When we've uploaded all the files, the first thing we might want to check how is our data interpreted in this program. For this we click on "Inspect Data" followed by an additional 
-click on "Upload data for visual inspection".
-
-Some pitfalls to beware of here are for example if we choose the wrong separator then it will only have one column and you see that this will be interpreted as wrong.
+Some pitfalls to beware of here are for example if we choose the wrong separator. If that happens, your data might be misread, showing up as a single column instead of a properly formatted table.
 At the bottom of the screen there are a multitude of checks where you can check whether your data looks as it should be.
-Green signifies that the dataset is fine, whereas red means you need to go into your data and change things and orange means the dataset has some issues but the program can handle it - for example 
-this dataset contains some entries which are missing and the application will just remove those entities from the table.
+Green signifies that the dataset is fine, whereas red means you need to go into your data and change things and orange means the dataset has some issues but the program can handle it - for example this dataset contains some entries which are missing and the application will just remove those entities from the table.
 
-After the inspection of the data is complete, click on "Upload new data" and now you should see your result in the right hand section of the pane.
-The first thing we can do is we can add annotation by choosing the organism to add the annotation. to the data if we didn't do that already, but since we did this already so we don't need to do it again. 
+After the inspection of the data is complete, click on "Upload new data" and now you should see your result in the right hand section of the panel.
+An additional thing we can do is adding annotation to the data if we didn't do that already, but since we did this already for the test data we don't need to do it again. 
 
-Next we choose row or samples:
+Next, we can perform row or samples selection:
 
 For the sample selection we first choose among the columns present in the sample table. For example we can choose the cells, condition, experiment or the sample. 
-If we select sample, additonally we might want to select only specific samples we want to include the data. Perhaps there are strong reasons to exclude some and by clicking on the specific 
-sample, it removes all other samples and will only uses these data sets.
+If we select sample, additionally we can select only specific samples we want to include the data analysis. Perhaps there are strong reasons to exclude some samples. By clicking on the specific sample, it removes all other samples and only uses the selection of samples we made.
 If we select condition, we can do a similar selection. Here it's treated or untreated but you have multiple conditions you might want to only check one of them. 
 
-For the row selection, the same can be done with genes and you can choose either the gene names here in Ensemble genes, or you might not know those gene names all by heart so you can select the symbols 
-and we can also select which ones we want to use.
-You can also use the gene biotype and which shows you functionals. For example in transcriptomics you sometimes only want to use the protein coding genes so we can select protein coding and the program 
-would thenonly use all of the protein coding genes that exists have within the data matrix. Similarly you can do this same for processed pseudo genes and it will select all the processed pseudo genes.
+For the row selection, the same can be done with genes and you can choose either the gene names here in Ensemble genes, or you might not know those gene names all by heart so you can select the symbols. Again, we can also select which ones we want to use.
+You can also use the gene biotype for selection. In transcriptomics you sometimes only want to use the protein coding genes so one can select protein coding and the program would then only use all of the protein coding genes that exists within the data matrix. Similarly you can do the same for processed pseudogenes and it will select all the processed pseudogenes.
 
 In our case we want to use all our data so we just start our journey by clicking on "Start the Journey". 
 
