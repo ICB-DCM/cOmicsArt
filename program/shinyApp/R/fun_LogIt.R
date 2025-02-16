@@ -1,11 +1,9 @@
 ## log function
 fun_LogIt <- function(
   message = "",
-
   addPlot = F,
   tableSaved = F,
-  Filename = NULL,
-  jokes = JOKES
+  Filename = NULL
 ){
   # sophisticated "Where to place log file"
   file_path <- paste0("www/", session$token)

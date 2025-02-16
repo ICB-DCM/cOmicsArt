@@ -20,9 +20,9 @@ pca_sidebar_panel <- function(ns){
     radioButtons(
       inputId = ns("scale_data"),
       label = "Scale data to unit variance?",
-      choices = c("Yes","No"),
+      choices = c("Yes" = TRUE, "No" = FALSE),
       # direction = "horizontal",
-      selected = "No"
+      selected = FALSE
     ),
     ### start pca ---
     actionButton(
@@ -50,9 +50,9 @@ pca_sidebar_panel <- function(ns){
     radioButtons(
       inputId = ns("Show_loadings"),
       label = "Plot Loadings on top? (currently top 5)",
-      choices = c("Yes","No"),
+      choices = c("Yes" = TRUE, "No" = FALSE),
       # direction = "horizontal",
-      selected = "No"
+      selected = FALSE
     ),
     helpText("Note: if you would like to change the annotation of the indicated loading vectors please select an option the the tab Loadings"),
     hr(style = "border-top: 1px dashed #000000;"),
@@ -135,7 +135,7 @@ pca_main_panel <- function(ns){
           splitLayout(
             style = "border: 1px solid silver:",
             cellWidths = c("70%", "30%"),
-            plotOutput(outputId = ns("PCA_Loadings_plot")),
+            plotlyOutput(outputId = ns("PCA_Loadings_plot")),
             textOutput(outputId = ns("Loadings_plot_Options_selected_out"), container = pre)
           ),
           uiOutput(outputId = ns("EntitieAnno_Loadings_ui")),

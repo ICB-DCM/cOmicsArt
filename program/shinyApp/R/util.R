@@ -4,9 +4,9 @@
 `%||%` <- function(a, b) if (!is.null(a)) a else b
 
 # tryCatch modal dialog
-error_modal <- function(e, additional_text = NULL){
-  if (is.null(e$message)){
-    e$message <- "An unknown error occured"
+error_modal <- function(error_message, additional_text = NULL){
+  if (is.null(error_message)){
+    error_message <- "An unknown error occured"
   }
   if (is.null(additional_text)){
     additional_text <- "Please check your data set and annotation and try again.<br><br>"
@@ -18,9 +18,9 @@ error_modal <- function(e, additional_text = NULL){
     "describing your problem."
   )
   showModal(modalDialog(
-    title = HTML("<font color='red'>An unknown Error occured</font>"),
+    title = HTML("<font color='red'>An Error occured</font>"),
     HTML(paste0(
-      "<font color='red'>Error: ",e$message,"</font><br><br>",
+      "<font color='red'>Error: ",error_message,"</font><br><br>",
       additional_text
     )),
     footer = modalButton("Close")
@@ -30,7 +30,6 @@ error_modal <- function(e, additional_text = NULL){
 
 update_data <- function(session_id){
   # for stability reasons, data is ALWAYS pulled here
-  print("Updating data...")
   data <- res_tmp[[session_id]]
   return(data)
 }
@@ -169,7 +168,14 @@ save.function.from.env <- function(wanted,file="utils.R")
   print(paste("A total of ", length(funs), " Functions where written into utils"))
 }
 
-
+save_complex_heatmap <- function(x, filename, type = "pdf") {
+  # Saves a heatmap to a file in different formats
+  stopifnot(!missing(x))
+  stopifnot(!missing(filename))
+  SAVE_FUNCTION[[type]](filename)
+  draw(x)
+  dev.off()
+}
 
 
 save_pheatmap <- function(x, filename, type = "pdf") {

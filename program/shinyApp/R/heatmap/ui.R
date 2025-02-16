@@ -9,8 +9,6 @@ heatmap_sidebar<- function(ns){
       inputId = ns("row_selection_options"),
       label = "Select Entities to show",
       choices = c("all", "Select based on Annotation", "Top K"),
-    # TODO: needs to be incoporated or deleted
-    # "TopK","significant_LFC","LFC_onlySig","rowAnno_based"),
       multiple = F,
       selected = "all"
     ) %>% helper(type = "markdown", content = "Heatmap_Options"),

@@ -895,7 +895,7 @@ server <- function(input,output,session){
   })
 
   # Visual Inspection ends here
-  
+
   observeEvent(input$usingVIdata,{
     if(res_tmp[[session$token]]$passedVI){
       uploaded_from("VI_data")
@@ -918,7 +918,7 @@ server <- function(input,output,session){
   observeEvent(input$CloseVI,{
     removeModal()
   })
-  
+
 
   observeEvent(input$refresh_file_input, {
     uploaded_from("file_input")
@@ -1591,7 +1591,7 @@ server <- function(input,output,session){
     # Checks and Warnings
     addWarning <- create_warning_preproc(data, preprocessing_procedure)
     data <- data[complete.cases(assay(data)),]
-    
+
     # Batch correction after preprocessing
     tryCatch({
       res_batch <- batch_correction(
@@ -1912,36 +1912,15 @@ server <- function(input,output,session){
   # Sample Correlation ----
   # calling server without reactive it will be init upon start, with no update
   # of respective data inputs hence need of at least one reactive!
-  sample_correlation_server(
-    id = "sample_correlation",
-    data = res_tmp[[session$token]],
-    params = par_tmp[[session$token]]
-  )
+  sample_correlation_server(id = "sample_correlation")
   # significance analysis ----
-  significance_analysis_server(
-    id = 'SignificanceAnalysis',
-    data = res_tmp[[session$token]],
-    params = par_tmp[[session$token]]
-  )
+  significance_analysis_server(id = 'SignificanceAnalysis')
   # PCA ----
-  pca_Server(
-    id = "PCA",
-    data = res_tmp[[session$token]],
-    params = par_tmp[[session$token]],
-    reactive(input$row_selection)
-  )
+  pca_Server(id = "PCA")
   # Heatmap ----
-  heatmap_server(
-    id = 'Heatmap',
-    data = res_tmp[[session$token]],
-    params = par_tmp[[session$token]],
-    reactive(updating$count)
-    )
+  heatmap_server(id = 'Heatmap')
   # Single Gene Visualisations ----
-  single_gene_visualisation_server(
-    id = 'single_gene_visualisation',
-    data = res_tmp[[session$token]]
-  )
+  single_gene_visualisation_server(id = 'single_gene_visualisation')
 
   # Enrichment Analysis ----
   enrichment_analysis_Server(
