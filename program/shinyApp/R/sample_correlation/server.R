@@ -180,7 +180,7 @@ sample_correlation_server <- function(id){
         },
         content = function(file){
           save_complex_heatmap(
-            sample_corr_reactive$corr_plot,
+            sample_corr_reactive$corr_plot + sample_corr_reactive$row_anno,
             filename = file,
             type=gsub("\\.","",input$file_ext_SampleCorrelation)
           )
