@@ -365,7 +365,7 @@ heatmap_server <- function(id){moduleServer(
     )
 
     observeEvent(input$only2Report_Heatmap,{
-      notificationID <- showNotification("Saving...",duration = 0)
+      notificationID <- showNotification("Saving to Report...",duration = 0)
       tmp_filename <- paste0(
         getwd(),
         file_path,
@@ -414,7 +414,7 @@ heatmap_server <- function(id){moduleServer(
                                           params = par_tmp[[session$token]]))
 
       removeNotification(notificationID)
-      showNotification("Saved!",type = "message", duration = 1)
+      showNotification("Report Saved!",type = "message", duration = 1)
     })
   }
 )}
