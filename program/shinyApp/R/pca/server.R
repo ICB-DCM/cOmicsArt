@@ -95,15 +95,9 @@ pca_Server <- function(id){
         multiple = F
       )})
 
-      output$EntitieAnno_Loadings_ui <- renderUI({selectInput(
-        inputId = ns("EntitieAnno_Loadings"),
-        label = "Select the annotype shown at y-axis",
-        choices = c(colnames(rowData(data$data))),
-        multiple = F
-      )})
-      output$EntitieAnno_Loadings_matrix_ui <- renderUI({selectInput(
-        inputId = ns("EntitieAnno_Loadings_matrix"),
-        label = "Select the annotype shown at y-axis",
+      output$entitie_anno_ui <- renderUI({selectInput(
+        inputId = ns("entitie_anno"),
+        label = "Name loadings after",
         choices = c(colnames(rowData(data$data))),
         multiple = F
       )})
@@ -195,7 +189,7 @@ pca_Server <- function(id){
         input$y_axis_selection,
         input$coloring_options,
         input$Show_loadings,
-        input$EntitieAnno_Loadings,
+        input$entitie_anno,
         input$PCA_anno_tooltip
       ),{
       req(pca_reactives$pcaData, pca_reactives$percentVar, input$coloring_options)
@@ -207,7 +201,7 @@ pca_Server <- function(id){
       y_axis <- input$y_axis_selection
       color_by <- input$coloring_options
       show_loadings <- as.logical(input$Show_loadings %||% FALSE)
-      entitie_anno <- input$EntitieAnno_Loadings
+      entitie_anno <- input$entitie_anno %||% NULL
       tooltip_var <- input$PCA_anno_tooltip %||% NULL
 
       data <- update_data(session$token)$data
@@ -242,7 +236,7 @@ pca_Server <- function(id){
       input$topSlider,
       input$bottomSlider,
       pca_reactives$percentVar,
-      input$EntitieAnno_Loadings
+      input$entitie_anno
     ), {
       req(pca_reactives$pcaData, input$topSlider, input$bottomSlider)
       # define the variables to be used
@@ -250,7 +244,7 @@ pca_Server <- function(id){
       x_axis <- input$x_axis_selection
       n_top <- input$topSlider
       n_bottom <- input$bottomSlider
-      entitie_anno <- input$EntitieAnno_Loadings
+      entitie_anno <- input$entitie_anno %||% NULL
       pca <- res_tmp[[session$token]][["PCA"]]
       data <- update_data(session$token)$data
       # Loadings plot
@@ -285,7 +279,7 @@ pca_Server <- function(id){
 
     observeEvent(list(  # Update the Loadings Matrix Plot
       input$filterValue,
-      input$EntitieAnno_Loadings_matrix,
+      input$entitie_anno,
       input$nPCAs_to_look_at,
       pca_reactives$pcaData  # Replacement for pca object
     ), {
@@ -295,7 +289,7 @@ pca_Server <- function(id){
       )
       # define variables to be used
       pca <- res_tmp[[session$token]][["PCA"]]
-      entitie_anno <- input$EntitieAnno_Loadings_matrix %||% NULL
+      entitie_anno <- input$entitie_anno %||% NULL
       cutoff <- input$filterValue
       n_pcs <- input$nPCAs_to_look_at %||% 2
       data <- update_data(session$token)$data
