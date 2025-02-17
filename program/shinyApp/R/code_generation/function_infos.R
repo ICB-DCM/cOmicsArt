@@ -327,7 +327,7 @@ plot_significant_results_info <<- list(
   additional_foos = list(
       prepare_upset_plot = prepare_upset_plot,
       filter_significant_result = filter_significant_result,
-      getLFC = getLFC
+      getLFCs = getLFCs
   )
 )
 volcano_plot_info <<- list(
