@@ -1381,8 +1381,8 @@ server <- function(input,output,session){
     sample_type <- input$providedSampleAnnotationTypes %||% c(colnames(colData(res_tmp[[session$token]]$data_original)))[1]
     row_type <- input$providedRowAnnotationTypes %||% c(colnames(rowData(res_tmp[[session$token]]$data_original)))[1]
     propensity <- input$propensityChoiceUser %||% 1
-    par_tmp[[session$token]][["row_selection"]] <<- row_selection
-    par_tmp[[session$token]][["sample_selection"]] <<- sample_selection
+    par_tmp[[session$token]][["selected_rows"]] <<- row_selection
+    par_tmp[[session$token]][["selected_samples"]] <<- sample_selection
     par_tmp[[session$token]][["row_type"]] <<- row_type
     par_tmp[[session$token]][["sample_type"]] <<- sample_type
     par_tmp[[session$token]]['propensity'] <<- propensity
