@@ -335,7 +335,6 @@ pca_Server <- function(id){
           res_tmp[[session$token]]$data_original,
           temp_directory
         )
-        browser()
         write(
           create_workflow_script(
             pipeline_info = PCA_PIPELINE,
