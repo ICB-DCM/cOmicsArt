@@ -33,16 +33,29 @@ clean_function_code <- function(f){
 
 prepare_function_for_util <- function(f, f_name = NULL){
   # Captures a function with comments, removes environment statement
-  f_out <- capture.output(f)
-  if(is.null(f_name)){
+  f_out <- paste(capture.output(f), collapse = "\n")
+
+  # Determine the function name if not provided
+  if (is.null(f_name)) {
     f_name <- deparse(substitute(f))
   }
-  # check that last line contains "environment" or "bytecode" and if yes remove it
-  if(grepl("environment", f_out[length(f_out)]) || grepl("bytecode", f_out[length(f_out)])){
-      f_out <- f_out[-length(f_out)]
+  # Check if the function name is syntactically valid.
+  # If not, add backticks around it. Needed for `%||%` and similar.
+  if (make.names(f_name) != f_name) {
+    f_name <- paste0("`", f_name, "`")
   }
-  f_out[[1]] <- paste0(f_name, " <- ", f_out[[1]])
-  f_out <- paste(f_out, collapse = "\n")
+
+  # Find the position of the last closing curly brace "}"
+  last_brace_pos <- max(unlist(gregexpr("}", f_out, fixed = TRUE)))
+  if (last_brace_pos > 0) {
+    f_out <- substr(f_out, 1, last_brace_pos)
+  }
+
+  # Prepend the function name to the first line of the function definition.
+  # This replaces the initial "function" with "<f_name> <- function"
+  f_out <- sub("^\\s*function", paste0(f_name, " <- function"), f_out)
+
+  return(f_out)
 }
 
 save_summarized_experiment <- function(se, path){
@@ -142,7 +155,12 @@ create_library_code <- function(foo_list){
 
   # Extend foo_list by "select_data" and "preprocessing" as they are always needed
   foo_list <- c(foo_list, "select_data", "preprocessing")
-  lib_sourcing <- "# Load all necessary libraries\nlibrary(rstudioapi)\nlibrary(SummarizedExperiment)"
+  lib_sourcing <- paste0(
+    "# Load all necessary libraries\n",
+    "library(rstudioapi)\n",
+    "library(SummarizedExperiment)\n",
+    "library(ggplot2)"
+  )
 
   # Helper function: given the name of a function, return the name of its package.
   get_pkg <- function(fun_name) {
@@ -167,7 +185,10 @@ create_library_code <- function(foo_list){
       return(get_function_packages(foo))
     }, error = function(e) return("base"))
   })))
-  all_packages <- setdiff(na.omit(all_packages), c("base", "", "package:base"))
+  all_packages <- setdiff(
+    na.omit(all_packages),
+    c("base", "", "package:base", "ggplot2", "SummarizedExperiment")  # Base or already loaded packages
+  )
   lib_sourcing <- paste(
     lib_sourcing,
     paste0("library(", all_packages, ")", collapse = "\n"),
@@ -338,6 +359,12 @@ create_workflow_script <- function(pipeline_info, par, par_mem = NULL, path_to_u
   # Returns:
   #   workflow_script: character, the R script that contains the workflow
   function_names <- sapply(pipeline_info, function(x) x$name)
+  # extract all function names of the additional_foos
+  if (!all(sapply(pipeline_info, function(x) is.null(x$additional_foos)))){
+      additional_foos <- sapply(pipeline_info, function(x) x$additional_foos)
+      additional_foos <- sapply(additional_foos, function(x) names(x))
+      function_names <- c(function_names, unlist(additional_foos))
+  }
   workflow_script <- create_library_code(function_names)
   workflow_script <- paste(
     workflow_script,

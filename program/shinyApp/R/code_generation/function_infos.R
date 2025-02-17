@@ -36,6 +36,7 @@ preprocessing_info <<- list(
   output_name = "res_preprocess",
   to_util = TRUE,
   additional_foos = list(
+    `%||%` = `%||%`,
     deseq_processing = deseq_processing,
     prefiltering = prefiltering,
     simple_center_scaling = simple_center_scaling,
