@@ -43,6 +43,15 @@ preprocessing_info <<- list(
     ln_normalisation = ln_normalisation
   )
 )
+violin_plot_raw_info <<- list(
+  foo = violin_plot,
+  name = "violin_plot",
+  input_mapping = list(
+    data = "data_orig[rows_selected, samples_selected, drop = FALSE]"
+  ),
+  to_util = TRUE,
+  output_name = "violin_plot_raw"
+)
 violin_plot_info <<- list(
   foo = violin_plot,
   name = "violin_plot",

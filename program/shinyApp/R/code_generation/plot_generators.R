@@ -2,7 +2,10 @@
 # ATTENTION: The order of the functions in the pipeline is important!
 
 # --- Preprocessing ---
-VIOLIN_PLOT_PIPELINE <<- list(violin_plot_info)
+VIOLIN_PLOT_PIPELINE <<- list(
+  violin_plot_info,
+  violin_plot_raw_info
+)
 
 # --- Sample Correlation ---
 SAMPLE_CORRELATION_PIPELINE <<- list(
