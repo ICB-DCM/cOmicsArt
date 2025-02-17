@@ -257,7 +257,7 @@ log_messages_volcano<- function(plot, table, contrast, file_path){
   if((is.null(plot)) | (is.null(table))){
     return()
   }
-  notificationID <- showNotification("Saving...",duration = 0)
+  notificationID <- showNotification("Saving to Report...",duration = 0)
 
   tmp_filename <- paste0(
     getwd(),file_path,paste(paste0("VOLCANO_", Sys.time(), ".png"))
@@ -273,7 +273,7 @@ log_messages_volcano<- function(plot, table, contrast, file_path){
   fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
 
   removeNotification(notificationID)
-  showNotification("Saved!",type = "message", duration = 1)
+  showNotification("Report Saved!",type = "message", duration = 1)
 }
 
 

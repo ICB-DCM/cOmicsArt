@@ -1712,7 +1712,7 @@ server <- function(input,output,session){
   )
 
   observeEvent(input$only2Report_Preprocess,{
-    notificationID <- showNotification("Saving...",duration = 0)
+    notificationID <- showNotification("Saving to Report...",duration = 0)
     tmp_filename <- paste0(
       getwd(),
       file_path,
@@ -1755,7 +1755,7 @@ server <- function(input,output,session){
     )
     # no publication snippet as thats already in the log
     removeNotification(notificationID)
-    showNotification("Saved!",type = "message", duration = 1)
+    showNotification("Report Saved!",type = "message", duration = 1)
   })
 
   output$getR_Code_Preprocess <- downloadHandler(
