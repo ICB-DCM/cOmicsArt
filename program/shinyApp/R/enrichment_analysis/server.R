@@ -340,17 +340,23 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         compare_within <- input$sample_annotation_types_cmp_GSEA
         reference <- input$Groups2Compare_ref_GSEA
         treatment <- input$Groups2Compare_treat_GSEA
-        ea_reactives$tmp_genes <- get_gene_set_choice(
-          ora_or_gse = ora_or_gse,
-          ora_gene_set_type = ora_gene_set_type,
-          uploaded_gene_set = uploaded_gene_set,
-          heatmap_genes = heatmap_genes,
-          gse_gene_set_type = gse_gene_set_type,
-          data = data,
-          compare_within = compare_within,
-          reference = reference,
-          treatment = treatment
-        )
+        ea_reactives$tmp_genes <- tryCatch({
+          get_gene_set_choice(
+            ora_or_gse = ora_or_gse,
+            ora_gene_set_type = ora_gene_set_type,
+            uploaded_gene_set = uploaded_gene_set,
+            heatmap_genes = heatmap_genes,
+            gse_gene_set_type = gse_gene_set_type,
+            data = data,
+            compare_within = compare_within,
+            reference = reference,
+            treatment = treatment
+          )
+        }, error = function(e){
+          waiter$hide()
+          error_modal(e$message)
+          req(FALSE)
+        })
         # Save par_tmp values
         update_par_tmp <- list(
           "ora_or_gse" = ora_or_gse,
@@ -394,24 +400,30 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         if(anno_results$no_ann){
           translation_modal()
         }else if(anno_results$can_start == FALSE){
-          if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            ea_reactives$data <- translate_genes_ea(
-              data = ea_reactives$data,
-              annotation_results = anno_results,
-              organism = ea_reactives$organism
+          tryCatch({
+            if(input$ORA_or_GSE == "GeneSetEnrichment"){
+              ea_reactives$data <- translate_genes_ea(
+                data = ea_reactives$data,
+                annotation_results = anno_results,
+                organism = ea_reactives$organism
+              )
+            }else{
+              ea_reactives$tmp_genes <- translate_genes_oa(
+                annotation_results = anno_results,
+                geneSetChoice = ea_reactives$tmp_genes,
+                geneSet2Enrich = input$GeneSet2Enrich,
+                data = ea_reactives$data,
+                organism = ea_reactives$organism
+              )
+            }
+          }, error = function(e){
+            waiter$hide()
+            error_modal(
+              "Either the wrong translations were chosen or the wrong organism was selected.",
             )
-          }else{
-            ea_reactives$tmp_genes <- translate_genes_oa(
-              annotation_results = anno_results,
-              geneSetChoice = ea_reactives$tmp_genes,
-              geneSet2Enrich = input$GeneSet2Enrich,
-              data = ea_reactives$data,
-              organism = ea_reactives$organism
-            )
-          }
-
+            req(FALSE)
+          })
           ea_reactives$can_start <- TRUE
-
         }
         # Modal in case translation fails
         observeEvent(input$translation_again, {
@@ -477,13 +489,19 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         observeEvent(ea_reactives$can_start, {
           req(ea_reactives$can_start == TRUE)
           if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            ea_reactives$enrichment_results <- gene_set_enrichment(
-              ea_reactives$organism,
-              ea_reactives$tmp_genes,
-              ea_reactives$data,
-              ea_reactives$enrichments2do,
-              PADJUST_METHOD[[input$test_correction]]
-            )
+            ea_reactives$enrichment_results <- tryCatch({
+              gene_set_enrichment(
+                ea_reactives$organism,
+                ea_reactives$tmp_genes,
+                ea_reactives$data,
+                ea_reactives$enrichments2do,
+                PADJUST_METHOD[[input$test_correction]]
+              )
+            }, error = function(e){
+              waiter$hide()
+              error_modal(e$message, "Check that you chose the right organism!")
+              req(FALSE)
+            })
             # update par_tmp, TODO: not pressing but update and align with other functions
             update_par_tmp <- list(
               "organism" = ea_reactives$organism,
@@ -505,14 +523,20 @@ enrichment_analysis_Server <- function(id, data, params, updates){
 
           }else{
             ea_reactives$tmp_genes <- rowData(data$data)[ea_reactives$tmp_genes,"entrezgene_id"]
-            ea_reactives$enrichment_results <- over_representation_analysis(
-              organism = ea_reactives$organism,
-              geneSetChoice = ea_reactives$tmp_genes,
-              data = data,
-              enrichments2do = ea_reactives$enrichments2do,
-              test_correction = PADJUST_METHOD[[input$test_correction]],
-              input$UniverseOfGene %||% "default"
-            )
+            ea_reactives$enrichment_results <- tryCatch({
+              over_representation_analysis(
+                organism = ea_reactives$organism,
+                geneSetChoice = ea_reactives$tmp_genes,
+                data = data,
+                enrichments2do = ea_reactives$enrichments2do,
+                test_correction = PADJUST_METHOD[[input$test_correction]],
+                input$UniverseOfGene %||% "default"
+              )
+            }, error = function(e){
+              waiter$hide()
+              error_modal(e$message, "Check that you chose the right organism!")
+              req(FALSE)
+            })
             # update par_tmp, TODO: not pressing but update and align with other functions
             update_par_tmp <- list(
               "organism" = ea_reactives$organism,
