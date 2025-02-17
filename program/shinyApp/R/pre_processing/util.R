@@ -115,18 +115,17 @@ deseq_processing <- function(
   # --- Sanity checks ---
   if(nrow(data) < 100){
     stop(
-      "The number of samples is too low for a DESeq2 analysis. Please select at least 100 samples.",
+      "The number of samples is too low for a DESeq2 analysis. Please select at least 100 samples."
     )
   }
   if (omic_type != "Transcriptomics"){
     stop(
-      "DESeq2 is only available for Transcriptomics data.",
+      "DESeq2 is only available for Transcriptomics data."
     )
   }
   if(length(deseq_factors) <= 0){
     stop(
-      "Please select at least one factor for the DESeq2 analysis.",
-      class = "InvalidInputError"
+      "Please select at least one factor for the DESeq2 analysis."
     )
   }
   # --- DESeq2 preprocessing ---
