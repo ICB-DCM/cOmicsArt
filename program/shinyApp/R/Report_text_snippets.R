@@ -219,7 +219,7 @@ snippet_heatmap <- function(
   if (params$Heatmap$cluster_rows == TRUE) {
     snippet <- paste0(snippet, "The rows were clustered based on euclidean-distance with complete-linkage.  ")
   }
-  if(params$Heatmap$rowWiseScaled ==TRUE ){
+  if(params$Heatmap$scale_rows ==TRUE ){
     snippet <- paste0(snippet, "The rows were scaled to visualise relative difference. ")
   }
   snippet <- paste0(snippet, "The heatmap was created using the pheatmap package", "(v. ",packageVersion("pheatmap"),") (",print(clean_citation(citation('pheatmap')), style = "text"),"). ")
