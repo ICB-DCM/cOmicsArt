@@ -26,7 +26,7 @@ ERROR_PREPROC <<- HTML(paste0(
 ))  # Error shown in the info box upon failed preprocessing
 
 ERROR_NORM_TEST <<- HTML(paste0(
-  "The testing of normalisation failed. This might be due to constant entities but does not necassrily harm your analysis"
+  "The testing of normalisation failed.<br>This might not necassarily harm your analysis"
 )) 
 
 # --- Error messages Heatmap ---

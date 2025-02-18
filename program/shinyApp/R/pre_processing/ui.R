@@ -15,15 +15,15 @@ pre_processing_sidebar_panel <- sidebarPanel(
                 "Miscellaneous"),
     selected = NULL,
     multiple = FALSE
-  )%>% helper(type = "markdown", content = "PreProcessing_Procedures"),
+  ) %>% helper(type = "markdown", content = "PreProcessing_Procedures"),
   
   # Second dropdown: Options based on Processing Type
   uiOutput(outputId = "dynamic_options_ui"),
   
   # Additional UI elements based on the selected option
-  uiOutput(outputId = "additional_inputs_ui"),
+  uiOutput(outputId = "additional_inputs_filter_ui"),
   
-  
+
   uiOutput(outputId = "formula_sub_ui"),
   uiOutput(outputId = "batch_effect_ui") %>% helper(type = "markdown", content = "PreProcessing_Batch"),
   actionButton(

@@ -1421,6 +1421,19 @@ server <- function(input,output,session){
                                                "Centering & Scaling" = "simpleCenterScaling", 
                                                "Scaling 0-1" = "Scaling_0_1")
     )
+    tagList(
+    if(!any(choices_list %in% c("none","filterOnly","filterPerSample"))){
+      div(style = "margin-left: 15px;", 
+          selectInput(
+            inputId = "PreProcessing_Procedure_filtering",
+            label = "Choose Filtering",
+            choices = c("global Filtering" = "filterOnly",
+                        "sample-wise Filtering" = "filterPerSample"),
+            selected = NULL,
+            multiple = FALSE
+          )
+      )
+    },
     div(style = "margin-left: 15px;", 
       selectInput(
         inputId = "PreProcessing_Procedure",
@@ -1430,12 +1443,19 @@ server <- function(input,output,session){
         multiple = FALSE
       )
     )
+    )
   })
   # Show additional numeric input if "Omic-specific filtering" is chosen
-  output$additional_inputs_ui <- renderUI({
+  output$additional_inputs_filter_ui <- renderUI({
     req(input$PreProcessing_Procedure)
     print(input$PreProcessing_Procedure)
-    if (input$PreProcessing_Procedure == "filterOnly") {
+    # check if input$PreProcessing_Procedure_filtering is present
+    if(input$PreProcessing_Procedure == "filterOnly" | input$PreProcessing_Procedure == "filterPerSample" |  input$PreProcessing_Procedure == "none"){
+      addFilter <- "no"
+    }else{
+      addFilter <- input$PreProcessing_Procedure_filtering
+    }
+    if (input$PreProcessing_Procedure == "filterOnly" | addFilter == "filterOnly") {
       tagList(
         div(style = "margin-left: 30px;",  
           numericInput(
@@ -1446,7 +1466,7 @@ server <- function(input,output,session){
           )
         )
       )
-    }else if (input$PreProcessing_Procedure == "filterPerSample"){
+    }else if (input$PreProcessing_Procedure == "filterPerSample" | addFilter == "filterPerSample"){
       tagList(
         div(style = "margin-left: 30px;",  
         numericInput(
@@ -1461,7 +1481,9 @@ server <- function(input,output,session){
             min = 1,
             max = ncol(res_tmp[[session$token]]$data),
             step = 1
-          )
+          ),
+        helpText(paste0("Note: This number should not exceed ", ncol(res_tmp[[session$token]]$data), "(the number of samples in your data set)")
+        )
         )
       )
     }
@@ -1542,6 +1564,7 @@ server <- function(input,output,session){
     print(selectedData())
     # ---- Value Assignment and Parameter Saving for later use ----
     preprocessing_procedure <- input$PreProcessing_Procedure
+    preprocessing_filtering <- input$PreProcessing_Procedure_filtering %||% NULL
     batch_column <- input$BatchEffect_Column %||% "NULL"
     omic_type <- par_tmp[[session$token]]$omic_type
     deseq_factors <- input$DESeq_formula_sub %||% NULL
@@ -1565,6 +1588,7 @@ server <- function(input,output,session){
         data = data,
         omic_type = omic_type,
         procedure = preprocessing_procedure,
+        preprocessing_filtering = preprocessing_filtering,
         deseq_factors = deseq_factors,
         filter_threshold = filter_threshold,
         filter_threshold_samplewise = filter_threshold_samplewise,
@@ -1589,6 +1613,17 @@ server <- function(input,output,session){
     })
 
     # Checks and Warnings
+    # check if no entites is left after pre-processing
+    if(nrow(data) == 0){
+      error_modal(
+        "No entities left after pre-processing. Please change your selection and pre-processing options. Maybe your filtering is too harsh?"
+      )
+      output$Statisitcs_Data <- renderText({ERROR_PREPROC})
+      hide_tabs()
+      waiter$hide()
+      req(FALSE)
+    }
+    
     addWarning <- create_warning_preproc(data, preprocessing_procedure)
     data <- data[complete.cases(assay(data)),]
 
@@ -1619,7 +1654,6 @@ server <- function(input,output,session){
       waiter$hide()
       req(FALSE)
     })
-    
     # add per entities (to rowData) normality test outcome
     tryCatch({
       norm_res <- add_normality_test(data)
@@ -1629,7 +1663,9 @@ server <- function(input,output,session){
           "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
           "<br>Number of genes with p-value < 0.05: ",length(which(norm_res$p_value_shapiro < 0.05)), "/",nrow(data),
           "<br>Number of genes with adj. p-value < 0.05: ",length(which(norm_res$p_value_shapiro_FDR < 0.05)), "/", nrow(data),
-          "<br> If p < 0.05 the normality assumption is violated."
+          "<br>If p < 0.05 the normality assumption is violated.",
+          "<br>For small sample size this test is not reliable.",
+          "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"
         )
     }, error = function(e){
       output$Statisitcs_Data <- renderText({ERROR_NORM_TEST})
