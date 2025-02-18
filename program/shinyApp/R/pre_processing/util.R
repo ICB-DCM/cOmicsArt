@@ -41,7 +41,6 @@ preprocessing <- function(
     if(preprocessing_filtering == "filterPerSample"){
       data = prefiltering_user(
         data, 
-        omic_type,
         filter_threshold = NULL, 
         filter_threshold_samplewise = filter_threshold_samplewise,
         filter_samplesize = filter_samplesize
