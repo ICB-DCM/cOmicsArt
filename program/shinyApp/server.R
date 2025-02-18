@@ -1579,6 +1579,14 @@ server <- function(input,output,session){
     data <- res_tmp[[session$token]]$data_original[rows_selected,samples_selected]
     data_selected <- data  # needed for batch correction with DESeq
     par_tmp[[session$token]]['BatchColumn'] <<- batch_column
+    
+    par_tmp[[session$token]]['preprocessing_filtering'] <<- preprocessing_filtering
+    par_tmp[[session$token]]['filter_threshold'] <<- filter_threshold
+    par_tmp[[session$token]]['filter_threshold_samplewise'] <<- filter_threshold_samplewise
+    par_tmp[[session$token]]['filter_samplesize'] <<- filter_samplesize
+    par_tmp[[session$token]]['limma_intercept'] <<- limma_intercept
+    par_tmp[[session$token]]['limma_formula'] <<- limma_formula
+    
     # preprocessing
     print(paste0("Do chosen Preprocessing:",preprocessing_procedure))
 
