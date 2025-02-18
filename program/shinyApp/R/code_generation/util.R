@@ -1,31 +1,37 @@
 # Here are the function to extract code, write a workflow script and download the script
 
-clean_function_code <- function(f){
-  # Captures a function with comments, returns function body without returns
-  f_out <- capture.output(f)
-  # check that last line contains "environment" and if yes remove it
-  f_out <- f_out[-length(f_out)]
-  # combine the lines to a single string
-  f_out <- paste(f_out, collapse = "\n")
-  # check that only one return statement is present, otherwise call stop
-  if(length(gregexpr("return\\s*\\(", f_out)[[1]]) > 1){
-      stop(paste(
-        "More than one return statement found in function",
-        deparse(substitute(f))
-      ))
+clean_function_code <- function(f) {
+  # Capture the function as text (with comments)
+  f_out <- paste(capture.output(f), collapse = "\n")
+
+  # Remove any trailing text after the last closing brace,
+  # which may include "<bytecode...>" or environment info.
+  last_brace_pos <- max(unlist(gregexpr("}", f_out, fixed = TRUE)))
+  if (last_brace_pos > 0) {
+    f_out <- substr(f_out, 1, last_brace_pos)
   }
-  # Remove last return statement and closing bracket if present
+
+  # Check that only one return statement is present; if not, signal an error.
+  if (length(gregexpr("return\\s*\\(", f_out)[[1]]) > 1) {
+    stop(paste("More than one return statement found in function",
+               deparse(substitute(f))))
+  }
+
+  # Remove the last return statement along with any trailing closing bracket.
   f_out <- sub("return\\(.*?\\)\\s*\\}$", "", f_out)
 
-  # Remove the last `}` if it's alone (i.e., the closing bracket of the function body)
+  # Remove the last closing curly brace if it is alone (closing the function body)
   f_out <- sub("\\s*\\}$", "", f_out, perl = TRUE)
-  # remove function definition (acroos multiple lines)
+
+  # Remove the function definition header (across multiple lines)
   f_out <- sub("(?s)^function\\s*\\((.*?)\\)\\s*\\{\\s*", "", f_out, perl = TRUE)
-  # remove (if existent) two whitespaces in every line
+
+  # Remove any two leading spaces in every line
   lines <- strsplit(f_out, "\n")[[1]]
   lines <- gsub("^  ", "", lines)
   f_out <- paste(lines, collapse = "\n")
-  # remove trailing whitespaces
+
+  # Trim any leading/trailing whitespace
   f_out <- trimws(f_out)
 
   return(f_out)
