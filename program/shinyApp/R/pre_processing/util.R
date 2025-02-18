@@ -202,23 +202,18 @@ limma_voom_processing <- function(data, limma_intercept, limma_formula){
     )
   }
   # limma-voom
- limma_concat <- paste0(limma_formula, collapse = "+")
-
- if(limma_intercept){
-   design_factors <- paste0("~",limma_concat)
- }else{
-   design_factors <- paste0("~0+", limma_concat)
- }
-
- design_mat <- model.matrix(as.formula(design_factors), data = colData(data))
-
-# TODO add limma plots to main panel
+  limma_concat <- paste0(limma_formula, collapse = "+")
+  if(limma_intercept){
+    design_factors <- paste0("~",limma_concat)
+  }else{
+    design_factors <- paste0("~0+", limma_concat)
+  }
+  design_mat <- model.matrix(as.formula(design_factors), data = colData(data))
   data_voom <- limma::voom(
     counts = assay(data),
     design = design_mat,
     plot = FALSE
   )
-
   assay(data) <- as.data.frame(data_voom$E)
   return(data)
 }
@@ -262,7 +257,7 @@ batch_correction <- function(
   return(batch_res)
 }
 
-add_normality_test <- function(data, omic_type){
+add_normality_test <- function(data){
   data2test <- assay(data)
   # Get feature names (e.g., genes)
   feature_names <- rownames(data2test)

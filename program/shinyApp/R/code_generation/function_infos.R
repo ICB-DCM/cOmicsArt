@@ -38,10 +38,12 @@ preprocessing_info <<- list(
   additional_foos = list(
     `%||%` = `%||%`,
     deseq_processing = deseq_processing,
-    prefiltering = prefiltering,
+    prefiltering_user = prefiltering_user,
     simple_center_scaling = simple_center_scaling,
     scaling_normalisation = scaling_normalisation,
-    ln_normalisation = ln_normalisation
+    ln_normalisation = ln_normalisation,
+    tmm_proccessing = tmm_proccessing,
+    limma_voom_processing = limma_voom_processing
   )
 )
 violin_plot_raw_info <<- list(
