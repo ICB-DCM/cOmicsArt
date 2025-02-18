@@ -280,6 +280,13 @@ server <- function(input,output,session){
     session$close()
   })
   
+  # Reset file input
+  observeEvent(input$clear_FileInput, {
+    reset("data_matrix1")
+    reset("data_sample_anno1")
+    reset("data_row_anno1")
+  })
+  
 # Data Upload + checks ----
   print("Data Upload")
 

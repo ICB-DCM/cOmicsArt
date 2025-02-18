@@ -16,22 +16,27 @@ data_selection_sidebar_panel <- sidebarPanel(
       br(),br(),
         shiny::fileInput(
           inputId = "data_matrix1",
-          label = HTML('Data matrix <small><a href="airway-read-counts-LS.csv" download>Download example data</a></small>'),
+          label = HTML('1. Data matrix <small><a href="airway-read-counts-LS.csv" download>Download example data</a></small>'),
           accept = c(".csv"),
           width = "80%"
         ) %>% helper(type = "markdown", content = "DataSelection_DataUploadFileInput"),
         shiny::fileInput(
           inputId = "data_sample_anno1",
-          label = HTML('Sample annotation <small><a href="airway-sample-sheet-LS.csv" download>Download example data</a></small>'),
+          label = HTML('2. Sample annotation <small><a href="airway-sample-sheet-LS.csv" download>Download example data</a></small>'),
           accept = c(".csv"),
           width = "80%"
         ),
         shiny::fileInput(
           inputId = "data_row_anno1",
-          label = HTML('Entities annotation <small><a href="airway-entitie_description-LS.csv" download>Download example data</a></small>'),
+          label = HTML('3. Entities annotation <small><a href="airway-entitie_description-LS.csv" download>Download example data</a></small>'),
           accept = c(".csv"),
           width = "80%"
         ),
+      actionLink(
+        "clear_FileInput", 
+        HTML("<span style='font-size: 16px; color: black;'>❌ Clear Data</span>"), 
+        style = "cursor: pointer;"
+      ),br(),br(),br(),
         actionButton(
           inputId = "inspect_data",
           label = "Inspect data",
