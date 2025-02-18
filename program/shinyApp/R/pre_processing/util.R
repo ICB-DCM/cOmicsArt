@@ -1,59 +1,100 @@
 # preprocessing procedures
 
-preprocessing <- function(data, omic_type, preprocessing_procedure, deseq_factors = NULL){
+preprocessing <- function(
+    data,
+    omic_type,
+    preprocessing_procedure,
+    preprocessing_filtering = NULL,
+    deseq_factors = NULL,
+    filter_threshold = 10,
+    filter_threshold_samplewise = NULL,
+    filter_samplesize = NULL,
+    limma_intercept = NULL,
+    limma_formula = NULL){
   print("Remove all entities which are constant over all samples")
   data <- data[rownames(data[which(apply(assay(data),1,sd) != 0),]),]
-  if(preprocessing_procedure == "vst_DESeq"){
+  if(preprocessing_procedure %in% c("none", "filterOnly", "filterPerSample")){
+    if(preprocessing_procedure == "filterOnly"){
+      return(list(
+        data = prefiltering_user(data ,filter_threshold = filter_threshold)
+      ))
+    }
+    if(preprocessing_procedure == "filterPerSample"){
+      return(list(
+        data = prefiltering_user(
+          data,
+          filter_threshold = NULL,
+          filter_threshold_samplewise = filter_threshold_samplewise,
+          filter_samplesize = filter_samplesize
+        )
+      ))
+    }
+    if(preprocessing_procedure == "none"){
+      return(list(
+        data = data
+      ))
+    }
+  }else{
+    if(preprocessing_filtering == "filterOnly"){
+      data <- prefiltering_user(data, filter_threshold = filter_threshold)
+    }
+    if(preprocessing_filtering == "filterPerSample"){
+      data <- prefiltering_user(
+        data,
+        filter_threshold = NULL,
+        filter_threshold_samplewise = filter_threshold_samplewise,
+        filter_samplesize = filter_samplesize
+      )
+    }
+    if(preprocessing_procedure == "vst_DESeq"){
       return(deseq_processing(data, omic_type, deseq_factors))
-  }
-  if(preprocessing_procedure == "filterOnly"){
-    return(list(
-      data = prefiltering(data, omic_type)
-    ))
-  }
-  if(preprocessing_procedure == "simpleCenterScaling"){
-    return(list(
-      data = simple_center_scaling(data, omic_type)
-    ))
-  }
-  if(preprocessing_procedure %in% c("Scaling_0_1", "pareto_scaling")){
-    return(list(
-      data = scaling_normalisation(data, omic_type, preprocessing_procedure)
-    ))
-  }
-  if(preprocessing_procedure %in% c("log10", "ln", "log2")){
-    return(list(
-      data = ln_normalisation(data, omic_type, preprocessing_procedure)
-    ))
-  }
-  if(preprocessing_procedure == "none"){
-    return(list(
-      data = data
-    ))
-  }
-  # if nothing is chosen, raise an error
-  stop("No valid Preprocessing procedure chosen")
-}
+    }
+    if(preprocessing_procedure == "limma_voom"){
+      return(list(
+        data = limma_voom_processing(data, limma_intercept, limma_formula)
+      ))
+    }
+    if(preprocessing_procedure == "TMM"){
+      return(list(
+        data = tmm_proccessing(data)
+      ))
+    }
 
-prefiltering <- function(data, omic_type){
-  # TODO: will be replaced with general "at least x in y samples" filter
-  # Filter out low abundant genes for Metabol- and Transcriptmics.
-  if(omic_type == "Transcriptomics"){
-    print("Remove anything of rowCount <=10")
-    return(data[which(rowSums(assay(data)) > 10),])
-  }
-  if(omic_type == "Metabolomics"){
-    print("Remove anything which has a row median of 0")
-    return(data[which(apply(assay(data),1,median)!=0),])
+    if(preprocessing_procedure == "simpleCenterScaling"){
+      return(list(
+        data = simple_center_scaling(data)
+      ))
+    }
+    if(preprocessing_procedure %in% c("Scaling_0_1", "pareto_scaling")){
+      return(list(
+        data = scaling_normalisation(data, preprocessing_procedure)
+      ))
+    }
+    if(preprocessing_procedure %in% c("log10", "ln", "log2")){
+      return(list(
+        data = ln_normalisation(data, preprocessing_procedure)
+      ))
+    }
+    # if nothing is chosen, raise an error
+    stop("No valid Preprocessing procedure chosen")
   }
 }
 
+prefiltering_user <- function(data,
+                              filter_threshold = NULL,
+                              filter_threshold_samplewise = NULL,
+                              filter_samplesize = NULL){
+  if(!is.null(filter_threshold)){
+    print(paste0("Remove anything of rowCount <=",filter_threshold))
+    return(data[which(rowSums(assay(data)) > filter_threshold),])
+  } else{
+    print(paste0("Remove anything of rowCount <=",filter_threshold_samplewise," in at least ",filter_samplesize," samples"))
+    return(data[which(rowSums(assay(data) > filter_threshold_samplewise) >= filter_samplesize),])
+  }
+}
 
-simple_center_scaling <- function(data, omic_type){
+simple_center_scaling <- function(data){
   # Center and scale the data
-  # prefilter the data
-  data <- prefiltering(data, omic_type)
-  # center and scale the data
   processedData <- as.data.frame(t(scale(
     x = as.data.frame(t(as.data.frame(assay(data)))),
     scale = T,
@@ -64,10 +105,9 @@ simple_center_scaling <- function(data, omic_type){
 }
 
 
-scaling_normalisation <- function(data, omic_type, scaling_procedure){
+scaling_normalisation <- function(data, scaling_procedure){
   # Center and scale the data
-  # prefilter the data
-  data <- prefiltering(data, omic_type)
+
   # scaling functions
   fun_scale <- function(x){
     return((x-min(x))/(max(x)-min(x)))
@@ -86,22 +126,21 @@ scaling_normalisation <- function(data, omic_type, scaling_procedure){
 }
 
 
-ln_normalisation <- function(data, omic_type, logarithm_procedure){
+ln_normalisation <- function(data, logarithm_procedure){
   # Center and scale the data
   if(logarithm_procedure == "log10")
   {
-    logarithm = log10
+    logarithm <- log10
   }
   else if(logarithm_procedure == "log2")
   {
-    logarithm = log2
+    logarithm <- log2
   }
   else
   {
-    logarithm = log
+    logarithm <- log
   }
-  # prefilter the data
-  data <- prefiltering(data, omic_type)
+
   # log the data and always add 1 to avoid -Inf
   processedData <- as.data.frame(logarithm(as.data.frame(assay(data)) + 1))
   assay(data) <- processedData
@@ -128,8 +167,8 @@ deseq_processing <- function(
       "Please select at least one factor for the DESeq2 analysis."
     )
   }
+
   # --- DESeq2 preprocessing ---
-  data <- prefiltering(data, omic_type)
   design_formula <- paste("~", paste(deseq_factors, collapse = " + "))
   # turn each factor into a factor
   for(i in deseq_factors){
@@ -153,6 +192,42 @@ deseq_processing <- function(
     data = data,
     DESeq_obj = de_seq_result
   ))
+}
+
+limma_voom_processing <- function(data, limma_intercept, limma_formula){
+  if(length(limma_formula) <= 0){
+    stop(
+      "Please select at least one factor for the limma voom design.",
+      class = "InvalidInputError"
+    )
+  }
+  # limma-voom
+  limma_concat <- paste0(limma_formula, collapse = "+")
+  if(limma_intercept){
+    design_factors <- paste0("~",limma_concat)
+  }else{
+    design_factors <- paste0("~0+", limma_concat)
+  }
+  design_mat <- model.matrix(as.formula(design_factors), data = colData(data))
+  data_voom <- limma::voom(
+    counts = assay(data),
+    design = design_mat,
+    plot = FALSE
+  )
+  assay(data) <- as.data.frame(data_voom$E)
+  return(data)
+}
+
+tmm_proccessing <- function(data){
+  # TMM normalization
+  # Create DGEList object
+  dge <- edgeR::DGEList(counts = assay(data))
+  # TODO visulaize norn factor distribution
+  dge_norm <- edgeR::calcNormFactors(dge, method ="TMM")
+  # counts per millio
+  tmm_counts <- edgeR::cpm(dge_norm, normalized.lib.sizes = TRUE)
+  assay(data) <- as.data.frame(tmm_counts)
+  return(data)
 }
 
 batch_correction <- function(
@@ -181,3 +256,24 @@ batch_correction <- function(
   batch_res$data <- data
   return(batch_res)
 }
+
+add_normality_test <- function(data){
+  data2test <- assay(data)
+  # Get feature names (e.g., genes)
+  feature_names <- rownames(data2test)
+
+  # Function to perform the Shapiro-Wilk test per feature (row)
+  normality_test <- data.frame(
+    entity = feature_names,
+    p_value_shapiro = apply(data2test, 1, function(x) shapiro.test(x)$p.value)
+  )
+
+  # Apply multiple testing correction
+  normality_test <- normality_test %>%
+    mutate(
+      p_adjusted_shapiro_FDR = p.adjust(p_value_shapiro, method = "fdr")
+    )
+
+  return(normality_test)
+}
+

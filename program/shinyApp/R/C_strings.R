@@ -25,6 +25,10 @@ ERROR_PREPROC <<- HTML(paste0(
   "<span style='color: red;'>You should not see this message before moving to analysis!</span><br>"
 ))  # Error shown in the info box upon failed preprocessing
 
+ERROR_NORM_TEST <<- HTML(paste0(
+  "The testing of normalisation failed.<br>This might not necassarily harm your analysis"
+)) 
+
 # --- Error messages Heatmap ---
 ERROR_SEND_GENES_ADD <<- "You only need to change the labels of the rows to portray ENSEMBL IDs ('Choose the label of rows')"
 
@@ -35,3 +39,4 @@ ERROR_NON_ENSEMBL_GENES <<- "Provided gene set must be in ENSEMBL-IDs format"
 ERROR_NO_HEATMAP_GENES <<- "No heatmap genes provided for enrichment analysis"
 ERROR_HEATMAP_IN_APP <<- "Change to 'Heatmap' tab, produce a heatmap and save the genes to use for enrichment analysis via button below the plot."
 ERROR_LFCS_EMPTY <<- "The fold-change calculation returned NULL. Check the compare_within, reference and treatment groups."
+
