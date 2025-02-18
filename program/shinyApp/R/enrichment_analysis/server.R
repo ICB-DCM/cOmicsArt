@@ -136,7 +136,7 @@ enrichment_analysis_geneset_server <- function(
           if(!is.null(session$userData[[paste0(id, "_Report_Val")]])){
             req(input$only2Report > session$userData[[paste0(id, "_Report_Val")]])
           }
-          notificationID <- showNotification(ui = "Saving...",duration = 0)
+          notificationID <- showNotification(ui = "Saving to Report...",duration = 0)
           tmp_filename <- paste0(getwd(),file_path, paste(id,Sys.time(),".png",sep="_"))
           ggsave(
             filename = tmp_filename,
@@ -177,7 +177,7 @@ enrichment_analysis_geneset_server <- function(
             ))
           }
           removeNotification(notificationID)
-          showNotification(ui = "Saved!",type = "message", duration = 1)
+          showNotification(ui = "Report Saved!",type = "message", duration = 1)
         })
       }
     }
