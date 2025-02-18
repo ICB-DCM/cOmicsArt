@@ -288,8 +288,9 @@ server <- function(input,output,session){
     session$sendCustomMessage(type = "resetValue", message = "data_matrix1")
     session$sendCustomMessage(type = "resetValue", message = "data_sample_anno1")
     session$sendCustomMessage(type = "resetValue", message = "data_row_anno1")
+    hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
     output$debug <- renderText({
-      "<b>Cleared data, hence there is nothing to upload. Please select your data or use the Testdata</b>"
+      "<b>Cleared data, hence there is nothing to upload. Please select your data or use the Testdata</b><br>Make sure to click on  'Upload new data' before proceeding to pre-processing"
     })
   })
   
@@ -1038,9 +1039,8 @@ server <- function(input,output,session){
       par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
       omic_type(input[[paste0("omic_type_", uploaded_from())]])
     }
-    
-    req(
-      (isTruthy(input$data_preDone) & uploaded_from() == "precompiled") |
+    # Add check if the data upload fails due to no supply of files
+    if(!((isTruthy(input$data_preDone) & uploaded_from() == "precompiled") |
       # Is File Input used?
       (isTruthy(input$data_matrix1) &
         isTruthy(input$data_sample_anno1) &
@@ -1056,7 +1056,13 @@ server <- function(input,output,session){
       # Is Test Data used?
       (uploaded_from() == "testdata") |
       (uploaded_from() == "VI_data")
-    )
+    )){
+      # if it is not evaluted to TRUE
+      output$debug <- renderText({
+        "<font color=\"#FF0000\"><b>Upload failed, please check your input - Did you specify all files?.</b></font>"
+      })
+      req(FALSE)
+    }
     # initialize empty data_input object
     data_input <- list()
     # upload depending on where the button was clicked
@@ -1225,7 +1231,7 @@ server <- function(input,output,session){
           custom_error[["message"]] <- "Uploading via file input failed"
           error_modal(custom_error)
           output$debug <- renderText({
-            "<font color=\"#FF0000\"><b>Uploading failed</b></font>: The uploaded files could not be put into a SummarizedExperiment. Try the 'Inspect data' button for potential errors."
+            "<font color=\"#FF0000\"><b>Upload failed</b></font>: <br>The uploaded files could not be put into a SummarizedExperiment.<br>Try the 'Inspect data' button for potential errors."
           })
           NULL
         }
