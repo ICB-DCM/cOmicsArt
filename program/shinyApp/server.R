@@ -285,6 +285,12 @@ server <- function(input,output,session){
     reset("data_matrix1")
     reset("data_sample_anno1")
     reset("data_row_anno1")
+    session$sendCustomMessage(type = "resetValue", message = "data_matrix1")
+    session$sendCustomMessage(type = "resetValue", message = "data_sample_anno1")
+    session$sendCustomMessage(type = "resetValue", message = "data_row_anno1")
+    output$debug <- renderText({
+      "<b>Cleared data, hence there is nothing to upload. Please select your data or use the Testdata</b>"
+    })
   })
   
 # Data Upload + checks ----
@@ -1074,6 +1080,9 @@ server <- function(input,output,session){
         reset('data_matrix1')
         reset('data_sample_anno1')
         reset('data_row_anno1')
+        session$sendCustomMessage(type = "resetValue", message = "data_matrix1")
+        session$sendCustomMessage(type = "resetValue", message = "data_sample_anno1")
+        session$sendCustomMessage(type = "resetValue", message = "data_row_anno1")
         return(NULL)
       })
     } else if(uploaded_from() == "metadata"){
@@ -1096,6 +1105,7 @@ server <- function(input,output,session){
             "<font color=\"#FF0000\"><b>Your Sample Names from the Metadata Sheet and from your Matrix do not match!! Data cannot be loaded</b></font>"
           })
           reset('metadataInput')
+          session$sendCustomMessage(type = "resetValue", message = "metadataInput")
           return(NULL)
         })
       }
