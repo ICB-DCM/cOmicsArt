@@ -296,7 +296,7 @@ single_gene_visualisation_server <- function(id){
 
       ## download only to report
       observeEvent(input$only2Report_SingleEntities,{
-        notificationID <- showNotification("Saving...",duration = 0)
+        notificationID <- showNotification("Saving to Report...",duration = 0)
         tmp_filename <- paste0(
           getwd(),
           file_path,
@@ -343,7 +343,7 @@ single_gene_visualisation_server <- function(id){
         fun_LogIt(message = snippet_SingleGene(data = res_tmp[[session$token]],
                                                params = par_tmp[[session$token]]))
         removeNotification(notificationID)
-        showNotification("Saved!",type = "message", duration = 1)
+        showNotification("Report Saved!",type = "message", duration = 1)
       })
     }
   )

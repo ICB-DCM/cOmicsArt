@@ -474,7 +474,7 @@ pca_Server <- function(id){
 
     ## Report generators ----
     observeEvent(input$only2Report_pca, {
-      notificationID <- showNotification("Saving...",duration = 0)
+      notificationID <- showNotification("Saving to Report...",duration = 0)
       pca_report_path <- paste0(getwd(), file_path, "PCA_plot_", Sys.time(), ".png")
       ggsave(
         pca_report_path,
@@ -512,11 +512,11 @@ pca_Server <- function(id){
         params = par_tmp[[session$token]])
       )
       removeNotification(notificationID)
-      showNotification("Saved!",type = "message", duration = 1)
+      showNotification("Report Saved!",type = "message", duration = 1)
     })
 
     observeEvent(input$only2Report_Scree_Plot, {
-      notificationID <- showNotification("Saving...",duration = 0)
+      notificationID <- showNotification("Saving to Report...",duration = 0)
       tmp_filename <- paste0(
         getwd(), file_path, "ScreePlot", Sys.time(), ".png"
       )
@@ -536,11 +536,11 @@ pca_Server <- function(id){
         params = par_tmp[[session$token]])
       )
       removeNotification(notificationID)
-      showNotification("Saved!",type = "message", duration = 1)
+      showNotification("Report Saved!",type = "message", duration = 1)
     })
 
     observeEvent(input$only2Report_Loadings, {
-      notificationID <- showNotification("Saving...",duration = 0)
+      notificationID <- showNotification("Saving to Report...",duration = 0)
       tmp_filename <- paste0(
         getwd(), file_path, "LOADINGS_PCA_", Sys.time(), ".png"
       )
@@ -561,11 +561,11 @@ pca_Server <- function(id){
         params = par_tmp[[session$token]])
       )
       removeNotification(notificationID)
-      showNotification("Saved!",type = "message", duration = 1)
+      showNotification("Report Saved!",type = "message", duration = 1)
     })
 
     observeEvent(input$only2Report_Loadings_matrix,{
-      notificationID <- showNotification("Saving...",duration = 0)
+      notificationID <- showNotification("Saving to Report...",duration = 0)
       tmp_filename <- paste0(
           getwd(), file_path,
           "LOADINGS_Matrix_PCA_", Sys.time(), input$file_ext_Loadings_matrix
@@ -589,7 +589,7 @@ pca_Server <- function(id){
         params = par_tmp[[session$token]])
       )
       removeNotification(notificationID)
-      showNotification("Saved!",type = "message", duration = 1)
+      showNotification("Report Saved!",type = "message", duration = 1)
     })
 
     ## Download Handlers ----

@@ -213,7 +213,7 @@ sample_correlation_server <- function(id){
       
       # send only to report
       observeEvent(input$only2Report_SampleCorrelation,{
-        notificationID <- showNotification("Saving...",duration = 0)
+        notificationID <- showNotification("Saving to Report...",duration = 0)
         tmp_filename <- paste0(
           getwd(),
           "/www/",
@@ -247,7 +247,7 @@ sample_correlation_server <- function(id){
                                                params=par_tmp[[session$token]]))
         
         removeNotification(notificationID)
-        showNotification("Saved!",type = "message", duration = 1)
+        showNotification("Report Saved!",type = "message", duration = 1)
       })
 })
 }
