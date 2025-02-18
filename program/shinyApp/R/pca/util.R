@@ -130,6 +130,7 @@ pca_loadings <- function(
       levels = make.unique(as.character(rowData(data)[rownames(loadings), entitie_anno]))
     )
   }
+  #On purpose no explicit return statement?
   # Return geom_segment layer for adding to plots
   geom_segment(
     data = loadings[loadings$feature != "", ],
@@ -143,4 +144,16 @@ pca_loadings <- function(
     arrow = arrow(type = "closed", unit(0.01, "inches"), ends = "both"),
     color = "#ab0521"
   )
+}
+
+pca_ellipses <- function(
+    plot_ellipses = TRUE
+){
+  # Add ellipses to the PCA plot
+  # Parameters:
+  #   plot_ellipses: bool, whether to plot ellipses
+  # Returns:
+  #   geom_ellipse object to add to the plot | NULL
+  if (!(plot_ellipses)) return(NULL)
+  return(stat_ellipse(level = 0.95, linetype = 2, show.legend = FALSE))
 }
