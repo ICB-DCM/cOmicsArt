@@ -230,9 +230,8 @@ significance_analysis_server <- function(id){
         })
         sig_ana_reactive$sig_results <- sig_results
         # Update res_-/par_tmp
-        # MAYBE TODO: refine the list to be able to store more than one result
         res_tmp[[session$token]]$SigAna[[compare_within]] <<- sig_results
-        par_tmp[[session$token]]$SigAna <<- list(
+        par_list <- list(
           preprocessing = preprocessing,
           comparisons = comparisons,
           compare_within = compare_within,
@@ -240,6 +239,7 @@ significance_analysis_server <- function(id){
           useBatch = useBatch,
           padjust_method = PADJUST_METHOD[[test_correction]]
         )
+        par_tmp[[session$token]]$SigAna[names(par_list)] <<- par_list
 
         ## Tab Management
         contrast_list <- lapply(comparisons, function(comp) unlist(strsplit(comp, ":")))
