@@ -1381,8 +1381,8 @@ server <- function(input,output,session){
     sample_type <- input$providedSampleAnnotationTypes %||% c(colnames(colData(res_tmp[[session$token]]$data_original)))[1]
     row_type <- input$providedRowAnnotationTypes %||% c(colnames(rowData(res_tmp[[session$token]]$data_original)))[1]
     propensity <- input$propensityChoiceUser %||% 1
-    par_tmp[[session$token]][["row_selection"]] <<- row_selection
-    par_tmp[[session$token]][["sample_selection"]] <<- sample_selection
+    par_tmp[[session$token]][["selected_rows"]] <<- row_selection
+    par_tmp[[session$token]][["selected_samples"]] <<- sample_selection
     par_tmp[[session$token]][["row_type"]] <<- row_type
     par_tmp[[session$token]][["sample_type"]] <<- sample_type
     par_tmp[[session$token]]['propensity'] <<- propensity
@@ -1474,15 +1474,15 @@ server <- function(input,output,session){
       preprocess_res <<- preprocessing(
         data = data,
         omic_type = omic_type,
-        procedure = preprocessing_procedure,
+        preprocessing_procedure = preprocessing_procedure,
         deseq_factors = deseq_factors
       )
-      par_tmp[[session$token]]['PreProcessing_Procedure'] <<- preprocessing_procedure
+      par_tmp[[session$token]]['preprocessing_procedure'] <<- preprocessing_procedure
       data <- preprocess_res$data
       if(preprocessing_procedure == "vst_DESeq"){
         res_tmp[[session$token]]$DESeq_obj <<- preprocess_res$DESeq_obj
-        par_tmp[[session$token]]["DESeq_formula"] <<- paste("~", paste(deseq_factors, collapse = " + "))
-        par_tmp[[session$token]]["DESeq_factors"] <<- deseq_factors
+        par_tmp[[session$token]]["deseq_formula"] <<- paste("~", paste(deseq_factors, collapse = " + "))
+        par_tmp[[session$token]]["deseq_factors"] <<- deseq_factors
       }
     }, error = function(e){
       error_modal(e)
@@ -1556,11 +1556,11 @@ server <- function(input,output,session){
 
     output$raw_violin_plot <- renderPlot({
       violin_plot(res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
-                  color_by = input$violin_color)
+                  violin_color = input$violin_color)
       })
     output$preprocessed_violin_plot <- renderPlot({
-      violin_plot(res_tmp[[session$token]]$data, 
-                  color_by = input$violin_color)
+      violin_plot(res_tmp[[session$token]]$data,
+                  violin_color = input$violin_color)
       })
     par_tmp[[session$token]]['violin_color'] <<- input$violin_color
     waiter$hide()
@@ -1637,12 +1637,12 @@ server <- function(input,output,session){
       # Create individual plots
       raw_plot <- violin_plot(
         res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']], par_tmp[[session$token]][['samples_selected']]],
-        color_by = input$violin_color
+        violin_color = input$violin_color
       ) + ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
 
       preprocessed_plot <- violin_plot(
         res_tmp[[session$token]]$data,
-        color_by = input$violin_color
+        violin_color = input$violin_color
       ) + ggtitle("Count distribution per sample - preprocessed")
 
       # Arrange the plots side by side with more space for the right plot
@@ -1676,12 +1676,12 @@ server <- function(input,output,session){
         )
         raw_plot <- violin_plot(
           res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']], par_tmp[[session$token]][['samples_selected']]],
-          color_by = input$violin_color
+          violin_color = input$violin_color
         ) + ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
 
         preprocessed_plot <- violin_plot(
           res_tmp[[session$token]]$data,
-          color_by = input$violin_color
+          violin_color = input$violin_color
         ) + ggtitle("Count distribution per sample - preprocessed")
 
         # Arrange the plots side by side with more space for the right plot
@@ -1724,12 +1724,12 @@ server <- function(input,output,session){
     )
     raw_plot <- violin_plot(
       res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']], par_tmp[[session$token]][['samples_selected']]],
-      color_by = input$violin_color
+      violin_color = input$violin_color
     ) + ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
 
     preprocessed_plot <- violin_plot(
       res_tmp[[session$token]]$data,
-      color_by = input$violin_color
+      violin_color = input$violin_color
     ) + ggtitle("Count distribution per sample - preprocessed")
 
     # Arrange the plots side by side with more space for the right plot
@@ -1770,18 +1770,26 @@ server <- function(input,output,session){
       )
       waiter$show()
       envList <- list(
-        res_tmp = res_tmp[[session$token]],
         par_tmp = par_tmp[[session$token]]
       )
       temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
       dir.create(temp_directory)
+      # save csv files
+      save_summarized_experiment(
+        res_tmp[[session$token]]$data_original,
+        temp_directory
+      )
 
       write(
-        getPlotCode(0.5),
+        create_workflow_script(
+          pipeline_info = VIOLIN_PLOT_PIPELINE,
+          par = par_tmp[[session$token]],
+          path_to_util = file.path(temp_directory, "util.R")
+        ),
         file.path(temp_directory, "Code.R")
       )
 
-      saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+      saveRDS(envList, file.path(temp_directory, "Data.rds"))
 
       zip::zip(
         zipfile = file,

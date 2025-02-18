@@ -209,14 +209,13 @@ if(format(Sys.Date(), "%d") == "01"){
 
 
 # Define the ggplotcustom theme
-CUSTOM_THEME <<- theme_bw(base_size = 15) + 
-  theme(
-    axis.title = element_text(size = 15),        # Axis labels
-    axis.text = element_text(size = 15),         # Axis tick labels
-    legend.text = element_text(size = 15),       # Legend text
-    legend.title = element_text(size = 15),      # Legend title
-    plot.title = element_text(size = 17, face = "bold")  # Plot title
-  )
+CUSTOM_THEME <<- theme_bw(base_size = 15) +  theme(
+  axis.title = element_text(size = 15),        # Axis labels
+  axis.text = element_text(size = 15),         # Axis tick labels
+  legend.text = element_text(size = 15),       # Legend text
+  legend.title = element_text(size = 15),      # Legend title
+  plot.title = element_text(size = 17, face = "bold")  # Plot title
+)
 
 # Saving Functions for non ggplots, names list with functions
 SAVE_FUNCTION <<- list(

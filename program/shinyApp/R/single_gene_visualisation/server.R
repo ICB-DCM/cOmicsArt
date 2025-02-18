@@ -160,15 +160,15 @@ single_gene_visualisation_server <- function(id){
             data = data,
             selected_type = selected_type,
             selected_gene = selected_gene,
-            groupy_by = group_by,
+            group_by = group_by,
             post_selection_check = post_selection_check
           )
         }, error = function(e){
           error_modal(e$message)
         })
         single_gene_reactives$gene_data <- gene_data
-        res_tmp[[session$token]]$SingleGeneVis <- gene_data
-        par_tmp[[session$token]]$SingleGeneVis <- list(
+        res_tmp[[session$token]]$SingleGeneVis <<- gene_data
+        par_tmp[[session$token]]$SingleGeneVis <<- list(
           selected_gene = selected_gene,
           selected_type = selected_type,
           group_by = group_by,
@@ -198,10 +198,8 @@ single_gene_visualisation_server <- function(id){
         # check that plot is valid, needed to align asynchronus calls due to both triggers
         req(ready_to_plot(gene_data, add_testing, comparisons))
         data_note <- "Data collected!"
-        plot_boxplots <- TRUE
-        if(all(table(gene_data$anno)<3)){
+        if(all(table(gene_data$annotation)<3)){
           data_note <- "Note, that you only see boxplots if you have more than 3 samples per group."
-          plot_boxplots <- FALSE
         }
         if(add_testing){
           data_note <- paste(
@@ -218,65 +216,56 @@ single_gene_visualisation_server <- function(id){
             sep = "\n"
           )
         }
-        # Understandable names for the processing
-        data_types <- list(
-          "data_original" = "Raw Data",
-          "data" = "Pre-processed Data",
-          "data_batch_corrected" = "Batch Corrected Data"
-        )
 
-
-        # boxplot layer
-        boxplot_layer <- NULL
-        if(plot_boxplots){boxplot_layer <- geom_boxplot(alpha = 0.5)}
         # Make graphics
-        P_boxplots <- ggplot(
-          gene_data,
-          aes(
-            x=annotation,
-            y=gene_data[,-ncol(gene_data)],
-            fill=annotation
-          )
-        ) +
-          ggtitle(selected_gene) +
-          geom_point(shape = 21, size=5)+
-          scale_fill_brewer(palette="RdBu") +
-          xlab(comparisons) +
-          ylab(data_types[[data_process_stage]]) +
-          CUSTOM_THEME +
-          boxplot_layer +
-          maybe_add_test(gene_data, add_testing, comparisons)
+        P_boxplots <- single_gene_boxplot(
+          gene_data = gene_data,
+          add_testing = add_testing,
+          comparisons = comparisons,
+          selected_gene = selected_gene,
+          data_process_stage = data_process_stage
+        )
         # assign reactive values
         single_gene_reactives$info_text <- data_note
         single_gene_reactives$plot <- P_boxplots
         # assign par_tmp
-        par_tmp[[session$token]]$SingleGeneVis$comparisons <- comparisons
-        par_tmp[[session$token]]$SingleGeneVis$add_testing <- add_testing
+        par_tmp[[session$token]]$SingleGeneVis$comparisons <<- comparisons
+        par_tmp[[session$token]]$SingleGeneVis$add_testing <<- add_testing
       })
 
       ## Download R code and data
       # TODO: needs fixing with scenario
-      output$getR_Code_SingleEntities <- downloadHandler(
-        filename = function(){
-          paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
-        },
-        content = function(file){
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
-          waiter$show()
-          envList <- list(
-            res_tmp = res_tmp[[session$token]],
-            par_tmp = par_tmp[[session$token]]
-          )
+      output$getR_Code_SingleEntities <- downloadHandler(filename = function(){
+        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      }, content = function(file){
+        waiter <- Waiter$new(
+          html = LOADING_SCREEN,
+          color = "#3897F147",
+          hide_on_render = FALSE
+        )
+        waiter$show()
+        envList <- list(
+          par_tmp = par_tmp[[session$token]]
+        )
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+        # save csv files
+        save_summarized_experiment(
+          res_tmp[[session$token]]$data_original,
+          temp_directory
+        )
 
+        write(
+          create_workflow_script(
+            pipeline_info = SINGLE_GENE_VISUALISATION_PIPELINE,
+            par = par_tmp[[session$token]],
+            par_mem = "SingleGeneVis",
+            path_to_util = file.path(temp_directory, "util.R")
+          ),
+          file.path(temp_directory, "Code.R")
+        )
 
-          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-          dir.create(temp_directory)
-          write(getPlotCode(boxplot_scenario), file.path(temp_directory, "Code.R"))
-          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+        saveRDS(envList, file.path(temp_directory, "Data.rds"))
           zip::zip(
             zipfile = file,
             files = dir(temp_directory),

@@ -130,7 +130,7 @@ for e.g. a statistical analysis will look like this:
 # get the results
 res2plot <- list()
 
-if(par_tmp$PreProcessing_Procedure == "vst_DESeq"){
+if(par_tmp$preprocessing_procedure == "vst_DESeq"){
   dds <- res_tmp$DESeq_obj
   
   # rewind the comparisons again
