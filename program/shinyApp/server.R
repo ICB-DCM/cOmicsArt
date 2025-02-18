@@ -1002,7 +1002,19 @@ server <- function(input,output,session){
         timerProgressBar = T
       )
       output$debug <- renderText({
-        "<font color=\"#00851d\"><b>Upload successful</b></font>"
+        paste0(
+        "<font color=\"#00851d\"><b>Upload successful</b></font>",
+        "<br>",ifelse(uploaded_from()=="file_input", paste0("The following data files are uploaded to cOmicsArt:",
+                                                           "<br>Data Matrix: ", input$data_matrix1$name,
+                                                           "<br>Sample Annotation: ", input$data_sample_anno1$name,
+                                                           "<br>Entitie Annotation: ", input$data_row_anno1$name),""),
+        "<br>",ifelse(uploaded_from()=="metadata", paste0("The following data files are uploaded to cOmicsArt:",
+                                                           "<br>Data Matrix: ", input$data_matrix_metadata$name,
+                                                           "<br>Sample Annotation: ", input$metadataInput$name,
+                                                           "<br>Entitie Annotation: ", input$data_row_anno_metadata$name),""),
+        "<br>",ifelse(uploaded_from()=="precompiled", paste0("The following data files are uploaded to cOmicsArt:",
+                                                           "<br>Precompiled Data: ", input$data_preDone$name),"")
+        )
       })
       if(isTruthy(input$data_preDone)){
         # precomplied set used
