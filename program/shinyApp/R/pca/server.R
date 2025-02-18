@@ -502,7 +502,9 @@ pca_Server <- function(id){
         fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
         fun_LogIt(message = paste0(
           "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
-          input$NotesPCA,
+          shiny::markdown("### Notes"),
+          shiny::markdown(input$NotesPCA),
+          NOTES_ADDITIONAL,
           "</div>"
         ))
       }
