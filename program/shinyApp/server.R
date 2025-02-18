@@ -330,7 +330,17 @@ server <- function(input,output,session){
       output$testdata_help_text <- renderUI({
         HTML(EXAMPLE_RNA_DESCRIPTION)
       })
-      }
+    }
+    if(input$omic_type_testdata == "Metabolomics"){
+      output$testdata_help_text <- renderUI({
+        HTML(EXAMPLE_METABO_DESCRIPTION)
+      })
+    }
+    if(input$omic_type_testdata == "Lipidomics"){
+      output$testdata_help_text <- renderUI({
+        HTML(EXAMPLE_LIPID_DESCRIPTION)
+      })
+    }
     })
   
   observeEvent(input$AddGeneSymbols, {
@@ -1159,9 +1169,23 @@ server <- function(input,output,session){
       
       
     } else if(uploaded_from() == "testdata"){
-      data_input <- readRDS(
-        file = "www/Transcriptomics_only_precompiled-LS.RDS"
-      )
+      browser()
+      if(input$omic_type_testdata=="Transcriptomics"){
+        data_input <- readRDS(
+          file = "www/Transcriptomics_only_precompiled-LS.RDS"
+        )
+      }
+      if(input$omic_type_testdata =="Lipidomics"){
+        data_input <- readRDS(
+          file = "www/Lipidomics_only_precompiled-LS.RDS"
+        )
+      }
+      if(input$omic_type_testdata =="Metabolomics"){
+        data_input <- readRDS(
+          file = "www/Metabolomics_only_precompiled-LS.RDS"
+        )
+      }
+
       fun_LogIt(
         message = paste0("<font color=\"#FF0000\"><b>**Attention** - Test Data set used</b></font>")
       )
@@ -1190,6 +1214,7 @@ server <- function(input,output,session){
       })
       return(NULL)
     }
+    browser()
 
     if(!any(class(data_input) == "SummarizedExperiment") & !any(grepl('SumExp',names(data_input))) ){
       summarized_experiment <- tryCatch(
