@@ -64,6 +64,20 @@ violin_plot_info <<- list(
   to_util = FALSE,
   plot_name = "plot2return"
 )
+plot_mean_sd_plot_info <<- list(
+  foo = function(data){
+    mean_and_sd_plot <- vsn::meanSdPlot(as.matrix(assay(data)), plot=FALSE)$gg +
+      CUSTOM_THEME +
+      ggtitle("Mean and SD per entity")
+    return(mean_and_sd_plot)
+  },
+  name = "plot_mean_sd_plot",
+  input_mapping = list(
+    data = "data"
+  ),
+  to_util = FALSE,
+  plot_name = "mean_and_sd_plot"
+)
 
 # --- Sample Correlation ---
 get_sample_correlation_info <<- list(

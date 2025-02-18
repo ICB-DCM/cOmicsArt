@@ -6,6 +6,9 @@ VIOLIN_PLOT_PIPELINE <<- list(
   violin_plot_info,
   violin_plot_raw_info
 )
+MEAN_SD_PLOT_PIPELINE <<- list(
+  plot_mean_sd_plot_info
+)
 
 # --- Sample Correlation ---
 SAMPLE_CORRELATION_PIPELINE <<- list(

@@ -281,11 +281,27 @@ server <- function(input,output,session){
   })
   
 # Data Upload + checks ----
-  print("Data Upload")
+
+## Plots
+  output$raw_violin_plot <- renderPlot({
+    req(react_violin_plot_raw())
+    react_violin_plot_raw()
+  })
+  output$preprocessed_violin_plot <- renderPlot({
+    req(react_violin_plot())
+    react_violin_plot()
+  })
+  output$mean_sd_plot <- renderPlot({
+    req(react_mean_sd_plot())
+    react_mean_sd_plot()
+  })
 
 ## Set reactiveVals ----
   uploaded_from <- reactiveVal(NULL)
   omic_type <- reactiveVal(NULL)
+  react_violin_plot <- reactiveVal(NULL)
+  react_violin_plot_raw <- reactiveVal(NULL)
+  react_mean_sd_plot <- reactiveVal(NULL)
 
   output$SaveInputAsList <- downloadHandler(
    filename = function() {
@@ -1713,14 +1729,16 @@ server <- function(input,output,session){
       timerProgressBar = T
     )
 
-    output$raw_violin_plot <- renderPlot({
-      violin_plot(res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
-                  violin_color = input$violin_color)
-      })
-    output$preprocessed_violin_plot <- renderPlot({
-      violin_plot(res_tmp[[session$token]]$data,
-                  violin_color = input$violin_color)
-      })
+    react_violin_plot(violin_plot(
+      data = data,
+      violin_color = input$violin_color
+    ))
+    react_violin_plot_raw(violin_plot(
+      data = res_tmp[[session$token]]$data_original[rows_selected, samples_selected],
+      violin_color = input$violin_color
+    ))
+    mean_and_obj <- vsn::meanSdPlot(as.matrix(assay(data)), plot=FALSE)
+    react_mean_sd_plot(mean_and_obj$gg + CUSTOM_THEME + ggtitle("Mean and SD per entity"))
     par_tmp[[session$token]]['violin_color'] <<- input$violin_color
     waiter$hide()
     return("Pre-Processing successfully")
@@ -1794,15 +1812,11 @@ server <- function(input,output,session){
     },
     content = function(file) {
       # Create individual plots
-      raw_plot <- violin_plot(
-        res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']], par_tmp[[session$token]][['samples_selected']]],
-        violin_color = input$violin_color
-      ) + ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
+      raw_plot <- react_violin_plot_raw() +
+        ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
 
-      preprocessed_plot <- violin_plot(
-        res_tmp[[session$token]]$data,
-        violin_color = input$violin_color
-      ) + ggtitle("Count distribution per sample - preprocessed")
+      preprocessed_plot <- react_violin_plot() +
+        ggtitle("Count distribution per sample - preprocessed")
 
       # Arrange the plots side by side with more space for the right plot
       combined_plot <- grid.arrange(
@@ -1821,52 +1835,7 @@ server <- function(input,output,session){
         units = "in",
         device = gsub("\\.","",input$file_ext_Preprocess)
       )
-
-      on.exit({
-        file_path <- paste0("/www/",session$token,"/")
-        tmp_filename <- paste0(
-          getwd(),
-          file_path,
-          paste0(
-            "Preprocessing_ViolinPlot_",
-            format(Sys.time(), "%Y_%m_%d_%H_%M_%S"),
-            input$file_ext_Preprocess
-          )
-        )
-        raw_plot <- violin_plot(
-          res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']], par_tmp[[session$token]][['samples_selected']]],
-          violin_color = input$violin_color
-        ) + ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
-
-        preprocessed_plot <- violin_plot(
-          res_tmp[[session$token]]$data,
-          violin_color = input$violin_color
-        ) + ggtitle("Count distribution per sample - preprocessed")
-
-        # Arrange the plots side by side with more space for the right plot
-        combined_plot <- grid.arrange(
-          raw_plot,
-          preprocessed_plot,
-          ncol = 2,
-          widths = c(1, 1.3)
-        )
-        ggsave(
-          filename = tmp_filename,
-          plot = combined_plot,
-          width = 16,  # Increase the width of the figure
-          height = 8,  # Adjust height if necessary
-          units = "in",
-          device = gsub("\\.","",input$file_ext_Preprocess)
-        )
-
-        fun_LogIt(message = "## PreProcessing Violin Plot{.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
-        fun_LogIt(message = paste0("**PreProcess** - The Samples were plotted after: ",input$violin_color))
-        fun_LogIt(
-          message = paste0("**PreProcess** - ![Violin Plot](",tmp_filename,")")
-        )
-        # no publication snippet as thats already in the log
-      })
+      on.exit({shinyjs::click("only2Report_Preprocess")})
     }
   )
 
@@ -1881,15 +1850,11 @@ server <- function(input,output,session){
         input$file_ext_Preprocess
       )
     )
-    raw_plot <- violin_plot(
-      res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']], par_tmp[[session$token]][['samples_selected']]],
-      violin_color = input$violin_color
-    ) + ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
+    raw_plot <- react_violin_plot_raw() +
+      ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
 
-    preprocessed_plot <- violin_plot(
-      res_tmp[[session$token]]$data,
-      violin_color = input$violin_color
-    ) + ggtitle("Count distribution per sample - preprocessed")
+    preprocessed_plot <- react_violin_plot() +
+      ggtitle("Count distribution per sample - preprocessed")
 
     # Arrange the plots side by side with more space for the right plot
     combined_plot <- grid.arrange(
@@ -1942,6 +1907,96 @@ server <- function(input,output,session){
       write(
         create_workflow_script(
           pipeline_info = VIOLIN_PLOT_PIPELINE,
+          par = par_tmp[[session$token]],
+          path_to_util = file.path(temp_directory, "util.R")
+        ),
+        file.path(temp_directory, "Code.R")
+      )
+
+      saveRDS(envList, file.path(temp_directory, "Data.rds"))
+
+      zip::zip(
+        zipfile = file,
+        files = dir(temp_directory),
+        root = temp_directory
+      )
+      waiter$hide()
+    },
+    contentType = "application/zip"
+  )
+  output$SavePlot_mean_sd_plot <- downloadHandler(
+    filename = function() {
+      paste0("Preprocessing_mean_sd_plot_", Sys.Date(), input$file_type_mean_sd_plot)
+    },
+    content = function(file) {
+      # Save the combined plot
+      ggsave(
+        filename = file,
+        plot = react_mean_sd_plot(),
+        width = 16,  # Increase the width of the figure
+        height = 8,  # Adjust height if necessary
+        units = "in",
+        device = gsub("\\.","",input$file_type_mean_sd_plot)
+      )
+      on.exit({shinyjs::click("only2Report_mean_sd_plot")})
+    }
+  )
+
+  observeEvent(input$only2Report_mean_sd_plot,{
+    notificationID <- showNotification("Saving to Report...",duration = 0)
+    tmp_filename <- paste0(
+      getwd(),
+      file_path,
+      paste0(
+        "Preprocessing_mean_sd_plot_",
+        format(Sys.time(), "%Y_%m_%d_%H_%M_%S"),
+        input$file_type_mean_sd_plot
+      )
+    )
+    ggsave(
+      filename = tmp_filename,
+      plot = react_mean_sd_plot(),
+      width = 16,  # Increase the width of the figure
+      height = 8,  # Adjust height if necessary
+      units = "in",
+      device = gsub("\\.","",input$file_type_mean_sd_plot)
+    )
+    fun_LogIt(message = "## PreProcessing Mean and SD Plot{.tabset .tabset-fade}")
+    fun_LogIt(message = "### Info")
+    fun_LogIt(message = "The means of the preprocessed data are plotted agains their standard deviation to check for heteroskedasticity.")
+    fun_LogIt(
+      message = paste0("**PreProcess** - ![Mean and SD Plot](",tmp_filename,")")
+    )
+    # no publication snippet as thats already in the log
+    removeNotification(notificationID)
+    showNotification("Saved!",type = "message", duration = 1)
+  })
+
+  output$getR_Code_mean_sd_plot <- downloadHandler(
+    filename = function() {
+      paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+    },
+    content = function(file) {
+      waiter <- Waiter$new(
+        html = LOADING_SCREEN,
+        color = "#3897F147",
+        hide_on_render = FALSE
+      )
+      waiter$show()
+      envList <- list(
+        par_tmp = par_tmp[[session$token]]
+      )
+      temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+      dir.create(temp_directory)
+      # save csv files
+      save_summarized_experiment(
+        res_tmp[[session$token]]$data_original,
+        temp_directory
+      )
+
+      write(
+        create_workflow_script(
+          pipeline_info = MEAN_SD_PLOT_PIPELINE,
           par = par_tmp[[session$token]],
           path_to_util = file.path(temp_directory, "util.R")
         ),
