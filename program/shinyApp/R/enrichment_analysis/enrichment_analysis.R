@@ -3,7 +3,7 @@ gene_set_enrichment <- function(
   geneSetChoice,
   data,
   enrichments2do,
-  adjustMethod
+  test_correction
 ){
   # assign the correct names to geneSetChoice
   names(geneSetChoice) <- rowData(data)[["entrezgene_id"]]
@@ -59,7 +59,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -73,7 +73,7 @@ gene_set_enrichment <- function(
       pvalueCutoff = 0.05,
       verbose = TRUE,
       OrgDb = ifelse(organism == "Human genes (GRCh38.p14)","org.Hs.eg.db","org.Mm.eg.db"),
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]]
+      pAdjustMethod = test_correction
     )
   }
   # Hallmarks
@@ -87,7 +87,7 @@ gene_set_enrichment <- function(
       TERM2GENE  =  Hallmarkset,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -102,7 +102,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C1set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -117,7 +117,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C2set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -132,7 +132,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C3set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -147,7 +147,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C4set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -162,7 +162,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C5set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -177,7 +177,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C6set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -192,7 +192,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -207,7 +207,7 @@ gene_set_enrichment <- function(
       TERM2GENE = C8set,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -223,7 +223,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -239,7 +239,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -255,7 +255,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -271,7 +271,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -287,7 +287,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -303,7 +303,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -319,7 +319,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -335,7 +335,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -351,7 +351,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -367,7 +367,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -383,7 +383,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -399,7 +399,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -415,7 +415,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -431,7 +431,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -447,7 +447,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -463,7 +463,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -479,7 +479,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }
@@ -495,7 +495,7 @@ gene_set_enrichment <- function(
       TERM2GENE = genesets4ea,
       verbose = FALSE,
       eps = 0,
-      pAdjustMethod = PADJUST_METHOD[[adjustMethod]],
+      pAdjustMethod = test_correction,
       pvalueCutoff = 1
     )
   }

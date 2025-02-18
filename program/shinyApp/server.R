@@ -1381,8 +1381,8 @@ server <- function(input,output,session){
     sample_type <- input$providedSampleAnnotationTypes %||% c(colnames(colData(res_tmp[[session$token]]$data_original)))[1]
     row_type <- input$providedRowAnnotationTypes %||% c(colnames(rowData(res_tmp[[session$token]]$data_original)))[1]
     propensity <- input$propensityChoiceUser %||% 1
-    par_tmp[[session$token]][["row_selection"]] <<- row_selection
-    par_tmp[[session$token]][["sample_selection"]] <<- sample_selection
+    par_tmp[[session$token]][["selected_rows"]] <<- row_selection
+    par_tmp[[session$token]][["selected_samples"]] <<- sample_selection
     par_tmp[[session$token]][["row_type"]] <<- row_type
     par_tmp[[session$token]][["sample_type"]] <<- sample_type
     par_tmp[[session$token]]['propensity'] <<- propensity
@@ -1418,12 +1418,12 @@ server <- function(input,output,session){
                                                "TMM" = "TMM"),
                            "Log-Based" = c("log10" = "log10", "log2" = "log2", "Natural logarithm" = "ln"),
                            "Miscellaneous" = c("Pareto scaling" = "pareto_scaling",
-                                               "Centering & Scaling" = "simpleCenterScaling", 
+                                               "Centering & Scaling" = "simpleCenterScaling",
                                                "Scaling 0-1" = "Scaling_0_1")
     )
     tagList(
     if(!any(choices_list %in% c("none","filterOnly","filterPerSample"))){
-      div(style = "margin-left: 15px;", 
+      div(style = "margin-left: 15px;",
           selectInput(
             inputId = "PreProcessing_Procedure_filtering",
             label = "Choose Filtering",
@@ -1434,7 +1434,7 @@ server <- function(input,output,session){
           )
       )
     },
-    div(style = "margin-left: 15px;", 
+    div(style = "margin-left: 15px;",
       selectInput(
         inputId = "PreProcessing_Procedure",
         label = "Choose Processing Option",
@@ -1457,7 +1457,7 @@ server <- function(input,output,session){
     }
     if (input$PreProcessing_Procedure == "filterOnly" | addFilter == "filterOnly") {
       tagList(
-        div(style = "margin-left: 30px;",  
+        div(style = "margin-left: 30px;",
           numericInput(
             inputId = "filter_threshold",
             label = "Specifcy the minimum sum of counts/concentration accross all samples for an entitie to be kept in the analysis.",
@@ -1468,7 +1468,7 @@ server <- function(input,output,session){
       )
     }else if (input$PreProcessing_Procedure == "filterPerSample" | addFilter == "filterPerSample"){
       tagList(
-        div(style = "margin-left: 30px;",  
+        div(style = "margin-left: 30px;",
         numericInput(
             inputId = "filter_threshold_samplewise",
             label = "Specifcy theFiltering threshold of counts/concentration for an entitie",
@@ -1488,7 +1488,7 @@ server <- function(input,output,session){
       )
     }
   })
-  
+
   # Update the batch effect UI based on the available columns
   output$batch_effect_ui <- renderUI({
     req(data_input_shiny())
@@ -1510,7 +1510,7 @@ server <- function(input,output,session){
     req(data_input_shiny())
     req(input$PreProcessing_Procedure)
     if(input$PreProcessing_Procedure == "vst_DESeq"){
-      div(style = "margin-left: 30px;",  
+      div(style = "margin-left: 30px;",
         selectInput(
           inputId = "DESeq_formula_sub",
           label = paste0(
@@ -1579,23 +1579,23 @@ server <- function(input,output,session){
     data <- res_tmp[[session$token]]$data_original[rows_selected,samples_selected]
     data_selected <- data  # needed for batch correction with DESeq
     par_tmp[[session$token]]['BatchColumn'] <<- batch_column
-    
+
     par_tmp[[session$token]]['preprocessing_filtering'] <<- preprocessing_filtering
     par_tmp[[session$token]]['filter_threshold'] <<- filter_threshold
     par_tmp[[session$token]]['filter_threshold_samplewise'] <<- filter_threshold_samplewise
     par_tmp[[session$token]]['filter_samplesize'] <<- filter_samplesize
     par_tmp[[session$token]]['limma_intercept'] <<- limma_intercept
     par_tmp[[session$token]]['limma_formula'] <<- limma_formula
-    
+
     # preprocessing
     print(paste0("Do chosen Preprocessing:",preprocessing_procedure))
-
+    
     # Check for DESeq option if more than 100 genes avail as it is for omics!
     tryCatch({
       preprocess_res <<- preprocessing(
         data = data,
         omic_type = omic_type,
-        procedure = preprocessing_procedure,
+        preprocessing_procedure = preprocessing_procedure,
         preprocessing_filtering = preprocessing_filtering,
         deseq_factors = deseq_factors,
         filter_threshold = filter_threshold,
@@ -1604,14 +1604,13 @@ server <- function(input,output,session){
         limma_intercept = limma_intercept,
         limma_formula = limma_formula
       )
-      par_tmp[[session$token]]['PreProcessing_Procedure'] <<- preprocessing_procedure
+      par_tmp[[session$token]]['preprocessing_procedure'] <<- preprocessing_procedure
       data <- preprocess_res$data
       if(preprocessing_procedure == "vst_DESeq"){
         res_tmp[[session$token]]$DESeq_obj <<- preprocess_res$DESeq_obj
-        par_tmp[[session$token]]["DESeq_formula"] <<- paste("~", paste(deseq_factors, collapse = " + "))
-        par_tmp[[session$token]]["DESeq_factors"] <<- deseq_factors
+        par_tmp[[session$token]]["deseq_formula"] <<- paste("~", paste(deseq_factors, collapse = " + "))
+        par_tmp[[session$token]]["deseq_factors"] <<- deseq_factors
       }
-      
     }, error = function(e){
       error_modal(e)
       output$Statisitcs_Data <- renderText({ERROR_PREPROC})
@@ -1631,7 +1630,7 @@ server <- function(input,output,session){
       waiter$hide()
       req(FALSE)
     }
-    
+
     addWarning <- create_warning_preproc(data, preprocessing_procedure)
     data <- data[complete.cases(assay(data)),]
 
@@ -1666,7 +1665,7 @@ server <- function(input,output,session){
     tryCatch({
       norm_res <- add_normality_test(data)
       rowData(data) <- cbind(rowData(data), norm_res[rownames(data),c("p_value_shapiro","p_adjusted_shapiro_FDR")])
-      normality_test_stat <- 
+      normality_test_stat <-
         paste0(
           "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
           "<br>Number of genes with p-value < 0.05: ",length(which(norm_res$p_value_shapiro < 0.05)), "/",nrow(data),
@@ -1680,7 +1679,7 @@ server <- function(input,output,session){
       waiter$hide()
       req(FALSE)
     })
-    
+
     # assign res_tmp finally
     res_tmp[[session$token]]$data <<- data
 
@@ -1716,11 +1715,11 @@ server <- function(input,output,session){
 
     output$raw_violin_plot <- renderPlot({
       violin_plot(res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
-                  color_by = input$violin_color)
+                  violin_color = input$violin_color)
       })
     output$preprocessed_violin_plot <- renderPlot({
-      violin_plot(res_tmp[[session$token]]$data, 
-                  color_by = input$violin_color)
+      violin_plot(res_tmp[[session$token]]$data,
+                  violin_color = input$violin_color)
       })
     par_tmp[[session$token]]['violin_color'] <<- input$violin_color
     waiter$hide()
@@ -1797,12 +1796,12 @@ server <- function(input,output,session){
       # Create individual plots
       raw_plot <- violin_plot(
         res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']], par_tmp[[session$token]][['samples_selected']]],
-        color_by = input$violin_color
+        violin_color = input$violin_color
       ) + ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
 
       preprocessed_plot <- violin_plot(
         res_tmp[[session$token]]$data,
-        color_by = input$violin_color
+        violin_color = input$violin_color
       ) + ggtitle("Count distribution per sample - preprocessed")
 
       # Arrange the plots side by side with more space for the right plot
@@ -1836,12 +1835,12 @@ server <- function(input,output,session){
         )
         raw_plot <- violin_plot(
           res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']], par_tmp[[session$token]][['samples_selected']]],
-          color_by = input$violin_color
+          violin_color = input$violin_color
         ) + ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
 
         preprocessed_plot <- violin_plot(
           res_tmp[[session$token]]$data,
-          color_by = input$violin_color
+          violin_color = input$violin_color
         ) + ggtitle("Count distribution per sample - preprocessed")
 
         # Arrange the plots side by side with more space for the right plot
@@ -1884,12 +1883,12 @@ server <- function(input,output,session){
     )
     raw_plot <- violin_plot(
       res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']], par_tmp[[session$token]][['samples_selected']]],
-      color_by = input$violin_color
+      violin_color = input$violin_color
     ) + ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
 
     preprocessed_plot <- violin_plot(
       res_tmp[[session$token]]$data,
-      color_by = input$violin_color
+      violin_color = input$violin_color
     ) + ggtitle("Count distribution per sample - preprocessed")
 
     # Arrange the plots side by side with more space for the right plot
@@ -1930,18 +1929,26 @@ server <- function(input,output,session){
       )
       waiter$show()
       envList <- list(
-        res_tmp = res_tmp[[session$token]],
         par_tmp = par_tmp[[session$token]]
       )
       temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
       dir.create(temp_directory)
+      # save csv files
+      save_summarized_experiment(
+        res_tmp[[session$token]]$data_original,
+        temp_directory
+      )
 
       write(
-        getPlotCode(0.5),
+        create_workflow_script(
+          pipeline_info = VIOLIN_PLOT_PIPELINE,
+          par = par_tmp[[session$token]],
+          path_to_util = file.path(temp_directory, "util.R")
+        ),
         file.path(temp_directory, "Code.R")
       )
 
-      saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+      saveRDS(envList, file.path(temp_directory, "Data.rds"))
 
       zip::zip(
         zipfile = file,

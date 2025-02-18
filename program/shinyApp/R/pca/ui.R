@@ -54,7 +54,7 @@ pca_sidebar_panel <- function(ns){
       # direction = "horizontal",
       selected = FALSE
     ),
-    helpText("Note: if you would like to change the annotation of the indicated loading vectors please select an option the the tab Loadings"),
+    uiOutput(outputId = ns("entitie_anno_ui")),
     hr(style = "border-top: 1px dashed #000000;"),
     # hidden Button to refresh the UI
     hidden(actionButton(
@@ -138,7 +138,6 @@ pca_main_panel <- function(ns){
             plotlyOutput(outputId = ns("PCA_Loadings_plot")),
             textOutput(outputId = ns("Loadings_plot_Options_selected_out"), container = pre)
           ),
-          uiOutput(outputId = ns("EntitieAnno_Loadings_ui")),
           sliderInput(
             inputId = ns("topSlider"),
             label = "Top k positive Loadings",
@@ -206,7 +205,6 @@ pca_main_panel <- function(ns){
             NULL
             #textOutput(outputId = ns("Loadings_plot_Options_selected_out"), container = pre)
           ),
-          uiOutput(outputId = ns("EntitieAnno_Loadings_matrix_ui")),
           uiOutput(outputId = ns("nPCAs_to_look_at_ui")),
   
           sliderInput(

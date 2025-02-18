@@ -52,20 +52,10 @@ sample_correlation_server <- function(id){
         req(selectedData_processed())
         req(sample_corr_reactive$corr_plot)
         data <- update_data(session$token)
-        annotationDF <- as.data.frame(colData(data$data)[,input$SampleAnnotationChoice,drop = F])
-        annotation_colors <- assign_colors_SampleCorr(annotationDF)
+        # Create row annotations separately
+        sample_corr_reactive$row_anno <- custom_sample_annotation(data$data, input$SampleAnnotationChoice)
         # update par_tmp
         par_tmp[[session$token]][["SampleCorrelation"]]$sample_annotations <<- input$SampleAnnotationChoice
-        # Create row annotations separately
-        sample_corr_reactive$row_anno <- rowAnnotation(
-          df = annotationDF, col = annotation_colors,
-          # Parameters to mimick CUSTOM_THEME
-          annotation_name_gp = gpar(fontsize = 15),
-          annotation_legend_param = list(
-            title_gp = gpar(fontsize = 15, fontface = "bold"),
-            labels_gp = gpar(fontsize = 15)
-          )
-        )
       })
       
       # Do sample correlation plot
@@ -85,7 +75,7 @@ sample_correlation_server <- function(id){
         sample_annotations <- input$SampleAnnotationChoice
         correlation_method <- input$corrMethod
         customTitleSampleCorrelation <- create_default_title_sc(
-          correlation_method, par_tmp[[session$token]]$PreProcessing_Procedure
+          correlation_method, par_tmp[[session$token]]$preprocessing_procedure
         )
         data <- update_data(session$token)
         if(useBatch){
@@ -98,7 +88,7 @@ sample_correlation_server <- function(id){
         # check whether we need to recompute the correlation matrix
         check <- check_calculations(
           list(
-            corrMethod = correlation_method,
+            correlation_method = correlation_method,
             data_updated = shiny::isolate(sample_corr_reactive$data_updated),
             sample_annotations = sample_annotations
           ),
@@ -108,15 +98,10 @@ sample_correlation_server <- function(id){
         # for safety measures, wrap in tryCatch
         if (check) {
           cormat <- res_tmp[[session$token]]$SampleCorrelation
-          annotationDF <- as.data.frame(colData(data)[,sample_annotations,drop = F])
-          annotation_colors <- assign_colors_SampleCorr(annotationDF)
           sample_corr_reactive$info_text <- "Correlation Matrix was already computed, no need to click the Button again."
         } else {  # needs computation
           tryCatch({
-            res <- get_sample_correlation(data, correlation_method, sample_annotations)
-            cormat <- res$cormat
-            annotationDF <- res$annotationDF
-            annotation_colors <- res$annotation_colors
+            cormat <- get_sample_correlation(data, correlation_method)
             sample_corr_reactive$info_text <- "Correlation Matrix successfully computed."
           }, error = function(e){
             error_modal(e$message)
@@ -125,46 +110,19 @@ sample_correlation_server <- function(id){
           })
         }
         # Create row annotations separately
-        row_anno <- rowAnnotation(
-          df = annotationDF, col = annotation_colors,
-          # Parameters to mimick CUSTOM_THEME
-          annotation_name_gp = gpar(fontsize = 15),
-          annotation_legend_param = list(
-            title_gp = gpar(fontsize = 15, fontface = "bold"),
-            labels_gp = gpar(fontsize = 15)
-          )
-        )
+        row_anno <- custom_sample_annotation(data, sample_annotations)
 
         # Generate the heatmap
-        heatmap_plot <- Heatmap(
-          matrix = cormat,
-          name = paste0("Correlation (",correlation_method,")"),
-          column_title = customTitleSampleCorrelation,
-          cluster_rows = TRUE,
-          cluster_columns = TRUE,
-          clustering_distance_rows = correlation_method,
-          clustering_distance_columns = correlation_method,
-          show_row_names = TRUE,
-          show_column_names = TRUE,
-          show_column_dend = FALSE,
-          # Parameters to mimick CUSTOM_THEME
-          rect_gp = gpar(col = "black"),
-          column_title_gp = gpar(fontsize = 17, fontface = "bold"),
-          row_names_gp = gpar(fontsize = 15),
-          column_names_gp = gpar(fontsize = 15),
-          heatmap_legend_param = list(
-            title_gp = gpar(fontsize = 15, fontface = "bold"),  # Legend title size and style
-            labels_gp = gpar(fontsize = 15)                     # Legend text size
-          )
-        )
+        heatmap_plot <- custom_heatmap(cormat, customTitleSampleCorrelation, correlation_method)
         sample_corr_reactive$corr_plot <- heatmap_plot
         sample_corr_reactive$row_anno <- row_anno
         res_tmp[[session$token]][["SampleCorrelation"]] <<- cormat
         # assign par_temp["SampleCorrelation"]
         par_tmp[[session$token]][["SampleCorrelation"]] <<- list(
-          corrMethod = correlation_method,
-          data_updated = FALSE,
-          sample_annotations = sample_annotations
+          correlation_method = correlation_method,
+          sample_annotations = sample_annotations,
+          title = customTitleSampleCorrelation,
+          data_updated = FALSE
         )
 
         # Longer names causes issues for saving
@@ -186,25 +144,32 @@ sample_correlation_server <- function(id){
           )
           waiter$show()
           envList <- list(
-
-            res_tmp = res_tmp[[session$token]],
             par_tmp = par_tmp[[session$token]]
-
           )
-          
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
-          sampleCorrelation_scenario <- 18
+          # save csv files
+          save_summarized_experiment(
+            res_tmp[[session$token]]$data_original,
+            temp_directory
+          )
 
-          write(getPlotCode(sampleCorrelation_scenario), file.path(temp_directory, "Code.R"))
-          
-          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+          write(
+            create_workflow_script(
+              pipeline_info = SAMPLE_CORRELATION_PIPELINE,
+              par = par_tmp[[session$token]],
+              par_mem = "SampleCorrelation",
+              path_to_util = file.path(temp_directory, "util.R")
+            ),
+            file.path(temp_directory, "Code.R")
+          )
+          saveRDS(envList, file.path(temp_directory, "Data.rds"))
           zip::zip(
             zipfile = file,
             files = dir(temp_directory),
             root = temp_directory
           )
-          waiter$hdie()
+          waiter$hide()
         },
         contentType = "application/zip"
       )
@@ -215,7 +180,7 @@ sample_correlation_server <- function(id){
         },
         content = function(file){
           save_complex_heatmap(
-            sample_corr_reactive$corr_plot,
+            sample_corr_reactive$corr_plot + sample_corr_reactive$row_anno,
             filename = file,
             type=gsub("\\.","",input$file_ext_SampleCorrelation)
           )

@@ -1,7 +1,9 @@
 ### general utility functions will be defined here
 
 # Utility function for is.null checks
-`%||%` <- function(a, b) if (!is.null(a)) a else b
+`%||%` <- function(a, b){
+   if (!is.null(a)) return(a) else return(b)
+}
 
 # tryCatch modal dialog
 error_modal <- function(error_message, additional_text = NULL){
@@ -36,11 +38,14 @@ update_data <- function(session_id){
 
 
 select_data <- function(
-  data, selected_samples, sample_type, selected_rows = "all", row_type = NULL, propensity = 1
+  data, selected_samples = "all", sample_type = NULL, selected_rows = "all", row_type = NULL, propensity = 1
 ){
   # select data based on selected samples
   if(is.null(row_type)) {
-    row_type <- c(colnames(colData(data)))[1]
+    row_type <- c(colnames(rowData(data)))[1]
+  }
+  if(is.null(sample_type)) {
+      sample_type <- c(colnames(colData(data)))[1]
   }
   samples_selected <- c()
   if(any(selected_samples == "all")) {
@@ -252,20 +257,22 @@ detect_annotation <- function(data) {
   ))
 }
 
-violin_plot <- function(data, color_by){
+violin_plot <- function(data, violin_color){
   # create a violin plot based on the provided summarized experiment. Colors by
-  # the provided color_by column and returns the plot
+  # the provided violin_color column and returns the plot
+  # for raw plot replace data with data_orig[rows_selected,samples_selected]
   data_frame <- as.data.frame(assay(data))
   data_frame <- reshape2::melt(data_frame, variable.name="Sample", value.name="Counts")
   data_frame <- merge(data_frame, colData(data), by.x = "Sample", by.y = "row.names")
-  plot2return <- ggplot(data_frame, aes(x = Sample, y = Counts, fill = data_frame[[color_by]])) +
+  plot2return <- ggplot(data_frame, aes(x = Sample, y = Counts, fill = data_frame[[violin_color]])) +
     geom_violin(trim = T, color = "black") +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    labs(title = "Count distribution per sample",
-         x = "Sample",
-         y = "Counts",
-         fill = color_by
+    labs(
+      title = "Count distribution per sample",
+      x = "Sample",
+      y = "Counts",
+      fill = violin_color
     )
   return(plot2return)
 }

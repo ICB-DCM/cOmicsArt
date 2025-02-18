@@ -68,3 +68,43 @@ plot_heatmap <- function(
   )
   return(heatmap_plot)
 }
+
+custom_rowAnnotation <- function(data, row_selected, row_annotations){
+  # Create a rowAnnotation object with custom Theme
+  # Parameters:
+  #   data: SummarizedExperiment, data to retrieve row annotations from
+  #   row_selected: numeric, names of selected rows
+  #   row_annotations: character, row annotations to show
+  # Returns:
+  #   rowAnnotation object
+
+  if(is.null(row_annotations)) return(NULL)
+  if("None" %in% row_annotations) return(NULL)
+  row_anno <- rowData(data)[row_selected, row_annotations]
+  plot_rowAnno <- rowAnnotation(
+    df = as.data.frame(row_anno),
+    # Parameters to mimick CUSTOM_THEME
+    annotation_name_gp = gpar(fontsize = 15),
+    annotation_legend_param = list(
+      title_gp = gpar(fontsize = 15, fontface = "bold"),
+      labels_gp = gpar(fontsize = 15)
+    )
+  )
+  return(plot_rowAnno)
+}
+
+custom_colAnnotation <- function(data, col_annotations){
+  if(is.null(col_annotations)) return(NULL)
+  if("None" %in% col_annotations) return(NULL)
+  col_anno <- colData(data)[, col_annotations]
+    plot_colAnno <- columnAnnotation(
+      df = as.data.frame(col_anno),
+      # Parameters to mimick CUSTOM_THEME
+      annotation_name_gp = gpar(fontsize = 15),
+      annotation_legend_param = list(
+      title_gp = gpar(fontsize = 15, fontface = "bold"),
+      labels_gp = gpar(fontsize = 15)
+      )
+  )
+  return(plot_colAnno)
+}

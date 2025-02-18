@@ -56,7 +56,7 @@ snippet_preprocessing <- function(
 ){
   # Conditional pre-processing procedure
   snippet <- c()
-  if (params$PreProcessing_Procedure == "filterOnly") {
+  if (params$preprocessing_procedure == "filterOnly") {
     # Conditional filtering based on omics type
     if (params$omic_type == "Transcriptomics") {
       snippet <- paste0(snippet, "The data was cleaned by removing constant entities across all samples and rows with all-zero values. Additionally, entities with total row counts less than or equal to 10 were removed.\n")
@@ -65,26 +65,26 @@ snippet_preprocessing <- function(
     }else{
       snippet <- c()
     }
-  } else if (params$PreProcessing_Procedure == "simpleCenterScaling") {
+  } else if (params$preprocessing_procedure == "simpleCenterScaling") {
     snippet <- paste0(snippet, "The data was centered and scaled. Centering involves subtracting the mean of each entity, and scaling involves dividing by the standard deviation.\n")
-  } else if (params$PreProcessing_Procedure == "vst_DESeq") {
+  } else if (params$preprocessing_procedure == "vst_DESeq") {
     snippet <- paste0(snippet, "For the transcriptomics data, DESeq2 was used for normalization and VST transformation applied for visualisation of the normalized data (not for statistical testing)",
                       "(v. ",packageVersion("DESeq2"),") (",print(clean_citation(citation('DESeq2')), style = "text"),"). ",
                       "The formula for analysis was ~",
                       params$DESeq_formula_batch,
-                      ifelse(params$DESeq_formula != "NULL",  params$DESeq_formula, ""),
+                      ifelse(params$deseq_formula != "NULL",  params$deseq_formula, ""),
                       ".\n")
-  } else if (params$PreProcessing_Procedure == "Scaling_0_1") {
+  } else if (params$preprocessing_procedure == "Scaling_0_1") {
     snippet <- paste0(snippet, "The data was scaled to fit within the range of 0 to 1. Each entity's values are hence transformed proportionally to ensure a consistent scale.\n")
-  } else if (params$PreProcessing_Procedure == "log10") {
+  } else if (params$preprocessing_procedure == "log10") {
     snippet <- paste0(snippet, "The base-10 logarithm of each data point was calculated. If a single zero value was present, 1 was added to all points to avoid undefined results.\n")
-  } else if (params$PreProcessing_Procedure == "ln") {
+  } else if (params$preprocessing_procedure == "ln") {
     snippet <- paste0(snippet, "The natural logarithm of each data point was calculated. If a single zero value was present, 1 was added to all points to avoid undefined results.\n")
-  } else if (params$PreProcessing_Procedure == "log2") {
+  } else if (params$preprocessing_procedure == "log2") {
     snippet <- paste0(snippet, "The base-2 logarithm of each data point was calculated. If a single zero value was present, 1 was added to all points to avoid undefined results.\n")
-  } else if (params$PreProcessing_Procedure == "pareto_scaling") {
+  } else if (params$preprocessing_procedure == "pareto_scaling") {
     snippet <- paste0(snippet, "The data was parteo scaled. Pareto scaling emphasizes the importance of small values by dividing each data point by the square root of its standard deviation.\n")
-  } else if(params$PreProcessing_Procedure == "None") {
+  } else if(params$preprocessing_procedure == "None") {
     snippet <- paste0(snippet, "No additional pre-processing was performed within cOmicsART.\n")
   }
   
@@ -105,7 +105,7 @@ snippet_sampleCorr <- function(
     params=par_tmp[[session$token]]
 ){
   snippet <- c()
-  snippet <- paste0(snippet, "The correlation between samples was calculated using the ", params$SampleCorr$corrMethod, " method. ")
+  snippet <- paste0(snippet, "The correlation between samples was calculated using the ", params$SampleCorr$correlation_method, " method. ")
   snippet <- paste0(snippet, "The resulting correlation matrix was visualized using the pheatmap package", "(v. ",packageVersion("pheatmap"),") (",print(clean_citation(citation('pheatmap')), style = "text"),"). ")
   snippet <- paste0(snippet, "The correlation matrix was clustered with the complete linkage method using correlation distance. ")
   return(snippet)
@@ -157,7 +157,7 @@ snippet_SigAna <- function(
 ){
   snippet <- c()
   # Transcriptomics with vst_DESeq
-  if (params$omic_type == "Transcriptomics" & params$PreProcessing_Procedure == "vst_DESeq") {
+  if (params$omic_type == "Transcriptomics" & params$preprocessing_procedure == "vst_DESeq") {
     snippet <- paste0(snippet, "Differential expression analysis was performed using the DESeq2 package (v. ", packageVersion("DESeq2"), ") (", print(clean_citation(citation('DESeq2')), style = "text"), "). ")
     snippet <- paste0(snippet, "The reported adjusted p-values were adjusted by ", params$SigAna$correction_method, ". ")
   } else {
@@ -182,33 +182,33 @@ snippet_heatmap <- function(
 ){
   snippet <- c()
   # General heatmap construction details
-  if(params$Heatmap$row_selection_options == "all"){
+  if(params$Heatmap$selection_type == "all"){
     snippet <- paste0(snippet, "All entities were used for the heatmap. ")
-  } else if (params$Heatmap$row_selection_options == "Select based on Annotation") {
+  } else if (params$Heatmap$selection_type == "Select based on Annotation") {
     snippet <- paste0(snippet, "The heatmap shows all entities which ",
-                      params$Heatmap$anno_options_heatmap, 
+                      params$Heatmap$select_by,
                       " is part of the set of ",
-                      paste0(params$Heatmap$row_anno_options_heatmap,
+                      paste0(params$Heatmap$selection,
                              collapse = ","),
                       ". ")
-  } else if (!is.null(params$Heatmap$TopK)) {
+  } else if (!is.null(params$Heatmap$n_top_k)) {
     snippet <- paste0(snippet, "The heatmap was constructed based on the top ", 
-                      params$Heatmap$TopK, " entities. ")
+                      params$Heatmap$n_top_k, " entities. ")
     snippet <- paste0(snippet, "The order of the entities was determined by ", 
-                      params$Heatmap$TopK_order, ". ")
-    if(grepl("Significant",params$Heatmap$TopK_order)){
+                      params$Heatmap$top_k_type, ". ")
+    if(grepl("Significant",params$Heatmap$top_k_type)){
       snippet <- paste0(snippet, 
                         "An entities was deemed significant with a significance level of",
-                        params$Heatmap$psig_threhsold_heatmap,
+                        params$Heatmap$significance_level,
                         ". ")
     }
   }
   
   # Sample and entity coloring
-  if(any(params$Heatmap$anno_options != "None")){
+  if(any(params$Heatmap$col_annotations != "None")){
     snippet <- paste0(snippet, "The heatmap samples were colored after ", paste0(params$Heatmap$anno_options, collapse = ", "), ". ")
   }
-  if(any(params$Heatmap$row_anno_options != "None")){
+  if(any(params$Heatmap$row_annotations != "None")){
     snippet <- paste0(snippet, "The heatmap entities were colored after ", paste0(params$Heatmap$row_anno_options, collapse = ", "), ". ")
   }
   
@@ -219,7 +219,7 @@ snippet_heatmap <- function(
   if (params$Heatmap$cluster_rows == TRUE) {
     snippet <- paste0(snippet, "The rows were clustered based on euclidean-distance with complete-linkage.  ")
   }
-  if(params$Heatmap$rowWiseScaled ==TRUE ){
+  if(params$Heatmap$scale_rows ==TRUE ){
     snippet <- paste0(snippet, "The rows were scaled to visualise relative difference. ")
   }
   snippet <- paste0(snippet, "The heatmap was created using the pheatmap package", "(v. ",packageVersion("pheatmap"),") (",print(clean_citation(citation('pheatmap')), style = "text"),"). ")
