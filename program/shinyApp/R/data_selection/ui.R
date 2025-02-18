@@ -152,10 +152,6 @@ data_selection_main_panel <- mainPanel(
         pre("Please choose your type of File Input then Proceed by clicking 'Upload new data'")  # Initial message
       ),
       htmlOutput(outputId = "debug", container = pre) 
-      # conditionalPanel(
-      #   condition = "output.debug != null && output.debug != ''",
-      #   htmlOutput(outputId = "debug", container = pre) 
-      # ),
       ),
   div(id = "mainPanel_other",
   # add link to toggle on the div geneAnno_toggle
