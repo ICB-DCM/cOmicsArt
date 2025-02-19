@@ -12,26 +12,31 @@ data_selection_sidebar_panel <- sidebarPanel(
               width = "80%"
             )
         ),
-      HTML('<span style="font-size: 20px; font-weight: bold;">Upload</span> <small><a href="https://github.com/ICB-DCM/cOmicsArt/blob/main/UploadHelpcOmicsArt.xlsx" target="_blank" download>Download an example Excel Workbook to prepare data upload</a></small>'),
+      HTML('<span style="font-size: 20px; font-weight: bold;">Upload</span><br> <small><a href="https://github.com/ICB-DCM/cOmicsArt/blob/main/UploadHelpcOmicsArt.xlsx" target="_blank" download>Download an example Excel Workbook to prepare data upload</a></small>'),
       br(),br(),
         shiny::fileInput(
           inputId = "data_matrix1",
-          label = HTML('Data matrix <small><a href="airway-read-counts-LS.csv" download>Download example data</a></small>'),
+          label = HTML('1. Data matrix  <br><small><a href="airway-read-counts-LS.csv" download>Download example data</a></small>'),
           accept = c(".csv"),
           width = "80%"
         ) %>% helper(type = "markdown", content = "DataSelection_DataUploadFileInput"),
         shiny::fileInput(
           inputId = "data_sample_anno1",
-          label = HTML('Sample annotation <small><a href="airway-sample-sheet-LS.csv" download>Download example data</a></small>'),
+          label = HTML('2. Sample annotation <br><small><a href="airway-sample-sheet-LS.csv" download>Download example data</a></small>'),
           accept = c(".csv"),
           width = "80%"
         ),
         shiny::fileInput(
           inputId = "data_row_anno1",
-          label = HTML('Entities annotation <small><a href="airway-entitie_description-LS.csv" download>Download example data</a></small>'),
+          label = HTML('3. Entities annotation <br><small><a href="airway-entitie_description-LS.csv" download>Download example data</a></small>'),
           accept = c(".csv"),
           width = "80%"
         ),
+      actionLink(
+        "clear_FileInput", 
+        HTML("<span style='font-size: 16px; color: black;'>❌ Clear Data</span>"), 
+        style = "cursor: pointer;"
+      ),br(),br(),br(),
         actionButton(
           inputId = "inspect_data",
           label = "Inspect data",
@@ -142,7 +147,11 @@ data_selection_sidebar_panel <- sidebarPanel(
 data_selection_main_panel <- mainPanel(
   id = "mainPanel_DataSelection",
   div(id ="InfoBox_DataSelection",
-      htmlOutput(outputId = "debug", container = pre)
+      conditionalPanel(
+        condition = "output.debug == null || output.debug == ''",
+        pre("Please choose your type of File Input then Proceed by clicking 'Upload new data'")  # Initial message
+      ),
+      htmlOutput(outputId = "debug", container = pre) 
       ),
   div(id = "mainPanel_other",
   # add link to toggle on the div geneAnno_toggle

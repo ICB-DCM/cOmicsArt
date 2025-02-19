@@ -32,7 +32,8 @@ server <- function(input,output,session){
             ".\n Documentation on the user interface can be found ",
             "<a href='",
             DOCUMENTATION,
-            "' target='_blank'>here</a>.\n\n"
+            "' target='_blank'>here</a>.\n\n",
+            SAVE_EDITED_HTML
             ),
             file=paste0(session$token,"/Report.md")
         )
@@ -278,6 +279,21 @@ server <- function(input,output,session){
       width = "100%"
       )
     session$close()
+  })
+  
+  # Reset file input
+  observeEvent(input$clear_FileInput, {
+    reset("data_matrix1")
+    reset("data_sample_anno1")
+    reset("data_row_anno1")
+    session$sendCustomMessage(type = "resetValue", message = "data_matrix1")
+    session$sendCustomMessage(type = "resetValue", message = "data_sample_anno1")
+    session$sendCustomMessage(type = "resetValue", message = "data_row_anno1")
+    hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
+    hide_tabs()
+    output$debug <- renderText({
+      "<b>Cleared data, hence there is nothing to upload. Please select your data or use the Testdata</b><br>Make sure to click on  'Upload new data' before proceeding to pre-processing"
+    })
   })
   
 # Data Upload + checks ----
@@ -1004,7 +1020,19 @@ server <- function(input,output,session){
         timerProgressBar = T
       )
       output$debug <- renderText({
-        "<font color=\"#00851d\"><b>Upload successful</b></font>"
+        paste0(
+        "<font color=\"#00851d\"><b>Upload successful</b></font>",
+        "<br>",ifelse(uploaded_from()=="file_input", paste0("The following data files are uploaded to cOmicsArt:",
+                                                           "<br>Data Matrix: ", input$data_matrix1$name,
+                                                           "<br>Sample Annotation: ", input$data_sample_anno1$name,
+                                                           "<br>Entitie Annotation: ", input$data_row_anno1$name),""),
+        "<br>",ifelse(uploaded_from()=="metadata", paste0("The following data files are uploaded to cOmicsArt:",
+                                                           "<br>Data Matrix: ", input$data_matrix_metadata$name,
+                                                           "<br>Sample Annotation: ", input$metadataInput$name,
+                                                           "<br>Entitie Annotation: ", input$data_row_anno_metadata$name),""),
+        "<br>",ifelse(uploaded_from()=="precompiled", paste0("The following data files are uploaded to cOmicsArt:",
+                                                           "<br>Precompiled Data: ", input$data_preDone$name),"")
+        )
       })
       if(isTruthy(input$data_preDone)){
         # precomplied set used
@@ -1041,9 +1069,8 @@ server <- function(input,output,session){
       par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
       omic_type(input[[paste0("omic_type_", uploaded_from())]])
     }
-    
-    req(
-      (isTruthy(input$data_preDone) & uploaded_from() == "precompiled") |
+    # Add check if the data upload fails due to no supply of files
+    if(!((isTruthy(input$data_preDone) & uploaded_from() == "precompiled") |
       # Is File Input used?
       (isTruthy(input$data_matrix1) &
         isTruthy(input$data_sample_anno1) &
@@ -1059,7 +1086,13 @@ server <- function(input,output,session){
       # Is Test Data used?
       (uploaded_from() == "testdata") |
       (uploaded_from() == "VI_data")
-    )
+    )){
+      # if it is not evaluted to TRUE
+      output$debug <- renderText({
+        "<font color=\"#FF0000\"><b>Upload failed, please check your input - Did you specify all files?.</b></font>"
+      })
+      req(FALSE)
+    }
     # initialize empty data_input object
     data_input <- list()
     # upload depending on where the button was clicked
@@ -1083,6 +1116,9 @@ server <- function(input,output,session){
         reset('data_matrix1')
         reset('data_sample_anno1')
         reset('data_row_anno1')
+        session$sendCustomMessage(type = "resetValue", message = "data_matrix1")
+        session$sendCustomMessage(type = "resetValue", message = "data_sample_anno1")
+        session$sendCustomMessage(type = "resetValue", message = "data_row_anno1")
         return(NULL)
       })
     } else if(uploaded_from() == "metadata"){
@@ -1105,6 +1141,7 @@ server <- function(input,output,session){
             "<font color=\"#FF0000\"><b>Your Sample Names from the Metadata Sheet and from your Matrix do not match!! Data cannot be loaded</b></font>"
           })
           reset('metadataInput')
+          session$sendCustomMessage(type = "resetValue", message = "metadataInput")
           return(NULL)
         })
       }
@@ -1224,7 +1261,7 @@ server <- function(input,output,session){
           custom_error[["message"]] <- "Uploading via file input failed"
           error_modal(custom_error)
           output$debug <- renderText({
-            "<font color=\"#FF0000\"><b>Uploading failed</b></font>: The uploaded files could not be put into a SummarizedExperiment. Try the 'Inspect data' button for potential errors."
+            "<font color=\"#FF0000\"><b>Upload failed</b></font>: <br>The uploaded files could not be put into a SummarizedExperiment.<br>Try the 'Inspect data' button for potential errors."
           })
           NULL
         }
@@ -1877,6 +1914,9 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**PreProcess** - ![Violin Plot](",tmp_filename,")")
     )
+    if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
+      fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
+    }
     # no publication snippet as thats already in the log
     removeNotification(notificationID)
     showNotification("Report Saved!",type = "message", duration = 1)

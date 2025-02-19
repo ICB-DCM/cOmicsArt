@@ -169,12 +169,7 @@ enrichment_analysis_geneset_server <- function(
             scroll_box(width = "100%", height = "300px"))
 
           if(isTruthy(input$Notes) & !(isEmpty(input$Notes))){
-            fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
-            fun_LogIt(message = paste0(
-              "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
-              input$Notes,
-              "</div>"
-            ))
+            fun_LogIt(message = add_notes_report(shiny::markdown(input$Notes)))
           }
           removeNotification(notificationID)
           showNotification(ui = "Report Saved!",type = "message", duration = 1)
