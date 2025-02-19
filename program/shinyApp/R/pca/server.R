@@ -18,7 +18,8 @@ pca_Server <- function(id){
       waiter = Waiter$new(
         html = LOADING_SCREEN,
         color="#70BF4F47"
-      )
+      ),
+      allow_plot = FALSE
     )
     ns <- session$ns
     file_path <- paste0("/www/",session$token,"/")
@@ -27,6 +28,7 @@ pca_Server <- function(id){
     observeEvent(input$refreshUI, {
       req(data_input_shiny())
       print("Refreshing UI Heatmap")
+      pca_reactives$allow_plot <- FALSE
       data <- update_data(session$token)
 
       output$UseBatch_ui <- renderUI({
@@ -107,6 +109,7 @@ pca_Server <- function(id){
       pca_reactives$info_text
     })
     output$PCA_plot <- renderPlotly({
+      req(pca_reactives$allow_plot)
       req(pca_reactives$PCA_plot)
       ggplotly(
         pca_reactives$PCA_plot,
@@ -114,18 +117,24 @@ pca_Server <- function(id){
         legendgroup = "color"
       )
     })
-    output$PCA_Loadings_plot <- renderPlotly({ggplotly(
-      pca_reactives$Loadings_plot
-    )  %>%
-      layout(
-        yaxis = list(tickfont = list(size = 15)),
-        xaxis = list(tickfont = list(size = 15))
+    output$PCA_Loadings_plot <- renderPlotly({
+      req(pca_reactives$allow_plot)
+      ggplotly(
+        pca_reactives$Loadings_plot
+      )  %>%
+        layout(
+          yaxis = list(tickfont = list(size = 15)),
+          xaxis = list(tickfont = list(size = 15))
+        )
+    })
+    output$Scree_Plot <- renderPlotly({
+      req(pca_reactives$allow_plot)
+      ggplotly(
+        pca_reactives$Scree_plot
       )
     })
-    output$Scree_Plot <- renderPlotly({ggplotly(
-      pca_reactives$Scree_plot
-    )})
     output$PCA_Loadings_matrix_plot <- renderPlot({
+      req(pca_reactives$allow_plot)
       pca_reactives$LoadingsMatrix_plot
     })
 
@@ -135,6 +144,8 @@ pca_Server <- function(id){
         input$Do_PCA > 0
       ) # for now, probably better one soon
       shinyjs::showElement(id = "PCA_main_panel_div", asis = TRUE)
+      pca_reactives$allow_plot <- TRUE
+
 
       pca_reactives$waiter$show()
       print("PCA analysis on pre-selected data")
@@ -192,6 +203,7 @@ pca_Server <- function(id){
         input$entitie_anno,
         input$PCA_anno_tooltip
       ),{
+      req(pca_reactives$allow_plot)
       req(pca_reactives$pcaData, pca_reactives$percentVar, input$coloring_options)
       # define the variables to be used
       pca <- res_tmp[[session$token]][["PCA"]]

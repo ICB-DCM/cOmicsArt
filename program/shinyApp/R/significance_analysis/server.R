@@ -28,6 +28,7 @@ significance_analysis_server <- function(id){
       observeEvent(input$refreshUI, {
         print("Refreshing UI Heatmap")
         data <- update_data(session$token)
+        sig_ana_reactive$plot_last <- NULL
 
         output$UseBatch_ui <- renderUI({
         req(par_tmp[[session$token]]$BatchColumn != "NULL")
@@ -175,7 +176,8 @@ significance_analysis_server <- function(id){
         sig_ana_reactive$info_text
       )
       output$Significant_Plot_final <- renderPlot({
-          print(sig_ana_reactive$plot_last)
+        req(sig_ana_reactive$plot_last)
+        print(sig_ana_reactive$plot_last)
       })
 
       # Analysis initial info

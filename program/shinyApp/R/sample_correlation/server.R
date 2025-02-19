@@ -6,13 +6,15 @@ sample_correlation_server <- function(id){
         info_text = "Press 'Get Sample Correlation' to start!",
         corr_plot = NULL,
         row_anno = NULL,
-        data_updated = TRUE  # Used to check whether new calculation is needed
+        data_updated = TRUE,  # Used to check whether new calculation is needed,
+        allow_plot = FALSE  # Clears Plots and prevents plotting after refresh
       )
       
       ns <- session$ns
       # UI Section ----
       observeEvent(input$refreshUI, {
         print("Refreshing UI Sample Correlation")
+        sample_corr_reactive$allow_plot <- FALSE
         data <- update_data(session$token)
         output$UseBatch_ui <- renderUI({
           req(par_tmp[[session$token]]$BatchColumn != "NULL")
@@ -46,6 +48,7 @@ sample_correlation_server <- function(id){
       })
 
       output$SampleCorrelationPlot <- renderPlot({
+        req(sample_corr_reactive$allow_plot)
         sample_corr_reactive$corr_plot + sample_corr_reactive$row_anno
       })
       observeEvent(input$SampleAnnotationChoice,{
@@ -70,6 +73,7 @@ sample_correlation_server <- function(id){
         waiter$show()
 
         shinyjs::showElement(id = "div_sampleCorrelation_main_panel", asis = T)
+        sample_corr_reactive$allow_plot <- TRUE
         # assign variables to be used
         useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
         sample_annotations <- input$SampleAnnotationChoice

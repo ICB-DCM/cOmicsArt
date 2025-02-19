@@ -9,12 +9,14 @@ single_gene_visualisation_server <- function(id){
       single_gene_reactives <- reactiveValues(
         gene_data = NULL,
         plot = NULL,
-        info_text = NULL
+        info_text = NULL,
+        allow_plot = FALSE
       )
 
       # Refresh UI /Data
       observeEvent(input$refreshUI,{
         print("Refresh UI Single Gene")
+        single_gene_reactives$allow_plot <- FALSE
         data <- update_data(session$token)
         
         ## Ui section ----
@@ -116,6 +118,7 @@ single_gene_visualisation_server <- function(id){
 
       # Render Plot and Info
       output$SingleGenePlot <- renderPlot({
+        req(single_gene_reactives$allow_plot)
         withCallingHandlers(
           {
             print(single_gene_reactives$plot)
@@ -131,10 +134,14 @@ single_gene_visualisation_server <- function(id){
       output$SingleGene_Info <- renderText({
         single_gene_reactives$info_text
       })
+
+      observe({
+        single_gene_reactives$allow_plot <- TRUE
+      }) %>% shiny::bindEvent(input$singleGeneGo)
      
       toListen <- reactive({
         list(
-          input$singleGeneGo,
+          single_gene_reactives$allow_plot,
           input$accross_condition
         )
       })
@@ -142,6 +149,7 @@ single_gene_visualisation_server <- function(id){
       # Visualize single Gene ----
       observeEvent(toListen(),{
         req(input$singleGeneGo > 0)
+        req(single_gene_reactives$allow_plot)
         shinyjs::showElement(id = "SingleGene_div", asis = TRUE)
         # assign variables
         data_process_stage <- input$type_of_data_gene

@@ -6,7 +6,7 @@ heatmap_server <- function(id){moduleServer(
       customTitle = NULL,
       info_text = "Press 'Get Heatmap' to start!",
       data = NULL,
-      plot = NULL
+      allow_plot = FALSE
     )
     # make waiter a reactive value and assign it
     waiter <- reactiveVal(Waiter$new(
@@ -22,6 +22,7 @@ heatmap_server <- function(id){moduleServer(
     observeEvent(input$refreshUI, {
       print("Refreshing UI Heatmap")
       heatmap_reactives$data <- update_data(session$token)
+      heatmap_reactives$allow_plot <- FALSE
       data <- heatmap_reactives$data$data
 
       ### Aesthetic Settings
@@ -123,6 +124,7 @@ heatmap_server <- function(id){moduleServer(
     })
 
     output$HeatmapPlot <- renderPlot({
+      req(heatmap_reactives$allow_plot)
       heatmap_plot()
     })
 
@@ -212,6 +214,7 @@ heatmap_server <- function(id){moduleServer(
       } else {
         waiter()$hide()
         proceed_with_heatmap(TRUE)
+        heatmap_reactives$allow_plot <- TRUE
         heatmap_reactives$info_text <- paste0(
           "The heatmap is being calculated and displays a matrix with: ",
           nrow(data2plot), " rows and ", ncol(data2plot), " columns."
@@ -227,6 +230,7 @@ heatmap_server <- function(id){moduleServer(
 
     observe({
       proceed_with_heatmap(TRUE)
+      heatmap_reactives$allow_plot <- TRUE
       heatmap_reactives$info_text <- paste0(
         "The heatmap is being calculated and displays a matrix with: ",
         nrow(data2plot()), " rows and ", ncol(data2plot()), " columns."
