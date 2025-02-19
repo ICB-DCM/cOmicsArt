@@ -9,7 +9,6 @@ VIOLIN_PLOT_PIPELINE <<- list(
 MEAN_SD_PLOT_PIPELINE <<- list(
   plot_mean_sd_plot_info
 )
-Test <<- "Testing github"
 
 # --- Sample Correlation ---
 SAMPLE_CORRELATION_PIPELINE <<- list(
