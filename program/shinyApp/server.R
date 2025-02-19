@@ -1519,7 +1519,7 @@ server <- function(input,output,session){
     filtered_column_names <- column_names[sapply(column_names, function(col) {
       length(unique(colData(res_tmp[[session$token]]$data_original)[[col]])) < nrow(colData(res_tmp[[session$token]]$data_original))
     })]
-    if (input$PreProcessing_Procedure == "vst_DESeq") {
+    if (isTruthy(input$PreProcessing_Procedure) && input$PreProcessing_Procedure == "vst_DESeq") {
       filtered_column_names <- filtered_column_names[!filtered_column_names %in% c(input$DESeq_formula_sub)]
     }
     selectInput(
