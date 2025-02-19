@@ -226,6 +226,7 @@ pca_Server <- function(id){
       pca_reactives$PCA_plot <- plot_pca(
         pca = pca,
         pcaData = pcaData,
+        data = data,
         percentVar = percentVar,
         x_axis = x_axis,
         y_axis = y_axis,

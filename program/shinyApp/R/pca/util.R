@@ -130,9 +130,8 @@ pca_loadings <- function(
       levels = make.unique(as.character(rowData(data)[rownames(loadings), entitie_anno]))
     )
   }
-  #On purpose no explicit return statement?
   # Return geom_segment layer for adding to plots
-  geom_segment(
+  return(geom_segment(
     data = loadings[loadings$feature != "", ],
     mapping = aes(
       x = 0,
@@ -143,7 +142,7 @@ pca_loadings <- function(
     ),
     arrow = arrow(type = "closed", unit(0.01, "inches"), ends = "both"),
     color = "#ab0521"
-  )
+  ))
 }
 
 pca_ellipses <- function(
