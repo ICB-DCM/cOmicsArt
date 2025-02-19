@@ -190,7 +190,8 @@ pca_Server <- function(id){
         input$coloring_options,
         input$Show_loadings,
         input$entitie_anno,
-        input$PCA_anno_tooltip
+        input$PCA_anno_tooltip,
+        input$Plot_ellipses
       ),{
       req(pca_reactives$pcaData, pca_reactives$percentVar, input$coloring_options)
       # define the variables to be used
@@ -201,6 +202,7 @@ pca_Server <- function(id){
       y_axis <- input$y_axis_selection
       color_by <- input$coloring_options
       show_loadings <- as.logical(input$Show_loadings %||% FALSE)
+      plot_ellipses <- as.logical(input$Plot_ellipses %||% FALSE)
       entitie_anno <- input$entitie_anno %||% NULL
       tooltip_var <- input$PCA_anno_tooltip %||% NULL
 
@@ -218,6 +220,7 @@ pca_Server <- function(id){
         color_by = color_by,
         title = customTitle,
         show_loadings = show_loadings,
+        plot_ellipses = plot_ellipses,
         entitie_anno = entitie_anno,
         tooltip_var = tooltip_var
       )
@@ -226,6 +229,7 @@ pca_Server <- function(id){
       par_tmp[[session$token]][["PCA"]]$x_axis <<- x_axis
       par_tmp[[session$token]][["PCA"]]$y_axis <<- y_axis
       par_tmp[[session$token]][["PCA"]]$show_loadings <<- show_loadings
+      par_tmp[[session$token]][["PCA"]]$plot_ellipses <<- plot_ellipses
       par_tmp[[session$token]][["PCA"]]$entitie_anno <<- entitie_anno
       par_tmp[[session$token]][["PCA"]]$tooltip_var <<- tooltip_var  # Needed for ggplot?
       par_tmp[[session$token]][["PCA"]]$title <<- customTitle

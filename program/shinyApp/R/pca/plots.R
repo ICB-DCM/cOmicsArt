@@ -1,5 +1,5 @@
 plot_pca <- function(
-  pca, pcaData, percentVar, x_axis, y_axis, color_by, title, show_loadings, entitie_anno, tooltip_var
+  pca, pcaData, percentVar, x_axis, y_axis, color_by, title, show_loadings, plot_ellipses, entitie_anno, tooltip_var
 ){
   # Plot the PCA plot using the principal components chosen in x_axis and y_axis.
   # Parameters:
@@ -27,7 +27,6 @@ plot_pca <- function(
   } else{
     pcaData$chosenAnno <- pcaData$global_ID
   }
-
   # Plotting routine
   pca_plot <- ggplot(
       pcaData,
@@ -35,12 +34,14 @@ plot_pca <- function(
         x = pcaData[,x_axis],
         y = pcaData[,y_axis],
         color = pcaData[,color_by],
+        group = pcaData[,color_by],
         label = global_ID,
         global_ID = global_ID,
         chosenAnno = chosenAnno
       )
     ) +
     geom_point(size = 3) +
+    pca_ellipses(plot_ellipses) +
     scale_color_manual(
       values = color_theme,
       name = color_by

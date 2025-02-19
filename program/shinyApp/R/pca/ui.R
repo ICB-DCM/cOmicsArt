@@ -22,7 +22,7 @@ pca_sidebar_panel <- function(ns){
       label = "Scale data to unit variance?",
       choices = c("Yes" = TRUE, "No" = FALSE),
       # direction = "horizontal",
-      selected = FALSE
+      selected = TRUE
     ),
     ### start pca ---
     actionButton(
@@ -53,6 +53,12 @@ pca_sidebar_panel <- function(ns){
       choices = c("Yes" = TRUE, "No" = FALSE),
       # direction = "horizontal",
       selected = FALSE
+    ),
+    radioButtons(
+      inputId = ns("Plot_ellipses"),
+      label = "Plot Ellipses indicating a 95% confidence interval?",
+      choices = c("Yes" = TRUE, "No" = FALSE),
+      selected = TRUE
     ),
     uiOutput(outputId = ns("entitie_anno_ui")),
     hr(style = "border-top: 1px dashed #000000;"),

@@ -269,7 +269,8 @@ plot_pca_info <<- list(
   plot_name = "pca_plot",
   additional_foos = list(
     prepare_coloring_pca = prepare_coloring_pca,
-    pca_loadings = pca_loadings
+    pca_loadings = pca_loadings,
+    pca_ellipses = pca_ellipses
   )
 )
 plot_pca_loadings_info <<- list(
