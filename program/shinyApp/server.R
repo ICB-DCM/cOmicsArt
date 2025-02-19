@@ -32,7 +32,8 @@ server <- function(input,output,session){
             ".\n Documentation on the user interface can be found ",
             "<a href='",
             DOCUMENTATION,
-            "' target='_blank'>here</a>.\n\n"
+            "' target='_blank'>here</a>.\n\n",
+            SAVE_EDITED_HTML
             ),
             file=paste0(session$token,"/Report.md")
         )
