@@ -559,7 +559,7 @@ significance_analysis_server <- function(id){
             ))
           }
           fun_LogIt(message = paste(
-            "- Top 5 significant genes for",
+            "- Top 5 significant entities for",
             comparisons[i],
             "are the following:"
           ))
@@ -574,9 +574,9 @@ significance_analysis_server <- function(id){
           fun_LogIt(message = "\n")
         }
         fun_LogIt(message = paste0(
-          "**Overview Plot** - Shown are ",input$sig_to_look_at," genes with a p-value < ",
+          "**Overview Plot** - Shown are ",input$sig_to_look_at," entities with a p-value < ",
           input$significance_level,
-          ". The plot shows the intersection of genes that are significant in the comparisons you selected (.",
+          ". The plot shows the intersection of entities that are significant in the comparisons you selected (.",
           input$comparisons_to_visualize,")."
         ))
         fun_LogIt(message = paste0(

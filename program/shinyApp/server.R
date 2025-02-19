@@ -1693,8 +1693,8 @@ server <- function(input,output,session){
       normality_test_stat <-
         paste0(
           "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
-          "<br>Number of genes with p-value < 0.05: ",length(which(norm_res$p_value_shapiro < 0.05)), "/",nrow(data),
-          "<br>Number of genes with adj. p-value < 0.05: ",length(which(norm_res$p_value_shapiro_FDR < 0.05)), "/", nrow(data),
+          "<br>Number of entities with p-value < 0.05: ",length(which(norm_res$p_value_shapiro < 0.05)), "/",nrow(data),
+          "<br>Number of entities with adj. p-value < 0.05: ",length(which(norm_res$p_value_shapiro_FDR < 0.05)), "/", nrow(data),
           "<br>If p < 0.05 the normality assumption is violated.",
           "<br>For small sample size this test is not reliable.",
           "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"
