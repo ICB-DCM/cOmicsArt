@@ -1169,7 +1169,6 @@ server <- function(input,output,session){
       
       
     } else if(uploaded_from() == "testdata"){
-      browser()
       if(input$omic_type_testdata=="Transcriptomics"){
         data_input <- readRDS(
           file = "www/Transcriptomics_only_precompiled-LS.RDS"
@@ -1214,7 +1213,6 @@ server <- function(input,output,session){
       })
       return(NULL)
     }
-    browser()
 
     if(!any(class(data_input) == "SummarizedExperiment") & !any(grepl('SumExp',names(data_input))) ){
       summarized_experiment <- tryCatch(
@@ -1486,7 +1484,7 @@ server <- function(input,output,session){
           numericInput(
             inputId = "filter_threshold",
             label = "Specifcy the minimum sum of counts/concentration accross all samples for an entitie to be kept in the analysis.",
-            value = 10,
+            value = ifelse(omic_type() == "Transcriptomics", 10, 0),
             min = 0
           )
         )
@@ -1497,7 +1495,7 @@ server <- function(input,output,session){
         numericInput(
             inputId = "filter_threshold_samplewise",
             label = "Specifcy theFiltering threshold of counts/concentration for an entitie",
-            value = 10
+            value = ifelse(omic_type() == "Transcriptomics", 10, 0)
           ),
         numericInput(
             inputId = "filter_samplesize",
@@ -1720,6 +1718,7 @@ server <- function(input,output,session){
       shinyjs::click("Heatmap-refreshUI",asis = T)
       shinyjs::click("PCA-refreshUI",asis = T)
       shinyjs::click("sample_correlation-refreshUI",asis = T)
+      ifelse(omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
       paste0(
         "The data has the dimensions of: ",
         paste0(dim(data),collapse = ", "),
