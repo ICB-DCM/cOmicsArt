@@ -2007,6 +2007,9 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**PreProcess** - ![Mean and SD Plot](",tmp_filename,")")
     )
+    if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
+      fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
+    }
     # no publication snippet as thats already in the log
     removeNotification(notificationID)
     showNotification("Saved!",type = "message", duration = 1)
