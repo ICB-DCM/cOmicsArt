@@ -32,7 +32,8 @@ server <- function(input,output,session){
             ".\n Documentation on the user interface can be found ",
             "<a href='",
             DOCUMENTATION,
-            "' target='_blank'>here</a>.\n\n"
+            "' target='_blank'>here</a>.\n\n",
+            SAVE_EDITED_HTML
             ),
             file=paste0(session$token,"/Report.md")
         )
@@ -1948,6 +1949,9 @@ server <- function(input,output,session){
     fun_LogIt(
       message = paste0("**PreProcess** - ![Violin Plot](",tmp_filename,")")
     )
+    if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
+      fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
+    }
     # no publication snippet as thats already in the log
     removeNotification(notificationID)
     showNotification("Report Saved!",type = "message", duration = 1)
