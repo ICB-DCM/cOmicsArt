@@ -50,6 +50,7 @@ library("ComplexHeatmap")
 # library(svglite)
 library(formattable)
 library(codetools)
+library(vsn)
 
 source("R/C.R")
 source("R/C_strings.R")
