@@ -38,7 +38,11 @@ get_pca <- function(data, scale_data, sample_types, sample_selection){
   #   percentVar, numeric, percentage of variance explained
 
   # Potentially select samples
-  data <- select_data(data, sample_selection, sample_types)$data
+  data <- select_data(
+    data = data,
+    selected_samples = sample_selection,
+    sample_type = sample_types
+  )$data
   # Compute the Principal Components
   pca <- prcomp(
     x = as.data.frame(t(as.data.frame(assay(data)))),

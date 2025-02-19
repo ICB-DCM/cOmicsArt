@@ -161,13 +161,15 @@ pca_Server <- function(id){
       } else {
           data <- data$data
       }
-      sample_types <- input$sample_selection_pca %||% c(colnames(colData(data)))[1]
+      sample_types <- input$SampleAnnotationTypes_pca %||% c(colnames(colData(data)))[1]
       sample_selection <- input$sample_selection_pca %||% "all"
       scale_data <- as.logical(input$scale_data)
       print("Calculate PCA")
       # PCA, for safety measures, wrap in tryCatch
       tryCatch({
-        pca_res <- get_pca(data, scale_data, sample_types, sample_selection)
+        pca_res <- get_pca(
+          data, scale_data, sample_types, sample_selection
+        )
         pca <- pca_res$pca
         pcaData <- pca_res$pcaData
         percentVar <- pca_res$percentVar
