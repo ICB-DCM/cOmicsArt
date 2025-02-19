@@ -51,6 +51,7 @@ library("ComplexHeatmap")
 library(formattable)
 library(codetools)
 library(vsn)
+library(hexbin)
 
 source("R/C.R")
 source("R/C_strings.R")
