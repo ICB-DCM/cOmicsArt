@@ -286,6 +286,7 @@ server <- function(input,output,session){
 ## Set reactiveVals ----
   uploaded_from <- reactiveVal(NULL)
   omic_type <- reactiveVal(NULL)
+  able_to_plot <- reactiveVal(FALSE)
 
   output$SaveInputAsList <- downloadHandler(
    filename = function() {
@@ -1366,6 +1367,7 @@ server <- function(input,output,session){
   
 ## Log Selection ----
   observeEvent(c(input$NextPanel, input$use_full_data),{
+    able_to_plot(FALSE)
     # Do actual selection before logging
     print(selectedData())
     # add row and col selection options
@@ -1571,6 +1573,17 @@ server <- function(input,output,session){
   output$Statisitcs_Data <- renderText({
     "Press 'Get-Preprocessing' to start!"
   })
+  output$raw_violin_plot <- renderPlot({
+    req(able_to_plot())
+    violin_plot(
+      res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
+      violin_color = isolate(input$violin_color)
+    )
+  })
+  output$preprocessed_violin_plot <- renderPlot({
+    req(able_to_plot())
+    violin_plot(res_tmp[[session$token]]$data, violin_color = input$violin_color)
+  })
 
 ## Preprocessing ----
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
@@ -1585,6 +1598,7 @@ server <- function(input,output,session){
     )
     waiter$show()
     print(selectedData())
+    print("Starting the Preprocessing")
     # ---- Value Assignment and Parameter Saving for later use ----
     preprocessing_procedure <- input$PreProcessing_Procedure
     preprocessing_filtering <- input$PreProcessing_Procedure_filtering %||% NULL
@@ -1718,7 +1732,7 @@ server <- function(input,output,session){
       shinyjs::click("Heatmap-refreshUI",asis = T)
       shinyjs::click("PCA-refreshUI",asis = T)
       shinyjs::click("sample_correlation-refreshUI",asis = T)
-      ifelse(omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
+      ifelse(omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"), showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
       paste0(
         "The data has the dimensions of: ",
         paste0(dim(data),collapse = ", "),
@@ -1736,15 +1750,7 @@ server <- function(input,output,session){
       timer = 2500,
       timerProgressBar = T
     )
-
-    output$raw_violin_plot <- renderPlot({
-      violin_plot(res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
-                  violin_color = input$violin_color)
-      })
-    output$preprocessed_violin_plot <- renderPlot({
-      violin_plot(res_tmp[[session$token]]$data,
-                  violin_color = input$violin_color)
-      })
+    able_to_plot(TRUE)
     par_tmp[[session$token]]['violin_color'] <<- input$violin_color
     waiter$hide()
     return("Pre-Processing successfully")
