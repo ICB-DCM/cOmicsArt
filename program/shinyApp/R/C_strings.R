@@ -7,7 +7,11 @@ NOTES_HELP <<- HTML(
   Here you can find a Markdown Cheat Sheet</a> <br> Please do not use heading mardkown
   syntax - <br> this will interfere with the reports hierachy"
 )
-NOTES_ADDITIONAL <<- '<textarea name="textarea" rows="5" cols="30" placeholder="Place here additional notes on the fly..."></textarea>"'
+NOTES_ADDITIONAL <<- paste(
+  '<textarea id="myTextarea" name="textarea" rows="5" cols="30" placeholder="Place here additional notes on the fly..."></textarea>\n',
+  '<button id="saveBtn">Add Note</button>\n',
+  sep = "\n"
+)
 
 # --- Error messages Preprocessing ---
 # Error messages in modal due to failed batch correction
@@ -40,4 +44,8 @@ ERROR_NON_ENSEMBL_GENES <<- "Provided gene set must be in ENSEMBL-IDs format"
 ERROR_NO_HEATMAP_GENES <<- "No heatmap genes provided for enrichment analysis"
 ERROR_HEATMAP_IN_APP <<- "Change to 'Heatmap' tab, produce a heatmap and save the genes to use for enrichment analysis via button below the plot."
 ERROR_LFCS_EMPTY <<- "The fold-change calculation returned NULL. Check the compare_within, reference and treatment groups."
+
+# --- Report Strings ---
+SAVE_EDITED_HTML <<- paste(readLines("R/report_generation/download_updated_report.html"), collapse = "\n")
+NOTES_BASE_HTML <<- paste(readLines("R/report_generation/notes_per_plot.html"), collapse = "\n")
 

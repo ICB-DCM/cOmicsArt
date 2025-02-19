@@ -402,14 +402,7 @@ heatmap_server <- function(id){moduleServer(
       }
       fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
       if(isTruthy(isolate(input$NotesHeatmap)) & !(isEmpty(isolate(input$NotesHeatmap)))){
-        fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
-        fun_LogIt(message = paste0(
-          "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
-          shiny::markdown("### Notes"),
-          shiny::markdown(input$NotesHeatmap),
-          NOTES_ADDITIONAL,
-          "</div>"
-        ))
+        fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesHeatmap)))
       }
       fun_LogIt(message = "### Publication Snippet")
       fun_LogIt(message = snippet_heatmap(data = res_tmp[[session$token]],

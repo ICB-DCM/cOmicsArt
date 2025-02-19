@@ -30,3 +30,5 @@ source("R/single_gene_visualisation/util.R",local = T)
 source("R/code_generation/function_infos.R",local = T)
 source("R/code_generation/util.R",local = T)
 source("R/code_generation/plot_generators.R",local = T)
+# Source for Report Generation
+source("R/report_generation/util.R",local = T)

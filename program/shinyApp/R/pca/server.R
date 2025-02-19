@@ -499,14 +499,7 @@ pca_Server <- function(id){
       fun_LogIt(message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
 
       if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
-        fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
-        fun_LogIt(message = paste0(
-          "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
-          shiny::markdown("### Notes"),
-          shiny::markdown(input$NotesPCA),
-          NOTES_ADDITIONAL,
-          "</div>"
-        ))
+        fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesPCA)))
       }
       fun_LogIt(message = "### Publication Snippet")
       fun_LogIt(message = snippet_PCA(
