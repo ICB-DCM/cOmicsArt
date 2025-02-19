@@ -302,6 +302,7 @@ server <- function(input,output,session){
 ## Set reactiveVals ----
   uploaded_from <- reactiveVal(NULL)
   omic_type <- reactiveVal(NULL)
+  able_to_plot <- reactiveVal(FALSE)
 
   output$SaveInputAsList <- downloadHandler(
    filename = function() {
@@ -346,7 +347,17 @@ server <- function(input,output,session){
       output$testdata_help_text <- renderUI({
         HTML(EXAMPLE_RNA_DESCRIPTION)
       })
-      }
+    }
+    if(input$omic_type_testdata == "Metabolomics"){
+      output$testdata_help_text <- renderUI({
+        HTML(EXAMPLE_METABO_DESCRIPTION)
+      })
+    }
+    if(input$omic_type_testdata == "Lipidomics"){
+      output$testdata_help_text <- renderUI({
+        HTML(EXAMPLE_LIPID_DESCRIPTION)
+      })
+    }
     })
   
   observeEvent(input$AddGeneSymbols, {
@@ -1049,7 +1060,7 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
-    if(is.null(unlist(par_tmp[[session$token]]['omic_type']))){
+    if(is.null(unlist(par_tmp[[session$token]]['omic_type'])) || input[[paste0("omic_type_", uploaded_from())]] != omic_type()){
       par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
       omic_type(input[[paste0("omic_type_", uploaded_from())]])
     }
@@ -1196,9 +1207,22 @@ server <- function(input,output,session){
       
       
     } else if(uploaded_from() == "testdata"){
-      data_input <- readRDS(
-        file = "www/Transcriptomics_only_precompiled-LS.RDS"
-      )
+      if(input$omic_type_testdata=="Transcriptomics"){
+        data_input <- readRDS(
+          file = "www/Transcriptomics_only_precompiled-LS.RDS"
+        )
+      }
+      if(input$omic_type_testdata =="Lipidomics"){
+        data_input <- readRDS(
+          file = "www/Lipidomics_only_precompiled-LS.RDS"
+        )
+      }
+      if(input$omic_type_testdata =="Metabolomics"){
+        data_input <- readRDS(
+          file = "www/Metabolomics_only_precompiled-LS.RDS"
+        )
+      }
+
       fun_LogIt(
         message = paste0("<font color=\"#FF0000\"><b>**Attention** - Test Data set used</b></font>")
       )
@@ -1380,6 +1404,7 @@ server <- function(input,output,session){
   
 ## Log Selection ----
   observeEvent(c(input$NextPanel, input$use_full_data),{
+    able_to_plot(FALSE)
     # Do actual selection before logging
     print(selectedData())
     # add row and col selection options
@@ -1498,7 +1523,7 @@ server <- function(input,output,session){
           numericInput(
             inputId = "filter_threshold",
             label = "Specifcy the minimum sum of counts/concentration accross all samples for an entitie to be kept in the analysis.",
-            value = 10,
+            value = ifelse(omic_type() == "Transcriptomics", 10, 0),
             min = 0
           )
         )
@@ -1509,7 +1534,7 @@ server <- function(input,output,session){
         numericInput(
             inputId = "filter_threshold_samplewise",
             label = "Specifcy theFiltering threshold of counts/concentration for an entitie",
-            value = 10
+            value = ifelse(omic_type() == "Transcriptomics", 10, 0)
           ),
         numericInput(
             inputId = "filter_samplesize",
@@ -1533,7 +1558,7 @@ server <- function(input,output,session){
     filtered_column_names <- column_names[sapply(column_names, function(col) {
       length(unique(colData(res_tmp[[session$token]]$data_original)[[col]])) < nrow(colData(res_tmp[[session$token]]$data_original))
     })]
-    if (input$PreProcessing_Procedure == "vst_DESeq") {
+    if (isTruthy(input$PreProcessing_Procedure) && input$PreProcessing_Procedure == "vst_DESeq") {
       filtered_column_names <- filtered_column_names[!filtered_column_names %in% c(input$DESeq_formula_sub)]
     }
     selectInput(
@@ -1585,6 +1610,17 @@ server <- function(input,output,session){
   output$Statisitcs_Data <- renderText({
     "Press 'Get-Preprocessing' to start!"
   })
+  output$raw_violin_plot <- renderPlot({
+    req(able_to_plot())
+    violin_plot(
+      res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
+      violin_color = isolate(input$violin_color)
+    )
+  })
+  output$preprocessed_violin_plot <- renderPlot({
+    req(able_to_plot())
+    violin_plot(res_tmp[[session$token]]$data, violin_color = input$violin_color)
+  })
 
 ## Preprocessing ----
   selectedData_processed <- eventReactive(input$Do_preprocessing,{
@@ -1599,6 +1635,7 @@ server <- function(input,output,session){
     )
     waiter$show()
     print(selectedData())
+    print("Starting the Preprocessing")
     # ---- Value Assignment and Parameter Saving for later use ----
     preprocessing_procedure <- input$PreProcessing_Procedure
     preprocessing_filtering <- input$PreProcessing_Procedure_filtering %||% NULL
@@ -1705,8 +1742,8 @@ server <- function(input,output,session){
       normality_test_stat <-
         paste0(
           "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
-          "<br>Number of genes with p-value < 0.05: ",length(which(norm_res$p_value_shapiro < 0.05)), "/",nrow(data),
-          "<br>Number of genes with adj. p-value < 0.05: ",length(which(norm_res$p_value_shapiro_FDR < 0.05)), "/", nrow(data),
+          "<br>Number of entities with p-value < 0.05: ",length(which(norm_res$p_value_shapiro < 0.05)), "/",nrow(data),
+          "<br>Number of entities with adj. p-value < 0.05: ",length(which(norm_res$p_value_shapiro_FDR < 0.05)), "/", nrow(data),
           "<br>If p < 0.05 the normality assumption is violated.",
           "<br>For small sample size this test is not reliable.",
           "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"
@@ -1732,6 +1769,7 @@ server <- function(input,output,session){
       shinyjs::click("Heatmap-refreshUI",asis = T)
       shinyjs::click("PCA-refreshUI",asis = T)
       shinyjs::click("sample_correlation-refreshUI",asis = T)
+      ifelse(omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"), showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
       paste0(
         "The data has the dimensions of: ",
         paste0(dim(data),collapse = ", "),
@@ -1749,15 +1787,7 @@ server <- function(input,output,session){
       timer = 2500,
       timerProgressBar = T
     )
-
-    output$raw_violin_plot <- renderPlot({
-      violin_plot(res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
-                  violin_color = input$violin_color)
-      })
-    output$preprocessed_violin_plot <- renderPlot({
-      violin_plot(res_tmp[[session$token]]$data,
-                  violin_color = input$violin_color)
-      })
+    able_to_plot(TRUE)
     par_tmp[[session$token]]['violin_color'] <<- input$violin_color
     waiter$hide()
     return("Pre-Processing successfully")

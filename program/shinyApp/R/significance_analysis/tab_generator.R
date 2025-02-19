@@ -25,12 +25,12 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   # total number of genes compared
   total_genes <- length(rownames(result))
   resume <- list()
-  resume[[1]] <- paste("Total number of genes compared: ", total_genes)
+  resume[[1]] <- paste("Total number of entities compared: ", total_genes)
   # number of NA values in pvalue
   resume[[2]] <- paste("Number of NA values in pvalue: ", sum(is.na(result$pvalue)))
   # number of genes with significant p-value
   resume[[3]] <- paste(
-    "Number of genes with significant p-value: ",
+    "Number of entities with significant p-value: ",
     length(which(result$padj < alpha)),
     ", ",
     round(length(which(result$padj < alpha))/total_genes*100, 2),
@@ -38,7 +38,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   )
   # number of significant genes without correction
   resume[[4]] <- paste(
-    "Number of significant genes without correction: ",
+    "Number of significant entities without correction: ",
     length(which(result$pvalue < alpha)),
     ", ",
     round(length(which(result$pvalue < alpha))/total_genes*100, 2),
@@ -556,10 +556,10 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   # total number of genes compared
   total_genes <- length(rownames(result))
   resume <- list()
-  resume[[1]] <- paste("Total number of genes compared: ", total_genes)
+  resume[[1]] <- paste("Total number of entities compared: ", total_genes)
   # number of genes with significant p-value
   resume[[2]] <- paste(
-    "Number of genes with significant p-value: ",
+    "Number of entities with significant p-value: ",
     length(which(result$padj < alpha)),
     ", ",
     round(length(which(result$padj < alpha))/total_genes*100, 2),
@@ -567,7 +567,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   )
   # number of upregulated significant genes
   resume[[3]] <- paste(
-    "Number of upregulated significant genes: ",
+    "Number of upregulated significant entities: ",
     length(which(result$padj < alpha & result$log2FoldChange > 0)),
     ", ",
     round(length(which(result$padj < alpha & result$log2FoldChange > 0))/total_genes*100, 2),
@@ -575,7 +575,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   )
   # number of downregulated significant genes
   resume[[4]] <- paste(
-    "Number of downregulated significant genes: ",
+    "Number of downregulated significant entities: ",
     length(which(result$padj < alpha & result$log2FoldChange < 0)),
     ", ",
     round(length(which(result$padj < alpha & result$log2FoldChange < 0))/total_genes*100, 2),
@@ -583,7 +583,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   )
   # number of significant genes without correction
   resume[[5]] <- paste(
-    "Number of significant genes without correction: ",
+    "Number of significant entities without correction: ",
     length(which(result$pvalue < alpha)),
     ", ",
     round(length(which(result$pvalue < alpha))/total_genes*100, 2),

@@ -40,7 +40,7 @@ snippet_dataInput <- function(
              paste0("No entitie selection was performed. ")
            }else{
              if(any(params$row_selection == "High Values+IQR")){
-               paste0("Selects the top entities based on their maximum expression levels and interquartile range (IQR), returning the intersection of genes that exceed the ",params$propensity, " quantile for both criteria. ")
+               paste0("Selects the top entities based on their maximum expression levels and interquartile range (IQR), returning the intersection of entities that exceed the ",params$propensity, " quantile for both criteria. ")
              }else{
                paste0("All entities with ",params$providedRowAnnotationTypes," being ",paste(params$row_selection,collapse = ", ")," were selected. ")
              }
