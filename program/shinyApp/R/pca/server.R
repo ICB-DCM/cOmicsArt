@@ -175,6 +175,9 @@ pca_Server <- function(id){
         percentVar <- pca_res$percentVar
       }, error = function(e){
         error_modal(e$message)
+        res_tmp[[session$token]][["PCA"]] <<- NULL
+        pca_reactives$pcaData <<- NULL
+        pca_reactives$percentVar <<- NULL
         pca_reactives$waiter$hide()
         return(NULL)
       })
