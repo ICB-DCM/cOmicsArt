@@ -113,10 +113,10 @@ ea_sidebar <- function(ns){
       ),
       conditionalPanel(
         condition = sprintf("input['%s'] == 'ProvidedGeneSet'", ns("GeneSet2Enrich")),
-        renderUI({shiny::fileInput(
+        shiny::fileInput(
           inputId = ns("UploadedGeneSet"),
-          label = "Select a file (.csv, 1 column, ENSEMBL, e.g. ENSMUSG....)"
-        )})
+          label = HTML('Select a file (.csv, 1 column, ENSEMBL, e.g. ENSMUSG....)<br/><a href="ExampleProvidedGeneSet.csv" download>Download example data</a></small>')
+        )
       ),
       selectInput(
         inputId = ns("UniverseOfGene"),
