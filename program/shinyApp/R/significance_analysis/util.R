@@ -76,7 +76,7 @@ performSigAnalysis <- function(
       )
       # Assume that significance_analysis returns the results directly.
     }, error = function(e) {
-      stop(paste("Error in significance_analysis for contrast:", contrasts, "\n", e))
+      stop(paste("Error in significance_analysis for contrast:", contrasts, "<br>", e))
     })
   }
   return(sig_results)
@@ -154,6 +154,10 @@ significance_analysis <- function(
       grp2 = idy
     )
     res <- as.data.frame(do.call(rbind, res))
+    if (identical(test_function, wilcox.test)) {
+      res$baseMean <- apply(df[,idy], 1, mean)
+      res$treatMean <- apply(df[,idx], 1, mean)
+    }
     # turn columns to numerics again
     res <- transform(
       res, 

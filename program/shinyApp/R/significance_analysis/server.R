@@ -245,8 +245,8 @@ significance_analysis_server <- function(id){
 
         ## Tab Management
         contrast_list <- lapply(comparisons, function(comp) unlist(strsplit(comp, ":")))
-        new_tabs <- setdiff(comparisons, sig_ana_reactive$active_tabs)
-        old_tabs <- setdiff(sig_ana_reactive$active_tabs, comparisons)
+        new_tabs <- comparisons
+        old_tabs <- sig_ana_reactive$active_tabs
 
         # Helper function to clean up tabs and associated elements
         cleanup_tab <- function(comp) {
