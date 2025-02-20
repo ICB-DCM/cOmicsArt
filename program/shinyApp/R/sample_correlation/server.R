@@ -11,6 +11,7 @@ sample_correlation_server <- function(id){
       )
       
       ns <- session$ns
+      file_path <- paste0("/www/",session$token,"/")
       # UI Section ----
       observeEvent(input$refreshUI, {
         print("Refreshing UI Sample Correlation")
@@ -188,29 +189,7 @@ sample_correlation_server <- function(id){
             filename = file,
             type=gsub("\\.","",input$file_ext_SampleCorrelation)
           )
-          on.exit({
-            tmp_filename <- paste0(
-              getwd(),
-              "/www/",
-              paste0(sample_corr_reactive$customTitleSampleCorrelation, Sys.time(), input$file_ext_SampleCorrelation)
-            )
-            save_complex_heatmap(
-              sample_corr_reactive$corr_plot,
-              filename = tmp_filename,
-              type = gsub("\\.","",input$file_ext_SampleCorrelation)
-            )
-            # Add Log Messages
-            fun_LogIt("## Sample correlation {.tabset .tabset-fade}")
-            fun_LogIt(message = "### Info")
-            fun_LogIt(message = paste0("**SampleCorrelation** - The correlation method used was: ",input$corrMethod))
-            fun_LogIt(message = paste0("**SampleCorrelation** - The heatmap samples were colored after ",paste(input$SampleAnnotationChoice)))
-            fun_LogIt(message = paste0("**SampleCorrelation** - The plot was save to the locally. "))
-            fun_LogIt(message = paste0("**SampleCorrelation** - ![SAMPLE_CORRELATION](",tmp_filename,")"))
-            fun_LogIt(message = "### Publication Snippet")
-            fun_LogIt(message = snippet_sampleCorr(data=res_tmp[[session$token]],
-                                                   params=par_tmp[[session$token]]))
-            fun_LogIt(message = "<br>")
-          })
+          on.exit({shinyjs::click(ns("only2Report_SampleCorrelation"))})
           
         }
       )
@@ -220,7 +199,7 @@ sample_correlation_server <- function(id){
         notificationID <- showNotification("Saving to Report...",duration = 0)
         tmp_filename <- paste0(
           getwd(),
-          "/www/",
+          file_path,
           paste0(sample_corr_reactive$customTitleSampleCorrelation, Sys.time(), ".png")
         )
         
