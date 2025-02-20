@@ -1787,7 +1787,9 @@ server <- function(input,output,session){
       shinyjs::click("sample_correlation-refreshUI",asis = T)
       ifelse(omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"), showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
       paste0(
-        "The data has the dimensions of: ",
+        "The raw data has dimensions: ",
+        paste0(dim(res_tmp[[session$token]]$data_original),collapse = ", "),
+        "<br>The processed data has dimensions: ",
         paste0(dim(data),collapse = ", "),
         "<br>",ifelse(input$processing_type == "Log-Based","In case of 0's present logX(data+1) is done",""),
         "<br>","See help for details",
