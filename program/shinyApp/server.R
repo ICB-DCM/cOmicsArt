@@ -153,6 +153,10 @@ server <- function(input,output,session){
     shinyjs::runjs("document.querySelector('.driver-close-btn').click();")
     showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
   })
+  
+  observeEvent(input$GoToStartAnalysis, {
+    guide_startDiscover$init()$start()
+  })
 
   output$help_tab_info <- renderText({
     HTML(paste0(

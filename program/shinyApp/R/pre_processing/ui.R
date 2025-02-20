@@ -43,6 +43,22 @@ pre_processing_main_panel <- mainPanel(
   div(
     id = "data_summary",
     HTML(text = "<br>"),
+    fluidRow(column(5,
+                    actionButton(
+                      "GoToStartAnalysis", "Start Discovering",
+                      width = "100%",
+                      icon = icon("fas fa-mouse-pointer"),
+                      style = "
+          background-color: #3897F147;
+          color: black;
+          border: 2px solid darkgrey;
+          font-size: 15px;
+          font-weight: bold;
+          box-shadow: 3px 3px 5px rgba(255, 0, 0, 0.2);
+          padding: 5px 5px;
+          border-radius: 10px;"
+                    )
+    )),
     fluidRow(
       column(
         6,
