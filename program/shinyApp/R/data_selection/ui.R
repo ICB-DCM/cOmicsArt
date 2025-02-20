@@ -244,7 +244,8 @@ data_selection_main_panel <- mainPanel(
 
 
 data_selection_panel <- tabPanel(
-  title = "Data selection",
+  title = tagList(tags$span("1. Data selection")), 
+  value = "Data selection",
   id = "Data_selection",
   fluid = T,
   h4("Data Selection"),

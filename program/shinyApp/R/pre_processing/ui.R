@@ -124,7 +124,8 @@ pre_processing_main_panel <- mainPanel(
 
 
 pre_processing_panel <- tabPanel(
-  title = "Pre-processing",
+  title = tagList(tags$span("2. Pre-processing")), 
+  value = "Pre-processing",
   id = "pre_processing_panel",
   fluid = T,
   h4("Data Pre-processing"),
