@@ -301,14 +301,17 @@ server <- function(input,output,session){
 
 ## Plots
   output$raw_violin_plot <- renderPlot({
+    req(able_to_plot())
     req(react_violin_plot_raw())
     react_violin_plot_raw()
   })
   output$preprocessed_violin_plot <- renderPlot({
+    req(able_to_plot())
     req(react_violin_plot())
     react_violin_plot()
   })
   output$mean_sd_plot <- renderPlot({
+    req(able_to_plot())
     req(react_mean_sd_plot())
     react_mean_sd_plot()
   })
@@ -1806,15 +1809,17 @@ server <- function(input,output,session){
       timer = 2500,
       timerProgressBar = T
     )
-
-    output$raw_violin_plot <- renderPlot({
-      violin_plot(res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
-                  violin_color = input$violin_color)
-      })
-    output$preprocessed_violin_plot <- renderPlot({
-      violin_plot(res_tmp[[session$token]]$data,
-                  violin_color = input$violin_color)
-      })
+    react_violin_plot(violin_plot(
+      data = data,
+      violin_color = input$violin_color
+    ))
+    react_violin_plot_raw(violin_plot(
+      data = res_tmp[[session$token]]$data_original[rows_selected, samples_selected],
+      violin_color = input$violin_color
+    ))
+    mean_and_obj <- vsn::meanSdPlot(as.matrix(assay(data)), plot=FALSE)
+    react_mean_sd_plot(mean_and_obj$gg + CUSTOM_THEME + ggtitle("Mean and SD per entity"))
+    able_to_plot(TRUE)
     par_tmp[[session$token]]['violin_color'] <<- input$violin_color
     waiter$hide()
     return("Pre-Processing successfully")
