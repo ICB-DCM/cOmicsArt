@@ -194,7 +194,15 @@ pca_Server <- function(id){
       pca_reactives$percentVar <- percentVar
       pca_reactives$pcaData <- pcaData
       print("PCA computing done")
-      pca_reactives$info_text <- "PCA computed."
+      info_text <- "PCA computed."
+      if (input$data_selection_pca && !("all" %in% sample_selection)){
+        info_text <- paste0(
+          info_text,
+          "\n\nDue to sample selection, some genes that are constant\n",
+          "in the selected samples were temporarily removed in the pca creation."
+        )
+      }
+      pca_reactives$info_text <- info_text
       pca_reactives$waiter$hide()
     })
 
@@ -213,6 +221,9 @@ pca_Server <- function(id){
       req(pca_reactives$pcaData, pca_reactives$percentVar, input$coloring_options)
       # define the variables to be used
       pca <- res_tmp[[session$token]][["PCA"]]
+      if(is.null(pca)){
+        return(NULL)
+      }
       percentVar <- pca_reactives$percentVar
       pcaData <- pca_reactives$pcaData
       x_axis <- input$x_axis_selection

@@ -43,6 +43,8 @@ get_pca <- function(data, scale_data, sample_types, sample_selection){
     selected_samples = sample_selection,
     sample_type = sample_types
   )$data
+  # remove again all contant entities (due to potentially reduced sample size)
+  data <- data[rownames(data[which(apply(assay(data),1,sd) != 0),]),]
   # Compute the Principal Components
   pca <- prcomp(
     x = as.data.frame(t(as.data.frame(assay(data)))),
