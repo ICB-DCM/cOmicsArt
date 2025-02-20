@@ -113,10 +113,10 @@ ea_sidebar <- function(ns){
       ),
       conditionalPanel(
         condition = sprintf("input['%s'] == 'ProvidedGeneSet'", ns("GeneSet2Enrich")),
-        renderUI({shiny::fileInput(
+        shiny::fileInput(
           inputId = ns("UploadedGeneSet"),
           label = "Select a file (.csv, 1 column, ENSEMBL, e.g. ENSMUSG....)"
-        )})
+        )
       ),
       selectInput(
         inputId = ns("UniverseOfGene"),
