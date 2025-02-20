@@ -161,18 +161,23 @@ pca_Server <- function(id){
       } else {
           data <- data$data
       }
-      sample_types <- input$sample_selection_pca %||% c(colnames(colData(data)))[1]
+      sample_types <- input$SampleAnnotationTypes_pca %||% c(colnames(colData(data)))[1]
       sample_selection <- input$sample_selection_pca %||% "all"
       scale_data <- as.logical(input$scale_data)
       print("Calculate PCA")
       # PCA, for safety measures, wrap in tryCatch
       tryCatch({
-        pca_res <- get_pca(data, scale_data, sample_types, sample_selection)
+        pca_res <- get_pca(
+          data, scale_data, sample_types, sample_selection
+        )
         pca <- pca_res$pca
         pcaData <- pca_res$pcaData
         percentVar <- pca_res$percentVar
       }, error = function(e){
         error_modal(e$message)
+        res_tmp[[session$token]][["PCA"]] <<- NULL
+        pca_reactives$pcaData <<- NULL
+        pca_reactives$percentVar <<- NULL
         pca_reactives$waiter$hide()
         return(NULL)
       })
@@ -189,7 +194,15 @@ pca_Server <- function(id){
       pca_reactives$percentVar <- percentVar
       pca_reactives$pcaData <- pcaData
       print("PCA computing done")
-      pca_reactives$info_text <- "PCA computed."
+      info_text <- "PCA computed."
+      if (input$data_selection_pca && !("all" %in% sample_selection)){
+        info_text <- paste0(
+          info_text,
+          "\n\nDue to sample selection, some genes that are constant\n",
+          "in the selected samples were temporarily removed in the pca creation."
+        )
+      }
+      pca_reactives$info_text <- info_text
       pca_reactives$waiter$hide()
     })
 
@@ -208,6 +221,9 @@ pca_Server <- function(id){
       req(pca_reactives$pcaData, pca_reactives$percentVar, input$coloring_options)
       # define the variables to be used
       pca <- res_tmp[[session$token]][["PCA"]]
+      if(is.null(pca)){
+        return(NULL)
+      }
       percentVar <- pca_reactives$percentVar
       pcaData <- pca_reactives$pcaData
       x_axis <- input$x_axis_selection
@@ -226,6 +242,7 @@ pca_Server <- function(id){
       pca_reactives$PCA_plot <- plot_pca(
         pca = pca,
         pcaData = pcaData,
+        data = data,
         percentVar = percentVar,
         x_axis = x_axis,
         y_axis = y_axis,

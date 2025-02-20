@@ -38,7 +38,13 @@ get_pca <- function(data, scale_data, sample_types, sample_selection){
   #   percentVar, numeric, percentage of variance explained
 
   # Potentially select samples
-  data <- select_data(data, sample_selection, sample_types)$data
+  data <- select_data(
+    data = data,
+    selected_samples = sample_selection,
+    sample_type = sample_types
+  )$data
+  # remove again all contant entities (due to potentially reduced sample size)
+  data <- data[rownames(data[which(apply(assay(data),1,sd) != 0),]),]
   # Compute the Principal Components
   pca <- prcomp(
     x = as.data.frame(t(as.data.frame(assay(data)))),
@@ -130,9 +136,8 @@ pca_loadings <- function(
       levels = make.unique(as.character(rowData(data)[rownames(loadings), entitie_anno]))
     )
   }
-  #On purpose no explicit return statement?
   # Return geom_segment layer for adding to plots
-  geom_segment(
+  return(geom_segment(
     data = loadings[loadings$feature != "", ],
     mapping = aes(
       x = 0,
@@ -143,7 +148,7 @@ pca_loadings <- function(
     ),
     arrow = arrow(type = "closed", unit(0.01, "inches"), ends = "both"),
     color = "#ab0521"
-  )
+  ))
 }
 
 pca_ellipses <- function(

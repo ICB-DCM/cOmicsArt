@@ -1,5 +1,5 @@
 plot_pca <- function(
-  pca, pcaData, percentVar, x_axis, y_axis, color_by, title, show_loadings, plot_ellipses, entitie_anno, tooltip_var
+  pca, pcaData, data, percentVar, x_axis, y_axis, color_by, title, show_loadings, plot_ellipses, entitie_anno, tooltip_var
 ){
   # Plot the PCA plot using the principal components chosen in x_axis and y_axis.
   # Parameters:
@@ -34,7 +34,6 @@ plot_pca <- function(
         x = pcaData[,x_axis],
         y = pcaData[,y_axis],
         color = pcaData[,color_by],
-        group = pcaData[,color_by],
         label = global_ID,
         global_ID = global_ID,
         chosenAnno = chosenAnno
