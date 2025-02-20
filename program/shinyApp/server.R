@@ -295,7 +295,7 @@ server <- function(input,output,session){
       "<b>Cleared data, hence there is nothing to upload. Please select your data or use the Testdata</b><br>Make sure to click on  'Upload new data' before proceeding to pre-processing"
     })
   })
-  
+
 # Data Upload + checks ----
 
 ## Plots
@@ -1220,8 +1220,8 @@ server <- function(input,output,session){
         })
         return(NULL)
       }
-      
-      
+
+
     } else if(uploaded_from() == "testdata"){
       if(input$omic_type_testdata=="Transcriptomics"){
         data_input <- readRDS(
@@ -1679,7 +1679,7 @@ server <- function(input,output,session){
 
     # preprocessing
     print(paste0("Do chosen Preprocessing:",preprocessing_procedure))
-    
+
     # Check for DESeq option if more than 100 genes avail as it is for omics!
     tryCatch({
       preprocess_res <<- preprocessing(

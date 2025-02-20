@@ -21,7 +21,6 @@ pca_sidebar_panel <- function(ns){
       inputId = ns("scale_data"),
       label = "Scale data to unit variance?",
       choices = c("Yes" = TRUE, "No" = FALSE),
-      # direction = "horizontal",
       selected = TRUE
     ),
     ### start pca ---
@@ -51,7 +50,6 @@ pca_sidebar_panel <- function(ns){
       inputId = ns("Show_loadings"),
       label = "Plot Loadings on top? (currently top 5)",
       choices = c("Yes" = TRUE, "No" = FALSE),
-      # direction = "horizontal",
       selected = FALSE
     ),
     radioButtons(
