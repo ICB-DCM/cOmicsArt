@@ -519,6 +519,10 @@ server <- function(input,output,session){
       title = "Upload Visual Inspection",
       helpText("If you have uploaded your data, you might want to visually check the tables to confirm the correct data format. If you notice irregualarities you will need to correct the input data - this cannot be done in cOmicsArt, See the help on how your data is expected."),
       br(),
+      actionButton(
+        inputId = "DoVisualDataInspection",
+        label = "Upload data for visual inspection"
+      ),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
         DT::dataTableOutput("DataMatrix_VI"),
@@ -543,7 +547,8 @@ server <- function(input,output,session){
       size = "l", # large modal
       class = "custom-modal" # custom class for this modal
     ))
-
+  })
+  observeEvent(input$DoVisualDataInspection, {
     tryCatch({
     if(isTruthy(input$data_preDone)){
       output$DataMatrix_VI_Info <- renderText({
@@ -1061,10 +1066,10 @@ server <- function(input,output,session){
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
     browser()
-    if(is.null(unlist(par_tmp[[session$token]]['omic_type'])) || input[[paste0("omic_type_", uploaded_from())]] != omic_type()){
-      par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
-      omic_type(input[[paste0("omic_type_", uploaded_from())]])
-    }
+    # if(is.null(unlist(par_tmp[[session$token]]['omic_type'])) || input[[paste0("omic_type_", uploaded_from())]] != omic_type()){
+    #   par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
+    #   omic_type(input[[paste0("omic_type_", uploaded_from())]])
+    # }
     # Add check if the data upload fails due to no supply of files
     if(!((isTruthy(input$data_preDone) & uploaded_from() == "precompiled") |
       # Is File Input used?
