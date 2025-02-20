@@ -711,6 +711,7 @@ server <- function(input,output,session){
           # test if rownames are valid
           if(any(grepl(invalidStart_regex, rownames(Matrix))) | any(grepl(space_regex, rownames(Matrix)))){
             # save orig rownmaes to entite anno
+            old_Matrix <- Matrix
             annotation_rows$original_rownames <- as.character(rownames(Matrix))
             idxTochange <- grepl(invalidStart_regex, rownames(Matrix))
             rownames(Matrix)[idxTochange] <- paste0("entite_", rownames(Matrix)[idxTochange])
@@ -720,7 +721,7 @@ server <- function(input,output,session){
 
             allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
 
-            oldnames_matrix <- rownames(Matrix)[allIdx_changes]
+            oldnames_matrix <- rownames(old_Matrix)[allIdx_changes]
             newName_matrix <- rownames(Matrix)[allIdx_changes]
             info_snippet_matrix_row <- paste0("Changes: <br> Matrix: Number of rownames changed: ",length(oldnames_matrix),"<br>",
                                           " e.g. old names: " ,paste0(head(oldnames_matrix,3), collapse = ", "),"<br>",
@@ -730,6 +731,7 @@ server <- function(input,output,session){
           }
           if(any(grepl(invalidStart_regex, colnames(Matrix))) | any(grepl(space_regex, colnames(Matrix)))){
             # save orig colnames to sample anno
+            old_Matrix <- Matrix
             sample_table$original_colnames <- as.character(colnames(Matrix))
             idxTochange <- grepl(invalidStart_regex, colnames(Matrix))
             if(any(grepl("^X", colnames(Matrix)))){
@@ -742,7 +744,7 @@ server <- function(input,output,session){
 
             allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
 
-            oldnames_matrix <- colnames(Matrix)[allIdx_changes]
+            oldnames_matrix <- colnames(old_Matrix)[allIdx_changes]
             newName_matrix <- colnames(Matrix)[allIdx_changes]
             info_snippet_matrix_column <- paste0("Changes: <br> Matrix: Number of colnames changed: ",length(oldnames_matrix),"<br>",
                      " e.g. old names: " ,paste0(head(oldnames_matrix,3), collapse = ", "),"<br>",
@@ -752,6 +754,7 @@ server <- function(input,output,session){
           }
           if(any(grepl(invalidStart_regex, rownames(sample_table))) | any(grepl(space_regex, rownames(sample_table)))){
             idxTochange <- grepl(invalidStart_regex, rownames(sample_table))
+            old_sample_table <- sample_table
             rownames(sample_table)[idxTochange] <- paste0("sample_", rownames(sample_table)[idxTochange])
 
             idxTochange_space <- grepl(space_regex, rownames(sample_table))
@@ -759,7 +762,7 @@ server <- function(input,output,session){
 
             allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
 
-            oldnames_sample <- rownames(sample_table)[allIdx_changes]
+            oldnames_sample <- rownames(old_sample_table)[allIdx_changes]
             newName_sample <- rownames(sample_table)[allIdx_changes]
             info_snippet_sample <- paste0("Changes: <br> Sample Table: Number of rownames changed: ",length(oldnames_sample),"<br>",
                      " e.g. old names: " ,paste0(head(oldnames_sample,3), collapse = ", "),"<br>",
@@ -769,6 +772,7 @@ server <- function(input,output,session){
           }
           if(any(grepl(invalidStart_regex, rownames(annotation_rows))) | any(grepl(space_regex, rownames(annotation_rows)))){
             idxTochange <- grepl(invalidStart_regex, rownames(annotation_rows))
+            old_annotation_rows <- annotation_rows
             rownames(annotation_rows)[idxTochange] <- paste0("entite_", rownames(annotation_rows)[idxTochange])
 
             idxTochange_space <- grepl(space_regex, rownames(annotation_rows))
@@ -776,7 +780,7 @@ server <- function(input,output,session){
 
             allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
 
-            oldnames_entitie <- rownames(annotation_rows)[allIdx_changes]
+            oldnames_entitie <- rownames(old_annotation_rows)[allIdx_changes]
             newNames_entitie <- rownames(annotation_rows)[allIdx_changes]
             info_snippet_entitie <- paste0("Changes: <br> Entitie Table: Number of rownames changed: ",length(oldnames_entitie),"<br>",
                      " e.g. oldnames " ,paste0(head(oldnames_entitie,3), collapse = ","),"<br>",
@@ -1065,7 +1069,6 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
-    browser()
     # if(is.null(unlist(par_tmp[[session$token]]['omic_type'])) || input[[paste0("omic_type_", uploaded_from())]] != omic_type()){
     #   par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
     #   omic_type(input[[paste0("omic_type_", uploaded_from())]])
