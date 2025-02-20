@@ -53,7 +53,8 @@ server <- function(input,output,session){
         setdiff(list.files(path=".", pattern = ".csv")) %>%
         setdiff(list.files(path=".", pattern = ".RDS")) %>%
         setdiff(list.files(path=".", pattern = ".png")) %>%
-        setdiff(list.files(path=".", pattern = ".gif"))
+        setdiff(list.files(path=".", pattern = ".css")) %>%
+        setdiff(list.files(path=".", pattern = ".js"))
     )
     print("Removed old Report files for fresh start")
     setwd("..")
