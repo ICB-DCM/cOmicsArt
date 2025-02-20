@@ -138,16 +138,9 @@ single_gene_visualisation_server <- function(id){
       observe({
         single_gene_reactives$allow_plot <- TRUE
       }) %>% shiny::bindEvent(input$singleGeneGo)
-     
-      toListen <- reactive({
-        list(
-          single_gene_reactives$allow_plot,
-          input$accross_condition
-        )
-      })
 
       # Visualize single Gene ----
-      observeEvent(toListen(),{
+      observe({
         req(input$singleGeneGo > 0)
         req(single_gene_reactives$allow_plot)
         shinyjs::showElement(id = "SingleGene_div", asis = TRUE)
@@ -183,7 +176,10 @@ single_gene_visualisation_server <- function(id){
           post_selection_check = post_selection_check,
           data_process_stage = data_process_stage
         )
-      })
+      }) %>% shiny::bindEvent(
+        input$accross_condition,
+        input$singleGeneGo
+      )
 
       observeEvent(list(  # Plotting function
         input$chooseComparisons,
