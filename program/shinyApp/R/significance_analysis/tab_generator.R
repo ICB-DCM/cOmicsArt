@@ -206,7 +206,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         extensions = 'Buttons',
         filter = 'top',
         rownames = TRUE,
-        colnames = c('Gene' = 1),
+        colnames = c('Entitie' = 1),
         options = list(
           paging = TRUE,
           searching = TRUE,

@@ -62,6 +62,7 @@ performSigAnalysis <- function(
     index_comparisons <- which(colData(data)[, compare_within] %in% contrasts_all)
     samples_selected <- colData(data)[index_comparisons, ]
     data_selected <- as.matrix(assay(data))[, index_comparisons]
+    rownames(data_selected) <- rownames(data)
 
     # Wrap the custom significance_analysis in tryCatch (modify it so that it returns its results)
     sig_results <- tryCatch({
