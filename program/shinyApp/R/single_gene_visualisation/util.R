@@ -83,7 +83,7 @@ ready_to_plot <- function(gene_data, add_testing, comparisons) {
   return(all(comps %in% gene_data$annotation))
 }
 
-single_gene_boxplot <- function(gene_data, add_testing, comparisons, selected_gene, data_process_stage) {
+single_gene_boxplot <- function(gene_data, add_testing, comparisons, selected_gene, data_process_stage, group_by) {
   # Function to create a boxplot for a single gene
   # Parameters:
   #   gene_data: data.frame, data to visualize
@@ -113,7 +113,7 @@ single_gene_boxplot <- function(gene_data, add_testing, comparisons, selected_ge
     ggtitle(selected_gene) +
     geom_point(shape = 21, size=5)+
     scale_fill_brewer(palette="RdBu") +
-    xlab(comparisons) +
+    xlab(group_by) +
     ylab(data_types[[data_process_stage]]) +
     CUSTOM_THEME +
     boxplot_layer +
