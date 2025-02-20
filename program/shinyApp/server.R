@@ -857,18 +857,9 @@ server <- function(input,output,session){
             })
             showNotification("Check if now you pass all tests")
             output$OverallChecks <- renderText({
-              paste0(
-                "Some overall Checks have been run:\n",
-                "<b>REQUIRED</b> (must all be Yes):\n",
-                "Data Matrix is a real csv (has ',' as separators:): ",check0,"\n",
-                "Data Matrix has only numeric values: ",check7,"\n",
-                "Rownames of Matrix are the same as rownames of entitie table ",check1,"\n",
-                "Colnames of Matrix are same as rownames of sample table ",check2," \n",
-                "Sample IDs have valid names ", check6, "\n\n",
-                "<b>OPTIONAL</b> (Yes is optimal but optional; Will result in slight data changes):\n",
-                "Matrix has no na (missing values) ",check3,"\n",
-                "Sample table no na (missing values) ",check4,"\n",
-                "Entitie table no na  (missing values) ",check5,"\n"
+              sprintf(
+                CHECK_TEMPLATE_VI,
+                check0, check7, check1, check2, check6, check3, check4, check5
               )
             })
             if(grepl(snippetYes,check0) &
@@ -912,18 +903,10 @@ server <- function(input,output,session){
         )
       }
       output$OverallChecks <- renderText({
-         paste0(
-           "Some overall Checks have been run:\n",
-           "Data Matrix is a real csv (has ',' as separators:): ",check0,"\n",
-           "Data Matrix has only numeric values: ",check7,"\n",
-           "Rownames of Matrix are the same as rownames of entitie table ",check1,"\n",
-           "Colnames of Matrix are same as rownames of sample table ",check2," \n",
-           "Sample IDs have valid names ", check6, "\n",
-           "<b>OPTIONAL</b>:\n",
-           "Matrix has no na (missing values) ",check3,"\n",
-           "Sample table no na (missing values) ",check4,"\n",
-           "Entitie table no na  (missing values) ",check5,"\n"
-         )
+        sprintf(
+          CHECK_TEMPLATE_VI,
+          check0, check7, check1, check2, check6, check3, check4, check5
+        )
       })
     }
       },
@@ -1077,6 +1060,7 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
+    browser()
     if(is.null(unlist(par_tmp[[session$token]]['omic_type'])) || input[[paste0("omic_type_", uploaded_from())]] != omic_type()){
       par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
       omic_type(input[[paste0("omic_type_", uploaded_from())]])
