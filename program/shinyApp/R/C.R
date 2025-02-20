@@ -251,6 +251,7 @@ EXAMPLE_RNA_DESCRIPTION <-
                 <li>Gene annotation is added already</li>
                 <li>You may want to investigate differences within the condition between treated and untreated samples</li>
                 <li>You can use the data as provided or apply filters, such as selecting only protein-coding transcripts based on the gene biotype</li>
+                <li>If you want to explore batch correction options, you can use 'batch_factor'-column. Note that this is an artifical batch column only meant for testing.</li>
             </ul>
             For more information, please visit the following resources:
             <ul>
