@@ -47,8 +47,7 @@ pre_processing_main_panel <- mainPanel(
       column(
         6,
         h4("Raw Data"),
-        plotOutput("raw_violin_plot"),
-        plotOutput("raw_kde_plot")
+        plotOutput("raw_violin_plot")
       ),
       column(
         6,
@@ -56,43 +55,57 @@ pre_processing_main_panel <- mainPanel(
         plotOutput("preprocessed_violin_plot"),
       )
     ),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-      NULL,
+    h4("Mean and Standard Deviation of preprocessed data"),
+    plotOutput("mean_sd_plot"),
+    fluidRow(column(4, ""), column(
+      4,
+      h5("Mean and SD Plot Download"),
       actionButton(
-        inputId = "only2Report_Preprocess",
+        inputId = "only2Report_mean_sd_plot",
         label = "Send only to Report",
         class = "btn-info"
-      )
-    ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-      NULL,
+      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
       downloadButton(
-        outputId = "getR_Code_Preprocess",
-        label = "Get underlying R code and data",
-        icon = icon(name = "code")
-      )
-    ),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-      NULL,
+          outputId = "getR_Code_mean_sd_plot",
+          label = "Get underlying R code and data",
+          icon = icon(name = "code")
+      ),
       downloadButton(
-        outputId = "SavePlot_Preprocess",
-        label = "Save plot",
-        class = "btn-info"
-      )
-    ),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-      NULL,
+          outputId = "SavePlot_mean_sd_plot",
+          label = "Save plot",
+          class = "btn-info"
+      ),
       radioGroupButtons(
-        inputId = "file_ext_Preprocess",
+        inputId = "file_type_mean_sd_plot",
         label = "File Type:",
         choices = c(".png", ".tiff", ".pdf"),
         selected = ".png"
       )
-    ),
+    ), column(
+      4,
+      h5("Violin Plot Download"),
+      actionButton(
+        inputId = "only2Report_Preprocess",
+        label = "Send only to Report",
+        class = "btn-info"
+      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+      downloadButton(
+          outputId = "getR_Code_Preprocess",
+          label = "Get underlying R code and data",
+          icon = icon(name = "code")
+      ),
+      downloadButton(
+          outputId = "SavePlot_Preprocess",
+          label = "Save plot",
+          class = "btn-info"
+      ),
+      radioGroupButtons(
+        inputId = "file_type_Preprocess",
+        label = "File Type:",
+        choices = c(".png", ".tiff", ".pdf"),
+        selected = ".png"
+      )
+    )),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
       cellArgs = list(style = "padding: 15px"),
