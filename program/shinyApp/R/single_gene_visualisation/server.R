@@ -119,17 +119,7 @@ single_gene_visualisation_server <- function(id){
       # Render Plot and Info
       output$SingleGenePlot <- renderPlot({
         req(single_gene_reactives$allow_plot)
-        withCallingHandlers(
-          {
-            print(single_gene_reactives$plot)
-          },
-          warning = function(w) {
-            shinyjs::html(
-              id = 'InfoText',
-              html = HTML(paste0("<font color='orange'>Warning: ", w$message, "</font>"))
-            )
-          }
-        )
+        print(single_gene_reactives$plot)
       })
       output$SingleGene_Info <- renderText({
         single_gene_reactives$info_text
@@ -138,16 +128,9 @@ single_gene_visualisation_server <- function(id){
       observe({
         single_gene_reactives$allow_plot <- TRUE
       }) %>% shiny::bindEvent(input$singleGeneGo)
-     
-      toListen <- reactive({
-        list(
-          single_gene_reactives$allow_plot,
-          input$accross_condition
-        )
-      })
 
       # Visualize single Gene ----
-      observeEvent(toListen(),{
+      observe({
         req(input$singleGeneGo > 0)
         req(single_gene_reactives$allow_plot)
         shinyjs::showElement(id = "SingleGene_div", asis = TRUE)
@@ -183,7 +166,10 @@ single_gene_visualisation_server <- function(id){
           post_selection_check = post_selection_check,
           data_process_stage = data_process_stage
         )
-      })
+      }) %>% shiny::bindEvent(
+        input$accross_condition,
+        input$singleGeneGo
+      )
 
       observeEvent(list(  # Plotting function
         input$chooseComparisons,
@@ -202,6 +188,7 @@ single_gene_visualisation_server <- function(id){
         comparisons <- input$chooseComparisons
         add_testing <- as.logical(input$add_testing)
         gene_data <- single_gene_reactives$gene_data
+        group_by <- input$accross_condition
         # Pre-compile info message
         # check that plot is valid, needed to align asynchronus calls due to both triggers
         req(ready_to_plot(gene_data, add_testing, comparisons))
@@ -231,7 +218,8 @@ single_gene_visualisation_server <- function(id){
           add_testing = add_testing,
           comparisons = comparisons,
           selected_gene = selected_gene,
-          data_process_stage = data_process_stage
+          data_process_stage = data_process_stage,
+          group_by = group_by
         )
         # assign reactive values
         single_gene_reactives$info_text <- data_note
