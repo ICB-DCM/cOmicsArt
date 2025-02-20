@@ -28,6 +28,7 @@ significance_analysis_server <- function(id){
       observeEvent(input$refreshUI, {
         print("Refreshing UI Heatmap")
         data <- update_data(session$token)
+        sig_ana_reactive$plot_last <- NULL
 
         output$UseBatch_ui <- renderUI({
         req(par_tmp[[session$token]]$BatchColumn != "NULL")
@@ -175,7 +176,8 @@ significance_analysis_server <- function(id){
         sig_ana_reactive$info_text
       )
       output$Significant_Plot_final <- renderPlot({
-          print(sig_ana_reactive$plot_last)
+        req(sig_ana_reactive$plot_last)
+        print(sig_ana_reactive$plot_last)
       })
 
       # Analysis initial info
@@ -559,7 +561,7 @@ significance_analysis_server <- function(id){
             ))
           }
           fun_LogIt(message = paste(
-            "- Top 5 significant genes for",
+            "- Top 5 significant entities for",
             comparisons[i],
             "are the following:"
           ))
@@ -574,9 +576,9 @@ significance_analysis_server <- function(id){
           fun_LogIt(message = "\n")
         }
         fun_LogIt(message = paste0(
-          "**Overview Plot** - Shown are ",input$sig_to_look_at," genes with a p-value < ",
+          "**Overview Plot** - Shown are ",input$sig_to_look_at," entities with a p-value < ",
           input$significance_level,
-          ". The plot shows the intersection of genes that are significant in the comparisons you selected (.",
+          ". The plot shows the intersection of entities that are significant in the comparisons you selected (.",
           input$comparisons_to_visualize,")."
         ))
         fun_LogIt(message = paste0(
