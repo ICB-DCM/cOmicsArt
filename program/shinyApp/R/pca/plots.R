@@ -34,6 +34,7 @@ plot_pca <- function(
         x = pcaData[,x_axis],
         y = pcaData[,y_axis],
         color = pcaData[,color_by],
+        group = pcaData[,color_by],
         label = global_ID,
         global_ID = global_ID,
         chosenAnno = chosenAnno
