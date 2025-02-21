@@ -665,9 +665,9 @@ server <- function(input,output,session){
       if(grepl(snippetYes,check0) &
          grepl(snippetYes,check1) &
          grepl(snippetYes,check2) &
-         grepl(snippetYes,check3) &
-         grepl(snippetYes,check4) & # not crucial
-         # grepl(snippetYes,check5) & # not crucial
+         #grepl(snippetYes,check3) &
+         #grepl(snippetYes,check4) & # not crucial
+         #grepl(snippetYes,check5) & # not crucial
          grepl(snippetYes,check6) &
          grepl(snippetYes,check7)){
         res_tmp[[session$token]]$passedVI <<- T
@@ -881,9 +881,9 @@ server <- function(input,output,session){
             if(grepl(snippetYes,check0) &
                grepl(snippetYes,check1) &
                grepl(snippetYes,check2) &
-               grepl(snippetYes,check3) &
-               grepl(snippetYes,check4) & # not crucial
-              # grepl(snippetYes,check5) & # not crucial
+               #grepl(snippetYes,check3) &
+               #grepl(snippetYes,check4) & # not crucial
+               #grepl(snippetYes,check5) & # not crucial
                grepl(snippetYes,check6) &
                grepl(snippetYes,check7)){
               res_tmp[[session$token]]$passedVI <<- T
