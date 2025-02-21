@@ -158,7 +158,7 @@ You will need to specify the filtering options as well. For more information see
   
 **Type: Log-based**
 
-You have the options of log10, log2 and ln (natural logarithm). Note, that there will be 1 added to the raw measurements to avoid taking log of 0 which results in -Inf. You will also need to specify - again - the filtering options as first steps.
+You have the options of log10, log2 and ln (natural logarithm). Note, that there will be 1 added to the raw measurements to avoid taking the log of 0 which results in -Inf. You will also need to specify - again - the filtering options as first steps.
 
 **Type: Miscellaneous**
 
