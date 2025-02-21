@@ -285,20 +285,13 @@ server <- function(input,output,session){
       )
     session$close()
   })
+
+  # Uploading uis
   
   # Reset file input
   observeEvent(input$clear_FileInput, {
-    reset("data_matrix1")
-    reset("data_sample_anno1")
-    reset("data_row_anno1")
-    session$sendCustomMessage(type = "resetValue", message = "data_matrix1")
-    session$sendCustomMessage(type = "resetValue", message = "data_sample_anno1")
-    session$sendCustomMessage(type = "resetValue", message = "data_row_anno1")
-    hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
-    hide_tabs()
-    output$debug <- renderText({
-      "<b>Cleared data, hence there is nothing to upload. Please select your data or use the Testdata</b><br>Make sure to click on  'Upload new data' before proceeding to pre-processing"
-    })
+    # trigger a refresh of the page
+    shinyjs::runjs("location.reload();")
   })
 
 # Data Upload + checks ----
