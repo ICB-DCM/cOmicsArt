@@ -27,7 +27,7 @@ In the side panel, you have the following options:
 
 - **PC for y-Axis**: Select the principal component for the y-axis. Options include PC1, PC2, PC3, and PC4.
 
-- **Plot ellipses**: You can choose to plot ellipses around the groups. This ellipses indicate the 95% confidence interval of the group. Hence, if the are overlapping the groups are not significantly different. Note, to draw such ellipses there need to be enough samples within a single group - if that is not the case the ellipses will not be drawn.
+- **Plot ellipses**: You can choose to plot ellipses around the groups. These ellipses indicate the 95% confidence interval of the group. Hence, if the are overlapping the groups are not significantly different. Note, to draw such ellipses there need to be enough samples within a single group - if that is not the case the ellipses will not be drawn.
 
 - **Plot Loadings on top**: You can choose to plot the loadings on top of the PCA plot (the top 5 are used). You can hover over them to identify the respective entities. For more help on how to interpret loadings within a PCA, check out [this resource on PCA loadings interpretation](https://towardsdatascience.com/what-are-pca-loadings-and-biplots-9a7897f2e559).
 
