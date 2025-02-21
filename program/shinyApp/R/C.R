@@ -365,3 +365,13 @@ guide <<- cicerone::Cicerone$
       <p>After this tutorial, you should be able to find the link within the interface on your own. Happy exploring! <i class='fas fa-cat'></i></p>
     ")
   )
+
+guide_startDiscover <<- cicerone::Cicerone$
+  new(keyboard_control = TRUE)$
+  step(
+    el = "tabsetPanel1",
+    title = "Click on a tab to switch to that analysis module",
+    description = HTML("You can navigate  by clicking on the tab.<br> Despite being numbered, you can choose any order as the analysis tabs work independent from each other. The numbering is a suggestion. <br>
+                       Here is an <a href='https://icb-dcm.github.io/cOmicsArt/showcases/showcase-a.html' target='_blank'>example workflow</a>.<br>
+                       Have fun discovering <i class='fas fa-cat'></i>")
+  )

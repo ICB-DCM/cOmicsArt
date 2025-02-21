@@ -1,11 +1,12 @@
 # Global String Constants
 
 # --- Notes ---
-NOTES_PlACEHOLDER <<- "Notes you want to take alongside the plot (will be saved in the report) \nYou can use markdown syntax for your notes"
+NOTES_PlACEHOLDER <<- "Notes will be added upon clicking 'Send only to report'"
 NOTES_HELP <<- HTML(
-  "<a href='https://www.markdownguide.org/cheat-sheet/' target='_blank'>
+  "You can use markdown syntax for your notes <br>
+  <a href='https://www.markdownguide.org/cheat-sheet/' target='_blank'>
   Here you can find a Markdown Cheat Sheet</a> <br> Please do not use heading mardkown
-  syntax - <br> this will interfere with the reports hierachy"
+  syntax (e.g. ## Heading) - <br> this will interfere with the reports hierachy"
 )
 NOTES_ADDITIONAL <<- paste(
   '<textarea id="myTextarea" name="textarea" rows="5" cols="30" placeholder="Place here additional notes on the fly..."></textarea>\n',

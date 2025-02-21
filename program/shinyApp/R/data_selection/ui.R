@@ -188,12 +188,12 @@ data_selection_main_panel <- mainPanel(
           width = "100%",
           icon = icon("fas fa-mouse-pointer"),
           style = "
-          background-color: white;
+          background-color: #70BF4F47;
           color: black;
           border: 2px solid darkgrey;
           font-size: 15px;
           font-weight: bold;
-          box-shadow: 3px 3px 5px rgba(255, 0, 0, 0.8);
+          box-shadow: 3px 3px 5px rgba(255, 0, 0, 0.2);
           padding: 5px 5px;
           border-radius: 10px;"
         )
@@ -244,7 +244,8 @@ data_selection_main_panel <- mainPanel(
 
 
 data_selection_panel <- tabPanel(
-  title = "Data selection",
+  title = tagList(tags$span("1. Data selection")), 
+  value = "Data selection",
   id = "Data_selection",
   fluid = T,
   h4("Data Selection"),

@@ -136,7 +136,8 @@ significance_analysis_UI <- function(id){
   ns <- NS(id)
 
   tabPanel(
-    title = "Differential Analysis",
+    title = tagList(tags$span("5. Differential Analysis")), 
+    value = "Differential Analysis",
     id = "significance_analysis",
     fluid = T,
     h4("Differential Analysis"),
