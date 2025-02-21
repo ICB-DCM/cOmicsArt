@@ -1,4 +1,15 @@
 # Global String Constants
+CHECK_TEMPLATE_VI <<- "Some overall Checks have been done:\n
+<b>REQUIRED</b> (must all be Yes):\n
+Data Matrix is a real csv (has ',' as separators): %s\n
+Data Matrix has only numeric values: %s\n
+Rownames of Matrix are the same as rownames of entity table: %s\n
+Colnames of Matrix are the same as rownames of sample table: %s\n
+Sample IDs have valid names: %s\n\n
+<b>OPTIONAL</b> (Yes is optimal but optional; will result in slight data changes):\n
+Matrix has no NA (missing values): %s\n
+Sample table has no NA (missing values): %s\n
+Entity table has no NA (missing values): %s\n"
 
 # --- Notes ---
 NOTES_PlACEHOLDER <<- "Notes will be added upon clicking 'Send only to report'"
