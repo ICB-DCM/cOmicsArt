@@ -59,7 +59,7 @@ Common issues are: Not exactly the same row or columnnames, missing values, wron
 <div class="question" onclick="toggleAnswer('q7')">7. I somehow cannot access the app (anymore)?</div>
   <div id="q7" class="answer">
   If you are not able to access the app anymore it is most likely that the server has been shut down or that your internet connection is not working or that specific settings of your institution or the browser you are using are blocking access. To troubleshoot check your internet connection, refresh the site, consider using Chrome or Mirror as a browser (tested and working), enable JavaScript and check with your IT department if any restrictions in place could block cOmicsArt. 
-You might also want to consider to run cOmicsArt locally - see respective documentation to be independent of the server and potential other issues.
+You might also want to consider running cOmicsArt locally - see respective documentation to be independent of the server and potentially other issues.
   </div>
 
 <script>
