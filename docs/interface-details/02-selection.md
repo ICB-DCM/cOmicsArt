@@ -28,7 +28,7 @@ Nonetheless, here is a short overview:
 - **Inspect data**: Click this button to inspect the uploaded data. This will open a 
   Modal, in which you can see how the application interprets your data, whether it is 
   able to differentiate between the different columns and - through additional tests - 
-  whether the data as you uploaded it is deemed good to go.
+  whether the data as you uploaded it is deemed good to go. To get to know more about the Visual Inspection, see at towards the bottom of this page.
 
 - **Upload new data**: Click this button to upload new data files.
 
@@ -93,6 +93,18 @@ The main panel provides options for detailed data selection:
 ### Save Input As RDS 💾
 
 - **Save file input to upload later**: Click this button to save the file input as an RDS file for later use.
+
+### Visual Inspection
+The visual Inspection is designed to help you to identify potential issues of your uploaded data. Upon clicking the "Inspect Data" button, a modal will open. Here you can safely upload your data upon click.
+Upon click, cOmicsArt is trying to interpret your data. It can actually detect common formatting issues (such as spaces in your sample names, or only numeric entitie names) and will ask whether you want cOmicsArt to correct them or not. If you choose to try the automatic correction the corrected data files will be prompted to you for download - such that you can upload those files directly next time.
+Then the visual inspection uploads the three provided matrices and displays to you all three of them. 
+- Carefully look at each matrix - do they look like you expected them? 
+- Are there your proper column names and rownames? 
+- Is it an acutal matrix or is everything in a single column? 
+- Is the first Matrix really the matrix with measurements, the second matrix the sample table (carrying inforamtion about your samples) and the thrid table the entitie table (carrying information about your entities e.g. genes, metabolites, lipids)? 
+
+To provide further help the visual inspection will also perform some automatic checks which status (Yes/No) you can see at the bottom of the modal. Here are required and optional tests. The required test must be all 'Yes' - if this it not the case you will need to correct your data outside of cOmicsArt and reupload once updated. If there are some 'Nos' (in orange color) within the optional tests you might want to consider to correct them. They are handled automatically within cOmicsArt, whereby this often means simply ignored or removed prior to the analysis. If you want to perform your own analysis or further refined the downloaded scripts form e.g. cOmicsArt it is recommended to correct them.
+If you are happy with the status you can click on 'Use Data' to proceed with the analysis. If you are not happy you can click on 'Close' and correct your data outside of cOmicsArt.
 
 ### Start the Journey 🚀
 
