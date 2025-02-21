@@ -35,15 +35,20 @@ Each processing type offers a set of options that allow you to refine the specif
 **Step 3: Choose your Processing Option dependent on your pre-preocessing type**
 
 **Type: Filtering**
+
 *global filtering*
+
   - Removes low-abundance entities by setting a minimum total count accross all samples. For example, if you set the minimum total count to 10, each entities sum over all samples is calculated and if it is below 10, the entity is removed.
+  
 *sample-wise filtering*
+
   - Removes low-abundance entities by setting a minimum count per sample as well as a threshold how many samples need to have this minimum count. For example, if you set the minimum count per sample to 0 and the threshold to 5, each entity is checked if it has a count of at least 1 in at least 5 samples. If not, the entity is removed. Note, that the number of sample meeting the defined threshold should not exceed total sample size.
 
 **Type: Omic-Specific**
+
 You will need to specify the filtering options as well. For more information see above.
 
-*DESeq2:*
+*DESeq2*
 - For transcriptomics data, DESeq2 is used for normalization and VST transformation.
 - The formula for analysis is determined based on user-specified factors. (<span id="toggle-button" style="color: blue; cursor: pointer;" onclick="toggleInfoBox()">Learn more</span>).
   <div id="info-box" style="display: none; margin-top: 10px; padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9; width: auto; max-width: 100%;">
@@ -152,20 +157,29 @@ You will need to specify the filtering options as well. For more information see
   - TMM stands for Trimmed Mean of M-values. It is a normalization method that estimates the scaling factors for the library sizes. The scaling factors are used to adjust the library sizes to account for differences in sequencing depth between samples.
   
 **Type: Log-based**
+
 You have the options of log10, log2 and ln (natural logarithm). Note, that there will be 1 added to the raw measurements to avoid taking log of 0 which results in -Inf. You will also need to specify - again - the filtering options as first steps.
 
 **Type: Miscellaneous**
+
 Be aware that this methods might not be particular suitable for e.g. raw count data. It might be useful however if you have data that is already-pre processed to some extend and you want to use e.g. cOmicsArts visualisation tools.
 You will also need to specify - again - the filtering options as first steps.
-*Pareto scaling*
-  - Pareto scaling is a scaling method that divides the data by the square root of the standard deviation. This method is useful when the data has a large dynamic range.
-*Centering & Scaling*
-  - Centering and scaling is a normalization method that subtracts the mean and divides by the standard deviation.
-*Scaling 0-1*
-  - Scaling to 0-1 is a normalization method that scales the data to a range between 0 and 1.
----
 
-### [optional] Select Batch Effect Column
+*Pareto scaling*
+
+  - Pareto scaling is a scaling method that divides the data by the square root of the standard deviation. This method is useful when the data has a large dynamic range.
+  
+*Centering & Scaling*
+
+  - Centering and scaling is a normalization method that subtracts the mean and divides by the standard deviation.
+  
+*Scaling 0-1*
+
+  - Scaling to 0-1 is a normalization method that scales the data to a range between 0 and 1.
+  
+
+
+**[optional Step]  Select Batch Effect Column**
 
 Choose a batch effect if applicable. Possible choices are taken from the sample 
 annotation columns. **Important**: This step is **optional**, as sometimes no batches need 
@@ -174,11 +188,13 @@ know, thus using no batch effects and looking at correlations and PCA plots can 
 to identify them. To learn more about batch effects - how they appear and how to 
 identify them you can start by checking out [this website ](https://bigomics.ch/blog/the-tricky-problem-of-batch-effects-in-biological-data/)
 
+
+
+**Get Pre-Processing**: Clicking this button will apply the selected pre-processing procedure to the data.
+
+**Color the violin plot by**: Choose a variable to color the violin plots. The options are taken from the sample annotation columns.
+
 ---
-
--   **Get Pre-Processing**: Clicking this button will apply the selected pre-processing procedure to the data.
-
--   **Color the violin plot by**: Choose a variable to color the violin plots. The options are taken from the sample annotation columns.
 
 ## Main Panel 💡
 
@@ -198,12 +214,20 @@ The main panel displays the results of the pre-processing. Here are some key poi
 -   **Save Mean and Standard Deviation Plot**: You can save the mean and standard deviation plot in different file formats such as PNG, TIFF, and PDF. You also have the option to download the underlying R code and data or send to plot to the report
 
 ### Interpretation Guidiance 🧭
-The pre-processing step is crucial as it is the basis on which all the following analyses are based. A unsuitable pre-processing may led to draw wrong conclusions from the data. Hence you should be carefully consider your options and do an informed choice. There is no harm on trying out different pre-processing options but should not try until you find the results you 'like'. What you should actually look for are the properties of your pre-processed data.
-In general you want to have similar global distributions per sample which you can check with the provided violin plots. There should be no sample that behaves distinctly different from the others. If you see such a shifted pattern that corresponds with e.g. a variable of interest (try out to color the different violins by various variables). Thi pattern might be actual variation of interest or can be accounted for with batch correction.
-The mean and standard deviation plot can help you to identify if the standard deviation is constant across the mean - one speaks of homoscedasticity. You are looking for a rather constant line. For more information on this topic you might want to check out this [resource](https://www.statisticshowto.com/homoscedasticity/). Note that we plot actullay the rank of the mean not the actually mean. If you use scaling methods you will see that the standard deviation is constant across the mean. The colored hexagonal shapes represent the number of entities at the respective rank area with respective standard deviation(will be suitable binned automatically). You are generally looking for high counts close to the fitted red line. If the line deviates from a constant behavior but for rather low number of variables you often can accept that and still assume reasonable homoscedasticity. If you have a large number of variables that deviate from the red line you might want to consider to apply a different pre-processing to your data as it is an assumption in many statistical tests.
-Finally you can assess the displayed results of the normality tests. This can provide you an overview which potential statistical test you can apply to your data as the t-test for example requires normal distributed data. You should be aware that the normality test is only reliable for large sample sizes which is often not the case - this means for small sample sizes the null hypothesis cannot be rejected. Hence handle this information careful and potentially ask you yourself whether you actually assume that the respective data is normal distributed. For further reading you might want to check out this paper: [Descriptive Statistics and Normality Tests for Statistical Data](https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#abstract1) or other resources.
+The pre-processing step is crucial as it is the basis on which all the following analyses are based. A unsuitable pre-processing may led to draw wrong conclusions from the data. Hence you should be carefully consider your options and do an informed choice. 
+⚠️There is no harm on trying out different pre-processing options but should not try until you find the results you 'like'. What you should actually look for are the properties of your pre-processed data.
 
-Based on the Interpretation gide and linke resources we aim to provide you with a good starting point to choose the correct pre-processing procedure for your data. Please be aware that the pre-processing is a crucial step and can have a large impact on the downstream analysis. The current implemented options are a good starting point but might not cover all possible scenarios. If you are missing a specific option please feel free to contact us via mail or GitHub! We are happy to expand upon user's request.
+🎻 In general you want to have similar global distributions per sample which you can check with the provided violin plots. There should be no sample that behaves distinctly different from the others. If you see such a shifted pattern that corresponds with e.g. a variable of interest (try out to color the different violins by various variables). This pattern might be actual variation of interest or can be accounted for with batch correction.
+
+📈 The mean and standard deviation plot can help you to identify if the standard deviation is constant across the mean - one speaks of homoscedasticity. You are looking for a rather constant line. For more information on this topic you might want to check out this [resource](https://www.statisticshowto.com/homoscedasticity/). Note that we plot actullay the rank of the mean not the actually mean. If you use scaling methods you will see that the standard deviation is constant across the mean. The colored hexagonal shapes represent the number of entities at the respective rank area with respective standard deviation(will be suitable binned automatically). You are generally looking for high counts close to the fitted red line. If the line deviates from a constant behavior but for rather low number of variables you often can accept that and still assume reasonable homoscedasticity. If you have a large number of variables that deviate from the red line you might want to consider to apply a different pre-processing to your data as it is an assumption in many statistical tests.
+
+📊Finally you can assess the displayed results of the normality tests. This can provide you an overview which potential statistical test you can apply to your data as the t-test for example requires normal distributed data. You should be aware that the normality test is only reliable for large sample sizes which is often not the case - this means for small sample sizes the null hypothesis cannot be rejected. Hence handle this information careful and potentially ask you yourself whether you actually assume that the respective data is normal distributed. For further reading you might want to check out this paper: [Descriptive Statistics and Normality Tests for Statistical Data](https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#abstract1) or other resources.
+
+Based on the Interpretation guide and linked resources we aim to provide you with a good starting point to choose the correct pre-processing procedure for your data. Please be aware that the pre-processing is a crucial step and can have a large impact on the downstream analysis.
+
+🔔The current implemented options are a good starting point but might not cover all possible scenarios.
+
+⏳If you are missing a specific option please feel free to contact us via mail or GitHub! We are happy to expand upon user's request.
 
 
 ### Other Notes 📌
