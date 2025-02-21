@@ -162,7 +162,7 @@ You have the options of log10, log2 and ln (natural logarithm). Note, that there
 
 **Type: Miscellaneous**
 
-Be aware that this methods might not be particular suitable for e.g. raw count data. It might be useful however if you have data that is already-pre processed to some extend and you want to use e.g. cOmicsArts visualisation tools.
+Be aware that these methods might not be particularly suitable for e.g. raw count data. It might be useful however if you have data that is already processed to some extent and you want to use e.g. cOmicsArts visualisation tools.
 You will also need to specify - again - the filtering options as first steps.
 
 *Pareto scaling*
@@ -171,7 +171,7 @@ You will also need to specify - again - the filtering options as first steps.
   
 *Centering & Scaling*
 
-  - Centering and scaling is a normalization method that subtracts the mean and divides by the standard deviation.
+  - Centering and scaling is a normalization method that subtracts the mean and divides it by the standard deviation.
   
 *Scaling 0-1*
 
