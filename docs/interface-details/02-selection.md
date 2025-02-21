@@ -28,7 +28,7 @@ Nonetheless, here is a short overview:
 - **Inspect data**: Click this button to inspect the uploaded data. This will open a 
   Modal, in which you can see how the application interprets your data, whether it is 
   able to differentiate between the different columns and - through additional tests - 
-  whether the data as you uploaded it is deemed good to go. To get to know more about the Visual Inspection, see at towards the bottom of this page.
+  whether the data as you uploaded it is deemed good to go. See the bottom of this page to learn more about the Visual Inspection.
 
 - **Upload new data**: Click this button to upload new data files.
 
