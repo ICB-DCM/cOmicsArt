@@ -1076,9 +1076,11 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
-    if(is.null(unlist(par_tmp[[session$token]]['omic_type'])) || input[[paste0("omic_type_", uploaded_from())]] != omic_type()){
-      par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
-      omic_type(input[[paste0("omic_type_", uploaded_from())]])
+    uploaded_where <- isolate(uploaded_from())
+    if(uploaded_where == "VI_data") uploaded_where <- "file_input"
+    if(is.null(unlist(par_tmp[[session$token]]['omic_type'])) || input[[paste0("omic_type_", uploaded_where)]] != omic_type()){
+      par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_where)]]
+      omic_type(input[[paste0("omic_type_", uploaded_where)]])
     }
     # Add check if the data upload fails due to no supply of files
     if(!((isTruthy(input$data_preDone) & uploaded_from() == "precompiled") |
