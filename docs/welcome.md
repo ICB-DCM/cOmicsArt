@@ -22,4 +22,4 @@ OR get stared with our Excel Workbook to prepare your data for cOmicsArt: [Uploa
 - 🔧 Need to run the app locally? Check out the [Installation Guide](installation.md).
 - 💡 Looking for customization inspiration? Explore our [Customization Examples](code-and-data/examples.md).
 - 📊 Want to know more about the differential analysis? Visit [Differential Analysis](interface-details/05-significance-analysis.md)
--   🧭 Need guidiance on the analysis workflow? Check out our Showcases: [Showcases](showcases.md)
+-   🧭 Need guidance on the analysis workflow? Check out our Showcases: [Showcases](showcases.md)
