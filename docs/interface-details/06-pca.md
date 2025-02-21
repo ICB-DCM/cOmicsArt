@@ -15,7 +15,7 @@ In the side panel, you have the following options:
 
 - **Get PCA**: Clicking this button will generate the PCA plot in the main panel based on the selected annotation type and entities.
 
-- **Toggle "Select Data"**: You can toggle on and off "Select Data". This allows you to quickly select data and perform PCA on the determined subset. Note, that if the selection leads to constatn entities within the subset those entities will be automatically removed as they do not containt any information.
+- **Toggle "Select Data"**: You can toggle on and off "Select Data". This allows you to quickly select data and perform PCA on the determined subset. Note, that if the selection leads to constant entities within the subset those entities will be automatically removed as they do not contain any information.
   
   - **Choose the annotation type to select on**: You can choose an annotation type for selection, such as `cell`. The options are populated based on the sample annotation provided initially. Precisely it is the column names of the sample annotation.
 
