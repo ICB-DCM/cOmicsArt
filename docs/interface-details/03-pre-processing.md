@@ -149,8 +149,8 @@ You will need to specify the filtering options as well. For more information see
 *limma voom*
   - Note that you need to also specify here first the filtering characteristics as first steps. limma::voom recommends to remove entities with low counts.
   -  Transforms data for linear modeling through two key steps. First, it converts raw counts into log2 counts per million (log2CPM). Then, it estimates the mean-variance relationship while accounting for the experimental design.
-  -  Choose factors of interest which will be added to your design in additive fashion and decide whether to include an intercept (default: yes). If you are not sure what to choose, we suggest to include the intercept. You would choose not intercept if you expect no expression in your control group.
-  - If you want to know more about 'What a desing matrix is' and how to choose the right factors, check out the information above under DESeq2.
+  -  Choose factors of interest which will be added to your design in an additive fashion and decide whether to include an intercept (default: yes). If you are not sure what to choose, we suggest to include the intercept. You would choose not to intercept if you expect no expression in your control group.
+  - If you want to know more about 'What a design matrix is' and how to choose the right factors, check out the information above under DESeq2.
   
 *TMM*
   - Not that you need to specify here first the filtering characteristics as first steps.
