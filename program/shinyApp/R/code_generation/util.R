@@ -103,7 +103,7 @@ variable_assignment <- function(foo_infos, par, par_mem = NULL){
   if(length(missing_pars) > 0){
     stop(paste(
     "The following parameters are missing in the parameter list of function",
-    deparse(substitute(foo_infos$foo)), ":",
+    foo_infos$name, ":",
     paste(missing_pars, collapse = ", ")
     ))
   }

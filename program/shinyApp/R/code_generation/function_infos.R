@@ -277,7 +277,8 @@ plot_pca_info <<- list(
   input_mapping = list(
     pca = "pca",
     pcaData = "pcaData",
-    percentVar = "percentVar"
+    percentVar = "percentVar",
+    data = "data"
   ),
   to_util = FALSE,
   plot_name = "pca_plot",
