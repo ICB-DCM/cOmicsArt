@@ -4,23 +4,27 @@ pre_processing_sidebar_panel <- sidebarPanel(
   # Do Center & scaling + potential other pre-processing stuff
   #########################################
   # this could be enhanced with personalized procedures
-  radioButtons(
-    inputId = "PreProcessing_Procedure",
-    label = "Pre-Processing Procedures",
-    choices = list(
-      "No pre-processing" = "none",
-      "Omic-specific filtering of low abundance" = "filterOnly",
-      "DESeq2 pre-processing (including variance stabilising transformation)" = "vst_DESeq",
-      "centering to 0 and scaling" = "simpleCenterScaling",
-      "scaling values to be within 0 and 1" = "Scaling_0_1",
-      "log10" = "log10",
-      "log2" = "log2",
-      "Pareto scaling (mean-centered and scaled by the square root of the standard deviation)" = "pareto_scaling",
-      "natural logarithm" = "ln"
-    ),
-    selected = "none"
+  # First dropdown: Choose Processing Type
+  selectInput(
+    inputId = "processing_type",
+    label = "Choose Processing Type",
+    choices = c("No pre-processing",
+                "Filtering",
+                "Omic-Specific",
+                "Log-Based",
+                "Miscellaneous"),
+    selected = NULL,
+    multiple = FALSE
   ) %>% helper(type = "markdown", content = "PreProcessing_Procedures"),
-  uiOutput(outputId = "DESeq_formula_sub_ui"),
+
+  # Second dropdown: Options based on Processing Type
+  uiOutput(outputId = "dynamic_options_ui"),
+
+  # Additional UI elements based on the selected option
+  uiOutput(outputId = "additional_inputs_filter_ui"),
+
+
+  uiOutput(outputId = "formula_sub_ui"),
   uiOutput(outputId = "batch_effect_ui") %>% helper(type = "markdown", content = "PreProcessing_Batch"),
   actionButton(
     inputId = "Do_preprocessing",
@@ -39,12 +43,27 @@ pre_processing_main_panel <- mainPanel(
   div(
     id = "data_summary",
     HTML(text = "<br>"),
+    fluidRow(column(5,
+                    actionButton(
+                      "GoToStartAnalysis", "Start Discovering",
+                      width = "100%",
+                      icon = icon("fas fa-mouse-pointer"),
+                      style = "
+          background-color: #3897F147;
+          color: black;
+          border: 2px solid darkgrey;
+          font-size: 15px;
+          font-weight: bold;
+          box-shadow: 3px 3px 5px rgba(255, 0, 0, 0.2);
+          padding: 5px 5px;
+          border-radius: 10px;"
+                    )
+    )),
     fluidRow(
       column(
         6,
         h4("Raw Data"),
-        plotOutput("raw_violin_plot"),
-        plotOutput("raw_kde_plot")
+        plotOutput("raw_violin_plot")
       ),
       column(
         6,
@@ -52,43 +71,57 @@ pre_processing_main_panel <- mainPanel(
         plotOutput("preprocessed_violin_plot"),
       )
     ),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-      NULL,
+    h4("Mean and Standard Deviation of preprocessed data"),
+    plotOutput("mean_sd_plot"),
+    fluidRow(column(4, ""), column(
+      4,
+      h5("Mean and SD Plot Download"),
       actionButton(
-        inputId = "only2Report_Preprocess",
+        inputId = "only2Report_mean_sd_plot",
         label = "Send only to Report",
         class = "btn-info"
-      )
-    ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-      NULL,
+      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
       downloadButton(
-        outputId = "getR_Code_Preprocess",
-        label = "Get underlying R code and data",
-        icon = icon(name = "code")
-      )
-    ),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-      NULL,
+          outputId = "getR_Code_mean_sd_plot",
+          label = "Get underlying R code and data",
+          icon = icon(name = "code")
+      ),
       downloadButton(
-        outputId = "SavePlot_Preprocess",
-        label = "Save plot",
-        class = "btn-info"
-      )
-    ),
-    splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
-      NULL,
+          outputId = "SavePlot_mean_sd_plot",
+          label = "Save plot",
+          class = "btn-info"
+      ),
       radioGroupButtons(
-        inputId = "file_ext_Preprocess",
+        inputId = "file_type_mean_sd_plot",
         label = "File Type:",
         choices = c(".png", ".tiff", ".pdf"),
         selected = ".png"
       )
-    ),
+    ), column(
+      4,
+      h5("Violin Plot Download"),
+      actionButton(
+        inputId = "only2Report_Preprocess",
+        label = "Send only to Report",
+        class = "btn-info"
+      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+      downloadButton(
+          outputId = "getR_Code_Preprocess",
+          label = "Get underlying R code and data",
+          icon = icon(name = "code")
+      ),
+      downloadButton(
+          outputId = "SavePlot_Preprocess",
+          label = "Save plot",
+          class = "btn-info"
+      ),
+      radioGroupButtons(
+        inputId = "file_type_Preprocess",
+        label = "File Type:",
+        choices = c(".png", ".tiff", ".pdf"),
+        selected = ".png"
+      )
+    )),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
       cellArgs = list(style = "padding: 15px"),
@@ -107,7 +140,8 @@ pre_processing_main_panel <- mainPanel(
 
 
 pre_processing_panel <- tabPanel(
-  title = "Pre-processing",
+  title = tagList(tags$span("2. Pre-processing")), 
+  value = "Pre-processing",
   id = "pre_processing_panel",
   fluid = T,
   h4("Data Pre-processing"),

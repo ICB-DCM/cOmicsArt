@@ -94,10 +94,11 @@ single_gene_visualisation_main_ui <- function(ns){
 single_gene_visualisation_UI <- function(id){
   ns <- NS(id)
   single_gene_visualisation_panel <- tabPanel(
-    title = "Single Gene Visualisations",
+    title = tagList(tags$span("7. Single Entitie Visualisation")), 
+    value = "Single Gene Visualisations",
     id = "single_gene_visualisation",
     fluid = TRUE,
-    h4("Single Gene Visualisations"),
+    h4("Single Entitie Visualisations"),
     #########################################
     # Single Gene Visualisations
     #########################################

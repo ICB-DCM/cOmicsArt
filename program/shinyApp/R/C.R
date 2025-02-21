@@ -3,9 +3,6 @@ library(waiter)
 library(ggplot2)
 library(cicerone)
 ### Global Constants will be saved here
-NOTES_PlACEHOLDER <<- "Notes you want to take alongside the plot (will be saved in the report) \nYou can use markdown syntax for your notes "
-NOTES_HELP <<- HTML("<a href='https://www.markdownguide.org/cheat-sheet/' target='_blank'>Here you can find a Markdown Cheat Sheet</a> \n
-                    Please do not use heading mardkown syntax - this will interfere with the reports hierachy")
 
 # Test correction list
 PADJUST_METHOD <<- list(
@@ -212,14 +209,21 @@ if(format(Sys.Date(), "%d") == "01"){
 
 
 # Define the ggplotcustom theme
-CUSTOM_THEME <<- theme_bw(base_size = 15) + 
-  theme(
-    axis.title = element_text(size = 15),        # Axis labels
-    axis.text = element_text(size = 15),         # Axis tick labels
-    legend.text = element_text(size = 15),       # Legend text
-    legend.title = element_text(size = 15),      # Legend title
-    plot.title = element_text(size = 17, face = "bold")  # Plot title
-  )
+CUSTOM_THEME <<- theme_bw(base_size = 15) +  theme(
+  axis.title = element_text(size = 15),        # Axis labels
+  axis.text = element_text(size = 15),         # Axis tick labels
+  legend.text = element_text(size = 15),       # Legend text
+  legend.title = element_text(size = 15),      # Legend title
+  plot.title = element_text(size = 17, face = "bold")  # Plot title
+)
+
+# Saving Functions for non ggplots, names list with functions
+SAVE_FUNCTION <<- list(
+  "pdf" = pdf,
+  "png" = png,
+  "tiff" = tiff,
+  "svg" = svglite::svglite
+)
 
 LOADING_SCREEN <- tagList(
   div(
@@ -247,6 +251,7 @@ EXAMPLE_RNA_DESCRIPTION <-
                 <li>Gene annotation is added already</li>
                 <li>You may want to investigate differences within the condition between treated and untreated samples</li>
                 <li>You can use the data as provided or apply filters, such as selecting only protein-coding transcripts based on the gene biotype</li>
+                <li>If you want to explore batch correction options, you can use 'batch_factor'-column. Note that this is an artifical batch column only meant for testing.</li>
             </ul>
             For more information, please visit the following resources:
             <ul>
@@ -255,7 +260,36 @@ EXAMPLE_RNA_DESCRIPTION <-
             </ul>
         </div>
     "
+EXAMPLE_METABO_DESCRIPTION <- 
+  "<div style='text-align: justify;'>
+            The underlying test data comes from a Metabolomics study on mouse cecum samples on a Western diet, taking the negative ion mode data only. Below are a few points about this data:
+            <ul>
+                <li>Metbolite annotation in form of its name, id and refmet-id is present</li>
+                <li>You may want to investigate differences within the 4 different diets</li>
+            </ul>
+            For more information, please visit the following resources:
+            <ul>
+                <li> <a href='https://www.metabolomicsworkbench.org/data/DRCCMetadata.php?Mode=Study&DataMode=CollectionData&StudyID=ST003695&StudyType=MS&ResultType=1#DataTabs' target='_blank'>Metabolomics Workbench Study ST003695</a></li>
+                <li> <a href='https://www.metabolomicsworkbench.org/data/DRCCMetadata.php?Mode=Project&ProjectID=PR002293' target='_blank'>More info about the project</a></li>
+            </ul>
+        </div>
+    "
 
+EXAMPLE_LIPID_DESCRIPTION <- 
+  "<div style='text-align: justify;'>
+            The underlying test data comes from Lipidomics measurement on mouse liver samples, investigating into the impact of Maternal Obesity. Below are a few points about this data:
+            <ul>
+                <li>Lipid annotation is present in form of Lipid Class, other Lipid information such as number of C atoms or number of double-bonds(db) also present</li>
+                <li>You may want to investigate differences within the diets, whereby the annotation is interpreted as [mothersDiet]_[LacatationDiet]_[offspringDiet]</li>
+                <li>You can use the data as provided or apply filters, such as selecting only TAG based on the SuperClass</li>
+            </ul>
+            For more information, please visit the following resources:
+            <ul>
+                <li> <a href='https://github.com/LeaSeep/MaternalObesity/tree/main/data' target='_blank'>Data resource</a></li>
+                <li> <a href='https://www.researchgate.net/publication/373071473_Developmental_programming_of_Kupffer_cells_by_maternal_obesity_causes_fatty_liver_disease_in_the_offspring' target='_blank'>More about the study</a></li>
+            </ul>
+        </div>
+    "
 
 guide <<- cicerone::Cicerone$
   new(keyboard_control = TRUE)$
@@ -330,4 +364,14 @@ guide <<- cicerone::Cicerone$
       <p>You can also visit the <a href='https://icb-dcm.github.io/cOmicsArt/' target='_blank'>documentation</a> for more detailed information.</p>
       <p>After this tutorial, you should be able to find the link within the interface on your own. Happy exploring! <i class='fas fa-cat'></i></p>
     ")
+  )
+
+guide_startDiscover <<- cicerone::Cicerone$
+  new(keyboard_control = TRUE)$
+  step(
+    el = "tabsetPanel1",
+    title = "Click on a tab to switch to that analysis module",
+    description = HTML("You can navigate  by clicking on the tab.<br> Despite being numbered, you can choose any order as the analysis tabs work independent from each other. The numbering is a suggestion. <br>
+                       Here is an <a href='https://icb-dcm.github.io/cOmicsArt/showcases/showcase-a.html' target='_blank'>example workflow</a>.<br>
+                       Have fun discovering <i class='fas fa-cat'></i>")
   )

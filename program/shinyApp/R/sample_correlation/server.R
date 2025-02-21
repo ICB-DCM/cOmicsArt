@@ -1,23 +1,22 @@
-sample_correlation_server <- function(id, data, params){
+sample_correlation_server <- function(id){
   moduleServer(
     id,
     function(input,output,session){
       sample_corr_reactive <- reactiveValues(
-        calculate = 0,
-        counter = 0
+        info_text = "Press 'Get Sample Correlation' to start!",
+        corr_plot = NULL,
+        row_anno = NULL,
+        data_updated = TRUE,  # Used to check whether new calculation is needed,
+        allow_plot = FALSE  # Clears Plots and prevents plotting after refresh
       )
-      session$userData$clicks_observer <- observeEvent(input$Do_SampleCorrelation,{
-        req(input$Do_SampleCorrelation > sample_corr_reactive$counter)
-        sample_corr_reactive$counter <- input$Do_SampleCorrelation
-        sample_corr_reactive$calculate <- 1
-      })
       
       ns <- session$ns
+      file_path <- paste0("/www/",session$token,"/")
       # UI Section ----
       observeEvent(input$refreshUI, {
         print("Refreshing UI Sample Correlation")
+        sample_corr_reactive$allow_plot <- FALSE
         data <- update_data(session$token)
-
         output$UseBatch_ui <- renderUI({
           req(par_tmp[[session$token]]$BatchColumn != "NULL")
           selectInput(
@@ -37,133 +36,106 @@ sample_correlation_server <- function(id, data, params){
             selected = colnames(colData(data$data))[1]
           )
         })
+        # since data has changed, remove the plots and reset the info text
+        sample_corr_reactive$corr_plot <- NULL
+        sample_corr_reactive$row_anno <- NULL
+        sample_corr_reactive$info_text <- "Press 'Get Sample Correlation' to start!"
+        sample_corr_reactive$data_updated <- TRUE
       })
       
       # Add initial text to help boxes
       output$SampleCorr_Info <- renderText({
-        "Press 'Get Sample Correlation' to start!"
+        sample_corr_reactive$info_text
+      })
+
+      output$SampleCorrelationPlot <- renderPlot({
+        req(sample_corr_reactive$allow_plot)
+        sample_corr_reactive$corr_plot + sample_corr_reactive$row_anno
+      })
+      observeEvent(input$SampleAnnotationChoice,{
+        req(selectedData_processed())
+        req(sample_corr_reactive$corr_plot)
+        data <- update_data(session$token)
+        # Create row annotations separately
+        sample_corr_reactive$row_anno <- custom_sample_annotation(data$data, input$SampleAnnotationChoice)
+        # update par_tmp
+        par_tmp[[session$token]][["SampleCorrelation"]]$sample_annotations <<- input$SampleAnnotationChoice
       })
       
-      # Do sample correlation plot 
-      toListen2CorrelationPlot <- reactive({list(
-        input$Do_SampleCorrelation,
-        input$SampleAnnotationChoice
-      )})
-      
-      observeEvent(toListen2CorrelationPlot(),{
+      # Do sample correlation plot
+      observeEvent(input$Do_SampleCorrelation,{
         req(selectedData_processed())
-        req(input$SampleAnnotationChoice)
         req(input$Do_SampleCorrelation > 0)
-        shinyjs::showElement(id = "div_sampleCorrelation_main_panel", asis = T)
+        req(input$SampleAnnotationChoice)
         waiter <- Waiter$new(
           html = LOADING_SCREEN,
           color="#A208BA35"
         )
         waiter$show()
-        # update the data if needed
-        data <- update_data(session$token)
+
+        shinyjs::showElement(id = "div_sampleCorrelation_main_panel", asis = T)
+        sample_corr_reactive$allow_plot <- TRUE
+        # assign variables to be used
         useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
+        sample_annotations <- input$SampleAnnotationChoice
+        correlation_method <- input$corrMethod
+        customTitleSampleCorrelation <- create_default_title_sc(
+          correlation_method, par_tmp[[session$token]]$preprocessing_procedure
+        )
+        data <- update_data(session$token)
         if(useBatch){
             data <- data$data_batch_corrected
         } else {
             data <- data$data
         }
-        # set the counter to 0 to prevent any further plotting
-        sample_corr_reactive$calculate <- 0
 
 
-        # check value of input$Do_SampleCorrelation
-        annotationDF <- colData(data)[,input$SampleAnnotationChoice,drop = F]
+        # check whether we need to recompute the correlation matrix
         check <- check_calculations(
           list(
-            corrMethod = input$corrMethod,
-            data_info = list(
-              rows = length(rownames(data)),
-              cols = length(colnames(data)),
-              preprocessing = par_tmp[[session$token]]$PreProcessing_Procedure
-            )
+            correlation_method = correlation_method,
+            data_updated = shiny::isolate(sample_corr_reactive$data_updated),
+            sample_annotations = sample_annotations
           ),
           "SampleCorrelation"
         )
+        sample_corr_reactive$data_updated <- FALSE
         # for safety measures, wrap in tryCatch
-        tryCatch({
-          if (check == "No Result yet"){
-            output$SampleCorr_Info <- renderText(
-              "Correlation Matrix successfully computed."
-            )
-            if(input$corrMethod == "kendall"){
-              cormat <- pcaPP::cor.fk(x = as.matrix(assay(data)))
-            } else {
-              cormat <- cor(
-                x = as.matrix(assay(data)),
-                method = input$corrMethod
-              )
-            }
-          } else if (check == "Result exists"){
-            output$SampleCorr_Info <- renderText(
-              "Correlation Matrix was already computed, no need to click the Button again."
-            )
-            cormat <- res_tmp[[session$token]]$SampleCorrelation
-          } else if (check == "Overwrite"){
-            output$SampleCorr_Info <- renderText(
-              "Correlation Matrix result overwritten with different parameters."
-            )
-            cormat <- cor(
-              x = as.matrix(assay(data)),
-              method = input$corrMethod
-            )
-          }
-        }, error = function(e){
-          error_modal(e)
-          waiter$hide()
-          return(NULL)
-        })
+        if (check) {
+          cormat <- res_tmp[[session$token]]$SampleCorrelation
+          sample_corr_reactive$info_text <- "Correlation Matrix was already computed, no need to click the Button again."
+        } else {  # needs computation
+          tryCatch({
+            cormat <- get_sample_correlation(data, correlation_method)
+            sample_corr_reactive$info_text <- "Correlation Matrix successfully computed."
+          }, error = function(e){
+            error_modal(e$message)
+            waiter$hide()
+            req(FALSE)
+          })
+        }
+        # Create row annotations separately
+        row_anno <- custom_sample_annotation(data, sample_annotations)
 
-        customTitleSampleCorrelation <- paste0(
-          "Sample Correlation - ",
-          params$omic_type,"-",
-          paste0("entities:",params$row_selection,collapse = "_"),
-          "-samples",
-          ifelse(any(params$row_selection != "all"),paste0(" (with: ",paste0(params$row_selection,collapse = ", "),")"),""),
-          "-preprocessing: ",
-          params$PreProcessing_Procedure
-        )
-
-        anno_colors <- assign_colors_SampleCorr(annotationDF)
-        SampleCorrelationPlot_final <- pheatmap(
-          mat = cormat,
-          annotation_row = as.data.frame(annotationDF),
-          main = customTitleSampleCorrelation,
-          annotation_colors = anno_colors,
-          clustering_distance_rows = "correlation",
-          clustering_distance_cols = "correlation"
-        )
-        # assign res_temp["SampleCorrelation"]
+        # Generate the heatmap
+        heatmap_plot <- custom_heatmap(cormat, customTitleSampleCorrelation, correlation_method)
+        sample_corr_reactive$corr_plot <- heatmap_plot
+        sample_corr_reactive$row_anno <- row_anno
         res_tmp[[session$token]][["SampleCorrelation"]] <<- cormat
         # assign par_temp["SampleCorrelation"]
         par_tmp[[session$token]][["SampleCorrelation"]] <<- list(
-          corrMethod = input$corrMethod,
-          data_info = list(
-            rows = length(rownames(data)),
-            cols = length(colnames(data)),
-            preprocessing = par_tmp[[session$token]]$PreProcessing_Procedure
-          )
+          correlation_method = correlation_method,
+          sample_annotations = sample_annotations,
+          title = customTitleSampleCorrelation,
+          data_updated = FALSE
         )
-
-        sampleCorrelation_scenario <- 18
-        output$SampleCorrelationPlot <- renderPlot({SampleCorrelationPlot_final})
 
         # Longer names causes issues for saving
         if(nchar(customTitleSampleCorrelation) >= 250){
           customTitleSampleCorrelation <- "SampleCorrelation"
         }
+        sample_corr_reactive$customTitleSampleCorrelation <<- customTitleSampleCorrelation
         waiter$hide()
-        tmp <- getUserReactiveValues(input)
-        par_tmp[[session$token]]$SampleCorr[names(tmp)] <<- tmp
-        par_tmp[[session$token]]$SampleCorr$customTitleSampleCorrelation <<- customTitleSampleCorrelation
-        par_tmp[[session$token]]$SampleCorr$SampleCorrelationPlot_final <<- SampleCorrelationPlot_final
-        par_tmp[[session$token]]$SampleCorr$annotationDF <<- as.data.frame(annotationDF)
-        par_tmp[[session$token]]$SampleCorr$anno_colors <<- anno_colors
       })
       
       # Download Section ----
@@ -177,73 +149,62 @@ sample_correlation_server <- function(id, data, params){
           )
           waiter$show()
           envList <- list(
-
-            res_tmp = res_tmp[[session$token]],
             par_tmp = par_tmp[[session$token]]
-
           )
-          
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
-          sampleCorrelation_scenario <- 18
+          # save csv files
+          save_summarized_experiment(
+            res_tmp[[session$token]]$data_original,
+            temp_directory
+          )
 
-          write(getPlotCode(sampleCorrelation_scenario), file.path(temp_directory, "Code.R"))
-          
-          saveRDS(envList, file.path(temp_directory, "Data.RDS"))
+          write(
+            create_workflow_script(
+              pipeline_info = SAMPLE_CORRELATION_PIPELINE,
+              par = par_tmp[[session$token]],
+              par_mem = "SampleCorrelation",
+              path_to_util = file.path(temp_directory, "util.R")
+            ),
+            file.path(temp_directory, "Code.R")
+          )
+          saveRDS(envList, file.path(temp_directory, "Data.rds"))
           zip::zip(
             zipfile = file,
             files = dir(temp_directory),
             root = temp_directory
           )
-          waiter$hdie()
+          waiter$hide()
         },
         contentType = "application/zip"
       )
       
       output$SavePlot_SampleCorrelation <- downloadHandler(
         filename = function() {
-          paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), input$file_ext_Heatmap)
+          paste0(sample_corr_reactive$customTitleSampleCorrelation, Sys.time(), input$file_ext_SampleCorrelation)
         },
         content = function(file){
-          save_pheatmap(par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,filename = file,type=gsub("\\.","",input$file_ext_SampleCorrelation))
-          on.exit({
-            tmp_filename <- paste0(
-              getwd(),
-              "/www/",
-              paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), input$file_ext_SampleCorrelation)
-            )
-            save_pheatmap(
-              par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,
-              filename = tmp_filename,
-              type = gsub("\\.","",input$file_ext_SampleCorrelation)
-            )
-            # Add Log Messages
-            fun_LogIt("## Sample correlation {.tabset .tabset-fade}")
-            fun_LogIt(message = "### Info")
-            fun_LogIt(message = paste0("**SampleCorrelation** - The correlation method used was: ",input$corrMethod))
-            fun_LogIt(message = paste0("**SampleCorrelation** - The heatmap samples were colored after ",paste(input$SampleAnnotationChoice)))
-            fun_LogIt(message = paste0("**SampleCorrelation** - The plot was save to the locally. "))
-            fun_LogIt(message = paste0("**SampleCorrelation** - ![SAMPLE_CORRELATION](",tmp_filename,")"))
-            fun_LogIt(message = "### Publication Snippet")
-            fun_LogIt(message = snippet_sampleCorr(data=res_tmp[[session$token]],
-                                                   params=par_tmp[[session$token]]))
-            fun_LogIt(message = "<br>")
-          })
+          save_complex_heatmap(
+            sample_corr_reactive$corr_plot + sample_corr_reactive$row_anno,
+            filename = file,
+            type=gsub("\\.","",input$file_ext_SampleCorrelation)
+          )
+          on.exit({shinyjs::click(ns("only2Report_SampleCorrelation"))})
           
         }
       )
       
       # send only to report
       observeEvent(input$only2Report_SampleCorrelation,{
-        notificationID <- showNotification("Saving...",duration = 0)
+        notificationID <- showNotification("Saving to Report...",duration = 0)
         tmp_filename <- paste0(
           getwd(),
-          "/www/",
-          paste0(par_tmp[[session$token]][["SampleCorr"]]$customTitleSampleCorrelation, Sys.time(), ".png")
+          file_path,
+          paste0(sample_corr_reactive$customTitleSampleCorrelation, Sys.time(), ".png")
         )
         
-        save_pheatmap(
-          par_tmp[[session$token]][["SampleCorr"]]$SampleCorrelationPlot_final,
+        save_complex_heatmap(
+          sample_corr_reactive$corr_plot + sample_corr_reactive$row_anno,
           filename = tmp_filename,
           type = "png"
         )
@@ -256,12 +217,7 @@ sample_correlation_server <- function(id, data, params){
         fun_LogIt(message = paste0("**SampleCorrelation** - ![SAMPLE_CORRELATION](",tmp_filename,")"))
         
         if(isTruthy(input$NotesSampleCorrelation) & !(isEmpty(input$NotesSampleCorrelation))){
-          fun_LogIt(message = "<span style='color:#298c2f;'>**Personal Notes:**</span>")
-          fun_LogIt(message = paste0(
-            "<div style='background-color:#f0f0f0; padding:10px; border-radius:5px;'>",
-            input$NotesSampleCorrelation,
-            "</div>"
-          ))
+          fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesSampleCorrelation)))
         }
         
         fun_LogIt(message = "### Publication Snippet")
@@ -269,7 +225,7 @@ sample_correlation_server <- function(id, data, params){
                                                params=par_tmp[[session$token]]))
         
         removeNotification(notificationID)
-        showNotification("Saved!",type = "message", duration = 1)
+        showNotification("Report Saved!",type = "message", duration = 1)
       })
 })
 }

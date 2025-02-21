@@ -20,9 +20,8 @@ pca_sidebar_panel <- function(ns){
     radioButtons(
       inputId = ns("scale_data"),
       label = "Scale data to unit variance?",
-      choices = c("Yes","No"),
-      # direction = "horizontal",
-      selected = "No"
+      choices = c("Yes" = TRUE, "No" = FALSE),
+      selected = TRUE
     ),
     ### start pca ---
     actionButton(
@@ -50,11 +49,16 @@ pca_sidebar_panel <- function(ns){
     radioButtons(
       inputId = ns("Show_loadings"),
       label = "Plot Loadings on top? (currently top 5)",
-      choices = c("Yes","No"),
-      # direction = "horizontal",
-      selected = "No"
+      choices = c("Yes" = TRUE, "No" = FALSE),
+      selected = FALSE
     ),
-    helpText("Note: if you would like to change the annotation of the indicated loading vectors please select an option the the tab Loadings"),
+    radioButtons(
+      inputId = ns("Plot_ellipses"),
+      label = "Plot Ellipses indicating a 95% confidence interval?",
+      choices = c("Yes" = TRUE, "No" = FALSE),
+      selected = TRUE
+    ),
+    uiOutput(outputId = ns("entitie_anno_ui")),
     hr(style = "border-top: 1px dashed #000000;"),
     # hidden Button to refresh the UI
     hidden(actionButton(
@@ -135,10 +139,9 @@ pca_main_panel <- function(ns){
           splitLayout(
             style = "border: 1px solid silver:",
             cellWidths = c("70%", "30%"),
-            plotOutput(outputId = ns("PCA_Loadings_plot")),
+            plotlyOutput(outputId = ns("PCA_Loadings_plot")),
             textOutput(outputId = ns("Loadings_plot_Options_selected_out"), container = pre)
           ),
-          uiOutput(outputId = ns("EntitieAnno_Loadings_ui")),
           sliderInput(
             inputId = ns("topSlider"),
             label = "Top k positive Loadings",
@@ -206,7 +209,6 @@ pca_main_panel <- function(ns){
             NULL
             #textOutput(outputId = ns("Loadings_plot_Options_selected_out"), container = pre)
           ),
-          uiOutput(outputId = ns("EntitieAnno_Loadings_matrix_ui")),
           uiOutput(outputId = ns("nPCAs_to_look_at_ui")),
   
           sliderInput(
@@ -319,7 +321,8 @@ pca_UI <- function(id){
   ns <- NS(id)
 
   tabPanel(
-    title = "PCA",
+    title = tagList(tags$span("4. PCA")), 
+    value = "PCA",
     id = "pca",
     fluid = T,
     h4("PCA"),

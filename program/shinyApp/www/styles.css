@@ -1,0 +1,148 @@
+body {
+  background-color: #f8f7fa;
+}
+body, label, input, button, select, h4, h3, h2 {
+  color: #3b3b3b;
+}
+.tabbable > .nav > li > a {
+   background-color: #dedede;
+   color: black;
+}
+.tabbable > .nav > li[class=active] > a {
+    background-color: #7a7e80;
+    color: black;
+}
+.custom-modal .modal-dialog {
+  width: 90%;
+  max-width: 90%;
+}
+.shinyhelper-container {
+  font-size: 24px;
+  color: darkred !important;
+}
+.well button {
+  background-color: white;
+  color: black;
+  border: 2px solid darkgrey;
+  font-size: 15px;
+  font-weight: bold;
+  box-shadow: 3px 3px 5px rgba(255, 0, 0, 0.8);
+  padding: 5px 5px;
+  border-radius: 10px;
+}
+#shiny-disconnected-overlay {
+  background-color: grey;
+  opacity: 1;
+  z-index: 99999 !important;
+  color: white;
+  font-size: 20px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  padding: 20px;
+  line-height: 1.5;
+}
+#shiny-disconnected-overlay a {
+  color: #add8e6;
+  text-decoration: underline;
+}
+#sidebar_data_selection {
+    background-color: #70BF4F47;
+}
+#sidebar_pre_processing {
+    background-color: #3897F147;
+}
+#sidebar_sampleCorrelation {
+    background-color: #A208BA35;
+}
+#sidebar_pca {
+    background-color: #FD8D3347;
+}
+#sidebar_significance_analysis {
+    background-color: #FFD33547;
+}
+#sidebar_heatmap {
+    background-color: #70BF4F47;
+}
+#sidebar_single_gene_visualisation {
+    background-color: #3897F147;
+}
+#sidebar_enrichment_analysis {
+    background-color: #A208BA35;
+}
+.tabbable > .nav > li > a[data-value='Data selection'] {
+   background-color: #70BF4F47 !important;
+   color: black;
+}
+.tabbable > .nav > li[class=active] > a[data-value='Data selection'] {
+  background-color: #70BF4F !important;
+  color: white !important;
+}
+.tabbable > .nav > li > a[data-value='Pre-processing'] {
+  background-color: #3897F147 !important;
+  color: black !important;
+}
+.tabbable > .nav > li[class=active] > a[data-value='Pre-processing'] {
+  background-color: #3897F1 !important;
+  color: white !important;
+}
+.tabbable > .nav > li > a[data-value='Sample Correlation'] {
+  background-color: #A208BA35 !important;
+  color: black !important;
+}
+.tabbable > .nav > li[class=active] > a[data-value='Sample Correlation'] {
+  background-color: #A208BA !important;
+  color: white !important;
+}
+.tabbable > .nav > li > a[data-value='PCA'] {
+  background-color: #FD8D3347 !important;
+  color: black !important;
+}
+.tabbable > .nav > li[class=active] > a[data-value='PCA'] {
+  background-color: #FD8D33 !important;
+  color: white !important;
+}
+.tabbable > .nav > li > a[data-value='Differential Analysis'] {
+  background-color: #FFD33547 !important;
+  color: black !important;
+}
+.tabbable > .nav > li > a[data-value='Heatmap'] {
+  background-color: #70BF4F47 !important;
+  color: black !important;
+}
+.tabbable > .nav > li[class=active] > a[data-value='Heatmap'] {
+  background-color: #70BF4F !important;
+  color: white !important;
+}
+.tabbable > .nav > li > a[data-value='Single Gene Visualisations'] {
+  background-color: #3897F147 !important;
+  color: black !important;
+}
+.tabbable > .nav > li[class=active] > a[data-value='Single Gene Visualisations'] {
+  background-color: #3897F1 !important;
+  color: white !important;
+}
+.tabbable > .nav > li > a[data-value='Enrichment Analysis'] {
+  background-color: #A208BA35 !important;
+  color: black !important;
+}
+.tabbable > .nav > li[class=active] > a[data-value='Enrichment Analysis'] {
+  background-color: #A208BA !important;
+  color: white !important;
+}
+.tabbable > .nav > li[class=active] > a[data-value='Differential Analysis'] {
+  background-color: #FFD335 !important;
+  color: white !important;
+}
+.align-bottom {
+  display: flex;
+  align-items: flex-end;
+}
+.align-bottom > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}

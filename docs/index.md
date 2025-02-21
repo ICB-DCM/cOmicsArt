@@ -21,4 +21,5 @@ Have fun exploring! 🎉
 -   📚 Want to know the required data and format? Visit [Interface Details](interface-details/01-required-data-input.md).
 -   🔧 Need to run the app locally? Check out the [Installation Guide](installation.md).
 -   💡 Looking for customization inspiration? Explore our [Customization Examples](code-and-data/examples.md).
--   📊 Want to know more about the significance analysis? Visit [Significance Analysis](interface-details/05-significance-analysis.md)
+-   📊 Want to know more about the differential analysis? Visit [Differential Analysis](interface-details/05-significance-analysis.md)
+-   🧭 Need guidiance on the analysis workflow? Check out our Showcases: [Showcases](showcases.md)
