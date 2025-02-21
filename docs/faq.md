@@ -53,7 +53,7 @@ Common issues are: Not exactly the same row or columnnames, missing values, wron
 
 <div class="question" onclick="toggleAnswer('q6')">6. The APp has beend computing for ages - what is going on?</div>
   <div id="q6" class="answer">
-  Some analysis do take some time but rather around several minutes and not more than 10 minutes. If the waiting screen persist for longer it is most likely that the app has crashed or stuck in a loop. This can have multiple reasons. In all cases it is necassary to refresh the page which leads to a reset of the app and the loss of analysis results. If you are able to reproduce this behaviour it points to a bug within cOmicsArt and we would very much appreciate a report to fix it. You could for example open an issue on GitHub (https://github.com/ICB-DCM/cOmicsArt/issues).
+  Some analysis do take some time but rather around several minutes and not more than 10 minutes. If the waiting screen persists for longer it is most likely that the app has crashed or is stuck in a loop. This can have multiple reasons. In all cases, it is necessary to refresh the page which leads to a reset of the app and the loss of analysis results. If you can reproduce this behaviour it points to a bug within cOmicsArt and we would very much appreciate a report to fix it. You could for example open an issue on GitHub (https://github.com/ICB-DCM/cOmicsArt/issues).
   </div>
 
 <div class="question" onclick="toggleAnswer('q7')">7. I somehow cannot access the app (anymore)?</div>
