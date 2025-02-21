@@ -161,12 +161,6 @@ create_library_code <- function(foo_list){
 
   # Extend foo_list by "select_data" and "preprocessing" as they are always needed
   foo_list <- c(foo_list, "select_data", "preprocessing")
-  lib_sourcing <- paste0(
-    "# Load all necessary libraries\n",
-    "library(rstudioapi)\n",
-    "library(SummarizedExperiment)\n",
-    "library(ggplot2)"
-  )
 
   # Helper function: given the name of a function, return the name of its package.
   get_pkg <- function(fun_name) {
@@ -194,6 +188,12 @@ create_library_code <- function(foo_list){
   all_packages <- setdiff(
     na.omit(all_packages),
     c("base", "", "package:base", "ggplot2", "SummarizedExperiment")  # Base or already loaded packages
+  )
+  all_packages <- c(all_packages, "rstudioapi", "SummarizedExperiment", "ggplot2")
+  lib_sourcing <- paste0(
+    prepare_function_for_util(check_and_install_packages),
+    "# Load all necessary libraries\n",
+    "check_and_install_packages(c(", paste0("'", all_packages, "'", collapse = ", "), "))\n"
   )
   lib_sourcing <- paste(
     lib_sourcing,

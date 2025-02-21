@@ -545,8 +545,9 @@ server <- function(input,output,session){
         DT::dataTableOutput("EntitieMatrix_VI"),
         htmlOutput(outputId = "EntitieMatrix_VI_Info", container = pre)
       ),
+      includeMarkdown("helpfiles/VI_checks.md"),
       htmlOutput(outputId = "OverallChecks", container = pre),
-      easyClose = TRUE,
+      easyClose = T,
       footer = tagList(
         actionButton("usingVIdata", "Use the Data"),
         actionButton("CloseVI","Close")
@@ -665,9 +666,9 @@ server <- function(input,output,session){
       if(grepl(snippetYes,check0) &
          grepl(snippetYes,check1) &
          grepl(snippetYes,check2) &
-         grepl(snippetYes,check3) &
-         grepl(snippetYes,check4) & # not crucial
-         # grepl(snippetYes,check5) & # not crucial
+         #grepl(snippetYes,check3) &
+         #grepl(snippetYes,check4) & # not crucial
+         #grepl(snippetYes,check5) & # not crucial
          grepl(snippetYes,check6) &
          grepl(snippetYes,check7)){
         res_tmp[[session$token]]$passedVI <<- T
@@ -739,7 +740,7 @@ server <- function(input,output,session){
           if(any(grepl(invalidStart_regex, colnames(Matrix))) | any(grepl(space_regex, colnames(Matrix)))){
             # save orig colnames to sample anno
             old_Matrix <- Matrix
-            sample_table$original_colnames <- as.character(colnames(Matrix))
+            
             idxTochange <- grepl(invalidStart_regex, colnames(Matrix))
             if(any(grepl("^X", colnames(Matrix)))){
               colnames(Matrix) <- gsub("^X","",colnames(Matrix))
@@ -808,7 +809,7 @@ server <- function(input,output,session){
 
           showModal(modalDialog(
             title = "Download Updated Data",
-              HTML(paste0("You can download your updated data for later reupload.<br>",
+              HTML(paste0("You can download your updated data for later reupload (not guaranteed to be correct!).<br>",
                      info_snippet_matrix_row,"<br>",
                      info_snippet_matrix_column,"<br>",
                      info_snippet_sample,"<br>",
@@ -881,9 +882,9 @@ server <- function(input,output,session){
             if(grepl(snippetYes,check0) &
                grepl(snippetYes,check1) &
                grepl(snippetYes,check2) &
-               grepl(snippetYes,check3) &
-               grepl(snippetYes,check4) & # not crucial
-              # grepl(snippetYes,check5) & # not crucial
+               #grepl(snippetYes,check3) &
+               #grepl(snippetYes,check4) & # not crucial
+               #grepl(snippetYes,check5) & # not crucial
                grepl(snippetYes,check6) &
                grepl(snippetYes,check7)){
               res_tmp[[session$token]]$passedVI <<- T
@@ -918,6 +919,7 @@ server <- function(input,output,session){
           paste0("\n\t",propblem_columns, collapse = ", ")
         )
       }
+
       output$OverallChecks <- renderText({
         sprintf(
           CHECK_TEMPLATE_VI,
@@ -1076,10 +1078,12 @@ server <- function(input,output,session){
 
 ## create data object ----
   data_input_shiny <- eventReactive(input$refresh1,{
-    # if(is.null(unlist(par_tmp[[session$token]]['omic_type'])) || input[[paste0("omic_type_", uploaded_from())]] != omic_type()){
-    #   par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_from())]]
-    #   omic_type(input[[paste0("omic_type_", uploaded_from())]])
-    # }
+    uploaded_where <- isolate(uploaded_from())
+    if(uploaded_where == "VI_data") uploaded_where <- "file_input"
+    if(is.null(unlist(par_tmp[[session$token]]['omic_type'])) || input[[paste0("omic_type_", uploaded_where)]] != omic_type()){
+      par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_where)]]
+      omic_type(input[[paste0("omic_type_", uploaded_where)]])
+    }
     # Add check if the data upload fails due to no supply of files
     if(!((isTruthy(input$data_preDone) & uploaded_from() == "precompiled") |
       # Is File Input used?

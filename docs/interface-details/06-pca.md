@@ -15,7 +15,7 @@ In the side panel, you have the following options:
 
 - **Get PCA**: Clicking this button will generate the PCA plot in the main panel based on the selected annotation type and entities.
 
-- **Toggle "Select Data"**: You can toggle on and off "Select Data". This allows you to quickly select data and perform PCA on the determined subset.
+- **Toggle "Select Data"**: You can toggle on and off "Select Data". This allows you to quickly select data and perform PCA on the determined subset. Note, that if the selection leads to constant entities within the subset those entities will be automatically removed as they do not contain any information.
   
   - **Choose the annotation type to select on**: You can choose an annotation type for selection, such as `cell`. The options are populated based on the sample annotation provided initially. Precisely it is the column names of the sample annotation.
 
@@ -26,6 +26,8 @@ In the side panel, you have the following options:
 - **PC for x-Axis**: Select the principal component for the x-axis. Options include PC1, PC2, PC3, and PC4.
 
 - **PC for y-Axis**: Select the principal component for the y-axis. Options include PC1, PC2, PC3, and PC4.
+
+- **Plot ellipses**: You can choose to plot ellipses around the groups. These ellipses indicate the 95% confidence interval of the group. Hence, if the are overlapping the groups are not significantly different. Note, to draw such ellipses there need to be enough samples within a single group - if that is not the case the ellipses will not be drawn.
 
 - **Plot Loadings on top**: You can choose to plot the loadings on top of the PCA plot (the top 5 are used). You can hover over them to identify the respective entities. For more help on how to interpret loadings within a PCA, check out [this resource on PCA loadings interpretation](https://towardsdatascience.com/what-are-pca-loadings-and-biplots-9a7897f2e559).
 
@@ -46,7 +48,7 @@ The main panel displays the PCA results. Here are some key points:
 ### Other Notes 📌
 
 - **Question Marks**: The displayed question marks provide quick and immediate help. However, since you are reading this documentation, you found the extensive version. Hope it helped!
-- **PCA Interpretation**: Observing the PCA plot can give insights into the relationships between different samples based on the selected annotation and the principal components chosen for the axes. For more information on PCA interpretation, check out [this video on PCA interpretation](https://www.youtube.com/watch?v=FgakZw6K1QQ).
+- **PCA Interpretation**: Observing the PCA plot can give insights into the relationships between different samples based on the selected annotation and the principal components chosen for the axes. For more information on PCA interpretation, check out [this video on PCA interpretation](https://www.youtube.com/watch?v=FgakZw6K1QQ). A common analysis workflow would be to pre-process the entire dataset and visualize it within the PCA plot. Coloring after your supplied metadata may help you to identify if you have any batch effects - large variations within your data that are not due to the biological question you are asking. You may want to save this plot e.g. within the Report for future comparison or simply reference. If you see such effects and want to remove them you might want to go back to pre-processing and select batch correction for the variable introducing the unwanted variation. If you assume it is a combination of variables that might not be within your initially loaded sample table you will need to adjust the sample table and re-upload to cOmicsArt (ensure to click Upload new data) before you can select the new variable as batch. Note that we use ComBat in the background which can deal with complex batches meaning they might not be necessarily linear. You can go back to the PCA, ensure it is updated by clicking 'Get PCA', and see the differences.
 
 ---
 
