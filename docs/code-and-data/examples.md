@@ -26,7 +26,7 @@ To recreate this example **within** cOmicsArt, use the following steps:
 3. We want to use `DESeq2` as the pre-processing method. Thus choose `Omic-Specific` 
    as the **Processing Type**, verify that `DESeq2` is selected as the **Preprocessing 
    Option**, and click `"Get Pre-Preprocessing"`
-4. In the `PCA`-tab, just click `"Get PCA Plot"`
+4. In the `PCA`-tab, set `Plot Ellispes` to **No** and just click `"Get PCA Plot"`
 5. Download the data and code by clicking on `Get underlying R code and data`
 
 Anything not mentioned here can be left as default. Below you can find a slide show of 
