@@ -545,8 +545,9 @@ server <- function(input,output,session){
         DT::dataTableOutput("EntitieMatrix_VI"),
         htmlOutput(outputId = "EntitieMatrix_VI_Info", container = pre)
       ),
+      includeMarkdown("helpfiles/VI_checks.md"),
       htmlOutput(outputId = "OverallChecks", container = pre),
-      easyClose = TRUE,
+      easyClose = T,
       footer = tagList(
         actionButton("usingVIdata", "Use the Data"),
         actionButton("CloseVI","Close")
