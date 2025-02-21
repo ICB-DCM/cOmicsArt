@@ -20,30 +20,31 @@ The options (and steps) of preprocessing are as follows:
 
 **Step 1: General Data Cleaning**
 
-- Constant entities across all samples are removed from the dataset.
-- Rows with all-zero values are removed to improve data quality.
+Constant entities across all samples are removed from the dataset - even if choose `No pre-processing` as preprocessing. Those entities do not contain any information and can lead to errors in the downstream analysis.
 
-**Step 2: Data Filtering (Optional)**
+**Step 2: Choose Processing Type**
 
-- If the selected preprocessing procedure is not `None`, additional filtering steps are 
-  applied based on the data type (Transcriptomics or Metabolomics).
-- Low-abundance entities are filtered out based on specified criteria.
+You can first choose your processing type, where we distinguish between the following options:
+- Filtering
+- Omic-Specific
+- Log-Based
+- Miscellaneous
 
-**Step 3: Data Transformation**
+Each processing type offers a set of options that allow you to refine the specific pre-processing steps you want to apply. If you select 'Filtering' as the processing type, it will only remove low-abundance entities based on your chosen criteria. For all other processing types, filtering must always be explicitly specified, as it serves as the initial step before any further pre-processing is applied.
 
-- **No pre-processing**
-  - No transformation is applied to the data.
-  - Step 2 is skipped.
-  - This option is recommended for data that has already been normalized and transformed.
+**Step 3: Choose your Processing Option dependent on your pre-preocessing type**
 
-- **Omic-specific filtering of low abundance**
-  - No transformation is applied to the data.
-  - Data is only filtered based on Step 2.
-  - This option is recommended for data that has already been normalized and 
-    transformed or if you want to use raw data.
+**Type: Filtering**
+*global filtering*
+  - Removes low-abundance entities by setting a minimum total count accross all samples. For example, if you set the minimum total count to 10, each entities sum over all samples is calculated and if it is below 10, the entity is removed.
+*sample-wise filtering*
+  - Removes low-abundance entities by setting a minimum count per sample as well as a threshold how many samples need to have this minimum count. For example, if you set the minimum count per sample to 0 and the threshold to 5, each entity is checked if it has a count of at least 1 in at least 5 samples. If not, the entity is removed. Note, that the number of sample meeting the defined threshold should not exceed total sample size.
 
-- **DESeq2 pre-processing (including variance stabilising transformation)**
-  - For transcriptomics data, DESeq2 is used for normalization and VST transformation.
+**Type: Omic-Specific**
+You will need to specify the filtering options as well. For more information see above.
+
+*DESeq2:*
+- For transcriptomics data, DESeq2 is used for normalization and VST transformation.
 - The formula for analysis is determined based on user-specified factors. (<span id="toggle-button" style="color: blue; cursor: pointer;" onclick="toggleInfoBox()">Learn more</span>).
   <div id="info-box" style="display: none; margin-top: 10px; padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9; width: auto; max-width: 100%;">
     <h2>Understanding the Design Matrix in DESeq2</h2>
@@ -140,35 +141,28 @@ The options (and steps) of preprocessing are as follows:
   }
 </script>
 
-- **centering to 0 and scaling**
-  - The data is centered and scaled.
-  - Centering involves subtracting the mean of each entity, and scaling involves dividing by the standard deviation.
-  - This procedure ensures that each entity has a mean of 0 and a standard deviation of 1.
+*limma voom*
+  - Note that you need to also specify here first the filtering characteristics as first steps. limma::voom recommends to remove entities with low counts.
+  -  Transforms data for linear modeling through two key steps. First, it converts raw counts into log2 counts per million (log2CPM). Then, it estimates the mean-variance relationship while accounting for the experimental design.
+  -  Choose factors of interest which will be added to your design in additive fashion and decide whether to include an intercept (default: yes). If you are not sure what to choose, we suggest to include the intercept. You would choose not intercept if you expect no expression in your control group.
+  - If you want to know more about 'What a desing matrix is' and how to choose the right factors, check out the information above under DESeq2.
+  
+*TMM*
+  - Not that you need to specify here first the filtering characteristics as first steps.
+  - TMM stands for Trimmed Mean of M-values. It is a normalization method that estimates the scaling factors for the library sizes. The scaling factors are used to adjust the library sizes to account for differences in sequencing depth between samples.
+  
+**Type: Log-based**
+You have the options of log10, log2 and ln (natural logarithm). Note, that there will be 1 added to the raw measurements to avoid taking log of 0 which results in -Inf. You will also need to specify - again - the filtering options as first steps.
 
-- **scaling values to be within 0 and 1**
-  - The data is scaled to fit within the range of 0 to 1.
-  - Each entity's values are transformed proportionally to ensure a consistent scale.
-
-- **Natural Logarithm (ln):**
-  - The natural logarithm of each data point is calculated.
-  - This transformation is particularly useful for data that exhibits exponential growth.
-
-- **Logarithm Base 10 (log10):**
-  - The base-10 logarithm of each data point is calculated.
-  - Special consideration is given to handling zero values to avoid undefined 
-    results: If any zero values are present, +1 is added to all values before applying
-    the logarithm.
-    
-- **Logarithm Base 2 (log2):**
-  - The base-2 logarithm of each data point is calculated.
-  - Special consideration is given to handling zero values to avoid undefined 
-    results: If any zero values are present, +1 is added to all values before applying
-    the logarithm.
-    
-- **Pareto Scaling:**
-  - Pareto scaling emphasizes the importance of small values by dividing each data point by the square root of its standard deviation.
-  - This method is suitable for datasets with a wide range of values.
-
+**Type: Miscellaneous**
+Be aware that this methods might not be particular suitable for e.g. raw count data. It might be useful however if you have data that is already-pre processed to some extend and you want to use e.g. cOmicsArts visualisation tools.
+You will also need to specify - again - the filtering options as first steps.
+*Pareto scaling*
+  - Pareto scaling is a scaling method that divides the data by the square root of the standard deviation. This method is useful when the data has a large dynamic range.
+*Centering & Scaling*
+  - Centering and scaling is a normalization method that subtracts the mean and divides by the standard deviation.
+*Scaling 0-1*
+  - Scaling to 0-1 is a normalization method that scales the data to a range between 0 and 1.
 ---
 
 ### [optional] Select Batch Effect Column
@@ -190,13 +184,24 @@ identify them you can start by checking out [this website ](https://bigomics.ch/
 
 The main panel displays the results of the pre-processing. Here are some key points:
 
--   **General statistics to the input data**: Displays general statistics about the input data, such as dimensions.
+-   **General statistics to the input data**: Displays general statistics about the input data, such as dimensions before and after pre-processing. Here you can see how many entities were removed due to the pre-processing steps. Additionally you find a summary of the entitie-wise conducted normality test. Check out the interpretation guidance for more information on this topic.
 
--   **Violin Plot**: Shows the count distribution per sample before and after pre-processing.
+-  **Start Discovering** : Upon click you will actually not taken to 'the' analysis (as you are free to choose the order or only a single module) but will be reminded again how to navigate to the different analysis tabs. When you use cOmicsArt more regularly you can simply skip this step and directly click on the analysis tabs to switch to the respective analysis.
+
+- **Violin Plot**: Shows the count distribution per sample before and after pre-processing. You are most likely looking for the same shapes across the samples. If one sample behaves distinctly different it might hint to you that there is something wrong with this sample. This can be further confirmed within the PCA or Sample correlation analysis. See at the bottom of this page for more information on how to interpret the pre-processing plots.
+
+- **Mean and Standard Deviation Plot**: Shows the mean and standard deviation of the pre-processed data. This plot can help you to identify if the standard deviation is constant across the mean - one speaks of homoscedasticity. If the standard deviation increases with the mean you have heteroscedasticity. This can be a problem for some statistical tests. See at the bottom of this page for more information on how to interpret the pre-processing plots.
 
 ### Download Options 📂
 
--   **Save Violin Plot**: You can save the violin plot in different file formats such as PNG, TIFF, and PDF. You also have the option to download the underlying R code and data.
+-   **Save Violin Plot**: You can save the violin plot in different file formats such as PNG, TIFF, and PDF. You also have the option to download the underlying R code and data or send to plot to the report
+-   **Save Mean and Standard Deviation Plot**: You can save the mean and standard deviation plot in different file formats such as PNG, TIFF, and PDF. You also have the option to download the underlying R code and data or send to plot to the report
+
+### Interpretation Guidiance 🧭
+The pre-processing step is crucial as it is the basis on which all the following analyses are based. A unsuitable pre-processing may led to draw wrong conclusions from the data. Hence you should be carefully consider your options and do an informed choice. There is no harm on trying out different pre-processing options but should not try until you find the results you 'like'. What you should actually look for are the properties of your pre-processed data.
+In general you want to have similar global distributions per sample which you can check with the provided violin plots. There should be no sample that behaves distinctly different from the others. If you see such a shifted pattern that corresponds with e.g. a variable of interest (try out to color the different violins by various variables). Thi pattern might be actual variation of interest or can be accounted for with batch correction.
+The mean and standard deviation plot can help you to identify if the standard deviation is constant across the mean - one speaks of homoscedasticity. You are looking for a rather constant line. For more information on this topic you might want to check out this [resource](https://www.statisticshowto.com/homoscedasticity/). Note that we plot actullay the rank of the mean not the actually mean. If you use scaling methods you will see that the standard deviation is constant across the mean. The colored hexagonal shapes represent the number of entities at the respective rank area with respective standard deviation(will be suitable binned automatically). You are generally looking for high counts close to the fitted red line. If the line deviates from a constant behavior but for rather low number of variables you often can accept that and still assume reasonable homoscedasticity. If you have a large number of variables that deviate from the red line you might want to consider to apply a different pre-processing to your data as it is an assumption in many statistical tests.
+Finally you can assess the displayed results of the normality tests. This can provide you an overview which potential statistical test you can apply to your data as the t-test for example requires normal distributed data. You should be aware that the normality test is only reliable for large sample sizes which is often not the case - this means for small sample sizes the null hypothesis cannot be rejected. Hence handle this information careful and potentially ask you yourself whether you actually assume that the respective data is normal distributed. For further reading you might want to check out this paper: [Descriptive Statistics and Normality Tests for Statistical Data](https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#abstract1) or other resources.
 
 ### Other Notes 📌
 
