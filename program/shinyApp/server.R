@@ -739,7 +739,7 @@ server <- function(input,output,session){
           if(any(grepl(invalidStart_regex, colnames(Matrix))) | any(grepl(space_regex, colnames(Matrix)))){
             # save orig colnames to sample anno
             old_Matrix <- Matrix
-            sample_table$original_colnames <- as.character(colnames(Matrix))
+            
             idxTochange <- grepl(invalidStart_regex, colnames(Matrix))
             if(any(grepl("^X", colnames(Matrix)))){
               colnames(Matrix) <- gsub("^X","",colnames(Matrix))
@@ -808,7 +808,7 @@ server <- function(input,output,session){
 
           showModal(modalDialog(
             title = "Download Updated Data",
-              HTML(paste0("You can download your updated data for later reupload.<br>",
+              HTML(paste0("You can download your updated data for later reupload (not guaranteed to be correct!).<br>",
                      info_snippet_matrix_row,"<br>",
                      info_snippet_matrix_column,"<br>",
                      info_snippet_sample,"<br>",
@@ -918,6 +918,7 @@ server <- function(input,output,session){
           paste0("\n\t",propblem_columns, collapse = ", ")
         )
       }
+
       output$OverallChecks <- renderText({
         sprintf(
           CHECK_TEMPLATE_VI,
