@@ -7,6 +7,9 @@ editor_options:
 Welcome to cOmicsArt - Customizable Omic Analysis and Reporting Tool. This tutorial is going to show you how to use this application to aid in your omic analysis.
 This tutorial is self-contained but can also be used to follow along with the YouTube tutorial.
 
+** Disclaimer ** : This tutorial is based on cOmicsArt v.1.0.0. Some parts of the interface for example, where to find some of the options have changed and additional options have been added,
+But the majority of this tutorial can be readily still used.
+
 cOmicsArt is designed to be modular. In the beginning you will only be able to see the data selection section, but if you upload your data and go through the steps progressively more tabs will be shown. 
 Let us start by uploading our data.
 
@@ -14,7 +17,7 @@ Let us start by uploading our data.
 
 To upload your data, you'll need three CSV files:  
 
-- **The data matrix**, where rows represent entities (like genes) and columns represent samples. The values contain count data.  
+- **The data matrix**, where rows represent entities (like genes) and columns represent samples. The values contain e.g. count data.  
 - **The sample table**, which includes metadata about the samples.  
 - **The entity table**, which contains additional information about the entities.  
 
@@ -25,7 +28,7 @@ Another option is to click on the helper buttons wherever they are. They'll show
 
 [Caption of screenshot] This documentation shows you how to upload your data via the file input. 
 
-We choose an example data set which is also available for download:  
+We choose the example data set which is also available for download:  
 
 - The **data matrix** file: `airway-read-counts-LS.csv`  
 - The **sample table** file: `airway-sample-sheet-LS.csv`  
@@ -37,14 +40,14 @@ Some pitfalls to beware of here are for example if we choose the wrong separator
 At the bottom of the screen there are a multitude of checks where you can check whether your data looks as it should be.
 Green signifies that the dataset is fine, whereas red means you need to go into your data and change things and orange means the dataset has some issues but the program can handle it - for example this dataset contains some entries which are missing and the application will just remove those entities from the table.
 
-After the inspection of the data is complete, click on "Upload new data" and now you should see your result in the right hand section of the panel.
+After the inspection of the data is completed, click on "Upload new data" and now you should see your result in the right hand section of the panel.
 An additional thing we can do is adding annotation to the data if we didn't do that already, but since we did this already for the test data we don't need to do it again. 
 
 Next, we can perform row or samples selection:
 
 For the sample selection we first choose among the columns present in the sample table. For example we can choose the cells, condition, experiment or the sample. 
 If we select sample, additionally we can select only specific samples we want to include the data analysis. Perhaps there are strong reasons to exclude some samples. By clicking on the specific sample, it removes all other samples and only uses the selection of samples we made.
-If we select condition, we can do a similar selection. Here it's treated or untreated but you have multiple conditions you might want to only check one of them. 
+If we select condition, we can do a similar selection. Here, it's treated or untreated but you have multiple conditions you might want to only check one of them. 
 
 For the row selection, the same can be done with genes and you can choose either the gene names here in Ensemble genes, or you might not know those gene names all by heart so you can select the symbols. Again, we can also select which ones we want to use.
 You can also use the gene biotype for selection. In transcriptomics you sometimes only want to use the protein coding genes so one can select protein coding and the program would then only use all of the protein coding genes that exists within the data matrix. Similarly you can do the same for processed pseudogenes and it will select all the processed pseudogenes.
@@ -148,7 +151,7 @@ Example:
 We select the following three comparisons: "N052611:N61311", "N080611:N61311", "N061011:N61311". 
 For this comparison, when we look at adjusted p-values, the result visualization is currently empty because we have nothing significant. 
 
-But if we choose to look at raw P values by changing the type of significance to "significant unadusted", there is now a plot which shows the genes which are significant in each of the comparisons.
+But if we choose to look at raw P values by changing the type of significance to "significant unadjusted", there is now a plot which shows the genes which are significant in each of the comparisons.
 Here, we can see, across all three comparisons 62 genes are significant, and across the first and second comparison we have 105 genes which are significant. 
 Additionally, using the option "Intersections to highlight", we can highlight the plot bars.
 
@@ -161,7 +164,7 @@ We can use Single Entitie Visualisation to look at a specific gene.
 First, we select between raw or pre-processed data and then select the gene to visualise from the list of available genes under "Select the Gene from the list".
 On selecting the "Get Single Gene Visualisation", we get box plots or dot plots. Box plots will only be visible if you have more than 3 samples per group. If there are fewer than 4 samples, only dots will be displayed. 
 
-You can also group the samples based on the annotation categories by choosing the annotation category from the list of available categories under "Choose the groups to show the data for"
+You can also group the samples based on the annotation categories by choosing the annotation category from the list of available categories under "Choose the groups to show the data for."
 
 We now move onto the next part of our exploratory analysis.
 
@@ -184,7 +187,7 @@ For each gene set selected a tab will be visible within which you can see the en
 
 We now come to the Heatmap tab. 
 
-The Heatmap displays the count matrix in a clustered fashion and We now can select what entities we want to plot. 
+The Heatmap displays the count matrix in a clustered fashion and we now can select what entities we want to plot. 
 
 In our example, we only want to plot a the first entities and for this, we select "Select based on Annotation", and "geneName" as the variable to select the rows after and then select the first eight entities.
 Selecting "Get Heatmap" displays the heatmap plot on the right.
