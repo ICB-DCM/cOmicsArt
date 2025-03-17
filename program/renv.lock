@@ -214,7 +214,7 @@
     },
     "DESeq2": {
       "Package": "DESeq2",
-      "Version": "1.38.3",
+      "Version": "1.46.0",
       "Source": "Bioconductor",
       "Requirements": [
         "Biobase",
@@ -452,7 +452,7 @@
     },
     "MASS": {
       "Package": "MASS",
-      "Version": "7.3-57",
+      "Version": "7.3-65",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -577,7 +577,7 @@
     },
     "RCurl": {
       "Package": "RCurl",
-      "Version": "1.98-1.13",
+      "Version": "1.98-1.16",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -748,7 +748,7 @@
     },
     "XML": {
       "Package": "XML",
-      "Version": "3.99-0.16",
+      "Version": "3.99-0.18",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -2327,7 +2327,7 @@
     },
     "httpuv": {
       "Package": "httpuv",
-      "Version": "1.6.13",
+      "Version": "1.6.15",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
