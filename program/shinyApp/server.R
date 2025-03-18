@@ -1914,7 +1914,7 @@ server <- function(input,output,session){
         width = 16,  # Increase the width of the figure
         height = 8,  # Adjust height if necessary
         units = "in",
-        device = gsub("\\.","",input$file_ext_Preprocess)
+        device = gsub("\\.","",input$file_type_mean_sd_plot)
       )
       on.exit({shinyjs::click("only2Report_Preprocess")})
     }
@@ -1950,7 +1950,7 @@ server <- function(input,output,session){
       width = 16,  # Increase the width of the figure
       height = 8,  # Adjust height if necessary
       units = "in",
-      device = gsub("\\.","",input$file_ext_Preprocess)
+      device = gsub("\\.","",input$file_type_Preprocess)
     )
     fun_LogIt(message = "## PreProcessing Violin Plot{.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
