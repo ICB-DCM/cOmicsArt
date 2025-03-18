@@ -117,7 +117,7 @@ There are four different kinds of plots which are available:
 
 We focus on the options available for customizing PCA the plot.
 You can select a variable to color the samples after as well as select which principal component we want to see on the X and Y axes. 
-It is also possible to select an annotation and by hovering over the plot, observe the value of this annotation at each point [Is it point or entitie?] on the plot.
+It is also possible to select an annotation and by hovering over the plot, observe the value of this annotation at each point on the plot.
 
 In our example, we want to color the plot by the variable "condition", since one might want to do this to check if clusters exist based on the conditions.
 We can do this by clicking on the box below "Choose the variable to color the samples after" and selecting "condition" from the resulting drop-down menu.
@@ -183,7 +183,7 @@ If any genes were found significant, a standard plot of an enrichment analysis w
 
 Lastly we proceed to the Heatmap tab. 
 
-## Heatmap ## [The last analysis?]
+## Heatmap ##
 
 The Heatmap displays the count matrix in a clustered fashion and you can now select what entities you want to plot. 
 
@@ -196,5 +196,4 @@ If no differences are visible in the plot, it is possible to perform a row-wise 
 ## Wrapping Up ##
 
 When you have completed your analysis, you can download the report as an HTML file. This HTML file will contain a report on everything you did and all the choices you made, enabling you to recreate all results displayed in the application during your session, making every result reproducible.
-
-[With this I want to thank you for your attention and I hope you enjoyed the application][Keep?]
+With this I want to thank you for your attention and I hope you enjoyed the tutorial for our application.
