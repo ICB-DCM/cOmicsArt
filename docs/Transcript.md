@@ -8,11 +8,18 @@ Welcome to cOmicsArt - Customizable Omic Analysis and Reporting Tool.
 
 This tutorial is going to show you how to use this application to aid in your omic analysis. This tutorial is self-contained but can also be used to follow along with the YouTube tutorial.
 
-**Disclaimer** : This tutorial is based on cOmicsArt v.1.0.0. Some parts of the interface for example, where to find some of the options have changed and additional options have been added. 
-However the majority of this tutorial can be readily still used.
-
 cOmicsArt is designed to be modular. When you start the application, you will only be able to see the data selection section, but if you upload your data and go through the steps progressively, more tabs will become visible.
 Let us start by uploading our data.
+
+<div class="disclaimer" style='background-color:#FF906E; color: black; border-left: solid #FF602F 4px; border-radius: 2px; padding:0.2em;'>
+<span>
+<p style='margin-top:1em; text-align:center'>
+<b>Disclaimer</b></p>
+<p style='margin-left:1em;'>
+This tutorial is based on cOmicsArt v.1.0.0. Some parts of the interface for example, where to find some of the options have changed and additional options have been added. 
+However the majority of this tutorial can be readily still used.
+</p></span>
+</div> &nbsp;
 
 ## Uploading Data ##
 
@@ -62,12 +69,20 @@ Suppose you want to include only treated or only untreated samples. You could do
 In our case we want to use all our data. So we can start our journey by clicking on "Start the Journey". 
 This will directly bring us to the pre-processing window.
 
-## Pre-Processing ##
+## Pre-Processing
 
-**A note on the layout**
-The layout of the analysis tabs is as follows:
-The left side consists of the sidebar with all the available for plotting and modifying the plot. Within these, the options which need re-computation on being changed are separated from those which do not such re-computation by a separating line.
-Once a plot is computed it will be visible on the right side of the screen.  
+&nbsp;
+
+<div class="warning" style='background-color:#75B9BE; color: #black; border-left: solid #18B5C1 4px; border-radius: 2px; padding:0.2em;'>
+<span><p style='margin-top:1em; text-align:center'>
+<b><a name ="layout">A note on the layout  of the analysis tabs</a></b>
+</p>
+<p style='margin-left:1em;'>
+- The left side consists of the sidebar with all the available for plotting and modifying the plot. Within these, the options which need re-computation on being changed are separated from those which do not such re-computation by a separating line. \
+- Once a plot is computed it will be visible on the right side of the screen.
+</p>
+</span>
+</div> &nbsp;
 
 There are a multitude of pre-processing options available. For more information on each of these options, you can click on the helper button to get a detailed description.
 It is also possible to choose batch effects from the columns already present in your data, but keep in mind that batch effects are usually done later when one realizes that there are batch effects.
@@ -79,17 +94,26 @@ In this case a distribution matrix and some statistics show us the changes which
 To illustrate how the options below the bar work, we will choose to color the violin plot by the condition variable. 
 Since this does not require any additional computation, simply changing the option will update the plot instantaneously.
 
-**A note on further options for plots**
-At the bottom of the screen for each of the statistical analysis tabs, each plot will have three options:
+&nbsp;
 
-- **Save plot** - This option is fairly straightforward. Here you need to choose the file type you want the plot to be saved as, followed by selecting the "Save plot" button. This will open up a window where you can choose a custom file name, and them directly save the plot to your local machine in any directory of your choice.
-- **Get the underlying R code and data** - This option gives you the exact R code you need to reproduce the the plot or even further customize it to your liking.
-- **Send only to Report** - This option will send the plot along with the options you chose on the left hand panel during analysis, along with any notes that you can take manually towards an HTML report which you can save to your local machine later. This enables you to reproduce any kind of findings during your statistical analysis within the application. 
+<div class="warning" style='background-color:#75B9BE; color: #black; border-left: solid #18B5C1 4px; border-radius: 2px; padding:0.2em;'>
+<span><p style='margin-top:1em; text-align:center'>
+<b><a name ="plot">A note on further options for plots</a></b>
+</p>
+<p style = 'margin-left:1em;'> At the bottom of the screen for each of the statistical analysis tabs, each plot will have three options: </p>
+<p style='margin-left:1em;'>
+- <b> Save plot </b> - This option is fairly straightforward. Here you need to choose the file type you want the plot to be saved as, followed by selecting the "Save plot" button. This will open up a window where you can choose a custom file name, and them directly save the plot to your local machine in any directory of your choice.
+- <b> Get the underlying R code and data </b> - This option gives you the exact R code you need to reproduce the the plot or even further customize it to your liking.
+- <b> Send only to Report </b> - This option will send the plot along with the options you chose on the left hand panel during analysis, along with any notes that you can take manually towards an HTML report which you can save to your local machine later. This enables you to reproduce any kind of findings during your statistical analysis within the application. 
+</p>
+</span>
+</div> &nbsp;
+
 
 Once you have completed the initial pre-processing step, all the other statistical analysis tabs will now be visible. You can switch between any of them at any time to do your analysis.
 We will now proceed with Sample Correlation.
 
-## Sample Correlation ##
+## Sample Correlation
 
 There are three different types of correlation methods to choose from. To get more information on the different types correlation available, you can click on the helper button.
 Once the correlation method has been selected, clicking the ""Get Sample Correlation" button will display the heatmap on right hand side of the window.
@@ -98,9 +122,12 @@ Example:
 In this tutorial we choose the pearson method as the correlation method and additionally choose to color the samples by the cell names.
 It is also possible to select multiple options for coloring of the rows which might help in finding clusters and patterns.
 
+For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). \
+For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) \
+
 Next up, we look at Principal Component Analysis.
 
-## Principal Component Analysis ##
+## Principal Component Analysis
 
 Here you have the choice of selecting a specific subset to perform analysis on. To create the subset, you would first need to select the annotation type, followed by selecting the entities on which you want to perform the principal component analysis.
 **Caution**: Selecting data is only advised for looking at variance explained within specific data points. Otherwise it is recommended to use all data get the principal components. 
@@ -126,9 +153,12 @@ Now, we switch to the Loadings plot.
 The loadings plot shows us the loadings for the principal component that we currently have selected on the X-axis. On changing the principal component displayed on the X-axis, the loadings plot changes as well. 
 It is also possible to change the Y-axis label of the loadings plot by changing the annotation. This is done by clicking on the box under "Name loadings after" and selecting the desired annotation from the drop-down menu.
 
+For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). \
+For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) \
+
 We now proceed to Differential Analysis.
 
-## Differential Analysis ##
+## Differential Analysis
 
 As a first step, you need to choose the groups for which you want to perform differential analysis. Then you need to select the specific group pairings you want to compare. 
 For example, choosing condition as the group allows comparison across treated and untreated observations. You can also choose multiple group pairings and cOmicsArt will directly calculate all the comparisons. 
@@ -154,9 +184,12 @@ Across all three comparisons 62 genes are significant, and across the first and 
 
 By using the option "Intersections to highlight", we can also highlight the plot bars.
 
+For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). \
+For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) \
+
 We move on to Single Gene Visualisation.
 
-## Single Entitie Visualisation ##
+## Single Entitie Visualisation
 
 You have the option to select between raw and pre-processed data. Once this is selected, you need to choose the annotation to select the entitie from, followed by the gene to visualise from the list of available genes under "Select the Gene from the list".
 Once all the parameters are set, selecting the "Get Single Gene Visualisation"  will generate the visualization on the right hand pane based on the selected options.
@@ -164,9 +197,12 @@ Note: Box plots will only be visible if you have more than 3 samples per group. 
 
 You can also group the samples based on a specific annotation category. This can be done by choosing the annotation from the list of available annotation categories under "Choose the groups to show the data for".
 
+For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). \
+For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) \
+
 Next part of our tutorial covers Exploratory Analysis.
 
-## Enrichment Analysis ##
+## Enrichment Analysis
 
 There are two types of analysis possible - Gene Set Enrichment (GSEA) and Overrepresentation-Analysis (ORA):
 
@@ -181,9 +217,12 @@ Clicking on the help button next to "Choose sets to do enrichment for" provides 
 Once the parameters are selected, clicking "Get Enrichment Analysis" will generate the results. For each gene set selected a tab will be visible.
 If any genes were found significant, a standard plot of an enrichment analysis will be visible in the tab for this gene set.
 
+For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). \
+For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) \
+
 Lastly we proceed to the Heatmap tab. 
 
-## Heatmap ##
+## Heatmap
 
 The Heatmap displays the count matrix in a clustered fashion and you can now select what entities you want to plot. 
 
@@ -193,7 +232,10 @@ Now we select the the first eight entities, followed by selecting "Get Heatmap" 
 
 If no differences are visible in the plot, it is possible to perform a row-wise scaling operation to make the differences clearer. Additionally, you can select what to annotate the samples after or the rows after.
 
-## Wrapping Up ##
+For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). \
+For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) \
+
+## Wrapping Up
 
 When you have completed your analysis, you can download the report as an HTML file. This HTML file will contain a report on everything you did and all the choices you made, enabling you to recreate all results displayed in the application during your session, making every result reproducible.
 With this I want to thank you for your attention and I hope you enjoyed the tutorial for our application.
