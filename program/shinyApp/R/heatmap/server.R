@@ -356,7 +356,7 @@ heatmap_server <- function(id){moduleServer(
 
     output$SavePlot_Heatmap <- downloadHandler(
       filename = function() {
-        paste0(isolate(heatmap_title()), " ", Sys.Date(), input$file_ext_Heatmap)
+        paste0(isolate(heatmap_title()), "_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_Heatmap)
       },
       content = function(file){
         save_complex_heatmap(

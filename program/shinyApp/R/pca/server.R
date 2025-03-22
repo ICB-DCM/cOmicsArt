@@ -627,7 +627,7 @@ pca_Server <- function(id){
         paste0(create_default_title_pca(
           pcs = paste0(input$x_axis_selection," vs ",input$y_axis_selection),
           preprocessing = par_tmp[[session$token]]['preprocessing_procedure']
-        ), Sys.time(), input$file_ext_plot1)
+        ), format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_plot1)
       },
       content = function(file){
         ggsave(
@@ -641,7 +641,7 @@ pca_Server <- function(id){
 
     output$SavePlot_Scree <- downloadHandler(
       filename = function() {
-        paste0("Scree_Plot_", Sys.time(), input$file_ext_Scree)
+        paste0("Scree_Plot_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_Scree)
       },
       content = function(file){
         ggsave(
@@ -654,7 +654,7 @@ pca_Server <- function(id){
     )
 
     output$SavePlot_Loadings <- downloadHandler(
-      filename = function() { paste0("LOADINGS_PCA_", Sys.time(), input$file_ext_Loadings) },
+      filename = function() { paste0("LOADINGS_PCA_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_Loadings) },
       content = function(file){
         ggsave(
           file,
@@ -667,7 +667,7 @@ pca_Server <- function(id){
     )
 
     output$SavePlot_Loadings_matrix <- downloadHandler(
-      filename = function() { paste0("LOADINGS_Matrix_PCA_", Sys.time(), input$file_ext_Loadings_matrix) },
+      filename = function() { paste0("LOADINGS_Matrix_PCA_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_Loadings_matrix) },
       content = function(file){
         ggsave(
           file,

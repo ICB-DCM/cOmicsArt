@@ -276,7 +276,7 @@ single_gene_visualisation_server <- function(id){
       output$SavePlot_singleGene <- downloadHandler(
         filename = function() {
           paste0(
-            "Single_Gene_Boxplot_", Sys.time(), input$file_ext_singleGene
+            "Single_Gene_Boxplot_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_singleGene
           )
         },
         content = function(file){

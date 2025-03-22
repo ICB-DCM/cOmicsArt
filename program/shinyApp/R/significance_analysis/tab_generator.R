@@ -484,7 +484,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     )
 
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano", sep = "_"))]] <- downloadHandler(
-    filename = function() {paste0("VOLCANO_", Sys.time(), input[[ns("file_ext_Volcano")]])},
+    filename = function() {paste0("VOLCANO_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input[[ns("file_ext_Volcano")]])},
     content = function(file){
       ggsave(
         filename = file,
@@ -501,7 +501,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       })
     })
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_raw", sep = "_"))]] <- downloadHandler(
-    filename = function() { paste("raw_VOLCANO",Sys.time(),input[[ns("file_ext_Volcano_raw")]],sep="") },
+    filename = function() { paste("raw_VOLCANO",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns("file_ext_Volcano_raw")]],sep="") },
     content = function(file){
       ggsave(
         filename = file,
@@ -518,7 +518,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       })
     })
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_both", sep = "_"))]] <- downloadHandler(
-    filename = function() { paste0("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]]) },
+    filename = function() { paste0("VOLCANO_",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns("file_ext_Volcano")]]) },
     content = function(file){
       ggsave(
         filename = file,
@@ -1023,7 +1023,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   )
 
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano", sep = "_"))]] <- downloadHandler(
-    filename = function() { paste("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]],sep="") },
+    filename = function() { paste("VOLCANO_",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns("file_ext_Volcano")]],sep="") },
     content = function(file){
       ggsave(
         filename = file,
@@ -1043,7 +1043,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       })
     })
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_raw", sep = "_"))]] <- downloadHandler(
-    filename = function() { paste("raw_VOLCANO",Sys.time(),input[[ns("file_ext_Volcano_raw")]],sep="") },
+    filename = function() { paste("raw_VOLCANO",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns("file_ext_Volcano_raw")]],sep="") },
     content = function(file){
       ggsave(
         filename = file,
@@ -1061,7 +1061,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       })
     })
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_both", sep = "_"))]] <- downloadHandler(
-    filename = function() { paste0("VOLCANO_",Sys.time(),input[[ns("file_ext_Volcano")]]) },
+    filename = function() { paste0("VOLCANO_",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns("file_ext_Volcano")]]) },
     content = function(file){
       ggsave(
         filename = file,
