@@ -116,7 +116,7 @@ pre_processing_main_panel <- mainPanel(
           class = "btn-info"
       ),
       radioGroupButtons(
-        inputId = "file_type_Preprocess",
+        inputId = "file_ext_Preprocess",
         label = "File Type:",
         choices = c(".png", ".tiff", ".pdf"),
         selected = ".png"

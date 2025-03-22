@@ -181,7 +181,7 @@ sample_correlation_server <- function(id){
       
       output$SavePlot_SampleCorrelation <- downloadHandler(
         filename = function() {
-          paste0(sample_corr_reactive$customTitleSampleCorrelation, Sys.time(), input$file_ext_SampleCorrelation)
+          paste0(sample_corr_reactive$customTitleSampleCorrelation, Sys.Date(), input$file_ext_SampleCorrelation)
         },
         content = function(file){
           save_complex_heatmap(
@@ -200,7 +200,7 @@ sample_correlation_server <- function(id){
         tmp_filename <- paste0(
           getwd(),
           file_path,
-          paste0(sample_corr_reactive$customTitleSampleCorrelation, Sys.time(), ".png")
+          paste0(sample_corr_reactive$customTitleSampleCorrelation, Sys.Date(), ".png")
         )
         
         save_complex_heatmap(
