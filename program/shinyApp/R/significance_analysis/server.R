@@ -48,7 +48,7 @@ significance_analysis_server <- function(id){
           }
           selectInput(
             inputId = ns("sample_annotation_types_cmp"),
-            label = "Choose groups to compare",
+            label = "Choose factor to group samples by",
             choices = choices,
             multiple = F,
             selected = NULL
@@ -72,7 +72,7 @@ significance_analysis_server <- function(id){
             }
             selectInput(
               inputId = ns("comparisons"),
-              label = "Select your desired comparisons. Notation is Treatment:Control",
+              label = "Choose pairwise comparisons. Notation is Treatment:Control",
               choices = sapply(xy.list, paste, collapse=":"),
               multiple = T,
               selected = sapply(xy.list, paste, collapse=":")[1]
@@ -172,9 +172,9 @@ significance_analysis_server <- function(id){
         })
       })
 
-      output$significance_analysis_info <- renderText(
-        sig_ana_reactive$info_text
-      )
+      output$significance_analysis_info <- renderUI({HTML(
+        sprintf('<pre>%s</pre>', sig_ana_reactive$info_text)
+      )})
       output$Significant_Plot_final <- renderPlot({
         req(sig_ana_reactive$plot_last)
         print(sig_ana_reactive$plot_last)
@@ -183,11 +183,15 @@ significance_analysis_server <- function(id){
       # Analysis initial info
       observeEvent(input$significanceGo,{
         shinyjs::showElement(id = "Significance_div", asis = T)
-        if(length(input$comparisons) <= 1){
+        if(length(input$comparisons) == 1){
           hideTab(
             inputId = "significance_analysis_results",
             target = "Multiple_Comparisons_Visualizations"
           )
+        } else if(length(input$comparisons) == 0){
+          sig_ana_reactive$info_text <- HTML("<span style=\'color: red;'>Please select at least one comparison!</span>")
+          return()
+
         } else {
           showTab(
             inputId = "significance_analysis_results",
