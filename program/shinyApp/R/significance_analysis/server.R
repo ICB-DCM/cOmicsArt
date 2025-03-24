@@ -172,9 +172,7 @@ significance_analysis_server <- function(id){
         })
       })
 
-      output$significance_analysis_info <- renderUI({HTML(
-        sprintf('<pre>%s</pre>', sig_ana_reactive$info_text)
-      )})
+      output$significance_analysis_info <- renderText({sig_ana_reactive$info_text})
       output$Significant_Plot_final <- renderPlot({
         req(sig_ana_reactive$plot_last)
         print(sig_ana_reactive$plot_last)
@@ -189,7 +187,7 @@ significance_analysis_server <- function(id){
             target = "Multiple_Comparisons_Visualizations"
           )
         } else if(length(input$comparisons) == 0){
-          sig_ana_reactive$info_text <- HTML("<span style=\'color: red;'>Please select at least one comparison!</span>")
+          sig_ana_reactive$info_text <- "<font color=\"red\">Please select at least one comparison!</font>"
           return()
 
         } else {
