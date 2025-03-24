@@ -19,6 +19,8 @@ pca_Server <- function(id){
         html = LOADING_SCREEN,
         color="#70BF4F47"
       ),
+      matrix_slider_max = 1,
+      matrix_slider_step = 0.01,
       allow_plot = FALSE
     )
     ns <- session$ns
@@ -181,6 +183,13 @@ pca_Server <- function(id){
         pca_reactives$waiter$hide()
         return(NULL)
       })
+      # Potentially update the slider for the matrix filter
+      isolate(update_slider_values(
+        pca = pca,
+        n_pcs = input$nPCAs_to_look_at %||% 4,
+        current_val = input$filterValue %||% 0.3,
+        session = session
+      ))
 
       # assign res_temp
       res_tmp[[session$token]][["PCA"]] <<- pca

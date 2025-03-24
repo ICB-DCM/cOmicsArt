@@ -162,3 +162,37 @@ pca_ellipses <- function(
   if (!(plot_ellipses)) return(NULL)
   return(stat_ellipse(level = 0.95, linetype = 2, show.legend = FALSE))
 }
+
+update_slider_values <- function(
+  pca,
+  n_pcs,
+  current_val,
+  session
+){
+  # Checks whether the slider of the matrix needs to be adapted
+  n_pcs <- min(n_pcs, ncol(pca$rotation))
+  abs_loadings <- abs(as.matrix(data.frame(
+    entity = row.names(pca$rotation),
+    pca$rotation[, 1:n_pcs]
+  )[,-1]))
+  top_5_vals <- tail(sort(abs_loadings, decreasing = FALSE), 5)
+  max_val <- max(top_5_vals)
+  new_val <- min(top_5_vals)
+  if (max_val > current_val) {
+    return(NULL)
+  }
+  # adjust ne max_value such that it is a "nice" value
+  exponent <- floor(log10(max_val))
+  max_val <- ceiling(max_val / 10^exponent) * 10^exponent
+  steps <- max_val / 100
+  new_val <- floor(new_val / steps) * steps
+  message(paste("Updating slider to max", max_val, "step", steps, "value", new_val))
+  updateSliderInput(
+      session = session,
+      inputId = "filterValue",
+      value = new_val,
+      min = 0,
+      max = max_val,
+      step = steps
+  )
+}
