@@ -5,11 +5,13 @@
 </div>
 <br>
 
-1. **Groups to Compare**  
-   - Select groups for significance analysis based on predefined factors (for DESeq) or sample annotations.
+1. **Factor to group samples**  
+   - Choose the factor from among your sample annotation columns to group samples by - these are precisely the column names from your uploaded sample data
+     for the analysis (e.g., "Condition").
 
 2. **Comparisons**  
-   - Choose specific group pairings (e.g., "Treatment:Control") for analysis.
+   - Choose specific group pairings (e.g., "Treatment:Control") for analysis. The 
+     options will be all combinations of unique values in the chosen factor.
 
 3. **Test Method**  
    - Options depend on preprocessing:

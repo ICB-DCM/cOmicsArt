@@ -319,8 +319,8 @@ plot_significant_results <- function(
     if (length(chosenVizSet) > 4) {
       chosenVizSet <- chosenVizSet[1:2]
       info_text <- paste0(
-        "Note: Although you chose 'all' to visualize, only the first 2 comparisons are shown to avoid ",
-        "unwanted computational overhead (you got more than 4 comparisons). Please choose precisely ",
+        "Note: Although you chose 'all' to visualize, only the first 2 comparisons are shown to avoid<br>",
+        "unwanted computational overhead (you got more than 4 comparisons). Please choose precisely<br>",
         "the comparisons for visualization."
       )
     }
@@ -348,7 +348,7 @@ plot_significant_results <- function(
     if (sig_to_look_at == "Significant") {
       info_text <- paste0(
         info_text,
-        "\nYou tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level."
+        "<br>You tried to look at adjusted pvalues.\nYou might want to look at raw pvalues (CAUTION!) or change the significance level."
       )
     }
     return(list(plot = NULL, info_text = info_text))

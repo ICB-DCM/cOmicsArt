@@ -155,7 +155,7 @@ heatmap_main <- function(ns){
         radioGroupButtons(
           inputId = ns("file_ext_Heatmap"), 
           label = "File Type:",
-          choices = c(".png", ".tiff", ".pdf"), 
+          choices = c(".png", ".tiff", ".svg", ".pdf"),
           selected = ".png"
         )
       ),

@@ -48,7 +48,7 @@ geneset_panel_UI <- function(
           radioGroupButtons(
             inputId = ns("file_ext"),
             label = "File Type:",
-            choices = c(".png", ".tiff", ".pdf"),
+            choices = c(".png", ".tiff", ".svg", ".pdf"),
             selected = ".pdf"
           )
         ),

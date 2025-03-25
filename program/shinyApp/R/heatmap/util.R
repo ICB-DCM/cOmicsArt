@@ -69,7 +69,7 @@ plot_heatmap <- function(
   return(heatmap_plot)
 }
 
-custom_rowAnnotation <- function(data, row_selected, row_annotations){
+custom_rowAnnotation <- function(data, row_selected, row_annotations = NULL){
   # Create a rowAnnotation object with custom Theme
   # Parameters:
   #   data: SummarizedExperiment, data to retrieve row annotations from
@@ -93,7 +93,7 @@ custom_rowAnnotation <- function(data, row_selected, row_annotations){
   return(plot_rowAnno)
 }
 
-custom_colAnnotation <- function(data, col_annotations){
+custom_colAnnotation <- function(data, col_annotations = NULL){
   if(is.null(col_annotations)) return(NULL)
   if("None" %in% col_annotations) return(NULL)
   col_anno <- colData(data)[, col_annotations, drop = F]
