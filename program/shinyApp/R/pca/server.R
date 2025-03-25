@@ -183,13 +183,6 @@ pca_Server <- function(id){
         pca_reactives$waiter$hide()
         return(NULL)
       })
-      # Potentially update the slider for the matrix filter
-      isolate(update_slider_values(
-        pca = pca,
-        n_pcs = input$nPCAs_to_look_at %||% 4,
-        current_val = input$filterValue %||% 0.3,
-        session = session
-      ))
 
       # assign res_temp
       res_tmp[[session$token]][["PCA"]] <<- pca
@@ -335,6 +328,14 @@ pca_Server <- function(id){
       cutoff <- input$filterValue
       n_pcs <- input$nPCAs_to_look_at %||% 2
       data <- update_data(session$token)$data
+
+      # Potentially update the slider for the matrix filter
+      isolate(update_slider_values(
+        pca = pca,
+        n_pcs = n_pcs,
+        current_val = cutoff,
+        session = session
+      ))
       # Loadings Matrix plot
       pca_reactives$LoadingsMatrix_plot <- plot_loadings_matrix(
         pca = pca,

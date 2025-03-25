@@ -178,12 +178,17 @@ update_slider_values <- function(
   top_5_vals <- tail(sort(abs_loadings, decreasing = FALSE), 5)
   max_val <- max(top_5_vals)
   new_val <- min(top_5_vals)
-  if (max_val > current_val) {
-    return(NULL)
-  }
-  # adjust ne max_value such that it is a "nice" value
+  # adjust new max_value such that it is a "nice" value
   exponent <- floor(log10(max_val))
   max_val <- ceiling(max_val / 10^exponent) * 10^exponent
+  if (max_val > current_val) {
+    updateSliderInput(
+        session = session,
+        inputId = "filterValue",
+        max = max_val
+    )
+    return(NULL)
+  }
   steps <- max_val / 100
   new_val <- floor(new_val / steps) * steps
   message(paste("Updating slider to max", max_val, "step", steps, "value", new_val))
