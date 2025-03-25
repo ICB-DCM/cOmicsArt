@@ -19,6 +19,8 @@ pca_Server <- function(id){
         html = LOADING_SCREEN,
         color="#70BF4F47"
       ),
+      matrix_slider_max = 1,
+      matrix_slider_step = 0.01,
       allow_plot = FALSE
     )
     ns <- session$ns
@@ -53,7 +55,7 @@ pca_Server <- function(id){
           inputId = ns("nPCAs_to_look_at"),
           label = "Number of PC's to include",
           min = 1,
-          max = length(c(colnames(colData(data$data)))),
+          max = length(c(colnames(data$data))),
           value = 4,
           step = 1
         )
@@ -326,6 +328,14 @@ pca_Server <- function(id){
       cutoff <- input$filterValue
       n_pcs <- input$nPCAs_to_look_at %||% 2
       data <- update_data(session$token)$data
+
+      # Potentially update the slider for the matrix filter
+      isolate(update_slider_values(
+        pca = pca,
+        n_pcs = n_pcs,
+        current_val = cutoff,
+        session = session
+      ))
       # Loadings Matrix plot
       pca_reactives$LoadingsMatrix_plot <- plot_loadings_matrix(
         pca = pca,
