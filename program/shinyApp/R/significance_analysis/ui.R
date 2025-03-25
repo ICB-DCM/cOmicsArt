@@ -42,7 +42,7 @@ significance_analysis_sidebar_ui<- function(ns){
 significance_analysis_main_ui <- function(ns){
   mainPanel(
     id = "main_significance_analysis",
-    textOutput(outputId = ns("significance_analysis_info"), container = pre),
+    htmlOutput(outputId = ns("significance_analysis_info"), container = pre),
     div(id = "Significance_div",
       tabsetPanel(
         id = ns("significance_analysis_results"),
