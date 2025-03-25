@@ -94,7 +94,7 @@ pre_processing_main_panel <- mainPanel(
       radioGroupButtons(
         inputId = "file_type_mean_sd_plot",
         label = "File Type:",
-        choices = c(".png", ".tiff", ".pdf", ".svg"),
+choices = c(".png", ".tiff", ".svg", ".pdf"),
         selected = ".png"
       )
     ), column(

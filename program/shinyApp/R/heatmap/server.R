@@ -373,7 +373,7 @@ heatmap_server <- function(id){moduleServer(
       tmp_filename <- paste0(
         getwd(),
         file_path,
-        paste(paste0(isolate(heatmap_title()), Sys.Date(), ".png"))
+        paste0(isolate(heatmap_title()), Sys.Date(), ".png")
       )
       save_complex_heatmap(
         isolate(heatmap_plot()),

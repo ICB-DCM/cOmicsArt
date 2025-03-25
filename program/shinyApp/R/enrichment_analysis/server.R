@@ -101,7 +101,7 @@ enrichment_analysis_geneset_server <- function(
         # Saving Plot
         output$SavePlot <- downloadHandler(
           filename = function() {
-            paste(id,format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input$file_ext,sep=" ")
+            paste0(id,format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input$file_ext)
           },
           content = function(file){
             ggsave(
