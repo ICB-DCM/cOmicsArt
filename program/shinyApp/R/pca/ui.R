@@ -117,7 +117,7 @@ pca_main_panel <- function(ns){
             radioGroupButtons(
               inputId = ns("file_ext_plot1"),
               label = "File Type:",
-choices = c(".png", ".tiff", ".svg", ".pdf"),
+              choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             )
           ),

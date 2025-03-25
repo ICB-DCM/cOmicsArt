@@ -157,19 +157,19 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
             radioGroupButtons(
               inputId = ns("file_ext_Volcano"),
               label = "File Type:",
-              choices = c(".png", ".tiff", ".pdf", ".svg"),
+              choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             ),
             radioGroupButtons(
               inputId = ns("file_ext_Volcano_both"),
               label = "File Type:",
-              choices = c(".png", ".tiff", ".pdf", ".svg"),
+              choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             ),
             radioGroupButtons(
               inputId = ns("file_ext_Volcano_raw"),
               label = "File Type:",
-              choices = c(".png", ".tiff", ".pdf", ".svg"),
+              choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             )
           )
@@ -702,19 +702,19 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
             radioGroupButtons(
               inputId = ns("file_ext_Volcano"),
               label = "File Type:",
-              choices = c(".png", ".tiff", ".pdf", ".svg"),
+              choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             ),
             radioGroupButtons(
               inputId = ns("file_ext_Volcano_both"),
               label = "File Type:",
-              choices = c(".png", ".tiff", ".pdf", ".svg"),
+              choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             ),
             radioGroupButtons(
               inputId = ns("file_ext_Volcano_raw"),
               label = "File Type:",
-              choices = c(".png", ".tiff", ".pdf", ".svg"),
+              choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             )
           )

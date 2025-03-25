@@ -70,7 +70,7 @@ single_gene_visualisation_main_ui <- function(ns){
         radioGroupButtons(
           inputId = ns("file_ext_singleGene"),
           label = "File Type:",
-choices = c(".png", ".tiff", ".svg", ".pdf"),
+          choices = c(".png", ".tiff", ".svg", ".pdf"),
           selected = ".png"
         )
       ),
