@@ -55,7 +55,7 @@ pca_Server <- function(id){
           inputId = ns("nPCAs_to_look_at"),
           label = "Number of PC's to include",
           min = 1,
-          max = length(c(colnames(colData(data$data)))),
+          max = length(c(colnames(data$data))),
           value = 4,
           step = 1
         )
