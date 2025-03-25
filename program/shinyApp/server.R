@@ -1889,7 +1889,7 @@ server <- function(input,output,session){
   ## Preprocessing save, Report and Code Snippet
   output$SavePlot_Preprocess <- downloadHandler(
     filename = function() {
-      paste0("Preprocessing_ViolinPlot_", Sys.Date(), input$file_ext_Preprocess)
+      paste0("Preprocessing_ViolinPlot_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_Preprocess)
     },
     content = function(file) {
       # Create individual plots
@@ -1914,7 +1914,7 @@ server <- function(input,output,session){
         width = 16,  # Increase the width of the figure
         height = 8,  # Adjust height if necessary
         units = "in",
-        device = gsub("\\.","",input$file_type_mean_sd_plot)
+        device = gsub("\\.","",input$file_ext_Preprocess)
       )
       on.exit({shinyjs::click("only2Report_Preprocess")})
     }
@@ -1950,7 +1950,7 @@ server <- function(input,output,session){
       width = 16,  # Increase the width of the figure
       height = 8,  # Adjust height if necessary
       units = "in",
-      device = gsub("\\.","",input$file_type_Preprocess)
+      device = gsub("\\.","",input$file_ext_Preprocess)
     )
     fun_LogIt(message = "## PreProcessing Violin Plot{.tabset .tabset-fade}")
     fun_LogIt(message = "### Info")
@@ -2010,7 +2010,7 @@ server <- function(input,output,session){
   )
   output$SavePlot_mean_sd_plot <- downloadHandler(
     filename = function() {
-      paste0("Preprocessing_mean_sd_plot_", Sys.Date(), input$file_type_mean_sd_plot)
+      paste0("Preprocessing_mean_sd_plot_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_type_mean_sd_plot)
     },
     content = function(file) {
       # Save the combined plot

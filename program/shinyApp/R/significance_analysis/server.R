@@ -474,7 +474,7 @@ significance_analysis_server <- function(id){
       # Saving Plot
       output$SavePlot_Sig <- downloadHandler(
         filename = function() {
-          paste0(id, Sys.time(), input$file_ext_Sig)
+          paste0(id, format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_Sig)
         },
         content = function(file){
           ggsave(

@@ -109,7 +109,7 @@ significance_analysis_main_ui <- function(ns){
             radioGroupButtons(
               inputId = ns("file_ext_Sig"),
               label = "File Type:",
-              choices = c(".png", ".tiff", ".pdf"),
+              choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             )
           ),
