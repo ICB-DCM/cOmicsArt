@@ -6,8 +6,8 @@
 <br>
 
 1. **Factor to group samples**  
-   - Choose the factor from among your sample annotation columns to group samples by 
-     for the analysis (e.g., "Treatment").
+   - Choose the factor from among your sample annotation columns to group samples by - these are precisely the column names from your uploaded sample data
+     for the analysis (e.g., "Condition").
 
 2. **Comparisons**  
    - Choose specific group pairings (e.g., "Treatment:Control") for analysis. The 
