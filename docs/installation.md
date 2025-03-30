@@ -34,7 +34,7 @@ Ensure you have the following software installed on your system: -
 <div class="disclaimer" style="background-color:#fff0bf; color: black; border: 2px solid #ffcf30; border-radius: 8px; padding:0.2em;">
 <span>
 <p style='margin-top:1em; text-align:left ;margin-left:1em;'>
-<b>Note:</b> cOmicsArt is built on R 4.2.0. To run cOmicsArt locally, please make sure you have R 4.2.0 installed.
+<b>Note:</b> cOmicsArt is built on version 4.2.0 of R. To run cOmicsArt locally, please make sure you have version 4.2.0 installed.
 <br/>
 <b>For Windows users:</b> In addition to the above mentioned software, [Rtools42](https://cran.r-project.org/bin/windows/Rtools/rtools42/rtools.html) is required to build pacakges from source.
 </p></span>
