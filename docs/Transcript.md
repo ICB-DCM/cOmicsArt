@@ -4,14 +4,9 @@ output: html_notebook
 editor_options: 
   chunk_output_type: inline
 ---
-Welcome to cOmicsArt - Customizable Omic Analysis and Reporting Tool. 
 
-This tutorial is going to show you how to use this application to aid in your omic analysis. This tutorial is self-contained but can also be used to follow along with the YouTube tutorial.
-
-cOmicsArt is designed to be modular. When you start the application, you will only be able to see the data selection section, but if you upload your data and go through the steps progressively, more tabs will become visible.
-Let us start by uploading our data.
-
-<div class="disclaimer" style='background-color:#FF906E; color: black; border-left: solid #FF602F 4px; border-radius: 2px; padding:0.2em;'>
+<br/>
+<div class="disclaimer" style="background-color:#fff0bf; color: black; border: 2px solid #ffcf30; border-radius: 8px; padding:0.2em;">
 <span>
 <p style='margin-top:1em; text-align:center'>
 <b>Disclaimer</b></p>
@@ -19,7 +14,14 @@ Let us start by uploading our data.
 This tutorial is based on cOmicsArt v.1.0.0. Some parts of the interface for example, where to find some of the options have changed and additional options have been added. 
 However the majority of this tutorial can be readily still used.
 </p></span>
-</div> &nbsp;
+</div> 
+<br/>
+Welcome to cOmicsArt - Customizable Omic Analysis and Reporting Tool. 
+
+This tutorial is going to show you how to use this application to aid in your omic analysis. This tutorial is self-contained but can also be used to follow along with the YouTube tutorial.
+
+cOmicsArt is designed to be modular. When you start the application, you will only be able to see the data selection section, but if you upload your data and go through the steps progressively, more tabs will become visible.
+Let us start by uploading our data.
 
 ## Uploading Data ##
 
@@ -71,9 +73,8 @@ This will directly bring us to the pre-processing window.
 
 ## Pre-Processing
 
-&nbsp;
-
-<div class="warning" style='background-color:#75B9BE; color: #black; border-left: solid #18B5C1 4px; border-radius: 2px; padding:0.2em;'>
+<br/>
+<div class="disclaimer" style="background-color:#fff0bf; color: black; border: 2px solid #ffcf30; border-radius: 8px; padding:0.2em;">
 <span><p style='margin-top:1em; text-align:center'>
 <b><a name ="layout">A note on the layout  of the analysis tabs</a></b>
 </p>
@@ -82,7 +83,8 @@ This will directly bring us to the pre-processing window.
 - Once a plot is computed it will be visible on the right side of the screen.
 </p>
 </span>
-</div> &nbsp;
+</div> 
+<br/>
 
 There are a multitude of pre-processing options available. For more information on each of these options, you can click on the helper button to get a detailed description.
 It is also possible to choose batch effects from the columns already present in your data, but keep in mind that batch effects are usually done later when one realizes that there are batch effects.
@@ -94,9 +96,8 @@ In this case a distribution matrix and some statistics show us the changes which
 To illustrate how the options below the bar work, we will choose to color the violin plot by the condition variable. 
 Since this does not require any additional computation, simply changing the option will update the plot instantaneously.
 
-&nbsp;
-
-<div class="warning" style='background-color:#75B9BE; color: #black; border-left: solid #18B5C1 4px; border-radius: 2px; padding:0.2em;'>
+<br/>
+<div class="disclaimer" style="background-color:#fff0bf; color: black; border: 2px solid #ffcf30; border-radius: 8px; padding:0.2em;">
 <span><p style='margin-top:1em; text-align:center'>
 <b><a name ="plot">A note on further options for plots</a></b>
 </p>
@@ -107,9 +108,8 @@ Since this does not require any additional computation, simply changing the opti
 - <b> Send only to Report </b> - This option will send the plot along with the options you chose on the left hand panel during analysis, along with any notes that you can take manually towards an HTML report which you can save to your local machine later. This enables you to reproduce any kind of findings during your statistical analysis within the application. 
 </p>
 </span>
-</div> &nbsp;
-
-
+</div> 
+<br/>
 Once you have completed the initial pre-processing step, all the other statistical analysis tabs will now be visible. You can switch between any of them at any time to do your analysis.
 We will now proceed with Sample Correlation.
 
@@ -122,15 +122,15 @@ Example:
 In this tutorial we choose the pearson method as the correlation method and additionally choose to color the samples by the cell names.
 It is also possible to select multiple options for coloring of the rows which might help in finding clusters and patterns.
 
-For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). \
-For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) \
+For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). <br/>
+For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) <br/>
 
 Next up, we look at Principal Component Analysis.
 
 ## Principal Component Analysis
 
 Here you have the choice of selecting a specific subset to perform analysis on. To create the subset, you would first need to select the annotation type, followed by selecting the entities on which you want to perform the principal component analysis.
-**Caution**: Selecting data is only advised for looking at variance explained within specific data points. Otherwise it is recommended to use all data get the principal components. 
+<br/>**Caution**: Selecting data is only advised for looking at variance explained within specific data points. Otherwise it is recommended to use all data get the principal components. 
 
 Example:
 For our example, we want to use the entire dataset. Clicking on "Get PCA" will display the principal component plot on the right hand section of the window.
@@ -153,8 +153,8 @@ Now, we switch to the Loadings plot.
 The loadings plot shows us the loadings for the principal component that we currently have selected on the X-axis. On changing the principal component displayed on the X-axis, the loadings plot changes as well. 
 It is also possible to change the Y-axis label of the loadings plot by changing the annotation. This is done by clicking on the box under "Name loadings after" and selecting the desired annotation from the drop-down menu.
 
-For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). \
-For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) \
+For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). <br/>
+For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) <br/>
 
 We now proceed to Differential Analysis.
 
@@ -184,8 +184,8 @@ Across all three comparisons 62 genes are significant, and across the first and 
 
 By using the option "Intersections to highlight", we can also highlight the plot bars.
 
-For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). \
-For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) \
+For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). <br/>
+For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) <br/>
 
 We move on to Single Gene Visualisation.
 
@@ -197,8 +197,8 @@ Note: Box plots will only be visible if you have more than 3 samples per group. 
 
 You can also group the samples based on a specific annotation category. This can be done by choosing the annotation from the list of available annotation categories under "Choose the groups to show the data for".
 
-For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). \
-For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) \
+For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). <br/>
+For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) <br/>
 
 Next part of our tutorial covers Exploratory Analysis.
 
@@ -217,8 +217,8 @@ Clicking on the help button next to "Choose sets to do enrichment for" provides 
 Once the parameters are selected, clicking "Get Enrichment Analysis" will generate the results. For each gene set selected a tab will be visible.
 If any genes were found significant, a standard plot of an enrichment analysis will be visible in the tab for this gene set.
 
-For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). \
-For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) \
+For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). <br/>
+For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) <br/>
 
 Lastly we proceed to the Heatmap tab. 
 
@@ -232,8 +232,8 @@ Now we select the the first eight entities, followed by selecting "Get Heatmap" 
 
 If no differences are visible in the plot, it is possible to perform a row-wise scaling operation to make the differences clearer. Additionally, you can select what to annotate the samples after or the rows after.
 
-For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). \
-For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) \
+For a more in-depth explanation of the layout of the panels, please refer to this [note on the layout](#layout). <br/>
+For a more in-depth explanation of the options available after plotting, please refer to this brief [note on further options for plots](#plot) <br/>
 
 ## Wrapping Up
 
