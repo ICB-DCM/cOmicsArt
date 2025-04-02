@@ -1,9 +1,10 @@
 ---
-title: "Transcript of Tutorial"
-output: html_notebook
-editor_options: 
-  chunk_output_type: inline
+title: "Written Tutorial"
+layout: default
+parent: Tutorials
+nav_order: 2
 ---
+# Written Tutorial 📝 
 
 <br/>
 <div class="disclaimer" style="background-color:#fff0bf; color: black; border: 2px solid #ffcf30; border-radius: 8px; padding:0.2em;">
