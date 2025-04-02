@@ -589,8 +589,8 @@ server <- function(input,output,session){
       if(flag_csv == F){
         tryCatch(
           expr = {
-            Matrix <- read.table(input$data_matrix1$datapath,check.names = T)
-            Matrix2 <- read.table(input$data_matrix1$datapath, check.names = F)
+            Matrix <- read.table(input$data_matrix1$datapath, strip.white = TRUE, check.names = T)
+            Matrix2 <- read.table(input$data_matrix1$datapath, strip.white = TRUE, check.names = F)
           },
           error = function(e){
             output$OverallChecks <- renderText(
