@@ -42,7 +42,7 @@ significance_analysis_server <- function(id){
         output$type_of_comparison_ui <- renderUI({
           req(data_input_shiny())
           if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
-            choices <- par_tmp[[session$token]]$DESeq_factors
+            choices <- par_tmp[[session$token]]$deseq_factors
           } else {
             choices <- c(colnames(colData(data$data)))
           }
