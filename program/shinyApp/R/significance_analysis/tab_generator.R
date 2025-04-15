@@ -399,7 +399,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
 
   output[[ns(paste(contrast[1], contrast[2], "getR_Code_Volcano", sep = "_"))]] <- downloadHandler(
       filename = function(){
-        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
       },
       content = function(file){
         waiter <- Waiter$new(
@@ -443,7 +443,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     output[[ns(paste(contrast[1], contrast[2], "getR_Code_Volcano_raw", sep = "_"))]] <- downloadHandler(
 
       filename = function(){
-        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
       },
       content = function(file){
         waiter <- Waiter$new(
@@ -942,7 +942,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
 
   output[[ns(paste(contrast[1], contrast[2], "getR_Code_Volcano", sep = "_"))]] <- downloadHandler(
     filename = function(){
-      paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
     content = function(file){
       waiter <- Waiter$new(
@@ -986,7 +986,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   output[[ns(paste(contrast[1], contrast[2], "getR_Code_Volcano_raw", sep = "_"))]] <- downloadHandler(
 
     filename = function(){
-      paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
     content = function(file){
       waiter <- Waiter$new(

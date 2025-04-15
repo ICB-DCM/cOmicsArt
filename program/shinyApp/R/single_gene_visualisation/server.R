@@ -232,7 +232,7 @@ single_gene_visualisation_server <- function(id){
       ## Download R code and data
       # TODO: needs fixing with scenario
       output$getR_Code_SingleEntities <- downloadHandler(filename = function(){
-        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
       }, content = function(file){
         waiter <- Waiter$new(
           html = LOADING_SCREEN,

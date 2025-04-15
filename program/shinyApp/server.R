@@ -1968,7 +1968,7 @@ server <- function(input,output,session){
 
   output$getR_Code_Preprocess <- downloadHandler(
     filename = function() {
-      paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
     content = function(file) {
       waiter <- Waiter$new(
@@ -2061,7 +2061,7 @@ server <- function(input,output,session){
 
   output$getR_Code_mean_sd_plot <- downloadHandler(
     filename = function() {
-      paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
     content = function(file) {
       waiter <- Waiter$new(

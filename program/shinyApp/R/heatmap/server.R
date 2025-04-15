@@ -322,7 +322,7 @@ heatmap_server <- function(id){moduleServer(
     })
 
     output$getR_Code_Heatmap <- downloadHandler(filename = function(){
-      paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
     }, content = function(file){
       waiter()$show()
       envList <- list(

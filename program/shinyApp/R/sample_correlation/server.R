@@ -140,7 +140,7 @@ sample_correlation_server <- function(id){
       
       # Download Section ----
       output$getR_SampleCorrelation <- downloadHandler(
-        filename = function(){ paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")},
+        filename = function(){ paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")},
         content = function(file){
           waiter <- Waiter$new(
             html = LOADING_SCREEN,
