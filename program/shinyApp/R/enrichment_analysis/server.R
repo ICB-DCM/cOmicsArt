@@ -49,7 +49,7 @@ enrichment_analysis_geneset_server <- function(
         # download R Code for further plotting
         output$getR_Code <- downloadHandler(
           filename = function(){
-            paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+            paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
             waiter <- Waiter$new(

@@ -430,7 +430,7 @@ significance_analysis_server <- function(id){
       output$getR_Code_Sig <- downloadHandler(
 
         filename = function(){
-          paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+          paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
         },
         content = function(file){
           waiter()$show()

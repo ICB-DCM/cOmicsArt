@@ -353,7 +353,7 @@ pca_Server <- function(id){
     ## R Code Download ----
     output$getR_Code_PCA <- downloadHandler(  # Download the R code for PCA
       filename = function(){
-        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
       },
       content = function(file){
         waiter <- Waiter$new(
@@ -394,7 +394,7 @@ pca_Server <- function(id){
 
     output$getR_Code_Scree_Plot <- downloadHandler(  # Download the R code for Scree Plot
       filename = function(){
-        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
       },
       content = function(file){
         waiter <- Waiter$new(
@@ -435,7 +435,7 @@ pca_Server <- function(id){
 
     output$getR_Code_Loadings <- downloadHandler(  # Download the R code for Loadings
       filename = function(){
-        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
       },
       content = function(file){
         waiter <- Waiter$new(
@@ -476,7 +476,7 @@ pca_Server <- function(id){
 
     output$getR_Code_Loadings_matrix <- downloadHandler(
       filename = function(){
-        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
       },
       content = function(file){
         waiter <- Waiter$new(
