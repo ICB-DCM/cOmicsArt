@@ -181,7 +181,8 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   # reactive values
   sig_ana_reactive <- reactiveValues(
     th_psig = NULL,
-    th_lfc = NULL
+    th_lfc = NULL,
+    Volcano_anno_tooltip = NULL
   )
   # print the summary of the results into the table
   output[[ns(paste(contrast[1], contrast[2], "summary", sep = "_"))]] <- renderText(
@@ -549,9 +550,6 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   # alpha: significance level
   # ns: namespace function
 
-  print("create new DESeq tab")
-  print(title)
-  print(result)
   # paste together the strings to print
   # total number of genes compared
   total_genes <- length(rownames(result))
@@ -735,7 +733,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   )
   result <- addStars(result, alpha)
 
-  brks_log2FC_neg <- seq(min(result$log2FoldChange, na.rm = T) -1, 0, length.out = 100) # -1 for towning down color match
+  brks_log2FC_neg <- seq(min(result$log2FoldChange, na.rm = T) - 1, 0, length.out = 100) # -1 for towning down color match
   brks_log2FC_pos <- seq(0, max(result$log2FoldChange, na.rm = T) +1 , length.out = 100) # +a for towning down color match
   brks <- c(brks_log2FC_neg, brks_log2FC_pos)
   clrs <- colorRampPalette(c("#0e5bcfCD","#fafafa","#cf0e5bCD"))(length(brks) + 1)
@@ -752,7 +750,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         extensions = 'Buttons',
         filter = 'top',
         rownames = TRUE,
-        colnames = c('Gene' = 1),
+        colnames = c('Entitie' = 1),
         options = list(
           paging = TRUE,
           searching = TRUE,
@@ -832,7 +830,8 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   toPlotVolcano <- reactive({
     list(
       input[[psig_th]],
-      input[[lfc_th]]
+      input[[lfc_th]],
+      input[[Volcano_anno_tooltip]]
     )
   })
   observeEvent(input[[show_legend_adj]], {
@@ -871,9 +870,15 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     anno_vector <- rowData(res_tmp[[session$token]]$data)[, anno_col_name]
 
     # Generate the volcano plots using the helper function.
-    volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = TRUE)
-    volcano_obj_raw <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
-    sig_ana_reactive$data4Volcano <- volcano_obj$data
+    volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
+    volcano_obj_raw <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = TRUE)
+    sig_ana_reactive$data4Volcano <- volcano_obj$data_volcano
+    sig_ana_reactive$VolcanoPlot <- volcano_obj$volcano_plt
+    sig_ana_reactive$VolcanoPlot_raw <- volcano_obj_raw$volcano_plt
+
+    par_tmp[[session$token]]$SigAna$th_psig <<- th_psig
+    par_tmp[[session$token]]$SigAna$th_lfc <<- th_lfc
+    par_tmp[[session$token]]$SigAna$anno_vector <<- anno_vector
 
     # Render the corrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({
@@ -1071,8 +1076,11 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       on.exit({
         fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
-        log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot)
-                             , sig_ana_reactive$data4Volcano, contrast, file_path)
+        log_messages_volcano(
+          gridExtra::arrangeGrob(
+            sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot
+          ), sig_ana_reactive$data4Volcano, contrast, file_path
+        )
         #log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
         fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
