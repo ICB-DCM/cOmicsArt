@@ -1702,8 +1702,8 @@ server <- function(input,output,session){
       data <- preprocess_res$data
       if(preprocessing_procedure == "vst_DESeq"){
         res_tmp[[session$token]]$DESeq_obj <<- preprocess_res$DESeq_obj
-        par_tmp[[session$token]]["deseq_formula"] <<- paste("~", paste(deseq_factors, collapse = " + "))
-        par_tmp[[session$token]]["deseq_factors"] <<- deseq_factors
+        par_tmp[[session$token]]$deseq_formula <<- paste("~", paste(deseq_factors, collapse = " + "))
+        par_tmp[[session$token]]$deseq_factors <<- deseq_factors
       }
     }, error = function(e){
       error_modal(e)
