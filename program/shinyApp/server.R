@@ -1729,59 +1729,93 @@ server <- function(input,output,session){
     data <- data[complete.cases(assay(data)),]
 
     # Batch correction after preprocessing
-    tryCatch({
-      res_batch <- batch_correction(
-        data = if(preprocessing_procedure == "vst_DESeq"){data_selected}else{data},
-        preprocessing_procedure = preprocessing_procedure,
-        batch_column = batch_column,
-        deseq_factors = deseq_factors,
-        omic_type = omic_type
-      )
-      res_tmp[[session$token]]$data_batch_corrected <<- res_batch$data
-      if(preprocessing_procedure == "vst_DESeq"){
-          res_tmp[[session$token]]$DESeq_obj_batch_corrected <<- res_batch$DESeq_obj
-          par_tmp[[session$token]]["DESeq_formula_batch"] <<- paste(
-            "~", paste(c(deseq_factors, batch_column), collapse = " + ")
+    console_output <- character(0)
+    warnings_output <- character(0)
+    
+    # Capture console output and warnings
+    console_output <- capture.output({
+      withCallingHandlers({
+        tryCatch({
+          res_batch <- batch_correction(
+            data = if(preprocessing_procedure == "vst_DESeq"){data_selected}else{data},
+            preprocessing_procedure = preprocessing_procedure,
+            batch_column = batch_column,
+            deseq_factors = deseq_factors,
+            omic_type = omic_type
           )
-      }
-    }, error = function(e){
-      error_modal(
-        e, additional_text = ifelse(
-          preprocessing_procedure == "vst_DESeq", ERROR_BATCH_DESEQ, ERROR_BATCH_CORR
-        )
-      )
-      output$Statisitcs_Data <- renderText({ERROR_PREPROC})
-      hide_tabs()
-      waiter$hide()
-      req(FALSE)
-    })
+          res_tmp[[session$token]]$data_batch_corrected <<- res_batch$data
+          if(preprocessing_procedure == "vst_DESeq"){
+            res_tmp[[session$token]]$DESeq_obj_batch_corrected <<- res_batch$DESeq_obj
+            par_tmp[[session$token]]["DESeq_formula_batch"] <<- paste(
+              "~", paste(c(deseq_factors, batch_column), collapse = " + ")
+            )
+          }
+        }, error = function(e){
+          error_modal(
+            e, additional_text = ifelse(
+              preprocessing_procedure == "vst_DESeq", ERROR_BATCH_DESEQ, ERROR_BATCH_CORR
+            )
+          )
+          output$Statisitcs_Data <- renderText({ERROR_PREPROC})
+          hide_tabs()
+          waiter$hide()
+          req(FALSE)
+        })
+      }, warning = function(w) {
+        warnings_output <<- c(warnings_output, paste("Warning:", conditionMessage(w)))
+        invokeRestart("muffleWarning")
+      }, message = function(m) {
+        warnings_output <<- c(warnings_output, paste("Message:", conditionMessage(m)))
+        invokeRestart("muffleMessage")
+      })
+    }, type = "output")
+    
+    # Store captured outputs
+    res_tmp[[session$token]]$batch_console_output <- console_output
+    res_tmp[[session$token]]$batch_warnings <- warnings_output
+    
     # add per entities (to rowData) normality test outcome
-    tryCatch({
-      norm_res <- add_normality_test(data)
-      rowData(data) <- cbind(rowData(data), norm_res[rownames(data),c("p_value_shapiro","p_adjusted_shapiro_FDR")])
-      normality_test_stat <-
-        paste0(
-          "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
-          "<br>Number of entities with p-value < 0.05: ",length(which(norm_res$p_value_shapiro < 0.05)), "/",nrow(data),
-          "<br>Number of entities with adj. p-value < 0.05: ",length(which(norm_res$p_value_shapiro_FDR < 0.05)), "/", nrow(data),
-          "<br>If p < 0.05 the normality assumption is violated.",
-          "<br>For small sample size this test is not reliable.",
-          "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"
-        )
-    }, error = function(e){
-      output$Statisitcs_Data <- renderText({ERROR_NORM_TEST})
-      waiter$hide()
-      req(FALSE)
-    })
-
+    norm_test_output <- capture.output({
+      withCallingHandlers({
+        tryCatch({
+          norm_res <- add_normality_test(data)
+          rowData(data) <- cbind(rowData(data), norm_res[rownames(data),c("p_value_shapiro","p_adjusted_shapiro_FDR")])
+          normality_test_stat <-
+            paste0(
+              "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
+              "<br>Number of entities with p-value < 0.05: ",length(which(norm_res$p_value_shapiro < 0.05)), "/",nrow(data),
+              "<br>Number of entities with adj. p-value < 0.05: ",length(which(norm_res$p_value_shapiro_FDR < 0.05)), "/", nrow(data),
+              "<br>If p < 0.05 the normality assumption is violated.",
+              "<br>For small sample size this test is not reliable.",
+              "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"
+            )
+        }, error = function(e){
+          output$Statisitcs_Data <- renderText({ERROR_NORM_TEST})
+          waiter$hide()
+          req(FALSE)
+        })
+      }, warning = function(w) {
+        warnings_output <<- c(warnings_output, paste("Warning:", conditionMessage(w)))
+        invokeRestart("muffleWarning")
+      }, message = function(m) {
+        warnings_output <<- c(warnings_output, paste("Message:", conditionMessage(m)))
+        invokeRestart("muffleMessage")
+      })
+    }, type = "output")
+    
+    # Combine all console outputs
+    all_console_output <- c(console_output, norm_test_output)
+    res_tmp[[session$token]]$all_console_output <- all_console_output
+    res_tmp[[session$token]]$all_warnings <- warnings_output
+    
     # assign res_tmp finally
     res_tmp[[session$token]]$data <<- data
-
+    
     show_tabs()
     
     # Count up updating
     updating$count <- updating$count + 1
-
+    
     output$Statisitcs_Data <- renderText({
       shinyjs::click("SignificanceAnalysis-refreshUI",asis = T)
       shinyjs::click("single_gene_visualisation-refreshUI",asis = T)
@@ -1790,6 +1824,32 @@ server <- function(input,output,session){
       shinyjs::click("PCA-refreshUI",asis = T)
       shinyjs::click("sample_correlation-refreshUI",asis = T)
       ifelse(omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"), showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
+      
+      # Create HTML for console output
+      console_html <- ""
+      if(length(all_console_output) > 0) {
+        filtered_output <- all_console_output[nzchar(all_console_output)]  # Remove empty strings
+        if(length(filtered_output) > 0) {
+          console_html <- paste0(
+            "<div style='background-color: #f5f5f5; padding: 10px; border: 1px solid #ddd; margin-top: 10px; margin-bottom: 10px;'>",
+            "<strong>Output:</strong><br>",
+            paste(filtered_output, collapse = "<br>"),
+            "</div>"
+          )
+        }
+      }
+      
+      # Create HTML for warnings and messages
+      warnings_html <- ""
+      if(length(warnings_output) > 0) {
+        warnings_html <- paste0(
+          "<div style='background-color: #fff3cd; padding: 10px; border: 1px solid #ddd; margin-top: 10px; margin-bottom: 10px;'>",
+          "<strong>Warnings or Messages:</strong><br>",
+          paste(warnings_output, collapse = "<br>"),
+          "</div>"
+        )
+      }
+      # Combine with the existing output
       paste0(
         "The raw data has dimensions: ",
         paste0(dim(res_tmp[[session$token]]$data_original),collapse = ", "),
@@ -1798,8 +1858,10 @@ server <- function(input,output,session){
         "<br>",ifelse(input$processing_type == "Log-Based","In case of 0's present logX(data+1) is done",""),
         "<br>","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(data)) < 0),"Be aware that processed data has negative values!",""), ## IS THAT TRUE??
-        "<br>",normality_test_stat
-        )
+        "<br>",normality_test_stat,
+        "<br>", console_html,
+        warnings_html
+      )
     })
     # set the warning as toast
     show_toast(
