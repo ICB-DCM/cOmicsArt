@@ -106,6 +106,7 @@ read_file <- function(filename, check.names=T){
        file = filename,
        header = T,
        row.names = 1,
+       stringsAsFactors = TRUE,
        check.names = check.names
     )
     return(df)
@@ -115,6 +116,7 @@ read_file <- function(filename, check.names=T){
       readxl::read_xlsx(
         path=filename,
         col_names=TRUE,
+        trim_ws = TRUE,
         na="NA",
         .name_repair = ifelse(check.names, "unique", "minimal")
         )
