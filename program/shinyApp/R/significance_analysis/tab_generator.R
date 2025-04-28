@@ -326,7 +326,8 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     # Assume 'result' is defined elsewhere (e.g. from your analysis)
     # and 'res_tmp[[session$token]]$data' contains rowData with annotation information.
     anno_vector <- rowData(res_tmp[[session$token]]$data)[, anno_col_name]
-
+    names(anno_vector) <- rownames(res_tmp[[session$token]]$data)
+    
     # Generate the volcano plots using the helper function.
     volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
     volcano_obj_raw <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = TRUE)
@@ -868,6 +869,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     # Assume 'result' is defined elsewhere (e.g. from your analysis)
     # and 'res_tmp[[session$token]]$data' contains rowData with annotation information.
     anno_vector <- rowData(res_tmp[[session$token]]$data)[, anno_col_name]
+    names(anno_vector) <- rownames(res_tmp[[session$token]]$data)
 
     # Generate the volcano plots using the helper function.
     volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
