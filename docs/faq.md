@@ -51,7 +51,16 @@ Common issues are: Not exactly the same row or columnnames, missing values, wron
   The report is generated for your download upon clicking on the hyperlink 'Download Report (as html)' underneath the cOmicsArt - text at the top left. Upon clicking you will see a loading bar and the report will be finalized. To retrieve it you need to click on 'Download report' (it is also a hyperlink) - you should get prompted by your file-browser to save the file. If this does not happen please check your browser settings and allow pop-ups for this page.
   </div>
 
+<div class="question" onclick="toggleAnswer('q6')">6. The App has beend computing for ages - what is going on?</div>
+  <div id="q6" class="answer">
+  Some analysis do take some time but rather around several minutes and not more than 10 minutes. If the waiting screen persists for longer it is most likely that the app has crashed or is stuck in a loop. This can have multiple reasons. In all cases, it is necessary to refresh the page which leads to a reset of the app and the loss of analysis results. If you can reproduce this behaviour it points to a bug within cOmicsArt and we would very much appreciate a report to fix it. You could for example open an issue on GitHub (https://github.com/ICB-DCM/cOmicsArt/issues).
+  </div>
 
+<div class="question" onclick="toggleAnswer('q7')">7. I somehow cannot access the app (anymore)?</div>
+  <div id="q7" class="answer">
+  If you are not able to access the app anymore it is most likely that the server has been shut down or that your internet connection is not working or that specific settings of your institution or the browser you are using are blocking access. To troubleshoot check your internet connection, refresh the site, consider using Chrome or Mirror as a browser (tested and working), enable JavaScript and check with your IT department if any restrictions in place could block cOmicsArt. 
+You might also want to consider running cOmicsArt locally - see respective documentation to be independent of the server and potentially other issues.
+  </div>
 
 <script>
 function toggleAnswer(id) {

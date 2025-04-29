@@ -79,7 +79,8 @@ help_tab_main_panel <- mainPanel(
 
 
 help_tab_panel <- tabPanel(
-  title = "Welcome to comicsArt ",
+  title = tagList(icon("home"), tags$span("Welcome to cOmicsArt")), 
+  value = "Welcome to comicsArt",
   id = "help_tab",
   fluid = T,
   h4("User Help"),

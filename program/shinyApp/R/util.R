@@ -1,12 +1,14 @@
 ### general utility functions will be defined here
 
 # Utility function for is.null checks
-`%||%` <- function(a, b) if (!is.null(a)) a else b
+`%||%` <- function(a, b){
+   if (!is.null(a)) return(a) else return(b)
+}
 
 # tryCatch modal dialog
-error_modal <- function(e, additional_text = NULL){
-  if (is.null(e$message)){
-    e$message <- "An unknown error occured"
+error_modal <- function(error_message, additional_text = NULL){
+  if (is.null(error_message)){
+    error_message <- "An unknown error occured"
   }
   if (is.null(additional_text)){
     additional_text <- "Please check your data set and annotation and try again.<br><br>"
@@ -18,9 +20,9 @@ error_modal <- function(e, additional_text = NULL){
     "describing your problem."
   )
   showModal(modalDialog(
-    title = HTML("<font color='red'>An unknown Error occured</font>"),
+    title = HTML("<font color='red'>An Error occured</font>"),
     HTML(paste0(
-      "<font color='red'>Error: ",e$message,"</font><br><br>",
+      "<font color='red'>Error: ",error_message,"</font><br><br>",
       additional_text
     )),
     footer = modalButton("Close")
@@ -30,32 +32,61 @@ error_modal <- function(e, additional_text = NULL){
 
 update_data <- function(session_id){
   # for stability reasons, data is ALWAYS pulled here
-  print("Updating data...")
   data <- res_tmp[[session_id]]
   return(data)
 }
 
 
-select_data <- function(data, selected_samples, sample_type, useBatch = F){
-  # select data for e.g. pca's or alike
-  if(useBatch){
-    data_entry <- "data_batch_corrected"
-  } else {
-    data_entry <- "data"
+select_data <- function(
+  data, selected_samples = "all", sample_type = NULL, selected_rows = "all", row_type = NULL, propensity = 1
+){
+  # select data based on selected samples
+  if(is.null(row_type)) {
+    row_type <- c(colnames(rowData(data)))[1]
+  }
+  if(is.null(sample_type)) {
+      sample_type <- c(colnames(colData(data)))[1]
   }
   samples_selected <- c()
-  if(any(selected_samples == "all")){
-    samples_selected <- colnames(assay(data[[data_entry]]))
-  }else{
-    samples_selected <- c(
+  if(any(selected_samples == "all")) {
+    samples_selected <- colnames(assay(data))
+  } else {
+    samples_selected <- unique(c(
       samples_selected,
-      rownames(colData(data[[data_entry]]))[which(
-        colData(data[[data_entry]])[,sample_type] %in% selected_samples
+      rownames(colData(data))[which(
+        colData(data)[,sample_type] %in% selected_samples
         )]
-      )
+      ))
   }
-  data[[data_entry]] <- data[[data_entry]][,samples_selected]
-  return(data)
+  rows_selected <- c()
+  if(any(selected_rows == "all")){
+    rows_selected <- rownames(data)
+  } else if ("High Values+IQR" %in% selected_rows && length(selected_rows) == 1) {
+    # Do nothing, as we don't want to modify `selected` in this case
+  } else {
+    rows_selected <- unique(c(
+      rows_selected,
+      rownames(rowData(data))[
+        rowData(data)[, row_type] %in% selected_rows
+      ]
+    ))
+  }
+  if (any(selected_rows == "High Values+IQR")) {
+     if(length(row_selection) == 1) {
+       prefiltered_data <- assay(data)
+       rows_selected <- rownames(data)
+     } else {
+       prefiltered_data <- assay(data)[rows_selected, ]
+     }
+    toKeep <- filter_rna(prefiltered_data, propensity)
+    rows_selected <- intersect(rows_selected, toKeep)
+  }
+  data <- data[rows_selected,samples_selected]
+  return(list(
+    data = data,
+    samples_selected = samples_selected,
+    rows_selected = rows_selected
+  ))
 }
 
 
@@ -142,7 +173,14 @@ save.function.from.env <- function(wanted,file="utils.R")
   print(paste("A total of ", length(funs), " Functions where written into utils"))
 }
 
-
+save_complex_heatmap <- function(x, filename, type = "pdf") {
+  # Saves a heatmap to a file in different formats
+  stopifnot(!missing(x))
+  stopifnot(!missing(filename))
+  SAVE_FUNCTION[[type]](filename)
+  draw(x)
+  dev.off()
+}
 
 
 save_pheatmap <- function(x, filename, type = "pdf") {
@@ -219,71 +257,74 @@ detect_annotation <- function(data) {
   ))
 }
 
-violin_plot <- function(data, color_by){
+violin_plot <- function(data, violin_color){
   # create a violin plot based on the provided summarized experiment. Colors by
-  # the provided color_by column and returns the plot
+  # the provided violin_color column and returns the plot
+  # for raw plot replace data with data_orig[rows_selected,samples_selected]
   data_frame <- as.data.frame(assay(data))
   data_frame <- reshape2::melt(data_frame, variable.name="Sample", value.name="Counts")
   data_frame <- merge(data_frame, colData(data), by.x = "Sample", by.y = "row.names")
-  plot2return <- ggplot(data_frame, aes(x = Sample, y = Counts, fill = data_frame[[color_by]])) +
+  plot2return <- ggplot(data_frame, aes(x = Sample, y = Counts, fill = data_frame[[violin_color]])) +
     geom_violin(trim = T, color = "black") +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    labs(title = "Count distribution per sample",
-         x = "Sample",
-         y = "Counts",
-         fill = color_by
+    labs(
+      title = "Count distribution per sample",
+      x = "Sample",
+      y = "Counts",
+      fill = violin_color
     )
   return(plot2return)
 }
 
-get_package_source <- function(package_name, lockfile = "../renv.lock"){
-  # Read and parse the renv.lock file
-  lockfile_content <- fromJSON(lockfile)
-  snippet <- paste0('
-# ShinyOmics R Code Download
-# Load necassary packages ----
-# Note that you do not need to install packages everytime you run the script
-# The following will check whether the package is installed and if not, installs it
-# We provide the version and repo of the package that was used in the project
-# in case the you run into problems try to install the specifc version
-
-# This command is requried only once per R installation. (uncomment if needed)
-# install.packages("BiocManager", repos = "https://cloud.r-project.org")
-# BiocManager::install(version = "',lockfile_content$Bioconductor$Version,'")
-check_and_install_package <- function(package_name) {
-  for(package in package_name){
-  # Check if the package is installed
-  if (!requireNamespace(package, quietly = TRUE)) {
-    # If not installed, install the package
-    BiocManager::install(package)
-  }
-  }
-}')
-  # Navigate to the specific package's source information
-  for(package in package_name){
-    if (package %in% names(lockfile_content$Packages)) {
-      package_info <- lockfile_content$Packages[[package]]
-      source_repo <- package_info$Repository
-      if(is.null(source_repo)){
-        # Biconductor Version
-        snippet <- paste0(snippet,"\n",
-                          'check_and_install_package("',package,'")\n',
-                          'library("',package,'") #tested with: source ',package_info$Source,', v.',package_info$Version) 
-        
-      }else{
-        # CRAN
-        # Biconductor Version
-        snippet <- paste0(snippet,"\n",
-                          'check_and_install_package("',package,'")\n',
-                          'library("',package,'") #tested with: source ',source_repo,', v.',package_info$Version) 
-        
-      }
-    } else {
-      # If the package is not found in the lockfile, return an error message
-      warning(paste(package, "not found in the lockfile"))
+check_and_install_packages <- function(package_names) {
+  # Check if the packages are installed and install them if not
+  for(package in package_names){
+    # Check if the package is installed
+    if (!requireNamespace(package, quietly = TRUE)) {
+      # If not installed, install the package
+      BiocManager::install(package)
     }
   }
-  return(snippet)
 }
 
+hide_tabs <- function(){
+  hideTab(inputId = "tabsetPanel1", target = "Sample Correlation")
+  hideTab(inputId = "tabsetPanel1", target = "Differential Analysis")
+  hideTab(inputId = "tabsetPanel1", target = "PCA")
+  hideTab(inputId = "tabsetPanel1", target = "Heatmap")
+  hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
+  hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+}
+
+show_tabs <- function(){
+  showTab(inputId = "tabsetPanel1", target = "Sample Correlation")
+  showTab(inputId = "tabsetPanel1", target = "Differential Analysis")
+  showTab(inputId = "tabsetPanel1", target = "PCA")
+  showTab(inputId = "tabsetPanel1", target = "Heatmap")
+  showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
+  showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+}
+
+create_warning_preproc <- function(data, preprocessing_procedure){
+  if(preprocessing_procedure == "filterOnly"){
+    addWarning <- "<font color=\"#000000\"><b>Only Filtering of low abundant is done only if Transcriptomics or Metabolomics was chosen</b></font><br>"
+  } else if(preprocessing_procedure == "none"){
+    addWarning <- "<font color=\"#000000\"><b>No Pre-Processing done. Use on your own accord.</b></font><br>"
+  } else{
+    addWarning <- "<font color=\"#000000\"><b>Pre Filtering to remove low abundant entities done if Transcriptomics or Metabolomics was chosen</b></font><br>"
+  }
+
+  if(any(is.na(assay(data)))){
+    print("This might be problem due to mismatched Annotation Data?!")
+    nrow_before <- nrow(assay(data))
+    nrow_after <- nrow(
+      data[complete.cases(assay(data)),]
+    )
+    addWarning <- paste0(addWarning, "<font color=\"#FF0000\"><b>There were NA's after pre-processing, any row containg such was completly removed! (before/after): ",nrow_before,"/",nrow_after,"</b></font><br>")
+    if(!(nrow_after > 0)){
+      addWarning <- paste0(addWarning, "<br> <font color=\"#FF0000\"><b>There is nothing left, choose different pre-processing other-wise cOmicsArt will crash!</b></font><br>")
+    }
+  }
+  return(addWarning)
+}

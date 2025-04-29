@@ -1,0 +1,27 @@
+<script>
+  document.addEventListener('keydown', function(e) {
+    // Check if Ctrl+S (or Cmd+S) is pressed
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      e.preventDefault(); // Prevent the browser's default save dialog
+
+      // Get the current HTML of the document
+      var htmlContent = document.documentElement.outerHTML;
+
+      // Create a Blob from the HTML content
+      var blob = new Blob([htmlContent], { type: 'text/html' });
+
+      // Create a temporary link element to trigger the download
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'updated_page.html'; // Set the file name
+
+      // Trigger the download
+      link.click();
+
+      // Clean up the created object URL after a short delay
+      setTimeout(function() {
+        URL.revokeObjectURL(link.href);
+      }, 100);
+    }
+  });
+</script>

@@ -1,0 +1,36 @@
+<span style='color:#298c2f;'>**Personal Notes:**</span>
+<div class="notes-container" style="background-color:#f0f0f0; padding:10px; border-radius:5px;">
+  <!-- This div displays the notes -->
+  <div class="notesDisplay" name="_Notes_" data-unique="_Notes_">__notes_placeholder__</div>
+
+  <!-- The textarea for new note content -->
+  <textarea class="myTextarea" name="textarea" rows="5" cols="30"
+            placeholder="Place here additional notes on the fly..."></textarea>
+
+  <!-- Save button -->
+  <button class="saveBtn">Save</button>
+
+  <!-- Include marked.js for Markdown parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <script>
+    // Scope the behavior to this container
+    (function(container) {
+      // Use container.querySelector to find elements within this instance
+      var notesDisplay = container.querySelector('.notesDisplay');
+      var myTextarea = container.querySelector('.myTextarea');
+      var saveBtn = container.querySelector('.saveBtn');
+
+      saveBtn.addEventListener('click', function() {
+        // Retrieve the content from the textarea.
+        var text = myTextarea.value;
+
+        // Convert the Markdown text to HTML using marked.js
+        var html = marked.parse(text);
+
+        // Append the new HTML to the existing notes.
+        notesDisplay.innerHTML += html;
+      });
+    })(document.currentScript.parentElement);
+  </script>
+</div>

@@ -37,18 +37,18 @@
 **3. Choose Genes to Look At:**
 
 - **Description:**
-  - Specify the type of genes to focus on within the selected comparisons.
+  - Specify the type of entities to focus on within the selected comparisons.
 
 - **Options:**
   - **For DESeq preprocessing:**
-    - "Significant": Display genes with adjusted significance.
-    - "Upregulated": Focus on upregulated genes.
-    - "Downregulated": Focus on downregulated genes.
-    - "Significant unadjusted": Display genes with unadjusted significance.
+    - "Significant": Display entities with adjusted significance.
+    - "Upregulated": Focus on upregulated entities.
+    - "Downregulated": Focus on downregulated entities.
+    - "Significant unadjusted": Display entities with unadjusted significance.
 
   - **For other preprocessing methods:**
-    - "Significant": Display genes with adjusted significance.
-    - "Significant unadjusted": Display genes with unadjusted significance.
+    - "Significant": Display entities with adjusted significance.
+    - "Significant unadjusted": Display entities with unadjusted significance.
 
 **Note:**
 - UpSetR plots provide a comprehensive view of overlapping features, while Venn diagrams offer a simplified representation.
