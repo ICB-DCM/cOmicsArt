@@ -365,6 +365,10 @@ server <- function(input,output,session){
   observeEvent(input$geneAnno_toggle_button, {
     shinyjs::toggle(id = "geneAnno_toggle")  # Toggle the div on button click
   })
+  
+  observeEvent(input$console_toggle_button, {
+    shinyjs::toggle(id = "console_toggle")
+  })
 
   observeEvent(input$omic_type_testdata,{
     if(input$omic_type_testdata == "Transcriptomics"){
@@ -1811,6 +1815,59 @@ server <- function(input,output,session){
     # assign res_tmp finally
     res_tmp[[session$token]]$data <<- data
     
+    output$consoleOutputDisplay <- renderUI({
+      # Require both batch effect column selection and button click
+      req(input$BatchEffect_Column)
+      req(input$Do_preprocessing > 0)  # This ensures we wait for button click
+      
+      # Check if we have output to display
+      hasOutput <- FALSE
+      hasConsoleOutput <- FALSE
+      hasWarnings <- FALSE
+      
+      # Safely check if the output variables exist
+      if (exists("res_tmp") && exists("session") && 
+          !is.null(res_tmp[[session$token]])) {
+        
+        # Check for console output
+        if (!is.null(res_tmp[[session$token]]$all_console_output) && 
+            length(res_tmp[[session$token]]$all_console_output) > 0) {
+          hasOutput <- TRUE
+          hasConsoleOutput <- TRUE
+        }
+        
+        # Check for warnings
+        if (!is.null(res_tmp[[session$token]]$all_warnings) && 
+            length(res_tmp[[session$token]]$all_warnings) > 0) {
+          hasOutput <- TRUE
+          hasWarnings <- TRUE
+        }
+      }
+      
+      # Only show if we have the batch effect column selected and we have output
+      if (input$BatchEffect_Column != "NULL" && hasOutput) {
+        tagList(
+          div(
+            class = "console-output-container",
+            if (hasConsoleOutput) {
+              tagList(
+                h4("Console Output:"),
+                tags$pre(paste(res_tmp[[session$token]]$all_console_output, collapse = "\n"))
+              )
+            },
+            if (hasWarnings) {
+              tagList(
+                h4("Warnings and Messages:"),
+                tags$pre(paste(res_tmp[[session$token]]$all_warnings, collapse = "\n"))
+              )
+            }
+          )
+        )
+      } else {
+        NULL  # Return nothing if conditions are not met
+      }
+    })
+    
     show_tabs()
     
     # Count up updating
@@ -1825,42 +1882,22 @@ server <- function(input,output,session){
       shinyjs::click("sample_correlation-refreshUI",asis = T)
       ifelse(omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"), showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
       
-      # Create HTML for console output
-      console_html <- ""
-      if(length(all_console_output) > 0) {
-        filtered_output <- all_console_output[nzchar(all_console_output)]  # Remove empty strings
-        if(length(filtered_output) > 0) {
-          console_html <- paste0(
-            "<div style='background-color: #f5f5f5; padding: 10px; border: 1px solid #ddd; margin-top: 10px; margin-bottom: 10px;'>",
-            "<strong>Output:</strong><br>",
-            paste(filtered_output, collapse = "<br>"),
-            "</div>"
-          )
-        }
+      num_batches <- NA
+      batch_message <- grep("Message: Found\\d+batches", res_tmp[[session$token]]$all_warnings, value = TRUE)
+      if (length(batch_message) > 0) {
+        num_batches <- sub(".*Message: Found(\\d+)batches.*", "\\1", batch_message[1])
       }
       
-      # Create HTML for warnings and messages
-      warnings_html <- ""
-      if(length(warnings_output) > 0) {
-        warnings_html <- paste0(
-          "<div style='background-color: #fff3cd; padding: 10px; border: 1px solid #ddd; margin-top: 10px; margin-bottom: 10px;'>",
-          "<strong>Warnings or Messages:</strong><br>",
-          paste(warnings_output, collapse = "<br>"),
-          "</div>"
-        )
-      }
-      # Combine with the existing output
       paste0(
         "The raw data has dimensions: ",
         paste0(dim(res_tmp[[session$token]]$data_original),collapse = ", "),
         "<br>The processed data has dimensions: ",
         paste0(dim(data),collapse = ", "),
+        "<br>", if (!is.na(num_batches)) paste0("Number of Batches found: ", num_batches) else "",
         "<br>",ifelse(input$processing_type == "Log-Based","In case of 0's present logX(data+1) is done",""),
         "<br>","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(data)) < 0),"Be aware that processed data has negative values!",""), ## IS THAT TRUE??
-        "<br>",normality_test_stat,
-        "<br>", console_html,
-        warnings_html
+        "<br>",normality_test_stat
       )
     })
     # set the warning as toast
