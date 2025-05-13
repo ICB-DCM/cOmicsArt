@@ -1815,11 +1815,32 @@ server <- function(input,output,session){
     # assign res_tmp finally
     res_tmp[[session$token]]$data <<- data
     
-    output$consoleOutputDisplay <- renderUI({
-      # Require both batch effect column selection and button click
-      req(input$BatchEffect_Column)
-      req(input$Do_preprocessing > 0)  # This ensures we wait for button click
+    hasConsoleOutput <- reactive({
+      # Check if we have output to display, regardless of current input values
+      if (exists("res_tmp") && exists("session") && 
+          !is.null(res_tmp[[session$token]])) {
+        
+        # Check for console output or warnings
+        has_console <- !is.null(res_tmp[[session$token]]$all_console_output) && 
+          length(res_tmp[[session$token]]$all_console_output) > 0
+        
+        has_warnings <- !is.null(res_tmp[[session$token]]$all_warnings) && 
+          length(res_tmp[[session$token]]$all_warnings) > 0
+        
+        return(has_console || has_warnings)
+      }
       
+      return(FALSE)
+    })
+    observe({
+      if(hasConsoleOutput()) {
+        shinyjs::show("console_toggle_button")
+      } else {
+        shinyjs::hide("console_toggle_button")
+      }
+    })
+  
+    output$consoleOutputDisplay <- renderUI({
       # Check if we have output to display
       hasOutput <- FALSE
       hasConsoleOutput <- FALSE
@@ -1844,8 +1865,8 @@ server <- function(input,output,session){
         }
       }
       
-      # Only show if we have the batch effect column selected and we have output
-      if (input$BatchEffect_Column != "NULL" && hasOutput) {
+      # Only show if we have output - removed the BatchEffect_Column condition
+      if (hasOutput) {
         tagList(
           div(
             class = "console-output-container",
