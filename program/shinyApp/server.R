@@ -1846,7 +1846,6 @@ server <- function(input,output,session){
       hasConsoleOutput <- FALSE
       hasWarnings <- FALSE
       
-      # Safely check if the output variables exist
       if (exists("res_tmp") && exists("session") && 
           !is.null(res_tmp[[session$token]])) {
         
@@ -1865,7 +1864,7 @@ server <- function(input,output,session){
         }
       }
       
-      # Only show if we have output - removed the BatchEffect_Column condition
+      # Only show if we have output
       if (hasOutput) {
         tagList(
           div(
