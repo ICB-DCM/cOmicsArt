@@ -59,6 +59,19 @@ pre_processing_main_panel <- mainPanel(
           border-radius: 10px;"
                     )
     )),
+    actionButton(
+      inputId = "console_toggle_button",
+      label = "(show/hide) Further Console Output",
+      icon = icon('plus'),
+      style = "color: #000000; background-color: transparent; border-color: transparent"
+    ),
+    div(
+      id = "console_toggle",
+      style = "display: none;",
+      class = "ConsoleOutput_ui",
+      uiOutput("consoleOutputDisplay"),
+      hr(style = "border-top: 1px solid #858585;")
+    ),
     fluidRow(
       column(
         6,

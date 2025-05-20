@@ -365,6 +365,10 @@ server <- function(input,output,session){
   observeEvent(input$geneAnno_toggle_button, {
     shinyjs::toggle(id = "geneAnno_toggle")  # Toggle the div on button click
   })
+  
+  observeEvent(input$console_toggle_button, {
+    shinyjs::toggle(id = "console_toggle")
+  })
 
   observeEvent(input$omic_type_testdata,{
     if(input$omic_type_testdata == "Transcriptomics"){
@@ -1729,59 +1733,166 @@ server <- function(input,output,session){
     data <- data[complete.cases(assay(data)),]
 
     # Batch correction after preprocessing
-    tryCatch({
-      res_batch <- batch_correction(
-        data = if(preprocessing_procedure == "vst_DESeq"){data_selected}else{data},
-        preprocessing_procedure = preprocessing_procedure,
-        batch_column = batch_column,
-        deseq_factors = deseq_factors,
-        omic_type = omic_type
-      )
-      res_tmp[[session$token]]$data_batch_corrected <<- res_batch$data
-      if(preprocessing_procedure == "vst_DESeq"){
-          res_tmp[[session$token]]$DESeq_obj_batch_corrected <<- res_batch$DESeq_obj
-          par_tmp[[session$token]]["DESeq_formula_batch"] <<- paste(
-            "~", paste(c(deseq_factors, batch_column), collapse = " + ")
+    console_output <- character(0)
+    warnings_output <- character(0)
+    
+    # Capture console output and warnings
+    console_output <- capture.output({
+      withCallingHandlers({
+        tryCatch({
+          res_batch <- batch_correction(
+            data = if(preprocessing_procedure == "vst_DESeq"){data_selected}else{data},
+            preprocessing_procedure = preprocessing_procedure,
+            batch_column = batch_column,
+            deseq_factors = deseq_factors,
+            omic_type = omic_type
           )
-      }
-    }, error = function(e){
-      error_modal(
-        e, additional_text = ifelse(
-          preprocessing_procedure == "vst_DESeq", ERROR_BATCH_DESEQ, ERROR_BATCH_CORR
-        )
-      )
-      output$Statisitcs_Data <- renderText({ERROR_PREPROC})
-      hide_tabs()
-      waiter$hide()
-      req(FALSE)
-    })
+          res_tmp[[session$token]]$data_batch_corrected <<- res_batch$data
+          if(preprocessing_procedure == "vst_DESeq"){
+            res_tmp[[session$token]]$DESeq_obj_batch_corrected <<- res_batch$DESeq_obj
+            par_tmp[[session$token]]["DESeq_formula_batch"] <<- paste(
+              "~", paste(c(deseq_factors, batch_column), collapse = " + ")
+            )
+          }
+        }, error = function(e){
+          error_modal(
+            e, additional_text = ifelse(
+              preprocessing_procedure == "vst_DESeq", ERROR_BATCH_DESEQ, ERROR_BATCH_CORR
+            )
+          )
+          output$Statisitcs_Data <- renderText({ERROR_PREPROC})
+          hide_tabs()
+          waiter$hide()
+          req(FALSE)
+        })
+      }, warning = function(w) {
+        warnings_output <<- c(warnings_output, paste("Warning:", conditionMessage(w)))
+        invokeRestart("muffleWarning")
+      }, message = function(m) {
+        warnings_output <<- c(warnings_output, paste("Message:", conditionMessage(m)))
+        invokeRestart("muffleMessage")
+      })
+    }, type = "output")
+    
+    # Store captured outputs
+    res_tmp[[session$token]]$batch_console_output <- console_output
+    res_tmp[[session$token]]$batch_warnings <- warnings_output
+    
     # add per entities (to rowData) normality test outcome
-    tryCatch({
-      norm_res <- add_normality_test(data)
-      rowData(data) <- cbind(rowData(data), norm_res[rownames(data),c("p_value_shapiro","p_adjusted_shapiro_FDR")])
-      normality_test_stat <-
-        paste0(
-          "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
-          "<br>Number of entities with p-value < 0.05: ",length(which(norm_res$p_value_shapiro < 0.05)), "/",nrow(data),
-          "<br>Number of entities with adj. p-value < 0.05: ",length(which(norm_res$p_value_shapiro_FDR < 0.05)), "/", nrow(data),
-          "<br>If p < 0.05 the normality assumption is violated.",
-          "<br>For small sample size this test is not reliable.",
-          "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"
-        )
-    }, error = function(e){
-      output$Statisitcs_Data <- renderText({ERROR_NORM_TEST})
-      waiter$hide()
-      req(FALSE)
-    })
-
+    norm_test_output <- capture.output({
+      withCallingHandlers({
+        tryCatch({
+          norm_res <- add_normality_test(data)
+          rowData(data) <- cbind(rowData(data), norm_res[rownames(data),c("p_value_shapiro","p_adjusted_shapiro_FDR")])
+          normality_test_stat <-
+            paste0(
+              "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
+              "<br>Number of entities with p-value < 0.05: ",length(which(norm_res$p_value_shapiro < 0.05)), "/",nrow(data),
+              "<br>Number of entities with adj. p-value < 0.05: ",length(which(norm_res$p_value_shapiro_FDR < 0.05)), "/", nrow(data),
+              "<br>If p < 0.05 the normality assumption is violated.",
+              "<br>For small sample size this test is not reliable.",
+              "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"
+            )
+        }, error = function(e){
+          output$Statisitcs_Data <- renderText({ERROR_NORM_TEST})
+          waiter$hide()
+          req(FALSE)
+        })
+      }, warning = function(w) {
+        warnings_output <<- c(warnings_output, paste("Warning:", conditionMessage(w)))
+        invokeRestart("muffleWarning")
+      }, message = function(m) {
+        warnings_output <<- c(warnings_output, paste("Message:", conditionMessage(m)))
+        invokeRestart("muffleMessage")
+      })
+    }, type = "output")
+    
+    # Combine all console outputs
+    all_console_output <- c(console_output, norm_test_output)
+    res_tmp[[session$token]]$all_console_output <- all_console_output
+    res_tmp[[session$token]]$all_warnings <- warnings_output
+    
     # assign res_tmp finally
     res_tmp[[session$token]]$data <<- data
-
+    
+    hasConsoleOutput <- reactive({
+      # Check if we have output to display, regardless of current input values
+      if (exists("res_tmp") && exists("session") && 
+          !is.null(res_tmp[[session$token]])) {
+        
+        # Check for console output or warnings
+        has_console <- !is.null(res_tmp[[session$token]]$all_console_output) && 
+          length(res_tmp[[session$token]]$all_console_output) > 0
+        
+        has_warnings <- !is.null(res_tmp[[session$token]]$all_warnings) && 
+          length(res_tmp[[session$token]]$all_warnings) > 0
+        
+        return(has_console || has_warnings)
+      }
+      
+      return(FALSE)
+    })
+    observe({
+      if(hasConsoleOutput()) {
+        shinyjs::show("console_toggle_button")
+      } else {
+        shinyjs::hide("console_toggle_button")
+      }
+    })
+  
+    output$consoleOutputDisplay <- renderUI({
+      # Check if we have output to display
+      hasOutput <- FALSE
+      hasConsoleOutput <- FALSE
+      hasWarnings <- FALSE
+      
+      if (exists("res_tmp") && exists("session") && 
+          !is.null(res_tmp[[session$token]])) {
+        
+        # Check for console output
+        if (!is.null(res_tmp[[session$token]]$all_console_output) && 
+            length(res_tmp[[session$token]]$all_console_output) > 0) {
+          hasOutput <- TRUE
+          hasConsoleOutput <- TRUE
+        }
+        
+        # Check for warnings
+        if (!is.null(res_tmp[[session$token]]$all_warnings) && 
+            length(res_tmp[[session$token]]$all_warnings) > 0) {
+          hasOutput <- TRUE
+          hasWarnings <- TRUE
+        }
+      }
+      
+      # Only show if we have output
+      if (hasOutput) {
+        tagList(
+          div(
+            class = "console-output-container",
+            if (hasConsoleOutput) {
+              tagList(
+                h4("Console Output:"),
+                tags$pre(paste(res_tmp[[session$token]]$all_console_output, collapse = "\n"))
+              )
+            },
+            if (hasWarnings) {
+              tagList(
+                h4("Warnings and Messages:"),
+                tags$pre(paste(res_tmp[[session$token]]$all_warnings, collapse = "\n"))
+              )
+            }
+          )
+        )
+      } else {
+        NULL  # Return nothing if conditions are not met
+      }
+    })
+    
     show_tabs()
     
     # Count up updating
     updating$count <- updating$count + 1
-
+    
     output$Statisitcs_Data <- renderText({
       shinyjs::click("SignificanceAnalysis-refreshUI",asis = T)
       shinyjs::click("single_gene_visualisation-refreshUI",asis = T)
@@ -1790,16 +1901,24 @@ server <- function(input,output,session){
       shinyjs::click("PCA-refreshUI",asis = T)
       shinyjs::click("sample_correlation-refreshUI",asis = T)
       ifelse(omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"), showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
+      
+      num_batches <- NA
+      batch_message <- grep("Message: Found\\d+batches", res_tmp[[session$token]]$all_warnings, value = TRUE)
+      if (length(batch_message) > 0) {
+        num_batches <- sub(".*Message: Found(\\d+)batches.*", "\\1", batch_message[1])
+      }
+      
       paste0(
         "The raw data has dimensions: ",
         paste0(dim(res_tmp[[session$token]]$data_original),collapse = ", "),
         "<br>The processed data has dimensions: ",
         paste0(dim(data),collapse = ", "),
+        "<br>", if (!is.na(num_batches)) paste0("Number of Batches found: ", num_batches) else "",
         "<br>",ifelse(input$processing_type == "Log-Based","In case of 0's present logX(data+1) is done",""),
         "<br>","See help for details",
         "<br>",ifelse(any(as.data.frame(assay(data)) < 0),"Be aware that processed data has negative values!",""), ## IS THAT TRUE??
         "<br>",normality_test_stat
-        )
+      )
     })
     # set the warning as toast
     show_toast(
