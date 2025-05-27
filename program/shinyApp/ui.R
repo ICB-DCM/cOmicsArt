@@ -96,11 +96,11 @@ ui <- shiny::fluidPage(
   div(
     style = "display: inline-block; float:right;",
     # Quit App Button
-      actionButton(
-        inputId = "Quit_App",
-        label = "Quit App",
-        class = "btn-secondary"
-      )
+    actionButton(
+      inputId = "Quit_App",
+      label = "Quit App",
+      class = "btn-secondary"
+    )
   ),
   div(
     id = "TitleID_normal",
@@ -159,7 +159,7 @@ ui <- shiny::fluidPage(
       NULL
     )
   ),
-
+  
   tabsetPanel(
     id = "tabsetPanel1",
     ################################################################################
@@ -190,7 +190,7 @@ ui <- shiny::fluidPage(
   conditionalPanel(
     condition = "input.element_02 == 0",
     absolutePanel("Brought to you by Lea Seep & Paul Jonas Jost",
-                         bottom = 0, left = 10, fixed = TRUE)
+                  bottom = 0, left = 10, fixed = TRUE)
   ),
   conditionalPanel(
     condition = "input.element_02 == 1",

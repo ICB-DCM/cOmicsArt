@@ -61,3 +61,103 @@ document.addEventListener('click', function(event) {
     }
   }
 });
+
+// Function to get an image blob from a URL
+async function getImageBlobFromUrl(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    console.error('Network response was not ok for URL:', url, response.status, response.statusText);
+    throw new Error('Network response was not ok for URL: ' + url);
+  }
+  const blob = await response.blob();
+  return blob;
+}
+
+// Function to copy a single plot to clipboard
+function copyPlotToClipboard(plotId) {
+  console.log('Attempting to copy plot:', plotId);
+  const src = $('#' + plotId + ' img').attr('src');
+  if (!src) {
+    console.error('Image source not found for plotId:', plotId);
+    Shiny.setInputValue('plot_copied_status', plotId + '_error_nosrc_' + Date.now(), {priority: 'event'});
+    return Promise.reject(new Error('Source not found'));
+  }
+  
+  return getImageBlobFromUrl(src).then(blob => {
+    if (navigator.clipboard && navigator.clipboard.write) {
+      console.log('Clipboard API available, attempting to write for plotId:', plotId);
+      return navigator.clipboard.write([
+        new ClipboardItem({
+          [blob.type]: blob
+        })
+      ]).then(() => {
+        console.log('Successfully copied to clipboard for plotId:', plotId);
+        Shiny.setInputValue('plot_copied_status', plotId + '_success_' + Date.now(), {priority: 'event'});
+        return plotId; // Return the plotId for chaining
+      }).catch(err => {
+        console.error('Clipboard write error for ' + plotId + ':', err.name, err.message);
+        Shiny.setInputValue('plot_copied_status', plotId + '_error_clipboard_' + Date.now(), {priority: 'event'});
+        throw err;
+      });
+    } else {
+      console.error('Clipboard API (navigator.clipboard.write) not available or not permitted.');
+      Shiny.setInputValue('plot_copied_status', plotId + '_error_unavailable_' + Date.now(), {priority: 'event'});
+      return Promise.reject(new Error('Clipboard API unavailable'));
+    }
+  }).catch(err => {
+    console.error('Image fetch/blob error for ' + plotId + ':', err.name, err.message);
+    Shiny.setInputValue('plot_copied_status', plotId + '_error_fetch_' + Date.now(), {priority: 'event'});
+    throw err;
+  });
+}
+function copyBothPlotsToClipboardCombined() {
+  const rawImg = $('#raw_violin_plot img')[0];
+  const processedImg = $('#preprocessed_violin_plot img')[0];
+
+  if (!rawImg || !processedImg) {
+    console.error("One or both images not found.");
+    Shiny.setInputValue('plot_copied_status', 'both_plots_error_nosrc_' + Date.now(), {priority: 'event'});
+    return;
+  }
+
+  const canvas = document.createElement('canvas');
+  const width = Math.max(rawImg.naturalWidth, processedImg.naturalWidth);
+  const height = rawImg.naturalHeight + processedImg.naturalHeight;
+
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(rawImg, 0, 0);
+  ctx.drawImage(processedImg, 0, rawImg.naturalHeight);
+
+  canvas.toBlob(blob => {
+    navigator.clipboard.write([
+      new ClipboardItem({ [blob.type]: blob })
+    ]).then(() => {
+      console.log("Successfully copied combined plot.");
+      Shiny.setInputValue('plot_copied_status', 'both_plots_success_' + Date.now(), {priority: 'event'});
+    }).catch(err => {
+      console.error("Failed to copy combined plot:", err);
+      Shiny.setInputValue('plot_copied_status', 'both_plots_error_clipboard_' + Date.now(), {priority: 'event'});
+    });
+  });
+}
+
+// Add click event handlers when the document is ready
+$(document).ready(function() {
+  $(document).on('click', '#copy_raw_violin_plot_btn', function() {
+    console.log('Copy raw violin plot button clicked.');
+    copyPlotToClipboard('raw_violin_plot');
+  });
+  
+  $(document).on('click', '#copy_preprocessed_violin_plot_btn', function() {
+    console.log('Copy preprocessed violin plot button clicked.');
+    copyPlotToClipboard('preprocessed_violin_plot');
+  });
+  
+  $(document).on('click', '#copy_both_plots_btn', function () {
+  console.log('Copy both plots button clicked.');
+  copyBothPlotsToClipboardCombined();
+  });
+});
