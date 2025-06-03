@@ -128,6 +128,12 @@ pre_processing_main_panel <- mainPanel(
           label = "Save plot",
           class = "btn-info"
       ),
+      actionButton(
+        inputId = "copy_both_plots_btn", 
+        label = "Copy Both Plots",
+        icon = icon("copy"),
+        class = "btn-primary" 
+      ),
       radioGroupButtons(
         inputId = "file_ext_Preprocess",
         label = "File Type:",
