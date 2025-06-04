@@ -201,7 +201,7 @@ pca_main_panel <- function(ns){
             radioGroupButtons(
               inputId = ns("file_ext_Loadings"),
               label = "File Type:",
-choices = c(".png", ".tiff", ".svg", ".pdf"),
+              choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             )
           )
@@ -258,10 +258,21 @@ choices = c(".png", ".tiff", ".svg", ".pdf"),
             style = "border: 1px solid silver:",
             cellWidths = c("70%", "30%"),
             NULL,
+          actionButton(
+            inputId = "copy_pca_loadings_matrix", 
+            label = "Copy Loading Matrix Plot",
+            icon = icon("copy"),
+            class = "btn-primary" 
+            )
+          ),
+          splitLayout(
+            style = "border: 1px solid silver:",
+            cellWidths = c("70%", "30%"),
+            NULL,
             radioGroupButtons(
               inputId = ns("file_ext_Loadings_matrix"),
               label = "File Type:",
-choices = c(".png", ".tiff", ".svg", ".pdf"),
+              choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             )
           )
@@ -311,7 +322,7 @@ choices = c(".png", ".tiff", ".svg", ".pdf"),
             radioGroupButtons(
               inputId = ns("file_ext_Scree"),
               label = "File Type:",
-choices = c(".png", ".tiff", ".svg", ".pdf"),
+              choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             )
           )
