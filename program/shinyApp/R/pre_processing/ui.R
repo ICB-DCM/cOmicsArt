@@ -85,7 +85,7 @@ pre_processing_main_panel <- mainPanel(
       )
     ),
     h4("Mean and Standard Deviation of preprocessed data"),
-    plotOutput("mean_sd_plot"),
+    plotlyOutput("mean_sd_plot"),
     fluidRow(column(4, ""), column(
       4,
       h5("Mean and SD Plot Download"),

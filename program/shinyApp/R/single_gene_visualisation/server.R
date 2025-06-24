@@ -117,10 +117,11 @@ single_gene_visualisation_server <- function(id){
       })
 
       # Render Plot and Info
-      output$SingleGenePlot <- renderPlot({
+      output$SingleGenePlot <- renderPlotly({
         req(single_gene_reactives$allow_plot)
-        print(single_gene_reactives$plot)
+        plotly::ggplotly(single_gene_reactives$plot)
       })
+      
       output$SingleGene_Info <- renderText({
         single_gene_reactives$info_text
       })

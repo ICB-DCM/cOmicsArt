@@ -211,7 +211,7 @@ pca_main_panel <- function(ns){
           splitLayout(
             style = "border: 1px solid silver:",
             cellWidths = c("70%", "30%"),
-            plotOutput(outputId = ns("PCA_Loadings_matrix_plot")),
+            plotlyOutput(outputId = ns("PCA_Loadings_matrix_plot")),
             NULL
             #textOutput(outputId = ns("Loadings_plot_Options_selected_out"), container = pre)
           ),

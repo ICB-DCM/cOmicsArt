@@ -212,9 +212,10 @@ pca_Server <- function(id){
     }
   ")
     })
-    output$PCA_Loadings_matrix_plot <- renderPlot({
+    output$PCA_Loadings_matrix_plot <- renderPlotly({
       req(pca_reactives$allow_plot)
       pca_reactives$LoadingsMatrix_plot
+      ggplotly(pca_reactives$LoadingsMatrix_plot)
     })
 
     observeEvent(input$Do_PCA,{  # Calculate values needed for PCA
