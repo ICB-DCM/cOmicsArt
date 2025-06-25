@@ -110,12 +110,6 @@ pca_main_panel <- function(ns){
               class = "btn-info"
             )
           ),
-          actionButton(
-            inputId = "copy_pca_main_plot", 
-            label = "Copy PCA Plot",
-            icon = icon("copy"),
-            class = "btn-primary" 
-          ),
           splitLayout(
             style = "border: 1px solid silver:",
             cellWidths = c("70%", "30%"),
@@ -252,17 +246,6 @@ pca_main_panel <- function(ns){
               outputId = ns("SavePlot_Loadings_matrix"),
               label = "Save plot",
               class = "btn-info"
-            )
-          ),
-          splitLayout(
-            style = "border: 1px solid silver:",
-            cellWidths = c("70%", "30%"),
-            NULL,
-          actionButton(
-            inputId = "copy_pca_loadings_matrix", 
-            label = "Copy Loading Matrix Plot",
-            icon = icon("copy"),
-            class = "btn-primary" 
             )
           ),
           splitLayout(
