@@ -314,7 +314,7 @@ server <- function(input,output,session){
     req(react_violin_plot())
     react_violin_plot()
   })
-  output$mean_sd_plot <- renderPlotly({
+  output$mean_sd_plot <- renderPlot({
     req(able_to_plot())
     req(react_mean_sd_plot())
     react_mean_sd_plot()
@@ -1937,8 +1937,7 @@ server <- function(input,output,session){
       violin_color = input$violin_color
     ))
     mean_and_obj <- vsn::meanSdPlot(as.matrix(assay(data)), plot=FALSE)
-    gg_plot <- mean_and_obj$gg + CUSTOM_THEME + ggtitle("Mean and SD per entity")
-    react_mean_sd_plot(ggplotly(gg_plot)) 
+    react_mean_sd_plot(mean_and_obj$gg + CUSTOM_THEME + ggtitle("Mean and SD per entity"))
     able_to_plot(TRUE)
     par_tmp[[session$token]]['violin_color'] <<- input$violin_color
     waiter$hide()
