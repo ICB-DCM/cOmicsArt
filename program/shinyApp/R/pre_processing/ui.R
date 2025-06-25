@@ -104,6 +104,12 @@ pre_processing_main_panel <- mainPanel(
           label = "Save plot",
           class = "btn-info"
       ),
+      actionButton(
+        inputId = "copy_mean_sd_plot_btn",
+        label = "Copy Mean SD Plot",
+        icon = icon("copy"),
+        class = "btn-primary"
+      ),
       radioGroupButtons(
         inputId = "file_type_mean_sd_plot",
         label = "File Type:",

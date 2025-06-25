@@ -159,30 +159,26 @@ function copyBothPlotsToClipboardCombined() {
 // Add click event handlers when the document is ready
 $(document).ready(function() {
   $(document).on('click', '#copy_raw_violin_plot_btn', function() {
-    console.log('Copy raw violin plot button clicked.');
     copyPlotToClipboard('raw_violin_plot');
   });
   
   $(document).on('click', '#copy_preprocessed_violin_plot_btn', function() {
-    console.log('Copy preprocessed violin plot button clicked.');
     copyPlotToClipboard('preprocessed_violin_plot');
   });
   
   $(document).on('click', '#copy_both_plots_btn', function () {
-  console.log('Copy both plots button clicked.');
-  copyBothPlotsToClipboardCombined();
+    copyBothPlotsToClipboardCombined();
   });
-});  
 
-$(document).ready(function() {
-  $(document).on('click', '#copy_pca_loadings_matrix', function() {
-    console.log('Copy raw violin plot button clicked.');
-    copyPlotToClipboard('PCA-PCA_Loadings_matrix_plot');
+  $(document).on('click', '#copy_mean_sd_plot_btn', function() {
+    copyPlotToClipboard('mean_sd_plot');
   });
-});   
-$(document).ready(function() {
-  $(document).on('click', '#copy_pca_main_plot', function() {
-    console.log('Copy raw violin plot button clicked.');
-    copyPlotToClipboard('PCA_plot');
+  
+  $(document).on('click', '#sample_correlation-copy_SampleCorrelationPlot', function() {
+  copyPlotToClipboard('sample_correlation-SampleCorrelationPlot');
   });
-});   
+  
+  $(document).on('click', '#Heatmap-copy_HeatmapPlot', function() {
+    copyPlotToClipboard('Heatmap-HeatmapPlot');
+  });
+});

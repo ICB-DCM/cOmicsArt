@@ -55,12 +55,18 @@ sampleCorrelation_main_panel <- function(ns){
       )
     ),
     splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+      style = "border: 1px solid silver:", cellWidths = c("70%", "15%", "15%"),
       NULL,
       downloadButton(
         outputId = ns("SavePlot_SampleCorrelation"),
         label = "Save plot",
         class = "btn-info"
+      ),
+      actionButton(
+        inputId = ns("copy_SampleCorrelationPlot"),
+        label = "Copy Plot",
+        icon = icon("copy"),
+        class = "btn-primary"
       )
     ),
     splitLayout(

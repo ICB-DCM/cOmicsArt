@@ -141,12 +141,18 @@ heatmap_main <- function(ns){
         )
       ),
       splitLayout(
-        style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
+        style = "border: 1px solid silver:", cellWidths = c("70%", "15%", "15%"),
         NULL,
         downloadButton(
           outputId = ns("SavePlot_Heatmap"),
           label = "Save plot",
           class = "btn-info"
+        ),
+        actionButton(
+          inputId = ns("copy_HeatmapPlot"),
+          label = "Copy Plot",
+          icon = icon("copy"),
+          class = "btn-primary"
         )
       ),
       splitLayout(
