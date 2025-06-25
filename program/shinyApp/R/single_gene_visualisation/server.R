@@ -143,7 +143,8 @@ single_gene_visualisation_server <- function(id){
                       });
                   });
                 }
-              }]
+              }],
+               modeBarButtonsToRemove: ['toImage']
             });
           }
         ")

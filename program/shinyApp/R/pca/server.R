@@ -141,7 +141,8 @@ pca_Server <- function(id){
                 });
             });
           }
-        }]
+        }],
+        modeBarButtonsToRemove: ['toImage']
       });
     }
   ")
@@ -176,7 +177,8 @@ pca_Server <- function(id){
                 });
             });
           }
-        }]
+        }],
+        modeBarButtonsToRemove: ['toImage']
       });
     }
   ")
@@ -207,7 +209,8 @@ pca_Server <- function(id){
                 });
             });
           }
-        }]
+        }],
+        modeBarButtonsToRemove: ['toImage']
       });
     }
   ")
@@ -236,7 +239,8 @@ pca_Server <- function(id){
                     });
                 });
               }
-            }]
+            }],
+            modeBarButtonsToRemove: ['toImage']
           });
         }
       ")
