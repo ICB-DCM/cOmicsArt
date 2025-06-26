@@ -89,26 +89,32 @@ pre_processing_main_panel <- mainPanel(
     fluidRow(column(4, ""), column(
       4,
       h5("Mean and SD Plot Download"),
-      actionButton(
-        inputId = "only2Report_mean_sd_plot",
-        label = "Send only to Report",
-        class = "btn-info"
+      div(
+        style = "margin-bottom: 5px;",
+        actionButton(
+          inputId = "only2Report_mean_sd_plot",
+          label = "Send only to Report",
+          class = "btn-info"
+        )
       ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
       downloadButton(
           outputId = "getR_Code_mean_sd_plot",
           label = "Get underlying R code and data",
           icon = icon(name = "code")
       ),
-      downloadButton(
-          outputId = "SavePlot_mean_sd_plot",
-          label = "Save plot",
-          class = "btn-info"
-      ),
-      actionButton(
-        inputId = "copy_mean_sd_plot_btn",
-        label = "Copy Mean SD Plot",
-        icon = icon("copy"),
-        class = "btn-primary"
+      div(
+        style = "margin-top: 5px; margin-bottom: 5px;",
+          downloadButton(
+            outputId = "SavePlot_mean_sd_plot",
+            label = "Save plot",
+            class = "btn-info"
+          ),
+          actionButton(
+            inputId = "copy_mean_sd_plot_btn",
+            label = "Copy plot",
+            icon = icon("copy"),
+            class = "btn-primary"
+          )
       ),
       radioGroupButtons(
         inputId = "file_type_mean_sd_plot",
@@ -119,26 +125,32 @@ pre_processing_main_panel <- mainPanel(
     ), column(
       4,
       h5("Violin Plot Download"),
-      actionButton(
-        inputId = "only2Report_Preprocess",
-        label = "Send only to Report",
-        class = "btn-info"
+      div(
+        style = "margin-bottom: 5px;",
+        actionButton(
+          inputId = "only2Report_Preprocess",
+          label = "Send only to Report",
+          class = "btn-info"
+        ) 
       ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
       downloadButton(
           outputId = "getR_Code_Preprocess",
           label = "Get underlying R code and data",
           icon = icon(name = "code")
       ),
-      downloadButton(
-          outputId = "SavePlot_Preprocess",
-          label = "Save plot",
-          class = "btn-info"
-      ),
-      actionButton(
-        inputId = "copy_both_plots_btn", 
-        label = "Copy Both Plots",
-        icon = icon("copy"),
-        class = "btn-primary" 
+      div(
+        style = "margin-top: 5px; margin-bottom: 5px;",
+        downloadButton(
+            outputId = "SavePlot_Preprocess",
+            label = "Save both plots",
+            class = "btn-info"
+        ),
+        actionButton(
+          inputId = "copy_both_plots_btn", 
+          label = "Copy both plots",
+          icon = icon("copy"),
+          class = "btn-primary" 
+        )
       ),
       radioGroupButtons(
         inputId = "file_ext_Preprocess",
@@ -160,7 +172,7 @@ pre_processing_main_panel <- mainPanel(
       NULL
     )
   )
-  )
+)
 
 
 

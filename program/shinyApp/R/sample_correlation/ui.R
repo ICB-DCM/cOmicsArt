@@ -39,34 +39,43 @@ sampleCorrelation_main_panel <- function(ns){
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
       NULL,
-      actionButton(
-        inputId = ns("only2Report_SampleCorrelation"),
-        label = "Send only to Report",
-        class = "btn-info"
+      div(
+        style = "margin-top: 5px; margin-bottom: 5px;",
+        actionButton(
+          inputId = ns("only2Report_SampleCorrelation"),
+          label = "Send only to Report",
+          class = "btn-info"
+        )
       )
     ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
       NULL,
-      downloadButton(
-        outputId = ns("getR_SampleCorrelation"),
-        label = "Get underlying R code and data",
-        icon = icon(name = "code")
+      div(
+        style = "margin-bottom: 5px;",
+        downloadButton(
+          outputId = ns("getR_SampleCorrelation"),
+          label = "Get underlying R code and data",
+          icon = icon(name = "code")
+        )
       )
     ),
     splitLayout(
-      style = "border: 1px solid silver:", cellWidths = c("70%", "15%", "15%"),
+      style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
       NULL,
-      downloadButton(
-        outputId = ns("SavePlot_SampleCorrelation"),
-        label = "Save plot",
-        class = "btn-info"
-      ),
-      actionButton(
-        inputId = ns("copy_SampleCorrelationPlot"),
-        label = "Copy Plot",
-        icon = icon("copy"),
-        class = "btn-primary"
+      div(
+        style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
+        downloadButton(
+          outputId = ns("SavePlot_SampleCorrelation"),
+          label = "Save plot",
+          class = "btn-info"
+        ),
+        actionButton(
+          inputId = ns("copy_SampleCorrelationPlot"),
+          label = "Copy plot",
+          icon = icon("copy"),
+          class = "btn-primary"
+        )
       )
     ),
     splitLayout(
