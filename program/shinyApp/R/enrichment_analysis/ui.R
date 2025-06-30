@@ -32,15 +32,23 @@ geneset_panel_UI <- function(
           )
         ),
         splitLayout(
-          style = "border: 1px solid silver:",
-          cellWidths = c("70%", "30%"),
+          style = "border: 1px solid silver:", cellWidths = c("70%", "30%"),
           NULL,
+          div(
+            style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
           downloadButton(
             outputId = ns("SavePlot"),
             label = "Save plot",
             class = "btn-info"
+          ),
+          actionButton(
+            inputId = ns("copy_EnrichmentPlot"),
+            label = "Copy plot",
+            icon = icon("copy"),
+            class = "btn-primary"
           )
-        ),
+        )
+      ),
         splitLayout(
           style = "border: 1px solid silver:",
           cellWidths = c("70%", "30%"),

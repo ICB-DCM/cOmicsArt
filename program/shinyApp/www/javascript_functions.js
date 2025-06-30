@@ -181,4 +181,120 @@ $(document).ready(function() {
   $(document).on('click', '#Heatmap-copy_HeatmapPlot', function() {
     copyPlotToClipboard('Heatmap-HeatmapPlot');
   });
+
+  $(document).on('click', '#EnrichmentAnalysis-Hallmarks-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-Hallmarks-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-C1-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-C1-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-C2-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-C2-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-CGP-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-CGP-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-CP-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-CP-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-BIOCARTA-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-BIOCARTA-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-Kegg-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-Kegg-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-PID-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-PID-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-REACTOME-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-REACTOME-EnrichmentPlot');
+  });
+    
+  $(document).on('click', '#EnrichmentAnalysis-WIKIPATHWAYS-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-WIKIPATHWAYS-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-C3-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-C3-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-MIRDB-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-MIRDB-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-MIR_Legacy-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-MIR_Legacy-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-GTRD-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-GTRD-EnrichmentPlot');
+  });
+    
+  $(document).on('click', '#EnrichmentAnalysis-TFT_Legacy-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-TFT_Legacy-EnrichmentPlot');
+  });
+    
+  $(document).on('click', '#EnrichmentAnalysis-C4-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-C4-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-CGN-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-CGN-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-CM-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-CM-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-C5-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-C5-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-GO-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-GO-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-GO_BP-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-GO_BP-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-GO_CC-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-GO_CC-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-GO_MF-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-GO_MF-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-HPO-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-HPO-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-C6-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-C6-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-C7-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-C7-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-IMMUNESIGDB-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-IMMUNESIGDB-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-VAX-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-VAX-EnrichmentPlot');
+  });
+  
+  $(document).on('click', '#EnrichmentAnalysis-C8-copy_EnrichmentPlot', function() {
+    copyPlotToClipboard('EnrichmentAnalysis-C8-EnrichmentPlot');
+  });
 });
