@@ -10,7 +10,7 @@ server <- function(input,output,session){
   # Can we add this somehow as necassary to every new release?
 
 # Security section ----
-  options(shiny.maxRequestSize=20*(1024^2)) # request 20MB
+  options(shiny.maxRequestSize=70*(1024^2)) # request 70MB
 
   #### Clean Up
   # create www folder if not present
