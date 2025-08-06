@@ -341,16 +341,69 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
 
     # Render the corrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({
-      ggplotly(volcano_obj$volcano_plt,
+      p = ggplotly(volcano_obj$volcano_plt,
                tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")) %>%
         layout(showlegend = TRUE)
+      onRender(p, "
+        function(el, x) {
+          Plotly.newPlot(el, x.data, x.layout, {
+            modeBarButtonsToAdd: [{
+              name: 'Copy to clipboard',
+              icon: Plotly.Icons.camera,
+              click: function(gd) {
+                Plotly.toImage(gd, {format: 'png'}).then(function(url) {
+                  fetch(url)
+                    .then(res => res.blob())
+                    .then(blob => {
+                      navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                      ]).then(function() {
+                        // Use el.id to dynamically set the input value for the toast message
+                        Shiny.setInputValue('plot_copied_status', el.id + '_success_' + Date.now(), {priority: 'event'});
+                      }).catch(function(err) {
+                        Shiny.setInputValue('plot_copied_status', el.id + '_clipboard_error_' + Date.now(), {priority: 'event'});
+                      });
+                    });
+                });
+              }
+            }],
+            modeBarButtonsToRemove: ['toImage']
+          });
+        }
+      ")
     })
-
+    
     # Render the uncorrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({
-      ggplotly(volcano_obj_raw$volcano_plt,
+     p = ggplotly(volcano_obj_raw$volcano_plt,
                tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")) %>%
         layout(showlegend = TRUE)
+     onRender(p, "
+        function(el, x) {
+          Plotly.newPlot(el, x.data, x.layout, {
+            modeBarButtonsToAdd: [{
+              name: 'Copy to clipboard',
+              icon: Plotly.Icons.camera,
+              click: function(gd) {
+                Plotly.toImage(gd, {format: 'png'}).then(function(url) {
+                  fetch(url)
+                    .then(res => res.blob())
+                    .then(blob => {
+                      navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                      ]).then(function() {
+                        Shiny.setInputValue('plot_copied_status', 'SingleGenePlot_success_' + Date.now(), {priority: 'event'});
+                      }).catch(function(err) {
+                        Shiny.setInputValue('plot_copied_status', 'SingleGenePlot_clipboard_error_' + Date.now(), {priority: 'event'});
+                      });
+                    });
+                });
+              }
+            }],
+            modeBarButtonsToRemove: ['toImage'] // Add this line
+          });
+        }
+      ")
     })
   })
 
@@ -540,7 +593,6 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     })
 
 }
-
 
 create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns, value){
   # create a new tabPanel for DESeq2 preprocessing
@@ -884,16 +936,72 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
 
     # Render the corrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({
-      ggplotly(volcano_obj$volcano_plt,
+     p = ggplotly(volcano_obj$volcano_plt,
                tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")) %>%
         layout(showlegend = TRUE)
+     
+     onRender(p, "
+        function(el, x) {
+          Plotly.newPlot(el, x.data, x.layout, {
+            modeBarButtonsToAdd: [{
+              name: 'Copy to clipboard',
+              icon: Plotly.Icons.camera, // Placeholder icon
+              click: function(gd) {
+                Plotly.toImage(gd, {format: 'png'}).then(function(url) {
+                  fetch(url)
+                    .then(res => res.blob())
+                    .then(blob => {
+                      navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                      ]).then(function() {
+                        // Use el.id to dynamically set the input value for the toast message
+                        Shiny.setInputValue('plot_copied_status', el.id + '_success_' + Date.now(), {priority: 'event'});
+                      }).catch(function(err) {
+                        Shiny.setInputValue('plot_copied_status', el.id + '_clipboard_error_' + Date.now(), {priority: 'event'});
+                      });
+                    });
+                });
+              }
+            }],
+            modeBarButtonsToRemove: ['toImage'] // Remove the default download button
+          });
+        }
+      ")
     })
 
     # Render the uncorrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({
-      ggplotly(volcano_obj_raw$volcano_plt,
+      p = ggplotly(volcano_obj_raw$volcano_plt,
                tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")) %>%
         layout(showlegend = TRUE)
+      
+      onRender(p, "
+        function(el, x) {
+          Plotly.newPlot(el, x.data, x.layout, {
+            modeBarButtonsToAdd: [{
+              name: 'Copy to clipboard',
+              icon: Plotly.Icons.camera, // Placeholder icon
+              click: function(gd) {
+                Plotly.toImage(gd, {format: 'png'}).then(function(url) {
+                  fetch(url)
+                    .then(res => res.blob())
+                    .then(blob => {
+                      navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                      ]).then(function() {
+                        // Use el.id to dynamically set the input value for the toast message
+                        Shiny.setInputValue('plot_copied_status', el.id + '_success_' + Date.now(), {priority: 'event'});
+                      }).catch(function(err) {
+                        Shiny.setInputValue('plot_copied_status', el.id + '_clipboard_error_' + Date.now(), {priority: 'event'});
+                      });
+                    });
+                });
+              }
+            }],
+            modeBarButtonsToRemove: ['toImage'] // Remove the default download button
+          });
+        }
+      ")
     })
   })
 

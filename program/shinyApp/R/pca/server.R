@@ -113,31 +113,137 @@ pca_Server <- function(id){
     output$PCA_plot <- renderPlotly({
       req(pca_reactives$allow_plot)
       req(pca_reactives$PCA_plot)
-      ggplotly(
+      
+      p <- ggplotly(
         pca_reactives$PCA_plot,
         tooltip = ifelse(is.null(input$PCA_anno_tooltip),"all","chosenAnno"),
         legendgroup = "color"
       )
+      
+      onRender(p, "
+    function(el, x) {
+      Plotly.newPlot(el, x.data, x.layout, {
+        modeBarButtonsToAdd: [{
+          name: 'Copy to clipboard',
+          icon: Plotly.Icons.camera,  // placeholder icon
+          click: function(gd) {
+            Plotly.toImage(gd, {format: 'png'}).then(function(url) {
+              fetch(url)
+                .then(res => res.blob())
+                .then(blob => {
+                  navigator.clipboard.write([
+                    new ClipboardItem({ [blob.type]: blob })
+                  ]).then(function() {
+                    Shiny.setInputValue('plot_copied_status', 'PCA_plot_success_' + Date.now(), {priority: 'event'});
+                  }).catch(function(err) {
+                    Shiny.setInputValue('plot_copied_status', 'PCA_plot_clipboard_error_' + Date.now(), {priority: 'event'});
+                  });
+                });
+            });
+          }
+        }],
+        modeBarButtonsToRemove: ['toImage']
+      });
+    }
+  ")
     })
     output$PCA_Loadings_plot <- renderPlotly({
       req(pca_reactives$allow_plot)
-      ggplotly(
+      p = ggplotly(
         pca_reactives$Loadings_plot
       )  %>%
         layout(
           yaxis = list(tickfont = list(size = 15)),
           xaxis = list(tickfont = list(size = 15))
         )
+      onRender(p, "
+    function(el, x) {
+      Plotly.newPlot(el, x.data, x.layout, {
+        modeBarButtonsToAdd: [{
+          name: 'Copy to clipboard',
+          icon: Plotly.Icons.camera,  // placeholder icon
+          click: function(gd) {
+            Plotly.toImage(gd, {format: 'png'}).then(function(url) {
+              fetch(url)
+                .then(res => res.blob())
+                .then(blob => {
+                  navigator.clipboard.write([
+                    new ClipboardItem({ [blob.type]: blob })
+                  ]).then(function() {
+                    Shiny.setInputValue('plot_copied_status', 'PCA_plot_success_' + Date.now(), {priority: 'event'});
+                  }).catch(function(err) {
+                    Shiny.setInputValue('plot_copied_status', 'PCA_plot_clipboard_error_' + Date.now(), {priority: 'event'});
+                  });
+                });
+            });
+          }
+        }],
+        modeBarButtonsToRemove: ['toImage']
+      });
+    }
+  ")
     })
     output$Scree_Plot <- renderPlotly({
       req(pca_reactives$allow_plot)
-      ggplotly(
+      p = ggplotly(
         pca_reactives$Scree_plot
       )
+      onRender(p, "
+    function(el, x) {
+      Plotly.newPlot(el, x.data, x.layout, {
+        modeBarButtonsToAdd: [{
+          name: 'Copy to clipboard',
+          icon: Plotly.Icons.camera,  // placeholder icon
+          click: function(gd) {
+            Plotly.toImage(gd, {format: 'png'}).then(function(url) {
+              fetch(url)
+                .then(res => res.blob())
+                .then(blob => {
+                  navigator.clipboard.write([
+                    new ClipboardItem({ [blob.type]: blob })
+                  ]).then(function() {
+                    Shiny.setInputValue('plot_copied_status', 'PCA_plot_success_' + Date.now(), {priority: 'event'});
+                  }).catch(function(err) {
+                    Shiny.setInputValue('plot_copied_status', 'PCA_plot_clipboard_error_' + Date.now(), {priority: 'event'});
+                  });
+                });
+            });
+          }
+        }],
+        modeBarButtonsToRemove: ['toImage']
+      });
+    }
+  ")
     })
-    output$PCA_Loadings_matrix_plot <- renderPlot({
+    output$PCA_Loadings_matrix_plot <- renderPlotly({
       req(pca_reactives$allow_plot)
-      pca_reactives$LoadingsMatrix_plot
+      p  = ggplotly(pca_reactives$LoadingsMatrix_plot)
+      onRender(p, "
+        function(el, x) {
+          Plotly.newPlot(el, x.data, x.layout, {
+            modeBarButtonsToAdd: [{
+              name: 'Copy to clipboard',
+              icon: Plotly.Icons.camera,  // placeholder icon
+              click: function(gd) {
+                Plotly.toImage(gd, {format: 'png'}).then(function(url) {
+                  fetch(url)
+                    .then(res => res.blob())
+                    .then(blob => {
+                      navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                      ]).then(function() {
+                        Shiny.setInputValue('plot_copied_status', 'PCA_loadings_matrix_plot_success_' + Date.now(), {priority: 'event'});
+                      }).catch(function(err) {
+                        Shiny.setInputValue('plot_copied_status', 'PCA_loadings_matrix_plot_clipboard_error_' + Date.now(), {priority: 'event'});
+                      });
+                    });
+                });
+              }
+            }],
+            modeBarButtonsToRemove: ['toImage']
+          });
+        }
+      ")
     })
 
     observeEvent(input$Do_PCA,{  # Calculate values needed for PCA
