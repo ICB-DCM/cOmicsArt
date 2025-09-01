@@ -29,7 +29,7 @@ single_gene_visualisation_main_ui <- function(ns){
       splitLayout(
         style = "border: 1px solid silver:",
         cellWidths = c("50%", "50%"),
-        plotOutput(outputId = ns("SingleGenePlot")),
+        plotlyOutput(outputId = ns("SingleGenePlot")),
         textOutput(outputId = ns("InfoText"))
       ),
       #h5(HTML("Note, that you only see boxplots if you have more than 3 samples per group")),

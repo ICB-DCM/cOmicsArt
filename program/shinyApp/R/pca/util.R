@@ -19,8 +19,8 @@ create_default_title_pca <- function(pcs, preprocessing){
     # Returns:
     #   character, default title
     return(paste0(
-      pcs, " -",
-      "- preprocessing: ",
+      pcs,
+      " -- preprocessing: ",
       preprocessing
     ))
 }

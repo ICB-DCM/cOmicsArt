@@ -1,10 +1,9 @@
 ---
 title: "Video Tutorial"
 layout: default
-nav_order: 8
+parent: Tutorials
+nav_order: 1
 ---
-
-![A comic about a cat finding cOmicsART](/cOmicsArt/assets/images/cOmicsRabbit.png) *Image generated using DALL-E by OpenAI. Adjusted by Lea Seep*
 
 # Video Tutorial 🎥
 
@@ -33,11 +32,3 @@ We’ve created a detailed screen recording to guide you through the navigation 
 We hope this helps you navigate cOmicsArt with ease! 😊
 
 (Note, the timestamps are also given within the video description)
-
----
-
-## Written Tutorial 📝
-
-Are you not a friend of video tutorials? No worries! We have two written showcases for 
-you. [Showcase A](showcases/showcase-a.md) and [Showcase B](showcases/showcase-b.md)
-will guide you through the main functionalities of cOmicsArt along a real-life example.

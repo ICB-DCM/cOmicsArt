@@ -181,7 +181,8 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   # reactive values
   sig_ana_reactive <- reactiveValues(
     th_psig = NULL,
-    th_lfc = NULL
+    th_lfc = NULL,
+    Volcano_anno_tooltip = NULL
   )
   # print the summary of the results into the table
   output[[ns(paste(contrast[1], contrast[2], "summary", sep = "_"))]] <- renderText(
@@ -325,7 +326,8 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     # Assume 'result' is defined elsewhere (e.g. from your analysis)
     # and 'res_tmp[[session$token]]$data' contains rowData with annotation information.
     anno_vector <- rowData(res_tmp[[session$token]]$data)[, anno_col_name]
-
+    names(anno_vector) <- rownames(res_tmp[[session$token]]$data)
+    
     # Generate the volcano plots using the helper function.
     volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
     volcano_obj_raw <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = TRUE)
@@ -339,16 +341,69 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
 
     # Render the corrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({
-      ggplotly(volcano_obj$volcano_plt,
+      p = ggplotly(volcano_obj$volcano_plt,
                tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")) %>%
         layout(showlegend = TRUE)
+      onRender(p, "
+        function(el, x) {
+          Plotly.newPlot(el, x.data, x.layout, {
+            modeBarButtonsToAdd: [{
+              name: 'Copy to clipboard',
+              icon: Plotly.Icons.camera,
+              click: function(gd) {
+                Plotly.toImage(gd, {format: 'png'}).then(function(url) {
+                  fetch(url)
+                    .then(res => res.blob())
+                    .then(blob => {
+                      navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                      ]).then(function() {
+                        // Use el.id to dynamically set the input value for the toast message
+                        Shiny.setInputValue('plot_copied_status', el.id + '_success_' + Date.now(), {priority: 'event'});
+                      }).catch(function(err) {
+                        Shiny.setInputValue('plot_copied_status', el.id + '_clipboard_error_' + Date.now(), {priority: 'event'});
+                      });
+                    });
+                });
+              }
+            }],
+            modeBarButtonsToRemove: ['toImage']
+          });
+        }
+      ")
     })
-
+    
     # Render the uncorrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({
-      ggplotly(volcano_obj_raw$volcano_plt,
+     p = ggplotly(volcano_obj_raw$volcano_plt,
                tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")) %>%
         layout(showlegend = TRUE)
+     onRender(p, "
+        function(el, x) {
+          Plotly.newPlot(el, x.data, x.layout, {
+            modeBarButtonsToAdd: [{
+              name: 'Copy to clipboard',
+              icon: Plotly.Icons.camera,
+              click: function(gd) {
+                Plotly.toImage(gd, {format: 'png'}).then(function(url) {
+                  fetch(url)
+                    .then(res => res.blob())
+                    .then(blob => {
+                      navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                      ]).then(function() {
+                        Shiny.setInputValue('plot_copied_status', 'SingleGenePlot_success_' + Date.now(), {priority: 'event'});
+                      }).catch(function(err) {
+                        Shiny.setInputValue('plot_copied_status', 'SingleGenePlot_clipboard_error_' + Date.now(), {priority: 'event'});
+                      });
+                    });
+                });
+              }
+            }],
+            modeBarButtonsToRemove: ['toImage'] // Add this line
+          });
+        }
+      ")
     })
   })
 
@@ -398,7 +453,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
 
   output[[ns(paste(contrast[1], contrast[2], "getR_Code_Volcano", sep = "_"))]] <- downloadHandler(
       filename = function(){
-        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
       },
       content = function(file){
         waiter <- Waiter$new(
@@ -442,7 +497,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     output[[ns(paste(contrast[1], contrast[2], "getR_Code_Volcano_raw", sep = "_"))]] <- downloadHandler(
 
       filename = function(){
-        paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
       },
       content = function(file){
         waiter <- Waiter$new(
@@ -539,7 +594,6 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
 
 }
 
-
 create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns, value){
   # create a new tabPanel for DESeq2 preprocessing
   # title: title of the tabPanel
@@ -549,9 +603,6 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   # alpha: significance level
   # ns: namespace function
 
-  print("create new DESeq tab")
-  print(title)
-  print(result)
   # paste together the strings to print
   # total number of genes compared
   total_genes <- length(rownames(result))
@@ -733,15 +784,15 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   output[[ns(paste(contrast[1], contrast[2], "summary", sep = "_"))]] <- renderText(
     paste(resume, collapse = "<br>")
   )
-  result <- addStars(result)
+  result <- addStars(result, alpha)
 
-  brks_log2FC_neg <- seq(min(result$log2FoldChange, na.rm = T) -1, 0, length.out = 100) # -1 for towning down color match
+  brks_log2FC_neg <- seq(min(result$log2FoldChange, na.rm = T) - 1, 0, length.out = 100) # -1 for towning down color match
   brks_log2FC_pos <- seq(0, max(result$log2FoldChange, na.rm = T) +1 , length.out = 100) # +a for towning down color match
   brks <- c(brks_log2FC_neg, brks_log2FC_pos)
   clrs <- colorRampPalette(c("#0e5bcfCD","#fafafa","#cf0e5bCD"))(length(brks) + 1)
 
-  brks_padj_sig <- seq(0, par_tmp[[session$token]]$SigAna$significance_level, length.out = 10)
-  brks_padj_unsig <- seq(par_tmp[[session$token]]$SigAna$significance_level,1, length.out = 10)
+  brks_padj_sig <- seq(0, alpha, length.out = 10)
+  brks_padj_unsig <- seq(alpha, 1, length.out = 10)
   brks_padj <- c(brks_padj_sig, brks_padj_unsig)
   clrs_padj <- colorRampPalette(c("#ffce78","#fafafa","#fafafa"))(length(brks_padj) + 1)
 
@@ -752,7 +803,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         extensions = 'Buttons',
         filter = 'top',
         rownames = TRUE,
-        colnames = c('Gene' = 1),
+        colnames = c('Entitie' = 1),
         options = list(
           paging = TRUE,
           searching = TRUE,
@@ -832,7 +883,8 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   toPlotVolcano <- reactive({
     list(
       input[[psig_th]],
-      input[[lfc_th]]
+      input[[lfc_th]],
+      input[[Volcano_anno_tooltip]]
     )
   })
   observeEvent(input[[show_legend_adj]], {
@@ -869,24 +921,87 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     # Assume 'result' is defined elsewhere (e.g. from your analysis)
     # and 'res_tmp[[session$token]]$data' contains rowData with annotation information.
     anno_vector <- rowData(res_tmp[[session$token]]$data)[, anno_col_name]
+    names(anno_vector) <- rownames(res_tmp[[session$token]]$data)
 
     # Generate the volcano plots using the helper function.
-    volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = TRUE)
-    volcano_obj_raw <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
-    sig_ana_reactive$data4Volcano <- volcano_obj$data
+    volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
+    volcano_obj_raw <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = TRUE)
+    sig_ana_reactive$data4Volcano <- volcano_obj$data_volcano
+    sig_ana_reactive$VolcanoPlot <- volcano_obj$volcano_plt
+    sig_ana_reactive$VolcanoPlot_raw <- volcano_obj_raw$volcano_plt
+
+    par_tmp[[session$token]]$SigAna$th_psig <<- th_psig
+    par_tmp[[session$token]]$SigAna$th_lfc <<- th_lfc
+    par_tmp[[session$token]]$SigAna$anno_vector <<- anno_vector
 
     # Render the corrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({
-      ggplotly(volcano_obj$volcano_plt,
+     p = ggplotly(volcano_obj$volcano_plt,
                tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")) %>%
         layout(showlegend = TRUE)
+     
+     onRender(p, "
+        function(el, x) {
+          Plotly.newPlot(el, x.data, x.layout, {
+            modeBarButtonsToAdd: [{
+              name: 'Copy to clipboard',
+              icon: Plotly.Icons.camera, // Placeholder icon
+              click: function(gd) {
+                Plotly.toImage(gd, {format: 'png'}).then(function(url) {
+                  fetch(url)
+                    .then(res => res.blob())
+                    .then(blob => {
+                      navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                      ]).then(function() {
+                        // Use el.id to dynamically set the input value for the toast message
+                        Shiny.setInputValue('plot_copied_status', el.id + '_success_' + Date.now(), {priority: 'event'});
+                      }).catch(function(err) {
+                        Shiny.setInputValue('plot_copied_status', el.id + '_clipboard_error_' + Date.now(), {priority: 'event'});
+                      });
+                    });
+                });
+              }
+            }],
+            modeBarButtonsToRemove: ['toImage'] // Remove the default download button
+          });
+        }
+      ")
     })
 
     # Render the uncorrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano_praw", sep = "_"))]] <- renderPlotly({
-      ggplotly(volcano_obj_raw$volcano_plt,
+      p = ggplotly(volcano_obj_raw$volcano_plt,
                tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")) %>%
         layout(showlegend = TRUE)
+      
+      onRender(p, "
+        function(el, x) {
+          Plotly.newPlot(el, x.data, x.layout, {
+            modeBarButtonsToAdd: [{
+              name: 'Copy to clipboard',
+              icon: Plotly.Icons.camera, // Placeholder icon
+              click: function(gd) {
+                Plotly.toImage(gd, {format: 'png'}).then(function(url) {
+                  fetch(url)
+                    .then(res => res.blob())
+                    .then(blob => {
+                      navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                      ]).then(function() {
+                        // Use el.id to dynamically set the input value for the toast message
+                        Shiny.setInputValue('plot_copied_status', el.id + '_success_' + Date.now(), {priority: 'event'});
+                      }).catch(function(err) {
+                        Shiny.setInputValue('plot_copied_status', el.id + '_clipboard_error_' + Date.now(), {priority: 'event'});
+                      });
+                    });
+                });
+              }
+            }],
+            modeBarButtonsToRemove: ['toImage'] // Remove the default download button
+          });
+        }
+      ")
     })
   })
 
@@ -937,7 +1052,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
 
   output[[ns(paste(contrast[1], contrast[2], "getR_Code_Volcano", sep = "_"))]] <- downloadHandler(
     filename = function(){
-      paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
     content = function(file){
       waiter <- Waiter$new(
@@ -981,7 +1096,7 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   output[[ns(paste(contrast[1], contrast[2], "getR_Code_Volcano_raw", sep = "_"))]] <- downloadHandler(
 
     filename = function(){
-      paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+      paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
     },
     content = function(file){
       waiter <- Waiter$new(
@@ -1071,8 +1186,11 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       on.exit({
         fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(message = "### Info")
-        log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot)
-                             , sig_ana_reactive$data4Volcano, contrast, file_path)
+        log_messages_volcano(
+          gridExtra::arrangeGrob(
+            sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot
+          ), sig_ana_reactive$data4Volcano, contrast, file_path
+        )
         #log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
         fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],

@@ -14,6 +14,7 @@ enrichment_analysis_geneset_server <- function(
         hideElement(id = "file_ext")
         hideElement(id = "Notes")
         hideElement(id = "NotesHelper")
+        hideElement(id = "copy_EnrichmentPlot")
       }else{
         print(paste(id, "Enrichment Done"))
         print(result)
@@ -28,6 +29,7 @@ enrichment_analysis_geneset_server <- function(
             showElement(id = "file_ext")
             showElement(id = "Notes")
             showElement(id = "NotesHelper")
+            showElement(id = "copy_EnrichmentPlot")
             hideElement(id = "EnrichmentFailure")
             output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result) + CUSTOM_THEME})
             if(ea_type == "GeneSetEnrichment"){
@@ -49,7 +51,7 @@ enrichment_analysis_geneset_server <- function(
         # download R Code for further plotting
         output$getR_Code <- downloadHandler(
           filename = function(){
-            paste0("ShinyOmics_Rcode2Reproduce_", Sys.Date(), ".zip")
+            paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
           },
           content = function(file){
             waiter <- Waiter$new(
