@@ -327,6 +327,21 @@ server <- function(input,output,session){
   react_violin_plot_raw <- reactiveVal(NULL)
   react_mean_sd_plot <- reactiveVal(NULL)
   able_to_plot <- reactiveVal(FALSE)
+  data_changed_since_VI <- reactiveVal(TRUE)  # Track if data has changed since last VI
+
+  # Track file input changes to know when to clear VI outputs
+  observeEvent(input$data_matrix1, {
+    data_changed_since_VI(TRUE)
+  })
+  observeEvent(input$data_sample_anno1, {
+    data_changed_since_VI(TRUE)
+  })
+  observeEvent(input$metadataInput, {
+    data_changed_since_VI(TRUE)
+  })
+  observeEvent(input$data_row_anno1, {
+    data_changed_since_VI(TRUE)
+  })
 
   output$SaveInputAsList <- downloadHandler(
    filename = function() {
@@ -526,6 +541,17 @@ server <- function(input,output,session){
   
 ## Upload visual inspection ----
   observeEvent(input$inspect_data, {
+    # Clear outputs only if data has changed since last inspection
+    if(data_changed_since_VI()) {
+      output$DataMatrix_VI <- DT::renderDataTable({DT::datatable(data = data.frame())})
+      output$SampleMatrix_VI <- DT::renderDataTable({DT::datatable(data = data.frame())})
+      output$EntitieMatrix_VI <- DT::renderDataTable({DT::datatable(data = data.frame())})
+      output$DataMatrix_VI_Info <- renderText({""})
+      output$SampleMatrix_VI_Info <- renderText({""})
+      output$EntitieMatrix_VI_Info <- renderText({""})
+      output$OverallChecks <- renderText({""})
+    }
+
     showModal(modalDialog(
       title = "Upload Visual Inspection",
       helpText("If you have uploaded your data, you might want to visually check the tables to confirm the correct data format. If you notice irregualarities you will need to correct the input data - this cannot be done in cOmicsArt, See the help on how your data is expected."),
@@ -930,6 +956,8 @@ server <- function(input,output,session){
           check0, check7, check1, check2, check6, check3, check4, check5
         )
       })
+      # Reset flag - data has been inspected, no need to clear on next modal open
+      data_changed_since_VI(FALSE)
     }
       },
     error = function(e){
