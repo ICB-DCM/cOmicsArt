@@ -56,6 +56,7 @@ The files must be in the following format:<br>
 - ⚠️ The files must be uploaded at their respective positions (**data matrix, sample annotation, entities annotation**).
 - ⚠️ The files need to be **.csv** files, which also means that they need to be comma-separated, not semicolon-separated. When **exporting from Excel**, make sure to check that the separator is a comma. If your Excel is in German, your default export uses semicolons which will lead to errors!
 - ⚠️ As stated above, the **column names in the data matrix** must be the same as the **row names in the sample annotation**. And the **row names in the data matrix** must be the same as the **row names in the entities annotation**. Upon upload, **before** pressing 'Do', you can switch the tab to go to 'Upload for visual inspection'. Here, you can inspect the uploaded files and check if they correspond to your expectations. Additionally, at the bottom, several outputs from tests are given - they should all be 'Yes'.
+- ⚠️ any empty lines/ empty cells (with comma separation) will cause trouble due to 'duplicated' rownames - inspect the end of your file to ensure it ends with actual data
 
 ## Starting with a Single Table and a Metadatasheet 📝 
 
