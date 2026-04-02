@@ -13,8 +13,7 @@ editor_options:
 cOmicsART](/cOmicsArt/assets/images/cOmicsTurtle.png) *Image generated
 using DALL-E by OpenAI. Adjusted by Lea Seep*
 
-Why do you want to install cOmicsART locally? If you just want to use it
-make sure to checkout the website:
+Why do you want to install cOmicsART locally? If you just want to use it make sure to check out the website:
 [cOmicsART](https://shiny.iaas.uni-bonn.de/cOmicsArt/). Here
 is no installation effort required. If you know you are right here,
 let's get started. You can find here instructions to run cOmicsART locally within RStudio or using Docker.
@@ -84,7 +83,7 @@ renv::restore(lockfile="renv.lock")
 
 This will install all the necessary packages as specified in the
 renv.lock file. **Note:** This takes quite some time as there are a lot of packages to retrieve. 
-Some of those need specific system dependencies. 
+Some of those need specific system dependencies. Also note that you can use R within the provided Docker image, which comes with a fully preloaded and ready-to-use environment. See #Running a cOmicsART Using Docker.
 
 ## 4. Start the Shiny App
 
@@ -160,6 +159,39 @@ docker pull pauljonasjost/comicsart:latest
 ```
 
 Then follow the steps to run the updated image.
+
+### 6. Access the environment through docker
+To enter the Docker container and use the same environment as the app:
+
+```bash
+docker run -it --rm pauljonasjost/comicsart:latest bash
+```
+Then, inside the container:
+```bash
+R
+```
+If you want to have changed files save, e.g., during app development ensure to mount into the docker:
+```
+git clone  https://github.com/icb-dcm/cOmicsArt.git
+cd cOmicsArt
+docker run -it --rm \
+  -v "$PWD":/workspace \
+  -w /workspace \
+  --name comicsart_dev \
+  pauljonasjost/comicsart:latest bash
+```
+
+Note, for having an IDE and not just plain R a simple option is to use VS Code + Dev Containers:
+1. Start the container
+2. Open VS Code
+3. Install the Dev Containers extension
+4. Open the command palette
+5. Select: Dev Containers: Attach to Running Container...
+
+This allows you to browse the file structure within the container, open a terminal inside it, and run R directly in the Docker environment.
+
+Use the mounted local repository approach above, then open that local folder in VS Code to ensure local saved changes.
+
 
 ### Troubleshooting
 
