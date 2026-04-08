@@ -29,13 +29,20 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cmake libfontconfig1-dev gfortran libcurl4-openssl-dev libssl-dev libxml2-dev libsqlite3-dev libglu1-mesa-dev default-jdk libmagick++-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev
         sudo apt install curl
+
+    - name: Configure CRAN mirror for CI
+      shell: Rscript {0}
+      run: |
+        options(repos = c(CRAN = "https://cloud.r-project.org"))
+        cat("Using CRAN repo:", getOption("repos")[["CRAN"]], "\n")
     
     - name: Install and activate renv
       shell: Rscript {0}
       run: |
-        install.packages("renv")
-        print(getwd())
-        renv::restore(lockfile="program/renv.lock")
+        install.packages("renv", repos = "https://cloud.r-project.org")
+        options(repos = c(CRAN = "https://cloud.r-project.org"))
+        renv::restore(lockfile = "program/renv.lock")
+
         
     # - name: Get R and OS version
     #   id: get-version
