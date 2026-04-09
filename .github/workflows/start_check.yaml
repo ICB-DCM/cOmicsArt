@@ -27,8 +27,19 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake libfontconfig1-dev gfortran libcurl4-openssl-dev libssl-dev libxml2-dev libsqlite3-dev libglu1-mesa-dev default-jdk libmagick++-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev
+        sudo apt-get install -y cmake libnlopt-dev libfontconfig1-dev gfortran libcurl4-openssl-dev libssl-dev libxml2-dev libsqlite3-dev libglu1-mesa-dev default-jdk libmagick++-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev
         sudo apt install curl
+
+    - name: Debug nloptr
+      shell: Rscript {0}
+      run: |
+        install.packages("nloptr", repos = "https://cloud.r-project.org")
+
+    - name: Debug ggtree
+      shell: Rscript {0}
+      run: |
+        if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+        BiocManager::install("ggtree", ask = FALSE, update = FALSE)
 
     - name: Configure CRAN mirror for CI
       shell: Rscript {0}
