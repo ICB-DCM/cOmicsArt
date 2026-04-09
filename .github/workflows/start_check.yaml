@@ -33,7 +33,7 @@ jobs:
     - name: Debug nloptr
       shell: Rscript {0}
       run: |
-        install.packages("nloptr", repos = "https://cloud.r-project.org")
+        install.packages("https://cran.r-project.org/src/contrib/Archive/nloptr/nloptr_2.0.3.tar.gz",repos = NULL, type = "source")
 
     - name: Debug ggtree
       shell: Rscript {0}
