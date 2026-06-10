@@ -1,5 +1,8 @@
 server <- function(input,output,session){
-  source("R/SourceAll.R",local=T)
+  # Note: SourceAll.R must remain here due to lexical scoping requirements
+  # Many functions need access to 'session' object through parent environment
+  # TODO Phase 2: Refactor to pass session as parameter to enable global sourcing
+  source("R/SourceAll.R", local=T)
 
   # fill session_if textOutput with current session$token
   output$session_id <- renderText({
@@ -494,21 +497,27 @@ server <- function(input,output,session){
         rowData(res_tmp[[session$token]]$data_original)$entrezgene_id[matched_rows] <<- matched_out$entrezgene_id[matched_rows]
       }
     }
-    
+
     # edit annotation columns such that if na is present in the row annotation,
     # the na gets replaced by the rowname
-    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data))){
-      if(any(is.na(rowData(res_tmp[[session$token]]$data)[,i]))){
-        rowData(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i]),i] <<- rownames(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i])]
+    ncols_data <- ncol(rowData(res_tmp[[session$token]]$data))
+    if(ncols_data > 0) {
+      for(i in seq_len(ncols_data)){
+        if(any(is.na(rowData(res_tmp[[session$token]]$data)[,i]))){
+          rowData(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i]),i] <<- rownames(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i])]
+        }
       }
     }
-    
-    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data_original))){
-      if(any(is.na(rowData(res_tmp[[session$token]]$data_original)[,i]))){
-        rowData(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i]),i] <<- rownames(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i])]
+
+    ncols_data_original <- ncol(rowData(res_tmp[[session$token]]$data_original))
+    if(ncols_data_original > 0) {
+      for(i in seq_len(ncols_data_original)){
+        if(any(is.na(rowData(res_tmp[[session$token]]$data_original)[,i]))){
+          rowData(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i]),i] <<- rownames(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i])]
+        }
       }
     }
-    
+
     par_tmp[[session$token]]['addedGeneAnno'] <<- TRUE
     par_tmp[[session$token]]['organism'] <<- input$AddGeneSymbols_organism
     removeModal()
@@ -1355,21 +1364,27 @@ server <- function(input,output,session){
       as.data.frame(rowData(res_tmp[[session$token]]$data)) %>%
         purrr::keep(~length(unique(.x)) != 1)
     )
-    
+
     # edit annotation columns such that if na is present in the row annotation,
     # the na gets replaced by the rowname
-    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data))){
-      if(any(is.na(rowData(res_tmp[[session$token]]$data)[,i]))){
-        rowData(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i]),i] <<- rownames(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i])]
+    ncols_data <- ncol(rowData(res_tmp[[session$token]]$data))
+    if(ncols_data > 0) {
+      for(i in seq_len(ncols_data)){
+        if(any(is.na(rowData(res_tmp[[session$token]]$data)[,i]))){
+          rowData(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i]),i] <<- rownames(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i])]
+        }
       }
     }
-    
-    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data_original))){
-      if(any(is.na(rowData(res_tmp[[session$token]]$data_original)[,i]))){
-        rowData(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i]),i] <<- rownames(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i])]
+
+    ncols_data_original <- ncol(rowData(res_tmp[[session$token]]$data_original))
+    if(ncols_data_original > 0) {
+      for(i in seq_len(ncols_data_original)){
+        if(any(is.na(rowData(res_tmp[[session$token]]$data_original)[,i]))){
+          rowData(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i]),i] <<- rownames(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i])]
+        }
       }
     }
-    
+
     print(paste0(
       "Number. of anno options annotation_rows lost: ",
       nrow(res_tmp[[session$token]]$data_original) - nrow(res_tmp[[session$token]]$data)

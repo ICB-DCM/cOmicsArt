@@ -63,12 +63,15 @@ significance_analysis_server <- function(id){
             helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
           } else {
             my_comparisons <- subset(expand.grid(rep(list(unique(annoToSelect)),2)), Var1 != Var2)
-            xy.list <- vector("list", nrow(my_comparisons))
-            for (i in 1:nrow(my_comparisons)) {
-              xy.list[[i]] <- c(
-                as.character(my_comparisons[i,1]),
-                as.character(my_comparisons[i,2])
-              )
+            nrows_comp <- nrow(my_comparisons)
+            xy.list <- vector("list", nrows_comp)
+            if(nrows_comp > 0) {
+              for (i in seq_len(nrows_comp)) {
+                xy.list[[i]] <- c(
+                  as.character(my_comparisons[i,1]),
+                  as.character(my_comparisons[i,2])
+                )
+              }
             }
             selectInput(
               inputId = ns("comparisons"),

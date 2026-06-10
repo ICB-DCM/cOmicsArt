@@ -72,8 +72,11 @@ enrichment_analysis_geneset_server <- function(
               res_tmp[[session$token]]$data_original,
               temp_directory
             )
-            pipeline <- OA_PIPELINE
-            pipeline <- if(ea_type == "GeneSetEnrichment") EA_PIPELINE
+            pipeline <- if(ea_type == "GeneSetEnrichment") {
+              EA_PIPELINE
+            } else {
+              OA_PIPELINE
+            }
             write(
               create_workflow_script(
                 pipeline_info = pipeline,

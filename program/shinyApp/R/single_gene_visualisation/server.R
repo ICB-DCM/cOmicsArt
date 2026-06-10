@@ -96,12 +96,15 @@ single_gene_visualisation_server <- function(id){
               x = unique(annoToSelect),
               m = 2
             ))
-            xy.list <- vector("list", nrow(my_comparisons))
-            for (i in 1:nrow(my_comparisons)) {
-              xy.list[[i]] <- c(
-                as.character(my_comparisons[i,1]),
-                as.character(my_comparisons[i,2])
-              )
+            nrows_comp <- nrow(my_comparisons)
+            xy.list <- vector("list", nrows_comp)
+            if(nrows_comp > 0) {
+              for (i in seq_len(nrows_comp)) {
+                xy.list[[i]] <- c(
+                  as.character(my_comparisons[i,1]),
+                  as.character(my_comparisons[i,2])
+                )
+              }
             }
             shinyWidgets::virtualSelectInput(
               search = T,
