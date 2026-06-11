@@ -1,9 +1,4 @@
 server <- function(input,output,session){
-  # Note: SourceAll.R must remain here due to lexical scoping requirements
-  # Many functions need access to 'session' object through parent environment
-  # TODO Phase 2: Refactor to pass session as parameter to enable global sourcing
-  source("R/SourceAll.R", local=T)
-
   # fill session_if textOutput with current session$token
   output$session_id <- renderText({
       paste0("Current session: ", session$token)
