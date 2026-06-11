@@ -278,7 +278,7 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         invisible(lapply(old_tabs, cleanup_tab))
 
         # Helper function to create new tabs
-        # Phase 2: Pass input, output, session explicitly for global sourcing
+        # Relies on source(local = TRUE) - input, output, session, file_path accessed via parent scope
         create_tab <- function(comp) {
           idx <- which(comparisons == comp)
           create_new_tab(
@@ -291,15 +291,22 @@ significance_analysis_server <- function(id, session_data, session_params, data_
             preprocess_method = preprocessing,
             value = paste0("Significance_", idx),
             session_data = session_data,
-            session_params = session_params,
-            input = input,
-            output = output,
-            session = session
+            session_params = session_params
           )
         }
 
         # Add new tabs
-        invisible(lapply(new_tabs, create_tab))
+        # Phase 2: Add error handling to diagnose tab creation issues
+        lapply(new_tabs, function(comp) {
+          tryCatch({
+            print(paste("Creating tab for:", comp))
+            create_tab(comp)
+            print(paste("Successfully created tab for:", comp))
+          }, error = function(e) {
+            print(paste("ERROR creating tab for:", comp))
+            print(e)
+          })
+        })
 
         # Update the list of active tabs
         sig_ana_reactive$active_tabs <- comparisons
