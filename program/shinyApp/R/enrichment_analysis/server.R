@@ -189,9 +189,8 @@ enrichment_analysis_geneset_server <- function(
 
 
 # Reactive server function that calls the enrichment analysis geneset server function
-# Phase 2: Requires session and input as explicit parameters for global sourcing
 enrichment_analysis_geneset_server_reactive <- function(
-  id, result_all, organism_choice, gene_set_choice, ea_type, session_data, session_params, session, input
+  id, result_all, organism_choice, gene_set_choice, ea_type, session_data, session_params
 ){
   observe({
     result <- result_all()[[paste("EnrichmentRes", id, sep = "_")]]
@@ -232,7 +231,6 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       )
 
       # Delete and Re-create the servers
-      # Phase 2: Pass session and input explicitly for global sourcing
       lapply(gene_sets_to_compare, function(id) {
         enrichment_analysis_geneset_server_reactive(
           id = id,
@@ -241,9 +239,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           organism_choice = ea_reactives$organism,
           gene_set_choice = ea_reactives$tmp_genes,
           session_data = data,
-          session_params = params,
-          session = session,
-          input = input
+          session_params = params
         )
       })
       ## Ui section
