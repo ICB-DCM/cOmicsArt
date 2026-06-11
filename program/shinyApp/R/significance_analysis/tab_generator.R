@@ -1,18 +1,18 @@
 # Tab generation of the significance analysis
-create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns, preprocess_method, value){
+create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns, preprocess_method, value, session_data, session_params){
   # call create_new_tab based on preprocess_method used
   # preprocess_method: preprocess_method used
   # for other parameters see create_new_tab_*
   if (preprocess_method == "vst_DESeq"){
-      create_new_tab_DESeq(title, targetPanel, result, contrast, alpha, ns, value)
+      create_new_tab_DESeq(title, targetPanel, result, contrast, alpha, ns, value, session_data, session_params)
   }
   else{
-      create_new_tab_manual(title, targetPanel, result, contrast, alpha, ns, value)
+      create_new_tab_manual(title, targetPanel, result, contrast, alpha, ns, value, session_data, session_params)
   }
 }
 
 
-create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, ns, value){
+create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, ns, value, session_data, session_params){
   # create a new tabPanel for manual preprocessing
   # title: title of the tabPanel
   # targetPanel: name of the targetPanel under which the tabPanel should be created
@@ -260,8 +260,8 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     selectInput(
     inputId = Volcano_anno_tooltip,
     label = "Select the anno to be shown at tooltip",
-    choices = colnames(rowData(res_tmp[[session$token]]$data)),
-    selected = colnames(rowData(res_tmp[[session$token]]$data))[1],
+    choices = colnames(rowData(session_data$data)),
+    selected = colnames(rowData(session_data$data))[1],
     multiple = F
     )
   })
@@ -324,10 +324,10 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     anno_col_name <- input[[Volcano_anno_tooltip]]
 
     # Assume 'result' is defined elsewhere (e.g. from your analysis)
-    # and 'res_tmp[[session$token]]$data' contains rowData with annotation information.
-    anno_vector <- rowData(res_tmp[[session$token]]$data)[, anno_col_name]
-    names(anno_vector) <- rownames(res_tmp[[session$token]]$data)
-    
+    # and 'session_data$data' contains rowData with annotation information.
+    anno_vector <- rowData(session_data$data)[, anno_col_name]
+    names(anno_vector) <- rownames(session_data$data)
+
     # Generate the volcano plots using the helper function.
     volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
     volcano_obj_raw <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = TRUE)
@@ -335,9 +335,12 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     sig_ana_reactive$VolcanoPlot <- volcano_obj$volcano_plt
     sig_ana_reactive$VolcanoPlot_raw <- volcano_obj_raw$volcano_plt
 
-    par_tmp[[session$token]]$SigAna$th_psig <<- th_psig
-    par_tmp[[session$token]]$SigAna$th_lfc <<- th_lfc
-    par_tmp[[session$token]]$SigAna$anno_vector <<- anno_vector
+    if(is.null(session_params$SigAna)){
+      session_params$SigAna <- list()
+    }
+    session_params$SigAna$th_psig <- th_psig
+    session_params$SigAna$th_lfc <- th_lfc
+    session_params$SigAna$anno_vector <- anno_vector
 
     # Render the corrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({
@@ -416,8 +419,10 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       fun_LogIt(message = "### Info")
       log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
       fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                         params = par_tmp[[session$token]]))
+      fun_LogIt(message = snippet_SigAna(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params)
+      ))
     }
   )
 
@@ -432,8 +437,10 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
                            sig_ana_reactive$data4Volcano, contrast, file_path)
       #log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
       fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                         params = par_tmp[[session$token]]))
+      fun_LogIt(message = snippet_SigAna(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params)
+      ))
     }
   )
 
@@ -446,8 +453,10 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       fun_LogIt(message = "### Info")
       log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
       fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                         params = par_tmp[[session$token]]))
+      fun_LogIt(message = snippet_SigAna(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params)
+      ))
     }
   )
 
@@ -462,22 +471,25 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           hide_on_render = FALSE
         )
         waiter$show()
-        par_tmp[[session$token]]$SigAna$comp <<- title
-        par_tmp[[session$token]]$SigAna$raw <<- FALSE
+        if(is.null(session_params$SigAna)){
+          session_params$SigAna <- list()
+        }
+        session_params$SigAna$comp <- title
+        session_params$SigAna$raw <- FALSE
         envList <- list(
-          par_tmp = par_tmp[[session$token]]
+          par_tmp = reactiveValuesToList(session_params)
         )
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
         # save csv files
         save_summarized_experiment(
-          res_tmp[[session$token]]$data_original,
+          session_data$data_original,
           temp_directory
         )
         write(
           create_workflow_script(
             pipeline_info = VOLCANO_PIPELINE,
-            par = par_tmp[[session$token]],
+            par = reactiveValuesToList(session_params),
             par_mem = "SigAna",
             path_to_util = file.path(temp_directory, "util.R")
           ),
@@ -506,22 +518,25 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           hide_on_render = FALSE
         )
         waiter$show()
-        par_tmp[[session$token]]$SigAna$comp <<- title
-        par_tmp[[session$token]]$SigAna$raw <<- TRUE
+        if(is.null(session_params$SigAna)){
+          session_params$SigAna <- list()
+        }
+        session_params$SigAna$comp <- title
+        session_params$SigAna$raw <- TRUE
         envList <- list(
-          par_tmp = par_tmp[[session$token]]
+          par_tmp = reactiveValuesToList(session_params)
         )
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
         # save csv files
         save_summarized_experiment(
-          res_tmp[[session$token]]$data_original,
+          session_data$data_original,
           temp_directory
         )
         write(
           create_workflow_script(
             pipeline_info = VOLCANO_PIPELINE,
-            par = par_tmp[[session$token]],
+            par = reactiveValuesToList(session_params),
             par_mem = "SigAna",
             path_to_util = file.path(temp_directory, "util.R")
           ),
@@ -551,8 +566,10 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         fun_LogIt(message = "### Info")
         log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
+        fun_LogIt(message = snippet_SigAna(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
       })
     })
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_raw", sep = "_"))]] <- downloadHandler(
@@ -568,8 +585,10 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         fun_LogIt(message = "### Info")
         log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
+        fun_LogIt(message = snippet_SigAna(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
       })
     })
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_both", sep = "_"))]] <- downloadHandler(
@@ -587,14 +606,16 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
                              sig_ana_reactive$data4Volcano, contrast, file_path)
 #        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
+        fun_LogIt(message = snippet_SigAna(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
       })
     })
 
 }
 
-create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns, value){
+create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns, value, session_data, session_params){
   # create a new tabPanel for DESeq2 preprocessing
   # title: title of the tabPanel
   # targetPanel: name of the targetPanel under which the tabPanel should be created
@@ -855,8 +876,8 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     selectInput(
       inputId = Volcano_anno_tooltip,
       label = "Select the anno to be shown at tooltip",
-      choices = colnames(rowData(res_tmp[[session$token]]$data)),
-      selected = colnames(rowData(res_tmp[[session$token]]$data))[1],
+      choices = colnames(rowData(session_data$data)),
+      selected = colnames(rowData(session_data$data))[1],
       multiple = F
     )
   })
@@ -919,9 +940,9 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     anno_col_name <- input[[Volcano_anno_tooltip]]
 
     # Assume 'result' is defined elsewhere (e.g. from your analysis)
-    # and 'res_tmp[[session$token]]$data' contains rowData with annotation information.
-    anno_vector <- rowData(res_tmp[[session$token]]$data)[, anno_col_name]
-    names(anno_vector) <- rownames(res_tmp[[session$token]]$data)
+    # and 'session_data$data' contains rowData with annotation information.
+    anno_vector <- rowData(session_data$data)[, anno_col_name]
+    names(anno_vector) <- rownames(session_data$data)
 
     # Generate the volcano plots using the helper function.
     volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
@@ -930,9 +951,12 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     sig_ana_reactive$VolcanoPlot <- volcano_obj$volcano_plt
     sig_ana_reactive$VolcanoPlot_raw <- volcano_obj_raw$volcano_plt
 
-    par_tmp[[session$token]]$SigAna$th_psig <<- th_psig
-    par_tmp[[session$token]]$SigAna$th_lfc <<- th_lfc
-    par_tmp[[session$token]]$SigAna$anno_vector <<- anno_vector
+    if(is.null(session_params$SigAna)){
+      session_params$SigAna <- list()
+    }
+    session_params$SigAna$th_psig <- th_psig
+    session_params$SigAna$th_lfc <- th_lfc
+    session_params$SigAna$anno_vector <- anno_vector
 
     # Render the corrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({
@@ -1015,8 +1039,10 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       fun_LogIt(message = "### Info")
       log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
       fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                         params = par_tmp[[session$token]]))
+      fun_LogIt(message = snippet_SigAna(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params)
+      ))
     }
   )
 
@@ -1031,8 +1057,10 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
                            sig_ana_reactive$data4Volcano, contrast, file_path)
       #log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
       fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                         params = par_tmp[[session$token]]))
+      fun_LogIt(message = snippet_SigAna(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params)
+      ))
     }
   )
 
@@ -1045,8 +1073,10 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       fun_LogIt(message = "### Info")
       log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
       fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                         params = par_tmp[[session$token]]))
+      fun_LogIt(message = snippet_SigAna(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params)
+      ))
     }
   )
 
@@ -1061,22 +1091,25 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         hide_on_render = FALSE
       )
       waiter$show()
-      par_tmp[[session$token]]$SigAna$comp <<- title
-      par_tmp[[session$token]]$SigAna$raw <<- FALSE
+      if(is.null(session_params$SigAna)){
+        session_params$SigAna <- list()
+      }
+      session_params$SigAna$comp <- title
+      session_params$SigAna$raw <- FALSE
       envList <- list(
-        par_tmp = par_tmp[[session$token]]
+        par_tmp = reactiveValuesToList(session_params)
       )
       temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
       dir.create(temp_directory)
       # save csv files
       save_summarized_experiment(
-        res_tmp[[session$token]]$data_original,
+        session_data$data_original,
         temp_directory
       )
       write(
         create_workflow_script(
           pipeline_info = VOLCANO_PIPELINE,
-          par = par_tmp[[session$token]],
+          par = reactiveValuesToList(session_params),
           par_mem = "SigAna",
           path_to_util = file.path(temp_directory, "util.R")
         ),
@@ -1105,22 +1138,25 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         hide_on_render = FALSE
       )
       waiter$show()
-      par_tmp[[session$token]]$SigAna$comp <<- title
-      par_tmp[[session$token]]$SigAna$raw <<- TRUE
+      if(is.null(session_params$SigAna)){
+        session_params$SigAna <- list()
+      }
+      session_params$SigAna$comp <- title
+      session_params$SigAna$raw <- TRUE
       envList <- list(
-        par_tmp = par_tmp[[session$token]]
+        par_tmp = reactiveValuesToList(session_params)
       )
       temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
       dir.create(temp_directory)
       # save csv files
       save_summarized_experiment(
-        res_tmp[[session$token]]$data_original,
+        session_data$data_original,
         temp_directory
       )
       write(
         create_workflow_script(
           pipeline_info = VOLCANO_PIPELINE,
-          par = par_tmp[[session$token]],
+          par = reactiveValuesToList(session_params),
           par_mem = "SigAna",
           path_to_util = file.path(temp_directory, "util.R")
         ),
@@ -1153,8 +1189,10 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
           sig_ana_reactive$data4Volcano, contrast, file_path
         )
         fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
+        fun_LogIt(message = snippet_SigAna(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
       })
     })
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_raw", sep = "_"))]] <- downloadHandler(
@@ -1170,8 +1208,10 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         fun_LogIt(message = "### Info")
         log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
+        fun_LogIt(message = snippet_SigAna(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
 
       })
     })
@@ -1193,8 +1233,10 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         )
         #log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
         fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
+        fun_LogIt(message = snippet_SigAna(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
       })
     })
 }

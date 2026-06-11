@@ -1,4 +1,4 @@
-sample_correlation_server <- function(id){
+sample_correlation_server <- function(id, session_data, session_params){
   moduleServer(
     id,
     function(input,output,session){
@@ -16,9 +16,9 @@ sample_correlation_server <- function(id){
       observeEvent(input$refreshUI, {
         print("Refreshing UI Sample Correlation")
         sample_corr_reactive$allow_plot <- FALSE
-        data <- update_data(session$token)
+        data <- reactiveValuesToList(session_data)
         output$UseBatch_ui <- renderUI({
-          req(par_tmp[[session$token]]$BatchColumn != "NULL")
+          req(session_params$BatchColumn != "NULL")
           selectInput(
             inputId = ns("UseBatch"),
             label = "Use batch corrected data?",
@@ -55,11 +55,14 @@ sample_correlation_server <- function(id){
       observeEvent(input$SampleAnnotationChoice,{
         req(selectedData_processed())
         req(sample_corr_reactive$corr_plot)
-        data <- update_data(session$token)
+        data <- reactiveValuesToList(session_data)
         # Create row annotations separately
         sample_corr_reactive$row_anno <- custom_sample_annotation(data$data, input$SampleAnnotationChoice)
-        # update par_tmp
-        par_tmp[[session$token]][["SampleCorrelation"]]$sample_annotations <<- input$SampleAnnotationChoice
+        # update session_params
+        if(is.null(session_params$SampleCorrelation)){
+          session_params$SampleCorrelation <- list()
+        }
+        session_params$SampleCorrelation$sample_annotations <- input$SampleAnnotationChoice
       })
       
       # Do sample correlation plot
@@ -76,13 +79,13 @@ sample_correlation_server <- function(id){
         shinyjs::showElement(id = "div_sampleCorrelation_main_panel", asis = T)
         sample_corr_reactive$allow_plot <- TRUE
         # assign variables to be used
-        useBatch <- ifelse(par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
+        useBatch <- ifelse(session_params$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
         sample_annotations <- input$SampleAnnotationChoice
         correlation_method <- input$corrMethod
         customTitleSampleCorrelation <- create_default_title_sc(
-          correlation_method, par_tmp[[session$token]]$preprocessing_procedure
+          correlation_method, session_params$preprocessing_procedure
         )
-        data <- update_data(session$token)
+        data <- reactiveValuesToList(session_data)
         if(useBatch){
             data <- data$data_batch_corrected
         } else {
@@ -97,12 +100,14 @@ sample_correlation_server <- function(id){
             data_updated = shiny::isolate(sample_corr_reactive$data_updated),
             sample_annotations = sample_annotations
           ),
-          "SampleCorrelation"
+          "SampleCorrelation",
+          session_data,
+          session_params
         )
         sample_corr_reactive$data_updated <- FALSE
         # for safety measures, wrap in tryCatch
         if (check) {
-          cormat <- res_tmp[[session$token]]$SampleCorrelation
+          cormat <- session_data$SampleCorrelation
           sample_corr_reactive$info_text <- "Correlation Matrix was already computed, no need to click the Button again."
         } else {  # needs computation
           tryCatch({
@@ -121,9 +126,9 @@ sample_correlation_server <- function(id){
         heatmap_plot <- custom_heatmap(cormat, customTitleSampleCorrelation, correlation_method)
         sample_corr_reactive$corr_plot <- heatmap_plot
         sample_corr_reactive$row_anno <- row_anno
-        res_tmp[[session$token]][["SampleCorrelation"]] <<- cormat
-        # assign par_temp["SampleCorrelation"]
-        par_tmp[[session$token]][["SampleCorrelation"]] <<- list(
+        session_data$SampleCorrelation <- cormat
+        # assign session_params SampleCorrelation
+        session_params$SampleCorrelation <- list(
           correlation_method = correlation_method,
           sample_annotations = sample_annotations,
           title = customTitleSampleCorrelation,
@@ -149,20 +154,20 @@ sample_correlation_server <- function(id){
           )
           waiter$show()
           envList <- list(
-            par_tmp = par_tmp[[session$token]]
+            par_tmp = reactiveValuesToList(session_params)
           )
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
           # save csv files
           save_summarized_experiment(
-            res_tmp[[session$token]]$data_original,
+            session_data$data_original,
             temp_directory
           )
 
           write(
             create_workflow_script(
               pipeline_info = SAMPLE_CORRELATION_PIPELINE,
-              par = par_tmp[[session$token]],
+              par = reactiveValuesToList(session_params),
               par_mem = "SampleCorrelation",
               path_to_util = file.path(temp_directory, "util.R")
             ),
@@ -221,8 +226,10 @@ sample_correlation_server <- function(id){
         }
         
         fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_sampleCorr(data=res_tmp[[session$token]],
-                                               params=par_tmp[[session$token]]))
+        fun_LogIt(message = snippet_sampleCorr(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
         
         removeNotification(notificationID)
         showNotification("Report Saved!",type = "message", duration = 1)
