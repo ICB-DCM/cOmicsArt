@@ -787,10 +787,13 @@ server <- function(input,output,session){
       if(check5 == snippetNo){
         # Indicate columns with NA
         colsWithNa <- numeric()
-        for(i in 1:ncol(annotation_rows)){
-           if(any(is.na(annotation_rows[,i]) == T)){
-             colsWithNa <- c(colsWithNa,i)
-           }
+        ncols <- ncol(annotation_rows)
+        if(ncols > 0){
+          for(i in seq_len(ncols)){
+             if(any(is.na(annotation_rows[,i]) == T)){
+               colsWithNa <- c(colsWithNa,i)
+             }
+          }
         }
         check5 <- paste0("<font color=\"#FFA500\"><b>No</b></font>",
                          "\n\tFollowing columns are *potentially* problematic: ",

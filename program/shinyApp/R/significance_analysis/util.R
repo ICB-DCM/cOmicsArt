@@ -190,8 +190,10 @@ prepare_upset_plot <- function(res2plot){
   # download.
   overlap_list <- UpSetR::fromList(res2plot)
   names <- c()
-  for(i in 1:length(res2plot)){
-    names <- append(names, res2plot[[i]])
+  if(length(res2plot) > 0){
+    for(i in seq_along(res2plot)){
+      names <- append(names, res2plot[[i]])
+    }
   }
   names <- unique(names)
   rownames(overlap_list) <- names

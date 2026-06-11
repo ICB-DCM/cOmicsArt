@@ -317,8 +317,10 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       observeEvent(input$GeneSetChoice, {
         # reset list
         ea_reactives$enrichments2do <- GENESETS_RESET
-        for(i in 1:length(input$GeneSetChoice)){
-          ea_reactives$enrichments2do[[input$GeneSetChoice[i]]] <- TRUE
+        if(length(input$GeneSetChoice) > 0){
+          for(i in seq_along(input$GeneSetChoice)){
+            ea_reactives$enrichments2do[[input$GeneSetChoice[i]]] <- TRUE
+          }
         }
         # hide the unselected ones
         for(name in names(which(ea_reactives$enrichments2do == FALSE))){
