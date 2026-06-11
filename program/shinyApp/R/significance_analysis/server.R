@@ -1,4 +1,5 @@
-significance_analysis_server <- function(id, session_data, session_params){
+# Phase 2: Requires data_input_shiny reactive for global sourcing
+significance_analysis_server <- function(id, session_data, session_params, data_input_shiny){
   moduleServer(
     id,
     function(input,output,session){
@@ -277,6 +278,7 @@ significance_analysis_server <- function(id, session_data, session_params){
         invisible(lapply(old_tabs, cleanup_tab))
 
         # Helper function to create new tabs
+        # Phase 2: Pass input, output, session explicitly for global sourcing
         create_tab <- function(comp) {
           idx <- which(comparisons == comp)
           create_new_tab(
@@ -289,7 +291,10 @@ significance_analysis_server <- function(id, session_data, session_params){
             preprocess_method = preprocessing,
             value = paste0("Significance_", idx),
             session_data = session_data,
-            session_params = session_params
+            session_params = session_params,
+            input = input,
+            output = output,
+            session = session
           )
         }
 
@@ -508,28 +513,28 @@ significance_analysis_server <- function(id, session_data, session_params){
         print(sig_ana_reactive$plot_last)
         dev.off()
 
-        fun_LogIt(message = "## Differential analysis {.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
+        fun_LogIt(session, message = "## Differential analysis {.tabset .tabset-fade}")
+        fun_LogIt(session, message = "### Info")
         # log which tests were performed
         if(session_params$preprocessing_procedure == "vst_DESeq"){
-          fun_LogIt(
+          fun_LogIt(session, 
             message = "- Differential Analysis was performed using DESeq2 pipeline"
           )
         } else {
-          fun_LogIt(message = paste(
+          fun_LogIt(session, message = paste(
             "- Differential Analysis was performed using", input$test_method
           ))
         }
         # log the significance level
-        fun_LogIt(message = paste(
+        fun_LogIt(session, message = paste(
           "- Significance level was set to", input$significance_level
         ))
         # log the test correction method
-        fun_LogIt(message = paste(
+        fun_LogIt(session, message = paste(
           "- p-values were adjusted using", input$test_correction, "correction method"
         ))
         # log which comparisons were performed
-        fun_LogIt(message = paste(
+        fun_LogIt(session, message = paste(
           "- Comparisons performed:",
           paste0(input$comparisons_to_visualize, collapse = ", ")
         ))
@@ -540,9 +545,9 @@ significance_analysis_server <- function(id, session_data, session_params){
           comparisons <- sig_ana_reactive$comparisons_for_plot
         }
         for(i in seq_along(comparisons)){
-           fun_LogIt(message = paste("####", comparisons[i]))
+           fun_LogIt(session, message = paste("####", comparisons[i]))
           # log the number of significant genes after correction
-          fun_LogIt(message = paste(
+          fun_LogIt(session, message = paste(
             "- Number of significant genes before correction for",
             comparisons[i],
             "is",
@@ -551,7 +556,7 @@ significance_analysis_server <- function(id, session_data, session_params){
             )
           ))
           # log the number of significant genes before correction
-          fun_LogIt(message = paste(
+          fun_LogIt(session, message = paste(
             "- Number of significant genes after correction for",
             comparisons[i],
             "is",
@@ -576,12 +581,12 @@ significance_analysis_server <- function(id, session_data, session_params){
               ),], 5
             ))
           }
-          fun_LogIt(message = paste(
+          fun_LogIt(session, message = paste(
             "- Top 5 significant entities for",
             comparisons[i],
             "are the following:"
           ))
-          fun_LogIt(message = knitr::kable(
+          fun_LogIt(session, message = knitr::kable(
             top5,
             format = "html",
             escape = FALSE,
@@ -589,23 +594,23 @@ significance_analysis_server <- function(id, session_data, session_params){
           ) %>%
             kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
             scroll_box(width = "100%", height = "300px"))
-          fun_LogIt(message = "\n")
+          fun_LogIt(session, message = "\n")
         }
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**Overview Plot** - Shown are ",input$sig_to_look_at," entities with a p-value < ",
           input$significance_level,
           ". The plot shows the intersection of entities that are significant in the comparisons you selected (.",
           input$comparisons_to_visualize,")."
         ))
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**Overview Plot** - ![Differential Analysis](",tmp_filename,")"
         ))
         if(isTruthy(input$NotesSigAna) & !(isEmpty(input$NotesSigAna))){
-          fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesSigAna)))
+          fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesSigAna)))
         }
         
-        fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(
+        fun_LogIt(session, message = "### Publication Snippet")
+        fun_LogIt(session, message = snippet_SigAna(
           data = reactiveValuesToList(session_data),
           params = reactiveValuesToList(session_params)
         ))

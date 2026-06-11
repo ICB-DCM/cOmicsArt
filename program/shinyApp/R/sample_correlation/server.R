@@ -1,4 +1,5 @@
-sample_correlation_server <- function(id, session_data, session_params){
+# Phase 2: Requires selectedData_processed reactive for global sourcing
+sample_correlation_server <- function(id, session_data, session_params, selectedData_processed){
   moduleServer(
     id,
     function(input,output,session){
@@ -215,18 +216,18 @@ sample_correlation_server <- function(id, session_data, session_params){
         )
         
         ## Add Log Messages
-        fun_LogIt("## Sample correlation {.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
-        fun_LogIt(message = paste0("**SampleCorrelation** - The correlation method used was: ",input$corrMethod))
-        fun_LogIt(message = paste0("**SampleCorrelation** - The heatmap samples were colored after ",paste(input$SampleAnnotationChoice)))
-        fun_LogIt(message = paste0("**SampleCorrelation** - ![SAMPLE_CORRELATION](",tmp_filename,")"))
+        fun_LogIt(session, "## Sample correlation {.tabset .tabset-fade}")
+        fun_LogIt(session, message = "### Info")
+        fun_LogIt(session, message = paste0("**SampleCorrelation** - The correlation method used was: ",input$corrMethod))
+        fun_LogIt(session, message = paste0("**SampleCorrelation** - The heatmap samples were colored after ",paste(input$SampleAnnotationChoice)))
+        fun_LogIt(session, message = paste0("**SampleCorrelation** - ![SAMPLE_CORRELATION](",tmp_filename,")"))
         
         if(isTruthy(input$NotesSampleCorrelation) & !(isEmpty(input$NotesSampleCorrelation))){
-          fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesSampleCorrelation)))
+          fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesSampleCorrelation)))
         }
         
-        fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_sampleCorr(
+        fun_LogIt(session, message = "### Publication Snippet")
+        fun_LogIt(session, message = snippet_sampleCorr(
           data = reactiveValuesToList(session_data),
           params = reactiveValuesToList(session_params)
         ))

@@ -1,5 +1,7 @@
 ## log function
+# Phase 2: Requires session as explicit parameter for global sourcing
 fun_LogIt <- function(
+  session,
   message = "",
   addPlot = F,
   tableSaved = F,

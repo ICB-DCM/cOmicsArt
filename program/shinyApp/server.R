@@ -509,10 +509,10 @@ server <- function(input,output,session){
   observeEvent(input$do_annotation, {
     # Added gene annotation if asked for
     if(input$AddGeneSymbols & input[[paste0("omic_type_", uploaded_from())]] == "Transcriptomics") {
-      fun_LogIt(
+      fun_LogIt(session, 
         message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added"
       )
-      fun_LogIt(
+      fun_LogIt(session, 
         message = paste0("**DataInput** - chosen Organism: ", input$AddGeneSymbols_organism)
       )
       session_params$organism <- input$AddGeneSymbols_organism
@@ -1092,9 +1092,9 @@ server <- function(input,output,session){
   observeEvent(input$refresh1,{
     req(data_input_shiny())
     session_params$addedGeneAnno <- FALSE
-    fun_LogIt(message = "## Data Selection {.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    fun_LogIt(
+    fun_LogIt(session, message = "## Data Selection {.tabset .tabset-fade}")
+    fun_LogIt(session, message = "### Info")
+    fun_LogIt(session, 
       message = paste0("**DataInput** - Uploaded Omic Type: ", session_params$omic_type)
     )
     if(!(
@@ -1151,23 +1151,23 @@ server <- function(input,output,session){
       })
       if(isTruthy(input$data_preDone)){
         # precomplied set used
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**DataInput** - The used data was precompiled. Filename: \n\t",
           input$data_preDone$name
         ))
       } else if(uploaded_from() == "VI_data"){
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**DataInput** - The used data was uploaded for visual inspection and changed within.")
         )
         }else {
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "The following data was used: \n\t",
           input$data_matrix1$name,"\n\t",
           input$data_sample_anno1$name,"\n\t",
           input$data_row_anno1$name
         ))
 
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**DataInput** - The raw data dimensions are: ",
           paste0(dim(session_data$data_original),collapse = ", ")
         ))
@@ -1345,7 +1345,7 @@ server <- function(input,output,session){
         )
       }
 
-      fun_LogIt(
+      fun_LogIt(session, 
         message = paste0("<font color=\"#FF0000\"><b>**Attention** - Test Data set used</b></font>")
       )
     } else if(uploaded_from() == "VI_data"){
@@ -1536,32 +1536,32 @@ server <- function(input,output,session){
     # Do actual selection before logging
     print(selectedData())
     # add row and col selection options
-    fun_LogIt(message = "**DataSelection** - The following selection was conducted:")
+    fun_LogIt(session, message = "**DataSelection** - The following selection was conducted:")
     print(length(input$sample_selection))
-    fun_LogIt(message = paste0(
+    fun_LogIt(session, message = paste0(
       "**DataSelection** - Samples:\n\t DataSelection - based on: ",
       input$providedSampleAnnotationTypes,": ",
       paste(input$sample_selection,collapse = ", ")
     ))
-    fun_LogIt(message = paste0(
+    fun_LogIt(session, message = paste0(
       "**DataSelection** - Entities:\n\t DataSelection - based on: ",
       input$providedRowAnnotationTypes,
       ": ",paste(input$row_selection,collapse = ", ")
     ))
     if(!is.null(input$propensityChoiceUser)){
       # also record IQR if this + other selection was selected
-      fun_LogIt(message = paste0(
+      fun_LogIt(session, message = paste0(
         "**DataSelection** - IQR treshold: ",
         input$propensityChoiceUser
       ))
     }
     
-    fun_LogIt(message = "### Publication Snippet")
-    fun_LogIt(message = snippet_dataInput(
+    fun_LogIt(session, message = "### Publication Snippet")
+    fun_LogIt(session, message = snippet_dataInput(
       data=reactiveValuesToList(session_data),
       params=reactiveValuesToList(session_params)
     ))
-    fun_LogIt(message = "<br>")
+    fun_LogIt(session, message = "<br>")
     showTab(inputId = "tabsetPanel1",target = "Pre-processing",select = T)
   })
   
@@ -2051,15 +2051,15 @@ server <- function(input,output,session){
     } else {
       tmp_logMessage <- "none"
     }
-    fun_LogIt("## Pre Processing {.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    fun_LogIt(
+    fun_LogIt(session, "## Pre Processing {.tabset .tabset-fade}")
+    fun_LogIt(session, message = "### Info")
+    fun_LogIt(session, 
       message = "**PreProcessing** - Alaways done: removal of all entities which are constant over all samples"
     )
-    fun_LogIt(
+    fun_LogIt(session, 
       message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage)
     )
-    fun_LogIt(
+    fun_LogIt(session, 
       message = paste0(
         "**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",
         ifelse(input$PreProcessing_Procedure == "vst_DESeq",
@@ -2070,25 +2070,25 @@ server <- function(input,output,session){
       )
     )
     if(input$BatchEffect_Column != "NULL"){
-      fun_LogIt(
+      fun_LogIt(session, 
         message = paste0(
           "**PreProcessing** - Batch Effect Correction: ",
           input$BatchEffect_Column
         )
       )
     }
-    fun_LogIt(
+    fun_LogIt(session, 
       message = paste0(
         "**PreProcessing** - The resulting dimensions are: ",
         paste0(dim(session_data$data),collapse = ", ")
       )
     )
-    fun_LogIt(message = "### Publication Snippet")
-    fun_LogIt(message = snippet_preprocessing(
+    fun_LogIt(session, message = "### Publication Snippet")
+    fun_LogIt(session, message = snippet_preprocessing(
       data=reactiveValuesToList(session_data),
       params=reactiveValuesToList(session_params)
     ))
-    fun_LogIt(message = "<br>")
+    fun_LogIt(session, message = "<br>")
   })
 
   # render plots and ui Parts
@@ -2170,14 +2170,14 @@ server <- function(input,output,session){
       units = "in",
       device = gsub("\\.","",input$file_ext_Preprocess)
     )
-    fun_LogIt(message = "## PreProcessing Violin Plot{.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    fun_LogIt(message = paste0("**PreProcess** - The Samples were plotted after: ",input$violin_color))
-    fun_LogIt(
+    fun_LogIt(session, message = "## PreProcessing Violin Plot{.tabset .tabset-fade}")
+    fun_LogIt(session, message = "### Info")
+    fun_LogIt(session, message = paste0("**PreProcess** - The Samples were plotted after: ",input$violin_color))
+    fun_LogIt(session, 
       message = paste0("**PreProcess** - ![Violin Plot](",tmp_filename,")")
     )
     if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
-      fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
+      fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
     }
     # no publication snippet as thats already in the log
     removeNotification(notificationID)
@@ -2263,14 +2263,14 @@ server <- function(input,output,session){
       units = "in",
       device = gsub("\\.","",input$file_type_mean_sd_plot)
     )
-    fun_LogIt(message = "## PreProcessing Mean and SD Plot{.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    fun_LogIt(message = "The means of the preprocessed data are plotted agains their standard deviation to check for heteroskedasticity.")
-    fun_LogIt(
+    fun_LogIt(session, message = "## PreProcessing Mean and SD Plot{.tabset .tabset-fade}")
+    fun_LogIt(session, message = "### Info")
+    fun_LogIt(session, message = "The means of the preprocessed data are plotted agains their standard deviation to check for heteroskedasticity.")
+    fun_LogIt(session, 
       message = paste0("**PreProcess** - ![Mean and SD Plot](",tmp_filename,")")
     )
     if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
-      fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
+      fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
     }
     # no publication snippet as thats already in the log
     removeNotification(notificationID)
@@ -2321,39 +2321,50 @@ server <- function(input,output,session){
   )
 
   # Sample Correlation ----
-  # Pass reactiveValues directly so modules can access $data, $data_original, etc.
+  # Phase 2: Pass selectedData_processed reactive for global sourcing
   sample_correlation_server(
     id = "sample_correlation",
     session_data = session_data,
-    session_params = session_params
+    session_params = session_params,
+    selectedData_processed = selectedData_processed
   )
 
   # Significance Analysis ----
+  # Phase 2: Pass data_input_shiny reactive for global sourcing
   significance_analysis_server(
     id = 'SignificanceAnalysis',
     session_data = session_data,
-    session_params = session_params
+    session_params = session_params,
+    data_input_shiny = data_input_shiny
   )
 
   # PCA ----
+  # Phase 2: Pass data_input_shiny reactive for global sourcing
   pca_Server(
     id = "PCA",
     session_data = session_data,
-    session_params = session_params
+    session_params = session_params,
+    data_input_shiny = data_input_shiny
   )
 
   # Heatmap ----
+  # Phase 2: Pass data_input_shiny and selectedData_processed reactives for global sourcing
   heatmap_server(
     id = 'Heatmap',
     session_data = session_data,
-    session_params = session_params
+    session_params = session_params,
+    data_input_shiny = data_input_shiny,
+    selectedData_processed = selectedData_processed
   )
 
   # Single Gene Visualisations ----
+  # Phase 2: Pass data_input_shiny and selectedData_processed reactives for global sourcing
   single_gene_visualisation_server(
     id = 'single_gene_visualisation',
     session_data = session_data,
-    session_params = session_params
+    session_params = session_params,
+    data_input_shiny = data_input_shiny,
+    selectedData_processed = selectedData_processed
   )
 
   # Enrichment Analysis ----

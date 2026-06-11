@@ -1,4 +1,5 @@
-heatmap_server <- function(id, session_data, session_params){moduleServer(
+# Phase 2: Requires data_input_shiny and selectedData_processed reactives for global sourcing
+heatmap_server <- function(id, session_data, session_params, data_input_shiny, selectedData_processed){moduleServer(
   id,
   function(input,output,session){
     # Heatmap ----
@@ -399,35 +400,35 @@ heatmap_server <- function(id, session_data, session_params){moduleServer(
         type="png"
       )
       # Add Log Messages
-      fun_LogIt(message = "## HEATMAP{.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
-      fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",isolate(input$row_selection_options)))
+      fun_LogIt(session, message = "## HEATMAP{.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
+      fun_LogIt(session, message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",isolate(input$row_selection_options)))
       if(any(isolate(input$row_selection_options)=="Select based on Annotation")){
-        fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",
+        fun_LogIt(session, message = paste0("**HEATMAP** - The rows were subsetted based on ",
                                    isolate(input$anno_options_heatmap),
                                    " :",
                                    paste0(isolate(input$row_anno_options_heatmap),
                                                   collapse = ",")))
       }
       if(!is.null(isolate(input$TopK))){
-        fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",isolate(input$TopK)))
-        fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",isolate(input$row_selection_options)))
+        fun_LogIt(session, message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",isolate(input$TopK)))
+        fun_LogIt(session, message = paste0("**HEATMAP** - Note that the order depends on ",isolate(input$row_selection_options)))
         # either based on LFC or on pVal
       }
-      fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",paste0(isolate(input$anno_options),collapse = ", ")))
-      fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",paste0(isolate(input$row_anno_options),collapse = ", ")))
+      fun_LogIt(session, message = paste0("**HEATMAP** - The heatmap samples were colored after ",paste0(isolate(input$anno_options),collapse = ", ")))
+      fun_LogIt(session, message = paste0("**HEATMAP** - The heatmap entities were colored after ",paste0(isolate(input$row_anno_options),collapse = ", ")))
       if(isolate(input$cluster_cols) == TRUE){
-        fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
+        fun_LogIt(session, message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
       }
       if(isolate(input$cluster_rows) == TRUE){
-        fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
+        fun_LogIt(session, message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
       }
-      fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
+      fun_LogIt(session, message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
       if(isTruthy(isolate(input$NotesHeatmap)) & !(isEmpty(isolate(input$NotesHeatmap)))){
-        fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesHeatmap)))
+        fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesHeatmap)))
       }
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_heatmap(
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_heatmap(
         data = reactiveValuesToList(session_data),
         params = reactiveValuesToList(session_params)
       ))

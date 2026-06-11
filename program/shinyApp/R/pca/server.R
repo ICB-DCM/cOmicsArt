@@ -1,4 +1,5 @@
-pca_Server <- function(id, session_data, session_params){
+# Phase 2: Requires data_input_shiny reactive for global sourcing
+pca_Server <- function(id, session_data, session_params, data_input_shiny){
   moduleServer(id, function(input,output,session){
     pca_reactives <- reactiveValues(
       calculate = -1,
@@ -631,27 +632,27 @@ pca_Server <- function(id, session_data, session_params){
         device = "png"
       )
       # Add Log Messages
-      fun_LogIt(message = "## PCA {.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
+      fun_LogIt(session, message = "## PCA {.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
       if(input$data_selection_pca && input$sample_selection_pca !="all"){
-        fun_LogIt(
+        fun_LogIt(session, 
           message = paste0("**PCA** - The following PCA-plot is based on a selection of the data. ")
         )
-        fun_LogIt(
+        fun_LogIt(session, 
           message = paste0("**PCA** - All samples with",input$SampleAnnotationTypes_pca,"being ",paste(input$sample_selection_pca,collapse = ", "),"were selected.")
         )
       }else{
-        fun_LogIt(message = "**PCA** - The PCA was computed on the entire dataset.")
+        fun_LogIt(session, message = "**PCA** - The PCA was computed on the entire dataset.")
       }
-      fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
-      ifelse(input$Show_loadings == "Yes",fun_LogIt(message = "PCA - Added top 5 loadings"),print(""))
-      fun_LogIt(message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
+      fun_LogIt(session, message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
+      ifelse(input$Show_loadings == "Yes",fun_LogIt(session, message = "PCA - Added top 5 loadings"),print(""))
+      fun_LogIt(session, message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
 
       if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
-        fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesPCA)))
+        fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesPCA)))
       }
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_PCA(
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_PCA(
         data = reactiveValuesToList(session_data),
         params = reactiveValuesToList(session_params))
       )
@@ -670,12 +671,12 @@ pca_Server <- function(id, session_data, session_params){
         device = "png"
       )
       # Add Log Messages
-      fun_LogIt(message = "## PCA ScreePlot{.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
-      fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
-      fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_PCAscree(
+      fun_LogIt(session, message = "## PCA ScreePlot{.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
+      fun_LogIt(session, message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
+      fun_LogIt(session, message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_PCAscree(
         data = reactiveValuesToList(session_data),
         params = reactiveValuesToList(session_params))
       )
@@ -694,13 +695,13 @@ pca_Server <- function(id, session_data, session_params){
         device = "png"
       )
       # Add Log Messages
-      fun_LogIt(message = "## PCA Loadings{.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
-      fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for ", input$x_axis_selection))
-      fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSliders," Loadings"))
-      fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_PCAloadings(
+      fun_LogIt(session, message = "## PCA Loadings{.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
+      fun_LogIt(session, message = paste0("**LoadingsPCA** - Loadings plot for ", input$x_axis_selection))
+      fun_LogIt(session, message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSliders," Loadings"))
+      fun_LogIt(session, message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_PCAloadings(
         data = reactiveValuesToList(session_data),
         params = reactiveValuesToList(session_params))
       )
@@ -721,14 +722,14 @@ pca_Server <- function(id, session_data, session_params){
         dpi = "print"
       )
       # Add Log Messages
-      fun_LogIt(message = "## PCA Loadings Matrix{.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
-      fun_LogIt(message = paste0("**PCALoadingsMatrix** - Loadings plot for Principle Components 1 till ",input$x_axis_selection))
-      fun_LogIt(message = paste0("**PCALoadingsMatrix** - Showing all entities which have an absolute Loadings value of at least", input$filterValue))
-      fun_LogIt(message = paste0("**PCALoadingsMatrix** - The corresponding Loadings Matrix plot - ![PCALoadingsMatrix](",tmp_filename,")"))
+      fun_LogIt(session, message = "## PCA Loadings Matrix{.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
+      fun_LogIt(session, message = paste0("**PCALoadingsMatrix** - Loadings plot for Principle Components 1 till ",input$x_axis_selection))
+      fun_LogIt(session, message = paste0("**PCALoadingsMatrix** - Showing all entities which have an absolute Loadings value of at least", input$filterValue))
+      fun_LogIt(session, message = paste0("**PCALoadingsMatrix** - The corresponding Loadings Matrix plot - ![PCALoadingsMatrix](",tmp_filename,")"))
 
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_PCAloadingsMatrix(
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_PCAloadingsMatrix(
         data = reactiveValuesToList(session_data),
         params = reactiveValuesToList(session_params))
       )

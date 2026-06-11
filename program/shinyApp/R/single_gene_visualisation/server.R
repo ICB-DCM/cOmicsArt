@@ -1,4 +1,5 @@
-single_gene_visualisation_server <- function(id, session_data, session_params){
+# Phase 2: Requires data_input_shiny and selectedData_processed reactives for global sourcing
+single_gene_visualisation_server <- function(id, session_data, session_params, data_input_shiny, selectedData_processed){
   moduleServer(
     id,
     function(input,output,session){
@@ -339,32 +340,32 @@ single_gene_visualisation_server <- function(id, session_data, session_params){
           device = "png"
         )
 
-        fun_LogIt(message = "## Single Entitie{.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = "## Single Entitie{.tabset .tabset-fade}")
+        fun_LogIt(session, message = "### Info")
+        fun_LogIt(session, message = paste0(
           "**Single Entitie** - The following single entitie was plotted: ",
           input$Select_Gene
         ))
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**Single Entitie** - Values shown are: ",
           input$type_of_data_gene, " data input"
         ))
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**Single Entitie** - Values are grouped for all levels within: ", input$accross_condition, " (",paste0(levels(single_gene_reactives$gene_data$anno),collapse = ";"),")"))
-        fun_LogIt(message = "**Single Entitie** - Test for differences: T-Test")  # For now only test method we do
-        fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
+        fun_LogIt(session, message = "**Single Entitie** - Test for differences: T-Test")  # For now only test method we do
+        fun_LogIt(session, message = paste0("**Single Entitie** - pairwise tested"))
 
-        fun_LogIt(
+        fun_LogIt(session, 
           message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")")
         )
 
         if(isTruthy(input$NotesSingleEntities) &
            !(isEmpty(input$NotesSingleEntities))){
-          fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesSingleEntities)))
+          fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesSingleEntities)))
         }
 
-        fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SingleGene(
+        fun_LogIt(session, message = "### Publication Snippet")
+        fun_LogIt(session, message = snippet_SingleGene(
           data = reactiveValuesToList(session_data),
           params = reactiveValuesToList(session_params)
         ))
