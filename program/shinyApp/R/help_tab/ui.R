@@ -61,7 +61,41 @@ help_tab_main_panel <- mainPanel(
     id = "help_tab_info",
     htmlOutput(outputId = "help_tab_info", container = pre),
   ),
-  uiOutput(outputId = "WelcomePage_ui"),
+  # Conditional content based on ImageSelect (client-side rendering for performance)
+  conditionalPanel(
+    condition = "input.ImageSelect == 'WelcomePage'",
+    imageOutput("WelcomePage")
+  ),
+  conditionalPanel(
+    condition = "input.ImageSelect == 'YouTube Tutorial'",
+    tags$div(
+      id = "youtube_container",
+      tags$iframe(
+        id = "youtube_iframe",
+        src = "https://www.youtube.com/embed/pTGjtIYQOak",
+        frameborder = "0",
+        allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+        allowfullscreen = TRUE,
+        style = "width: 100%; height: 600px;" # Will be updated by Shiny inputs
+      )
+    )
+  ),
+  # JavaScript to update YouTube iframe dimensions based on inputs
+  tags$script(HTML("
+    $(document).on('shiny:inputchanged', function(event) {
+      if (event.name === 'ImageWidth' || event.name === 'ImageHeight') {
+        var iframe = document.getElementById('youtube_iframe');
+        if (iframe) {
+          if (event.name === 'ImageWidth') {
+            iframe.style.width = event.value + '%';
+          }
+          if (event.name === 'ImageHeight') {
+            iframe.style.height = event.value;
+          }
+        }
+      }
+    });
+  ")),
   # Line break for additional spacing
   br(),
   div(
