@@ -124,35 +124,12 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
       # Render Plot and Info
       output$SingleGenePlot <- renderPlotly({
         req(single_gene_reactives$allow_plot)
-        p = plotly::ggplotly(single_gene_reactives$plot)
-        onRender(p, "
-          function(el, x) {
-            Plotly.newPlot(el, x.data, x.layout, {
-              modeBarButtonsToAdd: [{
-                name: 'Copy to clipboard',
-                icon: Plotly.Icons.camera,  // You can use a more appropriate icon if desired
-                click: function(gd) {
-                  Plotly.toImage(gd, {format: 'png'}).then(function(url) {
-                    fetch(url)
-                      .then(res => res.blob())
-                      .then(blob => {
-                        navigator.clipboard.write([
-                          new ClipboardItem({ [blob.type]: blob })
-                        ]).then(function() {
-                          // Send a success message back to Shiny
-                          Shiny.setInputValue('plot_copied_status', 'SingleGenePlot_success_' + Date.now(), {priority: 'event'});
-                        }).catch(function(err) {
-                          // Send an error message back to Shiny
-                          Shiny.setInputValue('plot_copied_status', 'SingleGenePlot_clipboard_error_' + Date.now(), {priority: 'event'});
-                        });
-                      });
-                  });
-                }
-              }],
-               modeBarButtonsToRemove: ['toImage']
-            });
-          }
-        ")
+
+        # Use helper function for clipboard functionality
+        create_clipboard_plotly(
+          gg_plot = single_gene_reactives$plot,
+          plot_id = "SingleGenePlot"
+        )
       })
       
       output$SingleGene_Info <- renderText({

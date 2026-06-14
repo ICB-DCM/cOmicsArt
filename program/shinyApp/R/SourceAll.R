@@ -1,6 +1,11 @@
 source("R/version.R",local = T)
 source("R/util.R", local = T)
 source("R/C.R",local = T)
+# Source constants
+source("R/constants/ui_styles.R", local = T)
+# Source utility helpers
+source("R/utils/plotly_helpers.R", local = T)
+source("R/utils/ui_components.R", local = T)
 source("R/fun_filterRNA.R",local = T)
 source("R/fun_LFC.R",local = T)
 source("R/heatmap/fun_entitieSelection.R",local = T)
