@@ -171,55 +171,22 @@ generate_volcano_plots <- function(result, input, output, ids, tab_state,
   session_params$SigAna$th_lfc <- th_lfc
   session_params$SigAna$anno_vector <- anno_vector
 
-  # Render plotly outputs
+  # Render plotly outputs using centralized helper function
   output[[ids$volcano_plot_adj]] <- renderPlotly({
-    create_plotly_with_clipboard(volcano_obj$volcano_plt, anno_col_name)
+    create_clipboard_plotly(
+      gg_plot = volcano_obj$volcano_plt,
+      plot_id = ids$volcano_plot_adj,
+      tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")
+    ) %>% plotly::layout(showlegend = TRUE)
   })
 
   output[[ids$volcano_plot_raw]] <- renderPlotly({
-    create_plotly_with_clipboard(volcano_obj_raw$volcano_plt, anno_col_name)
+    create_clipboard_plotly(
+      gg_plot = volcano_obj_raw$volcano_plt,
+      plot_id = ids$volcano_plot_raw,
+      tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")
+    ) %>% plotly::layout(showlegend = TRUE)
   })
-}
-
-#' Create Plotly object with clipboard functionality
-#'
-#' Adds a custom clipboard button to Plotly plots.
-#'
-#' @param ggplot_obj ggplot object to convert to plotly
-#' @param anno_col_name Name of annotation column for tooltips
-#' @return Plotly object with clipboard button
-#' @export
-create_plotly_with_clipboard <- function(ggplot_obj, anno_col_name) {
-  p <- ggplotly(ggplot_obj,
-    tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")) %>%
-    layout(showlegend = TRUE)
-
-  onRender(p, "
-    function(el, x) {
-      Plotly.newPlot(el, x.data, x.layout, {
-        modeBarButtonsToAdd: [{
-          name: 'Copy to clipboard',
-          icon: Plotly.Icons.camera,
-          click: function(gd) {
-            Plotly.toImage(gd, {format: 'png'}).then(function(url) {
-              fetch(url)
-                .then(res => res.blob())
-                .then(blob => {
-                  navigator.clipboard.write([
-                    new ClipboardItem({ [blob.type]: blob })
-                  ]).then(function() {
-                    Shiny.setInputValue('plot_copied_status', el.id + '_success_' + Date.now(), {priority: 'event'});
-                  }).catch(function(err) {
-                    Shiny.setInputValue('plot_copied_status', el.id + '_clipboard_error_' + Date.now(), {priority: 'event'});
-                  });
-                });
-            });
-          }
-        }],
-        modeBarButtonsToRemove: ['toImage']
-      });
-    }
-  ")
 }
 
 #' Setup legend toggle observers
