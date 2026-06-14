@@ -431,23 +431,7 @@ server <- function(input,output,session){
     shinyjs::toggle(id = "console_toggle")
   })
 
-  observeEvent(input$omic_type_testdata,{
-    if(input$omic_type_testdata == "Transcriptomics"){
-      output$testdata_help_text <- renderUI({
-        HTML(EXAMPLE_RNA_DESCRIPTION)
-      })
-    }
-    if(input$omic_type_testdata == "Metabolomics"){
-      output$testdata_help_text <- renderUI({
-        HTML(EXAMPLE_METABO_DESCRIPTION)
-      })
-    }
-    if(input$omic_type_testdata == "Lipidomics"){
-      output$testdata_help_text <- renderUI({
-        HTML(EXAMPLE_LIPID_DESCRIPTION)
-      })
-    }
-    })
+  # Test data help text rendered client-side via conditionalPanel in data_selection/ui.R
   
   observeEvent(input$AddGeneSymbols, {
     req(data_input_shiny())
