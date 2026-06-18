@@ -190,8 +190,10 @@ prepare_upset_plot <- function(res2plot){
   # download.
   overlap_list <- UpSetR::fromList(res2plot)
   names <- c()
-  for(i in 1:length(res2plot)){
-    names <- append(names, res2plot[[i]])
+  if(length(res2plot) > 0){
+    for(i in seq_along(res2plot)){
+      names <- append(names, res2plot[[i]])
+    }
   }
   names <- unique(names)
   rownames(overlap_list) <- names
@@ -272,10 +274,10 @@ log_messages_volcano<- function(plot, table, contrast, file_path){
 
   # Add Log Messages
 
-  fun_LogIt(message = paste(
+  fun_LogIt(session, message = paste(
     "**VOLCANO** - Underlying Volcano Comparison:", contrast[1],"vs", contrast[2]
   ))
-  fun_LogIt(message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
+  fun_LogIt(session, message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
 
   removeNotification(notificationID)
   showNotification("Report Saved!",type = "message", duration = 1)

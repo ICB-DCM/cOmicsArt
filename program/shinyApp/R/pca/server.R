@@ -1,4 +1,5 @@
-pca_Server <- function(id){
+# Phase 2: Requires data_input_shiny reactive for global sourcing
+pca_Server <- function(id, session_data, session_params, data_input_shiny){
   moduleServer(id, function(input,output,session){
     pca_reactives <- reactiveValues(
       calculate = -1,
@@ -31,10 +32,10 @@ pca_Server <- function(id){
       req(data_input_shiny())
       print("Refreshing UI Heatmap")
       pca_reactives$allow_plot <- FALSE
-      data <- update_data(session$token)
+      data <- reactiveValuesToList(session_data)
 
       output$UseBatch_ui <- renderUI({
-        req(par_tmp[[session$token]]$BatchColumn != "NULL")
+        req(session_params$BatchColumn != "NULL")
         selectInput(
           inputId = ns("UseBatch"),
           label = "Use batch corrected data?",
@@ -260,10 +261,10 @@ pca_Server <- function(id){
 
       # assign variables to be used
       useBatch <- ifelse(
-        par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes",
+        session_params$BatchColumn != "NULL" && input$UseBatch == "Yes",
         TRUE,FALSE
       )
-      data <- update_data(session$token)
+      data <- reactiveValuesToList(session_data)
       if(useBatch){
           data <- data$data_batch_corrected
       } else {
@@ -283,17 +284,17 @@ pca_Server <- function(id){
         percentVar <- pca_res$percentVar
       }, error = function(e){
         error_modal(e$message)
-        res_tmp[[session$token]][["PCA"]] <<- NULL
-        pca_reactives$pcaData <<- NULL
-        pca_reactives$percentVar <<- NULL
+        session_data$PCA <- NULL
+        pca_reactives$pcaData <- NULL
+        pca_reactives$percentVar <- NULL
         pca_reactives$waiter$hide()
         return(NULL)
       })
 
-      # assign res_temp
-      res_tmp[[session$token]][["PCA"]] <<- pca
-      # assign par_temp as empty list
-      par_tmp[[session$token]][["PCA"]] <<- list(
+      # assign session_data
+      session_data$PCA <- pca
+      # assign session_params
+      session_params$PCA <- list(
         sample_selection = sample_selection,
         sample_types = sample_types,
         useBatch = useBatch,
@@ -328,7 +329,7 @@ pca_Server <- function(id){
       req(pca_reactives$allow_plot)
       req(pca_reactives$pcaData, pca_reactives$percentVar, input$coloring_options)
       # define the variables to be used
-      pca <- res_tmp[[session$token]][["PCA"]]
+      pca <- session_data$PCA
       if(is.null(pca)){
         return(NULL)
       }
@@ -342,10 +343,10 @@ pca_Server <- function(id){
       entitie_anno <- input$entitie_anno %||% NULL
       tooltip_var <- input$PCA_anno_tooltip %||% NULL
 
-      data <- update_data(session$token)$data
+      data <- reactiveValuesToList(session_data)$data
       customTitle <- create_default_title_pca(
         pcs = paste0(x_axis," vs ",y_axis),
-        preprocessing = par_tmp[[session$token]]['preprocessing_procedure']
+        preprocessing = session_params$preprocessing_procedure
       )
       pca_reactives$PCA_plot <- plot_pca(
         pca = pca,
@@ -361,15 +362,15 @@ pca_Server <- function(id){
         entitie_anno = entitie_anno,
         tooltip_var = tooltip_var
       )
-      # Update par_tmp
-      par_tmp[[session$token]][["PCA"]]$color_by <<- color_by
-      par_tmp[[session$token]][["PCA"]]$x_axis <<- x_axis
-      par_tmp[[session$token]][["PCA"]]$y_axis <<- y_axis
-      par_tmp[[session$token]][["PCA"]]$show_loadings <<- show_loadings
-      par_tmp[[session$token]][["PCA"]]$plot_ellipses <<- plot_ellipses
-      par_tmp[[session$token]][["PCA"]]$entitie_anno <<- entitie_anno
-      par_tmp[[session$token]][["PCA"]]$tooltip_var <<- tooltip_var  # Needed for ggplot?
-      par_tmp[[session$token]][["PCA"]]$title <<- customTitle
+      # Update session_params
+      session_params$PCA$color_by <- color_by
+      session_params$PCA$x_axis <- x_axis
+      session_params$PCA$y_axis <- y_axis
+      session_params$PCA$show_loadings <- show_loadings
+      session_params$PCA$plot_ellipses <- plot_ellipses
+      session_params$PCA$entitie_anno <- entitie_anno
+      session_params$PCA$tooltip_var <- tooltip_var  # Needed for ggplot?
+      session_params$PCA$title <- customTitle
     })
 
     observeEvent(list(  # Update the Loadings Plot
@@ -386,8 +387,8 @@ pca_Server <- function(id){
       n_top <- input$topSlider
       n_bottom <- input$bottomSlider
       entitie_anno <- input$entitie_anno %||% NULL
-      pca <- res_tmp[[session$token]][["PCA"]]
-      data <- update_data(session$token)$data
+      pca <- session_data$PCA
+      data <- reactiveValuesToList(session_data)$data
       # Loadings plot
       pca_reactives$Loadings_plot <- plot_pca_loadings(
         pca = pca,
@@ -397,11 +398,11 @@ pca_Server <- function(id){
         n_bottom = n_bottom,
         entitie_anno = entitie_anno
       )
-      # update par_tmp
-      par_tmp[[session$token]][["PCA"]]$n_top <<- n_top
-      par_tmp[[session$token]][["PCA"]]$n_bottom <<- n_bottom
-      par_tmp[[session$token]][["PCA"]]$entitie_anno <<- entitie_anno
-      par_tmp[[session$token]][["PCA"]]$x_axis <<- x_axis
+      # update session_params
+      session_params$PCA$n_top <- n_top
+      session_params$PCA$n_bottom <- n_bottom
+      session_params$PCA$entitie_anno <- entitie_anno
+      session_params$PCA$x_axis <- x_axis
     })
 
     observeEvent(list(  # Update the Scree Plot
@@ -410,7 +411,7 @@ pca_Server <- function(id){
       req(pca_reactives$percentVar)
       # define the variables to be used
       percentVar <- pca_reactives$percentVar
-      pca <- res_tmp[[session$token]][["PCA"]]
+      pca <- session_data$PCA
       # Scree plot
       pca_reactives$Scree_plot <- plot_scree_pca(
         pca = pca,
@@ -429,11 +430,11 @@ pca_Server <- function(id){
         input$filterValue
       )
       # define variables to be used
-      pca <- res_tmp[[session$token]][["PCA"]]
+      pca <- session_data$PCA
       entitie_anno <- input$entitie_anno %||% NULL
       cutoff <- input$filterValue
       n_pcs <- input$nPCAs_to_look_at %||% 2
-      data <- update_data(session$token)$data
+      data <- reactiveValuesToList(session_data)$data
 
       # Potentially update the slider for the matrix filter
       isolate(update_slider_values(
@@ -450,10 +451,10 @@ pca_Server <- function(id){
         n_pcs = n_pcs,
         cutoff = cutoff
       )
-      # update par_tmp
-      par_tmp[[session$token]][["PCA"]]$cutoff <<- cutoff
-      par_tmp[[session$token]][["PCA"]]$n_pcs <<- n_pcs
-      par_tmp[[session$token]][["PCA"]]$entitie_anno <<- entitie_anno
+      # update session_params
+      session_params$PCA$cutoff <- cutoff
+      session_params$PCA$n_pcs <- n_pcs
+      session_params$PCA$entitie_anno <- entitie_anno
     })
 
     ## R Code Download ----
@@ -469,19 +470,19 @@ pca_Server <- function(id){
         )
         waiter$show()
         envList <- list(
-          par_tmp = par_tmp[[session$token]]
+          par_tmp = reactiveValuesToList(session_params)
         )
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
         # save csv files
         save_summarized_experiment(
-          res_tmp[[session$token]]$data_original,
+          session_data$data_original,
           temp_directory
         )
         write(
           create_workflow_script(
             pipeline_info = PCA_PIPELINE,
-            par = par_tmp[[session$token]],
+            par = reactiveValuesToList(session_params),
             par_mem = "PCA",
             path_to_util = file.path(temp_directory, "util.R")
           ),
@@ -510,19 +511,19 @@ pca_Server <- function(id){
         )
         waiter$show()
         envList <- list(
-          par_tmp = par_tmp[[session$token]]
+          par_tmp = reactiveValuesToList(session_params)
         )
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
         # save csv files
         save_summarized_experiment(
-          res_tmp[[session$token]]$data_original,
+          session_data$data_original,
           temp_directory
         )
         write(
           create_workflow_script(
             pipeline_info = SCREE_PLOT_PIPELINE,
-            par = par_tmp[[session$token]],
+            par = reactiveValuesToList(session_params),
             par_mem = "PCA",
             path_to_util = file.path(temp_directory, "util.R")
           ),
@@ -551,19 +552,19 @@ pca_Server <- function(id){
         )
         waiter$show()
         envList <- list(
-          par_tmp = par_tmp[[session$token]]
+          par_tmp = reactiveValuesToList(session_params)
         )
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
         # save csv files
         save_summarized_experiment(
-          res_tmp[[session$token]]$data_original,
+          session_data$data_original,
           temp_directory
         )
         write(
           create_workflow_script(
             pipeline_info = PCA_LOADINGS_PIPELINE,
-            par = par_tmp[[session$token]],
+            par = reactiveValuesToList(session_params),
             par_mem = "PCA",
             path_to_util = file.path(temp_directory, "util.R")
           ),
@@ -592,19 +593,19 @@ pca_Server <- function(id){
         )
         waiter$show()
         envList <- list(
-          par_tmp = par_tmp[[session$token]]
+          par_tmp = reactiveValuesToList(session_params)
         )
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
         # save csv files
         save_summarized_experiment(
-          res_tmp[[session$token]]$data_original,
+          session_data$data_original,
           temp_directory
         )
         write(
           create_workflow_script(
             pipeline_info = LOADINGS_MATRIX_PIPELINE,
-            par = par_tmp[[session$token]],
+            par = reactiveValuesToList(session_params),
             par_mem = "PCA",
             path_to_util = file.path(temp_directory, "util.R")
           ),
@@ -631,29 +632,29 @@ pca_Server <- function(id){
         device = "png"
       )
       # Add Log Messages
-      fun_LogIt(message = "## PCA {.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
+      fun_LogIt(session, message = "## PCA {.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
       if(input$data_selection_pca && input$sample_selection_pca !="all"){
-        fun_LogIt(
+        fun_LogIt(session, 
           message = paste0("**PCA** - The following PCA-plot is based on a selection of the data. ")
         )
-        fun_LogIt(
+        fun_LogIt(session, 
           message = paste0("**PCA** - All samples with",input$SampleAnnotationTypes_pca,"being ",paste(input$sample_selection_pca,collapse = ", "),"were selected.")
         )
       }else{
-        fun_LogIt(message = "**PCA** - The PCA was computed on the entire dataset.")
+        fun_LogIt(session, message = "**PCA** - The PCA was computed on the entire dataset.")
       }
-      fun_LogIt(message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
-      ifelse(input$Show_loadings == "Yes",fun_LogIt(message = "PCA - Added top 5 loadings"),print(""))
-      fun_LogIt(message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
+      fun_LogIt(session, message = paste0("**PCA** - The following PCA-plot is colored after: ", input$coloring_options))
+      ifelse(input$Show_loadings == "Yes",fun_LogIt(session, message = "PCA - Added top 5 loadings"),print(""))
+      fun_LogIt(session, message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
 
       if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
-        fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesPCA)))
+        fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesPCA)))
       }
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_PCA(
-        data = res_tmp[[session$token]],
-        params = par_tmp[[session$token]])
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_PCA(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params))
       )
       removeNotification(notificationID)
       showNotification("Report Saved!",type = "message", duration = 1)
@@ -670,14 +671,14 @@ pca_Server <- function(id){
         device = "png"
       )
       # Add Log Messages
-      fun_LogIt(message = "## PCA ScreePlot{.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
-      fun_LogIt(message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
-      fun_LogIt(message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_PCAscree(
-        data = res_tmp[[session$token]],
-        params = par_tmp[[session$token]])
+      fun_LogIt(session, message = "## PCA ScreePlot{.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
+      fun_LogIt(session, message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
+      fun_LogIt(session, message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_PCAscree(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params))
       )
       removeNotification(notificationID)
       showNotification("Report Saved!",type = "message", duration = 1)
@@ -694,15 +695,15 @@ pca_Server <- function(id){
         device = "png"
       )
       # Add Log Messages
-      fun_LogIt(message = "## PCA Loadings{.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
-      fun_LogIt(message = paste0("**LoadingsPCA** - Loadings plot for ", input$x_axis_selection))
-      fun_LogIt(message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSliders," Loadings"))
-      fun_LogIt(message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_PCAloadings(
-        data = res_tmp[[session$token]],
-        params = par_tmp[[session$token]])
+      fun_LogIt(session, message = "## PCA Loadings{.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
+      fun_LogIt(session, message = paste0("**LoadingsPCA** - Loadings plot for ", input$x_axis_selection))
+      fun_LogIt(session, message = paste0("**LoadingsPCA** - Showing the the highest ",input$topSlider," and the lowest ",input$bottomSliders," Loadings"))
+      fun_LogIt(session, message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_PCAloadings(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params))
       )
       removeNotification(notificationID)
       showNotification("Report Saved!",type = "message", duration = 1)
@@ -721,16 +722,16 @@ pca_Server <- function(id){
         dpi = "print"
       )
       # Add Log Messages
-      fun_LogIt(message = "## PCA Loadings Matrix{.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
-      fun_LogIt(message = paste0("**PCALoadingsMatrix** - Loadings plot for Principle Components 1 till ",input$x_axis_selection))
-      fun_LogIt(message = paste0("**PCALoadingsMatrix** - Showing all entities which have an absolute Loadings value of at least", input$filterValue))
-      fun_LogIt(message = paste0("**PCALoadingsMatrix** - The corresponding Loadings Matrix plot - ![PCALoadingsMatrix](",tmp_filename,")"))
+      fun_LogIt(session, message = "## PCA Loadings Matrix{.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
+      fun_LogIt(session, message = paste0("**PCALoadingsMatrix** - Loadings plot for Principle Components 1 till ",input$x_axis_selection))
+      fun_LogIt(session, message = paste0("**PCALoadingsMatrix** - Showing all entities which have an absolute Loadings value of at least", input$filterValue))
+      fun_LogIt(session, message = paste0("**PCALoadingsMatrix** - The corresponding Loadings Matrix plot - ![PCALoadingsMatrix](",tmp_filename,")"))
 
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_PCAloadingsMatrix(
-        data = res_tmp[[session$token]],
-        params = par_tmp[[session$token]])
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_PCAloadingsMatrix(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params))
       )
       removeNotification(notificationID)
       showNotification("Report Saved!",type = "message", duration = 1)
@@ -742,7 +743,7 @@ pca_Server <- function(id){
       filename = function() {
         paste0(create_default_title_pca(
           pcs = paste0(input$x_axis_selection," vs ",input$y_axis_selection),
-          preprocessing = par_tmp[[session$token]]['preprocessing_procedure']
+          preprocessing = session_params$preprocessing_procedure
         ), format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_plot1)
       },
       content = function(file){

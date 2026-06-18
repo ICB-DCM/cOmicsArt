@@ -1,5 +1,8 @@
 server <- function(input,output,session){
-  source("R/SourceAll.R",local=T)
+  # Note: SourceAll.R must remain here due to lexical scoping requirements
+  # Many functions need access to 'session' object through parent environment
+  # TODO Phase 2: Refactor to pass session as parameter to enable global sourcing
+  source("R/SourceAll.R", local=T)
 
   # fill session_if textOutput with current session$token
   output$session_id <- renderText({
@@ -224,27 +227,90 @@ server <- function(input,output,session){
 
 
 
-# Init res_tmp and par_tmp objects if they do not yet exist ----
-  if(!exists("res_tmp")){
-    res_tmp <<- list()
-    par_tmp <<- list()
-  }
-  # create an empty list in res/par_tmp[[session$token]]
-  res_tmp[[session$token]] <<- list()
-  par_tmp[[session$token]] <<- list()
-  res_tmp[[session$token]]$passedVI <<- F
-  # On session end, remove the list from res/par_tmp
+# Init session-scoped reactiveValues (Phase 2 Refactoring) ----
+  # Data objects storage
+  session_data <- reactiveValues(
+    # Primary data objects
+    data = NULL,                        # Current processed data (main analysis object)
+    data_original = NULL,               # Original uploaded data (preserved)
+    data_batch_corrected = NULL,        # Batch-corrected data (optional)
+
+    # DESeq2 objects
+    DESeq_obj = NULL,                   # DESeq2 object (if vst_DESeq used)
+    DESeq_obj_batch_corrected = NULL,   # Batch-corrected DESeq object
+
+    # Workflow control flags
+    passedVI = FALSE,                   # Visual inspection passed
+    changedDuringVI = FALSE,            # Data changed during VI
+
+    # Console outputs (for display)
+    batch_console_output = NULL,        # Batch correction console output
+    batch_warnings = NULL,              # Batch correction warnings
+    all_console_output = NULL,          # All preprocessing output
+    all_warnings = NULL,                # All preprocessing warnings
+
+    # Module-specific state storage (session-level for code generation)
+    # NOTE: Kept at session level to support R code generation
+    Heatmap = NULL,
+    SampleCorrelation = NULL,
+    SigAna = NULL,
+    SingleGeneVis = NULL
+  )
+
+  # Parameters and configuration storage
+  session_params <- reactiveValues(
+    # Data type and organism
+    omic_type = NULL,                   # "Transcriptomics", "Proteomics", etc.
+    organism = NULL,                    # For biomaRt annotation
+    addedGeneAnno = FALSE,              # Gene annotation added flag
+
+    # Preprocessing configuration
+    preprocessing_procedure = NULL,     # "vst_DESeq", "limma_voom", etc.
+    preprocessing_filtering = NULL,     # Filtering method
+    BatchColumn = "NULL",               # Batch effect column name
+
+    # Filtering parameters
+    filter_threshold = NULL,            # Main filtering threshold
+    filter_threshold_samplewise = NULL, # Sample-wise threshold
+    filter_samplesize = NULL,           # Filter sample size
+
+    # DESeq2 parameters
+    deseq_formula = NULL,               # DESeq2 formula string
+    deseq_factors = NULL,               # DESeq2 factors vector
+    DESeq_formula_batch = NULL,         # Formula including batch
+
+    # Limma voom parameters
+    limma_intercept = NULL,             # Limma intercept
+    limma_formula = NULL,               # Limma formula
+
+    # Selection parameters (standardized names)
+    selected_rows = NULL,               # Selected row IDs (replaces entities_selected)
+    selected_samples = NULL,            # Selected sample IDs (replaces samples_selected)
+    row_type = NULL,                    # Row selection type
+    sample_type = NULL,                 # Sample selection type
+    propensity = 1,                     # Propensity score (default 1)
+
+    # Visualization parameters
+    violin_color = NULL,                # Violin plot color preference
+
+    # Module-specific parameters (session-level for code generation)
+    Enrichment = list(),                # Enrichment analysis params (nested)
+    Heatmap = NULL,                     # Heatmap params
+    SigAna = NULL,                      # Significance analysis params
+    SingleGeneVis = NULL                # Single gene visualization params
+  )
+
+  # Session cleanup: reactiveValues auto-cleanup on session end
+  # Only need to remove the www/ folder
   session$onSessionEnded(function() {
-    res_tmp[[session$token]] <<- NULL
-    par_tmp[[session$token]] <<- NULL
-    # delete the folder with the session token
+    # Delete the folder with the session token
     if(dir.exists(paste0("www/",session$token))){
       # Remove the directory and its contents
       unlink(paste0("www/",session$token), recursive = TRUE)
       if (!dir.exists(paste0("www/",session$token))) {
-        cat("The directory has been successfully removed.\n")
+        cat("Session cleanup: Directory successfully removed.\n")
       } else {
-        cat("The directory could not be removed.\n")
+        cat("Session cleanup: Directory could not be removed.\n")
       }
     }
   })
@@ -349,7 +415,7 @@ server <- function(input,output,session){
     content = function(file){
       # TODO Q: What to save here? only original enough?
       saveRDS(
-        object = res_tmp[[session$token]]$data_original,
+        object = session_data$data_original,
         file = file
       )
     }
@@ -405,8 +471,8 @@ server <- function(input,output,session){
   
   observeEvent(input$AddGeneSymbols, {
     req(data_input_shiny())
-    req(res_tmp[[session$token]]$data_original)
-    annotation_result <- detect_annotation(res_tmp[[session$token]]$data_original)
+    req(session_data$data_original)
+    annotation_result <- detect_annotation(session_data$data_original)
     annotation_name <- annotation_result$AnnoType
     column_name <- annotation_result$AnnoCol
 
@@ -415,7 +481,7 @@ server <- function(input,output,session){
       HTML(paste0(
         "We tried to find an appropriate annotation and ",
         if (is.null(annotation_name)) {
-          
+
           "found nothing."
         } else {
           paste0("might have found <strong>", annotation_name, "</strong> in <strong>", column_name, "</strong>. Is that correct?")
@@ -431,7 +497,7 @@ server <- function(input,output,session){
         column(6, selectInput(
           inputId = "annotation_colname",
           label = "Column Names",
-          choices = colnames(rowData(res_tmp[[session$token]]$data_original)),
+          choices = colnames(rowData(session_data$data_original)),
           selected = column_name
         ))
       ),
@@ -448,16 +514,16 @@ server <- function(input,output,session){
   observeEvent(input$do_annotation, {
     # Added gene annotation if asked for
     if(input$AddGeneSymbols & input[[paste0("omic_type_", uploaded_from())]] == "Transcriptomics") {
-      fun_LogIt(
+      fun_LogIt(session, 
         message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added"
       )
-      fun_LogIt(
+      fun_LogIt(session, 
         message = paste0("**DataInput** - chosen Organism: ", input$AddGeneSymbols_organism)
       )
-      par_tmp[[session$token]]['organism'] <<- input$AddGeneSymbols_organism
+      session_params$organism <- input$AddGeneSymbols_organism
 
       output$debug <- renderText({"<font color=\"#00851d\"><b>Added gene annotation</b></font>"})
-      if(par_tmp[[session$token]]['organism'] == "Human genes (GRCh38.p14)"){
+      if(session_params$organism == "Human genes (GRCh38.p14)"){
         ensembl_slot <- "hsapiens_gene_ensembl"
       }else{
         ensembl_slot <- "mmusculus_gene_ensembl"
@@ -467,12 +533,12 @@ server <- function(input,output,session){
       out <- getBM(
         attributes = c("ensembl_gene_id", "gene_biotype", "external_gene_name", "entrezgene_id"),
         filter = input$annotation_name,
-        values = rowData(res_tmp[[session$token]]$data_original)[,input$annotation_colname],
+        values = rowData(session_data$data_original)[,input$annotation_colname],
         mart = ensembl
       )
       # Align the rows based on matching annotation
       match_indices <- match(
-        rowData(res_tmp[[session$token]]$data_original)[,input$annotation_colname], out[,input$annotation_name]
+        rowData(session_data$data_original)[,input$annotation_colname], out[,input$annotation_name]
       )
       matched_out <- out[match_indices, ]
 
@@ -481,36 +547,42 @@ server <- function(input,output,session){
         output$debug <- renderText({"<font color=\"#ab020a\"><b>You have most likely chosen the wrong organism! No annotation was added</b></font>"})
       } else {
         # Initialize new columns in the rowData with NA
-        rowData(res_tmp[[session$token]]$data_original)$ensembl_gene_id <<- NA
-        rowData(res_tmp[[session$token]]$data_original)$gene_biotype <<- NA
-        rowData(res_tmp[[session$token]]$data_original)$external_gene_name <<- NA
-        rowData(res_tmp[[session$token]]$data_original)$entrezgene_id <<- NA
+        rowData(session_data$data_original)$ensembl_gene_id <- NA
+        rowData(session_data$data_original)$gene_biotype <- NA
+        rowData(session_data$data_original)$external_gene_name <- NA
+        rowData(session_data$data_original)$entrezgene_id <- NA
 
         # Update rowData with matched information
         matched_rows <- !is.na(match_indices)
-        rowData(res_tmp[[session$token]]$data_original)$ensembl_gene_id[matched_rows] <<- matched_out$ensembl_gene_id[matched_rows]
-        rowData(res_tmp[[session$token]]$data_original)$gene_biotype[matched_rows] <<- matched_out$gene_biotype[matched_rows]
-        rowData(res_tmp[[session$token]]$data_original)$external_gene_name[matched_rows] <<- matched_out$external_gene_name[matched_rows]
-        rowData(res_tmp[[session$token]]$data_original)$entrezgene_id[matched_rows] <<- matched_out$entrezgene_id[matched_rows]
+        rowData(session_data$data_original)$ensembl_gene_id[matched_rows] <- matched_out$ensembl_gene_id[matched_rows]
+        rowData(session_data$data_original)$gene_biotype[matched_rows] <- matched_out$gene_biotype[matched_rows]
+        rowData(session_data$data_original)$external_gene_name[matched_rows] <- matched_out$external_gene_name[matched_rows]
+        rowData(session_data$data_original)$entrezgene_id[matched_rows] <- matched_out$entrezgene_id[matched_rows]
       }
     }
-    
+
     # edit annotation columns such that if na is present in the row annotation,
     # the na gets replaced by the rowname
-    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data))){
-      if(any(is.na(rowData(res_tmp[[session$token]]$data)[,i]))){
-        rowData(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i]),i] <<- rownames(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i])]
+    ncols_data <- ncol(rowData(session_data$data))
+    if(ncols_data > 0) {
+      for(i in seq_len(ncols_data)){
+        if(any(is.na(rowData(session_data$data)[,i]))){
+          rowData(session_data$data)[is.na(rowData(session_data$data)[,i]),i] <- rownames(session_data$data)[is.na(rowData(session_data$data)[,i])]
+        }
       }
     }
-    
-    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data_original))){
-      if(any(is.na(rowData(res_tmp[[session$token]]$data_original)[,i]))){
-        rowData(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i]),i] <<- rownames(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i])]
+
+    ncols_data_original <- ncol(rowData(session_data$data_original))
+    if(ncols_data_original > 0) {
+      for(i in seq_len(ncols_data_original)){
+        if(any(is.na(rowData(session_data$data_original)[,i]))){
+          rowData(session_data$data_original)[is.na(rowData(session_data$data_original)[,i]),i] <- rownames(session_data$data_original)[is.na(rowData(session_data$data_original)[,i])]
+        }
       }
     }
-    
-    par_tmp[[session$token]]['addedGeneAnno'] <<- TRUE
-    par_tmp[[session$token]]['organism'] <<- input$AddGeneSymbols_organism
+
+    session_params$addedGeneAnno <- TRUE
+    session_params$organism <- input$AddGeneSymbols_organism
     removeModal()
   })
 
@@ -701,11 +773,11 @@ server <- function(input,output,session){
          #grepl(snippetYes,check5) & # not crucial
          grepl(snippetYes,check6) &
          grepl(snippetYes,check7)){
-        res_tmp[[session$token]]$passedVI <<- T
+        session_data$passedVI <- TRUE
       } else {
-        res_tmp[[session$token]]$passedVI <<- F
+        session_data$passedVI <- FALSE
       }
-      res_tmp[[session$token]]$changedDuringVI <<- F
+      session_data$changedDuringVI <- FALSE
       #TODO ensure that if there are e.g. invalid sample names but als different sample names in data and annotation tables that we catch this
 
       if(check0 == snippetNo){
@@ -720,10 +792,13 @@ server <- function(input,output,session){
       if(check5 == snippetNo){
         # Indicate columns with NA
         colsWithNa <- numeric()
-        for(i in 1:ncol(annotation_rows)){
-           if(any(is.na(annotation_rows[,i]) == T)){
-             colsWithNa <- c(colsWithNa,i)
-           }
+        ncols <- ncol(annotation_rows)
+        if(ncols > 0){
+          for(i in seq_len(ncols)){
+             if(any(is.na(annotation_rows[,i]) == T)){
+               colsWithNa <- c(colsWithNa,i)
+             }
+          }
         }
         check5 <- paste0("<font color=\"#FFA500\"><b>No</b></font>",
                          "\n\tFollowing columns are *potentially* problematic: ",
@@ -833,7 +908,7 @@ server <- function(input,output,session){
           write.csv(Matrix, file = paste0("www/",session$token,"/updatedMatrix.csv"), row.names = T)
           write.csv(sample_table, file = paste0("www/",session$token,"/updatedSampleTable.csv"), row.names = T)
           write.csv(annotation_rows, file = paste0("www/",session$token,"/updatedEntitieAnnotation.csv"), row.names = T)
-          res_tmp[[session$token]]$changedDuringVI <<- T
+          session_data$changedDuringVI <- TRUE
 
           # TODO also set flag to update matrixes upon 'upload new data' within app for this round
 
@@ -917,9 +992,9 @@ server <- function(input,output,session){
                #grepl(snippetYes,check5) & # not crucial
                grepl(snippetYes,check6) &
                grepl(snippetYes,check7)){
-              res_tmp[[session$token]]$passedVI <<- T
+              session_data$passedVI <- TRUE
             } else {
-              res_tmp[[session$token]]$passedVI <<- F
+              session_data$passedVI <- FALSE
             }
 
           })
@@ -974,11 +1049,11 @@ server <- function(input,output,session){
   # Visual Inspection ends here
 
   observeEvent(input$usingVIdata,{
-    if(res_tmp[[session$token]]$passedVI){
+    if(session_data$passedVI){
       uploaded_from("VI_data")
       removeModal()
       # take specification from file_input as only here VI applicable
-      par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_file_input")]]
+      session_params$omic_type <- input[[paste0("omic_type_file_input")]]
       omic_type(input[[paste0("omic_type_file_input")]])
       shinyjs::click("refresh1")
     }else{
@@ -1021,11 +1096,11 @@ server <- function(input,output,session){
 ## Do Upload ----
   observeEvent(input$refresh1,{
     req(data_input_shiny())
-    par_tmp[[session$token]]['addedGeneAnno'] <<- FALSE
-    fun_LogIt(message = "## Data Selection {.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    fun_LogIt(
-      message = paste0("**DataInput** - Uploaded Omic Type: ", par_tmp[[session$token]]['omic_type'])
+    session_params$addedGeneAnno <- FALSE
+    fun_LogIt(session, message = "## Data Selection {.tabset .tabset-fade}")
+    fun_LogIt(session, message = "### Info")
+    fun_LogIt(session, 
+      message = paste0("**DataInput** - Uploaded Omic Type: ", session_params$omic_type)
     )
     if(!(
       # Is Precompiled data used?
@@ -1049,8 +1124,8 @@ server <- function(input,output,session){
       output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
     } else if (uploaded_from() == "testdata"){
       show_toast(
-        title = paste(par_tmp[[session$token]]['omic_type'],"Example Upload"),
-        text = paste(par_tmp[[session$token]]['omic_type'],"- Example upload was successful"),
+        title = paste(session_params$omic_type,"Example Upload"),
+        text = paste(session_params$omic_type,"- Example upload was successful"),
         position = "top",
         timer = 1500,
         timerProgressBar = T
@@ -1058,8 +1133,8 @@ server <- function(input,output,session){
       output$debug <- renderText({"The Test Data Set was used"})
     } else {
       show_toast(
-        title = paste(par_tmp[[session$token]]['omic_type'],"Data Upload"),
-        text = paste(par_tmp[[session$token]]['omic_type'],"- data upload was successful"),
+        title = paste(session_params$omic_type,"Data Upload"),
+        text = paste(session_params$omic_type,"- data upload was successful"),
         position = "top",
         timer = 1500,
         timerProgressBar = T
@@ -1081,25 +1156,25 @@ server <- function(input,output,session){
       })
       if(isTruthy(input$data_preDone)){
         # precomplied set used
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**DataInput** - The used data was precompiled. Filename: \n\t",
           input$data_preDone$name
         ))
       } else if(uploaded_from() == "VI_data"){
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**DataInput** - The used data was uploaded for visual inspection and changed within.")
         )
         }else {
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "The following data was used: \n\t",
           input$data_matrix1$name,"\n\t",
           input$data_sample_anno1$name,"\n\t",
           input$data_row_anno1$name
         ))
 
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**DataInput** - The raw data dimensions are: ",
-          paste0(dim(res_tmp[[session$token]]$data_original),collapse = ", ")
+          paste0(dim(session_data$data_original),collapse = ", ")
         ))
         
       }
@@ -1112,8 +1187,8 @@ server <- function(input,output,session){
   data_input_shiny <- eventReactive(input$refresh1,{
     uploaded_where <- isolate(uploaded_from())
     if(uploaded_where == "VI_data") uploaded_where <- "file_input"
-    if(is.null(unlist(par_tmp[[session$token]]['omic_type'])) || input[[paste0("omic_type_", uploaded_where)]] != omic_type()){
-      par_tmp[[session$token]]['omic_type'] <<- input[[paste0("omic_type_", uploaded_where)]]
+    if(is.null(session_params$omic_type) || input[[paste0("omic_type_", uploaded_where)]] != omic_type()){
+      session_params$omic_type <- input[[paste0("omic_type_", uploaded_where)]]
       omic_type(input[[paste0("omic_type_", uploaded_where)]])
     }
     # Add check if the data upload fails due to no supply of files
@@ -1275,11 +1350,11 @@ server <- function(input,output,session){
         )
       }
 
-      fun_LogIt(
+      fun_LogIt(session, 
         message = paste0("<font color=\"#FF0000\"><b>**Attention** - Test Data set used</b></font>")
       )
     } else if(uploaded_from() == "VI_data"){
-      if(res_tmp[[session$token]]$changedDuringVI){
+      if(session_data$changedDuringVI){
         data_input <- list(
           Matrix = read_file(paste0("www/",session$token,"/updatedMatrix.csv"), check.names=T),
           sample_table = read_file(paste0("www/",session$token,"/updatedSampleTable.csv"), check.names=T),
@@ -1336,43 +1411,49 @@ server <- function(input,output,session){
     }
     # TODO SumExp only needed hence more restructuring needed
 
-    res_tmp[[session$token]][['data_original']] <<- data_input[[paste0(omic_type(),"_SumExp")]]
+    session_data$data_original <- data_input[[paste0(omic_type(),"_SumExp")]]
     # Make a copy, to leave original data untouched
-    res_tmp[[session$token]][['data']] <<- res_tmp[[session$token]]$data_original
+    session_data$data <- session_data$data_original
     # Count up updating
     updating$count <- updating$count + 1
     # Check if the data is a SummarizedExperiment
-    colData(res_tmp[[session$token]]$data) <- DataFrame(
-      as.data.frame(colData(res_tmp[[session$token]]$data)) %>%
+    colData(session_data$data) <- DataFrame(
+      as.data.frame(colData(session_data$data)) %>%
       purrr::keep(~length(unique(.x)) != 1)
     )
     print(paste0(
       "Number. of anno options sample_table lost: ",
-      ncol(res_tmp[[session$token]]$data_original) - ncol(res_tmp[[session$token]]$data)
+      ncol(session_data$data_original) - ncol(session_data$data)
     ))
 
-    rowData(res_tmp[[session$token]]$data) <- DataFrame(
-      as.data.frame(rowData(res_tmp[[session$token]]$data)) %>%
+    rowData(session_data$data) <- DataFrame(
+      as.data.frame(rowData(session_data$data)) %>%
         purrr::keep(~length(unique(.x)) != 1)
     )
-    
+
     # edit annotation columns such that if na is present in the row annotation,
     # the na gets replaced by the rowname
-    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data))){
-      if(any(is.na(rowData(res_tmp[[session$token]]$data)[,i]))){
-        rowData(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i]),i] <<- rownames(res_tmp[[session$token]]$data)[is.na(rowData(res_tmp[[session$token]]$data)[,i])]
+    ncols_data <- ncol(rowData(session_data$data))
+    if(ncols_data > 0) {
+      for(i in seq_len(ncols_data)){
+        if(any(is.na(rowData(session_data$data)[,i]))){
+          rowData(session_data$data)[is.na(rowData(session_data$data)[,i]),i] <- rownames(session_data$data)[is.na(rowData(session_data$data)[,i])]
+        }
       }
     }
-    
-    for(i in 1:ncol(rowData(res_tmp[[session$token]]$data_original))){
-      if(any(is.na(rowData(res_tmp[[session$token]]$data_original)[,i]))){
-        rowData(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i]),i] <<- rownames(res_tmp[[session$token]]$data_original)[is.na(rowData(res_tmp[[session$token]]$data_original)[,i])]
+
+    ncols_data_original <- ncol(rowData(session_data$data_original))
+    if(ncols_data_original > 0) {
+      for(i in seq_len(ncols_data_original)){
+        if(any(is.na(rowData(session_data$data_original)[,i]))){
+          rowData(session_data$data_original)[is.na(rowData(session_data$data_original)[,i]),i] <- rownames(session_data$data_original)[is.na(rowData(session_data$data_original)[,i])]
+        }
       }
     }
-    
+
     print(paste0(
       "Number. of anno options annotation_rows lost: ",
-      nrow(res_tmp[[session$token]]$data_original) - nrow(res_tmp[[session$token]]$data)
+      nrow(session_data$data_original) - nrow(session_data$data)
     ))
     return("DataUploadSuccesful")
   })
@@ -1383,12 +1464,12 @@ server <- function(input,output,session){
 ## Ui Section ----
   observe({
     req(data_input_shiny())
-    isTruthy(res_tmp[[session$token]]$data)
+    isTruthy(session_data$data)
     # Row
     output$providedRowAnnotationTypes_ui <- renderUI({shinyWidgets::virtualSelectInput(
       inputId = "providedRowAnnotationTypes",
       label = "Which annotation type do you want to select on?",
-      choices = c(colnames(rowData(res_tmp[[session$token]]$data_original))),
+      choices = c(colnames(rowData(session_data$data_original))),
       multiple = F,
       search = T,
       showSelectedOptionsFirst = T
@@ -1396,7 +1477,7 @@ server <- function(input,output,session){
     output$row_selection_ui <- renderUI({
       req(input$providedRowAnnotationTypes)
       if(is.numeric(
-        rowData(res_tmp[[session$token]]$data_original)[,input$providedRowAnnotationTypes])
+        rowData(session_data$data_original)[,input$providedRowAnnotationTypes])
       ){
         selectInput(
           inputId = "row_selection",
@@ -1409,7 +1490,7 @@ server <- function(input,output,session){
         shinyWidgets::virtualSelectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Will be the union if multiple selected)",
-          choices = c("High Values+IQR","all",unique(unlist(strsplit(rowData(res_tmp[[session$token]]$data_original)[,input$providedRowAnnotationTypes],"\\|")))),
+          choices = c("High Values+IQR","all",unique(unlist(strsplit(rowData(session_data$data_original)[,input$providedRowAnnotationTypes],"\\|")))),
           selected = "all",
           multiple = T,
           search = T,
@@ -1434,8 +1515,8 @@ server <- function(input,output,session){
       selectInput(
         inputId = "providedSampleAnnotationTypes",
         label = "Which annotation type do you want to select on?",
-        choices = c(colnames(colData(res_tmp[[session$token]]$data_original))),
-        selected = c(colnames(colData(res_tmp[[session$token]]$data_original)))[1],
+        choices = c(colnames(colData(session_data$data_original))),
+        selected = c(colnames(colData(session_data$data_original)))[1],
         multiple = F
       )
     })
@@ -1446,7 +1527,7 @@ server <- function(input,output,session){
         label = "Which entities to use? (Will be the union if multiple selected)",
         choices = c(
           "all",
-          unique(colData(res_tmp[[session$token]]$data_original)[,input$providedSampleAnnotationTypes])
+          unique(colData(session_data$data_original)[,input$providedSampleAnnotationTypes])
         ),
         selected = "all",
         multiple = T
@@ -1460,30 +1541,32 @@ server <- function(input,output,session){
     # Do actual selection before logging
     print(selectedData())
     # add row and col selection options
-    fun_LogIt(message = "**DataSelection** - The following selection was conducted:")
+    fun_LogIt(session, message = "**DataSelection** - The following selection was conducted:")
     print(length(input$sample_selection))
-    fun_LogIt(message = paste0(
+    fun_LogIt(session, message = paste0(
       "**DataSelection** - Samples:\n\t DataSelection - based on: ",
       input$providedSampleAnnotationTypes,": ",
       paste(input$sample_selection,collapse = ", ")
     ))
-    fun_LogIt(message = paste0(
+    fun_LogIt(session, message = paste0(
       "**DataSelection** - Entities:\n\t DataSelection - based on: ",
       input$providedRowAnnotationTypes,
       ": ",paste(input$row_selection,collapse = ", ")
     ))
     if(!is.null(input$propensityChoiceUser)){
       # also record IQR if this + other selection was selected
-      fun_LogIt(message = paste0(
+      fun_LogIt(session, message = paste0(
         "**DataSelection** - IQR treshold: ",
         input$propensityChoiceUser
       ))
     }
     
-    fun_LogIt(message = "### Publication Snippet")
-    fun_LogIt(message = snippet_dataInput(data=res_tmp[[session$token]],
-                                          params=par_tmp[[session$token]]))
-    fun_LogIt(message = "<br>")
+    fun_LogIt(session, message = "### Publication Snippet")
+    fun_LogIt(session, message = snippet_dataInput(
+      data=reactiveValuesToList(session_data),
+      params=reactiveValuesToList(session_params)
+    ))
+    fun_LogIt(session, message = "<br>")
     showTab(inputId = "tabsetPanel1",target = "Pre-processing",select = T)
   })
   
@@ -1492,27 +1575,28 @@ server <- function(input,output,session){
     req(data_input_shiny())
     row_selection <- input$row_selection %||% "all"
     sample_selection <- input$sample_selection %||% "all"
-    sample_type <- input$providedSampleAnnotationTypes %||% c(colnames(colData(res_tmp[[session$token]]$data_original)))[1]
-    row_type <- input$providedRowAnnotationTypes %||% c(colnames(rowData(res_tmp[[session$token]]$data_original)))[1]
+    sample_type <- input$providedSampleAnnotationTypes %||% c(colnames(colData(session_data$data_original)))[1]
+    row_type <- input$providedRowAnnotationTypes %||% c(colnames(rowData(session_data$data_original)))[1]
     propensity <- input$propensityChoiceUser %||% 1
-    par_tmp[[session$token]][["selected_rows"]] <<- row_selection
-    par_tmp[[session$token]][["selected_samples"]] <<- sample_selection
-    par_tmp[[session$token]][["row_type"]] <<- row_type
-    par_tmp[[session$token]][["sample_type"]] <<- sample_type
-    par_tmp[[session$token]]['propensity'] <<- propensity
+    session_params$selected_rows <- row_selection
+    session_params$selected_samples <- sample_selection
+    session_params$row_type <- row_type
+    session_params$sample_type <- sample_type
+    session_params$propensity <- propensity
     print("Alright do Row selection")
     # Data set selection
     res_select <- select_data(
-        data = res_tmp[[session$token]]$data_original,
+        data = session_data$data_original,
         selected_rows = row_selection,
         selected_samples = sample_selection,
         row_type = row_type,
         sample_type = sample_type,
         propensity = propensity
     )
-    res_tmp[[session$token]]$data <<- res_select$data
-    par_tmp[[session$token]][['samples_selected']] <<- res_select$samples_selected
-    par_tmp[[session$token]][['entities_selected']] <<- res_select$rows_selected
+    session_data$data <- res_select$data
+    # Store selected IDs (returned from select_data) - using standardized names
+    session_params$selected_samples <- res_select$samples_selected
+    session_params$selected_rows <- res_select$rows_selected
     return("Selection Success")
   })
   
@@ -1593,10 +1677,10 @@ server <- function(input,output,session){
             label = "Number of Samples that need to pass the Filtering threshold",
             value = 3,
             min = 1,
-            max = ncol(res_tmp[[session$token]]$data),
+            max = ncol(session_data$data),
             step = 1
           ),
-        helpText(paste0("Note: This number should not exceed ", ncol(res_tmp[[session$token]]$data), "(the number of samples in your data set)")
+        helpText(paste0("Note: This number should not exceed ", ncol(session_data$data), "(the number of samples in your data set)")
         )
         )
       )
@@ -1606,9 +1690,9 @@ server <- function(input,output,session){
   # Update the batch effect UI based on the available columns
   output$batch_effect_ui <- renderUI({
     req(data_input_shiny())
-    column_names <- colnames(colData(res_tmp[[session$token]]$data_original))
+    column_names <- colnames(colData(session_data$data_original))
     filtered_column_names <- column_names[sapply(column_names, function(col) {
-      length(unique(colData(res_tmp[[session$token]]$data_original)[[col]])) < nrow(colData(res_tmp[[session$token]]$data_original))
+      length(unique(colData(session_data$data_original)[[col]])) < nrow(colData(session_data$data_original))
     })]
     if (isTruthy(input$PreProcessing_Procedure) && input$PreProcessing_Procedure == "vst_DESeq") {
       filtered_column_names <- filtered_column_names[!filtered_column_names %in% c(input$DESeq_formula_sub)]
@@ -1631,7 +1715,7 @@ server <- function(input,output,session){
             "Choose factors to account for ",
             "(App might crash if your factor has only 1 sample per level)"
           ),
-          choices = c(colnames(colData(res_tmp[[session$token]]$data))),
+          choices = c(colnames(colData(session_data$data))),
           multiple = T,
           selected = "condition"
         )) %>% helper(type = "markdown", content = "PreProcessing_DESeq")
@@ -1650,9 +1734,9 @@ server <- function(input,output,session){
           label = paste0(
             "Choose the design formula for limma voom"
           ),
-          choices = c(colnames(colData(res_tmp[[session$token]]$data))),
+          choices = c(colnames(colData(session_data$data))),
           multiple = T,
-          selected = colnames(colData(res_tmp[[session$token]]$data))[1]
+          selected = colnames(colData(session_data$data))[1]
         ) %>% helper(type = "markdown", content = "PreProcessing_voom")
         )
       )
@@ -1665,13 +1749,13 @@ server <- function(input,output,session){
   output$raw_violin_plot <- renderPlot({
     req(able_to_plot())
     violin_plot(
-      res_tmp[[session$token]]$data_original[par_tmp[[session$token]][['entities_selected']],par_tmp[[session$token]][['samples_selected']]],
+      session_data$data_original[session_params$selected_rows, session_params$selected_samples],
       violin_color = isolate(input$violin_color)
     )
   })
   output$preprocessed_violin_plot <- renderPlot({
     req(able_to_plot())
-    violin_plot(res_tmp[[session$token]]$data, violin_color = input$violin_color)
+    violin_plot(session_data$data, violin_color = input$violin_color)
   })
 
 ## Preprocessing ----
@@ -1692,26 +1776,26 @@ server <- function(input,output,session){
     preprocessing_procedure <- input$PreProcessing_Procedure
     preprocessing_filtering <- input$PreProcessing_Procedure_filtering %||% NULL
     batch_column <- input$BatchEffect_Column %||% "NULL"
-    omic_type <- par_tmp[[session$token]]$omic_type
+    omic_type <- session_params$omic_type
     deseq_factors <- input$DESeq_formula_sub %||% NULL
-    rows_selected <- par_tmp[[session$token]][['entities_selected']]
-    samples_selected <- par_tmp[[session$token]][['samples_selected']]
+    rows_selected <- session_params$selected_rows
+    samples_selected <- session_params$selected_samples
     filter_threshold <- input$filter_threshold %||% 10
     filter_threshold_samplewise <- input$filter_threshold_samplewise %||% NULL
     filter_samplesize <- input$filter_samplesize %||% NULL
     limma_intercept <- input$limma_intercept %||% NULL
     limma_formula <- input$limma_formula %||% NULL
     # reset data to the selection that was done
-    data <- res_tmp[[session$token]]$data_original[rows_selected,samples_selected]
+    data <- session_data$data_original[rows_selected,samples_selected]
     data_selected <- data  # needed for batch correction with DESeq
-    par_tmp[[session$token]]['BatchColumn'] <<- batch_column
+    session_params$BatchColumn <- batch_column
 
-    par_tmp[[session$token]]['preprocessing_filtering'] <<- preprocessing_filtering
-    par_tmp[[session$token]]['filter_threshold'] <<- filter_threshold
-    par_tmp[[session$token]]['filter_threshold_samplewise'] <<- filter_threshold_samplewise
-    par_tmp[[session$token]]['filter_samplesize'] <<- filter_samplesize
-    par_tmp[[session$token]]['limma_intercept'] <<- limma_intercept
-    par_tmp[[session$token]]['limma_formula'] <<- limma_formula
+    session_params$preprocessing_filtering <- preprocessing_filtering
+    session_params$filter_threshold <- filter_threshold
+    session_params$filter_threshold_samplewise <- filter_threshold_samplewise
+    session_params$filter_samplesize <- filter_samplesize
+    session_params$limma_intercept <- limma_intercept
+    session_params$limma_formula <- limma_formula
 
     # preprocessing
     print(paste0("Do chosen Preprocessing:",preprocessing_procedure))
@@ -1730,12 +1814,12 @@ server <- function(input,output,session){
         limma_intercept = limma_intercept,
         limma_formula = limma_formula
       )
-      par_tmp[[session$token]]['preprocessing_procedure'] <<- preprocessing_procedure
+      session_params$preprocessing_procedure <- preprocessing_procedure
       data <- preprocess_res$data
       if(preprocessing_procedure == "vst_DESeq"){
-        res_tmp[[session$token]]$DESeq_obj <<- preprocess_res$DESeq_obj
-        par_tmp[[session$token]]$deseq_formula <<- paste("~", paste(deseq_factors, collapse = " + "))
-        par_tmp[[session$token]]$deseq_factors <<- deseq_factors
+        session_data$DESeq_obj <- preprocess_res$DESeq_obj
+        session_params$deseq_formula <- paste("~", paste(deseq_factors, collapse = " + "))
+        session_params$deseq_factors <- deseq_factors
       }
     }, error = function(e){
       error_modal(e)
@@ -1775,10 +1859,10 @@ server <- function(input,output,session){
             deseq_factors = deseq_factors,
             omic_type = omic_type
           )
-          res_tmp[[session$token]]$data_batch_corrected <<- res_batch$data
+          session_data$data_batch_corrected <- res_batch$data
           if(preprocessing_procedure == "vst_DESeq"){
-            res_tmp[[session$token]]$DESeq_obj_batch_corrected <<- res_batch$DESeq_obj
-            par_tmp[[session$token]]["DESeq_formula_batch"] <<- paste(
+            session_data$DESeq_obj_batch_corrected <- res_batch$DESeq_obj
+            session_params$DESeq_formula_batch <- paste(
               "~", paste(c(deseq_factors, batch_column), collapse = " + ")
             )
           }
@@ -1803,8 +1887,8 @@ server <- function(input,output,session){
     }, type = "output")
     
     # Store captured outputs
-    res_tmp[[session$token]]$batch_console_output <- console_output
-    res_tmp[[session$token]]$batch_warnings <- warnings_output
+    session_data$batch_console_output <- console_output
+    session_data$batch_warnings <- warnings_output
     
     # add per entities (to rowData) normality test outcome
     norm_test_output <- capture.output({
@@ -1837,28 +1921,22 @@ server <- function(input,output,session){
     
     # Combine all console outputs
     all_console_output <- c(console_output, norm_test_output)
-    res_tmp[[session$token]]$all_console_output <- all_console_output
-    res_tmp[[session$token]]$all_warnings <- warnings_output
-    
-    # assign res_tmp finally
-    res_tmp[[session$token]]$data <<- data
+    session_data$all_console_output <- all_console_output
+    session_data$all_warnings <- warnings_output
+
+    # assign session_data finally
+    session_data$data <- data
     
     hasConsoleOutput <- reactive({
       # Check if we have output to display, regardless of current input values
-      if (exists("res_tmp") && exists("session") && 
-          !is.null(res_tmp[[session$token]])) {
-        
-        # Check for console output or warnings
-        has_console <- !is.null(res_tmp[[session$token]]$all_console_output) && 
-          length(res_tmp[[session$token]]$all_console_output) > 0
-        
-        has_warnings <- !is.null(res_tmp[[session$token]]$all_warnings) && 
-          length(res_tmp[[session$token]]$all_warnings) > 0
-        
-        return(has_console || has_warnings)
-      }
-      
-      return(FALSE)
+      # Check for console output or warnings
+      has_console <- !is.null(session_data$all_console_output) &&
+        length(session_data$all_console_output) > 0
+
+      has_warnings <- !is.null(session_data$all_warnings) &&
+        length(session_data$all_warnings) > 0
+
+      return(has_console || has_warnings)
     })
     observe({
       if(hasConsoleOutput()) {
@@ -1873,25 +1951,21 @@ server <- function(input,output,session){
       hasOutput <- FALSE
       hasConsoleOutput <- FALSE
       hasWarnings <- FALSE
-      
-      if (exists("res_tmp") && exists("session") && 
-          !is.null(res_tmp[[session$token]])) {
-        
-        # Check for console output
-        if (!is.null(res_tmp[[session$token]]$all_console_output) && 
-            length(res_tmp[[session$token]]$all_console_output) > 0) {
-          hasOutput <- TRUE
-          hasConsoleOutput <- TRUE
-        }
-        
-        # Check for warnings
-        if (!is.null(res_tmp[[session$token]]$all_warnings) && 
-            length(res_tmp[[session$token]]$all_warnings) > 0) {
-          hasOutput <- TRUE
-          hasWarnings <- TRUE
-        }
+
+      # Check for console output
+      if (!is.null(session_data$all_console_output) &&
+          length(session_data$all_console_output) > 0) {
+        hasOutput <- TRUE
+        hasConsoleOutput <- TRUE
       }
-      
+
+      # Check for warnings
+      if (!is.null(session_data$all_warnings) &&
+          length(session_data$all_warnings) > 0) {
+        hasOutput <- TRUE
+        hasWarnings <- TRUE
+      }
+
       # Only show if we have output
       if (hasOutput) {
         tagList(
@@ -1900,13 +1974,13 @@ server <- function(input,output,session){
             if (hasConsoleOutput) {
               tagList(
                 h4("Console Output:"),
-                tags$pre(paste(res_tmp[[session$token]]$all_console_output, collapse = "\n"))
+                tags$pre(paste(session_data$all_console_output, collapse = "\n"))
               )
             },
             if (hasWarnings) {
               tagList(
                 h4("Warnings and Messages:"),
-                tags$pre(paste(res_tmp[[session$token]]$all_warnings, collapse = "\n"))
+                tags$pre(paste(session_data$all_warnings, collapse = "\n"))
               )
             }
           )
@@ -1931,14 +2005,14 @@ server <- function(input,output,session){
       ifelse(omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"), showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
       
       num_batches <- NA
-      batch_message <- grep("Message: Found\\d+batches", res_tmp[[session$token]]$all_warnings, value = TRUE)
+      batch_message <- grep("Message: Found\\d+batches", session_data$all_warnings, value = TRUE)
       if (length(batch_message) > 0) {
         num_batches <- sub(".*Message: Found(\\d+)batches.*", "\\1", batch_message[1])
       }
-      
+
       paste0(
         "The raw data has dimensions: ",
-        paste0(dim(res_tmp[[session$token]]$data_original),collapse = ", "),
+        paste0(dim(session_data$data_original),collapse = ", "),
         "<br>The processed data has dimensions: ",
         paste0(dim(data),collapse = ", "),
         "<br>", if (!is.na(num_batches)) paste0("Number of Batches found: ", num_batches) else "",
@@ -1961,13 +2035,13 @@ server <- function(input,output,session){
       violin_color = input$violin_color
     ))
     react_violin_plot_raw(violin_plot(
-      data = res_tmp[[session$token]]$data_original[rows_selected, samples_selected],
+      data = session_data$data_original[rows_selected, samples_selected],
       violin_color = input$violin_color
     ))
     mean_and_obj <- vsn::meanSdPlot(as.matrix(assay(data)), plot=FALSE)
     react_mean_sd_plot(mean_and_obj$gg + CUSTOM_THEME + ggtitle("Mean and SD per entity"))
     able_to_plot(TRUE)
-    par_tmp[[session$token]]['violin_color'] <<- input$violin_color
+    session_params$violin_color <- input$violin_color
     waiter$hide()
     return("Pre-Processing successfully")
   })
@@ -1975,22 +2049,22 @@ server <- function(input,output,session){
 ## Log preprocessing ----
   observeEvent(input$Do_preprocessing,{
     print(selectedData_processed())
-    if(par_tmp[[session$token]]$omic_type == "Transcriptomics"){
+    if(session_params$omic_type == "Transcriptomics"){
       tmp_logMessage <- "Remove anything which row Count <= 10"
-    } else if (par_tmp[[session$token]]$omic_type == "Metabolomics"){
+    } else if (session_params$omic_type == "Metabolomics"){
       tmp_logMessage <- "Remove anything which has a row median of 0"
     } else {
       tmp_logMessage <- "none"
     }
-    fun_LogIt("## Pre Processing {.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    fun_LogIt(
+    fun_LogIt(session, "## Pre Processing {.tabset .tabset-fade}")
+    fun_LogIt(session, message = "### Info")
+    fun_LogIt(session, 
       message = "**PreProcessing** - Alaways done: removal of all entities which are constant over all samples"
     )
-    fun_LogIt(
+    fun_LogIt(session, 
       message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage)
     )
-    fun_LogIt(
+    fun_LogIt(session, 
       message = paste0(
         "**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",
         ifelse(input$PreProcessing_Procedure == "vst_DESeq",
@@ -2001,23 +2075,25 @@ server <- function(input,output,session){
       )
     )
     if(input$BatchEffect_Column != "NULL"){
-      fun_LogIt(
+      fun_LogIt(session, 
         message = paste0(
           "**PreProcessing** - Batch Effect Correction: ",
           input$BatchEffect_Column
         )
       )
     }
-    fun_LogIt(
+    fun_LogIt(session, 
       message = paste0(
         "**PreProcessing** - The resulting dimensions are: ",
-        paste0(dim(res_tmp[[session$token]]$data),collapse = ", ")
+        paste0(dim(session_data$data),collapse = ", ")
       )
     )
-    fun_LogIt(message = "### Publication Snippet")
-    fun_LogIt(message = snippet_preprocessing(data=res_tmp[[session$token]],
-                                              params=par_tmp[[session$token]]))
-    fun_LogIt(message = "<br>")
+    fun_LogIt(session, message = "### Publication Snippet")
+    fun_LogIt(session, message = snippet_preprocessing(
+      data=reactiveValuesToList(session_data),
+      params=reactiveValuesToList(session_params)
+    ))
+    fun_LogIt(session, message = "<br>")
   })
 
   # render plots and ui Parts
@@ -2026,12 +2102,12 @@ server <- function(input,output,session){
     selectInput(
       inputId = "violin_color",
       label = "Color the violin plot by:",
-      choices = c(colnames(colData(res_tmp[[session$token]]$data_original))),
-      selected = c(colnames(colData(res_tmp[[session$token]]$data_original)))[1],
+      choices = c(colnames(colData(session_data$data_original))),
+      selected = c(colnames(colData(session_data$data_original)))[1],
       multiple = F
     )
   })
-  output$debug <- renderText(dim(res_tmp[[session$token]]$data))
+  output$debug <- renderText(dim(session_data$data))
 
   ## Preprocessing save, Report and Code Snippet
   output$SavePlot_Preprocess <- downloadHandler(
@@ -2099,14 +2175,14 @@ server <- function(input,output,session){
       units = "in",
       device = gsub("\\.","",input$file_ext_Preprocess)
     )
-    fun_LogIt(message = "## PreProcessing Violin Plot{.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    fun_LogIt(message = paste0("**PreProcess** - The Samples were plotted after: ",input$violin_color))
-    fun_LogIt(
+    fun_LogIt(session, message = "## PreProcessing Violin Plot{.tabset .tabset-fade}")
+    fun_LogIt(session, message = "### Info")
+    fun_LogIt(session, message = paste0("**PreProcess** - The Samples were plotted after: ",input$violin_color))
+    fun_LogIt(session, 
       message = paste0("**PreProcess** - ![Violin Plot](",tmp_filename,")")
     )
     if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
-      fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
+      fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
     }
     # no publication snippet as thats already in the log
     removeNotification(notificationID)
@@ -2125,20 +2201,20 @@ server <- function(input,output,session){
       )
       waiter$show()
       envList <- list(
-        par_tmp = par_tmp[[session$token]]
+        par_tmp = reactiveValuesToList(session_params)
       )
       temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
       dir.create(temp_directory)
       # save csv files
       save_summarized_experiment(
-        res_tmp[[session$token]]$data_original,
+        session_data$data_original,
         temp_directory
       )
 
       write(
         create_workflow_script(
           pipeline_info = VIOLIN_PLOT_PIPELINE,
-          par = par_tmp[[session$token]],
+          par = reactiveValuesToList(session_params),
           path_to_util = file.path(temp_directory, "util.R")
         ),
         file.path(temp_directory, "Code.R")
@@ -2192,14 +2268,14 @@ server <- function(input,output,session){
       units = "in",
       device = gsub("\\.","",input$file_type_mean_sd_plot)
     )
-    fun_LogIt(message = "## PreProcessing Mean and SD Plot{.tabset .tabset-fade}")
-    fun_LogIt(message = "### Info")
-    fun_LogIt(message = "The means of the preprocessed data are plotted agains their standard deviation to check for heteroskedasticity.")
-    fun_LogIt(
+    fun_LogIt(session, message = "## PreProcessing Mean and SD Plot{.tabset .tabset-fade}")
+    fun_LogIt(session, message = "### Info")
+    fun_LogIt(session, message = "The means of the preprocessed data are plotted agains their standard deviation to check for heteroskedasticity.")
+    fun_LogIt(session, 
       message = paste0("**PreProcess** - ![Mean and SD Plot](",tmp_filename,")")
     )
     if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
-      fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
+      fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
     }
     # no publication snippet as thats already in the log
     removeNotification(notificationID)
@@ -2218,20 +2294,20 @@ server <- function(input,output,session){
       )
       waiter$show()
       envList <- list(
-        par_tmp = par_tmp[[session$token]]
+        par_tmp = reactiveValuesToList(session_params)
       )
       temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
       dir.create(temp_directory)
       # save csv files
       save_summarized_experiment(
-        res_tmp[[session$token]]$data_original,
+        session_data$data_original,
         temp_directory
       )
 
       write(
         create_workflow_script(
           pipeline_info = MEAN_SD_PLOT_PIPELINE,
-          par = par_tmp[[session$token]],
+          par = reactiveValuesToList(session_params),
           path_to_util = file.path(temp_directory, "util.R")
         ),
         file.path(temp_directory, "Code.R")
@@ -2250,23 +2326,58 @@ server <- function(input,output,session){
   )
 
   # Sample Correlation ----
-  # calling server without reactive it will be init upon start, with no update
-  # of respective data inputs hence need of at least one reactive!
-  sample_correlation_server(id = "sample_correlation")
-  # significance analysis ----
-  significance_analysis_server(id = 'SignificanceAnalysis')
+  # Phase 2: Pass selectedData_processed reactive for global sourcing
+  sample_correlation_server(
+    id = "sample_correlation",
+    session_data = session_data,
+    session_params = session_params,
+    selectedData_processed = selectedData_processed
+  )
+
+  # Significance Analysis ----
+  # Phase 2: Pass data_input_shiny reactive for global sourcing
+  significance_analysis_server(
+    id = 'SignificanceAnalysis',
+    session_data = session_data,
+    session_params = session_params,
+    data_input_shiny = data_input_shiny
+  )
+
   # PCA ----
-  pca_Server(id = "PCA")
+  # Phase 2: Pass data_input_shiny reactive for global sourcing
+  pca_Server(
+    id = "PCA",
+    session_data = session_data,
+    session_params = session_params,
+    data_input_shiny = data_input_shiny
+  )
+
   # Heatmap ----
-  heatmap_server(id = 'Heatmap')
+  # Phase 2: Pass data_input_shiny and selectedData_processed reactives for global sourcing
+  heatmap_server(
+    id = 'Heatmap',
+    session_data = session_data,
+    session_params = session_params,
+    data_input_shiny = data_input_shiny,
+    selectedData_processed = selectedData_processed
+  )
+
   # Single Gene Visualisations ----
-  single_gene_visualisation_server(id = 'single_gene_visualisation')
+  # Phase 2: Pass data_input_shiny and selectedData_processed reactives for global sourcing
+  single_gene_visualisation_server(
+    id = 'single_gene_visualisation',
+    session_data = session_data,
+    session_params = session_params,
+    data_input_shiny = data_input_shiny,
+    selectedData_processed = selectedData_processed
+  )
 
   # Enrichment Analysis ----
+  # Passing reactiveValues directly (not reactive()) for this module's unique needs
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
-    data = res_tmp[[session$token]],
-    params = par_tmp[[session$token]],
+    data = session_data,
+    params = session_params,
     reactive(updating$count)
   )
 }

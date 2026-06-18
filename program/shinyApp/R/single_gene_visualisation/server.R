@@ -1,4 +1,5 @@
-single_gene_visualisation_server <- function(id){
+# Phase 2: Requires data_input_shiny and selectedData_processed reactives for global sourcing
+single_gene_visualisation_server <- function(id, session_data, session_params, data_input_shiny, selectedData_processed){
   moduleServer(
     id,
     function(input,output,session){
@@ -17,7 +18,8 @@ single_gene_visualisation_server <- function(id){
       observeEvent(input$refreshUI,{
         print("Refresh UI Single Gene")
         single_gene_reactives$allow_plot <- FALSE
-        data <- update_data(session$token)
+        # Access data from session reactiveValues (replaces update_data())
+        data <- reactiveValuesToList(session_data)
         
         ## Ui section ----
         output$type_of_data_gene_ui <- renderUI({
@@ -26,7 +28,7 @@ single_gene_visualisation_server <- function(id){
             "raw data" = "data_original",
             "pre-processed"="data"
           )
-          if(par_tmp[[session$token]]$BatchColumn != "NULL"){
+          if(session_params$BatchColumn != "NULL"){
             options <- list(
               "raw data" = "data_original",
               "pre-processed" = "data",
@@ -96,12 +98,15 @@ single_gene_visualisation_server <- function(id){
               x = unique(annoToSelect),
               m = 2
             ))
-            xy.list <- vector("list", nrow(my_comparisons))
-            for (i in 1:nrow(my_comparisons)) {
-              xy.list[[i]] <- c(
-                as.character(my_comparisons[i,1]),
-                as.character(my_comparisons[i,2])
-              )
+            nrows_comp <- nrow(my_comparisons)
+            xy.list <- vector("list", nrows_comp)
+            if(nrows_comp > 0) {
+              for (i in seq_len(nrows_comp)) {
+                xy.list[[i]] <- c(
+                  as.character(my_comparisons[i,1]),
+                  as.character(my_comparisons[i,2])
+                )
+              }
             }
             shinyWidgets::virtualSelectInput(
               search = T,
@@ -187,8 +192,8 @@ single_gene_visualisation_server <- function(id){
           error_modal(e$message)
         })
         single_gene_reactives$gene_data <- gene_data
-        res_tmp[[session$token]]$SingleGeneVis <<- gene_data
-        par_tmp[[session$token]]$SingleGeneVis <<- list(
+        session_data$SingleGeneVis <- gene_data
+        session_params$SingleGeneVis <- list(
           selected_gene = selected_gene,
           selected_type = selected_type,
           group_by = group_by,
@@ -253,9 +258,9 @@ single_gene_visualisation_server <- function(id){
         # assign reactive values
         single_gene_reactives$info_text <- data_note
         single_gene_reactives$plot <- P_boxplots
-        # assign par_tmp
-        par_tmp[[session$token]]$SingleGeneVis$comparisons <<- comparisons
-        par_tmp[[session$token]]$SingleGeneVis$add_testing <<- add_testing
+        # assign session_params
+        session_params$SingleGeneVis$comparisons <- comparisons
+        session_params$SingleGeneVis$add_testing <- add_testing
       })
 
       ## Download R code and data
@@ -270,20 +275,20 @@ single_gene_visualisation_server <- function(id){
         )
         waiter$show()
         envList <- list(
-          par_tmp = par_tmp[[session$token]]
+          par_tmp = reactiveValuesToList(session_params)
         )
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
         # save csv files
         save_summarized_experiment(
-          res_tmp[[session$token]]$data_original,
+          session_data$data_original,
           temp_directory
         )
 
         write(
           create_workflow_script(
             pipeline_info = SINGLE_GENE_VISUALISATION_PIPELINE,
-            par = par_tmp[[session$token]],
+            par = reactiveValuesToList(session_params),
             par_mem = "SingleGeneVis",
             path_to_util = file.path(temp_directory, "util.R")
           ),
@@ -335,33 +340,35 @@ single_gene_visualisation_server <- function(id){
           device = "png"
         )
 
-        fun_LogIt(message = "## Single Entitie{.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = "## Single Entitie{.tabset .tabset-fade}")
+        fun_LogIt(session, message = "### Info")
+        fun_LogIt(session, message = paste0(
           "**Single Entitie** - The following single entitie was plotted: ",
           input$Select_Gene
         ))
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**Single Entitie** - Values shown are: ",
           input$type_of_data_gene, " data input"
         ))
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**Single Entitie** - Values are grouped for all levels within: ", input$accross_condition, " (",paste0(levels(single_gene_reactives$gene_data$anno),collapse = ";"),")"))
-        fun_LogIt(message = "**Single Entitie** - Test for differences: T-Test")  # For now only test method we do
-        fun_LogIt(message = paste0("**Single Entitie** - pairwise tested"))
+        fun_LogIt(session, message = "**Single Entitie** - Test for differences: T-Test")  # For now only test method we do
+        fun_LogIt(session, message = paste0("**Single Entitie** - pairwise tested"))
 
-        fun_LogIt(
+        fun_LogIt(session, 
           message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")")
         )
 
         if(isTruthy(input$NotesSingleEntities) &
            !(isEmpty(input$NotesSingleEntities))){
-          fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesSingleEntities)))
+          fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesSingleEntities)))
         }
 
-        fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SingleGene(data = res_tmp[[session$token]],
-                                               params = par_tmp[[session$token]]))
+        fun_LogIt(session, message = "### Publication Snippet")
+        fun_LogIt(session, message = snippet_SingleGene(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
         removeNotification(notificationID)
         showNotification("Report Saved!",type = "message", duration = 1)
       })

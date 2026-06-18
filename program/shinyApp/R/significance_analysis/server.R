@@ -1,4 +1,5 @@
-significance_analysis_server <- function(id){
+# Phase 2: Requires data_input_shiny reactive for global sourcing
+significance_analysis_server <- function(id, session_data, session_params, data_input_shiny){
   moduleServer(
     id,
     function(input,output,session){
@@ -27,11 +28,11 @@ significance_analysis_server <- function(id){
       ## Sidebar UI section
       observeEvent(input$refreshUI, {
         print("Refreshing UI Heatmap")
-        data <- update_data(session$token)
+        data <- reactiveValuesToList(session_data)
         sig_ana_reactive$plot_last <- NULL
 
         output$UseBatch_ui <- renderUI({
-        req(par_tmp[[session$token]]$BatchColumn != "NULL")
+        req(session_params$BatchColumn != "NULL")
         selectInput(
           inputId = ns("UseBatch"),
           label = "Use batch corrected data?",
@@ -41,8 +42,8 @@ significance_analysis_server <- function(id){
         })
         output$type_of_comparison_ui <- renderUI({
           req(data_input_shiny())
-          if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
-            choices <- par_tmp[[session$token]]$deseq_factors
+          if(session_params$preprocessing_procedure == "vst_DESeq"){
+            choices <- session_params$deseq_factors
           } else {
             choices <- c(colnames(colData(data$data)))
           }
@@ -63,12 +64,15 @@ significance_analysis_server <- function(id){
             helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
           } else {
             my_comparisons <- subset(expand.grid(rep(list(unique(annoToSelect)),2)), Var1 != Var2)
-            xy.list <- vector("list", nrow(my_comparisons))
-            for (i in 1:nrow(my_comparisons)) {
-              xy.list[[i]] <- c(
-                as.character(my_comparisons[i,1]),
-                as.character(my_comparisons[i,2])
-              )
+            nrows_comp <- nrow(my_comparisons)
+            xy.list <- vector("list", nrows_comp)
+            if(nrows_comp > 0) {
+              for (i in seq_len(nrows_comp)) {
+                xy.list[[i]] <- c(
+                  as.character(my_comparisons[i,1]),
+                  as.character(my_comparisons[i,2])
+                )
+              }
             }
             selectInput(
               inputId = ns("comparisons"),
@@ -81,7 +85,7 @@ significance_analysis_server <- function(id){
         })
         # UI to choose test method
         output$chooseTest_ui <- renderUI({
-          if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
+          if(session_params$preprocessing_procedure == "vst_DESeq"){
             renderText(
               expr = "DESeq is using a Wald test statistic.\nWe are using the same here.",
               outputArgs = list(container = pre)
@@ -128,7 +132,7 @@ significance_analysis_server <- function(id){
         output$chooseGenesToLookAt_ui <- renderUI({
           req(input$comparisons_to_visualize)
           # choices dependent on preprocess_method
-          if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
+          if(session_params$preprocessing_procedure == "vst_DESeq"){
             choices <- c(
               "Significant",
               "Upregulated",
@@ -206,15 +210,15 @@ significance_analysis_server <- function(id){
         print("Start the Significance Analysis")
 
         # define variables to be used
-        useBatch <- par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes"
-        preprocessing <- par_tmp[[session$token]]$preprocessing_procedure
+        useBatch <- session_params$BatchColumn != "NULL" && input$UseBatch == "Yes"
+        preprocessing <- session_params$preprocessing_procedure
         comparisons <- input$comparisons
         test_correction <- input$test_correction
         significance_level <- input$significance_level
         compare_within <- input$sample_annotation_types_cmp
         test_method <- input$test_method
         # update the data if needed
-        data <- update_data(session$token)
+        data <- reactiveValuesToList(session_data)
 
         # perform the analysis
         sig_results <- tryCatch({
@@ -233,8 +237,11 @@ significance_analysis_server <- function(id){
           req(FALSE)
         })
         sig_ana_reactive$sig_results <- sig_results
-        # Update res_-/par_tmp
-        res_tmp[[session$token]]$SigAna[[compare_within]] <<- sig_results
+        # Update session_data/session_params
+        if(is.null(session_data$SigAna)){
+          session_data$SigAna <- list()
+        }
+        session_data$SigAna[[compare_within]] <- sig_results
         par_list <- list(
           preprocessing = preprocessing,
           comparisons = comparisons,
@@ -243,7 +250,10 @@ significance_analysis_server <- function(id){
           useBatch = useBatch,
           padjust_method = PADJUST_METHOD[[test_correction]]
         )
-        par_tmp[[session$token]]$SigAna[names(par_list)] <<- par_list
+        if(is.null(session_params$SigAna)){
+          session_params$SigAna <- list()
+        }
+        session_params$SigAna[names(par_list)] <- par_list
 
         ## Tab Management
         contrast_list <- lapply(comparisons, function(comp) unlist(strsplit(comp, ":")))
@@ -268,6 +278,7 @@ significance_analysis_server <- function(id){
         invisible(lapply(old_tabs, cleanup_tab))
 
         # Helper function to create new tabs
+        # Relies on source(local = TRUE) - input, output, session, file_path accessed via parent scope
         create_tab <- function(comp) {
           idx <- which(comparisons == comp)
           create_new_tab(
@@ -278,12 +289,24 @@ significance_analysis_server <- function(id){
             alpha = significance_level,
             ns = ns,
             preprocess_method = preprocessing,
-            value = paste0("Significance_", idx)
+            value = paste0("Significance_", idx),
+            session_data = session_data,
+            session_params = session_params
           )
         }
 
         # Add new tabs
-        invisible(lapply(new_tabs, create_tab))
+        # Phase 2: Add error handling to diagnose tab creation issues
+        lapply(new_tabs, function(comp) {
+          tryCatch({
+            print(paste("Creating tab for:", comp))
+            create_tab(comp)
+            print(paste("Successfully created tab for:", comp))
+          }, error = function(e) {
+            print(paste("ERROR creating tab for:", comp))
+            print(e)
+          })
+        })
 
         # Update the list of active tabs
         sig_ana_reactive$active_tabs <- comparisons
@@ -333,7 +356,7 @@ significance_analysis_server <- function(id){
         compare_within   <- input$sample_annotation_types_cmp
 
         # Retrieve the significance results (for safety, as in your original code)
-        sig_results <- res_tmp[[session$token]]$SigAna[[compare_within]]
+        sig_results <- session_data$SigAna[[compare_within]]
 
         # --- Call the plotting helper function ---
         plot_data <- plot_significant_results(
@@ -352,10 +375,13 @@ significance_analysis_server <- function(id){
           sig_ana_reactive$intersect_names <- plot_data$intersect_names
           sig_ana_reactive$overlap_list <- plot_data$overlap_list
         }
-        par_tmp[[session$token]]$SigAna$comparisons_to_visualize <<- comparisons_to_visualize
-        par_tmp[[session$token]]$SigAna$sig_to_look_at <<- sig_to_look_at
-        par_tmp[[session$token]]$SigAna$visualization_method <<- visualization_method
-        par_tmp[[session$token]]$SigAna$significance_level <<- significance_level
+        if(is.null(session_params$SigAna)){
+          session_params$SigAna <- list()
+        }
+        session_params$SigAna$comparisons_to_visualize <- comparisons_to_visualize
+        session_params$SigAna$sig_to_look_at <- sig_to_look_at
+        session_params$SigAna$visualization_method <- visualization_method
+        session_params$SigAna$significance_level <- significance_level
       })
       # if we want to change the highlighting
       observeEvent(input$intersection_high,{
@@ -435,19 +461,19 @@ significance_analysis_server <- function(id){
         content = function(file){
           waiter()$show()
           envList <- list(
-            par_tmp = par_tmp[[session$token]]
+            par_tmp = reactiveValuesToList(session_params)
           )
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
           # save csv files
           save_summarized_experiment(
-            res_tmp[[session$token]]$data_original,
+            session_data$data_original,
             temp_directory
           )
           write(
             create_workflow_script(
               pipeline_info = UPSET_PLOT_PIPELINE,
-              par = par_tmp[[session$token]],
+              par = reactiveValuesToList(session_params),
               par_mem = "SigAna",
               path_to_util = file.path(temp_directory, "util.R")
             ),
@@ -489,33 +515,33 @@ significance_analysis_server <- function(id){
         notificationID <- showNotification(ui = "Saving to Report...",duration = 0)
         tmp_filename <- paste0(getwd(),file_path, paste(id,Sys.time(),".png",sep="_"))
         # assign sig_results again for safety
-        sig_results <- res_tmp[[session$token]]$SigAna[[input$sample_annotation_types_cmp]]
+        sig_results <- session_data$SigAna[[input$sample_annotation_types_cmp]]
         png(tmp_filename)
         print(sig_ana_reactive$plot_last)
         dev.off()
-        
-        fun_LogIt(message = "## Differential analysis {.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
+
+        fun_LogIt(session, message = "## Differential analysis {.tabset .tabset-fade}")
+        fun_LogIt(session, message = "### Info")
         # log which tests were performed
-        if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq"){
-          fun_LogIt(
+        if(session_params$preprocessing_procedure == "vst_DESeq"){
+          fun_LogIt(session, 
             message = "- Differential Analysis was performed using DESeq2 pipeline"
           )
         } else {
-          fun_LogIt(message = paste(
+          fun_LogIt(session, message = paste(
             "- Differential Analysis was performed using", input$test_method
           ))
         }
         # log the significance level
-        fun_LogIt(message = paste(
+        fun_LogIt(session, message = paste(
           "- Significance level was set to", input$significance_level
         ))
         # log the test correction method
-        fun_LogIt(message = paste(
+        fun_LogIt(session, message = paste(
           "- p-values were adjusted using", input$test_correction, "correction method"
         ))
         # log which comparisons were performed
-        fun_LogIt(message = paste(
+        fun_LogIt(session, message = paste(
           "- Comparisons performed:",
           paste0(input$comparisons_to_visualize, collapse = ", ")
         ))
@@ -526,9 +552,9 @@ significance_analysis_server <- function(id){
           comparisons <- sig_ana_reactive$comparisons_for_plot
         }
         for(i in seq_along(comparisons)){
-           fun_LogIt(message = paste("####", comparisons[i]))
+           fun_LogIt(session, message = paste("####", comparisons[i]))
           # log the number of significant genes after correction
-          fun_LogIt(message = paste(
+          fun_LogIt(session, message = paste(
             "- Number of significant genes before correction for",
             comparisons[i],
             "is",
@@ -537,7 +563,7 @@ significance_analysis_server <- function(id){
             )
           ))
           # log the number of significant genes before correction
-          fun_LogIt(message = paste(
+          fun_LogIt(session, message = paste(
             "- Number of significant genes after correction for",
             comparisons[i],
             "is",
@@ -546,7 +572,7 @@ significance_analysis_server <- function(id){
             )
           ))
           # log the top 5 significant genes
-          if(par_tmp[[session$token]]$preprocessing_procedure == "vst_DESeq" & "result" %in% names(sig_ana_reactive$sig_results[[comparisons[i]]])){
+          if(session_params$preprocessing_procedure == "vst_DESeq" & "result" %in% names(sig_ana_reactive$sig_results[[comparisons[i]]])){
             top5 <- head(
                 sig_ana_reactive$sig_results[[comparisons[i]]]@result[order(
                   sig_ana_reactive$sig_results[[comparisons[i]]]@result$p.adjust,
@@ -562,12 +588,12 @@ significance_analysis_server <- function(id){
               ),], 5
             ))
           }
-          fun_LogIt(message = paste(
+          fun_LogIt(session, message = paste(
             "- Top 5 significant entities for",
             comparisons[i],
             "are the following:"
           ))
-          fun_LogIt(message = knitr::kable(
+          fun_LogIt(session, message = knitr::kable(
             top5,
             format = "html",
             escape = FALSE,
@@ -575,24 +601,26 @@ significance_analysis_server <- function(id){
           ) %>%
             kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
             scroll_box(width = "100%", height = "300px"))
-          fun_LogIt(message = "\n")
+          fun_LogIt(session, message = "\n")
         }
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**Overview Plot** - Shown are ",input$sig_to_look_at," entities with a p-value < ",
           input$significance_level,
           ". The plot shows the intersection of entities that are significant in the comparisons you selected (.",
           input$comparisons_to_visualize,")."
         ))
-        fun_LogIt(message = paste0(
+        fun_LogIt(session, message = paste0(
           "**Overview Plot** - ![Differential Analysis](",tmp_filename,")"
         ))
         if(isTruthy(input$NotesSigAna) & !(isEmpty(input$NotesSigAna))){
-          fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesSigAna)))
+          fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesSigAna)))
         }
         
-        fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
+        fun_LogIt(session, message = "### Publication Snippet")
+        fun_LogIt(session, message = snippet_SigAna(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
 
         
         removeNotification(notificationID)

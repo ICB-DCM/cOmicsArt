@@ -1,18 +1,22 @@
 # Tab generation of the significance analysis
-create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns, preprocess_method, value){
+# Relies on source(local = TRUE) to access input, output, session, file_path from parent scope
+create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns, preprocess_method, value, session_data, session_params){
   # call create_new_tab based on preprocess_method used
   # preprocess_method: preprocess_method used
   # for other parameters see create_new_tab_*
   if (preprocess_method == "vst_DESeq"){
-      create_new_tab_DESeq(title, targetPanel, result, contrast, alpha, ns, value)
+      create_new_tab_DESeq(title, targetPanel, result, contrast, alpha, ns, value, session_data, session_params)
   }
   else{
-      create_new_tab_manual(title, targetPanel, result, contrast, alpha, ns, value)
+      create_new_tab_manual(title, targetPanel, result, contrast, alpha, ns, value, session_data, session_params)
   }
 }
 
 
-create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, ns, value){
+# Relies on source(local = TRUE) to access input, output, session, file_path from parent scope
+create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, ns, value, session_data, session_params){
+  print(paste("ENTER create_new_tab_manual for:", contrast[1], "vs", contrast[2]))
+
   # create a new tabPanel for manual preprocessing
   # title: title of the tabPanel
   # targetPanel: name of the targetPanel under which the tabPanel should be created
@@ -155,19 +159,19 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
             radioGroupButtons(
-              inputId = ns("file_ext_Volcano"),
+              inputId = ns(paste(contrast[1], contrast[2], "file_ext_Volcano", sep = "_")),
               label = "File Type:",
               choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             ),
             radioGroupButtons(
-              inputId = ns("file_ext_Volcano_both"),
+              inputId = ns(paste(contrast[1], contrast[2], "file_ext_Volcano_both", sep = "_")),
               label = "File Type:",
               choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             ),
             radioGroupButtons(
-              inputId = ns("file_ext_Volcano_raw"),
+              inputId = ns(paste(contrast[1], contrast[2], "file_ext_Volcano_raw", sep = "_")),
               label = "File Type:",
               choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
@@ -177,18 +181,25 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       )
     )
   )
+  print(paste("appendTab completed for:", contrast[1], "vs", contrast[2]))
+
   # server part of tabPanel
-  # reactive values
+  # Phase 2: Create LOCAL sig_ana_reactive for this tab's volcano plot state
+  # (Different from parent sig_ana_reactive which tracks overall analysis state)
   sig_ana_reactive <- reactiveValues(
     th_psig = NULL,
     th_lfc = NULL,
-    Volcano_anno_tooltip = NULL
+    Volcano_anno_tooltip = NULL,
+    data4Volcano = NULL,
+    VolcanoPlot = NULL,
+    VolcanoPlot_raw = NULL
   )
   # print the summary of the results into the table
   output[[ns(paste(contrast[1], contrast[2], "summary", sep = "_"))]] <- renderText(
     paste(resume, collapse = "<br>")
   )
   result <- addStars(result, alpha)
+  print(paste("Result for", contrast[1], "vs", contrast[2], "has", nrow(result), "rows"))
 
   brks_log2FC_neg <- seq(min(result$log2FoldChange, na.rm = T) -1 , 0, length.out = 100) # -1 for towning down color match
   brks_log2FC_pos <- seq(0, max(result$log2FoldChange, na.rm = T) +1 , length.out = 100) # +a for towning down color match
@@ -249,6 +260,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           rows = NULL
         )
     })
+  print(paste("DataTable renderOutput assigned for:", contrast[1], "vs", contrast[2]))
 
   psig_th <- ns(paste(contrast[1], contrast[2], "psig_th", sep = "_"))
   lfc_th <- ns(paste(contrast[1], contrast[2], "lfc_th", sep = "_"))
@@ -256,16 +268,24 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
   show_legend_adj <- ns(paste(contrast[1], contrast[2], "show_legend_adj", sep = "_"))
   show_legend_raw <- ns(paste(contrast[1], contrast[2], "show_legend_raw", sep = "_"))
 
+  print(paste("Setting up renderUI for:", contrast[1], "vs", contrast[2]))
+
+  # Direct output assignment - renderUI will execute when UI requests it
+  print(paste("Assigning Volcano_anno_tooltip_ui for:", contrast[1], "vs", contrast[2]))
   output[[ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_"))]] <- renderUI({
+    print(paste("renderUI EXECUTING for Volcano_anno_tooltip:", contrast[1], "vs", contrast[2]))
     selectInput(
-    inputId = Volcano_anno_tooltip,
-    label = "Select the anno to be shown at tooltip",
-    choices = colnames(rowData(res_tmp[[session$token]]$data)),
-    selected = colnames(rowData(res_tmp[[session$token]]$data))[1],
-    multiple = F
+      inputId = Volcano_anno_tooltip,
+      label = "Select the anno to be shown at tooltip",
+      choices = colnames(rowData(session_data$data)),
+      selected = colnames(rowData(session_data$data))[1],
+      multiple = F
     )
   })
+
+  print(paste("Assigning psig_th_ui for:", contrast[1], "vs", contrast[2]))
   output[[ns(paste(contrast[1], contrast[2], "psig_th_ui", sep = "_"))]] <- renderUI({
+    print(paste("renderUI EXECUTING for psig_th:", contrast[1], "vs", contrast[2]))
     numericInput(
       inputId = ns(paste(contrast[1], contrast[2], "psig_th", sep = "_")),
       label = "adj. p-value threshold",
@@ -273,9 +293,12 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       max=0.1,
       step=0.01,
       value = 0.05
-      )
+    )
   })
+
+  print(paste("Assigning lfc_th_ui for:", contrast[1], "vs", contrast[2]))
   output[[ns(paste(contrast[1], contrast[2], "lfc_th_ui", sep = "_"))]] <- renderUI({
+    print(paste("renderUI EXECUTING for lfc_th:", contrast[1], "vs", contrast[2]))
     numericInput(
       inputId = lfc_th,
       label = "Log FC threshold (both sides!)",
@@ -283,14 +306,21 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       max = 10,
       step = 0.1,
       value = 1.0
-      )
+    )
   })
   toPlotVolcano <- reactive({
-    list(
-      input[[psig_th]],
-      input[[lfc_th]],
-      input[[Volcano_anno_tooltip]]
-    )
+    # Only return a list if all inputs exist, otherwise return NULL
+    if(!is.null(input[[psig_th]]) && !is.null(input[[lfc_th]]) && !is.null(input[[Volcano_anno_tooltip]])) {
+      print(paste("toPlotVolcano reactive firing with values for:", contrast[1], "vs", contrast[2]))
+      list(
+        input[[psig_th]],
+        input[[lfc_th]],
+        input[[Volcano_anno_tooltip]]
+      )
+    } else {
+      print(paste("toPlotVolcano reactive - inputs not ready yet for:", contrast[1], "vs", contrast[2]))
+      NULL
+    }
   })
   observeEvent(input[[show_legend_adj]], {
     print("Show legend adjusted")
@@ -303,10 +333,11 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       plotlyProxyInvoke(method = "relayout", list(showlegend = input[[show_legend_raw]]))
   })
   observeEvent(toPlotVolcano(), {
-    print("Plot volcano")
+    print(paste("Plot volcano observer triggered for:", contrast[1], "vs", contrast[2]))
 
-    # Ensure required inputs are available
-    req(input[[psig_th]], input[[lfc_th]], input[[Volcano_anno_tooltip]])
+    # req will fail silently if toPlotVolcano() is NULL (inputs not ready yet)
+    req(toPlotVolcano())
+    print(paste("req() passed! Plotting volcano for:", contrast[1], "vs", contrast[2]))
 
     # Create a loading screen using a Waiter
     waiter <- Waiter$new(
@@ -324,10 +355,10 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     anno_col_name <- input[[Volcano_anno_tooltip]]
 
     # Assume 'result' is defined elsewhere (e.g. from your analysis)
-    # and 'res_tmp[[session$token]]$data' contains rowData with annotation information.
-    anno_vector <- rowData(res_tmp[[session$token]]$data)[, anno_col_name]
-    names(anno_vector) <- rownames(res_tmp[[session$token]]$data)
-    
+    # and 'session_data$data' contains rowData with annotation information.
+    anno_vector <- rowData(session_data$data)[, anno_col_name]
+    names(anno_vector) <- rownames(session_data$data)
+
     # Generate the volcano plots using the helper function.
     volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
     volcano_obj_raw <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = TRUE)
@@ -335,9 +366,12 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     sig_ana_reactive$VolcanoPlot <- volcano_obj$volcano_plt
     sig_ana_reactive$VolcanoPlot_raw <- volcano_obj_raw$volcano_plt
 
-    par_tmp[[session$token]]$SigAna$th_psig <<- th_psig
-    par_tmp[[session$token]]$SigAna$th_lfc <<- th_lfc
-    par_tmp[[session$token]]$SigAna$anno_vector <<- anno_vector
+    if(is.null(session_params$SigAna)){
+      session_params$SigAna <- list()
+    }
+    session_params$SigAna$th_psig <- th_psig
+    session_params$SigAna$th_lfc <- th_lfc
+    session_params$SigAna$anno_vector <- anno_vector
 
     # Render the corrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({
@@ -405,6 +439,7 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
         }
       ")
     })
+    print(paste("Volcano plots rendered for:", contrast[1], "vs", contrast[2]))
   })
 
   session$userData[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_"))]] <- observeEvent(
@@ -412,12 +447,14 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_val", sep = "_")]])){
           req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_val", sep = "_")]])
       }
-      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
+      fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
       log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                         params = par_tmp[[session$token]]))
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_SigAna(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params)
+      ))
     }
   )
 
@@ -426,14 +463,16 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_both_val", sep = "_")]])){
         req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_both", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_both_val", sep = "_")]])
       }
-      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
+      fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
       log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
                            sig_ana_reactive$data4Volcano, contrast, file_path)
       #log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                         params = par_tmp[[session$token]]))
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_SigAna(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params)
+      ))
     }
   )
 
@@ -442,12 +481,14 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
       if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_raw_val", sep = "_")]])){
         req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_raw", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_raw_val", sep = "_")]])
       }
-      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
+      fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
       log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                         params = par_tmp[[session$token]]))
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_SigAna(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params)
+      ))
     }
   )
 
@@ -462,22 +503,25 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           hide_on_render = FALSE
         )
         waiter$show()
-        par_tmp[[session$token]]$SigAna$comp <<- title
-        par_tmp[[session$token]]$SigAna$raw <<- FALSE
+        if(is.null(session_params$SigAna)){
+          session_params$SigAna <- list()
+        }
+        session_params$SigAna$comp <- title
+        session_params$SigAna$raw <- FALSE
         envList <- list(
-          par_tmp = par_tmp[[session$token]]
+          par_tmp = reactiveValuesToList(session_params)
         )
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
         # save csv files
         save_summarized_experiment(
-          res_tmp[[session$token]]$data_original,
+          session_data$data_original,
           temp_directory
         )
         write(
           create_workflow_script(
             pipeline_info = VOLCANO_PIPELINE,
-            par = par_tmp[[session$token]],
+            par = reactiveValuesToList(session_params),
             par_mem = "SigAna",
             path_to_util = file.path(temp_directory, "util.R")
           ),
@@ -506,22 +550,25 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
           hide_on_render = FALSE
         )
         waiter$show()
-        par_tmp[[session$token]]$SigAna$comp <<- title
-        par_tmp[[session$token]]$SigAna$raw <<- TRUE
+        if(is.null(session_params$SigAna)){
+          session_params$SigAna <- list()
+        }
+        session_params$SigAna$comp <- title
+        session_params$SigAna$raw <- TRUE
         envList <- list(
-          par_tmp = par_tmp[[session$token]]
+          par_tmp = reactiveValuesToList(session_params)
         )
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
         # save csv files
         save_summarized_experiment(
-          res_tmp[[session$token]]$data_original,
+          session_data$data_original,
           temp_directory
         )
         write(
           create_workflow_script(
             pipeline_info = VOLCANO_PIPELINE,
-            par = par_tmp[[session$token]],
+            par = reactiveValuesToList(session_params),
             par_mem = "SigAna",
             path_to_util = file.path(temp_directory, "util.R")
           ),
@@ -539,62 +586,69 @@ create_new_tab_manual <- function(title, targetPanel, result, contrast, alpha, n
     )
 
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano", sep = "_"))]] <- downloadHandler(
-    filename = function() {paste0("VOLCANO_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input[[ns("file_ext_Volcano")]])},
+    filename = function() {paste0("VOLCANO_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input[[ns(paste(contrast[1], contrast[2], "file_ext_Volcano", sep = "_"))]])},
     content = function(file){
       ggsave(
         filename = file,
         plot = sig_ana_reactive$VolcanoPlot,
-        device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
+        device = gsub("\\.","",input[[ns(paste(contrast[1], contrast[2], "file_ext_Volcano", sep = "_"))]])
         )
       on.exit({
-        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
+        fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(session, message = "### Info")
         log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
-        fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
+        fun_LogIt(session, message = "### Publication Snippet")
+        fun_LogIt(session, message = snippet_SigAna(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
       })
     })
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_raw", sep = "_"))]] <- downloadHandler(
-    filename = function() { paste("raw_VOLCANO",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns("file_ext_Volcano_raw")]],sep="") },
+    filename = function() { paste("raw_VOLCANO",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns(paste(contrast[1], contrast[2], "file_ext_Volcano_raw", sep = "_"))]],sep="") },
     content = function(file){
       ggsave(
         filename = file,
         plot = sig_ana_reactive$VolcanoPlot_raw,
-        device = gsub("\\.","",input[[ns("file_ext_Volcano_raw")]])
+        device = gsub("\\.","",input[[ns(paste(contrast[1], contrast[2], "file_ext_Volcano_raw", sep = "_"))]])
         )
       on.exit({
-        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
+        fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(session, message = "### Info")
         log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
-        fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
+        fun_LogIt(session, message = "### Publication Snippet")
+        fun_LogIt(session, message = snippet_SigAna(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
       })
     })
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_both", sep = "_"))]] <- downloadHandler(
-    filename = function() { paste0("VOLCANO_",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns("file_ext_Volcano_both")]]) },
+    filename = function() { paste0("VOLCANO_",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns(paste(contrast[1], contrast[2], "file_ext_Volcano_both", sep = "_"))]]) },
     content = function(file){
       ggsave(
         filename = file,
         plot = gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
-        device = gsub("\\.","",input[[ns("file_ext_Volcano_both")]])
+        device = gsub("\\.","",input[[ns(paste(contrast[1], contrast[2], "file_ext_Volcano_both", sep = "_"))]])
         )
       on.exit({
-        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
+        fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(session, message = "### Info")
         log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
                              sig_ana_reactive$data4Volcano, contrast, file_path)
 #        log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
-        fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
+        fun_LogIt(session, message = "### Publication Snippet")
+        fun_LogIt(session, message = snippet_SigAna(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
       })
     })
 
 }
 
-create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns, value){
+# Relies on source(local = TRUE) to access input, output, session, file_path from parent scope
+create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns, value, session_data, session_params){
   # create a new tabPanel for DESeq2 preprocessing
   # title: title of the tabPanel
   # targetPanel: name of the targetPanel under which the tabPanel should be created
@@ -751,19 +805,19 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
             style = "border: 1px solid silver:",
             cellWidths = c("35%","35%", "30%"),
             radioGroupButtons(
-              inputId = ns("file_ext_Volcano"),
+              inputId = ns(paste(contrast[1], contrast[2], "file_ext_Volcano", sep = "_")),
               label = "File Type:",
               choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             ),
             radioGroupButtons(
-              inputId = ns("file_ext_Volcano_both"),
+              inputId = ns(paste(contrast[1], contrast[2], "file_ext_Volcano_both", sep = "_")),
               label = "File Type:",
               choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
             ),
             radioGroupButtons(
-              inputId = ns("file_ext_Volcano_raw"),
+              inputId = ns(paste(contrast[1], contrast[2], "file_ext_Volcano_raw", sep = "_")),
               label = "File Type:",
               choices = c(".png", ".tiff", ".svg", ".pdf"),
               selected = ".png"
@@ -773,12 +827,18 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       )
     )
   )
+  print(paste("appendTab completed for:", contrast[1], "vs", contrast[2]))
+
   # server part of tabPanel
-  # reactive values
+  # Phase 2: Create LOCAL sig_ana_reactive for this tab's volcano plot state
+  # (Different from parent sig_ana_reactive which tracks overall analysis state)
   sig_ana_reactive <- reactiveValues(
     th_psig = NULL,
     th_lfc = NULL,
-    Volcano_anno_tooltip = NULL
+    Volcano_anno_tooltip = NULL,
+    data4Volcano = NULL,
+    VolcanoPlot = NULL,
+    VolcanoPlot_raw = NULL
   )
   # print the summary of the results
   output[[ns(paste(contrast[1], contrast[2], "summary", sep = "_"))]] <- renderText(
@@ -851,16 +911,24 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   show_legend_adj <- ns(paste(contrast[1], contrast[2], "show_legend_adj", sep = "_"))
   show_legend_raw <- ns(paste(contrast[1], contrast[2], "show_legend_raw", sep = "_"))
 
+  print(paste("Setting up renderUI for:", contrast[1], "vs", contrast[2]))
+
+  # Direct output assignment - renderUI will execute when UI requests it
+  print(paste("Assigning Volcano_anno_tooltip_ui for:", contrast[1], "vs", contrast[2]))
   output[[ns(paste(contrast[1], contrast[2], "Volcano_anno_tooltip_ui", sep = "_"))]] <- renderUI({
+    print(paste("renderUI EXECUTING for Volcano_anno_tooltip:", contrast[1], "vs", contrast[2]))
     selectInput(
       inputId = Volcano_anno_tooltip,
       label = "Select the anno to be shown at tooltip",
-      choices = colnames(rowData(res_tmp[[session$token]]$data)),
-      selected = colnames(rowData(res_tmp[[session$token]]$data))[1],
+      choices = colnames(rowData(session_data$data)),
+      selected = colnames(rowData(session_data$data))[1],
       multiple = F
     )
   })
+
+  print(paste("Assigning psig_th_ui for:", contrast[1], "vs", contrast[2]))
   output[[ns(paste(contrast[1], contrast[2], "psig_th_ui", sep = "_"))]] <- renderUI({
+    print(paste("renderUI EXECUTING for psig_th:", contrast[1], "vs", contrast[2]))
     numericInput(
       inputId = ns(paste(contrast[1], contrast[2], "psig_th", sep = "_")),
       label = "adj. p-value threshold",
@@ -868,9 +936,12 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       max=0.1,
       step=0.01,
       value = 0.05
-      )
+    )
   })
+
+  print(paste("Assigning lfc_th_ui for:", contrast[1], "vs", contrast[2]))
   output[[ns(paste(contrast[1], contrast[2], "lfc_th_ui", sep = "_"))]] <- renderUI({
+    print(paste("renderUI EXECUTING for lfc_th:", contrast[1], "vs", contrast[2]))
     numericInput(
       inputId = lfc_th,
       label = "Log FC threshold (both sides!)",
@@ -878,14 +949,21 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       max = 10,
       step = 0.1,
       value = 1.0
-      )
+    )
   })
   toPlotVolcano <- reactive({
-    list(
-      input[[psig_th]],
-      input[[lfc_th]],
-      input[[Volcano_anno_tooltip]]
-    )
+    # Only return a list if all inputs exist, otherwise return NULL
+    if(!is.null(input[[psig_th]]) && !is.null(input[[lfc_th]]) && !is.null(input[[Volcano_anno_tooltip]])) {
+      print(paste("toPlotVolcano reactive firing with values for:", contrast[1], "vs", contrast[2]))
+      list(
+        input[[psig_th]],
+        input[[lfc_th]],
+        input[[Volcano_anno_tooltip]]
+      )
+    } else {
+      print(paste("toPlotVolcano reactive - inputs not ready yet for:", contrast[1], "vs", contrast[2]))
+      NULL
+    }
   })
   observeEvent(input[[show_legend_adj]], {
     print("Show legend adjusted")
@@ -898,10 +976,11 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       plotlyProxyInvoke(method = "relayout", list(showlegend = input[[show_legend_raw]]))
   })
   observeEvent(toPlotVolcano(), {
-    print("Plot volcano")
+    print(paste("Plot volcano observer triggered for:", contrast[1], "vs", contrast[2]))
 
-    # Ensure required inputs are available
-    req(input[[psig_th]], input[[lfc_th]], input[[Volcano_anno_tooltip]])
+    # req will fail silently if toPlotVolcano() is NULL (inputs not ready yet)
+    req(toPlotVolcano())
+    print(paste("req() passed! Plotting volcano for:", contrast[1], "vs", contrast[2]))
 
     # Create a loading screen using a Waiter
     waiter <- Waiter$new(
@@ -919,9 +998,9 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     anno_col_name <- input[[Volcano_anno_tooltip]]
 
     # Assume 'result' is defined elsewhere (e.g. from your analysis)
-    # and 'res_tmp[[session$token]]$data' contains rowData with annotation information.
-    anno_vector <- rowData(res_tmp[[session$token]]$data)[, anno_col_name]
-    names(anno_vector) <- rownames(res_tmp[[session$token]]$data)
+    # and 'session_data$data' contains rowData with annotation information.
+    anno_vector <- rowData(session_data$data)[, anno_col_name]
+    names(anno_vector) <- rownames(session_data$data)
 
     # Generate the volcano plots using the helper function.
     volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)
@@ -930,9 +1009,12 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
     sig_ana_reactive$VolcanoPlot <- volcano_obj$volcano_plt
     sig_ana_reactive$VolcanoPlot_raw <- volcano_obj_raw$volcano_plt
 
-    par_tmp[[session$token]]$SigAna$th_psig <<- th_psig
-    par_tmp[[session$token]]$SigAna$th_lfc <<- th_lfc
-    par_tmp[[session$token]]$SigAna$anno_vector <<- anno_vector
+    if(is.null(session_params$SigAna)){
+      session_params$SigAna <- list()
+    }
+    session_params$SigAna$th_psig <- th_psig
+    session_params$SigAna$th_lfc <- th_lfc
+    session_params$SigAna$anno_vector <- anno_vector
 
     # Render the corrected volcano plot as a Plotly object
     output[[ns(paste(contrast[1], contrast[2], "Volcano", sep = "_"))]] <- renderPlotly({
@@ -1011,12 +1093,14 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_val", sep = "_")]])){
           req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_val", sep = "_")]])
       }
-      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
+      fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
       log_messages_volcano(sig_ana_reactive$VolcanoPlot, sig_ana_reactive$data4Volcano, contrast, file_path)
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                         params = par_tmp[[session$token]]))
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_SigAna(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params)
+      ))
     }
   )
 
@@ -1025,14 +1109,16 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_both_val", sep = "_")]])){
         req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_both", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_both_val", sep = "_")]])
       }
-      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
+      fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
       log_messages_volcano(gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
                            sig_ana_reactive$data4Volcano, contrast, file_path)
       #log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                         params = par_tmp[[session$token]]))
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_SigAna(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params)
+      ))
     }
   )
 
@@ -1041,12 +1127,14 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
       if(!is.null(session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_raw_val", sep = "_")]])){
         req(input[[ns(paste(contrast[1], contrast[2], "only2Report_Volcano_raw", sep = "_"))]] > session$userData[[paste(contrast[1], contrast[2], "only2Report_Volcano_raw_val", sep = "_")]])
       }
-      fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
+      fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
       log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                         params = par_tmp[[session$token]]))
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_SigAna(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params)
+      ))
     }
   )
 
@@ -1061,22 +1149,25 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         hide_on_render = FALSE
       )
       waiter$show()
-      par_tmp[[session$token]]$SigAna$comp <<- title
-      par_tmp[[session$token]]$SigAna$raw <<- FALSE
+      if(is.null(session_params$SigAna)){
+        session_params$SigAna <- list()
+      }
+      session_params$SigAna$comp <- title
+      session_params$SigAna$raw <- FALSE
       envList <- list(
-        par_tmp = par_tmp[[session$token]]
+        par_tmp = reactiveValuesToList(session_params)
       )
       temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
       dir.create(temp_directory)
       # save csv files
       save_summarized_experiment(
-        res_tmp[[session$token]]$data_original,
+        session_data$data_original,
         temp_directory
       )
       write(
         create_workflow_script(
           pipeline_info = VOLCANO_PIPELINE,
-          par = par_tmp[[session$token]],
+          par = reactiveValuesToList(session_params),
           par_mem = "SigAna",
           path_to_util = file.path(temp_directory, "util.R")
         ),
@@ -1105,22 +1196,25 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
         hide_on_render = FALSE
       )
       waiter$show()
-      par_tmp[[session$token]]$SigAna$comp <<- title
-      par_tmp[[session$token]]$SigAna$raw <<- TRUE
+      if(is.null(session_params$SigAna)){
+        session_params$SigAna <- list()
+      }
+      session_params$SigAna$comp <- title
+      session_params$SigAna$raw <- TRUE
       envList <- list(
-        par_tmp = par_tmp[[session$token]]
+        par_tmp = reactiveValuesToList(session_params)
       )
       temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
       dir.create(temp_directory)
       # save csv files
       save_summarized_experiment(
-        res_tmp[[session$token]]$data_original,
+        session_data$data_original,
         temp_directory
       )
       write(
         create_workflow_script(
           pipeline_info = VOLCANO_PIPELINE,
-          par = par_tmp[[session$token]],
+          par = reactiveValuesToList(session_params),
           par_mem = "SigAna",
           path_to_util = file.path(temp_directory, "util.R")
         ),
@@ -1138,63 +1232,69 @@ create_new_tab_DESeq <- function(title, targetPanel, result, contrast, alpha, ns
   )
 
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano", sep = "_"))]] <- downloadHandler(
-    filename = function() { paste("VOLCANO_",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns("file_ext_Volcano")]],sep="") },
+    filename = function() { paste("VOLCANO_",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns(paste(contrast[1], contrast[2], "file_ext_Volcano", sep = "_"))]],sep="") },
     content = function(file){
       ggsave(
         filename = file,
         plot = sig_ana_reactive$VolcanoPlot,
-        device = gsub("\\.","",input[[ns("file_ext_Volcano")]])
+        device = gsub("\\.","",input[[ns(paste(contrast[1], contrast[2], "file_ext_Volcano", sep = "_"))]])
         )
       on.exit({
-        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
+        fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(session, message = "### Info")
         log_messages_volcano(
           sig_ana_reactive$VolcanoPlot,
           sig_ana_reactive$data4Volcano, contrast, file_path
         )
-        fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
+        fun_LogIt(session, message = "### Publication Snippet")
+        fun_LogIt(session, message = snippet_SigAna(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
       })
     })
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_raw", sep = "_"))]] <- downloadHandler(
-    filename = function() { paste("raw_VOLCANO",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns("file_ext_Volcano_raw")]],sep="") },
+    filename = function() { paste("raw_VOLCANO",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns(paste(contrast[1], contrast[2], "file_ext_Volcano_raw", sep = "_"))]],sep="") },
     content = function(file){
       ggsave(
         filename = file,
         plot = sig_ana_reactive$VolcanoPlot_raw,
-        device = gsub("\\.","",input[[ns("file_ext_Volcano_raw")]])
+        device = gsub("\\.","",input[[ns(paste(contrast[1], contrast[2], "file_ext_Volcano_raw", sep = "_"))]])
         )
       on.exit({
-        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
+        fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(session, message = "### Info")
         log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
-        fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
+        fun_LogIt(session, message = "### Publication Snippet")
+        fun_LogIt(session, message = snippet_SigAna(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
 
       })
     })
   output[[ns(paste(contrast[1], contrast[2], "SavePlot_Volcano_both", sep = "_"))]] <- downloadHandler(
-    filename = function() { paste0("VOLCANO_",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns("file_ext_Volcano_both")]]) },
+    filename = function() { paste0("VOLCANO_",format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input[[ns(paste(contrast[1], contrast[2], "file_ext_Volcano_both", sep = "_"))]]) },
     content = function(file){
       ggsave(
         filename = file,
         plot = gridExtra::arrangeGrob(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot),
-        device = gsub("\\.","",input[[ns("file_ext_Volcano_both")]])
+        device = gsub("\\.","",input[[ns(paste(contrast[1], contrast[2], "file_ext_Volcano_both", sep = "_"))]])
         )
       on.exit({
-        fun_LogIt(message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
+        fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
+        fun_LogIt(session, message = "### Info")
         log_messages_volcano(
           gridExtra::arrangeGrob(
             sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$VolcanoPlot
           ), sig_ana_reactive$data4Volcano, contrast, file_path
         )
         #log_messages_volcano(sig_ana_reactive$VolcanoPlot_raw, sig_ana_reactive$data4Volcano, contrast, file_path)
-        fun_LogIt(message = "### Publication Snippet")
-        fun_LogIt(message = snippet_SigAna(data = res_tmp[[session$token]],
-                                           params = par_tmp[[session$token]]))
+        fun_LogIt(session, message = "### Publication Snippet")
+        fun_LogIt(session, message = snippet_SigAna(
+          data = reactiveValuesToList(session_data),
+          params = reactiveValuesToList(session_params)
+        ))
       })
     })
 }

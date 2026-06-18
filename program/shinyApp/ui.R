@@ -1,75 +1,7 @@
-## Server 2.0
-
-# eigentlich getestet auf 4.1.2
-# setwd("program")
-# if(!(renv::status()$synchronized)){
-#  renv::restore(lockfile = "renv.lock")
-# }
-
-library(DT)
-library(plotly)
-library(waiter)
-library(shiny, lib.loc = .libPaths()[1])
-library(shinyWidgets)
-library(shinymanager)
-library(shinyjs)
-library(DESeq2)
-library(grid)
-library(ggplot2)
-library(pheatmap)
-library(pathview)
-library(clusterProfiler)
-library(BiocManager)
-library(shinyhelper)
-library(dplyr)
-library(shinycssloaders)
-library(ggpubr)
-library(org.Mm.eg.db)
-library(org.Hs.eg.db)
-library(jsonlite)
-library(rmarkdown)
-library(tinytex)
-library(testthat)
-library(shinytest)
-library(biomaRt)
-library(zip)
-library(cicerone)
-library(shinyalert)
-library(msigdbr)
-library(tidyr)
-library(kableExtra)
-library(readxl)
-library(ggvenn)
-library(ComplexUpset)
-library(gridExtra)
-library(sva)
-library(pcaPP) # requires gfortran. Not sure how to install on server
-library(reshape2)
-library(cowplot)  # already imported but now we use it explicitly
-library("ComplexHeatmap")
-library(svglite)
-library(formattable)
-library(codetools)
-library(vsn)
-library(hexbin)
-library(htmlwidgets)
-
-source("R/C.R")
-source("R/C_strings.R")
-source("R/module_DownloadReport.R",local=T)
-# source the uis for each panel here
-source("R/help_tab/ui.R",local=T)
-source("R/data_selection/ui.R",local=T)
-source("R/pre_processing/ui.R",local=T)
-source("R/pca/ui.R",local=T)
-source("R/heatmap/ui.R",local=T)
-source("R/single_gene_visualisation/ui.R",local=T)
-source("R/enrichment_analysis/ui.R",local=T)
-source("R/sample_correlation/ui.R",local = T)
-source("R/significance_analysis/ui.R",local=T)
-
-options(repos = BiocManager::repositories())
-options(spinner.color = "#1c8a3b", spinner.color.background = "#ffffff", spinner.size = 2)
+## cOmicsArt UI Definition
+##
+## Note: All library loading and sourcing has been moved to global.R
+## for improved startup performance and proper package loading order.
 
 ui <- shiny::fluidPage(
   # Loading Bars?
