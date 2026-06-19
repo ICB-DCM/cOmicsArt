@@ -116,6 +116,24 @@ Shiny app.
 Ensure Docker is installed on your system. You can download and install Docker from 
 [Docker's official website](https://www.docker.com/get-started).
 
+<div class="disclaimer" style="background-color:#fff0bf; color: black; border: 2px solid #ffcf30; border-radius: 8px; padding:0.2em;">
+<span>
+<p style='margin-top:1em; text-align:left ;margin-left:1em;'>
+<b>Apple Silicon (M1/M2/M3) users:</b> The image is built for the
+<code>linux/amd64</code> architecture and runs under emulation on Apple
+Silicon. <b>App mode works out of the box.</b> For the <b>development
+(RStudio) mode</b> you must enable Apple's Virtualization framework and
+Rosetta in Docker Desktop, otherwise RStudio will show
+<i>"Unable to connect to service"</i>:
+<br/><br/>
+Docker Desktop &rarr; <b>Settings</b> &rarr; <b>General</b> &rarr; set
+<b>Virtual Machine Manager (VMM)</b> to <b>Apple Virtualization
+framework</b> &rarr; tick <b>"Use Rosetta for x86_64/amd64 emulation on
+Apple Silicon"</b> &rarr; <b>Apply &amp; Restart</b>. Requires macOS 13
+(Ventura) or newer.
+</p></span>
+</div>
+
 ## Steps to Install and Run the Shiny App
 
 ### 2. Pull the Docker Image
@@ -126,17 +144,24 @@ Open a terminal or command prompt and use the following command to pull the Dock
 docker pull pauljonasjost/comicsart:latest
 ```
 
-### 3. Run the Docker Container
+### 3. Run the Docker Container (App mode)
 
 After pulling the image, you can run the Docker container with the following command:
 
 ```bash
-docker run -p 3838:3838 pauljonasjost/comicsart:latest
+docker run --rm -p 3838:3838 pauljonasjost/comicsart:latest
 ```
 
 This command does the following:
+- `--rm` removes the container automatically when you stop it.
 - `-p 3838:3838` maps port 3838 in the Docker container to port 3838 on your local machine.
 - `pauljonasjost/comicsart:latest` specifies the Docker image to run.
+
+The image supports two modes, selected with the `MODE` environment
+variable: `MODE=app` (the default, shown above) runs the Shiny app, and
+`MODE=rstudio` starts an RStudio Server for development (see
+[Development mode (RStudio)](#development-mode-rstudio) below). Because
+`app` is the default, no `-e MODE=...` flag is needed to run the app.
 
 ### 4. Access the Shiny App
 
@@ -160,20 +185,58 @@ docker pull pauljonasjost/comicsart:latest
 
 Then follow the steps to run the updated image.
 
-### 6. Access the environment through docker
-To enter the Docker container and use the same environment as the app:
+## Development mode (RStudio)
+
+The same image can start an **RStudio Server**, giving you the app's
+fully preloaded R environment inside a browser-based IDE. This is the
+recommended way to develop or debug the app without setting up renv
+locally.
+
+> **Apple Silicon:** development mode requires the Apple Virtualization
+> framework + Rosetta to be enabled first — see the note under
+> [Install Docker](#1--install-docker).
+
+Clone the repository (so your edits are saved to your machine), then
+start the container in `rstudio` mode with your local `program/` folder
+mounted into it:
 
 ```bash
-docker run -it --rm pauljonasjost/comicsart:latest bash
-```
-Then, inside the container:
-```bash
-R
-```
-If you want to have changed files save, e.g., during app development ensure to mount into the docker:
-```
-git clone  https://github.com/icb-dcm/cOmicsArt.git
+git clone https://github.com/icb-dcm/cOmicsArt.git
 cd cOmicsArt
+
+docker run --rm -p 8787:8787 \
+  -e MODE=rstudio \
+  -e PASSWORD=yourpassword \
+  -v "$PWD/program":/home/rstudio/project \
+  pauljonasjost/comicsart:latest
+```
+
+This does the following:
+- `-p 8787:8787` maps RStudio Server's port to your machine.
+- `-e MODE=rstudio` starts RStudio Server instead of the app.
+- `-e PASSWORD=yourpassword` sets the login password (choose your own).
+- `-v "$PWD/program":/home/rstudio/project` mounts your local `program/`
+  folder into the container at `~/project`, so any changes you make are
+  written back to your machine.
+
+Then open [http://localhost:8787](http://localhost:8787) and log in with
+username `rstudio` and the password you set. Your mounted code is in the
+`project/` folder. To launch the app from within RStudio:
+
+```r
+shiny::runApp("project/shinyApp")
+```
+
+Because the environment is baked into the image, packages such as
+`DESeq2` and `ggtree` load immediately — no `renv::restore()` needed.
+
+<details>
+<summary>Alternative: plain shell / VS Code Dev Containers</summary>
+
+If you prefer a terminal or VS Code instead of RStudio, you can open a
+shell in the same environment:
+
+```bash
 docker run -it --rm \
   -v "$PWD":/workspace \
   -w /workspace \
@@ -181,16 +244,12 @@ docker run -it --rm \
   pauljonasjost/comicsart:latest bash
 ```
 
-Note, for having an IDE and not just plain R a simple option is to use VS Code + Dev Containers:
-1. Start the container
-2. Open VS Code
-3. Install the Dev Containers extension
-4. Open the command palette
-5. Select: Dev Containers: Attach to Running Container...
+For an IDE, use VS Code + the **Dev Containers** extension: start the
+container, then in VS Code open the command palette and select
+*Dev Containers: Attach to Running Container...*. Open your mounted local
+folder so saved changes persist on your machine.
 
-This allows you to browse the file structure within the container, open a terminal inside it, and run R directly in the Docker environment.
-
-Use the mounted local repository approach above, then open that local folder in VS Code to ensure local saved changes.
+</details>
 
 
 ### Troubleshooting
@@ -206,5 +265,10 @@ If you encounter issues, consider the following tips:
   Then access the app at `http://localhost:8888`.
 
 - **Permissions Issues**: On Linux, you may need to use `sudo` for Docker commands.
+
+- **RStudio "Unable to connect to service" (Apple Silicon)**: Development
+  mode needs Docker Desktop's Apple Virtualization framework + Rosetta
+  enabled (Settings → General → VMM: *Apple Virtualization framework* →
+  *Use Rosetta for x86_64/amd64 emulation*). App mode is unaffected.
 
 .....
