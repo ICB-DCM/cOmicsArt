@@ -16,6 +16,10 @@ WORKDIR /srv/shiny-server
 # and any RStudio session for any user — finds them on the default .libPaths()
 # with no renv auto-activation needed.
 ENV RENV_PATHS_CACHE=/srv/shiny-server/renv/cache
+# Install packages directly into the target library (no isolated staging lib),
+# so each dependency is visible to the packages built after it. Avoids
+# "there is no package called 'magrittr'" type failures during restore.
+ENV RENV_CONFIG_INSTALL_TRANSACTIONAL=FALSE
 
 RUN apt-get update -o Acquire::Retries=5 \
  && apt-get install -y --no-install-recommends \
