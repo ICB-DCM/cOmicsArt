@@ -6,7 +6,9 @@ name: Build & push Docker image
 # test workflow just pulls the prebuilt image instead.
 on:
   push:
-    branches: [main, develop]
+    # NOTE: docker_for_test is TEMPORARY — added so the build can be verified
+    # on this feature branch before merging. Remove it before merging the PR.
+    branches: [main, develop, docker_for_test]
     paths:
       - Dockerfile
       - start.sh
