@@ -6,13 +6,16 @@ name: Build & push Docker image
 # test workflow just pulls the prebuilt image instead.
 on:
   push:
-    # NOTE: docker_for_test is TEMPORARY — added so the build can be verified
-    # on this feature branch before merging. Remove it before merging the PR.
+    # NOTE: docker_for_test + the disabled paths filter below are TEMPORARY —
+    # added so the build can be verified on this feature branch before merging.
+    # Before merging the PR, restore this block to:
+    #     branches: [main, develop]
+    #     paths: [Dockerfile, start.sh, program/renv.lock]
     branches: [main, develop, docker_for_test]
-    paths:
-      - Dockerfile
-      - start.sh
-      - program/renv.lock
+    # paths:
+    #   - Dockerfile
+    #   - start.sh
+    #   - program/renv.lock
   workflow_dispatch:
 
 env:
