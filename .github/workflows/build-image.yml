@@ -1,21 +1,17 @@
 name: Build & push Docker image
 
-# Build the environment image and push it to Docker Hub ONLY when the
-# environment actually changes (lockfile, Dockerfile, or launcher), plus a
-# manual trigger. Day-to-day app-code changes do NOT rebuild the image — the
-# test workflow just pulls the prebuilt image instead.
+# Build the environment image whenever the environment changes (lockfile,
+# Dockerfile, or launcher) on ANY branch, plus a manual trigger.
+#  - lock-<hash> and <sha> tags are pushed on every branch, so the smoke test
+#    running on a feature branch can pull the freshly-built environment.
+#  - :latest is pushed ONLY from main/develop, so feature branches never
+#    overwrite the image end users pull.
 on:
   push:
-    # NOTE: docker_for_test + the disabled paths filter below are TEMPORARY —
-    # added so the build can be verified on this feature branch before merging.
-    # Before merging the PR, restore this block to:
-    #     branches: [main, develop]
-    #     paths: [Dockerfile, start.sh, program/renv.lock]
-    branches: [main, develop, docker_for_test]
-    # paths:
-    #   - Dockerfile
-    #   - start.sh
-    #   - program/renv.lock
+    paths:
+      - Dockerfile
+      - start.sh
+      - program/renv.lock
   workflow_dispatch:
 
 env:
@@ -28,11 +24,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Short, stable tag derived from the lockfile so the test workflow can
-      # pull the image that exactly matches a given renv.lock.
-      - name: Compute renv.lock hash
-        id: lock
-        run: echo "hash=$(sha256sum program/renv.lock | cut -c1-8)" >> "$GITHUB_OUTPUT"
+      - name: Compute image tags
+        id: meta
+        run: |
+          HASH=$(sha256sum program/renv.lock | cut -c1-8)
+          {
+            echo "tags<<EOF"
+            echo "${IMAGE}:lock-${HASH}"
+            echo "${IMAGE}:${{ github.sha }}"
+            if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+              echo "${IMAGE}:latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -50,10 +54,6 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64
           push: true
-          tags: |
-            ${{ env.IMAGE }}:latest
-            ${{ env.IMAGE }}:${{ github.ref_name }}
-            ${{ env.IMAGE }}:lock-${{ steps.lock.outputs.hash }}
-            ${{ env.IMAGE }}:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max

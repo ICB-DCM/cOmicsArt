@@ -7,35 +7,43 @@ on: [push]
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Generous timeout: if this push changed renv.lock, build-image.yml is
+    # building the matching image in parallel and we wait for it (below).
+    timeout-minutes: 75
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Pull the image whose tag matches THIS commit's renv.lock, so the app is
-      # tested against exactly the environment the lockfile describes. Falls
-      # back to :latest if that tag isn't published yet (e.g. the build for a
-      # brand-new lock is still running).
-      # TODO let it wait till the other workflow is done (build-image.yml)
-      - name: Resolve and pull image
+      # The image tag is derived from THIS commit's renv.lock, so we always test
+      # against exactly the environment the lockfile describes.
+      - name: Resolve image tag
         id: img
+        run: echo "tag=pauljonasjost/comicsart:lock-$(sha256sum program/renv.lock | cut -c1-8)" >> "$GITHUB_OUTPUT"
+
+      # Wait for the matching image to be available. If renv.lock just changed,
+      # build-image.yml is building it now, so we retry until it's pushed
+      # (rather than testing against the wrong environment). Unchanged locks are
+      # already on Docker Hub, so the first pull succeeds immediately.
+      - name: Pull image (wait for build-image.yml if env just changed)
         run: |
-          HASH=$(sha256sum program/renv.lock | cut -c1-8)
-          TAG="pauljonasjost/comicsart:lock-$HASH"
-          if docker pull "$TAG"; then
-            echo "image=$TAG" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::$TAG not found, falling back to :latest"
-            docker pull pauljonasjost/comicsart:latest
-            echo "image=pauljonasjost/comicsart:latest" >> "$GITHUB_OUTPUT"
-          fi
+          TAG="${{ steps.img.outputs.tag }}"
+          for i in $(seq 1 120); do
+            if docker pull "$TAG"; then
+              echo "Pulled $TAG"
+              exit 0
+            fi
+            echo "[$i/120] $TAG not on Docker Hub yet (build-image.yml may still be running); retrying in 30s..."
+            sleep 30
+          done
+          echo "Timed out waiting for $TAG — did the image build fail?"
+          exit 1
 
       - name: Start app (current code mounted into prebuilt env)
         run: |
           docker run -d --name comicsart_app -p 3838:3838 \
             -e MODE=app \
             -v "${{ github.workspace }}/program/shinyApp":/srv/shiny-server/shinyApp \
-            "${{ steps.img.outputs.image }}"
+            "${{ steps.img.outputs.tag }}"
 
       - name: Wait for the app to respond
         run: |
