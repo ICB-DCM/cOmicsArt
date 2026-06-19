@@ -1,0 +1,54 @@
+name: Build & push Docker image
+
+# Build the environment image and push it to Docker Hub ONLY when the
+# environment actually changes (lockfile, Dockerfile, or launcher), plus a
+# manual trigger. Day-to-day app-code changes do NOT rebuild the image — the
+# test workflow just pulls the prebuilt image instead.
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - Dockerfile
+      - start.sh
+      - program/renv.lock
+  workflow_dispatch:
+
+env:
+  IMAGE: pauljonasjost/comicsart
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Short, stable tag derived from the lockfile so the test workflow can
+      # pull the image that exactly matches a given renv.lock.
+      - name: Compute renv.lock hash
+        id: lock
+        run: echo "hash=$(sha256sum program/renv.lock | cut -c1-8)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.ref_name }}
+            ${{ env.IMAGE }}:lock-${{ steps.lock.outputs.hash }}
+            ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
