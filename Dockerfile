@@ -82,6 +82,11 @@ RUN --mount=type=cache,target=/var/cache/apt \
           renv::restore(lockfile='/srv/shiny-server/renv.lock', \
                         library='/usr/local/lib/R/site-library', prompt=FALSE)"
 
+# Register R's shared library with the dynamic loader so RStudio's rsession
+# can always find libR.so (otherwise dev mode fails with "Unable to connect
+# to service" / "libR.so: cannot open shared object file").
+RUN echo "/usr/local/lib/R/lib" > /etc/ld.so.conf.d/libR.conf && ldconfig
+
 # Now copy the frequently-changing app code (baked default; overridden by a
 # volume mount in dev/CI).
 COPY program/shinyApp /srv/shiny-server/shinyApp
