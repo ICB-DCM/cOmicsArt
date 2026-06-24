@@ -44,8 +44,6 @@ results_tab_server <- function(id, contrast, result, alpha, preprocess_method,
   in_root   <- root$input
   ids <- create_contrast_ids(ns, contrast)
 
-  # DESeq2::results() returns a DESeqResults (S4), which fails is.data.frame()
-  # in the summary guards and would abort the whole tab. Coerce once, up front.
   result <- as.data.frame(result)
   # Local reactive values for this tab's state
   tab_state <- reactiveValues(
@@ -75,7 +73,6 @@ results_tab_server <- function(id, contrast, result, alpha, preprocess_method,
   })
 
   # Setup table rendering
-  # Pass result directly (not as reactive) - table_server processes it upfront
   table_server(
     id = paste0(id, "_table"),
     result = result,
@@ -87,7 +84,6 @@ results_tab_server <- function(id, contrast, result, alpha, preprocess_method,
   )
 
   # Setup volcano plots and controls
-  # Pass result directly - volcano_server will use it in observeEvent
   volcano_server(
     id = paste0(id, "_volcano"),
     result = result,

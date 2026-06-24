@@ -245,7 +245,6 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
 
 #' Factory function to create plot save download handler
 #'
-#' Massive duplication reduction - all three handlers use this factory.
 #'
 #' @param input Shiny input object
 #' @param session Shiny session object

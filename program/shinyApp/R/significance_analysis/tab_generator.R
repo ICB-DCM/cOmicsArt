@@ -1,11 +1,7 @@
 # Tab Generation for Significance Analysis Results
-# Refactored version using modular components
-# Original version backed up as tab_generator.R.backup
 
 #' Create a new significance analysis results tab
 #'
-#' This is a wrapper function that maintains backward compatibility with the
-#' original interface while using the refactored modular system underneath.
 #'
 #' @param title Tab title displayed to user
 #' @param targetPanel ID of tabsetPanel to append to

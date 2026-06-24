@@ -19,11 +19,9 @@ table_server <- function(id, result, alpha, preprocess_method, ids, output, inpu
   # Using moduleServer would create double-namespacing and break rendering
 
   # Process result data upfront - add significance stars
-  # (Original code did this once, not as a reactive)
   processed_result <- addStars(result, alpha)
 
   # Calculate color scales upfront for table styling
-  # (Original code calculated these once when tab was created)
   brks_log2FC_neg <- seq(min(processed_result$log2FoldChange, na.rm = TRUE) - 1, 0, length.out = 100)
   brks_log2FC_pos <- seq(0, max(processed_result$log2FoldChange, na.rm = TRUE) + 1, length.out = 100)
   brks_lfc <- c(brks_log2FC_neg, brks_log2FC_pos)

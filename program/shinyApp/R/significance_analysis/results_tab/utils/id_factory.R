@@ -1,5 +1,4 @@
 # ID Factory for Significance Analysis Results Tabs
-# Centralizes ID generation to eliminate string concatenation bugs
 
 #' Create a factory for generating namespaced IDs for a specific contrast
 #'
