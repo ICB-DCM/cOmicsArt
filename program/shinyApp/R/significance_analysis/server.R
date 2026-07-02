@@ -268,7 +268,7 @@ significance_analysis_server <- function(id, session_data, session_params, data_
           lapply(c("", "_both", "_raw"), function(button) {
             input_id <- paste0(name, button)
             session$userData[[paste0(input_id, "_val")]] <- isolate(input[[input_id]])
-            session$userData[[ns(input_id)]]$destroy()
+            if (!is.null(session$userData[[ns(input_id)]])) session$userData[[ns(input_id)]]$destroy()
           })
 
           removeTab("significance_analysis_results", target = paste0("Significance_", which(sig_ana_reactive$active_tabs == comp)))
