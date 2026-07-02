@@ -48,7 +48,7 @@ select_data <- function(
       sample_type <- c(colnames(colData(data)))[1]
   }
   samples_selected <- c()
-  if(any(selected_samples == "all")) {
+  if(any(selected_samples == "all") | length(selected_samples) == ncol(assay(data))) {
     samples_selected <- colnames(assay(data))
   } else {
     samples_selected <- unique(c(
