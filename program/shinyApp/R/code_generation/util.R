@@ -34,6 +34,11 @@ clean_function_code <- function(f) {
   # Trim any leading/trailing whitespace
   f_out <- trimws(f_out)
 
+  # Reattach `else`/`else if` to the preceding closing brace. deparse() places
+  # `else` on its own line, which is valid inside a function body but a syntax
+  # error once this body is inlined at the top level of the generated script.
+  f_out <- gsub("\\}[[:space:]]*\\n[[:space:]]*else", "} else", f_out)
+
   return(f_out)
 }
 
