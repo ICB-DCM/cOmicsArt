@@ -1464,7 +1464,7 @@ server <- function(input,output,session){
 ## Ui Section ----
   observe({
     req(data_input_shiny())
-    isTruthy(session_data$data)
+    # isTruthy(session_data$data)
     # Row
     output$providedRowAnnotationTypes_ui <- renderUI({shinyWidgets::virtualSelectInput(
       inputId = "providedRowAnnotationTypes",
