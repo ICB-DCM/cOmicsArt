@@ -101,6 +101,7 @@ ui <- shiny::fluidPage(
     help_tab_panel,
     data_selection_panel,
     pre_processing_panel,
+    ml_classification_UI("ml_classification"),
     sampleCorrelation_UI("sample_correlation"),
     pca_UI("PCA"),
     significance_analysis_UI("SignificanceAnalysis"),

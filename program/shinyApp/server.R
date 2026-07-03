@@ -76,6 +76,7 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+  hideTab(inputId = "tabsetPanel1", target = "ML Classification")
   shinyjs::hideElement(id = "mainPanel_other")
   shinyjs::hideElement(id = "data_summary")
   shinyjs::hideElement(id = "div_sampleCorrelation_main_panel")
@@ -1966,7 +1967,9 @@ server <- function(input,output,session){
       shinyjs::click("Heatmap-refreshUI",asis = T)
       shinyjs::click("PCA-refreshUI",asis = T)
       shinyjs::click("sample_correlation-refreshUI",asis = T)
+      shinyjs::click("ml_classification-refreshUI",asis = T)
       ifelse(omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"), showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
+      showTab(inputId = "tabsetPanel1", target = "ML Classification")
       
       num_batches <- NA
       batch_message <- grep("Message: Found\\d+batches", session_data$all_warnings, value = TRUE)
@@ -2343,5 +2346,13 @@ server <- function(input,output,session){
     data = session_data,
     params = session_params,
     reactive(updating$count)
+  )
+
+  # ML Classification ----
+  ml_classification_Server(
+    id = "ml_classification",
+    session_data = session_data,
+    session_params = session_params,
+    data_input_shiny = data_input_shiny
   )
 }

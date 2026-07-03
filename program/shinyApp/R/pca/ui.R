@@ -320,7 +320,7 @@ pca_UI <- function(id){
   ns <- NS(id)
 
   tabPanel(
-    title = tagList(tags$span("4. PCA")), 
+    title = tagList(tags$span("5. PCA")), 
     value = "PCA",
     id = "pca",
     fluid = T,

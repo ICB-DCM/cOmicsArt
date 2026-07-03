@@ -193,7 +193,7 @@ heatmap_main <- function(ns){
 heatmap_UI <- function(id){
   ns <- NS(id)
   heatmap_panel <- tabPanel(
-    title = tagList(tags$span("6. Heatmap")), 
+    title = tagList(tags$span("7. Heatmap")), 
     value = "Heatmap",
     id = "heatmap",
     fluid = T,
