@@ -168,56 +168,36 @@ server <- function(input,output,session){
     ))
   })
 
-  output$WelcomePage_ui <- renderUI({
-    imageOutput("WelcomePage")
-  })
+  # Help tab: WelcomePage image rendering (reactive to width/height sliders)
+  # Note: Show/hide logic now handled client-side by conditionalPanel in ui.R
+  output$WelcomePage <- renderImage({
+    req(input$ImageSelect == "WelcomePage")  # Only render when WelcomePage is selected
+    list(
+      src = "www/WelcomPage.png",
+      contentType = "image/png",
+      width = paste0(input$ImageWidth,"%"),
+      height = input$ImageHeight
+    )
+  }, deleteFile = FALSE)
 
-  observeEvent(input$get_help,{
-    if(input$ImageSelect == "WelcomePage"){
-      output$WelcomePage_ui <- renderUI({
-        imageOutput("WelcomePage")
-      })
-      output$WelcomePage <- renderImage({
-        # Path to the image file
-        list(
-          src = "www/WelcomPage.png",
-          contentType = "image/png",
-          width = paste0(input$ImageWidth,"%"), # Adjust as needed
-          height = input$ImageHeight # Adjust as needed
-        )
-      }, deleteFile = FALSE) # Set deleteFile to FALSE to keep the image file
-      output$help_tab_info <- renderText({
-        HTML(
-          paste0(
-            "As you selected the WelcomePage on the <b>left</b>, you can see a screenshot of the WelcomePage below.<br>",
-            "If you want to see the full documentation, click ",
-            "<a href='https://icb-dcm.github.io/cOmicsArt/' target='_blank'>here</a>",
-            ".<br>or click on the link on the top left of the screen 'Go To Documentation'.<br><br>",
-            "Within cOmicsArt this box will display information depending on the current tab you are in.<br> A tab represents an analysis."
-          )
-        )
-        }
-      )
-    } else if(input$ImageSelect == "YouTube Tutorial"){
-      output$WelcomePage_ui <- renderUI({
-        tags$iframe(
-          width = paste0(input$ImageWidth,"%"), # Adjust as needed
-          height = input$ImageHeight, # Adjust as needed
-          src = "https://www.youtube.com/embed/pTGjtIYQOak",
-          frameborder = "0",
-          allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
-          allowfullscreen = TRUE
-        )
-      })
-    } else if(input$ImageSelect == "nothing selected"){
-      output$help_tab_info <- renderText({
-        HTML(paste0(
-          "You have selected 'nothing selected' - hence there is nothing to show<br>.",
-          "Do you want to see something else? Try to select a different Image (Select Image) on the left!<br>",
-          "Did you maybe just press the button?"
-        ))
-      })
-      output$WelcomePage_ui <- renderUI({NULL})
+  # Help tab: Info text that updates based on selection
+  output$help_tab_info <- renderText({
+    if(input$ImageSelect == "WelcomePage") {
+      HTML(paste0(
+        "As you selected the WelcomePage on the <b>left</b>, you can see a screenshot of the WelcomePage below.<br>",
+        "If you want to see the full documentation, click ",
+        "<a href='https://icb-dcm.github.io/cOmicsArt/' target='_blank'>here</a>",
+        ".<br>or click on the link on the top left of the screen 'Go To Documentation'.<br><br>",
+        "Within cOmicsArt this box will display information depending on the current tab you are in.<br> A tab represents an analysis."
+      ))
+    } else if(input$ImageSelect == "nothing selected") {
+      HTML(paste0(
+        "You have selected 'nothing selected' - hence there is nothing to show<br>.",
+        "Do you want to see something else? Try to select a different Image (Select Image) on the left!<br>",
+        "Did you maybe just press the button?"
+      ))
+    } else {
+      ""  # Empty for YouTube Tutorial
     }
   })
 
@@ -451,23 +431,7 @@ server <- function(input,output,session){
     shinyjs::toggle(id = "console_toggle")
   })
 
-  observeEvent(input$omic_type_testdata,{
-    if(input$omic_type_testdata == "Transcriptomics"){
-      output$testdata_help_text <- renderUI({
-        HTML(EXAMPLE_RNA_DESCRIPTION)
-      })
-    }
-    if(input$omic_type_testdata == "Metabolomics"){
-      output$testdata_help_text <- renderUI({
-        HTML(EXAMPLE_METABO_DESCRIPTION)
-      })
-    }
-    if(input$omic_type_testdata == "Lipidomics"){
-      output$testdata_help_text <- renderUI({
-        HTML(EXAMPLE_LIPID_DESCRIPTION)
-      })
-    }
-    })
+  # Test data help text rendered client-side via conditionalPanel in data_selection/ui.R
   
   observeEvent(input$AddGeneSymbols, {
     req(data_input_shiny())
