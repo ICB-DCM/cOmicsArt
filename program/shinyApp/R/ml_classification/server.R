@@ -117,6 +117,14 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
 
         ml_code$current <- generated_code
 
+        # Store parameters for code generation
+        session_params$MLClassification <- list(
+          k_clusters = input$k_clusters,
+          filter_genes_unsupervised = input$filter_genes_unsupervised,
+          n_genes_unsupervised = input$n_genes_unsupervised,
+          condition_overlay = input$condition_overlay
+        )
+
         showNotification("k-means clustering completed successfully!", type = "default")
 
       }, error = function(e) {
@@ -157,12 +165,18 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
         sample_annotation <- as.data.frame(colData(data$data))
       }
 
-      render_kmeans_plot(
+      # Generate and store plot
+      plot_obj <- render_kmeans_plot(
         kmeans_result = ml_results$kmeans,
         data_matrix = ml_results$data_matrix,
         sample_annotation = sample_annotation,
         condition_column = condition_col
       )
+
+      # Store for download/report handlers
+      ml_results$cluster_plot <- plot_obj
+
+      plot_obj
     })
 
     # Render cluster assignments table
@@ -307,6 +321,14 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
           kernel = "radial"
         )
 
+        # Store parameters for code generation
+        session_params$MLClassification <- list(
+          condition_column_supervised = input$condition_column_supervised,
+          filter_genes_supervised = input$filter_genes_supervised,
+          n_genes_supervised = input$n_genes_supervised,
+          svm_kernel = "radial"
+        )
+
         showNotification("SVM classification completed successfully!", type = "message")
 
       }, error = function(e) {
@@ -333,13 +355,19 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
       req(ml_results$predictions)
       req(ml_results$accuracy)
 
-      render_svm_plot(
+      # Generate and store plot
+      plot_obj <- render_svm_plot(
         svm_model = ml_results$svm,
         X = ml_results$svm_X,
         y = ml_results$svm_y,
         predictions = ml_results$predictions,
         accuracy = ml_results$accuracy
       )
+
+      # Store for download/report handlers
+      ml_results$svm_plot <- plot_obj
+
+      plot_obj
     })
 
     # Render predictions table
@@ -410,6 +438,232 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
 
         write.csv(predictions_df, file, row.names = FALSE)
       }
+    )
+
+    ## Download and Reporting Handlers ----
+
+    # K-means clustering handlers
+    observeEvent(input$only2Report_cluster, {
+      req(ml_results$cluster_plot)
+      notificationID <- showNotification("Saving to Report...", duration = 0)
+
+      tmp_filename <- paste0(
+        getwd(), "/", session_params$file_path,
+        "KMeans_Clustering_", Sys.time(), input$file_ext_cluster
+      )
+
+      ggsave(
+        tmp_filename,
+        plot = ml_results$cluster_plot,
+        width = 16,
+        height = 9,
+        units = "in",
+        device = gsub("\\.","", input$file_ext_cluster)
+      )
+
+      # Log to report with proper section structure
+      fun_LogIt(session, message = "## ML Classification - k-means Clustering {.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
+      fun_LogIt(session, message = paste0(
+        "**k-means Clustering** - Number of clusters: k=", input$k_clusters
+      ))
+      if (input$filter_genes_unsupervised) {
+        fun_LogIt(session, message = paste0(
+          "**k-means** - Filtered to top ", input$n_genes_unsupervised, " variable genes"
+        ))
+      }
+      if (!is.null(input$condition_overlay) && input$condition_overlay != "none") {
+        fun_LogIt(session, message = paste0(
+          "**k-means** - Overlay condition: ", input$condition_overlay
+        ))
+      }
+      fun_LogIt(session, message = paste0("![k-means Clustering](", tmp_filename, ")"))
+
+      removeNotification(notificationID)
+      showNotification("Saved!", type = "message", duration = 1)
+    })
+
+    output$SavePlot_cluster <- downloadHandler(
+      filename = function() {
+        paste0("KMeans_Clustering_k", input$k_clusters, "_",
+               format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),
+               input$file_ext_cluster)
+      },
+      content = function(file) {
+        req(ml_results$cluster_plot)
+        ggsave(
+          file,
+          plot = ml_results$cluster_plot,
+          width = 16,
+          height = 9,
+          units = "in",
+          dpi = "print",
+          device = gsub("\\.","", input$file_ext_cluster)
+        )
+        on.exit({shinyjs::click(ns("only2Report_cluster"))})
+      }
+    )
+
+    output$getR_Code_cluster <- downloadHandler(
+      filename = function() {
+        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+      },
+      content = function(file) {
+        waiter <- Waiter$new(
+          html = LOADING_SCREEN,
+          color = "#3897F147",
+          hide_on_render = FALSE
+        )
+        waiter$show()
+
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+
+        # Save data
+        save_summarized_experiment(
+          session_data$data_original,
+          temp_directory
+        )
+
+        # Generate R script
+        write(
+          create_workflow_script(
+            pipeline_info = KMEANS_CLUSTERING_PIPELINE,
+            par = reactiveValuesToList(session_params),
+            par_mem = "MLClassification",
+            path_to_util = file.path(temp_directory, "util.R")
+          ),
+          file.path(temp_directory, "Code.R")
+        )
+
+        # Save environment data
+        envList <- list(
+          par_tmp = reactiveValuesToList(session_params)
+        )
+        saveRDS(envList, file.path(temp_directory, "Data.rds"))
+
+        # Zip everything
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+        waiter$hide()
+      },
+      contentType = "application/zip"
+    )
+
+    # SVM classification handlers
+    observeEvent(input$only2Report_svm, {
+      req(ml_results$svm_plot)
+      notificationID <- showNotification("Saving to Report...", duration = 0)
+
+      tmp_filename <- paste0(
+        getwd(), "/", session_params$file_path,
+        "SVM_Classification_", Sys.time(), input$file_ext_svm
+      )
+
+      ggsave(
+        tmp_filename,
+        plot = ml_results$svm_plot,
+        width = 16,
+        height = 9,
+        units = "in",
+        device = gsub("\\.","", input$file_ext_svm)
+      )
+
+      # Log to report with proper section structure
+      fun_LogIt(session, message = "## ML Classification - SVM {.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
+      fun_LogIt(session, message = paste0(
+        "**SVM Classification** - Predicting: ", input$condition_column_supervised
+      ))
+      fun_LogIt(session, message = paste0(
+        "**SVM** - Training accuracy: ", round(ml_results$accuracy * 100, 1), "%"
+      ))
+      fun_LogIt(session, message = paste0(
+        "**SVM** - Note: This is training accuracy only (no validation). ",
+        "Results are exploratory."
+      ))
+      if (input$filter_genes_supervised) {
+        fun_LogIt(session, message = paste0(
+          "**SVM** - Filtered to top ", input$n_genes_supervised, " variable genes"
+        ))
+      }
+      fun_LogIt(session, message = paste0("![SVM Classification](", tmp_filename, ")"))
+
+      removeNotification(notificationID)
+      showNotification("Saved!", type = "message", duration = 1)
+    })
+
+    output$SavePlot_svm <- downloadHandler(
+      filename = function() {
+        paste0("SVM_Classification_", input$condition_column_supervised, "_",
+               format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),
+               input$file_ext_svm)
+      },
+      content = function(file) {
+        req(ml_results$svm_plot)
+        ggsave(
+          file,
+          plot = ml_results$svm_plot,
+          width = 16,
+          height = 9,
+          units = "in",
+          dpi = "print",
+          device = gsub("\\.","", input$file_ext_svm)
+        )
+        on.exit({shinyjs::click(ns("only2Report_svm"))})
+      }
+    )
+
+    output$getR_Code_svm <- downloadHandler(
+      filename = function() {
+        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+      },
+      content = function(file) {
+        waiter <- Waiter$new(
+          html = LOADING_SCREEN,
+          color = "#3897F147",
+          hide_on_render = FALSE
+        )
+        waiter$show()
+
+        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+        dir.create(temp_directory)
+
+        # Save data
+        save_summarized_experiment(
+          session_data$data_original,
+          temp_directory
+        )
+
+        # Generate R script
+        write(
+          create_workflow_script(
+            pipeline_info = SVM_CLASSIFICATION_PIPELINE,
+            par = reactiveValuesToList(session_params),
+            par_mem = "MLClassification",
+            path_to_util = file.path(temp_directory, "util.R")
+          ),
+          file.path(temp_directory, "Code.R")
+        )
+
+        # Save environment data
+        envList <- list(
+          par_tmp = reactiveValuesToList(session_params)
+        )
+        saveRDS(envList, file.path(temp_directory, "Data.rds"))
+
+        # Zip everything
+        zip::zip(
+          zipfile = file,
+          files = dir(temp_directory),
+          root = temp_directory
+        )
+        waiter$hide()
+      },
+      contentType = "application/zip"
     )
   })
 }

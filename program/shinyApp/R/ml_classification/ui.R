@@ -133,15 +133,44 @@ ml_classification_main_panel <- function(ns){
 
       plotOutput(ns("cluster_plot"), height = "600px"),
 
-      fluidRow(
-        column(4,
-          downloadButton(ns("download_cluster_plot"), "Download Plot")
-        ),
-        column(4,
-          downloadButton(ns("download_cluster_code"), "Download R Code")
-        ),
-        column(4,
-          downloadButton(ns("download_cluster_results"), "Download Results")
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        actionButton(
+          inputId = ns("only2Report_cluster"),
+          label = "Send only to Report"
+        )
+      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        downloadButton(
+          outputId = ns("getR_Code_cluster"),
+          label = "Get underlying R code and data",
+          icon = icon("code")
+        )
+      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        downloadButton(
+          outputId = ns("SavePlot_cluster"),
+          label = "Save plot",
+          class = "btn-info"
+        )
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        selectInput(
+          inputId = ns("file_ext_cluster"),
+          label = "Select file type:",
+          choices = c(".png", ".pdf", ".svg"),
+          selected = ".png"
         )
       ),
 
@@ -170,15 +199,44 @@ ml_classification_main_panel <- function(ns){
 
       plotOutput(ns("svm_plot"), height = "600px"),
 
-      fluidRow(
-        column(4,
-          downloadButton(ns("download_svm_plot"), "Download Plot")
-        ),
-        column(4,
-          downloadButton(ns("download_svm_code"), "Download R Code")
-        ),
-        column(4,
-          downloadButton(ns("download_svm_results"), "Download Results")
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        actionButton(
+          inputId = ns("only2Report_svm"),
+          label = "Send only to Report"
+        )
+      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        downloadButton(
+          outputId = ns("getR_Code_svm"),
+          label = "Get underlying R code and data",
+          icon = icon("code")
+        )
+      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        downloadButton(
+          outputId = ns("SavePlot_svm"),
+          label = "Save plot",
+          class = "btn-info"
+        )
+      ),
+      splitLayout(
+        style = "border: 1px solid silver:",
+        cellWidths = c("70%", "30%"),
+        NULL,
+        selectInput(
+          inputId = ns("file_ext_svm"),
+          label = "Select file type:",
+          choices = c(".png", ".pdf", ".svg"),
+          selected = ".png"
         )
       ),
 
