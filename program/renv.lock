@@ -24,7 +24,7 @@
       },
       {
         "Name": "CRAN",
-        "URL": "https://p3m.dev/cran/2022-10-28"
+        "URL": "https://cloud.r-project.org"
       }
     ]
   },
