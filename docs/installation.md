@@ -235,14 +235,18 @@ Because the environment is baked into the image, packages such as
 The R environment is tracked in `program/renv.lock`, and the Docker image
 is rebuilt from it automatically (see the image-build workflow). The image
 is set up so the `rstudio` user can install packages directly and renv can
-record them. From **development mode** above, in the RStudio Console:
+record them. (note no `renv::init() or restore` required. From **development mode** above, in the RStudio Console:
 
-1. Install the package (installs into the shared library, usable at once):
+1. Install the package:
 
    ```r
-   install.packages("e1071")            # a CRAN package
+   lib <- path.expand("~/R/dev-library"); dir.create(lib, recursive = TRUE, showWarnings = FALSE)
+   .libPaths(c(lib, .libPaths()))
+   Sys.setenv(RENV_PATHS_CACHE = path.expand("~/.cache/R/renv"))
+   # Then install your package, e.g.:
+   # install.packages("e1071")            # a CRAN package
    # for a Bioconductor package instead: BiocManager::install("somePkg")
-   library(e1071)                        # quick check it loads
+   # library(e1071)                        # quick check it loads
    ```
 
 2. Record it — and its dependencies — into the lockfile:
