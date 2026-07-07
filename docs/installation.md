@@ -230,6 +230,43 @@ shiny::runApp("project/shinyApp")
 Because the environment is baked into the image, packages such as
 `DESeq2` and `ggtree` load immediately — no `renv::restore()` needed.
 
+### Adding a new R package
+
+The R environment is tracked in `program/renv.lock`, and the Docker image
+is rebuilt from it automatically (see the image-build workflow). The image
+is set up so the `rstudio` user can install packages directly and renv can
+record them. From **development mode** above, in the RStudio Console:
+
+1. Install the package (installs into the shared library, usable at once):
+
+   ```r
+   install.packages("e1071")            # a CRAN package
+   # for a Bioconductor package instead: BiocManager::install("somePkg")
+   library(e1071)                        # quick check it loads
+   ```
+
+2. Record it — and its dependencies — into the lockfile:
+
+   ```r
+   renv::snapshot(project  = "~/project",
+                  lockfile = "~/project/renv.lock",
+                  type     = "all",
+                  exclude  = c("renv", "BiocManager"))
+   ```
+
+3. Back on your machine, review and commit the lockfile change:
+
+   ```bash
+   git diff program/renv.lock            # should add your package (+ its deps)
+   git add program/renv.lock
+   git commit -m "Add e1071"
+   git push
+   ```
+
+On push, the image is rebuilt from the updated `renv.lock` and the startup
+test runs against it. Afterwards, `docker pull` the refreshed image to use
+the new package in the container.
+
 <details>
 <summary>Alternative: plain shell / VS Code Dev Containers</summary>
 
