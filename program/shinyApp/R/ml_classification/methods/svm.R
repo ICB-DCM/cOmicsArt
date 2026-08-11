@@ -15,8 +15,6 @@ run_svm_classification <- function(data_matrix,
                                    n_genes = 500,
                                    kernel = "radial") {
 
-  require(e1071)
-
   # Filter genes if requested
   if (filter_genes) {
     data_matrix <- filter_top_variable_genes(data_matrix, n_genes)
@@ -36,7 +34,7 @@ run_svm_classification <- function(data_matrix,
 
   # Train SVM
   # Note: No train/test split in v1 - training on full data
-  svm_model <- svm(
+  svm_model <- e1071::svm(
     x = X,
     y = y,
     kernel = kernel,

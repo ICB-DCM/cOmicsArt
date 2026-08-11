@@ -24,7 +24,7 @@ Choose between two fundamental approaches:
 
 - **Unsupervised**: Discovers natural groupings without using condition labels
   - Ideal when you want to see if samples naturally group by your experimental conditions
-  - Does not require condition labels for the analysis
+
 
 - **Supervised**: Tests separability based on known condition labels
   - Ideal when you want to assess how well conditions can be distinguished
@@ -34,7 +34,8 @@ Choose between two fundamental approaches:
 
 When **Unsupervised** is selected:
 
-- **Method**: Currently k-means clustering (additional methods coming in future releases)
+- **Method**: Currently k-means clustering (additional methods coming in future 
+  releases). For info see e.g. https://youtu.be/4b5d3muPQmA
 
 - **Number of clusters (k)**:
   - Select how many groups to divide samples into (2-10)
@@ -48,7 +49,6 @@ When **Unsupervised** is selected:
   - Improves performance and reduces noise by selecting most informative features
   - **Number of genes**: Select how many top variable genes to use (50-5000)
     - Default: 500 genes is a good starting point
-    - Increase if you have very distinct conditions
     - Decrease if running into performance issues
 
 - **Overlay condition (optional)**:
@@ -61,7 +61,8 @@ When **Unsupervised** is selected:
 
 When **Supervised** is selected:
 
-- **Method**: Currently SVM (Support Vector Machine) - additional methods coming in future releases
+- **Method**: Currently SVM (Support Vector Machine) - additional methods coming in 
+  future releases. For more info see e.g. https://youtu.be/efR1C6CvhmE
 
 - **Condition column (target)**:
   - Select the categorical variable you want to predict
@@ -107,7 +108,7 @@ After clicking **Run Classification**, the main panel displays:
 #### Training Accuracy Panel
 - Shows the percentage of correctly classified samples
 - **⚠️ Important Disclaimer**: This is training accuracy only (no validation)
-  - Results are exploratory and not suitable for publication claims
+  - Results are exploratory and need to be distinguished from true predictive performance
   - May be overly optimistic due to overfitting
   - Cross-validation coming in future release
 
