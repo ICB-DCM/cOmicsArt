@@ -364,22 +364,25 @@ run_kmeans_analysis_info <<- list(
   foo = run_kmeans_analysis,
   name = "run_kmeans_analysis",
   input_mapping = list(
-    data_matrix = "as.matrix(assay(data))",
+    data = "data",
     k = "parameters$MLClassification$k_clusters",
     filter_genes = "parameters$MLClassification$filter_genes_unsupervised",
     n_genes = "parameters$MLClassification$n_genes_unsupervised"
   ),
   output_name = "kmeans_result",
-  to_util = TRUE
+  to_util = TRUE,
+  additional_foos = list(
+    filter_top_variable_genes = filter_top_variable_genes,
+    check_degenerate_clustering = check_degenerate_clustering
+  )
 )
 
 render_kmeans_plot_info <<- list(
   foo = render_kmeans_plot,
   name = "render_kmeans_plot",
   input_mapping = list(
-    kmeans_result = "kmeans_result$result",
-    data_matrix = "kmeans_result$data_matrix",
-    sample_annotation = "as.data.frame(colData(data))",
+    kmeans_result = "kmeans_result",
+    data = "data",
     condition_column = "parameters$MLClassification$condition_overlay"
   ),
   to_util = FALSE,
@@ -390,25 +393,24 @@ run_svm_classification_info <<- list(
   foo = run_svm_classification,
   name = "run_svm_classification",
   input_mapping = list(
-    data_matrix = "as.matrix(assay(data))",
-    condition_vector = "as.data.frame(colData(data))[[parameters$MLClassification$condition_column_supervised]]",
+    data = "data",
+    condition_column = "parameters$MLClassification$condition_column_supervised",
     filter_genes = "parameters$MLClassification$filter_genes_supervised",
     n_genes = "parameters$MLClassification$n_genes_supervised",
     kernel = "parameters$MLClassification$svm_kernel %||% 'radial'"
   ),
   output_name = "svm_result",
-  to_util = TRUE
+  to_util = TRUE,
+  additional_foos = list(
+    filter_top_variable_genes = filter_top_variable_genes
+  )
 )
 
 render_svm_plot_info <<- list(
   foo = render_svm_plot,
   name = "render_svm_plot",
   input_mapping = list(
-    svm_model = "svm_result$model",
-    X = "svm_result$X",
-    y = "svm_result$y",
-    predictions = "svm_result$predictions",
-    accuracy = "svm_result$accuracy"
+    svm_result = "svm_result"
   ),
   to_util = FALSE,
   plot_name = "svm_plot"

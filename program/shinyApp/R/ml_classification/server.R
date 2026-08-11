@@ -1,5 +1,4 @@
 # ML Classification Server Module
-# Phase 2-3: Full implementation
 
 ml_classification_Server <- function(id, session_data, session_params, data_input_shiny){
   moduleServer(id, function(input, output, session){
@@ -15,11 +14,6 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
       svm_X = NULL,
       svm_y = NULL,
       confusion = NULL
-    )
-
-    # Reactive value for generated code
-    ml_code <- reactiveValues(
-      current = ""
     )
 
     ns <- session$ns
@@ -68,7 +62,6 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
       ml_results$predictions <- NULL
       ml_results$accuracy <- NULL
       ml_results$data_matrix <- NULL
-      ml_code$current <- ""
     })
 
     ## k-means Section ----
@@ -76,46 +69,38 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
     # Run k-means clustering
     observeEvent(input$run_clustering, {
       # Get preprocessed data
-      data <- reactiveValuesToList(session_data)
-      data_matrix <- data$data
+      session_data_list <- reactiveValuesToList(session_data)
+      data <- session_data_list$data
 
       # Validation
       tryCatch({
-        # Convert SummarizedExperiment to matrix if needed
-        if (inherits(data_matrix, "SummarizedExperiment")) {
-          data_matrix <- assay(data_matrix)
+        # Validate data exists and is correct type
+        if (is.null(data)) {
+          stop("No preprocessed data available. Please run preprocessing first.")
+        }
+        if (!inherits(data, "SummarizedExperiment")) {
+          stop("Data must be a SummarizedExperiment object.")
         }
 
+        # Extract matrix for validation
+        data_matrix <- as.matrix(assay(data))
         validate_preprocessed_data(data_matrix)
         validate_no_missing_values(data_matrix)
         validate_minimum_samples(data_matrix, min_samples = 10)
 
         # Run k-means
         kmeans_analysis <- run_kmeans_analysis(
-          data_matrix = data_matrix,
+          data = data,
           k = input$k_clusters,
           filter_genes = input$filter_genes_unsupervised,
           n_genes = input$n_genes_unsupervised
         )
 
         # Store results
-        ml_results$kmeans <- kmeans_analysis$result
+        ml_results$kmeans_result <- kmeans_analysis  # Store entire result
+        ml_results$kmeans <- kmeans_analysis$result  # Keep for backward compatibility
         ml_results$cluster_assignments <- kmeans_analysis$cluster_assignments
         ml_results$data_matrix <- kmeans_analysis$data_matrix
-
-        # Generate code
-        generated_code <- generate_kmeans_code(
-          n_genes = if(input$filter_genes_unsupervised) input$n_genes_unsupervised else NULL,
-          k = input$k_clusters,
-          filtered = input$filter_genes_unsupervised
-        )
-
-        # Verify code is a character string before storing
-        if (!is.character(generated_code)) {
-          stop("Generated code is not a character string. Type: ", class(generated_code))
-        }
-
-        ml_code$current <- generated_code
 
         # Store parameters for code generation
         session_params$MLClassification <- list(
@@ -147,11 +132,11 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
     })
 
     # Render clustering plot
-    output$cluster_plot <- renderPlot({
-      req(ml_results$kmeans)
-      req(ml_results$data_matrix)
+    output$cluster_plot <- renderPlotly({
+      req(ml_results$kmeans_result)
 
-      data <- reactiveValuesToList(session_data)
+      session_data_list <- reactiveValuesToList(session_data)
+      data <- session_data_list$data
 
       # Get condition column for overlay (if selected)
       condition_col <- NULL
@@ -159,24 +144,22 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
         condition_col <- input$condition_overlay
       }
 
-      # Get sample annotation
-      sample_annotation <- NULL
-      if (!is.null(data$data)) {
-        sample_annotation <- as.data.frame(colData(data$data))
-      }
-
       # Generate and store plot
       plot_obj <- render_kmeans_plot(
-        kmeans_result = ml_results$kmeans,
-        data_matrix = ml_results$data_matrix,
-        sample_annotation = sample_annotation,
+        kmeans_result = ml_results$kmeans_result,
+        data = data,
         condition_column = condition_col
       )
 
       # Store for download/report handlers
       ml_results$cluster_plot <- plot_obj
 
-      plot_obj
+      # Convert to interactive plotly with clipboard functionality
+      create_clipboard_plotly(
+        gg_plot = plot_obj,
+        plot_id = "cluster_plot",
+        tooltip = "all"
+      )
     })
 
     # Render cluster assignments table
@@ -209,31 +192,21 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
         paste0("kmeans_clustering_k", input$k_clusters, "_", Sys.Date(), ".png")
       },
       content = function(file) {
-        data <- reactiveValuesToList(session_data)
+        session_data_list <- reactiveValuesToList(session_data)
+        data <- session_data_list$data
         condition_col <- if(!is.null(input$condition_overlay) && input$condition_overlay != "none") input$condition_overlay else NULL
-        sample_annotation <- if(!is.null(data$data)) as.data.frame(colData(data$data)) else NULL
 
         ggsave(
           file,
           plot = render_kmeans_plot(
-            ml_results$kmeans,
-            ml_results$data_matrix,
-            sample_annotation,
-            condition_col
+            kmeans_result = ml_results$kmeans_result,
+            data = data,
+            condition_column = condition_col
           ),
           width = 10,
           height = 8,
           dpi = 300
         )
-      }
-    )
-
-    output$download_cluster_code <- downloadHandler(
-      filename = function() {
-        paste0("kmeans_clustering_code_", Sys.Date(), ".R")
-      },
-      content = function(file) {
-        writeLines(ml_code$current, file)
       }
     )
 
@@ -262,17 +235,21 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
     # Run SVM classification
     observeEvent(input$run_classification, {
       # Get data
-      data <- reactiveValuesToList(session_data)
-      data_matrix <- data$data
+      session_data_list <- reactiveValuesToList(session_data)
+      data <- session_data_list$data
 
       tryCatch({
-        # Convert SummarizedExperiment to matrix if needed
-        if (inherits(data_matrix, "SummarizedExperiment")) {
-          sample_annotation <- as.data.frame(colData(data_matrix))
-          data_matrix <- assay(data_matrix)
-        } else {
-          sample_annotation <- as.data.frame(colData(data$data))
+        # Validate data exists and is correct type
+        if (is.null(data)) {
+          stop("No preprocessed data available. Please run preprocessing first.")
         }
+        if (!inherits(data, "SummarizedExperiment")) {
+          stop("Data must be a SummarizedExperiment object.")
+        }
+
+        # Extract matrix and sample annotation for validation
+        data_matrix <- as.matrix(assay(data))
+        sample_annotation <- as.data.frame(colData(data))
 
         # Validation
         validate_preprocessed_data(data_matrix)
@@ -283,7 +260,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
           return()
         }
 
-        # Get condition vector
+        # Get condition vector for NA check
         condition_vector <- sample_annotation[[input$condition_column_supervised]]
 
         # Check for NAs in condition
@@ -297,29 +274,22 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
 
         # Run SVM
         svm_analysis <- run_svm_classification(
-          data_matrix = data_matrix,
-          condition_vector = condition_vector,
+          data = data,
+          condition_column = input$condition_column_supervised,
           filter_genes = input$filter_genes_supervised,
           n_genes = input$n_genes_supervised,
           kernel = "radial"
         )
 
         # Store results
-        ml_results$svm <- svm_analysis$model
+        ml_results$svm_result <- svm_analysis  # Store entire result
+        ml_results$svm <- svm_analysis$model  # Keep for backward compatibility
         ml_results$predictions <- svm_analysis$predictions
         ml_results$accuracy <- svm_analysis$accuracy
         ml_results$data_matrix <- svm_analysis$data_matrix
         ml_results$svm_X <- svm_analysis$X
         ml_results$svm_y <- svm_analysis$y
         ml_results$confusion <- svm_analysis$confusion
-
-        # Generate code
-        ml_code$current <- generate_svm_code(
-          condition_col = input$condition_column_supervised,
-          n_genes = if(input$filter_genes_supervised) input$n_genes_supervised else NULL,
-          filtered = input$filter_genes_supervised,
-          kernel = "radial"
-        )
 
         # Store parameters for code generation
         session_params$MLClassification <- list(
@@ -348,26 +318,24 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
     })
 
     # Render SVM plot
-    output$svm_plot <- renderPlot({
-      req(ml_results$svm)
-      req(ml_results$svm_X)
-      req(ml_results$svm_y)
-      req(ml_results$predictions)
-      req(ml_results$accuracy)
+    output$svm_plot <- renderPlotly({
+      req(ml_results$svm_result)
 
       # Generate and store plot
       plot_obj <- render_svm_plot(
-        svm_model = ml_results$svm,
-        X = ml_results$svm_X,
-        y = ml_results$svm_y,
-        predictions = ml_results$predictions,
-        accuracy = ml_results$accuracy
+        svm_result = ml_results$svm_result
       )
 
       # Store for download/report handlers
       ml_results$svm_plot <- plot_obj
 
-      plot_obj
+      # Convert to interactive plotly with clipboard functionality
+      # Using "text" tooltip since we created custom tooltip text in the plot
+      create_clipboard_plotly(
+        gg_plot = plot_obj,
+        plot_id = "svm_plot",
+        tooltip = "text"
+      )
     })
 
     # Render predictions table
@@ -402,25 +370,12 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
         ggsave(
           file,
           plot = render_svm_plot(
-            ml_results$svm,
-            ml_results$svm_X,
-            ml_results$svm_y,
-            ml_results$predictions,
-            ml_results$accuracy
+            svm_result = ml_results$svm_result
           ),
           width = 12,
           height = 8,
           dpi = 300
         )
-      }
-    )
-
-    output$download_svm_code <- downloadHandler(
-      filename = function() {
-        paste0("svm_classification_code_", Sys.Date(), ".R")
-      },
-      content = function(file) {
-        writeLines(ml_code$current, file)
       }
     )
 

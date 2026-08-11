@@ -1,24 +1,24 @@
 # ML Classification Plot Functions
-# Phase 2: k-means visualization
-# Phase 3: SVM visualization
 
 #' Render k-means clustering plot with PCA projection
 #'
-#' @param kmeans_result Result from kmeans()
-#' @param data_matrix Data matrix used for clustering (genes x samples)
-#' @param sample_annotation Data frame with sample metadata (optional)
+#' @param kmeans_result Result from run_kmeans_analysis
+#' @param data SummarizedExperiment object with sample metadata
 #' @param condition_column Name of condition column for overlay (optional)
 #' @return ggplot object
 render_kmeans_plot <- function(kmeans_result,
-                               data_matrix,
-                               sample_annotation = NULL,
+                               data,
                                condition_column = NULL) {
 
-  require(ggplot2)
+  # Extract filtered data matrix from kmeans result
+  data_matrix <- kmeans_result$data_matrix
+
+  # Extract sample annotation from data
+  sample_annotation <- as.data.frame(colData(data))
 
   # Run PCA for 2D visualization
   data_t <- t(data_matrix)  # Samples as rows for PCA
-  pca_result <- prcomp(data_t, scale. = FALSE)
+  pca_result <- prcomp(data_t, scale. = TRUE)
 
   # Create data frame for plotting
   plot_data <- data.frame(
@@ -41,62 +41,77 @@ render_kmeans_plot <- function(kmeans_result,
   # Calculate variance explained
   var_explained <- summary(pca_result)$importance[2, 1:2] * 100
 
-  # Build plot
-  p <- ggplot(plot_data, aes(x = PC1, y = PC2))
-
+  # Build plot with tooltip-friendly aes mappings for ggplotly
   if (has_condition) {
     # Show both cluster (color) and condition (shape)
-    p <- p + geom_point(
-      aes(color = cluster, shape = condition),
-      size = 4,
-      alpha = 0.8
-    )
+    # Add tooltip-friendly mappings: label, Sample, Cluster, Condition
+    cluster_plot <- ggplot(plot_data, aes(
+      x = PC1,
+      y = PC2,
+      color = cluster,
+      shape = condition,
+      label = sample,
+      Sample = sample,
+      Cluster = cluster,
+      Condition = condition
+    )) +
+      geom_point(size = 3) +
+      labs(
+        title = sprintf("k-means Clustering (k = %d)", length(unique(kmeans_result$cluster))),
+        subtitle = "PCA projection for visualization",
+        x = sprintf("PC1 (%.1f%% variance)", var_explained[1]),
+        y = sprintf("PC2 (%.1f%% variance)", var_explained[2]),
+        color = "Cluster",
+        shape = "Condition"
+      ) +
+      CUSTOM_THEME +
+      theme(aspect.ratio = 1)
   } else {
     # Show cluster only
-    p <- p + geom_point(
-      aes(color = cluster),
-      size = 4,
-      alpha = 0.8
-    )
+    # Add tooltip-friendly mappings: label, Sample, Cluster
+    cluster_plot <- ggplot(plot_data, aes(
+      x = PC1,
+      y = PC2,
+      color = cluster,
+      label = sample,
+      Sample = sample,
+      Cluster = cluster
+    )) +
+      geom_point(size = 3) +
+      labs(
+        title = sprintf("k-means Clustering (k = %d)", length(unique(kmeans_result$cluster))),
+        subtitle = "PCA projection for visualization",
+        x = sprintf("PC1 (%.1f%% variance)", var_explained[1]),
+        y = sprintf("PC2 (%.1f%% variance)", var_explained[2]),
+        color = "Cluster"
+      ) +
+      CUSTOM_THEME +
+      theme(aspect.ratio = 1)
   }
 
-  p <- p +
-    labs(
-      title = sprintf("k-means Clustering (k = %d)", length(unique(kmeans_result$cluster))),
-      subtitle = "PCA projection for visualization",
-      x = sprintf("PC1 (%.1f%% variance)", var_explained[1]),
-      y = sprintf("PC2 (%.1f%% variance)", var_explained[2]),
-      color = "Cluster"
-    ) +
-    theme_minimal(base_size = 14) +
-    theme(
-      legend.position = "right",
-      plot.title = element_text(face = "bold", size = 16)
-    )
-
-  if (has_condition) {
-    p <- p + labs(shape = "Condition")
-  }
-
-  return(p)
+  return(cluster_plot)
 }
 
 #' Render SVM decision boundary plot with PCA projection
 #'
-#' @param svm_model SVM model object
-#' @param X Data matrix (samples x genes)
-#' @param y True labels
-#' @param predictions Predicted labels
-#' @param accuracy Classification accuracy
+#' @param svm_result Result from run_svm_classification
 #' @return ggplot object
-render_svm_plot <- function(svm_model, X, y, predictions, accuracy) {
+render_svm_plot <- function(svm_result) {
 
   require(ggplot2)
   require(e1071)
 
+  # Extract components from svm_result
+  svm_model <- svm_result$model
+  X <- svm_result$X
+  y <- svm_result$y
+  predictions <- svm_result$predictions
+  accuracy <- svm_result$accuracy
+
   # Run PCA for 2D visualization
   pca_result <- prcomp(X, scale. = FALSE)
   pca_coords <- as.data.frame(pca_result$x[, 1:2])
+  pca_coords$sample <- rownames(X)
   pca_coords$actual <- as.factor(y)
   pca_coords$predicted <- as.factor(predictions)
   pca_coords$correct <- (y == predictions)
@@ -105,7 +120,7 @@ render_svm_plot <- function(svm_model, X, y, predictions, accuracy) {
   # Convert numeric kernel code to kernel name
   # e1071 stores kernel as: 0=linear, 1=polynomial, 2=radial, 3=sigmoid
   kernel_names <- c("linear", "polynomial", "radial", "sigmoid")
-  kernel_type <- kernel_names[svm_model$kernel + 1]  # +1 because R is 1-indexed
+  kernel_type <- kernel_names[svm_model$kernel + 1]
 
   svm_2d <- svm(
     x = pca_coords[, 1:2],
@@ -127,44 +142,46 @@ render_svm_plot <- function(svm_model, X, y, predictions, accuracy) {
   # Calculate variance explained
   var_explained <- summary(pca_result)$importance[2, 1:2] * 100
 
-  # Build plot
-  p <- ggplot() +
+  # Add misclassification indicator to data for better visualization
+  pca_coords$misclassified <- ifelse(pca_coords$correct, "Correct", "Misclassified")
+
+  # Build plot with tooltip-friendly aes mappings for ggplotly
+  svm_plot <- ggplot() +
     # Decision boundary background
     geom_tile(
       data = grid,
       aes(x = PC1, y = PC2, fill = prediction),
-      alpha = 0.3
+      alpha = 0.2,
+      show.legend = TRUE
     ) +
-    # Sample points
+    # Sample points with tooltip-friendly mappings
     geom_point(
       data = pca_coords,
-      aes(x = PC1, y = PC2, color = actual, shape = predicted),
-      size = 4,
-      alpha = 0.8
-    ) +
-    # Highlight misclassifications
-    geom_point(
-      data = pca_coords[!pca_coords$correct, ],
-      aes(x = PC1, y = PC2),
-      color = "red",
-      size = 6,
-      shape = 1,  # Circle outline
-      stroke = 2
+      aes(
+        x = PC1,
+        y = PC2,
+        color = actual,
+        shape = predicted,
+        text = paste0(
+          "Sample: ", sample,
+          "\nTrue Label: ", actual,
+          "\nPredicted: ", predicted,
+          "\nStatus: ", misclassified
+        )
+      ),
+      size = 3
     ) +
     labs(
       title = "SVM Decision Boundary (PCA Projection)",
-      subtitle = sprintf("Training accuracy: %.1f%% | Red circles = misclassified", accuracy * 100),
+      subtitle = sprintf("Training accuracy: %.1f%% | Hover over points for details", accuracy * 100),
       x = sprintf("PC1 (%.1f%% variance)", var_explained[1]),
       y = sprintf("PC2 (%.1f%% variance)", var_explained[2]),
       color = "True Label",
       shape = "Predicted",
       fill = "Decision Region"
     ) +
-    theme_minimal(base_size = 14) +
-    theme(
-      legend.position = "right",
-      plot.title = element_text(face = "bold", size = 16)
-    )
+    CUSTOM_THEME +
+    theme(aspect.ratio = 1)
 
-  return(p)
+  return(svm_plot)
 }

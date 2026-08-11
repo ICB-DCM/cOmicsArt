@@ -131,7 +131,7 @@ ml_classification_main_panel <- function(ns){
 
       h4("Clustering Results"),
 
-      plotOutput(ns("cluster_plot"), height = "600px"),
+      plotlyOutput(ns("cluster_plot"), height = "600px"),
 
       splitLayout(
         style = "border: 1px solid silver:",
@@ -192,12 +192,12 @@ ml_classification_main_panel <- function(ns){
         h5("Training Accuracy"),
         textOutput(ns("svm_accuracy_text")),
         helpText(
-          "Note: This is training accuracy only (no validation). ",
+          "Note: This is training accuracy only (no validation) and there is no test. ",
           "Results are exploratory. Cross-validation coming in future release."
         )
       ),
 
-      plotOutput(ns("svm_plot"), height = "600px"),
+      plotlyOutput(ns("svm_plot"), height = "600px"),
 
       splitLayout(
         style = "border: 1px solid silver:",

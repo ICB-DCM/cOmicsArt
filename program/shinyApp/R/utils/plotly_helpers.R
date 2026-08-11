@@ -83,7 +83,7 @@ add_plotly_clipboard <- function(plotly_obj,
   ", plot_id, plot_id, buttons_json)
 
   # Apply onRender and return
-  plotly::onRender(plotly_obj, js_code)
+  htmlwidgets::onRender(plotly_obj, js_code)
 }
 
 #' Apply standard Plotly layout for cOmicsArt plots

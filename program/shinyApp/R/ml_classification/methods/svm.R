@@ -3,28 +3,38 @@
 
 #' Run SVM classification on preprocessed data
 #'
-#' @param data_matrix Preprocessed expression matrix (genes x samples)
-#' @param condition_vector Vector of condition labels
+#' @param data SummarizedExperiment object with preprocessed data
+#' @param condition_column Name of column in colData with condition labels
 #' @param filter_genes Whether to filter to top variable genes
 #' @param n_genes Number of genes to keep (if filtering)
 #' @param kernel SVM kernel type (default: "radial")
 #' @return List with SVM model, predictions, accuracy, and data
-run_svm_classification <- function(data_matrix,
-                                   condition_vector,
+run_svm_classification <- function(data,
+                                   condition_column,
                                    filter_genes = FALSE,
                                    n_genes = 500,
                                    kernel = "radial") {
+
+  # Extract expression matrix from SummarizedExperiment
+  data_matrix <- as.matrix(assay(data))
+
+  # Extract condition vector from sample annotation
+  condition_vector <- as.data.frame(colData(data))[[condition_column]]
 
   # Filter genes if requested
   if (filter_genes) {
     data_matrix <- filter_top_variable_genes(data_matrix, n_genes)
 
     if (nrow(data_matrix) > 5000) {
-      showNotification(
-        sprintf("Running SVM on %d genes may cause performance issues. Consider reducing gene count.", nrow(data_matrix)),
-        type = "warning",
-        duration = 8
-      )
+      if (exists("showNotification", mode = "function")) {
+        showNotification(
+          sprintf("Running SVM on %d genes may cause performance issues. Consider reducing gene count.", nrow(data_matrix)),
+          type = "warning",
+          duration = 8
+        )
+      } else {
+        warning(sprintf("Running SVM on %d genes may cause performance issues. Consider reducing gene count.", nrow(data_matrix)))
+      }
     }
   }
 

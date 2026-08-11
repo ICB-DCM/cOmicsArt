@@ -1,6 +1,4 @@
 # ML Classification Utility Functions
-# Phase 2: k-means validation and code generation
-# Phase 3: SVM validation and code generation
 
 #' Validate that preprocessed data exists and is ready
 #'
@@ -43,11 +41,15 @@ validate_minimum_samples <- function(data_matrix, min_samples = 10) {
   }
 
   if (n_samples < min_samples) {
-    showNotification(
-      sprintf("Warning: Only %d samples available. Results may be unreliable with few samples.", n_samples),
-      type = "warning",
-      duration = 8
-    )
+    if (exists("showNotification", mode = "function")) {
+      showNotification(
+        sprintf("Warning: Only %d samples available. Results may be unreliable with few samples.", n_samples),
+        type = "warning",
+        duration = 8
+      )
+    } else {
+      warning(sprintf("Only %d samples available. Results may be unreliable with few samples.", n_samples))
+    }
   }
 
   return(TRUE)
@@ -78,94 +80,24 @@ check_degenerate_clustering <- function(cluster_assignments, threshold = 0.8) {
   max_proportion <- max(cluster_sizes) / sum(cluster_sizes)
 
   if (max_proportion > threshold) {
-    showNotification(
-      sprintf(
-        "Warning: %.0f%% of samples assigned to a single cluster. Consider reducing k or checking data quality.",
+    if (exists("showNotification", mode = "function")) {
+      showNotification(
+        sprintf(
+          "Warning: %.0f%% of samples assigned to a single cluster. Consider reducing k or checking data quality.",
+          max_proportion * 100
+        ),
+        type = "warning",
+        duration = 10
+      )
+    } else {
+      warning(sprintf(
+        "%.0f%% of samples assigned to a single cluster. Consider reducing k or checking data quality.",
         max_proportion * 100
-      ),
-      type = "warning",
-      duration = 10
-    )
+      ))
+    }
   }
 
   return(TRUE)
-}
-
-#' Generate R code for k-means clustering
-#'
-#' @param n_genes Number of genes used (NULL if all)
-#' @param k Number of clusters
-#' @param filtered Whether gene filtering was applied
-#' @return Character string with R code
-generate_kmeans_code <- function(n_genes = NULL, k, filtered = FALSE) {
-
-  code <- sprintf("# Machine learning classification using k-means
-# Purpose: Discover natural sample groupings in expression data
-#
-# Note: k-means is a stochastic algorithm. Results may vary between runs.
-# To ensure reproducibility, set a random seed before running:
-# set.seed(123)  # Use any integer
-
-# Load required libraries
-library(stats)  # For kmeans
-library(ggplot2)  # For visualization
-
-# Assume 'data_matrix' is your preprocessed expression matrix
-# Rows = genes/features, Columns = samples
-
-")
-
-  if (filtered) {
-    code <- paste0(code, sprintf("# Filter to top %d most variable genes
-gene_vars <- apply(data_matrix, 1, var, na.rm = TRUE)
-top_genes <- order(gene_vars, decreasing = TRUE)[1:%d]
-data_filtered <- data_matrix[top_genes, , drop = FALSE]
-
-", n_genes, n_genes))
-    data_var <- "data_filtered"
-  } else {
-    data_var <- "data_matrix"
-  }
-
-  code <- paste0(code, sprintf("# Transpose data: kmeans expects samples as rows
-data_t <- t(%s)
-
-# Run k-means clustering
-# nstart = 25 means try 25 different random starting configurations
-# and pick the best one (more stable results)
-kmeans_result <- kmeans(
-  x = data_t,
-  centers = %d,
-  nstart = 25,
-  iter.max = 100
-)
-
-# Extract cluster assignments
-cluster_assignments <- kmeans_result$cluster
-
-# View cluster sizes
-table(cluster_assignments)
-
-# Basic visualization using PCA projection
-pca_result <- prcomp(data_t, scale. = FALSE)
-pca_coords <- as.data.frame(pca_result$x[, 1:2])
-pca_coords$cluster <- as.factor(cluster_assignments)
-
-ggplot(pca_coords, aes(x = PC1, y = PC2, color = cluster)) +
-  geom_point(size = 3) +
-  labs(
-    title = 'k-means Clustering (k = %d)',
-    subtitle = 'PCA projection for visualization',
-    color = 'Cluster'
-  ) +
-  theme_minimal()
-
-# To add condition labels as shapes (if available):
-# pca_coords$condition <- sample_annotation$your_condition_column
-# Then add: shape = condition to the aes() above
-", data_var, k, k))
-
-  return(code)
 }
 
 #' Validate condition column for supervised learning
@@ -229,112 +161,4 @@ validate_condition_column_supervised <- function(condition_col, sample_annotatio
   }
 
   return(TRUE)
-}
-
-#' Generate R code for SVM classification
-#'
-#' @param condition_col Name of condition column
-#' @param n_genes Number of genes (NULL if all)
-#' @param filtered Whether filtering was applied
-#' @param kernel SVM kernel type
-#' @return Character string with R code
-generate_svm_code <- function(condition_col, n_genes = NULL, filtered = FALSE, kernel = "radial") {
-
-  code <- sprintf("# Machine learning classification using SVM
-# Purpose: AI-based pattern detection in expression data
-#
-# Note: This example trains on the full dataset without validation.
-# For real analysis, implement train/test splitting or cross-validation.
-
-# Load required libraries
-library(e1071)  # For SVM
-library(ggplot2)  # For visualization
-
-# Assume 'data_matrix' is your preprocessed expression matrix (genes x samples)
-# Assume 'sample_annotation' is your sample metadata data frame
-
-")
-
-  if (filtered) {
-    code <- paste0(code, sprintf("# Filter to top %d most variable genes
-gene_vars <- apply(data_matrix, 1, var, na.rm = TRUE)
-top_genes <- order(gene_vars, decreasing = TRUE)[1:%d]
-data_filtered <- data_matrix[top_genes, , drop = FALSE]
-
-", n_genes, n_genes))
-    data_var <- "data_filtered"
-  } else {
-    data_var <- "data_matrix"
-  }
-
-  code <- paste0(code, sprintf("# Prepare data
-X <- t(%s)  # Transpose: samples as rows, genes as columns
-y <- as.factor(sample_annotation$%s)  # Target variable
-
-# Train SVM
-# Note: Training on full data (no train/test split in this example)
-svm_model <- svm(
-  x = X,
-  y = y,
-  kernel = '%s',
-  scale = TRUE  # Auto-scale features
-)
-
-# Get predictions on training data
-predictions <- predict(svm_model, X)
-
-# Calculate training accuracy
-accuracy <- sum(predictions == y) / length(y)
-cat(sprintf('Training accuracy: %%.1f%%%%\\n', accuracy * 100))
-
-# Confusion matrix
-confusion <- table(Predicted = predictions, Actual = y)
-print(confusion)
-
-# WARNING: This is training accuracy - likely overly optimistic!
-# For real analysis:
-# 1. Split data into train/test sets, OR
-# 2. Use cross-validation (e.g., caret package)
-
-# Visualization: Decision boundary on PCA projection
-pca_result <- prcomp(X, scale. = FALSE)
-pca_coords <- as.data.frame(pca_result$x[, 1:2])
-pca_coords$actual <- y
-pca_coords$predicted <- predictions
-
-# Train 2D SVM for visualization
-svm_2d <- svm(
-  x = pca_coords[, 1:2],
-  y = y,
-  kernel = '%s'
-)
-
-# Create decision boundary grid
-x_range <- range(pca_coords$PC1)
-y_range <- range(pca_coords$PC2)
-grid <- expand.grid(
-  PC1 = seq(x_range[1], x_range[2], length.out = 100),
-  PC2 = seq(y_range[1], y_range[2], length.out = 100)
-)
-grid$prediction <- predict(svm_2d, grid)
-
-# Plot
-ggplot() +
-  geom_tile(data = grid, aes(PC1, PC2, fill = prediction), alpha = 0.3) +
-  geom_point(
-    data = pca_coords,
-    aes(PC1, PC2, color = actual, shape = predicted),
-    size = 3
-  ) +
-  labs(
-    title = 'SVM Decision Boundary (PCA Projection)',
-    subtitle = sprintf('Training accuracy: %%.1f%%%%', accuracy * 100),
-    color = 'True Label',
-    shape = 'Predicted',
-    fill = 'Decision Region'
-  ) +
-  theme_minimal()
-", data_var, condition_col, kernel, kernel))
-
-  return(code)
 }
