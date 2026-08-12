@@ -98,3 +98,5 @@ RUN chmod +x /usr/local/bin/start.sh
 EXPOSE 3838 8787
 
 ENTRYPOINT ["/usr/local/bin/start.sh"]
+
+# 
