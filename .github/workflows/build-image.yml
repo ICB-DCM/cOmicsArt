@@ -1,13 +1,21 @@
 name: Build & push Docker image
 
-# Build the environment image whenever the environment changes (lockfile,
-# Dockerfile, or launcher) on ANY branch, plus a manual trigger.
-#  - lock-<hash> and <sha> tags are pushed on every branch, so the smoke test
-#    running on a feature branch can pull the freshly-built environment.
-#  - :latest is pushed ONLY from main/develop, so feature branches never
-#    overwrite the image end users pull.
+# Build the environment image when the environment changes (lockfile, Dockerfile
+# or launcher):
+#   - On a pull request -> push a human-trackable  pr-<number>  tag, so the PR's
+#     smoke test can pull exactly this build. Does NOT touch :latest.
+#   - On push to main/develop -> push  :latest  (the image end users pull).
+# NOTE: pull_request runs from a fork do not receive repo secrets, so pushing to
+# Docker Hub only works for PRs from branches within this repository.
 on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - Dockerfile
+      - start.sh
+      - program/renv.lock
   push:
+    branches: [main, develop]
     paths:
       - Dockerfile
       - start.sh
@@ -24,19 +32,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Compute image tags
+      - name: Compute image tag
         id: meta
         run: |
-          HASH=$(sha256sum program/renv.lock | cut -c1-8)
-          {
-            echo "tags<<EOF"
-            echo "${IMAGE}:lock-${HASH}"
-            echo "${IMAGE}:${{ github.sha }}"
-            if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.ref }}" = "refs/heads/develop" ]; then
-              echo "${IMAGE}:latest"
-            fi
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "tag=${IMAGE}:pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${IMAGE}:latest" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -54,6 +57,6 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tag }}
           cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max

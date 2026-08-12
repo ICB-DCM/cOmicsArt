@@ -1,44 +1,63 @@
 name: Test Shiny App Startup
 
-# Fast smoke test: pull the prebuilt environment image from Docker Hub and
-# check that the CURRENT (checked-out) app code starts inside it. 
-on: [push]
+# Pull the prebuilt environment image and check the CURRENT app code starts in
+# it. No renv restore here — that cost lives in build-image.yml.
+#   - On a PR that changed the environment -> test the pr-<number> image that
+#     build-image.yml is publishing for this PR (wait for it).
+#   - Otherwise -> test the published :latest image.
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+env:
+  IMAGE: pauljonasjost/comicsart
 
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    # Generous timeout: if this push changed renv.lock, build-image.yml is
-    # building the matching image in parallel and we wait for it (below).
+    # Generous: if this PR changed renv.lock, build-image.yml is building the
+    # matching pr-<number> image in parallel and we wait for it below.
     timeout-minutes: 75
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need both PR parents to diff against the base
 
-      # The image tag is derived from THIS commit's renv.lock, so we always test
-      # against exactly the environment the lockfile describes.
-      - name: Resolve image tag
+      - name: Resolve image to test
         id: img
-        run: echo "tag=pauljonasjost/comicsart:lock-$(sha256sum program/renv.lock | cut -c1-8)" >> "$GITHUB_OUTPUT"
+        run: |
+          TAG="${IMAGE}:latest"   # default: test against the published environment
+          WAIT=false
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Did this PR change the environment? If so, build-image.yml is
+            # publishing a pr-<n> image and we should test against THAT.
+            if git diff --name-only HEAD^1 HEAD | grep -qE '^(Dockerfile|start\.sh|program/renv\.lock)$'; then
+              TAG="${IMAGE}:pr-${{ github.event.pull_request.number }}"
+              WAIT=true
+            fi
+          fi
+          echo "tag=$TAG"   >> "$GITHUB_OUTPUT"
+          echo "wait=$WAIT" >> "$GITHUB_OUTPUT"
+          echo "Testing against $TAG (wait=$WAIT)"
 
-      # Wait for the matching image to be available. If renv.lock just changed,
-      # build-image.yml is building it now, so we retry until it's pushed
-      # (rather than testing against the wrong environment). Unchanged locks are
-      # already on Docker Hub, so the first pull succeeds immediately.
-      - name: Pull image (wait for build-image.yml if env just changed)
+      - name: Pull the image (wait for the PR build if the env changed)
         run: |
           TAG="${{ steps.img.outputs.tag }}"
-          for i in $(seq 1 120); do
-            if docker pull "$TAG"; then
-              echo "Pulled $TAG"
-              exit 0
-            fi
-            echo "[$i/120] $TAG not on Docker Hub yet (build-image.yml may still be running); retrying in 30s..."
-            sleep 30
-          done
-          echo "Timed out waiting for $TAG — did the image build fail?"
-          exit 1
+          if [ "${{ steps.img.outputs.wait }}" = "true" ]; then
+            for i in $(seq 1 120); do
+              if docker pull "$TAG"; then echo "Pulled $TAG"; exit 0; fi
+              echo "[$i/120] $TAG not on Docker Hub yet (build-image.yml still running?); retrying in 30s..."
+              sleep 30
+            done
+            echo "Timed out waiting for $TAG — did the image build fail?"; exit 1
+          else
+            docker pull "$TAG"
+          fi
 
-      - name: Start app (current code mounted into prebuilt env)
+      - name: Start app (current code mounted into the env image)
         run: |
           docker run -d --name comicsart_app -p 3838:3838 \
             -e MODE=app \
