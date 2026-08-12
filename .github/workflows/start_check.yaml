@@ -1,120 +1,86 @@
 name: Test Shiny App Startup
 
-on: [push]
+# Pull the prebuilt environment image and check the CURRENT app code starts in
+# it. No renv restore here — that cost lives in build-image.yml.
+#   - On a PR that changed the environment -> test the pr-<number> image that
+#     build-image.yml is publishing for this PR (wait for it).
+#   - Otherwise -> test the published :latest image.
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+env:
+  IMAGE: pauljonasjost/comicsart
 
 jobs:
-  build:
+  smoke:
     runs-on: ubuntu-latest
-    env:
-      RENV_PATHS_ROOT: ~/.cache/R/renv
-      
+    # Generous: if this PR changed renv.lock, build-image.yml is building the
+    # matching pr-<number> image in parallel and we wait for it below.
+    timeout-minutes: 75
     steps:
-    - uses: actions/checkout@v3
-    
-    - uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: 4.2.0
-    
-    - name: Restore Renv package cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          ${{ env.RENV_PATHS_ROOT }}
-          ./renv/library
-        key: ${{ steps.get-version.outputs.os-version }}-${{ steps.get-version.outputs.r-version }}-${{ inputs.cache-version }}-${{ hashFiles('renv.lock') }}
-        restore-keys: ${{ steps.get-version.outputs.os-version }}-${{ steps.get-version.outputs.r-version }}-${{ inputs.cache-version }}-
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need both PR parents to diff against the base
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libsqlite3-dev libglu1-mesa-dev default-jdk libmagick++-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev
-        sudo apt install curl
-    
-    - name: Install and activate renv
-      shell: Rscript {0}
-      run: |
-        install.packages("renv")
-        print(getwd())
-        renv::restore(lockfile="program/renv.lock")
-        
-    # - name: Get R and OS version
-    #   id: get-version
-    #   run: |
-    #     cat("##[set-output name=os-version;]", sessionInfo()$running, "\n", sep = "")
-    #     cat("##[set-output name=r-version;]", R.Version()$version.string, sep = "")
-    #   shell: Rscript {0}
-      
+      - name: Resolve image to test
+        id: img
+        run: |
+          TAG="${IMAGE}:latest"   # default: test against the published environment
+          WAIT=false
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Did this PR change the environment? If so, build-image.yml is
+            # publishing a pr-<n> image and we should test against THAT.
+            if git diff --name-only HEAD^1 HEAD | grep -qE '^(Dockerfile|start\.sh|program/renv\.lock)$'; then
+              TAG="${IMAGE}:pr-${{ github.event.pull_request.number }}"
+              WAIT=true
+            fi
+          fi
+          echo "tag=$TAG"   >> "$GITHUB_OUTPUT"
+          echo "wait=$WAIT" >> "$GITHUB_OUTPUT"
+          echo "Testing against $TAG (wait=$WAIT)"
 
-#    - name: Setup renv
-#      uses: r-lib/actions/setup-renv@v2
-    
-    # - name: Restore packages
-    #   shell: Rscript {0}
-    #   run: |
-    #     renv::restore()
+      - name: Pull the image (wait for the PR build if the env changed)
+        run: |
+          TAG="${{ steps.img.outputs.tag }}"
+          if [ "${{ steps.img.outputs.wait }}" = "true" ]; then
+            for i in $(seq 1 120); do
+              if docker pull "$TAG"; then echo "Pulled $TAG"; exit 0; fi
+              echo "[$i/120] $TAG not on Docker Hub yet (build-image.yml still running?); retrying in 30s..."
+              sleep 30
+            done
+            echo "Timed out waiting for $TAG — did the image build fail?"; exit 1
+          else
+            docker pull "$TAG"
+          fi
 
-#    - name: test specific packages
-#      run: |
-#        Rscript -e 'install.packages("Rcpp")'
-#          Rscript -e 'install.packages("RcppArmadillo")'
-#          Rscript -e 'install.packages("DESeq2")'
+      - name: Start app (current code mounted into the env image)
+        run: |
+          docker run -d --name comicsart_app -p 3838:3838 \
+            -e MODE=app \
+            -v "${{ github.workspace }}/program/shinyApp":/srv/shiny-server/shinyApp \
+            "${{ steps.img.outputs.tag }}"
 
-    - name: Test if Shiny app starts
-      timeout-minutes: 2
-      shell: Rscript {0}
-      run: |
-        install.packages('processx')
-        library(processx)
-        
-        execute_shiny_app <- function() {
-          tryCatch(
-            {
-              # Start the Shiny app in a separate process
-              app_process <- process$new(
-                "Rscript",
-                c("-e", "shiny::runApp('program/shinyApp', launch.browser = FALSE, port = 3838)"),
-                stdout = "|", stderr = "|"
-              )
-              
-              # Wait for a few seconds to allow the app to start
-              Sys.sleep(15)
-              
-              # Check if the process is still running
-              if (app_process$is_alive()) {
-                # Terminate the app if it started successfully
-                app_process$kill()
-                return("Success")
-              } else {
-                # Capture and return the error message if the app failed to start
-                error_message <- app_process$read_error()
-                return(paste("Error:", error_message))
-              }
-            },
-            error = function(e) {
-              return(paste("Error:", e$message))
-            }
-          )
-        }
-        
-        
-        result <- execute_shiny_app()
-        
-            # Check if the result is "failure"
-        if (result == "Success") {
-          cat("Test passed")
-        } else {
-        cat(result)
-           cat("Test failed: Output is 'failure'\n")
-          quit(status = 1)
-        }
-        
-    - name: Save cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.local/share/renv
-          ./renv/library
-        key: ${{ steps.get-version.outputs.os-version }}-${{ steps.get-version.outputs.r-version }}-${{ inputs.cache-version }}-${{ hashFiles('renv.lock') }}
+      - name: Wait for the app to respond
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sSf http://localhost:3838 >/dev/null 2>&1; then
+              echo "App responded on attempt $i"
+              exit 0
+            fi
+            echo "waiting for app... ($i)"
+            sleep 5
+          done
+          echo "App did not respond within timeout"
+          exit 1
 
+      - name: Show app logs (always)
+        if: always()
+        run: docker logs comicsart_app || true
 
-
+      - name: Clean up
+        if: always()
+        run: docker rm -f comicsart_app || true
