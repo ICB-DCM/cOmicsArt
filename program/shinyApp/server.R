@@ -2293,7 +2293,6 @@ server <- function(input,output,session){
   )
 
   # Sample Correlation ----
-  # Phase 2: Pass selectedData_processed reactive for global sourcing
   sample_correlation_server(
     id = "sample_correlation",
     session_data = session_data,
@@ -2302,7 +2301,6 @@ server <- function(input,output,session){
   )
 
   # Significance Analysis ----
-  # Phase 2: Pass data_input_shiny reactive for global sourcing
   significance_analysis_server(
     id = 'SignificanceAnalysis',
     session_data = session_data,
@@ -2311,7 +2309,6 @@ server <- function(input,output,session){
   )
 
   # PCA ----
-  # Phase 2: Pass data_input_shiny reactive for global sourcing
   pca_Server(
     id = "PCA",
     session_data = session_data,
@@ -2320,7 +2317,6 @@ server <- function(input,output,session){
   )
 
   # Heatmap ----
-  # Phase 2: Pass data_input_shiny and selectedData_processed reactives for global sourcing
   heatmap_server(
     id = 'Heatmap',
     session_data = session_data,
@@ -2330,7 +2326,6 @@ server <- function(input,output,session){
   )
 
   # Single Gene Visualisations ----
-  # Phase 2: Pass data_input_shiny and selectedData_processed reactives for global sourcing
   single_gene_visualisation_server(
     id = 'single_gene_visualisation',
     session_data = session_data,
@@ -2340,7 +2335,6 @@ server <- function(input,output,session){
   )
 
   # Enrichment Analysis ----
-  # Passing reactiveValues directly (not reactive()) for this module's unique needs
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
     data = session_data,

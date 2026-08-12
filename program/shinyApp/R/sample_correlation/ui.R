@@ -109,7 +109,7 @@ sampleCorrelation_UI <- function(id){
   ns <- NS(id)
   
   tabPanel(
-    title = tagList(tags$span("4. Sample Correlation")), 
+    title = tagList(tags$span("3. Sample Correlation")),
     value = "Sample Correlation",
     id = "sample_correlation",
     fluid = T,

@@ -252,7 +252,7 @@ ml_classification_UI <- function(id){
   ns <- NS(id)
 
   tabPanel(
-    title = tagList(tags$span("3. ML Classification")),
+    title = tagList(tags$span("5. ML Classification")),
     value = "ML Classification",
     id = "ml_classification",
     fluid = TRUE,
