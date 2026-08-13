@@ -1,4 +1,4 @@
-name: Cleanup PR Docker Images
+name: Cleanup PR Docker images
 
 # Delete the PR-specific Docker image when a PR is closed (merged or abandoned)
 on:
@@ -91,18 +91,22 @@ jobs:
               errorMsg = deleteError;
             }
 
+            const issueBody = [
+              '## Docker Image Cleanup Failed',
+              '',
+              `**PR:** ${prNumber} - ${prTitle}`,
+              `**Image Tag:** \`${{ env.IMAGE }}:${imageTag}\``,
+              `**Error:** ${errorMsg}`,
+              `**Workflow Run:** ${workflowUrl}`,
+              '',
+              'Please manually delete the image tag from Docker Hub or re-run the cleanup workflow.'
+            ].join('\n');
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `Failed to delete Docker image ${imageTag}`,
-              body: `## Docker Image Cleanup Failed
-
-**PR:** #${prNumber} - ${prTitle}
-**Image Tag:** \`${{ env.IMAGE }}:${imageTag}\`
-**Error:** ${errorMsg}
-**Workflow Run:** ${workflowUrl}
-
-Please manually delete the image tag from Docker Hub or re-run the cleanup workflow.`,
+              body: issueBody,
               labels: ['documentation'],
               assignees: ['pauljonasjost']
             });
