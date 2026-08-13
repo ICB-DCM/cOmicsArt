@@ -220,7 +220,7 @@ enrichment_analysis_UI <- function(id){
   ns <- NS(id)
 
   tabPanel(
-    title = tagList(tags$span("8. Enrichment Analysis")), 
+    title = tagList(tags$span("9. Enrichment Analysis")), 
     value = "Enrichment Analysis",
     fluid = TRUE,
     h4("Enrichment Analysis"),

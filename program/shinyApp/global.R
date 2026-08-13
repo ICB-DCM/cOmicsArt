@@ -47,7 +47,11 @@ library(svglite)
 library(formattable)
 library(codetools)
 library(vsn)
-library(hexbin)
+library(e1071)
+# hexbin is optional - only load if available (requires gfortran to compile)
+if (!requireNamespace("hexbin", quietly = TRUE)) {
+  message("Note: hexbin package not available (optional)")
+}
 library(htmlwidgets)
 
 # Load global constants and utilities

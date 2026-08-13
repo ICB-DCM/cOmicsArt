@@ -72,3 +72,13 @@ VOLCANO_PIPELINE <<- list(
   performSigAnalysis_info,
   volcano_plot_info
 )
+
+# --- ML Classification ---
+KMEANS_CLUSTERING_PIPELINE <<- list(
+  run_kmeans_analysis_info,
+  render_kmeans_plot_info
+)
+SVM_CLASSIFICATION_PIPELINE <<- list(
+  run_svm_classification_info,
+  render_svm_plot_info
+)

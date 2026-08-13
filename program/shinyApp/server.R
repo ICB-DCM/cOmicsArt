@@ -76,6 +76,7 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+  hideTab(inputId = "tabsetPanel1", target = "ML Classification")
   shinyjs::hideElement(id = "mainPanel_other")
   shinyjs::hideElement(id = "data_summary")
   shinyjs::hideElement(id = "div_sampleCorrelation_main_panel")
@@ -1966,7 +1967,9 @@ server <- function(input,output,session){
       shinyjs::click("Heatmap-refreshUI",asis = T)
       shinyjs::click("PCA-refreshUI",asis = T)
       shinyjs::click("sample_correlation-refreshUI",asis = T)
+      shinyjs::click("ml_classification-refreshUI",asis = T)
       ifelse(omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"), showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
+      showTab(inputId = "tabsetPanel1", target = "ML Classification")
       
       num_batches <- NA
       batch_message <- grep("Message: Found\\d+batches", session_data$all_warnings, value = TRUE)
@@ -2290,7 +2293,6 @@ server <- function(input,output,session){
   )
 
   # Sample Correlation ----
-  # Phase 2: Pass selectedData_processed reactive for global sourcing
   sample_correlation_server(
     id = "sample_correlation",
     session_data = session_data,
@@ -2299,7 +2301,6 @@ server <- function(input,output,session){
   )
 
   # Significance Analysis ----
-  # Phase 2: Pass data_input_shiny reactive for global sourcing
   significance_analysis_server(
     id = 'SignificanceAnalysis',
     session_data = session_data,
@@ -2308,7 +2309,6 @@ server <- function(input,output,session){
   )
 
   # PCA ----
-  # Phase 2: Pass data_input_shiny reactive for global sourcing
   pca_Server(
     id = "PCA",
     session_data = session_data,
@@ -2317,7 +2317,6 @@ server <- function(input,output,session){
   )
 
   # Heatmap ----
-  # Phase 2: Pass data_input_shiny and selectedData_processed reactives for global sourcing
   heatmap_server(
     id = 'Heatmap',
     session_data = session_data,
@@ -2327,7 +2326,6 @@ server <- function(input,output,session){
   )
 
   # Single Gene Visualisations ----
-  # Phase 2: Pass data_input_shiny and selectedData_processed reactives for global sourcing
   single_gene_visualisation_server(
     id = 'single_gene_visualisation',
     session_data = session_data,
@@ -2337,11 +2335,18 @@ server <- function(input,output,session){
   )
 
   # Enrichment Analysis ----
-  # Passing reactiveValues directly (not reactive()) for this module's unique needs
   enrichment_analysis_Server(
     id = 'EnrichmentAnalysis',
     data = session_data,
     params = session_params,
     reactive(updating$count)
+  )
+
+  # ML Classification ----
+  ml_classification_Server(
+    id = "ml_classification",
+    session_data = session_data,
+    session_params = session_params,
+    data_input_shiny = data_input_shiny
   )
 }
