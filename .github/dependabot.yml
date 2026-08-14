@@ -1,0 +1,9 @@
+version: 2
+updates:
+  - package-ecosystem: "bundler"
+    directory: "/docs"
+    schedule:
+      interval: "monthly"
+    groups:
+      docs-dependencies:
+        patterns: ["*"]
