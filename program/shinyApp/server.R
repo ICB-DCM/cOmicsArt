@@ -639,6 +639,7 @@ server <- function(input,output,session){
         )
     } else {
       flag_csv <- F
+      read_error <- NULL
 
       tryCatch(
         expr = {
@@ -647,6 +648,7 @@ server <- function(input,output,session){
           flag_csv <- T
         },
         error = function(e){
+          read_error <<- conditionMessage(e)
           output$OverallChecks <- renderText(
             "<font color=\"#ab020a\"><b>Not a real csv file!</b></font>"
           )
@@ -745,7 +747,10 @@ server <- function(input,output,session){
       session_data$changedDuringVI <- FALSE
       #TODO ensure that if there are e.g. invalid sample names but als different sample names in data and annotation tables that we catch this
 
-      if(check0 == snippetNo){
+      if(check0 == snippetNo && !is.null(read_error) && grepl("Unsupported file type", read_error)){
+        # point to the unsupported file type instead of guessing
+        check0 <- paste0(snippetNo, "\n\t", read_error)
+      } else if(check0 == snippetNo){
         # add help text
         check0 <- paste0(
           snippetNo,
