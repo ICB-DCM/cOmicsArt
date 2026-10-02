@@ -30,12 +30,6 @@ error_modal <- function(error_message, additional_text = NULL){
 }
 
 
-update_data <- function(session_id){
-  # for stability reasons, data is ALWAYS pulled here
-  data <- res_tmp[[session_id]]
-  return(data)
-}
-
 
 select_data <- function(
   data, selected_samples = "all", sample_type = NULL, selected_rows = "all", row_type = NULL, propensity = 1
@@ -89,14 +83,6 @@ select_data <- function(
   ))
 }
 
-
-update_params <- function(session_id){
-  # update parameter if updates is larger than current_updates
-  # could force to always update
-  print("Updating parameters...")
-  params <- par_tmp[[session_id]]
-  return(params)
-}
 
 
 read_file <- function(filename, check.names=T){

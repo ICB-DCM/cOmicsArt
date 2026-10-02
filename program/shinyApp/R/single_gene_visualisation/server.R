@@ -151,7 +151,7 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
         selected_type <- input$Select_GeneAnno
         group_by <- input$accross_condition
 
-        data <- update_data(session$token)
+        data <- reactiveValuesToList(session_data)
         post_selection_check <- unique(c(colData(data$data)[,group_by]))
         data <- data[[data_process_stage]]
 
