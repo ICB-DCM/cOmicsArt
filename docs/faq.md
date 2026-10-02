@@ -58,8 +58,35 @@ Common issues are: Not exactly the same row or columnnames, missing values, wron
 
 <div class="question" onclick="toggleAnswer('q7')">7. I somehow cannot access the app (anymore)?</div>
   <div id="q7" class="answer">
-  If you are not able to access the app anymore it is most likely that the server has been shut down or that your internet connection is not working or that specific settings of your institution or the browser you are using are blocking access. To troubleshoot check your internet connection, refresh the site, consider using Chrome or Mirror as a browser (tested and working), enable JavaScript and check with your IT department if any restrictions in place could block cOmicsArt. 
+  If you are not able to access the app anymore it is most likely that the server has been shut down or that your internet connection is not working or that specific settings of your institution or the browser you are using are blocking access. To troubleshoot check your internet connection, refresh the site, consider using Chrome or Mirror as a browser (tested and working), enable JavaScript and check with your IT department if any restrictions in place could block cOmicsArt.
 You might also want to consider running cOmicsArt locally - see respective documentation to be independent of the server and potentially other issues.
+  </div>
+
+<div class="question" onclick="toggleAnswer('q8')">8. What's the difference between ML Classification and Sample Correlation?</div>
+  <div id="q8" class="answer">
+  Sample Correlation shows pairwise relationships and hierarchical clustering based on correlation metrics. ML Classification offers additional methods (k-means, SVM) and can test specific hypotheses about group separability. They're complementary - use both for complete analysis! Sample Correlation is great for seeing overall sample relationships, while ML Classification helps you test whether specific biological groups are distinguishable or discover natural groupings.
+  </div>
+
+<div class="question" onclick="toggleAnswer('q9')">9. Why is my SVM accuracy 100%? Is that good?</div>
+  <div id="q9" class="answer">
+  Be cautious! 100% training accuracy often means overfitting. Since validation isn't 
+supported yet, perfect accuracy doesn't guarantee the classifier will work on new data.
+This is why we emphasize "exploratory" results. The ML Classification feature is designed for discovery and hypothesis generation, not final publication claims. Cross-validation is coming in a future release to provide more reliable accuracy estimates.
+  </div>
+
+<div class="question" onclick="toggleAnswer('q10')">10. Should I filter genes before ML Classification?</div>
+  <div id="q10" class="answer">
+  Generally yes, especially for large datasets. Gene filtering: (1) Improves performance by reducing computation time, (2) Reduces noise by removing uninformative genes, (3) Is standard practice in ML for high-dimensional data. Start with the top 500-1000 most variable genes. You can experiment with different values to see what works best for your data.
+  </div>
+
+<div class="question" onclick="toggleAnswer('q11')">11. My k-means results change each time. Is something broken?</div>
+  <div id="q11" class="answer">
+  No, that's expected! k-means is stochastic (uses random starting points). Results shown in the app use random initialization to demonstrate natural variability. To get reproducible results: (1) Download the R code, (2) Add set.seed(123) before kmeans(), (3) Run the script - now it's reproducible! The downloaded code includes instructions on exactly how to do this.
+  </div>
+
+<div class="question" onclick="toggleAnswer('q12')">12. What k value should I choose for k-means?</div>
+  <div id="q12" class="answer">
+  Start with the number of biological conditions you have. For example: 2 conditions (treated vs control) → try k=2; 3 timepoints → try k=3. Then try k+1 and k-1 to see if substructure exists. If k=2 gives you good separation but k=3 shows that one of those groups splits meaningfully, that tells you something biologically interesting! Future versions will add automatic optimal k detection.
   </div>
 
 <script>

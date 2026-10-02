@@ -135,7 +135,19 @@ data_selection_sidebar_panel <- sidebarPanel(
         width = "80%"
       )
     ),
-    uiOutput("testdata_help_text"),
+    # Conditional help text based on omic type (client-side rendering for performance)
+    conditionalPanel(
+      condition = "input.omic_type_testdata == 'Transcriptomics'",
+      HTML(EXAMPLE_RNA_DESCRIPTION)
+    ),
+    conditionalPanel(
+      condition = "input.omic_type_testdata == 'Metabolomics'",
+      HTML(EXAMPLE_METABO_DESCRIPTION)
+    ),
+    conditionalPanel(
+      condition = "input.omic_type_testdata == 'Lipidomics'",
+      HTML(EXAMPLE_LIPID_DESCRIPTION)
+    ),
     br(),
     actionButton(
       inputId = "EasyTestForUser",

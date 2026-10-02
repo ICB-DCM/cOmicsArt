@@ -13,8 +13,7 @@ editor_options:
 cOmicsART](/cOmicsArt/assets/images/cOmicsTurtle.png) *Image generated
 using DALL-E by OpenAI. Adjusted by Lea Seep*
 
-Why do you want to install cOmicsART locally? If you just want to use it
-make sure to checkout the website:
+Why do you want to install cOmicsART locally? If you just want to use it make sure to check out the website:
 [cOmicsART](https://shiny.iaas.uni-bonn.de/cOmicsArt/). Here
 is no installation effort required. If you know you are right here,
 let's get started. You can find here instructions to run cOmicsART locally within RStudio or using Docker.
@@ -84,7 +83,7 @@ renv::restore(lockfile="renv.lock")
 
 This will install all the necessary packages as specified in the
 renv.lock file. **Note:** This takes quite some time as there are a lot of packages to retrieve. 
-Some of those need specific system dependencies. 
+Some of those need specific system dependencies. Also note that you can use R within the provided Docker image, which comes with a fully preloaded and ready-to-use environment. See #Running a cOmicsART Using Docker.
 
 ## 4. Start the Shiny App
 
@@ -117,6 +116,24 @@ Shiny app.
 Ensure Docker is installed on your system. You can download and install Docker from 
 [Docker's official website](https://www.docker.com/get-started).
 
+<div class="disclaimer" style="background-color:#fff0bf; color: black; border: 2px solid #ffcf30; border-radius: 8px; padding:0.2em;">
+<span>
+<p style='margin-top:1em; text-align:left ;margin-left:1em;'>
+<b>Apple Silicon (M1/M2/M3) users:</b> The image is built for the
+<code>linux/amd64</code> architecture and runs under emulation on Apple
+Silicon. <b>App mode works out of the box.</b> For the <b>development
+(RStudio) mode</b> you must enable Apple's Virtualization framework and
+Rosetta in Docker Desktop, otherwise RStudio will show
+<i>"Unable to connect to service"</i>:
+<br/><br/>
+Docker Desktop &rarr; <b>Settings</b> &rarr; <b>General</b> &rarr; set
+<b>Virtual Machine Manager (VMM)</b> to <b>Apple Virtualization
+framework</b> &rarr; tick <b>"Use Rosetta for x86_64/amd64 emulation on
+Apple Silicon"</b> &rarr; <b>Apply &amp; Restart</b>. Requires macOS 13
+(Ventura) or newer.
+</p></span>
+</div>
+
 ## Steps to Install and Run the Shiny App
 
 ### 2. Pull the Docker Image
@@ -127,17 +144,24 @@ Open a terminal or command prompt and use the following command to pull the Dock
 docker pull pauljonasjost/comicsart:latest
 ```
 
-### 3. Run the Docker Container
+### 3. Run the Docker Container (App mode)
 
 After pulling the image, you can run the Docker container with the following command:
 
 ```bash
-docker run -p 3838:3838 pauljonasjost/comicsart:latest
+docker run --rm -p 3838:3838 pauljonasjost/comicsart:latest
 ```
 
 This command does the following:
+- `--rm` removes the container automatically when you stop it.
 - `-p 3838:3838` maps port 3838 in the Docker container to port 3838 on your local machine.
 - `pauljonasjost/comicsart:latest` specifies the Docker image to run.
+
+The image supports two modes, selected with the `MODE` environment
+variable: `MODE=app` (the default, shown above) runs the Shiny app, and
+`MODE=rstudio` starts an RStudio Server for development (see
+[Development mode (RStudio)](#development-mode-rstudio) below). Because
+`app` is the default, no `-e MODE=...` flag is needed to run the app.
 
 ### 4. Access the Shiny App
 
@@ -161,6 +185,114 @@ docker pull pauljonasjost/comicsart:latest
 
 Then follow the steps to run the updated image.
 
+## Development mode (RStudio)
+
+The same image can start an **RStudio Server**, giving you the app's
+fully preloaded R environment inside a browser-based IDE. This is the
+recommended way to develop or debug the app without setting up renv
+locally.
+
+> **Apple Silicon:** development mode requires the Apple Virtualization
+> framework + Rosetta to be enabled first — see the note under
+> [Install Docker](#1--install-docker).
+
+Clone the repository (so your edits are saved to your machine), then
+start the container in `rstudio` mode with your local `program/` folder
+mounted into it:
+
+```bash
+git clone https://github.com/icb-dcm/cOmicsArt.git
+cd cOmicsArt
+
+docker run --rm -p 8787:8787 \
+  -e MODE=rstudio \
+  -e PASSWORD=yourpassword \
+  -v "$PWD/program":/home/rstudio/project \
+  pauljonasjost/comicsart:latest
+```
+
+This does the following:
+- `-p 8787:8787` maps RStudio Server's port to your machine.
+- `-e MODE=rstudio` starts RStudio Server instead of the app.
+- `-e PASSWORD=yourpassword` sets the login password (choose your own).
+- `-v "$PWD/program":/home/rstudio/project` mounts your local `program/`
+  folder into the container at `~/project`, so any changes you make are
+  written back to your machine.
+
+Then open [http://localhost:8787](http://localhost:8787) and log in with
+username `rstudio` and the password you set. Your mounted code is in the
+`project/` folder. To launch the app from within RStudio:
+
+```r
+shiny::runApp("project/shinyApp")
+```
+
+Because the environment is baked into the image, packages such as
+`DESeq2` and `ggtree` load immediately — no `renv::restore()` needed.
+
+### Adding a new R package
+
+The R environment is tracked in `program/renv.lock`, and the Docker image
+is rebuilt from it automatically (see the image-build workflow). The image
+is set up so the `rstudio` user can install packages directly and renv can
+record them. (note no `renv::init() or restore` required. From **development mode** above, in the RStudio Console:
+
+1. Install the package:
+
+   ```r
+   lib <- path.expand("~/R/dev-library"); dir.create(lib, recursive = TRUE, showWarnings = FALSE)
+   .libPaths(c(lib, .libPaths()))
+   Sys.setenv(RENV_PATHS_CACHE = path.expand("~/.cache/R/renv"))
+   # Then install your package, e.g.:
+   # install.packages("e1071")            # a CRAN package
+   # for a Bioconductor package instead: BiocManager::install("somePkg")
+   # library(e1071)                        # quick check it loads
+   ```
+
+2. Record it — and its dependencies — into the lockfile:
+
+   ```r
+   renv::snapshot(project  = "~/project",
+                  lockfile = "~/project/renv.lock",
+                  type     = "all",
+                  exclude  = c("renv", "BiocManager"))
+   ```
+
+3. Back on your machine, review and commit the lockfile change:
+
+   ```bash
+   git diff program/renv.lock            # should add your package (+ its deps)
+   git add program/renv.lock
+   git commit -m "Add e1071"
+   git push
+   ```
+
+On push, the image is rebuilt from the updated `renv.lock` and the startup
+test runs against it. Afterwards, `docker pull` the refreshed image to use
+the new package in the container.
+
+<details>
+<summary>Alternative: plain shell / VS Code Dev Containers</summary>
+
+If you prefer a terminal or VS Code instead of RStudio, you can open a
+shell in the same environment:
+
+```bash
+docker run -it --rm \
+  -v "$PWD":/workspace \
+  -w /workspace \
+  --name comicsart_dev \
+  pauljonasjost/comicsart:latest bash
+```
+
+For an IDE, use VS Code + the **Dev Containers** extension: start the
+container, then in VS Code open the command palette and select
+*Dev Containers: Attach to Running Container...*. Open your mounted local
+folder so saved changes persist on your machine.
+
+</details>
+
+
 ### Troubleshooting
 
 If you encounter issues, consider the following tips:
@@ -174,5 +306,10 @@ If you encounter issues, consider the following tips:
   Then access the app at `http://localhost:8888`.
 
 - **Permissions Issues**: On Linux, you may need to use `sudo` for Docker commands.
+
+- **RStudio "Unable to connect to service" (Apple Silicon)**: Development
+  mode needs Docker Desktop's Apple Virtualization framework + Rosetta
+  enabled (Settings → General → VMM: *Apple Virtualization framework* →
+  *Use Rosetta for x86_64/amd64 emulation*). App mode is unaffected.
 
 .....

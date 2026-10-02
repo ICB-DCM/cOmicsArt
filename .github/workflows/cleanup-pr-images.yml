@@ -1,0 +1,112 @@
+name: Cleanup PR Docker images
+
+# Delete the PR-specific Docker image when a PR is closed (merged or abandoned)
+on:
+  pull_request:
+    types: [closed]
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to clean up (e.g., 123)'
+        required: true
+        type: number
+
+permissions:
+  issues: write
+
+env:
+  IMAGE: pauljonasjost/comicsart
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine PR number
+        id: pr
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "number=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "number=${{ inputs.pr_number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Login to Docker Hub API
+        id: login
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST https://hub.docker.com/v2/users/login/ \
+            -H "Content-Type: application/json" \
+            -d '{"username": "${{ secrets.DOCKERHUB_USERNAME }}", "password": "${{ secrets.DOCKERHUB_TOKEN }}"}')
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+
+          if [ "$http_code" -ne 200 ]; then
+            echo "error=Failed to authenticate with Docker Hub (HTTP $http_code)" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          token=$(echo "$body" | jq -r '.token')
+          if [ -z "$token" ] || [ "$token" = "null" ]; then
+            echo "error=Failed to extract JWT token from login response" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          echo "token=$token" >> "$GITHUB_OUTPUT"
+
+      - name: Delete Docker image tag
+        id: delete
+        run: |
+          tag="pr-${{ steps.pr.outputs.number }}"
+
+          http_code=$(curl -s -w "%{http_code}" -o /dev/null -X DELETE \
+            "https://hub.docker.com/v2/repositories/${{ env.IMAGE }}/tags/$tag/" \
+            -H "Authorization: JWT ${{ steps.login.outputs.token }}")
+
+          if [ "$http_code" -eq 204 ] || [ "$http_code" -eq 404 ]; then
+            echo "Image tag $tag deleted successfully (or already gone)"
+            exit 0
+          else
+            echo "error=Failed to delete tag $tag (HTTP $http_code)" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = '${{ steps.pr.outputs.number }}';
+            const prTitle = context.payload.pull_request?.title || 'Manual cleanup';
+            const imageTag = `pr-${prNumber}`;
+            const workflowUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const loginError = '${{ steps.login.outputs.error }}';
+            const deleteError = '${{ steps.delete.outputs.error }}';
+
+            let errorMsg = 'Unknown error occurred during cleanup';
+            if (loginError) {
+              errorMsg = loginError;
+            } else if (deleteError) {
+              errorMsg = deleteError;
+            }
+
+            const issueBody = [
+              '## Docker Image Cleanup Failed',
+              '',
+              `**PR:** ${prNumber} - ${prTitle}`,
+              `**Image Tag:** \`${{ env.IMAGE }}:${imageTag}\``,
+              `**Error:** ${errorMsg}`,
+              `**Workflow Run:** ${workflowUrl}`,
+              '',
+              'Please manually delete the image tag from Docker Hub or re-run the cleanup workflow.'
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Failed to delete Docker image ${imageTag}`,
+              body: issueBody,
+              labels: ['documentation'],
+              assignees: ['pauljonasjost']
+            });

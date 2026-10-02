@@ -1,5 +1,5 @@
 enrichment_analysis_geneset_server <- function(
-  id, result, organism_choice, gene_set_choice, ea_type
+  id, result, organism_choice, gene_set_choice, ea_type, session_data, session_params
 ){
   moduleServer(
     id,
@@ -60,24 +60,30 @@ enrichment_analysis_geneset_server <- function(
               hide_on_render = FALSE
             )
             waiter$show()
-            # add the id to par_tmp
-            par_tmp[[session$token]]$Enrichment$enrich_set <<- id
+            # add the id to session_params
+            if(is.null(session_params$Enrichment)){
+              session_params$Enrichment <- list()
+            }
+            session_params$Enrichment$enrich_set <- id
             envList <- list(
-              par_tmp = par_tmp[[session$token]]
+              par_tmp = reactiveValuesToList(session_params)
             )
             temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
             dir.create(temp_directory)
             # save csv files
             save_summarized_experiment(
-              res_tmp[[session$token]]$data_original,
+              session_data$data_original,
               temp_directory
             )
-            pipeline <- OA_PIPELINE
-            pipeline <- if(ea_type == "GeneSetEnrichment") EA_PIPELINE
+            pipeline <- if(ea_type == "GeneSetEnrichment") {
+              EA_PIPELINE
+            } else {
+              OA_PIPELINE
+            }
             write(
               create_workflow_script(
                 pipeline_info = pipeline,
-                par = par_tmp[[session$token]],
+                par = reactiveValuesToList(session_params),
                 par_mem = "Enrichment",
                 path_to_util = file.path(temp_directory, "util.R")
               ),
@@ -146,22 +152,22 @@ enrichment_analysis_geneset_server <- function(
             device = "png"
           )
           
-          fun_LogIt(message = paste0("### ", id, "_ENRICHMENT"))
+          fun_LogIt(session, message = paste0("### ", id, "_ENRICHMENT"))
 
-          fun_LogIt(
+          fun_LogIt(session, 
             message = paste0(
               "- The number of found enriched terms (p.adj <0.05): ",
               nrow(result@result[result@result$p.adjust<0.05,])
             )
           )
 
-          fun_LogIt(
+          fun_LogIt(session, 
             message = paste0(
               "**", id, " ENRICHMENT** - ![", id, " ENRICHMENT](",tmp_filename,")"
             )
           )
-          fun_LogIt(message = paste("- The top 5 terms are the following (sorted by adj. p.val)"))
-          fun_LogIt(message = knitr::kable(
+          fun_LogIt(session, message = paste("- The top 5 terms are the following (sorted by adj. p.val)"))
+          fun_LogIt(session, message = knitr::kable(
             head(result@result[order(result@result$p.adjust, decreasing = FALSE),], 5),
             format = "html",
             escape = FALSE,
@@ -171,7 +177,7 @@ enrichment_analysis_geneset_server <- function(
             scroll_box(width = "100%", height = "300px"))
 
           if(isTruthy(input$Notes) & !(isEmpty(input$Notes))){
-            fun_LogIt(message = add_notes_report(shiny::markdown(input$Notes)))
+            fun_LogIt(session, message = add_notes_report(shiny::markdown(input$Notes)))
           }
           removeNotification(notificationID)
           showNotification(ui = "Report Saved!",type = "message", duration = 1)
@@ -184,7 +190,7 @@ enrichment_analysis_geneset_server <- function(
 
 # Reactive server function that calls the enrichment analysis geneset server function
 enrichment_analysis_geneset_server_reactive <- function(
-  id, result_all, organism_choice, gene_set_choice, ea_type
+  id, result_all, organism_choice, gene_set_choice, ea_type, session_data, session_params
 ){
   observe({
     result <- result_all()[[paste("EnrichmentRes", id, sep = "_")]]
@@ -195,7 +201,7 @@ enrichment_analysis_geneset_server_reactive <- function(
       )
       session$userData[[paste0(id, "_Report")]]$destroy()
     }
-    server <- enrichment_analysis_geneset_server(id, result, organism_choice, gene_set_choice, ea_type)
+    server <- enrichment_analysis_geneset_server(id, result, organism_choice, gene_set_choice, ea_type, session_data, session_params)
   })
 }
 
@@ -231,12 +237,14 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           result_all = reactive(ea_reactives$enrichment_results),
           ea_type = input$ORA_or_GSE,
           organism_choice = ea_reactives$organism,
-          gene_set_choice = ea_reactives$tmp_genes
+          gene_set_choice = ea_reactives$tmp_genes,
+          session_data = data,
+          session_params = params
         )
       })
       ## Ui section
       output$OrganismChoice_ui <- renderUI({
-        if (is.null(par_tmp[[session$token]][['organism']])) {
+        if (is.null(params$organism)) {
           selectInput(
             inputId = ns("organism_choice_ea"),
             label = "Choose an organism:",
@@ -244,7 +252,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             selected = "Mouse genes (GRCm39)"
           )
         } else if (
-          par_tmp[[session$token]][['organism']] %in% c("Mouse genes (GRCm39)", "Human genes (GRCh38.p14)")
+          params$organism %in% c("Mouse genes (GRCm39)", "Human genes (GRCh38.p14)")
         ) {
           paste0("The organism you have chosen is ", ea_reactives$organism, ".")
         } else {
@@ -263,8 +271,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       )
       # refresh the UI/data if needed
       observeEvent(input$refreshUI, {
-        ea_reactives$data <- update_data(session$token)$data %||% NULL
-        ea_reactives$organism <- par_tmp[[session$token]][['organism']]
+        ea_reactives$data <- reactiveValuesToList(data)$data %||% NULL
+        ea_reactives$organism <- params$organism
         req(ea_reactives$data)
         output$sample_annotation_types_cmp_GSEA_ui <- renderUI({
           selectInput(
@@ -298,15 +306,17 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       })
       observeEvent(input$organism_choice_ea, {
         print("Organism choice changed!")
-        par_tmp[[session$token]]['organism'] <<- input$organism_choice_ea
+        params$organism <- input$organism_choice_ea
         ea_reactives$organism <- input$organism_choice_ea
       })
       # change values in list to true if selected
       observeEvent(input$GeneSetChoice, {
         # reset list
         ea_reactives$enrichments2do <- GENESETS_RESET
-        for(i in 1:length(input$GeneSetChoice)){
-          ea_reactives$enrichments2do[[input$GeneSetChoice[i]]] <- TRUE
+        if(length(input$GeneSetChoice) > 0){
+          for(i in seq_along(input$GeneSetChoice)){
+            ea_reactives$enrichments2do[[input$GeneSetChoice[i]]] <- TRUE
+          }
         }
         # hide the unselected ones
         for(name in names(which(ea_reactives$enrichments2do == FALSE))){
@@ -331,7 +341,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         ora_or_gse <- input$ORA_or_GSE %||% "GeneSetEnrichment"
         ora_gene_set_type <- input$GeneSet2Enrich %||% NULL
         uploaded_gene_set <- input$UploadedGeneSet %||% NULL
-        heatmap_genes <- res_tmp[[session$token]]$Heatmap$gene_list %||% NULL
+        heatmap_genes <- data$Heatmap$gene_list %||% NULL
         gse_gene_set_type <- input$ValueToAttach %||% "LFC"
         data <- ea_reactives$data
         compare_within <- input$sample_annotation_types_cmp_GSEA
@@ -354,7 +364,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           error_modal(e$message)
           req(FALSE)
         })
-        # Save par_tmp values
+        # Save params values
         update_par_tmp <- list(
           "ora_or_gse" = ora_or_gse,
           "ora_gene_set_type" = ora_gene_set_type,
@@ -365,11 +375,14 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           "reference" = reference,
           "treatment" = treatment
         )
-        par_tmp[[session$token]]$Enrichment[names(update_par_tmp)] <<- update_par_tmp
-        fun_LogIt(message = "## Enrichment{.tabset .tabset-fade}")
-        fun_LogIt(message = "### Info")
-        par_tmp[[session$token]]$Enrichment$tmp_genes <<- ea_reactives$tmp_genes
-        par_tmp[[session$token]]$Enrichment$enrichments2do <<- ea_reactives$enrichments2do
+        if(is.null(params$Enrichment)){
+          params$Enrichment <- list()
+        }
+        params$Enrichment[names(update_par_tmp)] <- update_par_tmp
+        fun_LogIt(session, message = "## Enrichment{.tabset .tabset-fade}")
+        fun_LogIt(session, message = "### Info")
+        params$Enrichment$tmp_genes <- ea_reactives$tmp_genes
+        params$Enrichment$enrichments2do <- ea_reactives$enrichments2do
         # Check whether the necessary annotation is available
         anno_results <- check_annotation_enrichment_analysis(ea_reactives$data)
         ea_reactives$data <- anno_results$new_data
@@ -476,11 +489,11 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           )
         })
         # start the analysis if ea_reactives$can_start == TRUE
-        fun_LogIt(message = paste0("**Enrichment general** The analysed gene set size: ",
+        fun_LogIt(session, message = paste0("**Enrichment general** The analysed gene set size: ",
                                    length(ea_reactives$tmp_genes)))
-        fun_LogIt(message = paste0("**Enrichment general** Chosen Organism (needed for translation): ",
+        fun_LogIt(session, message = paste0("**Enrichment general** Chosen Organism (needed for translation): ",
                                    ea_reactives$organism))
-        fun_LogIt(message = paste0("**Enrichment general** The following sets to check an enrichment: ",
+        fun_LogIt(session, message = paste0("**Enrichment general** The following sets to check an enrichment: ",
                                    paste0(names(unlist(ea_reactives$enrichments2do))[unlist(ea_reactives$enrichments2do)],collapse = ",")))
 
         observeEvent(ea_reactives$can_start, {
@@ -499,22 +512,25 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               error_modal(e$message, "Check that you chose the right organism!")
               req(FALSE)
             })
-            # update par_tmp, TODO: not pressing but update and align with other functions
+            # update params, TODO: not pressing but update and align with other functions
             update_par_tmp <- list(
               "organism" = ea_reactives$organism,
               "enrichments2do" = ea_reactives$enrichments2do,
               "test_correction" = PADJUST_METHOD[[input$test_correction]]
             )
-            par_tmp[[session$token]]$Enrichment[names(update_par_tmp)] <<- update_par_tmp
+            if(is.null(params$Enrichment)){
+              params$Enrichment <- list()
+            }
+            params$Enrichment[names(update_par_tmp)] <- update_par_tmp
 
-            fun_LogIt(message = paste0("**GSEA** Gene Set enrichment analysis was perfomed."))
-            fun_LogIt(message = paste0("**GSEA** The genes were sorted by: ",input$ValueToAttach))
-            fun_LogIt(message = paste0("**GSEA** Calculation based on ",
+            fun_LogIt(session, message = paste0("**GSEA** Gene Set enrichment analysis was perfomed."))
+            fun_LogIt(session, message = paste0("**GSEA** The genes were sorted by: ",input$ValueToAttach))
+            fun_LogIt(session, message = paste0("**GSEA** Calculation based on ",
                                       input$sample_annotation_types_cmp_GSEA,": ",
                                        input$Groups2Compare_treat_GSEA,
                                        " vs. ",
                                        input$Groups2Compare_ref_GSEA))
-            fun_LogIt(message = paste0("**GSEA** The adj. p-value threshold was set to 0.05,
+            fun_LogIt(session, message = paste0("**GSEA** The adj. p-value threshold was set to 0.05,
                                        whereby mutliple testing correction was : ",
                                        input$test_correction))
 
@@ -536,32 +552,37 @@ enrichment_analysis_Server <- function(id, data, params, updates){
               error_modal(e$message, "Check that you chose the right organism!")
               req(FALSE)
             })
-            # update par_tmp, TODO: not pressing but update and align with other functions
+            # update params, TODO: not pressing but update and align with other functions
             update_par_tmp <- list(
               "organism" = ea_reactives$organism,
               "enrichments2do" = ea_reactives$enrichments2do,
               "test_correction" = PADJUST_METHOD[[input$test_correction]],
               "UniverseOfGene" = input$UniverseOfGene %||% "default"
             )
-            par_tmp[[session$token]]$Enrichment[names(update_par_tmp)] <<- update_par_tmp
-            fun_LogIt(message = paste0("**ORA** Overrepresentation analysis was perfomed."))
-            fun_LogIt(message = paste0("**ORA** The genes were taken from: ",input$ValueToAttach))
-            if(input$GeneSet2Enrich =="ProvidedGeneSet"){
-              fun_LogIt(message = paste0("**ORA** The gene set was provided by the user. Filename: ",input$UploadedGeneSet$name))
+            if(is.null(params$Enrichment)){
+              params$Enrichment <- list()
             }
-            fun_LogIt(message = paste0("**ORA** The adj. p-value threshold was set to 0.05,
+            params$Enrichment[names(update_par_tmp)] <- update_par_tmp
+            fun_LogIt(session, message = paste0("**ORA** Overrepresentation analysis was perfomed."))
+            fun_LogIt(session, message = paste0("**ORA** The genes were taken from: ",input$ValueToAttach))
+            if(input$GeneSet2Enrich =="ProvidedGeneSet"){
+              fun_LogIt(session, message = paste0("**ORA** The gene set was provided by the user. Filename: ",input$UploadedGeneSet$name))
+            }
+            fun_LogIt(session, message = paste0("**ORA** The adj. p-value threshold was set to 0.05,
                                        whereby mutliple testing correction was : ",
                                        input$test_correction))
           }
-          fun_LogIt(message = "### Publication Snippet")
-          fun_LogIt(message = snippet_Enrichment(data = res_tmp[[session$token]],
-                                                 params = par_tmp[[session$token]]))
-          fun_LogIt(message = paste0("## Enrichment results {.tabset .tabset-fade}"))
+          fun_LogIt(session, message = "### Publication Snippet")
+          fun_LogIt(session, message = snippet_Enrichment(
+            data = reactiveValuesToList(data),
+            params = reactiveValuesToList(params)
+          ))
+          fun_LogIt(session, message = paste0("## Enrichment results {.tabset .tabset-fade}"))
           waiter$hide()
           ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
-          # res_temp Zuweisung
-          
-          res_tmp[[session$token]][["Enrichment"]] <<- ea_reactives$enrichment_results
+          # session_data assignment
+
+          data$Enrichment <- ea_reactives$enrichment_results
         })
       })
     }
