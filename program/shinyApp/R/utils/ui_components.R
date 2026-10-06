@@ -276,10 +276,10 @@ triple_button_layout <- function(ids, label, class = "btn-default",
 #' JavaScript clipboard handler (no need to add JS code).
 #'
 #' @param inputId Character. Button ID
-#' @param label Character. Button label
+#' @param label Character. Button label (default: "Copy plot")
 #' @param plot_id Character. ID of the plot to copy (for data-clipboard-plot attribute)
-#' @param icon_name Character. Font Awesome icon (default: "clipboard")
-#' @param class Character. CSS class (default: "btn-default")
+#' @param icon_name Character. Font Awesome icon (default: "copy")
+#' @param class Character. CSS class (default: "btn-primary")
 #' @param ... Additional arguments passed to actionButton()
 #'
 #' @return Action button with data-clipboard-plot attribute
@@ -287,15 +287,14 @@ triple_button_layout <- function(ids, label, class = "btn-default",
 #' @examples
 #' \dontrun{
 #' clipboard_button(
-#'   inputId = "copy_pca_btn",
-#'   label = "Copy PCA Plot",
-#'   plot_id = "PCA_plot"
+#'   inputId = ns("copy_HeatmapPlot"),
+#'   plot_id = ns("HeatmapPlot")
 #' )
 #' }
 #'
 #' @export
-clipboard_button <- function(inputId, label = "Copy to Clipboard", plot_id,
-                              icon_name = "clipboard", class = "btn-default", ...) {
+clipboard_button <- function(inputId, plot_id, label = "Copy plot",
+                              icon_name = "copy", class = "btn-primary", ...) {
   actionButton(
     inputId = inputId,
     label = label,

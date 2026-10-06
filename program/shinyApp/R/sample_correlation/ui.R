@@ -70,11 +70,9 @@ sampleCorrelation_main_panel <- function(ns){
           label = "Save plot",
           class = "btn-info"
         ),
-        actionButton(
+        clipboard_button(
           inputId = ns("copy_SampleCorrelationPlot"),
-          label = "Copy plot",
-          icon = icon("copy"),
-          class = "btn-primary"
+          plot_id = ns("SampleCorrelationPlot")
         )
       )
     ),

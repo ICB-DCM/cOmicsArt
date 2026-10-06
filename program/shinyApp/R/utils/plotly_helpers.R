@@ -27,7 +27,7 @@
 #' 4. Sends success/error notifications back to Shiny via input$plot_copied_status
 #'
 #' Success notification format: "<plot_id>_success_<timestamp>"
-#' Error notification format: "<plot_id>_clipboard_error_<timestamp>"
+#' Error notification format: "<plot_id>_error_clipboard_<timestamp>"
 #'
 #' @examples
 #' \dontrun{
@@ -71,7 +71,7 @@ add_plotly_clipboard <- function(plotly_obj,
                   ]).then(function() {
                     Shiny.setInputValue('plot_copied_status', '%s_success_' + Date.now(), {priority: 'event'});
                   }).catch(function(err) {
-                    Shiny.setInputValue('plot_copied_status', '%s_clipboard_error_' + Date.now(), {priority: 'event'});
+                    Shiny.setInputValue('plot_copied_status', '%s_error_clipboard_' + Date.now(), {priority: 'event'});
                   });
                 });
             });
