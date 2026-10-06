@@ -427,7 +427,7 @@ server <- function(input,output,session){
   observeEvent(input$geneAnno_toggle_button, {
     shinyjs::toggle(id = "geneAnno_toggle")  # Toggle the div on button click
   })
-  
+
   observeEvent(input$console_toggle_button, {
     shinyjs::toggle(id = "console_toggle")
   })
@@ -479,10 +479,10 @@ server <- function(input,output,session){
   observeEvent(input$do_annotation, {
     # Added gene annotation if asked for
     if(input$AddGeneSymbols & input[[paste0("omic_type_", uploaded_from())]] == "Transcriptomics") {
-      fun_LogIt(session, 
+      fun_LogIt(session,
         message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added"
       )
-      fun_LogIt(session, 
+      fun_LogIt(session,
         message = paste0("**DataInput** - chosen Organism: ", input$AddGeneSymbols_organism)
       )
       session_params$organism <- input$AddGeneSymbols_organism
@@ -639,7 +639,6 @@ server <- function(input,output,session){
         )
     } else {
       flag_csv <- F
-      read_error <- NULL
 
       tryCatch(
         expr = {
@@ -648,7 +647,6 @@ server <- function(input,output,session){
           flag_csv <- T
         },
         error = function(e){
-          read_error <<- conditionMessage(e)
           output$OverallChecks <- renderText(
             "<font color=\"#ab020a\"><b>Not a real csv file!</b></font>"
           )
@@ -747,10 +745,7 @@ server <- function(input,output,session){
       session_data$changedDuringVI <- FALSE
       #TODO ensure that if there are e.g. invalid sample names but als different sample names in data and annotation tables that we catch this
 
-      if(check0 == snippetNo && !is.null(read_error) && grepl("Unsupported file type", read_error)){
-        # point to the unsupported file type instead of guessing
-        check0 <- paste0(snippetNo, "\n\t", read_error)
-      } else if(check0 == snippetNo){
+      if(check0 == snippetNo){
         # add help text
         check0 <- paste0(
           snippetNo,
@@ -1069,7 +1064,7 @@ server <- function(input,output,session){
     session_params$addedGeneAnno <- FALSE
     fun_LogIt(session, message = "## Data Selection {.tabset .tabset-fade}")
     fun_LogIt(session, message = "### Info")
-    fun_LogIt(session, 
+    fun_LogIt(session,
       message = paste0("**DataInput** - Uploaded Omic Type: ", session_params$omic_type)
     )
     if(!(
@@ -1320,7 +1315,7 @@ server <- function(input,output,session){
         )
       }
 
-      fun_LogIt(session, 
+      fun_LogIt(session,
         message = paste0("<font color=\"#FF0000\"><b>**Attention** - Test Data set used</b></font>")
       )
     } else if(uploaded_from() == "VI_data"){
@@ -1817,7 +1812,7 @@ server <- function(input,output,session){
     # Batch correction after preprocessing
     console_output <- character(0)
     warnings_output <- character(0)
-    
+
     # Capture console output and warnings
     console_output <- capture.output({
       withCallingHandlers({
@@ -1855,11 +1850,11 @@ server <- function(input,output,session){
         invokeRestart("muffleMessage")
       })
     }, type = "output")
-    
+
     # Store captured outputs
     session_data$batch_console_output <- console_output
     session_data$batch_warnings <- warnings_output
-    
+
     # add per entities (to rowData) normality test outcome
     norm_test_output <- capture.output({
       withCallingHandlers({
@@ -1888,7 +1883,7 @@ server <- function(input,output,session){
         invokeRestart("muffleMessage")
       })
     }, type = "output")
-    
+
     # Combine all console outputs
     all_console_output <- c(console_output, norm_test_output)
     session_data$all_console_output <- all_console_output
@@ -1896,7 +1891,7 @@ server <- function(input,output,session){
 
     # assign session_data finally
     session_data$data <- data
-    
+
     hasConsoleOutput <- reactive({
       # Check if we have output to display, regardless of current input values
       # Check for console output or warnings
@@ -1915,7 +1910,7 @@ server <- function(input,output,session){
         shinyjs::hide("console_toggle_button")
       }
     })
-  
+
     output$consoleOutputDisplay <- renderUI({
       # Check if we have output to display
       hasOutput <- FALSE
@@ -1959,12 +1954,12 @@ server <- function(input,output,session){
         NULL  # Return nothing if conditions are not met
       }
     })
-    
+
     show_tabs()
     
     # Count up updating
     updating$count <- updating$count + 1
-    
+
     output$Statisitcs_Data <- renderText({
       shinyjs::click("SignificanceAnalysis-refreshUI",asis = T)
       shinyjs::click("single_gene_visualisation-refreshUI",asis = T)
@@ -1975,7 +1970,7 @@ server <- function(input,output,session){
       shinyjs::click("ml_classification-refreshUI",asis = T)
       ifelse(omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"), showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
       showTab(inputId = "tabsetPanel1", target = "ML Classification")
-      
+
       num_batches <- NA
       batch_message <- grep("Message: Found\\d+batches", session_data$all_warnings, value = TRUE)
       if (length(batch_message) > 0) {
@@ -2030,13 +2025,13 @@ server <- function(input,output,session){
     }
     fun_LogIt(session, "## Pre Processing {.tabset .tabset-fade}")
     fun_LogIt(session, message = "### Info")
-    fun_LogIt(session, 
+    fun_LogIt(session,
       message = "**PreProcessing** - Alaways done: removal of all entities which are constant over all samples"
     )
-    fun_LogIt(session, 
+    fun_LogIt(session,
       message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage)
     )
-    fun_LogIt(session, 
+    fun_LogIt(session,
       message = paste0(
         "**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",
         ifelse(input$PreProcessing_Procedure == "vst_DESeq",
@@ -2047,14 +2042,14 @@ server <- function(input,output,session){
       )
     )
     if(input$BatchEffect_Column != "NULL"){
-      fun_LogIt(session, 
+      fun_LogIt(session,
         message = paste0(
           "**PreProcessing** - Batch Effect Correction: ",
           input$BatchEffect_Column
         )
       )
     }
-    fun_LogIt(session, 
+    fun_LogIt(session,
       message = paste0(
         "**PreProcessing** - The resulting dimensions are: ",
         paste0(dim(session_data$data),collapse = ", ")
@@ -2150,7 +2145,7 @@ server <- function(input,output,session){
     fun_LogIt(session, message = "## PreProcessing Violin Plot{.tabset .tabset-fade}")
     fun_LogIt(session, message = "### Info")
     fun_LogIt(session, message = paste0("**PreProcess** - The Samples were plotted after: ",input$violin_color))
-    fun_LogIt(session, 
+    fun_LogIt(session,
       message = paste0("**PreProcess** - ![Violin Plot](",tmp_filename,")")
     )
     if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
@@ -2243,7 +2238,7 @@ server <- function(input,output,session){
     fun_LogIt(session, message = "## PreProcessing Mean and SD Plot{.tabset .tabset-fade}")
     fun_LogIt(session, message = "### Info")
     fun_LogIt(session, message = "The means of the preprocessed data are plotted agains their standard deviation to check for heteroskedasticity.")
-    fun_LogIt(session, 
+    fun_LogIt(session,
       message = paste0("**PreProcess** - ![Mean and SD Plot](",tmp_filename,")")
     )
     if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){

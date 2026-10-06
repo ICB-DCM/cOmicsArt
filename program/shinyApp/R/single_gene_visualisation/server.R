@@ -131,7 +131,7 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
           plot_id = "SingleGenePlot"
         )
       })
-      
+
       output$SingleGene_Info <- renderText({
         single_gene_reactives$info_text
       })
@@ -151,7 +151,7 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
         selected_type <- input$Select_GeneAnno
         group_by <- input$accross_condition
 
-        data <- update_data(session$token)
+        data <- reactiveValuesToList(session_data)
         post_selection_check <- unique(c(colData(data$data)[,group_by]))
         data <- data[[data_process_stage]]
 
@@ -332,7 +332,7 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
         fun_LogIt(session, message = "**Single Entitie** - Test for differences: T-Test")  # For now only test method we do
         fun_LogIt(session, message = paste0("**Single Entitie** - pairwise tested"))
 
-        fun_LogIt(session, 
+        fun_LogIt(session,
           message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")")
         )
 

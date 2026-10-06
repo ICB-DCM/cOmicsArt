@@ -121,7 +121,11 @@ Ensure Docker is installed on your system. You can download and install Docker f
 <p style='margin-top:1em; text-align:left ;margin-left:1em;'>
 <b>Apple Silicon (M1/M2/M3) users:</b> The image is built for the
 <code>linux/amd64</code> architecture and runs under emulation on Apple
-Silicon. <b>App mode works out of the box.</b> For the <b>development
+Silicon. Always pass <code>--platform linux/amd64</code> to
+<code>docker pull</code> and <code>docker run</code> (as in the commands
+below), otherwise Docker looks for an arm64 image and fails with
+<i>"no matching manifest for linux/arm64/v8"</i>. <b>App mode then works
+out of the box.</b> For the <b>development
 (RStudio) mode</b> you must enable Apple's Virtualization framework and
 Rosetta in Docker Desktop, otherwise RStudio will show
 <i>"Unable to connect to service"</i>:
@@ -141,7 +145,7 @@ Apple Silicon"</b> &rarr; <b>Apply &amp; Restart</b>. Requires macOS 13
 Open a terminal or command prompt and use the following command to pull the Docker image from Docker Hub:
 
 ```bash
-docker pull pauljonasjost/comicsart:latest
+docker pull --platform linux/amd64 pauljonasjost/comicsart:latest
 ```
 
 ### 3. Run the Docker Container (App mode)
@@ -149,11 +153,15 @@ docker pull pauljonasjost/comicsart:latest
 After pulling the image, you can run the Docker container with the following command:
 
 ```bash
-docker run --rm -p 3838:3838 pauljonasjost/comicsart:latest
+docker run --rm --platform linux/amd64 -p 3838:3838 pauljonasjost/comicsart:latest
 ```
 
 This command does the following:
 - `--rm` removes the container automatically when you stop it.
+- `--platform linux/amd64` selects the image's architecture. It is
+  required on Apple Silicon (the image is only published for amd64, so
+  without it Docker fails with *"no matching manifest for linux/arm64/v8"*)
+  and harmless everywhere else.
 - `-p 3838:3838` maps port 3838 in the Docker container to port 3838 on your local machine.
 - `pauljonasjost/comicsart:latest` specifies the Docker image to run.
 
@@ -180,7 +188,7 @@ Note, that this intitially may take some time due to initializing.
 To update the Docker image with the latest version, pull the image again:
 
 ```bash
-docker pull pauljonasjost/comicsart:latest
+docker pull --platform linux/amd64 pauljonasjost/comicsart:latest
 ```
 
 Then follow the steps to run the updated image.
@@ -204,7 +212,7 @@ mounted into it:
 git clone https://github.com/icb-dcm/cOmicsArt.git
 cd cOmicsArt
 
-docker run --rm -p 8787:8787 \
+docker run --rm --platform linux/amd64 -p 8787:8787 \
   -e MODE=rstudio \
   -e PASSWORD=yourpassword \
   -v "$PWD/program":/home/rstudio/project \
@@ -212,6 +220,8 @@ docker run --rm -p 8787:8787 \
 ```
 
 This does the following:
+- `--platform linux/amd64` selects the amd64 image (required on Apple
+  Silicon, see above).
 - `-p 8787:8787` maps RStudio Server's port to your machine.
 - `-e MODE=rstudio` starts RStudio Server instead of the app.
 - `-e PASSWORD=yourpassword` sets the login password (choose your own).
@@ -278,7 +288,7 @@ If you prefer a terminal or VS Code instead of RStudio, you can open a
 shell in the same environment:
 
 ```bash
-docker run -it --rm \
+docker run -it --rm --platform linux/amd64 \
   -v "$PWD":/workspace \
   -w /workspace \
   --name comicsart_dev \
@@ -300,10 +310,14 @@ If you encounter issues, consider the following tips:
 - **Port Conflicts**: If port 3838 is already in use, map the container's port to a different local port, e.g., 8888:
 
   ```bash
-  docker run -p 8888:3838 username/shinyapp:latest
+  docker run --rm --platform linux/amd64 -p 8888:3838 pauljonasjost/comicsart:latest
   ```
 
   Then access the app at `http://localhost:8888`.
+
+- **"no matching manifest for linux/arm64/v8"**: You are on Apple Silicon
+  and left out `--platform linux/amd64`. Add it to your `docker pull` /
+  `docker run` command.
 
 - **Permissions Issues**: On Linux, you may need to use `sudo` for Docker commands.
 

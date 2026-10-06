@@ -539,10 +539,10 @@ pca_Server <- function(id, session_data, session_params, data_input_shiny){
       fun_LogIt(session, message = "## PCA {.tabset .tabset-fade}")
       fun_LogIt(session, message = "### Info")
       if(input$data_selection_pca && input$sample_selection_pca !="all"){
-        fun_LogIt(session, 
+        fun_LogIt(session,
           message = paste0("**PCA** - The following PCA-plot is based on a selection of the data. ")
         )
-        fun_LogIt(session, 
+        fun_LogIt(session,
           message = paste0("**PCA** - All samples with",input$SampleAnnotationTypes_pca,"being ",paste(input$sample_selection_pca,collapse = ", "),"were selected.")
         )
       }else{

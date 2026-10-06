@@ -524,7 +524,7 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         fun_LogIt(session, message = "### Info")
         # log which tests were performed
         if(session_params$preprocessing_procedure == "vst_DESeq"){
-          fun_LogIt(session, 
+          fun_LogIt(session,
             message = "- Differential Analysis was performed using DESeq2 pipeline"
           )
         } else {
