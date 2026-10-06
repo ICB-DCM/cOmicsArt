@@ -87,7 +87,9 @@ select_data <- function(
 
 read_file <- function(filename, check.names=T){
   # reads in the file of either a .csv or a .xlsx filetype
-  if (base::endsWith(filename, ".csv")){
+  # file extension is matched case-insensitive (e.g. '.CSV' is valid too)
+  file_extension <- tolower(tools::file_ext(filename))
+  if (file_extension == "csv"){
     df <- read.csv(
        file = filename,
        header = T,
@@ -97,7 +99,7 @@ read_file <- function(filename, check.names=T){
     )
     return(df)
   }
-  if (base::endsWith(filename, ".xlsx")){
+  if (file_extension == "xlsx"){
     df <- as.data.frame(
       readxl::read_xlsx(
         path=filename,
@@ -111,6 +113,11 @@ read_file <- function(filename, check.names=T){
     df[[1]] <- NULL
     return(df)
   }
+  # do not fail silently on unsupported file types
+  stop(paste0(
+    "Unsupported file type '.", file_extension, "' of file '", basename(filename),
+    "'. Only .csv and .xlsx files are supported."
+  ))
 }
 
 getUserReactiveValues <- function(data = input){
