@@ -18,8 +18,8 @@ clean_citation <- function(citation) {
 ## done as functions
 ## Input. packages 
 snippet_dataInput <- function(
-  data=res_tmp[[session$token]],
-  params=par_tmp[[session$token]]
+  data,
+  params
 ){
   snippet <- 
     paste0("The data was uploaded to cOmicsART (v. ", VERSION,") a webapp to perform explorative and statistical analysis with seamless integration to R (Seep et. al. 2024). ",
@@ -51,8 +51,8 @@ snippet_dataInput <- function(
 }
 
 snippet_preprocessing <- function(
-    data=res_tmp[[session$token]],
-    params=par_tmp[[session$token]]
+    data,
+    params
 ){
   # Conditional pre-processing procedure
   snippet <- c()
@@ -101,8 +101,8 @@ snippet_preprocessing <- function(
 }
   
 snippet_sampleCorr <- function(
-    data=res_tmp[[session$token]],
-    params=par_tmp[[session$token]]
+    data,
+    params
 ){
   snippet <- c()
   snippet <- paste0(snippet, "The correlation between samples was calculated using the ", params$SampleCorr$correlation_method, " method. ")
@@ -113,8 +113,8 @@ snippet_sampleCorr <- function(
   
   
 snippet_PCA <- function(
-    data=res_tmp[[session$token]],
-    params=par_tmp[[session$token]]
+    data,
+    params
 ){
   #ifelse(input$Show_loadings == "Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
   snippet <- c()
@@ -124,8 +124,8 @@ snippet_PCA <- function(
 }
 
 snippet_PCAscree <- function(
-    data=res_tmp[[session$token]],
-    params=par_tmp[[session$token]]
+    data,
+    params
 ){
   snippet <- c()
   snippet <- paste0(snippet, "The scree plot was generated to visualize the proportion of variance explained by each principal component. ")
@@ -133,8 +133,8 @@ snippet_PCAscree <- function(
 }
 
 snippet_PCAloadings <- function(
-    data=res_tmp[[session$token]],
-    params=par_tmp[[session$token]]
+    data,
+    params
 ){
   snippet <- c()
   snippet <- paste0(snippet, "The top ",params$PCA$topSlider," positive loadings and the top ",params$PCA$bottomSlider," negative loadings were seleceted to assess an entities' impact on the principal components ")
@@ -142,8 +142,8 @@ snippet_PCAloadings <- function(
 }
 
 snippet_PCAloadingsMatrix <- function(
-    data=res_tmp[[session$token]],
-    params=par_tmp[[session$token]]
+    data,
+    params
 ){
   snippet <- c()
   snippet <- paste0(snippet, "The loadings matrix was created by taking all absolute loading values higher than ",params$PCA$filterValue ," into account for the first ",gsub("PC","",params$PCA$x_axis_selection," PCs. "))
@@ -152,8 +152,8 @@ snippet_PCAloadingsMatrix <- function(
 }
   
 snippet_SigAna <- function(
-    data=res_tmp[[session$token]],
-    params=par_tmp[[session$token]]
+    data,
+    params
 ){
   snippet <- c()
   # Transcriptomics with vst_DESeq
@@ -177,8 +177,8 @@ snippet_SigAna <- function(
 }
 
 snippet_heatmap <- function(
-    data=res_tmp[[session$token]],
-    params=par_tmp[[session$token]]
+    data,
+    params
 ){
   snippet <- c()
   # General heatmap construction details
@@ -229,8 +229,8 @@ snippet_heatmap <- function(
 }
 
 snippet_SingleGene <- function(
-    data=res_tmp[[session$token]],
-    params=par_tmp[[session$token]]
+    data,
+    params
 ){
   snippet <- c()
   # Single Entity Plotting
@@ -249,8 +249,8 @@ snippet_SingleGene <- function(
 }
 
 snippet_Enrichment <- function(
-    data=res_tmp[[session$token]],
-    params=par_tmp[[session$token]]
+    data,
+    params
     ){
   
   snippet <- c()

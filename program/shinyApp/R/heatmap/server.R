@@ -1,4 +1,5 @@
-heatmap_server <- function(id){moduleServer(
+# Phase 2: Requires data_input_shiny and selectedData_processed reactives for global sourcing
+heatmap_server <- function(id, session_data, session_params, data_input_shiny, selectedData_processed){moduleServer(
   id,
   function(input,output,session){
     # Heatmap ----
@@ -21,7 +22,7 @@ heatmap_server <- function(id){moduleServer(
 
     observeEvent(input$refreshUI, {
       print("Refreshing UI Heatmap")
-      heatmap_reactives$data <- update_data(session$token)
+      heatmap_reactives$data <- reactiveValuesToList(session_data)
       heatmap_reactives$allow_plot <- FALSE
       data <- heatmap_reactives$data$data
 
@@ -56,7 +57,7 @@ heatmap_server <- function(id){moduleServer(
         )
       })
       output$UseBatch_ui <- renderUI({
-        req(par_tmp[[session$token]]$BatchColumn != "NULL")
+        req(session_params$BatchColumn != "NULL")
         selectInput(
           inputId = ns("UseBatch"),
           label = "Use batch corrected data?",
@@ -129,8 +130,8 @@ heatmap_server <- function(id){moduleServer(
     })
 
     observeEvent(input$SaveGeneList_Heatmap, {
-      # Save the gene list to res_tmp separately when asked
-      genes2send <- par_tmp[[session$token]]$Heatmap$row_labels
+      # Save the gene list to session_data separately when asked
+      genes2send <- session_params$Heatmap$row_labels
       if(!length(which(grepl("ENS.*",genes2send) == TRUE)) == length(genes2send)){
         error_modal(
           error_message = paste("No genes were saved.", ERROR_NON_ENSEMBL_GENES),
@@ -138,7 +139,10 @@ heatmap_server <- function(id){moduleServer(
         )
         req(FALSE)
       }
-      res_tmp[[session$token]][["Heatmap"]]$gene_list <<- genes2send
+      if(is.null(session_data$Heatmap)){
+        session_data$Heatmap <- list()
+      }
+      session_data$Heatmap$gene_list <- genes2send
       showNotification("Heatmap Genes Saved!",type = "message", duration = 2)
     })
 
@@ -157,7 +161,7 @@ heatmap_server <- function(id){moduleServer(
       waiter()$show()
       shinyjs::showElement(id = "Heatmap_div", asis = TRUE)
       # assign variables to be used
-      useBatch <- par_tmp[[session$token]]$BatchColumn != "NULL" && input$UseBatch == "Yes"
+      useBatch <- session_params$BatchColumn != "NULL" && input$UseBatch == "Yes"
       selection_type <- input$row_selection_options
       top_k_type <- input$TopK_order %||% NULL
       n_top_k <- input$TopK %||% NULL
@@ -194,8 +198,11 @@ heatmap_server <- function(id){moduleServer(
         treatment = treatment,
         significance_level = significance_level
       )
-      # update par_tmp with the new parameters
-      par_tmp[[session$token]]$Heatmap[names(par_list)] <<- par_list
+      # update session_params with the new parameters
+      if(is.null(session_params$Heatmap)){
+        session_params$Heatmap <- list()
+      }
+      session_params$Heatmap[names(par_list)] <- par_list
       # start checks here
       if (nrow(data2plot) < 2){
         waiter()$hide()
@@ -262,7 +269,10 @@ heatmap_server <- function(id){moduleServer(
 
     heatmap_row_anno <- reactive({
       req(isolate(selected_data()), heatmap_reactives$data, proceed_with_heatmap())
-      par_tmp[[session$token]]$Heatmap$row_annotations <<- input$row_anno_options
+      if(is.null(session_params$Heatmap)){
+        session_params$Heatmap <- list()
+      }
+      session_params$Heatmap$row_annotations <- input$row_anno_options
       return(custom_rowAnnotation(
         data = heatmap_reactives$data$data,
         row_selected = rownames(isolate(selected_data())),
@@ -272,7 +282,10 @@ heatmap_server <- function(id){moduleServer(
 
     heatmap_col_anno <- reactive({
       req(isolate(selected_data()), heatmap_reactives$data, proceed_with_heatmap())
-      par_tmp[[session$token]]$Heatmap$col_annotations <<- input$anno_options
+      if(is.null(session_params$Heatmap)){
+        session_params$Heatmap <- list()
+      }
+      session_params$Heatmap$col_annotations <- input$anno_options
       return(custom_colAnnotation(
         data = heatmap_reactives$data$data,
         col_annotations = input$anno_options
@@ -311,13 +324,19 @@ heatmap_server <- function(id){moduleServer(
         return(NULL)
       })
       waiter()$hide()
-      res_tmp[[session$token]][["Heatmap"]]$selected_data <<- selected_data()
-      par_tmp[[session$token]]$Heatmap$title <<- title
-      par_tmp[[session$token]]$Heatmap$cluster_rows <<- cluster_rows
-      par_tmp[[session$token]]$Heatmap$cluster_cols <<- cluster_cols
-      par_tmp[[session$token]]$Heatmap$scale_rows <<- scale_rows
-      par_tmp[[session$token]]$Heatmap$n_max_row_labels <<- n_max_row_labels
-      par_tmp[[session$token]]$Heatmap$row_labels <<- row_labels
+      if(is.null(session_data$Heatmap)){
+        session_data$Heatmap <- list()
+      }
+      if(is.null(session_params$Heatmap)){
+        session_params$Heatmap <- list()
+      }
+      session_data$Heatmap$selected_data <- selected_data()
+      session_params$Heatmap$title <- title
+      session_params$Heatmap$cluster_rows <- cluster_rows
+      session_params$Heatmap$cluster_cols <- cluster_cols
+      session_params$Heatmap$scale_rows <- scale_rows
+      session_params$Heatmap$n_max_row_labels <- n_max_row_labels
+      session_params$Heatmap$row_labels <- row_labels
       return(plot2return)
     })
 
@@ -326,19 +345,19 @@ heatmap_server <- function(id){moduleServer(
     }, content = function(file){
       waiter()$show()
       envList <- list(
-        par_tmp = par_tmp[[session$token]]
+        par_tmp = reactiveValuesToList(session_params)
       )
       temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
       dir.create(temp_directory)
       # save csv files
       save_summarized_experiment(
-        res_tmp[[session$token]]$data_original,
+        session_data$data_original,
         temp_directory
       )
       write(
         create_workflow_script(
           pipeline_info = HEATMAP_PIPELINE,
-          par = par_tmp[[session$token]],
+          par = reactiveValuesToList(session_params),
           par_mem = "Heatmap",
           path_to_util = file.path(temp_directory, "util.R")
         ),
@@ -381,36 +400,38 @@ heatmap_server <- function(id){moduleServer(
         type="png"
       )
       # Add Log Messages
-      fun_LogIt(message = "## HEATMAP{.tabset .tabset-fade}")
-      fun_LogIt(message = "### Info")
-      fun_LogIt(message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",isolate(input$row_selection_options)))
+      fun_LogIt(session, message = "## HEATMAP{.tabset .tabset-fade}")
+      fun_LogIt(session, message = "### Info")
+      fun_LogIt(session, message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ",isolate(input$row_selection_options)))
       if(any(isolate(input$row_selection_options)=="Select based on Annotation")){
-        fun_LogIt(message = paste0("**HEATMAP** - The rows were subsetted based on ",
+        fun_LogIt(session, message = paste0("**HEATMAP** - The rows were subsetted based on ",
                                    isolate(input$anno_options_heatmap),
                                    " :",
                                    paste0(isolate(input$row_anno_options_heatmap),
                                                   collapse = ",")))
       }
       if(!is.null(isolate(input$TopK))){
-        fun_LogIt(message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",isolate(input$TopK)))
-        fun_LogIt(message = paste0("**HEATMAP** - Note that the order depends on ",isolate(input$row_selection_options)))
+        fun_LogIt(session, message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ",isolate(input$TopK)))
+        fun_LogIt(session, message = paste0("**HEATMAP** - Note that the order depends on ",isolate(input$row_selection_options)))
         # either based on LFC or on pVal
       }
-      fun_LogIt(message = paste0("**HEATMAP** - The heatmap samples were colored after ",paste0(isolate(input$anno_options),collapse = ", ")))
-      fun_LogIt(message = paste0("**HEATMAP** - The heatmap entities were colored after ",paste0(isolate(input$row_anno_options),collapse = ", ")))
+      fun_LogIt(session, message = paste0("**HEATMAP** - The heatmap samples were colored after ",paste0(isolate(input$anno_options),collapse = ", ")))
+      fun_LogIt(session, message = paste0("**HEATMAP** - The heatmap entities were colored after ",paste0(isolate(input$row_anno_options),collapse = ", ")))
       if(isolate(input$cluster_cols) == TRUE){
-        fun_LogIt(message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
+        fun_LogIt(session, message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
       }
       if(isolate(input$cluster_rows) == TRUE){
-        fun_LogIt(message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
+        fun_LogIt(session, message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
       }
-      fun_LogIt(message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
+      fun_LogIt(session, message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
       if(isTruthy(isolate(input$NotesHeatmap)) & !(isEmpty(isolate(input$NotesHeatmap)))){
-        fun_LogIt(message = add_notes_report(shiny::markdown(input$NotesHeatmap)))
+        fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesHeatmap)))
       }
-      fun_LogIt(message = "### Publication Snippet")
-      fun_LogIt(message = snippet_heatmap(data = res_tmp[[session$token]],
-                                          params = par_tmp[[session$token]]))
+      fun_LogIt(session, message = "### Publication Snippet")
+      fun_LogIt(session, message = snippet_heatmap(
+        data = reactiveValuesToList(session_data),
+        params = reactiveValuesToList(session_params)
+      ))
 
       removeNotification(notificationID)
       showNotification("Report Saved!",type = "message", duration = 1)

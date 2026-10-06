@@ -1,0 +1,62 @@
+name: Build & push Docker image
+
+# Build the environment image when the environment changes (lockfile, Dockerfile
+# or launcher):
+#   - On a pull request -> push a human-trackable  pr-<number>  tag, so the PR's
+#     smoke test can pull exactly this build. Does NOT touch :latest.
+#   - On push to main/develop -> push  :latest  (the image end users pull).
+# NOTE: pull_request runs from a fork do not receive repo secrets, so pushing to
+# Docker Hub only works for PRs from branches within this repository.
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - Dockerfile
+      - start.sh
+      - program/renv.lock
+  push:
+    branches: [main, develop]
+    paths:
+      - Dockerfile
+      - start.sh
+      - program/renv.lock
+  workflow_dispatch:
+
+env:
+  IMAGE: pauljonasjost/comicsart
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute image tag
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "tag=${IMAGE}:pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${IMAGE}:latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tag }}
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
