@@ -69,24 +69,28 @@ create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns,
 #' Loads all the modular components needed for results tab functionality.
 #' Called automatically by create_new_tab().
 #'
-#' @return None (sources files into environment)
+#' @return None (sources files into the server environment)
 #' @keywords internal
 source_results_tab_components <- function() {
   base_path <- "R/significance_analysis/results_tab"
+  # Source into the server environment this function was defined in (see
+  # SourceAll.R), so components can use server-local helpers such as
+  # create_clipboard_plotly() and fun_LogIt()
+  env <- parent.env(environment())
 
   # Source utilities
-  source(file.path(base_path, "utils/id_factory.R"), local = FALSE)
-  source(file.path(base_path, "utils/summary_generators.R"), local = FALSE)
-  source(file.path(base_path, "utils/download_handlers.R"), local = FALSE)
-  source(file.path(dirname(base_path), "util.R"), local = FALSE)
+  source(file.path(base_path, "utils/id_factory.R"), local = env)
+  source(file.path(base_path, "utils/summary_generators.R"), local = env)
+  source(file.path(base_path, "utils/download_handlers.R"), local = env)
+  source(file.path(dirname(base_path), "util.R"), local = env)
 
   # Source UI components
-  source(file.path(base_path, "components/table_ui.R"), local = FALSE)
-  source(file.path(base_path, "components/volcano_ui.R"), local = FALSE)
-  source(file.path(base_path, "ui.R"), local = FALSE)
+  source(file.path(base_path, "components/table_ui.R"), local = env)
+  source(file.path(base_path, "components/volcano_ui.R"), local = env)
+  source(file.path(base_path, "ui.R"), local = env)
 
   # Source server components
-  source(file.path(base_path, "components/table_server.R"), local = FALSE)
-  source(file.path(base_path, "components/volcano_server.R"), local = FALSE)
-  source(file.path(base_path, "server.R"), local = FALSE)
+  source(file.path(base_path, "components/table_server.R"), local = env)
+  source(file.path(base_path, "components/volcano_server.R"), local = env)
+  source(file.path(base_path, "server.R"), local = env)
 }
