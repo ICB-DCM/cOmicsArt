@@ -47,11 +47,9 @@ geneset_panel_UI <- function(
             label = "Save plot",
             class = "btn-info"
           ),
-          actionButton(
+          clipboard_button(
             inputId = ns("copy_EnrichmentPlot"),
-            label = "Copy plot",
-            icon = icon("copy"),
-            class = "btn-primary"
+            plot_id = ns("EnrichmentPlot")
           )
         )
       ),

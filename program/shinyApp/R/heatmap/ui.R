@@ -156,11 +156,9 @@ heatmap_main <- function(ns){
             label = "Save plot",
             class = "btn-info"
           ),
-          actionButton(
+          clipboard_button(
             inputId = ns("copy_HeatmapPlot"),
-            label = "Copy plot",
-            icon = icon("copy"),
-            class = "btn-primary"
+            plot_id = ns("HeatmapPlot")
           )
         )
       ),
