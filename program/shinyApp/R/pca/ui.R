@@ -104,10 +104,17 @@ pca_main_panel <- function(ns){
             style = "border: 1px solid silver:",
             cellWidths = c("70%", "30%"),
             NULL,
-            downloadButton(
-              outputId = ns("SavePlot_pos1"),
-              label = "Save plot",
-              class = "btn-info"
+            div(
+              style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
+              downloadButton(
+                outputId = ns("SavePlot_pos1"),
+                label = "Save plot",
+                class = "btn-info"
+              ),
+              clipboard_button(
+                inputId = ns("copy_PCA_plot"),
+                plot_id = ns("PCA_plot")
+              )
             )
           ),
           splitLayout(
@@ -182,10 +189,17 @@ pca_main_panel <- function(ns){
             style = "border: 1px solid silver:",
             cellWidths = c("70%", "30%"),
             NULL,
-            downloadButton(
-              outputId = ns("SavePlot_Loadings"),
-              label = "Save plot",
-              class = "btn-info"
+            div(
+              style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
+              downloadButton(
+                outputId = ns("SavePlot_Loadings"),
+                label = "Save plot",
+                class = "btn-info"
+              ),
+              clipboard_button(
+                inputId = ns("copy_PCA_Loadings_plot"),
+                plot_id = ns("PCA_Loadings_plot")
+              )
             )
           ),
           splitLayout(
@@ -242,10 +256,17 @@ pca_main_panel <- function(ns){
             style = "border: 1px solid silver:",
             cellWidths = c("70%", "30%"),
             NULL,
-            downloadButton(
-              outputId = ns("SavePlot_Loadings_matrix"),
-              label = "Save plot",
-              class = "btn-info"
+            div(
+              style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
+              downloadButton(
+                outputId = ns("SavePlot_Loadings_matrix"),
+                label = "Save plot",
+                class = "btn-info"
+              ),
+              clipboard_button(
+                inputId = ns("copy_PCA_Loadings_matrix_plot"),
+                plot_id = ns("PCA_Loadings_matrix_plot")
+              )
             )
           ),
           splitLayout(
@@ -292,10 +313,17 @@ pca_main_panel <- function(ns){
             style = "border: 1px solid silver:",
             cellWidths = c("70%", "30%"),
             NULL,
-            downloadButton(
-              outputId = ns("SavePlot_Scree"),
-              label = "Save plot",
-              class = "btn-info"
+            div(
+              style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
+              downloadButton(
+                outputId = ns("SavePlot_Scree"),
+                label = "Save plot",
+                class = "btn-info"
+              ),
+              clipboard_button(
+                inputId = ns("copy_Scree_Plot"),
+                plot_id = ns("Scree_Plot")
+              )
             )
           ),
           splitLayout(
