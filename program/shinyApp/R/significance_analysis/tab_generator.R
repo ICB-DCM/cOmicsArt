@@ -73,20 +73,23 @@ create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns,
 #' @keywords internal
 source_results_tab_components <- function() {
   base_path <- "R/significance_analysis/results_tab"
+  # Source into the session's server environment (where SourceAll.R put the
+  # helpers these files call, e.g. create_clipboard_plotly), not .GlobalEnv
+  env <- parent.env(environment())
 
   # Source utilities
-  source(file.path(base_path, "utils/id_factory.R"), local = FALSE)
-  source(file.path(base_path, "utils/summary_generators.R"), local = FALSE)
-  source(file.path(base_path, "utils/download_handlers.R"), local = FALSE)
-  source(file.path(dirname(base_path), "util.R"), local = FALSE)
+  source(file.path(base_path, "utils/id_factory.R"), local = env)
+  source(file.path(base_path, "utils/summary_generators.R"), local = env)
+  source(file.path(base_path, "utils/download_handlers.R"), local = env)
+  source(file.path(dirname(base_path), "util.R"), local = env)
 
   # Source UI components
-  source(file.path(base_path, "components/table_ui.R"), local = FALSE)
-  source(file.path(base_path, "components/volcano_ui.R"), local = FALSE)
-  source(file.path(base_path, "ui.R"), local = FALSE)
+  source(file.path(base_path, "components/table_ui.R"), local = env)
+  source(file.path(base_path, "components/volcano_ui.R"), local = env)
+  source(file.path(base_path, "ui.R"), local = env)
 
   # Source server components
-  source(file.path(base_path, "components/table_server.R"), local = FALSE)
-  source(file.path(base_path, "components/volcano_server.R"), local = FALSE)
-  source(file.path(base_path, "server.R"), local = FALSE)
+  source(file.path(base_path, "components/table_server.R"), local = env)
+  source(file.path(base_path, "components/volcano_server.R"), local = env)
+  source(file.path(base_path, "server.R"), local = env)
 }
