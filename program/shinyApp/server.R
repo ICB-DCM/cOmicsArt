@@ -132,7 +132,8 @@ server <- function(input,output,session){
   # If it is the user's first visit, start the guide
   observeEvent(input$first_visit, {
     # TODO: Should we switch to showing data selection by default?
-    if (input$first_visit) {
+    # shinytest2 runs the app in test mode: skip the welcome tour there
+    if (input$first_visit && !isTRUE(getShinyOption("testmode"))) {
       guide_welcome$init()$start()
     } else {
       showTab(inputId = "tabsetPanel1", target = "Data selection", select = TRUE)
