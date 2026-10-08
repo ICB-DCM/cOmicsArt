@@ -87,6 +87,16 @@ RUN --mount=type=cache,target=/var/cache/apt \
 # to service" / "libR.so: cannot open shared object file").
 RUN echo "/usr/local/lib/R/lib" > /etc/ld.so.conf.d/libR.conf && ldconfig
 
+# Google Chrome for the shinytest2 browser tests (chromote). Own layer AFTER
+# the restore so the expensive renv layer stays cached. The .deb also adds
+# Google's apt repo; apt pulls in Chrome's shared-library dependencies.
+RUN curl -fsSL -o /tmp/chrome.deb \
+      https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+ && apt-get update -o Acquire::Retries=5 \
+ && apt-get install -y --no-install-recommends /tmp/chrome.deb \
+ && rm -rf /tmp/chrome.deb /var/lib/apt/lists/*
+ENV CHROMOTE_CHROME=/usr/bin/google-chrome
+
 # Now copy the frequently-changing app code (baked default; overridden by a
 # volume mount in dev/CI).
 COPY program/shinyApp /srv/shiny-server/shinyApp

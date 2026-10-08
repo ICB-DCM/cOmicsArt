@@ -52,6 +52,13 @@
       ],
       "Hash": "14966d2e5ffaa621945cc2b9a115f377"
     },
+    "AsioHeaders": {
+      "Package": "AsioHeaders",
+      "Version": "1.30.2-1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a6d3ad7ba83bd5dc4b9c13b685b2b4a4"
+    },
     "BH": {
       "Package": "BH",
       "Version": "1.84.0-0",
@@ -1164,6 +1171,41 @@
       ],
       "Hash": "f61dbaec772ccd2e17705c1e872e9e7c"
     },
+    "checkmate": {
+      "Package": "checkmate",
+      "Version": "2.3.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "backports",
+        "utils"
+      ],
+      "Hash": "0e14e01ce07e7c88fd25de6d4260d26b"
+    },
+    "chromote": {
+      "Package": "chromote",
+      "Version": "0.5.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R6",
+        "cli",
+        "curl",
+        "fastmap",
+        "jsonlite",
+        "later",
+        "magrittr",
+        "processx",
+        "promises",
+        "rlang",
+        "utils",
+        "websocket",
+        "withr",
+        "zip"
+      ],
+      "Hash": "645cd21d708d14c2732a34b2ccba87b8"
+    },
     "cicerone": {
       "Package": "cicerone",
       "Version": "1.0.4",
@@ -2200,6 +2242,17 @@
         "R"
       ],
       "Hash": "ab08ac61f3e1be454ae21911eb8bc2fe"
+    },
+    "globals": {
+      "Package": "globals",
+      "Version": "0.17.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "codetools"
+      ],
+      "Hash": "b3789a625be4a9825af3f7aff4e85223"
     },
     "glue": {
       "Package": "glue",
@@ -3896,6 +3949,32 @@
       ],
       "Hash": "47528912d55d13cbcf59fde00d03edd8"
     },
+    "shinytest2": {
+      "Package": "shinytest2",
+      "Version": "0.4.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R6",
+        "callr",
+        "checkmate",
+        "chromote",
+        "cli",
+        "cpp11",
+        "fs",
+        "globals",
+        "httr",
+        "jsonlite",
+        "lifecycle",
+        "pingr",
+        "rlang",
+        "rmarkdown",
+        "shiny",
+        "testthat",
+        "withr"
+      ],
+      "Hash": "47a1efcc7baec6fc5299498b7f3fdb3e"
+    },
     "showimage": {
       "Package": "showimage",
       "Version": "1.0.0",
@@ -4387,6 +4466,19 @@
         "withr"
       ],
       "Hash": "adc1e0db3ac0d75dcdb4b8179e7ca796"
+    },
+    "websocket": {
+      "Package": "websocket",
+      "Version": "1.4.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "AsioHeaders",
+        "R6",
+        "cpp11",
+        "later"
+      ],
+      "Hash": "1c674e92da114a65ce2b5a1ab59997ed"
     },
     "whisker": {
       "Package": "whisker",
