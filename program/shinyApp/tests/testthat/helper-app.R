@@ -60,6 +60,13 @@ IDS <- list(
       ),
       after = c(HEATMAP$after, "#Heatmap-SaveGeneList_Heatmap")
     )),
+    "Heatmap (top K, significant)" = modifyList(HEATMAP, list(
+      tab = "Heatmap", set = list(
+        "Heatmap-row_selection_options" = "Top K",
+        "Heatmap-TopK_order" = "LogFoldChange and Significant",
+        "Heatmap-TopK" = 500
+      )
+    )),
     "Single Gene Visualisations" = list(
       go = "single_gene_visualisation-singleGeneGo",
       out = "#single_gene_visualisation-SingleGenePlot",
