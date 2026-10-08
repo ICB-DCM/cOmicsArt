@@ -77,6 +77,34 @@ jobs:
           echo "App did not respond within timeout"
           exit 1
 
+      # Browser smoke tests (shinytest2) + existing unit tests, all via
+      # shiny::runTests() in the env image. Mount must be read-write: the app
+      # creates www/<session token>/ folders.
+      - name: Run tests (shinytest2 + unit tests)
+        run: |
+          set -o pipefail
+          docker run --rm \
+            -e CI=true \
+            -e NOT_CRAN=true \
+            -e COMICSART_OFFLINE=true \
+            -e SHINYTEST2_LOAD_TIMEOUT=300000 \
+            -e SHINYTEST2_TIMEOUT=120000 \
+            -v "${{ github.workspace }}/program/shinyApp":/srv/shiny-server/shinyApp \
+            -w /srv/shiny-server/shinyApp \
+            --entrypoint Rscript \
+            "${{ steps.img.outputs.tag }}" \
+            -e 'shiny::runTests(".")' 2>&1 | tee shinytest2.log
+
+      - name: Upload test output on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shinytest2-output
+          path: |
+            shinytest2.log
+            program/shinyApp/tests/testthat/_snaps
+          if-no-files-found: ignore
+
       - name: Show app logs (always)
         if: always()
         run: docker logs comicsart_app || true
