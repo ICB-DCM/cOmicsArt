@@ -342,7 +342,8 @@ enrichment_analysis_Server <- function(id, data, params, updates){
         uploaded_gene_set <- input$UploadedGeneSet %||% NULL
         heatmap_genes <- data$Heatmap$gene_list %||% NULL
         gse_gene_set_type <- input$ValueToAttach %||% "LFC"
-        data <- ea_reactives$data
+        # not `data`: that is the session data this module must write back to
+        ea_data <- ea_reactives$data
         compare_within <- input$sample_annotation_types_cmp_GSEA
         reference <- input$Groups2Compare_ref_GSEA
         treatment <- input$Groups2Compare_treat_GSEA
@@ -353,7 +354,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             uploaded_gene_set = uploaded_gene_set,
             heatmap_genes = heatmap_genes,
             gse_gene_set_type = gse_gene_set_type,
-            data = data,
+            data = ea_data,
             compare_within = compare_within,
             reference = reference,
             treatment = treatment
@@ -534,7 +535,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
                                        input$test_correction))
 
           }else{
-            ea_reactives$tmp_genes <- rowData(data)[ea_reactives$tmp_genes,"entrezgene_id"]
+            ea_reactives$tmp_genes <- rowData(ea_data)[ea_reactives$tmp_genes,"entrezgene_id"]
             # remove NAs
             ea_reactives$tmp_genes <- ea_reactives$tmp_genes[!is.na(ea_reactives$tmp_genes)]
             ea_reactives$enrichment_results <- tryCatch({
