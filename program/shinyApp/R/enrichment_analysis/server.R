@@ -244,17 +244,16 @@ enrichment_analysis_Server <- function(id, data, params, updates){
       })
       ## Ui section
       output$OrganismChoice_ui <- renderUI({
-        if (is.null(params$organism)) {
+        # Keep the choice visible: the select's initial value already sets
+        # params$organism, so replacing it by text locked users into Mouse
+        if (is.null(params$organism) ||
+            params$organism %in% c("Mouse genes (GRCm39)", "Human genes (GRCh38.p14)")) {
           selectInput(
             inputId = ns("organism_choice_ea"),
             label = "Choose an organism:",
             choices = c("Mouse genes (GRCm39)", "Human genes (GRCh38.p14)"),
-            selected = "Mouse genes (GRCm39)"
+            selected = params$organism %||% "Mouse genes (GRCm39)"
           )
-        } else if (
-          params$organism %in% c("Mouse genes (GRCm39)", "Human genes (GRCh38.p14)")
-        ) {
-          paste0("The organism you have chosen is ", ea_reactives$organism, ".")
         } else {
           div(
             style = "color: red;",
