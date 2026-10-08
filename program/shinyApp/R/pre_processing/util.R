@@ -142,8 +142,12 @@ ln_normalisation <- function(data, logarithm_procedure){
   }
 
   # log the data and always add 1 to avoid -Inf
-  processedData <- as.data.frame(logarithm(as.data.frame(assay(data)) + 1))
-  assay(data) <- processedData
+  # via a matrix: with the data.table namespace loaded (always in the app),
+  # as.data.frame() of a data.table assay drops the rownames, which assay<-
+  # rejects
+  processedData <- logarithm(as.matrix(assay(data)) + 1)
+  dimnames(processedData) <- dimnames(data)
+  assay(data) <- as.data.frame(processedData)
   return(data)
 }
 
