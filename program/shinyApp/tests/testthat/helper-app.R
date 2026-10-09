@@ -6,7 +6,8 @@
 # Precise behaviour belongs in unit tests.
 
 HEATMAP <- list(
-  go = "Heatmap-Do_Heatmap", out = "#Heatmap-HeatmapPlot",
+  go = "Heatmap-Do_Heatmap",
+  out = "#Heatmap-HeatmapPlot",
   rcode = "#Heatmap-getR_Code_Heatmap",
   after = "#Heatmap-continue_heatmap"  # confirm "more than 100 rows" if shown
 )
@@ -37,7 +38,9 @@ IDS <- list(
       rcode = "#sample_correlation-getR_SampleCorrelation"
     ),
     "PCA" = list(
-      go = "PCA-Do_PCA", out = "#PCA-PCA_plot", rcode = "#PCA-getR_Code_PCA"
+      go = "PCA-Do_PCA",
+      out = "#PCA-PCA_plot",
+      rcode = "#PCA-getR_Code_PCA"
     ),
     "ML Classification" = list(
       go = "ml_classification-run_clustering",
@@ -54,14 +57,16 @@ IDS <- list(
     "Heatmap" = HEATMAP,
     # Transcriptomics: 'all' rows is too slow; the gene list feeds Enrichment
     "Heatmap (top K)" = modifyList(HEATMAP, list(
-      tab = "Heatmap", set = list(
+      tab = "Heatmap",
+      set = list(
         "Heatmap-row_selection_options" = "Top K",
         "Heatmap-TopK" = 500  # enough genes for a significant enrichment
       ),
       after = c(HEATMAP$after, "#Heatmap-SaveGeneList_Heatmap")
     )),
     "Heatmap (top K, significant)" = modifyList(HEATMAP, list(
-      tab = "Heatmap", set = list(
+      tab = "Heatmap",
+      set = list(
         "Heatmap-row_selection_options" = "Top K",
         "Heatmap-TopK_order" = "LogFoldChange and Significant",
         "Heatmap-TopK" = 500
