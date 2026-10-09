@@ -46,6 +46,8 @@ create_contrast_ids <- function(ns, contrast) {
     only2report_volcano = ns(paste(base, "only2Report_Volcano", sep = "_")),
     only2report_volcano_both = ns(paste(base, "only2Report_Volcano_both", sep = "_")),
     only2report_volcano_raw = ns(paste(base, "only2Report_Volcano_raw", sep = "_")),
+    copy_volcano = ns(paste(base, "copy_Volcano", sep = "_")),
+    copy_volcano_raw = ns(paste(base, "copy_Volcano_raw", sep = "_")),
 
     # Download IDs
     get_r_code_volcano = ns(paste(base, "getR_Code_Volcano", sep = "_")),

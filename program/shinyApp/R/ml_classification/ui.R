@@ -156,10 +156,17 @@ ml_classification_main_panel <- function(ns){
         style = "border: 1px solid silver:",
         cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton(
-          outputId = ns("SavePlot_cluster"),
-          label = "Save plot",
-          class = "btn-info"
+        div(
+          style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
+          downloadButton(
+            outputId = ns("SavePlot_cluster"),
+            label = "Save plot",
+            class = "btn-info"
+          ),
+          clipboard_button(
+            inputId = ns("copy_cluster_plot"),
+            plot_id = ns("cluster_plot")
+          )
         )
       ),
       splitLayout(
@@ -222,10 +229,17 @@ ml_classification_main_panel <- function(ns){
         style = "border: 1px solid silver:",
         cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton(
-          outputId = ns("SavePlot_svm"),
-          label = "Save plot",
-          class = "btn-info"
+        div(
+          style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
+          downloadButton(
+            outputId = ns("SavePlot_svm"),
+            label = "Save plot",
+            class = "btn-info"
+          ),
+          clipboard_button(
+            inputId = ns("copy_svm_plot"),
+            plot_id = ns("svm_plot")
+          )
         )
       ),
       splitLayout(

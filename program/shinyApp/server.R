@@ -1377,6 +1377,15 @@ server <- function(input,output,session){
     }
     # TODO SumExp only needed hence more restructuring needed
 
+    # a data.table assay loses its rownames in as.data.frame() (used
+    # downstream), so turn it into a data.frame with the SE's rownames
+    raw_assay <- assay(data_input[[paste0(omic_type(),"_SumExp")]], withDimnames = FALSE)
+    if (inherits(raw_assay, "data.table")) {
+      raw_assay <- as.data.frame(raw_assay)
+      rownames(raw_assay) <- rownames(data_input[[paste0(omic_type(),"_SumExp")]])
+      assay(data_input[[paste0(omic_type(),"_SumExp")]], withDimnames = FALSE) <- raw_assay
+    }
+
     session_data$data_original <- data_input[[paste0(omic_type(),"_SumExp")]]
     # Make a copy, to leave original data untouched
     session_data$data <- session_data$data_original
