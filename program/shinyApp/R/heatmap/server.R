@@ -240,7 +240,7 @@ heatmap_server <- function(id, session_data, session_params, data_input_shiny, s
       heatmap_reactives$allow_plot <- TRUE
       heatmap_reactives$info_text <- paste0(
         "The heatmap is being calculated and displays a matrix with: ",
-        nrow(data2plot()), " rows and ", ncol(data2plot()), " columns."
+        nrow(selected_data()), " rows and ", ncol(selected_data()), " columns."
       )
       removeModal()
     }) %>% shiny::bindEvent(

@@ -73,9 +73,8 @@ create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns,
 #' @keywords internal
 source_results_tab_components <- function() {
   base_path <- "R/significance_analysis/results_tab"
-  # Source into the server environment this function was defined in (see
-  # SourceAll.R), so components can use server-local helpers such as
-  # create_clipboard_plotly() and fun_LogIt()
+  # Source into the session's server environment (where SourceAll.R put the
+  # helpers these files call, e.g. create_clipboard_plotly), not .GlobalEnv
   env <- parent.env(environment())
 
   # Source utilities
