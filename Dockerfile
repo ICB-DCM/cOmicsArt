@@ -75,9 +75,12 @@ COPY program/renv.lock /srv/shiny-server/renv.lock
 
 # Restore the locked environment into the global site library.
 # BiocManager is installed first so renv can resolve the 50 Bioconductor pkgs.
+# renv is pinned to the lockfile's version: renv 1.3.x's parallel installer
+# built the GitHub-sourced ggtree before its dependencies and broke the restore.
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/srv/shiny-server/renv/cache \
-    R -e "install.packages(c('renv','BiocManager'), repos='https://cloud.r-project.org'); \
+    R -e "install.packages('https://cloud.r-project.org/src/contrib/Archive/renv/renv_1.0.7.tar.gz', repos=NULL, type='source'); \
+          install.packages('BiocManager', repos='https://cloud.r-project.org'); \
           BiocManager::install(version='3.16', ask=FALSE, update=FALSE); \
           renv::restore(lockfile='/srv/shiny-server/renv.lock', \
                         library='/usr/local/lib/R/site-library', prompt=FALSE)"

@@ -61,6 +61,7 @@ jobs:
         run: |
           docker run -d --name comicsart_app -p 3838:3838 \
             -e MODE=app \
+            -e COMICSART_OFFLINE=true \
             -v "${{ github.workspace }}/program/shinyApp":/srv/shiny-server/shinyApp \
             "${{ steps.img.outputs.tag }}"
 
