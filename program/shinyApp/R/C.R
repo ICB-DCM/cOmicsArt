@@ -200,7 +200,8 @@ EnsemblUpdateCheck <- function(){
 }
 
 # Note that this will still need internet connection as it accessing data via API
-if(format(Sys.Date(), "%d") == "01"){
+# COMICSART_OFFLINE=true (set in CI/tests) skips the network check
+if(format(Sys.Date(), "%d") == "01" && Sys.getenv("COMICSART_OFFLINE") != "true"){
   EnsemblUpdateCheck()
 }else{
   ensembl_objects <- readRDS("www/EnsemblObjects.RDS")

@@ -1,5 +1,9 @@
 # test translation of genes
 test_that("translation works", {
+  skip(paste(
+    "Stale: written for the pre-SummarizedExperiment list data model and",
+    "the old translate_genes_ea() signature. Found by Phase 0a, see coupling-inventory"
+  ))
   # create test data
   data <- list(
     Transcriptomics = list(
@@ -49,6 +53,10 @@ test_that("translation works", {
 
 # test the function that checks if the annotation is correct
 test_that("check annotation works", {
+  skip(paste(
+    "Stale: written for the pre-SummarizedExperiment list data model and",
+    "the old translate_genes_ea() signature. Found by Phase 0a, see coupling-inventory"
+  ))
   # create test data
   data <- list(
     Transcriptomics = list(

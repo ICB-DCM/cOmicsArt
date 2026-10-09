@@ -75,9 +75,12 @@ COPY program/renv.lock /srv/shiny-server/renv.lock
 
 # Restore the locked environment into the global site library.
 # BiocManager is installed first so renv can resolve the 50 Bioconductor pkgs.
+# renv is pinned to the lockfile's version: renv 1.3.x's parallel installer
+# built the GitHub-sourced ggtree before its dependencies and broke the restore.
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/srv/shiny-server/renv/cache \
-    R -e "install.packages(c('renv','BiocManager'), repos='https://cloud.r-project.org'); \
+    R -e "install.packages('https://cloud.r-project.org/src/contrib/Archive/renv/renv_1.0.7.tar.gz', repos=NULL, type='source'); \
+          install.packages('BiocManager', repos='https://cloud.r-project.org'); \
           BiocManager::install(version='3.16', ask=FALSE, update=FALSE); \
           renv::restore(lockfile='/srv/shiny-server/renv.lock', \
                         library='/usr/local/lib/R/site-library', prompt=FALSE)"
@@ -86,6 +89,16 @@ RUN --mount=type=cache,target=/var/cache/apt \
 # can always find libR.so (otherwise dev mode fails with "Unable to connect
 # to service" / "libR.so: cannot open shared object file").
 RUN echo "/usr/local/lib/R/lib" > /etc/ld.so.conf.d/libR.conf && ldconfig
+
+# Google Chrome for the shinytest2 browser tests (chromote). Own layer AFTER
+# the restore so the expensive renv layer stays cached. The .deb also adds
+# Google's apt repo; apt pulls in Chrome's shared-library dependencies.
+RUN curl -fsSL -o /tmp/chrome.deb \
+      https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+ && apt-get update -o Acquire::Retries=5 \
+ && apt-get install -y --no-install-recommends /tmp/chrome.deb \
+ && rm -rf /tmp/chrome.deb /var/lib/apt/lists/*
+ENV CHROMOTE_CHROME=/usr/bin/google-chrome
 
 # Now copy the frequently-changing app code (baked default; overridden by a
 # volume mount in dev/CI).
