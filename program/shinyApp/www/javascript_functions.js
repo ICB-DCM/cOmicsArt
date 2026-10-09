@@ -76,7 +76,25 @@ async function getImageBlobFromUrl(url) {
 function copyPlotToClipboard(plotId) {
   console.log('Attempting to copy plot:', plotId);
 
-  // Try <img> first (e.g. from Plotly or ggplotly)
+  // Plotly plots (plotlyOutput) render as SVG, so export them via Plotly.toImage.
+  // The blob is passed as a Promise so Safari keeps the user gesture.
+  const plotEl = document.getElementById(plotId);
+  const plotlyEl = plotEl && (plotEl.classList.contains('js-plotly-plot')
+    ? plotEl
+    : plotEl.querySelector('.js-plotly-plot'));
+  if (plotlyEl) {
+    const blobPromise = Plotly.toImage(plotlyEl, {format: 'png'}).then(getImageBlobFromUrl);
+    return navigator.clipboard.write([
+      new ClipboardItem({ 'image/png': blobPromise })
+    ]).then(() => {
+      Shiny.setInputValue('plot_copied_status', plotId + '_success_' + Date.now(), {priority: 'event'});
+    }).catch(err => {
+      Shiny.setInputValue('plot_copied_status', plotId + '_error_clipboard_' + Date.now(), {priority: 'event'});
+      throw err;
+    });
+  }
+
+  // Try <img> next (e.g. from renderPlot)
   const imgEl = $('#' + plotId + ' img')[0];
   if (imgEl && imgEl.src) {
     return getImageBlobFromUrl(imgEl.src).then(blob => {

@@ -69,7 +69,7 @@ create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns,
 #' Loads all the modular components needed for results tab functionality.
 #' Called automatically by create_new_tab().
 #'
-#' @return None (sources files into environment)
+#' @return None (sources files into the server environment)
 #' @keywords internal
 source_results_tab_components <- function() {
   base_path <- "R/significance_analysis/results_tab"

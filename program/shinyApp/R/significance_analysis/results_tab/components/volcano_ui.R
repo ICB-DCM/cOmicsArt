@@ -85,12 +85,21 @@ create_volcano_downloads_ui <- function(ids) {
       downloadButton(ids$get_r_code_volcano_raw, "Get underlying R code and data", icon = icon("code"))
     ),
 
-    # Save Plot buttons
-    create_split_layout_buttons(
-      ids = c(ids$save_plot_volcano, ids$save_plot_volcano_both, ids$save_plot_volcano_raw),
-      label = "Save plot",
-      class = "btn-info",
-      type = "download"
+    # Save Plot buttons (with copy buttons for the single plots)
+    splitLayout(
+      style = "border: 1px solid silver:",
+      cellWidths = c("35%", "35%", "30%"),
+      div(
+        style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
+        downloadButton(outputId = ids$save_plot_volcano, label = "Save plot", class = "btn-info"),
+        clipboard_button(inputId = ids$copy_volcano, plot_id = ids$volcano_plot_adj)
+      ),
+      downloadButton(outputId = ids$save_plot_volcano_both, label = "Save plot", class = "btn-info"),
+      div(
+        style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
+        downloadButton(outputId = ids$save_plot_volcano_raw, label = "Save plot", class = "btn-info"),
+        clipboard_button(inputId = ids$copy_volcano_raw, plot_id = ids$volcano_plot_raw)
+      )
     ),
 
     # File type selectors

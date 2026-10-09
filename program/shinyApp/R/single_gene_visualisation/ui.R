@@ -58,10 +58,17 @@ single_gene_visualisation_main_ui <- function(ns){
         style = "border: 1px solid silver:",
         cellWidths = c("70%", "30%"),
         NULL,
-        downloadButton(
-          outputId = ns("SavePlot_singleGene"),
-          label = "Save plot",
-          class = "btn-info"
+        div(
+          style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
+          downloadButton(
+            outputId = ns("SavePlot_singleGene"),
+            label = "Save plot",
+            class = "btn-info"
+          ),
+          clipboard_button(
+            inputId = ns("copy_SingleGenePlot"),
+            plot_id = ns("SingleGenePlot")
+          )
         )
       ),
       splitLayout(
