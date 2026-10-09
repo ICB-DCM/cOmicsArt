@@ -1,0 +1,56 @@
+/* PROTOTYPE 06 -- throwaway. Module colours copied from program/shinyApp/www/styles.css */
+body { background-color: #f8f7fa; padding-bottom: 70px; }
+.tabbable > .nav > li > a { background-color: #dedede; color: black; }
+.tabbable > .nav > li.active > a { background-color: #7a7e80; color: white; }
+
+/* existing module colours (light when inactive, full when active) */
+.ds-modules .nav > li > a[data-value='Data selection'] { background-color: #70BF4F47; }
+.ds-modules .nav > li.active > a[data-value='Data selection'] { background-color: #70BF4F; color: white; }
+.ds-modules .nav > li > a[data-value='Pre-processing'] { background-color: #3897F147; }
+.ds-modules .nav > li.active > a[data-value='Pre-processing'] { background-color: #3897F1; color: white; }
+.ds-modules .nav > li > a[data-value='Sample Correlation'] { background-color: #A208BA35; }
+.ds-modules .nav > li.active > a[data-value='Sample Correlation'] { background-color: #A208BA; color: white; }
+.ds-modules .nav > li > a[data-value='PCA'] { background-color: #FD8D3347; }
+.ds-modules .nav > li.active > a[data-value='PCA'] { background-color: #FD8D33; color: white; }
+.ds-modules .nav > li > a[data-value='ML'] { background-color: #dedede; }
+.ds-modules .nav > li.active > a[data-value='ML'] { background-color: #7a7e80; color: white; }
+.ds-modules .nav > li > a[data-value='Differential Analysis'] { background-color: #FFD33547; }
+.ds-modules .nav > li.active > a[data-value='Differential Analysis'] { background-color: #FFD335; color: white; }
+.ds-modules .nav > li > a[data-value='Heatmap'] { background-color: #70BF4F47; }
+.ds-modules .nav > li.active > a[data-value='Heatmap'] { background-color: #70BF4F; color: white; }
+.ds-modules .nav > li > a[data-value='Single Gene Visualisations'] { background-color: #3897F147; }
+.ds-modules .nav > li.active > a[data-value='Single Gene Visualisations'] { background-color: #3897F1; color: white; }
+.ds-modules .nav > li > a[data-value='Enrichment Analysis'] { background-color: #A208BA35; }
+.ds-modules .nav > li.active > a[data-value='Enrichment Analysis'] { background-color: #A208BA; color: white; }
+
+/* Dataset identity: --ds is set inline per Dataset */
+.ds-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--ds); margin-right: 6px; vertical-align: middle; }
+.ds-badge { display: inline-block; border: 2px solid var(--ds); border-radius: 12px;
+  padding: 1px 8px; background: white; margin-right: 6px; white-space: nowrap; }
+.ds-omic { margin-left: 6px; font-size: 0.85em; color: #555; }
+.ds-meta { margin-left: 8px; font-size: 0.85em; color: #777; }
+.ds-removed { opacity: 0.55; text-decoration: line-through; filter: grayscale(1); }
+.ds-tab-title { font-weight: bold; }
+
+.ds-header { border-left: 6px solid var(--ds); background: white; padding: 6px 10px;
+  margin: 8px 0; }
+.colour-frame { border: 3px solid var(--ds); border-radius: 6px; padding: 6px;
+  background: color-mix(in srgb, var(--ds) 6%, white); }
+.colour-frame .ds-header { border-left: none; background: color-mix(in srgb, var(--ds) 15%, white); }
+.sidebar-badge { margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #ccc; }
+
+.ds-picker { padding: 8px 0; }
+.ds-picker .radio-inline { margin-right: 10px; }
+
+.tombstone { padding: 30px; color: #777; background: repeating-linear-gradient(45deg,
+  #f3f3f3, #f3f3f3 10px, #ebebeb 10px, #ebebeb 20px); border: 1px dashed #aaa; margin-top: 10px; }
+
+.debug { background: #fff; border: 1px dashed #999; padding: 8px; font-size: 12px; }
+.debug tr.dead td { color: #aaa; text-decoration: line-through; }
+.debug tr.ds-row td { font-weight: bold; }
+
+.variant-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+  background: #222; color: #eee; padding: 8px 14px; font-size: 12px; }
+.variant-bar label { margin: 0 12px; color: #eee; font-weight: normal; }
+.variant-bar select { color: black; margin-left: 4px; }
