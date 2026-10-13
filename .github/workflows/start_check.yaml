@@ -1,61 +1,188 @@
-name: Test Shiny App Startup
+name: Build & Test Shiny App
 
-# Pull the prebuilt environment image and check the CURRENT app code starts in
-# it. No renv restore here — that cost lives in build-image.yml.
-#   - On a PR that changed the environment -> test the pr-<number> image that
-#     build-image.yml is publishing for this PR (wait for it).
-#   - Otherwise -> test the published :latest image.
+# One pipeline for the environment image and the app checks:
+#   plan  -> decide whether an image must be built, and how
+#   build -> (only if needed) build + push the image
+#   smoke -> start the CURRENT app code inside that image and run the tests
+#
+# Which image build a change needs:
+#   - Dockerfile changed                       -> full build (./Dockerfile)
+#   - only renv.lock / start.sh changed        -> incremental build on top of
+#     :latest (Dockerfile.incremental); renv installs only changed packages
+#   - nothing environment-related changed      -> no build, test against :latest
+# Tags: a pull request pushes  pr-<number>  (deleted by cleanup-pr-images.yml),
+# a push to main/develop pushes  :latest .
+# Weekly (and on manual dispatch): full rebuild of :latest, but only if
+# renv.lock, start.sh or Dockerfile.incremental changed on main since the last
+# successful weekly run, i.e. only if :latest got incremental builds since then.
+# NOTE: pull_request runs from a fork do not receive repo secrets, so a PR from a
+# fork that changes the environment cannot push its image.
 on:
   pull_request:
     branches: [main, develop]
   push:
     branches: [main, develop]
+  schedule:
+    - cron: '0 3 * * 1'   # Mondays 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      force_full:
+        description: 'Full rebuild of :latest even if it looks up to date'
+        type: boolean
+        default: false
+
+# A new push to a PR cancels that PR's still-running pipeline. Pushes to
+# main/develop each get their own group so no :latest build is ever dropped.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: true
 
 env:
   IMAGE: pauljonasjost/comicsart
 
 jobs:
-  smoke:
+  plan:
     runs-on: ubuntu-latest
-    # Generous: if this PR changed renv.lock, build-image.yml is building the
-    # matching pr-<number> image in parallel and we wait for it below.
-    timeout-minutes: 75
+    permissions:
+      contents: read
+      pull-requests: read   # paths-filter lists the PR's files via the API
+      actions: read         # weekly run looks up the last successful weekly run
+    outputs:
+      build: ${{ steps.decide.outputs.build }}       # none | full | incremental
+      tag: ${{ steps.decide.outputs.tag }}
+      test: ${{ steps.decide.outputs.test }}         # true | false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Detect environment changes
+        id: changes
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        # Third-party action: pinned to the commit of v4.0.3 so the tag can't be moved.
+        uses: dorny/paths-filter@v4
         with:
-          fetch-depth: 0   # need both PR parents to diff against the base
+          # On push: compare against the commit before the push.
+          base: ${{ github.event_name == 'push' && github.ref_name || '' }}
+          filters: |
+            full:
+              - Dockerfile
+            incremental:
+              - program/renv.lock
+              - start.sh
+              - Dockerfile.incremental
 
-      - name: Resolve image to test
-        id: img
+      - name: Decide build mode
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}   # for gh run list
         run: |
-          TAG="${IMAGE}:latest"   # default: test against the published environment
-          WAIT=false
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            # Did this PR change the environment? If so, build-image.yml is
-            # publishing a pr-<n> image and we should test against THAT.
-            if git diff --name-only HEAD^1 HEAD | grep -qE '^(Dockerfile|start\.sh|program/renv\.lock)$'; then
-              TAG="${IMAGE}:pr-${{ github.event.pull_request.number }}"
-              WAIT=true
-            fi
-          fi
-          echo "tag=$TAG"   >> "$GITHUB_OUTPUT"
-          echo "wait=$WAIT" >> "$GITHUB_OUTPUT"
-          echo "Testing against $TAG (wait=$WAIT)"
-
-      - name: Pull the image (wait for the PR build if the env changed)
-        run: |
-          TAG="${{ steps.img.outputs.tag }}"
-          if [ "${{ steps.img.outputs.wait }}" = "true" ]; then
-            for i in $(seq 1 120); do
-              if docker pull "$TAG"; then echo "Pulled $TAG"; exit 0; fi
-              echo "[$i/120] $TAG not on Docker Hub yet (build-image.yml still running?); retrying in 30s..."
-              sleep 30
-            done
-            echo "Timed out waiting for $TAG — did the image build fail?"; exit 1
+            TAG="${IMAGE}:pr-${{ github.event.pull_request.number }}"
           else
-            docker pull "$TAG"
+            TAG="${IMAGE}:latest"
           fi
+
+          TEST=true
+          case "${{ github.event_name }}" in
+            pull_request|push)
+              if [ "${{ steps.changes.outputs.full }}" = "true" ]; then
+                BUILD=full
+              elif [ "${{ steps.changes.outputs.incremental }}" = "true" ]; then
+                BUILD=incremental
+              else
+                BUILD=none
+              fi
+              ;;
+            schedule|workflow_dispatch)
+              if [ "${{ inputs.force_full }}" = "true" ]; then
+                BUILD=full
+                echo "Full rebuild forced by dispatch input"
+              else
+                # :latest only gets incremental builds from pushes to main. So it needs a full rebuild exactly when
+                # renv.lock, start.sh or Dockerfile.incremental changed on main
+                # since the last weekly run that succeeded. Anchoring on that run means a failed weekly rebuild is
+                # retried the next week.
+                LAST_SHA=$(gh run list --workflow start_check.yaml --event schedule \
+                             --branch main --status success --limit 1 \
+                             --json headSha --jq '.[0].headSha')
+                if [ -z "$LAST_SHA" ]; then
+                  BUILD=full
+                  echo "No earlier successful weekly run found -> full rebuild"
+                else
+                  git fetch --quiet --depth=1 origin "$LAST_SHA"
+                  CHANGED=$(git diff --name-only "$LAST_SHA" HEAD -- program/renv.lock start.sh Dockerfile.incremental)
+                  if [ -z "$CHANGED" ]; then
+                    BUILD=none
+                    TEST=false
+                    echo "No renv.lock/start.sh change since ${LAST_SHA:0:7}, nothing to do"
+                  else
+                    BUILD=full
+                    echo "Changed since ${LAST_SHA:0:7}: $CHANGED -> full rebuild"
+                  fi
+                fi
+              fi
+              ;;
+          esac
+
+          echo "build=$BUILD"       >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG"           >> "$GITHUB_OUTPUT"
+          echo "test=$TEST"         >> "$GITHUB_OUTPUT"
+          echo "Build: $BUILD -> $TAG (test=$TEST)"
+
+  build:
+    needs: plan
+    if: needs.plan.outputs.build != 'none'
+    runs-on: ubuntu-latest
+    # A full build from scratch restores every R package (~1.5 h).
+    timeout-minutes: 180
+    outputs:
+      image: ${{ env.IMAGE }}@${{ steps.push.outputs.digest }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # The registry layer cache is only used for full builds: an incremental
+      # build is cheap and would otherwise overwrite the full build's cache.
+      - name: Build and push (${{ needs.plan.outputs.build }})
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ needs.plan.outputs.build == 'full' && 'Dockerfile' || 'Dockerfile.incremental' }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ needs.plan.outputs.tag }}
+          cache-from: ${{ needs.plan.outputs.build == 'full' && format('type=registry,ref={0}:buildcache', env.IMAGE) || '' }}
+          cache-to: ${{ needs.plan.outputs.build == 'full' && format('type=registry,ref={0}:buildcache,mode=max', env.IMAGE) || '' }}
+
+  smoke:
+    needs: [plan, build]
+    # Runs after the build, or directly when no build was needed (build skipped).
+    if: >-
+      always() && needs.plan.result == 'success' && needs.plan.outputs.test == 'true' &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      # The exact image just built (by digest), else the published environment.
+      TEST_IMAGE: ${{ needs.build.outputs.image || 'pauljonasjost/comicsart:latest' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pull the image
+        run: |
+          echo "Testing against $TEST_IMAGE"
+          docker pull "$TEST_IMAGE"
 
       - name: Start app (current code mounted into the env image)
         run: |
@@ -63,7 +190,7 @@ jobs:
             -e MODE=app \
             -e COMICSART_OFFLINE=true \
             -v "${{ github.workspace }}/program/shinyApp":/srv/shiny-server/shinyApp \
-            "${{ steps.img.outputs.tag }}"
+            "$TEST_IMAGE"
 
       - name: Wait for the app to respond
         run: |
@@ -93,7 +220,7 @@ jobs:
             -v "${{ github.workspace }}/program/shinyApp":/srv/shiny-server/shinyApp \
             -w /srv/shiny-server/shinyApp \
             --entrypoint Rscript \
-            "${{ steps.img.outputs.tag }}" \
+            "$TEST_IMAGE" \
             -e 'shiny::runTests(".")' 2>&1 | tee shinytest2.log
 
       - name: Upload test output on failure

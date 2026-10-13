@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1
+# Incremental environment image: start from the last published image and let
+# renv install only the packages whose locked version changed. Used by CI when a
+# change touches renv.lock and/or start.sh but NOT the Dockerfile (system libs,
+# R version, base image -> those need the full build from ./Dockerfile).
+#
+# renv::restore() never uninstalls packages that were dropped from the lockfile,
+# and every incremental build adds a layer. The weekly full rebuild in
+# .github/workflows/start_check.yaml resets both.
+ARG BASE_IMAGE=pauljonasjost/comicsart:latest
+FROM ${BASE_IMAGE}
+
+COPY program/renv.lock /srv/shiny-server/renv.lock
+
+# Same restore call as the full build; renv compares the site library against
+# the lockfile and installs only the differences. The renv cache is disabled so
+# packages land directly in the site library (no links into a cache directory).
+RUN RENV_CONFIG_CACHE_ENABLED=FALSE R -e "renv::restore(lockfile='/srv/shiny-server/renv.lock', \
+                        library='/usr/local/lib/R/site-library', prompt=FALSE)"
+
+COPY program/shinyApp /srv/shiny-server/shinyApp
+
+COPY start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
