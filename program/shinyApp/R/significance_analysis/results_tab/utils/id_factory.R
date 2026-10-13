@@ -57,10 +57,6 @@ create_contrast_ids <- function(ns, contrast) {
     save_plot_volcano_raw = ns(paste(base, "SavePlot_Volcano_raw", sep = "_")),
     file_ext_volcano = ns(paste(base, "file_ext_Volcano", sep = "_")),
     file_ext_volcano_both = ns(paste(base, "file_ext_Volcano_both", sep = "_")),
-    file_ext_volcano_raw = ns(paste(base, "file_ext_Volcano_raw", sep = "_")),
-
-    # Store the base for use in plotlyProxy calls (which don't use ns)
-    base_id = ns(paste(base, "Volcano", sep = "_")),
-    base_id_raw = ns(paste(base, "Volcano_praw", sep = "_"))
+    file_ext_volcano_raw = ns(paste(base, "file_ext_Volcano_raw", sep = "_"))
   )
 }

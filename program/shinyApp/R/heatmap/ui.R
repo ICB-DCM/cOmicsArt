@@ -68,7 +68,6 @@ heatmap_sidebar<- function(ns){
       condition = "input.Aesthetics_show == true",
       uiOutput(outputId = ns("anno_options_ui")),
       uiOutput(outputId = ns("row_anno_options_ui")),
-      uiOutput(outputId = ns("row_label_options_ui")),
       checkboxInput(
         inputId = ns("cluster_rows"),
         label="Row Clustering?",
