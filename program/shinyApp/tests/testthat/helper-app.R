@@ -12,12 +12,59 @@ HEATMAP <- list(
   after = "#Heatmap-continue_heatmap"  # confirm "more than 100 rows" if shown
 )
 
+# Example files the app ships (paths relative to tests/testthat/)
+AIRWAY <- list(
+  matrix = "../../www/airway-read-counts-LS.csv",
+  samples = "../../www/airway-sample-sheet-LS.csv",
+  rows = "../../www/airway-entitie_description-LS.csv",
+  # airway sample sheet in Metadatasheet layout (sheet "Input")
+  metadata = "fixtures/airway-metadata-sheet.xlsx",
+  precompiled = "../../www/Transcriptomics_only_precompiled-LS.RDS"
+)
+
 IDS <- list(
   tabs = "tabsetPanel1",
   data_tab = "Data selection",
   pre_tab = "Pre-processing",
-  omic = "omic_type_testdata",
-  upload = "EasyTestForUser",
+  upload_sidebar = "sidebar_data_selection",
+  status = "debug",
+  # One entry per Upload source: sidebar `tab`, omic-type input, `files`
+  # (file input ID -> fixture) and the `upload` button.
+  sources = list(
+    testdata = list(
+      tab = "Testdata", omic = "omic_type_testdata", upload = "EasyTestForUser"
+    ),
+    file_input = list(
+      tab = "File Input", omic = "omic_type_file_input",
+      files = list(
+        data_matrix1 = AIRWAY$matrix,
+        data_sample_anno1 = AIRWAY$samples,
+        data_row_anno1 = AIRWAY$rows
+      ),
+      upload = "refresh_file_input"
+    ),
+    precompiled = list(
+      tab = "Precompiled", omic = "omic_type_precompiled",
+      files = list(data_preDone = AIRWAY$precompiled),
+      upload = "refresh_precompiled"
+    ),
+    metadata = list(
+      tab = "Metadata", omic = "omic_type_metadata",
+      files = list(
+        data_matrix_metadata = AIRWAY$matrix,
+        metadataInput = AIRWAY$metadata,
+        data_row_anno_metadata = AIRWAY$rows
+      ),
+      upload = "refresh_metadata"
+    )
+  ),
+  # Visual inspection of the File Input files
+  inspect = list(
+    open = "inspect_data",
+    run = "DoVisualDataInspection",
+    checks = "OverallChecks",
+    use = "usingVIdata"
+  ),
   to_pre = "use_full_data",
   processing_type = "processing_type",
   procedure = "PreProcessing_Procedure",
@@ -113,13 +160,43 @@ click_and_wait <- function(app, id) {
   app$wait_for_idle(duration = 1000, timeout = TIMEOUT)
 }
 
-# Upload the bundled test data of one omic type and go to Pre-processing.
-load_test_data <- function(app, omic) {
+# Open one Upload source in the Data selection sidebar, choose the omic type
+# and fill its file inputs (no upload yet).
+fill_source <- function(app, source, omic) {
+  s <- IDS$sources[[source]]
   set_and_wait(app, !!IDS$tabs := IDS$data_tab)
-  set_and_wait(app, !!IDS$omic := omic)
-  click_and_wait(app, IDS$upload)
+  app$run_js(sprintf(
+    "document.querySelector(\"#%s a[data-value='%s']\").click()",
+    IDS$upload_sidebar, s$tab
+  ))
+  set_and_wait(app, !!s$omic := omic)
+  for (id in names(s$files)) app$upload_file(!!id := s$files[[id]])
+}
+
+# Click "Go to Preprocessing" after a successful Upload.
+go_to_preprocessing <- function(app) {
   click_and_wait(app, IDS$to_pre)
   expect_equal(app$get_value(input = IDS$tabs), IDS$pre_tab)
+}
+
+# Upload through one source and go to Pre-processing.
+load_data <- function(app, source, omic) {
+  fill_source(app, source, omic)
+  click_and_wait(app, IDS$sources[[source]]$upload)
+  if (source != "testdata") expect_status(app, "Upload successful")
+  expect_no_app_errors(app, paste("Upload", source))
+  go_to_preprocessing(app)
+}
+
+# Upload the bundled test data of one omic type and go to Pre-processing.
+load_test_data <- function(app, omic) load_data(app, "testdata", omic)
+
+# The Upload status box shows `text`.
+expect_status <- function(app, text) {
+  status <- app$get_js(sprintf(
+    "document.getElementById('%s')?.innerText ?? ''", IDS$status
+  ))
+  expect_match(status, text, fixed = TRUE, label = "Upload status box")
 }
 
 # `type`/`procedure` are the two pre-processing dropdowns; NULL = defaults.
