@@ -41,9 +41,6 @@ volcano_server <- function(id, result, contrast, session_data, session_params,
       contrast = contrast
     )
   })
-
-  # Setup legend toggle observers
-  setup_legend_toggles(input, ids, contrast)
 }
 
 #' Render volcano plot control UI elements
@@ -177,7 +174,7 @@ generate_volcano_plots <- function(result, input, output, ids, tab_state,
       gg_plot = volcano_obj$volcano_plt,
       plot_id = ids$volcano_plot_adj,
       tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")
-    ) %>% plotly::layout(showlegend = TRUE)
+    ) %>% plotly::layout(showlegend = input[[ids$show_legend_adj]] %||% TRUE)
   })
 
   output[[ids$volcano_plot_raw]] <- renderPlotly({
@@ -185,27 +182,6 @@ generate_volcano_plots <- function(result, input, output, ids, tab_state,
       gg_plot = volcano_obj_raw$volcano_plt,
       plot_id = ids$volcano_plot_raw,
       tooltip = ifelse(is.null(anno_col_name), "all", "chosenAnno")
-    ) %>% plotly::layout(showlegend = TRUE)
+    ) %>% plotly::layout(showlegend = input[[ids$show_legend_raw]] %||% TRUE)
   })
-}
-
-#' Setup legend toggle observers
-#'
-#' Creates observers for the legend visibility checkboxes.
-#'
-#' @param input Shiny input object
-#' @param ids List of IDs from create_contrast_ids()
-#' @param contrast Character vector c(group1, group2)
-#' @return None (creates observers)
-#' @export
-setup_legend_toggles <- function(input, ids, contrast) {
-  observeEvent(input[[ids$show_legend_adj]], {
-    plotlyProxy(ids$base_id, session = getDefaultReactiveDomain()) %>%
-      plotlyProxyInvoke(method = "relayout", list(showlegend = input[[ids$show_legend_adj]]))
-  }, ignoreInit = TRUE)
-
-  observeEvent(input[[ids$show_legend_raw]], {
-    plotlyProxy(ids$base_id_raw, session = getDefaultReactiveDomain()) %>%
-      plotlyProxyInvoke(method = "relayout", list(showlegend = input[[ids$show_legend_raw]]))
-  }, ignoreInit = TRUE)
 }
