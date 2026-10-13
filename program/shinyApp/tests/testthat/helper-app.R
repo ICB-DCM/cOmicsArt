@@ -160,14 +160,23 @@ expect_output_shown <- function(app, selector, label = selector) {
   expect_true(shown, label = paste0(label, ": output ", selector, " shown"))
 }
 
+# Number of log lines already checked, per app (keyed by URL), so an error is
+# reported once, for the step that caused it, and not again for later steps.
+LOG_SEEN <- new.env()
+
 # No red Shiny error outputs (validation messages are fine), no error_modal()
-# dialog, no R errors in the log.
+# dialog, no R or browser errors in the log since the previous check.
 expect_no_app_errors <- function(app, label) {
   n <- app$get_js(sprintf("document.querySelectorAll(\"%s\").length", IDS$errors))
   expect_equal(n, 0, label = paste0(label, ": error outputs or dialogs"))
-  logs <- as.data.frame(app$get_logs())
-  errors <- grep("\\bError\\b", logs$message, value = TRUE)
-  expect_equal(errors, character(0), label = paste0(label, ": Error lines in log"))
+  logs <- as.data.frame(app$get_logs())$message
+  seen <- if (is.null(LOG_SEEN[[app$get_url()]])) 0 else LOG_SEEN[[app$get_url()]]
+  LOG_SEEN[[app$get_url()]] <- length(logs)
+  errors <- grep("\\bError\\b", logs[seq_along(logs) > seen], value = TRUE)
+  expect(
+    length(errors) == 0,
+    paste0(label, ": Error lines in log:\n", paste(errors, collapse = "\n"))
+  )
 }
 
 expect_download <- function(app, selector) {
