@@ -17,9 +17,12 @@ name: Build & Test Shiny App
 # successful weekly run, i.e. only if :latest got incremental builds since then.
 # NOTE: pull_request runs from a fork do not receive repo secrets, so a PR from a
 # fork that changes the environment cannot push its image.
+# Runs on pull requests into any branch, so stacked PRs are tested too. A stacked
+# PR is only compared against its base branch: if the base PR changed the
+# environment and this one does not, it is tested against :latest, which lacks
+# the base PR's changes.
 on:
   pull_request:
-    branches: [main, develop]
   push:
     branches: [main, develop]
   schedule:

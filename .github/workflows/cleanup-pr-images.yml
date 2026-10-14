@@ -4,7 +4,6 @@ name: Cleanup PR Docker images
 on:
   pull_request:
     types: [closed]
-    branches: [main, develop]
   workflow_dispatch:
     inputs:
       pr_number:
