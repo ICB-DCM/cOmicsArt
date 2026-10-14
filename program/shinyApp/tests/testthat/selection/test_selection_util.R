@@ -99,10 +99,13 @@ test_that("select_data selects samples and entities by annotation", {
   expect_equal(both$samples_selected, colnames(both$data))
 })
 
-test_that("known bug (issue 08): as many chosen values as samples counts as 'all'", {
-  # s1 is "x", s2 is "y" and "z" matches nothing, so only s1 should be kept;
-  # but 2 chosen values for 2 samples are taken as "all"
+test_that("only 'all' selects everything, not the number of chosen values", {
+  # s1 is "x", s2 is "y" and "z" matches nothing: 2 chosen values for
+  # 2 samples must not count as "all"
   two <- small[, c("s1", "s2")]
   res <- select_data(two, selected_samples = c("x", "z"), sample_type = "group")
-  expect_equal(res$samples_selected, c("s1", "s2"))
+  expect_equal(res$samples_selected, "s1")
+  # the same for entities: 4 values for 4 entities
+  res <- select_data(small, selected_rows = c("b", "c", "y", "z"), row_type = "pathway")
+  expect_equal(res$rows_selected, c("e2", "e3"))
 })
