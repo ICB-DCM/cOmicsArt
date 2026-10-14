@@ -82,7 +82,7 @@ upload_server <- function(id){
 
     output$SaveInputAsList <- downloadHandler(
      filename = function() {
-       paste0(input$omic_type, "_only_precompiled", " ", Sys.time(), ".RDS") },
+       paste0(omic_type(), "_only_precompiled", " ", Sys.time(), ".RDS") },
       content = function(file){
         # TODO Q: What to save here? only original enough?
         saveRDS(
