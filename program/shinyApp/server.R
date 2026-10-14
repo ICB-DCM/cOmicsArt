@@ -265,7 +265,6 @@ server <- function(input,output,session){
     selected_samples = NULL,            # Selected sample IDs (replaces samples_selected)
     row_type = NULL,                    # Row selection type
     sample_type = NULL,                 # Sample selection type
-    propensity = 1,                     # Propensity score (default 1)
 
     # Visualization parameters
     violin_color = NULL,                # Violin plot color preference
@@ -426,17 +425,6 @@ server <- function(input,output,session){
         )
       }
     })
-    output$propensityChoiceUser_ui <- renderUI({
-      req(data_input_shiny())
-      req(any(input$row_selection == "High Values+IQR"))
-      numericInput(
-        inputId = "propensityChoiceUser",
-        label = "Specifcy the propensity for variablity & Expr",
-        value = 0.85,
-        min = 0,
-        max = 1
-      )
-    })
     # Column /Sample
     output$providedSampleAnnotationTypes_ui <- renderUI({
       req(data_input_shiny())
@@ -478,13 +466,6 @@ server <- function(input,output,session){
       input$providedRowAnnotationTypes,
       ": ",paste(input$row_selection,collapse = ", ")
     ))
-    if(!is.null(input$propensityChoiceUser)){
-      # also record IQR if this + other selection was selected
-      fun_LogIt(session, message = paste0(
-        "**DataSelection** - IQR treshold: ",
-        input$propensityChoiceUser
-      ))
-    }
     
     fun_LogIt(session, message = "### Publication Snippet")
     fun_LogIt(session, message = snippet_dataInput(
@@ -503,8 +484,7 @@ server <- function(input,output,session){
       row_selection = input$row_selection,
       sample_selection = input$sample_selection,
       row_type = input$providedRowAnnotationTypes,
-      sample_type = input$providedSampleAnnotationTypes,
-      propensity = input$propensityChoiceUser
+      sample_type = input$providedSampleAnnotationTypes
     ))
     session_data$data <- selection$data
     # Store selected IDs (returned from select_data) - using standardized names
@@ -512,7 +492,6 @@ server <- function(input,output,session){
     session_params$selected_samples <- selection$selected_samples
     session_params$row_type <- selection$row_type
     session_params$sample_type <- selection$sample_type
-    session_params$propensity <- selection$propensity
     return("Selection Success")
   })
   

@@ -485,13 +485,6 @@ significance_analysis_server <- function(id, session_data, session_params, data_
             files = dir(temp_directory),
             root = temp_directory
           )
-          # TODO [Lea] - filter_rna this needs to be always downloaded if IQR chosen for selection.
-          # Should be added always - Idea:
-          # upon an Rcode downloade - zip folder created based on selection and preprocessing
-          # then user prompted choise of possible downloads for further bits
-          # but this would need to be triggered above modules
-          # or once hit after preprocessing temp folder created with first bit then added
-          # depending on analyses down - pop up based what is present in res_tmp (for this scenarios should be added to par_tmp!)
           waiter()$hide()
         },
         contentType = "application/zip"

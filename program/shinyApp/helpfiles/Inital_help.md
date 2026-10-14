@@ -44,7 +44,7 @@ Also note that everything above the line beneath the "Do [whatever]"-button, nee
 #### Transcriptomics:
 ##### TL;DR
 - assuming bulk-RNA-Seq hence read in raw counts<br>
-- select protein-coding genes (needs the appropiate annotation within the row-annotation-file) (potentially + HighIQR option to filter down to variable and high expressing genes)<br>
+- select protein-coding genes (needs the appropiate annotation within the row-annotation-file)<br>
 - general processing is always done which means every gene which has less or it equal to 10 counts is removed
 - do DE-Seq preprocessing and choose the variable which contrasts (mostly like treatment) you are interested in (check if still appropriate when previously high filtering)<br>
 - do you visualizes <br>
