@@ -18,7 +18,7 @@ entity_choices <- function(data, column){
   }
   list(
     numeric = FALSE,
-    values = c("High Values+IQR", "all", unique(unlist(strsplit(values, "\\|"))))
+    values = c("all", unique(unlist(strsplit(values, "\\|"))))
   )
 }
 
@@ -28,29 +28,26 @@ sample_choices <- function(data, column){
 }
 
 # The Selection for the given inputs (any of them may be missing):
-# row_selection, sample_selection, row_type, sample_type, propensity.
+# row_selection, sample_selection, row_type, sample_type.
 # Returns the selected object, the resolved entity and sample IDs and the
-# annotation columns and propensity that were used.
+# annotation columns that were used.
 resolve_selection <- function(data, inputs){
   row_selection <- inputs$row_selection %||% "all"
   sample_selection <- inputs$sample_selection %||% "all"
   row_type <- inputs$row_type %||% selection_annotation_columns(data, "entities")[1]
   sample_type <- inputs$sample_type %||% selection_annotation_columns(data, "samples")[1]
-  propensity <- inputs$propensity %||% 1
   res_select <- select_data(
     data = data,
     selected_rows = row_selection,
     selected_samples = sample_selection,
     row_type = row_type,
-    sample_type = sample_type,
-    propensity = propensity
+    sample_type = sample_type
   )
   list(
     data = res_select$data,
     selected_rows = res_select$rows_selected,
     selected_samples = res_select$samples_selected,
     row_type = row_type,
-    sample_type = sample_type,
-    propensity = propensity
+    sample_type = sample_type
   )
 }
