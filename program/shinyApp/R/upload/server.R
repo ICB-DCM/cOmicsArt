@@ -652,11 +652,16 @@ upload_server <- function(id){
             "**DataInput** - The used data was uploaded for visual inspection and changed within.")
           )
           }else {
+          if(uploaded_from() == "metadata"){
+            used_files <- list(input$data_matrix_metadata, input$metadataInput, input$data_row_anno_metadata)
+          } else {
+            used_files <- list(input$data_matrix1, input$data_sample_anno1, input$data_row_anno1)
+          }
           fun_LogIt(session, message = paste0(
             "The following data was used: \n\t",
-            input$data_matrix1$name,"\n\t",
-            input$data_sample_anno1$name,"\n\t",
-            input$data_row_anno1$name
+            used_files[[1]]$name,"\n\t",
+            used_files[[2]]$name,"\n\t",
+            used_files[[3]]$name
           ))
 
           fun_LogIt(session, message = paste0(
@@ -689,7 +694,9 @@ upload_server <- function(id){
           matrix = input$data_matrix1$datapath,
           sample_table = input$data_sample_anno1$datapath,
           row_annotation = input$data_row_anno1$datapath,
+          metadata_matrix = input$data_matrix_metadata$datapath,
           metadata_sheet = input$metadataInput$datapath,
+          metadata_row_annotation = input$data_row_anno_metadata$datapath,
           precompiled = input$data_preDone$datapath,
           corrected = list(
             matrix = paste0("www/",session$token,"/updatedMatrix.csv"),
@@ -711,6 +718,10 @@ upload_server <- function(id){
       }
       if(upload$read_failed){
         reset_file_input()
+      }
+      if(upload$metadata_read_failed){
+        reset("metadataInput")
+        session$sendCustomMessage(type = "resetValue", message = ns("metadataInput"))
       }
       if(!is.null(upload$error_modal)){
         error_modal(list(message = upload$error_modal))
