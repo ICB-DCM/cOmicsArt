@@ -58,3 +58,42 @@ test_that("gene annotation works after 'Use the Data' from visual inspection", {
     expect_true(session$returned$added_gene_anno())
   })
 })
+
+test_that("column-name correction handles each click once after repeated inspections", {
+  # names starting with a digit are not syntactic, so correction is offered
+  counts <- matrix(1:4, nrow = 2, dimnames = list(c("1g", "2g"), c("1s", "2s")))
+  files <- write_file_inputs(
+    counts,
+    data.frame(group = c("a", "b"), row.names = c("1s", "2s")),
+    data.frame(id = c("a", "b"), row.names = c("1g", "2g"))
+  )
+  # count the corrections and the "Close" handler runs (it shows a notification)
+  calls <- new.env()
+  calls$correct <- 0
+  calls$close <- 0
+  module_env <- environment(upload_server)
+  correct_upload_names <- module_env$correct_upload_names
+  module_env$correct_upload_names <- function(...){
+    calls$correct <- calls$correct + 1
+    correct_upload_names(...)
+  }
+  module_env$showNotification <- function(...) calls$close <- calls$close + 1
+  on.exit({
+    module_env$correct_upload_names <- correct_upload_names
+    rm("showNotification", envir = module_env)
+  }, add = TRUE)
+
+  test_upload_server(values = list(files = files), {
+    do.call(session$setInputs, c(list(omic_type_file_input = "Lipidomics"), files))
+    for (round in 1:2){
+      session$setInputs(DoVisualDataInspection = round)
+      session$setInputs(yes_correct_column_names = round)
+      session$setInputs(close_modal_VI = round)
+    }
+    # the corrected matrix can be downloaded
+    corrected <- read.csv(output$DownloadUpdatedMatrix, row.names = 1, check.names = FALSE)
+    expect_equal(colnames(corrected), c("sample_1s", "sample_2s"))
+  })
+  expect_equal(calls$correct, 2)
+  expect_equal(calls$close, 2)
+})

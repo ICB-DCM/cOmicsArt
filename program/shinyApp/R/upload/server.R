@@ -25,7 +25,9 @@ upload_server <- function(id){
     cleared <- reactiveVal(NULL)
     vi <- reactiveValues(
       passed = FALSE,                   # Visual inspection passed
-      changed = FALSE                   # Data changed during VI
+      changed = FALSE,                  # Data changed during VI
+      tables = NULL,                    # Tables offered for column-name correction
+      checks = NULL                     # Check results kept after correction
     )
     data_changed_since_VI <- reactiveVal(TRUE)  # Track if data has changed since last VI
 
@@ -241,6 +243,8 @@ upload_server <- function(id){
     })
 
 ## Upload visual inspection ----
+    snippetYes <- "<font color=\"#00851d\"><b>Yes</b></font>"
+    snippetNo <-  "<font color=\"#ab020a\"><b>No</b></font>"
     observeEvent(input$inspect_data, {
       # Clear outputs only if data has changed since last inspection
       if(data_changed_since_VI()) {
@@ -358,8 +362,6 @@ upload_server <- function(id){
         }
 
         ## Do some checking
-        snippetYes <- "<font color=\"#00851d\"><b>Yes</b></font>"
-        snippetNo <-  "<font color=\"#ab020a\"><b>No</b></font>"
         snippetOrangeNo <- "<font color=\"#FFA500\"><b>No</b></font> But if you use any preprocessing other than `None`, those NAs will be removed"
         # a check that failed itself (NA) shows a red No
         check_snippet <- function(passed, no = snippetNo){
@@ -406,113 +408,10 @@ upload_server <- function(id){
               modalButton("No") # Close button by default
             )
           ))
-          # Handle "Yes" button click
-          observeEvent(input$yes_correct_column_names, {
-            removeModal() # Close the modal
-            corrected <- correct_upload_names(Matrix, sample_table, annotation_rows)
-            Matrix <- corrected$matrix
-            sample_table <- corrected$sample_table
-            annotation_rows <- corrected$annotation_rows
-
-            # TODO if rownames updated put also to report
-
-            # Write the matrices to csv's to allow reupload for later
-            write.csv(Matrix, file = paste0("www/",session$token,"/updatedMatrix.csv"), row.names = T)
-            write.csv(sample_table, file = paste0("www/",session$token,"/updatedSampleTable.csv"), row.names = T)
-            write.csv(annotation_rows, file = paste0("www/",session$token,"/updatedEntitieAnnotation.csv"), row.names = T)
-            vi$changed <- TRUE
-
-            # TODO also set flag to update matrixes upon 'upload new data' within app for this round
-
-            showModal(modalDialog(
-              title = "Download Updated Data",
-                HTML(paste0("You can download your updated data for later reupload (not guaranteed to be correct!).<br>",
-                       corrected$changes[["matrix_rows"]],"<br>",
-                       corrected$changes[["matrix_columns"]],"<br>",
-                       corrected$changes[["sample_table"]],"<br>",
-                       corrected$changes[["annotation_rows"]]
-                       )
-                ),
-              footer = tagList(
-                downloadButton(
-                  outputId = ns("DownloadUpdatedMatrix"),
-                  label = "Updated Matrix"
-                ),
-                downloadButton(
-                  outputId = ns("DownloadUpdatedSampleTable"),
-                  label = "Updated Sample Table"
-                ),
-                downloadButton(
-                  outputId = ns("DownloadUpdatedEntitieAnnotation"),
-                  label = "Updated Entitie Annotation"
-                ),
-                actionButton(ns("close_modal_VI"), "Close") # Custom close button
-              )
-            ))
-
-
-            # Handle data download
-            output$DownloadUpdatedMatrix <- downloadHandler(
-              filename = function() {
-                paste0("updated_dataMatrix", Sys.Date(), ".csv") # Dynamic filename
-              },
-              content = function(file) {
-                write.csv(Matrix, file, row.names = TRUE) # Save the reactive data with row names
-              }
-            )
-            output$DownloadUpdatedSampleTable <- downloadHandler(
-              filename = function() {
-                paste0("updated_SampleTable", Sys.Date(), ".csv") # Dynamic filename
-              },
-              content = function(file) {
-                write.csv(sample_table, file, row.names = TRUE) # Save the reactive data with row names
-              }
-            )
-            output$DownloadUpdatedEntitieAnnotation <- downloadHandler(
-              filename = function() {
-                paste0("updated_EntitieAnno", Sys.Date(), ".csv") # Dynamic filename
-              },
-              content = function(file) {
-                write.csv(annotation_rows, file, row.names = TRUE) # Save the reactive data with row names
-              }
-            )
-            observeEvent(input$close_modal_VI, {
-              removeModal()  # Close the modal
-              # Redo relevant checks
-              check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
-              check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
-              check6 <- ifelse(all(colnames(Matrix) == colnames(Matrix)),snippetYes,snippetNo)
-              # Add any additional actions you want to perform
-              shinyjs::click(id = "inspect_data")
-              output$DataMatrix_VI <- DT::renderDataTable({DT::datatable(data = Matrix)})
-              output$SampleMatrix_VI <- DT::renderDataTable({DT::datatable(data = sample_table)})
-              output$EntitieMatrix_VI <- DT::renderDataTable({
-                DT::datatable(data = annotation_rows)
-              })
-              showNotification("Check if now you pass all tests")
-              output$OverallChecks <- renderText({
-                sprintf(
-                  CHECK_TEMPLATE_VI,
-                  check0, check7, check1, check2, check6, check3, check4, check5
-                )
-              })
-              if(grepl(snippetYes,check0) &
-                 grepl(snippetYes,check1) &
-                 grepl(snippetYes,check2) &
-                 #grepl(snippetYes,check3) &
-                 #grepl(snippetYes,check4) & # not crucial
-                 #grepl(snippetYes,check5) & # not crucial
-                 grepl(snippetYes,check6) &
-                 grepl(snippetYes,check7)){
-                vi$passed <- TRUE
-              } else {
-                vi$passed <- FALSE
-              }
-
-            })
-
-
-            })
+          # the tables to correct if the user clicks "Yes"
+          vi$tables <- list(
+            matrix = Matrix, sample_table = sample_table, annotation_rows = annotation_rows
+          )
 
           if(check6 == "No"){
             # add help text
@@ -537,6 +436,10 @@ upload_server <- function(id){
           )
         }
 
+        # the checks that column-name correction does not redo
+        vi$checks <- list(
+          check0 = check0, check3 = check3, check4 = check4, check5 = check5, check7 = check7
+        )
         output$OverallChecks <- renderText({
           sprintf(
             CHECK_TEMPLATE_VI,
@@ -556,6 +459,115 @@ upload_server <- function(id){
           width = "100%"
         )
       })
+    })
+
+    # Handle "Yes" button click
+    observeEvent(input$yes_correct_column_names, {
+      removeModal() # Close the modal
+      corrected <- correct_upload_names(
+        vi$tables$matrix, vi$tables$sample_table, vi$tables$annotation_rows
+      )
+      vi$tables <- corrected[c("matrix", "sample_table", "annotation_rows")]
+
+      # TODO if rownames updated put also to report
+
+      # Write the matrices to csv's to allow reupload for later
+      write.csv(corrected$matrix, file = paste0("www/",session$token,"/updatedMatrix.csv"), row.names = T)
+      write.csv(corrected$sample_table, file = paste0("www/",session$token,"/updatedSampleTable.csv"), row.names = T)
+      write.csv(corrected$annotation_rows, file = paste0("www/",session$token,"/updatedEntitieAnnotation.csv"), row.names = T)
+      vi$changed <- TRUE
+
+      # TODO also set flag to update matrixes upon 'upload new data' within app for this round
+
+      showModal(modalDialog(
+        title = "Download Updated Data",
+          HTML(paste0("You can download your updated data for later reupload (not guaranteed to be correct!).<br>",
+                 corrected$changes[["matrix_rows"]],"<br>",
+                 corrected$changes[["matrix_columns"]],"<br>",
+                 corrected$changes[["sample_table"]],"<br>",
+                 corrected$changes[["annotation_rows"]]
+                 )
+          ),
+        footer = tagList(
+          downloadButton(
+            outputId = ns("DownloadUpdatedMatrix"),
+            label = "Updated Matrix"
+          ),
+          downloadButton(
+            outputId = ns("DownloadUpdatedSampleTable"),
+            label = "Updated Sample Table"
+          ),
+          downloadButton(
+            outputId = ns("DownloadUpdatedEntitieAnnotation"),
+            label = "Updated Entitie Annotation"
+          ),
+          actionButton(ns("close_modal_VI"), "Close") # Custom close button
+        )
+      ))
+    })
+
+    # Handle data download
+    output$DownloadUpdatedMatrix <- downloadHandler(
+      filename = function() {
+        paste0("updated_dataMatrix", Sys.Date(), ".csv") # Dynamic filename
+      },
+      content = function(file) {
+        write.csv(vi$tables$matrix, file, row.names = TRUE) # Save the reactive data with row names
+      }
+    )
+    output$DownloadUpdatedSampleTable <- downloadHandler(
+      filename = function() {
+        paste0("updated_SampleTable", Sys.Date(), ".csv") # Dynamic filename
+      },
+      content = function(file) {
+        write.csv(vi$tables$sample_table, file, row.names = TRUE) # Save the reactive data with row names
+      }
+    )
+    output$DownloadUpdatedEntitieAnnotation <- downloadHandler(
+      filename = function() {
+        paste0("updated_EntitieAnno", Sys.Date(), ".csv") # Dynamic filename
+      },
+      content = function(file) {
+        write.csv(vi$tables$annotation_rows, file, row.names = TRUE) # Save the reactive data with row names
+      }
+    )
+    observeEvent(input$close_modal_VI, {
+      removeModal()  # Close the modal
+      Matrix <- vi$tables$matrix
+      sample_table <- vi$tables$sample_table
+      annotation_rows <- vi$tables$annotation_rows
+      checks <- vi$checks
+      # Redo relevant checks
+      check1 <- ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo)
+      check2 <- ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo)
+      check6 <- ifelse(all(colnames(Matrix) == colnames(Matrix)),snippetYes,snippetNo)
+      # Add any additional actions you want to perform
+      shinyjs::click(id = "inspect_data")
+      output$DataMatrix_VI <- DT::renderDataTable({DT::datatable(data = Matrix)})
+      output$SampleMatrix_VI <- DT::renderDataTable({DT::datatable(data = sample_table)})
+      output$EntitieMatrix_VI <- DT::renderDataTable({
+        DT::datatable(data = annotation_rows)
+      })
+      showNotification("Check if now you pass all tests")
+      output$OverallChecks <- renderText({
+        sprintf(
+          CHECK_TEMPLATE_VI,
+          checks$check0, checks$check7, check1, check2, check6, checks$check3, checks$check4, checks$check5
+        )
+      })
+      if(grepl(snippetYes,checks$check0) &
+         grepl(snippetYes,check1) &
+         grepl(snippetYes,check2) &
+         #grepl(snippetYes,check3) &
+         #grepl(snippetYes,check4) & # not crucial
+         #grepl(snippetYes,check5) & # not crucial
+         grepl(snippetYes,check6) &
+         grepl(snippetYes,checks$check7)){
+        vi$passed <- TRUE
+      } else {
+        vi$passed <- FALSE
+      }
+
     })
 
     # Visual Inspection ends here
