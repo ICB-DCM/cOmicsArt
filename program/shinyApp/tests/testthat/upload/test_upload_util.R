@@ -51,14 +51,17 @@ test_that("upload_inputs_complete accepts each source with its inputs", {
   expect_true(upload_inputs_complete("VI_data", list()))
 })
 
-test_that("upload_inputs_complete keeps today's Metadata quirk", {
+test_that("upload_inputs_complete accepts the Metadata source with its own inputs", {
   file <- list(datapath = "x")
   metadata_inputs <- list(
     metadata_matrix = file, metadata_sheet = file, metadata_row_annotation = file
   )
-  # the Metadata inputs only count when the source is "file_input" (known bug) TODO: fix
-  expect_false(upload_inputs_complete("metadata", metadata_inputs))
-  expect_true(upload_inputs_complete("file_input", metadata_inputs))
+  expect_true(upload_inputs_complete("metadata", metadata_inputs))
+  expect_false(upload_inputs_complete("metadata", metadata_inputs[1:2]))
+  # the File Input's files don't make a Metadata upload complete, and vice versa
+  file_inputs <- list(matrix = file, sample_table = file, row_annotation = file)
+  expect_false(upload_inputs_complete("metadata", file_inputs))
+  expect_false(upload_inputs_complete("file_input", metadata_inputs))
 })
 
 # Read an Upload ----
@@ -98,17 +101,43 @@ test_that("read_upload returns a SummarizedExperiment for each source", {
   }
 })
 
-test_that("read_upload reads the Metadata source from the File Input matrix and annotation", {
+test_that("read_upload reads the Metadata source from its own inputs", {
   upload <- read_upload(
     "metadata", "Transcriptomics",
     list(
-      matrix = airway$matrix,
-      row_annotation = airway$row_annotation,
-      metadata_sheet = metadata_sheet
+      # the File Input's files must not be read
+      matrix = "missing-file-input-matrix.csv",
+      row_annotation = "missing-file-input-annotation.csv",
+      metadata_matrix = airway$matrix,
+      metadata_sheet = metadata_sheet,
+      metadata_row_annotation = airway$row_annotation
     )
   )
   expect_s4_class(upload$se, "SummarizedExperiment")
-  expect_equal(ncol(upload$se), 8)
+  expect_equal(dim(upload$se), c(33469, 8))
+  expect_false(upload$metadata_read_failed)
+})
+
+test_that("read_upload reports a Metadata sheet whose samples are not in the matrix", {
+  counts <- small_counts()
+  colnames(counts) <- c("other1", "other2")
+  paths <- write_tables(
+    counts, data.frame(), data.frame(id = c("a", "b"), row.names = c("g1", "g2"))
+  )
+  upload <- read_upload(
+    "metadata", "Transcriptomics",
+    list(
+      metadata_matrix = paths$matrix,
+      metadata_sheet = metadata_sheet,
+      metadata_row_annotation = paths$row_annotation
+    )
+  )
+  expect_null(upload$se)
+  expect_true(upload$metadata_read_failed)
+  expect_match(
+    tail(upload$messages, 1),
+    "Your Sample Names from the Metadata Sheet and from your Matrix do not match"
+  )
 })
 
 test_that("read_upload adds a dummy column to a one-column entity annotation", {
@@ -208,6 +237,25 @@ test_that("fill_na_row_annotation replaces NA annotation values by row names", {
   filled <- fill_na_row_annotation(se)
   expect_equal(SummarizedExperiment::rowData(filled)$symbol, c("A", "g2"))
   expect_equal(SummarizedExperiment::rowData(filled)$id, c("g1", "g2"))
+})
+
+test_that("dataset_start_copy drops single-value annotation columns before the NA fill", {
+  se <- SummarizedExperiment::SummarizedExperiment(
+    assays = list(raw = small_counts()),
+    rowData = data.frame(
+      symbol = c("A", NA), constant = c("x", "x"), empty = c(NA, NA),
+      row.names = c("g1", "g2")
+    ),
+    colData = data.frame(
+      group = c("a", "b"), batch = c("1", "1"), row.names = c("s1", "s2")
+    )
+  )
+  data <- dataset_start_copy(se)
+  # an all-NA column has a single value, so it is dropped, not filled
+  expect_equal(colnames(SummarizedExperiment::rowData(data)), "symbol")
+  expect_equal(SummarizedExperiment::rowData(data)$symbol, c("A", "g2"))
+  expect_equal(colnames(SummarizedExperiment::colData(data)), "group")
+  expect_equal(dim(data), dim(se))
 })
 
 # Inspect files ----

@@ -26,44 +26,45 @@ IDS <- list(
   tabs = "tabsetPanel1",
   data_tab = "Data selection",
   pre_tab = "Pre-processing",
-  upload_sidebar = "sidebar_data_selection",
-  status = "debug",
+  upload_sidebar = "upload-sidebar_data_selection",
+  status = "upload-debug",
   # One entry per Upload source: sidebar `tab`, omic-type input, `files`
   # (file input ID -> fixture) and the `upload` button.
   sources = list(
     testdata = list(
-      tab = "Testdata", omic = "omic_type_testdata", upload = "EasyTestForUser"
+      tab = "Testdata", omic = "upload-omic_type_testdata",
+      upload = "upload-EasyTestForUser"
     ),
     file_input = list(
-      tab = "File Input", omic = "omic_type_file_input",
+      tab = "File Input", omic = "upload-omic_type_file_input",
       files = list(
-        data_matrix1 = AIRWAY$matrix,
-        data_sample_anno1 = AIRWAY$samples,
-        data_row_anno1 = AIRWAY$rows
+        "upload-data_matrix1" = AIRWAY$matrix,
+        "upload-data_sample_anno1" = AIRWAY$samples,
+        "upload-data_row_anno1" = AIRWAY$rows
       ),
-      upload = "refresh_file_input"
+      upload = "upload-refresh_file_input"
     ),
     precompiled = list(
-      tab = "Precompiled", omic = "omic_type_precompiled",
-      files = list(data_preDone = AIRWAY$precompiled),
-      upload = "refresh_precompiled"
+      tab = "Precompiled", omic = "upload-omic_type_precompiled",
+      files = list("upload-data_preDone" = AIRWAY$precompiled),
+      upload = "upload-refresh_precompiled"
     ),
     metadata = list(
-      tab = "Metadata", omic = "omic_type_metadata",
+      tab = "Metadata", omic = "upload-omic_type_metadata",
       files = list(
-        data_matrix_metadata = AIRWAY$matrix,
-        metadataInput = AIRWAY$metadata,
-        data_row_anno_metadata = AIRWAY$rows
+        "upload-data_matrix_metadata" = AIRWAY$matrix,
+        "upload-metadataInput" = AIRWAY$metadata,
+        "upload-data_row_anno_metadata" = AIRWAY$rows
       ),
-      upload = "refresh_metadata"
+      upload = "upload-refresh_metadata"
     )
   ),
   # Visual inspection of the File Input files
   inspect = list(
-    open = "inspect_data",
-    run = "DoVisualDataInspection",
-    checks = "OverallChecks",
-    use = "usingVIdata"
+    open = "upload-inspect_data",
+    run = "upload-DoVisualDataInspection",
+    checks = "upload-OverallChecks",
+    use = "upload-usingVIdata"
   ),
   to_pre = "use_full_data",
   processing_type = "processing_type",

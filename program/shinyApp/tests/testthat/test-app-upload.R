@@ -41,11 +41,6 @@ test_that("Precompiled: cOmicsArt RDS", {
 })
 
 test_that("Metadata: data matrix + Metadatasheet + entity annotation", {
-  # Known bug on main:
-  # the Metadata source's validity check only accepts File Input, and it reads
-  # the File Input tab's matrix and annotation instead of its own inputs, so
-  # this upload always fails. Remove this skip() with that fix.
-  skip("Known bug: Metadata upload fails (TODO: fix, disabled for now)")
   app <- start_app("upload-metadata")
   on.exit(app$stop(), add = TRUE)
   load_data(app, "metadata", "Transcriptomics")
