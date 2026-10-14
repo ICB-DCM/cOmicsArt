@@ -375,6 +375,18 @@ server <- function(input,output,session){
   react_mean_sd_plot <- reactiveVal(NULL)
   able_to_plot <- reactiveVal(FALSE)
   data_changed_since_VI <- reactiveVal(TRUE)  # Track if data has changed since last VI
+  # The file inputs of all sources, for upload_inputs_complete()
+  upload_files <- function(){
+    list(
+      matrix = input$data_matrix1,
+      sample_table = input$data_sample_anno1,
+      row_annotation = input$data_row_anno1,
+      precompiled = input$data_preDone,
+      metadata_matrix = input$data_matrix_metadata,
+      metadata_sheet = input$metadataInput,
+      metadata_row_annotation = input$data_row_anno_metadata
+    )
+  }
 
   # Track file input changes to know when to clear VI outputs
   observeEvent(input$data_matrix1, {
@@ -528,23 +540,8 @@ server <- function(input,output,session){
 
     # edit annotation columns such that if na is present in the row annotation,
     # the na gets replaced by the rowname
-    ncols_data <- ncol(rowData(session_data$data))
-    if(ncols_data > 0) {
-      for(i in seq_len(ncols_data)){
-        if(any(is.na(rowData(session_data$data)[,i]))){
-          rowData(session_data$data)[is.na(rowData(session_data$data)[,i]),i] <- rownames(session_data$data)[is.na(rowData(session_data$data)[,i])]
-        }
-      }
-    }
-
-    ncols_data_original <- ncol(rowData(session_data$data_original))
-    if(ncols_data_original > 0) {
-      for(i in seq_len(ncols_data_original)){
-        if(any(is.na(rowData(session_data$data_original)[,i]))){
-          rowData(session_data$data_original)[is.na(rowData(session_data$data_original)[,i]),i] <- rownames(session_data$data_original)[is.na(rowData(session_data$data_original)[,i])]
-        }
-      }
-    }
+    session_data$data <- fill_na_row_annotation(session_data$data)
+    session_data$data_original <- fill_na_row_annotation(session_data$data_original)
 
     session_params$addedGeneAnno <- TRUE
     session_params$organism <- input$AddGeneSymbols_organism
@@ -638,45 +635,24 @@ server <- function(input,output,session){
         "<font color=\"#ab020a\"><b>The Upload has failed completely, or you haven't uploaded anything yet. Need to uploade all three matrices!</b></font>"
         )
     } else {
-      flag_csv <- F
-
-      tryCatch(
-        expr = {
-          Matrix <- read_file(input$data_matrix1$datapath, check.names=T)
-          Matrix2 <- read_file(input$data_matrix1$datapath, check.names=F)
-          flag_csv <- T
-        },
-        error = function(e){
-          output$OverallChecks <- renderText(
-            "<font color=\"#ab020a\"><b>Not a real csv file!</b></font>"
-          )
-        }
+      inspection <- inspect_upload_files(
+        matrix_path = input$data_matrix1$datapath,
+        row_annotation_path = input$data_row_anno1$datapath,
+        sample_table_path = if(isTruthy(input$data_sample_anno1)) input$data_sample_anno1$datapath,
+        metadata_path = if(isTruthy(input$metadataInput)) input$metadataInput$datapath
       )
-
-      if(flag_csv == F){
-        tryCatch(
-          expr = {
-            Matrix <- read.table(input$data_matrix1$datapath, strip.white = TRUE, check.names = T)
-            Matrix2 <- read.table(input$data_matrix1$datapath, strip.white = TRUE, check.names = F)
-          },
-          error = function(e){
-            output$OverallChecks <- renderText(
-              "<font color=\"#ab020a\"><b>Data Matrix upload failed. Most likely reasons are duplicated row.names. </b></font>"
-            )
-            Matrix <- readLines(input$data_matrix1$datapath,warn=F)
-            Matrix2 <- readLines(input$data_matrix1$datapath,n=10,warn=F) # ensure 'Matrices' are not the same to evoke all related tests to fail
-            #put into dataframe to ensure test run smoothly
-            Matrix <- data.frame(Matrix)
-            Matrix2 <- data.frame(Matrix2)
-          }
-        )
+      if(!is.null(inspection$matrix_message)){
+        output$OverallChecks <- renderText(inspection$matrix_message)
       }
+      Matrix <- inspection$matrix
 
       tryCatch(
         expr = {
           withCallingHandlers(
             {
-              dim(Matrix) # to envoke an error if it is not present
+              # to envoke an error if it is not present
+              if(is.null(Matrix)) stop("Matrix could not be read")
+              dim(Matrix)
               # (needed sometime as DT sometimes seem to handle errors internally and does not throw an error)
               # not the cleanest but works
               output$DataMatrix_VI <- DT::renderDataTable({
@@ -698,52 +674,42 @@ server <- function(input,output,session){
       )
 
       output$DataMatrix_VI_Info <- renderText({"Matrix:"})
-      if(isTruthy(input$data_sample_anno1)){
-        sample_table <- read_file(input$data_sample_anno1$datapath, check.names=T)
-      } else if(isTruthy(input$metadataInput)){
-        sample_table <- fun_readInSampleTable(input$metadataInput$datapath)
-      } else {
-        sample_table <- data.frame()
+      if(!is.null(inspection$sample_table)){
+        sample_table <- inspection$sample_table
+        output$SampleMatrix_VI <- DT::renderDataTable({DT::datatable(data = sample_table)})
+        output$SampleMatrix_VI_Info <- renderText({"Sample table:"})
       }
-
-      output$SampleMatrix_VI <- DT::renderDataTable({DT::datatable(data = sample_table)})
-      output$SampleMatrix_VI_Info <- renderText({"Sample table:"})
-
-      annotation_rows <- read_file(input$data_row_anno1$datapath, check.names = T)
-      output$EntitieMatrix_VI <- DT::renderDataTable({
-        DT::datatable(data = annotation_rows)
-      })
-      output$EntitieMatrix_VI_Info <- renderText({"Entitie table:"})
+      if(!is.null(inspection$annotation_rows)){
+        annotation_rows <- inspection$annotation_rows
+        output$EntitieMatrix_VI <- DT::renderDataTable({
+          DT::datatable(data = annotation_rows)
+        })
+        output$EntitieMatrix_VI_Info <- renderText({"Entitie table:"})
+      }
+      if(!is.null(inspection$error)){
+        stop(inspection$error)
+      }
 
       ## Do some checking
       snippetYes <- "<font color=\"#00851d\"><b>Yes</b></font>"
       snippetNo <-  "<font color=\"#ab020a\"><b>No</b></font>"
       snippetOrangeNo <- "<font color=\"#FFA500\"><b>No</b></font> But if you use any preprocessing other than `None`, those NAs will be removed"
-
-      check0 <- tryCatch(ifelse(flag_csv,snippetYes,snippetNo),error = function(e) snippetNo)
-      check1 <- tryCatch(ifelse(all(rownames(Matrix) == rownames(annotation_rows)),snippetYes,snippetNo),error = function(e) snippetNo)
-      check2 <- tryCatch(ifelse(all(colnames(Matrix) == rownames(sample_table)),snippetYes,snippetNo),error = function(e) snippetNo)
-      check3 <- tryCatch(ifelse(any(is.na(Matrix) == T),snippetOrangeNo,snippetYes),error = function(e) snippetNo)
-      check4 <- tryCatch(ifelse(any(is.na(sample_table) == T),snippetNo,snippetYes),error = function(e) snippetNo)
-      check5 <- tryCatch(ifelse(any(is.na(annotation_rows) == T),snippetNo,snippetYes),error = function(e) snippetNo)
-      check6 <- tryCatch(ifelse(all(colnames(Matrix2) == colnames(Matrix)),snippetYes,snippetNo),error = function(e) snippetNo)
-
-      check7 <- tryCatch(ifelse(all(sapply(Matrix,is.numeric)),snippetYes,snippetNo),error = function(e) snippetNo)
-
-      if(grepl(snippetYes,check0) &
-         grepl(snippetYes,check1) &
-         grepl(snippetYes,check2) &
-         #grepl(snippetYes,check3) &
-         #grepl(snippetYes,check4) & # not crucial
-         #grepl(snippetYes,check5) & # not crucial
-         grepl(snippetYes,check6) &
-         grepl(snippetYes,check7)){
-        session_data$passedVI <- TRUE
-      } else {
-        session_data$passedVI <- FALSE
+      # a check that failed itself (NA) shows a red No
+      check_snippet <- function(passed, no = snippetNo){
+        if(isTRUE(passed)) snippetYes else if(is.na(passed)) snippetNo else no
       }
+      checks <- inspection$checks
+      check0 <- check_snippet(checks$csv_readable)
+      check1 <- check_snippet(checks$row_names_match)
+      check2 <- check_snippet(checks$sample_names_match)
+      check3 <- check_snippet(checks$no_na_matrix, no = snippetOrangeNo)
+      check4 <- check_snippet(checks$no_na_sample_table)
+      check5 <- check_snippet(checks$no_na_annotation)
+      check6 <- check_snippet(checks$syntactic_names)
+      check7 <- check_snippet(checks$numeric)
+
+      session_data$passedVI <- inspection$passed
       session_data$changedDuringVI <- FALSE
-      #TODO ensure that if there are e.g. invalid sample names but als different sample names in data and annotation tables that we catch this
 
       if(check0 == snippetNo){
         # add help text
@@ -756,15 +722,7 @@ server <- function(input,output,session){
       }
       if(check5 == snippetNo){
         # Indicate columns with NA
-        colsWithNa <- numeric()
-        ncols <- ncol(annotation_rows)
-        if(ncols > 0){
-          for(i in seq_len(ncols)){
-             if(any(is.na(annotation_rows[,i]) == T)){
-               colsWithNa <- c(colsWithNa,i)
-             }
-          }
-        }
+        colsWithNa <- inspection$annotation_na_columns
         check5 <- paste0("<font color=\"#FFA500\"><b>No</b></font>",
                          "\n\tFollowing columns are *potentially* problematic: ",
                          "\n\t",paste0(colsWithNa, collapse = ", "),
@@ -784,88 +742,10 @@ server <- function(input,output,session){
         # Handle "Yes" button click
         observeEvent(input$yes_correct_column_names, {
           removeModal() # Close the modal
-          invalidStart_regex <- "^[X0-9_.]"
-          space_regex <- "\\s"
-          # test if rownames are valid
-          if(any(grepl(invalidStart_regex, rownames(Matrix))) | any(grepl(space_regex, rownames(Matrix)))){
-            # save orig rownmaes to entite anno
-            old_Matrix <- Matrix
-            annotation_rows$original_rownames <- as.character(rownames(Matrix))
-            idxTochange <- grepl(invalidStart_regex, rownames(Matrix))
-            rownames(Matrix)[idxTochange] <- paste0("entite_", rownames(Matrix)[idxTochange])
-
-            idxTochange_space <- grepl(space_regex, rownames(Matrix))
-            rownames(Matrix)[idxTochange_space] <- gsub(space_regex,".",rownames(Matrix)[idxTochange_space])
-
-            allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
-
-            oldnames_matrix <- rownames(old_Matrix)[allIdx_changes]
-            newName_matrix <- rownames(Matrix)[allIdx_changes]
-            info_snippet_matrix_row <- paste0("Changes: <br> Matrix: Number of rownames changed: ",length(oldnames_matrix),"<br>",
-                                          " e.g. old names: " ,paste0(head(oldnames_matrix,3), collapse = ", "),"<br>",
-                                          " changed to: ",paste0(head(newName_matrix,3), collapse = ", "),"<br>")
-          }else{
-            info_snippet_matrix_row <- ""
-          }
-          if(any(grepl(invalidStart_regex, colnames(Matrix))) | any(grepl(space_regex, colnames(Matrix)))){
-            # save orig colnames to sample anno
-            old_Matrix <- Matrix
-            
-            idxTochange <- grepl(invalidStart_regex, colnames(Matrix))
-            if(any(grepl("^X", colnames(Matrix)))){
-              colnames(Matrix) <- gsub("^X","",colnames(Matrix))
-            }
-            colnames(Matrix)[idxTochange] <- paste0("sample_", colnames(Matrix)[idxTochange])
-
-            idxTochange_space <- grepl(space_regex, colnames(Matrix))
-            colnames(Matrix)[idxTochange_space] <- gsub(space_regex,".",colnames(Matrix)[idxTochange_space])
-
-            allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
-
-            oldnames_matrix <- colnames(old_Matrix)[allIdx_changes]
-            newName_matrix <- colnames(Matrix)[allIdx_changes]
-            info_snippet_matrix_column <- paste0("Changes: <br> Matrix: Number of colnames changed: ",length(oldnames_matrix),"<br>",
-                     " e.g. old names: " ,paste0(head(oldnames_matrix,3), collapse = ", "),"<br>",
-                     " changed to: ",paste0(head(newName_matrix,3), collapse = ", "),"<br>")
-          }else{
-            info_snippet_matrix_column <- ""
-          }
-          if(any(grepl(invalidStart_regex, rownames(sample_table))) | any(grepl(space_regex, rownames(sample_table)))){
-            idxTochange <- grepl(invalidStart_regex, rownames(sample_table))
-            old_sample_table <- sample_table
-            rownames(sample_table)[idxTochange] <- paste0("sample_", rownames(sample_table)[idxTochange])
-
-            idxTochange_space <- grepl(space_regex, rownames(sample_table))
-            rownames(sample_table)[idxTochange_space] <- gsub(space_regex,".",rownames(sample_table)[idxTochange_space])
-
-            allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
-
-            oldnames_sample <- rownames(old_sample_table)[allIdx_changes]
-            newName_sample <- rownames(sample_table)[allIdx_changes]
-            info_snippet_sample <- paste0("Changes: <br> Sample Table: Number of rownames changed: ",length(oldnames_sample),"<br>",
-                     " e.g. old names: " ,paste0(head(oldnames_sample,3), collapse = ", "),"<br>",
-                     " changed to: ",paste0(head(newName_sample,3), collapse = ", "),"<br>")
-          }else{
-            info_snippet_sample <- ""
-          }
-          if(any(grepl(invalidStart_regex, rownames(annotation_rows))) | any(grepl(space_regex, rownames(annotation_rows)))){
-            idxTochange <- grepl(invalidStart_regex, rownames(annotation_rows))
-            old_annotation_rows <- annotation_rows
-            rownames(annotation_rows)[idxTochange] <- paste0("entite_", rownames(annotation_rows)[idxTochange])
-
-            idxTochange_space <- grepl(space_regex, rownames(annotation_rows))
-            rownames(annotation_rows)[idxTochange_space] <- gsub(space_regex,".",rownames(annotation_rows)[idxTochange_space])
-
-            allIdx_changes <- sort(unique(c(idxTochange_space,idxTochange)))
-
-            oldnames_entitie <- rownames(old_annotation_rows)[allIdx_changes]
-            newNames_entitie <- rownames(annotation_rows)[allIdx_changes]
-            info_snippet_entitie <- paste0("Changes: <br> Entitie Table: Number of rownames changed: ",length(oldnames_entitie),"<br>",
-                     " e.g. oldnames " ,paste0(head(oldnames_entitie,3), collapse = ","),"<br>",
-                     " changed to ",paste0(head(newNames_entitie,3), collapse = ","),"<br>")
-          }else{
-            info_snippet_entitie <- ""
-          }
+          corrected <- correct_upload_names(Matrix, sample_table, annotation_rows)
+          Matrix <- corrected$matrix
+          sample_table <- corrected$sample_table
+          annotation_rows <- corrected$annotation_rows
 
           # TODO if rownames updated put also to report
 
@@ -880,10 +760,10 @@ server <- function(input,output,session){
           showModal(modalDialog(
             title = "Download Updated Data",
               HTML(paste0("You can download your updated data for later reupload (not guaranteed to be correct!).<br>",
-                     info_snippet_matrix_row,"<br>",
-                     info_snippet_matrix_column,"<br>",
-                     info_snippet_sample,"<br>",
-                     info_snippet_entitie
+                     corrected$changes[["matrix_rows"]],"<br>",
+                     corrected$changes[["matrix_columns"]],"<br>",
+                     corrected$changes[["sample_table"]],"<br>",
+                     corrected$changes[["annotation_rows"]]
                      )
               ),
             footer = tagList(
@@ -981,7 +861,7 @@ server <- function(input,output,session){
       }
       if(check7 == snippetNo & check0 == snippetYes){
         # add help text
-        propblem_columns <- colnames(Matrix)[!sapply(Matrix,is.numeric)]
+        propblem_columns <- inspection$non_numeric_columns
         check7 <- paste0(
           snippetNo,
           "\n\tThe data has columns with non-numeric values.",
@@ -1067,25 +947,7 @@ server <- function(input,output,session){
     fun_LogIt(session,
       message = paste0("**DataInput** - Uploaded Omic Type: ", session_params$omic_type)
     )
-    if(!(
-      # Is Precompiled data used?
-      (isTruthy(input$data_preDone) & uploaded_from() == "precompiled") |
-      # Is File Input used?
-      (isTruthy(input$data_matrix1) &
-        isTruthy(input$data_sample_anno1) &
-        isTruthy(input$data_row_anno1) &
-        uploaded_from() == "file_input"
-      ) |
-      # Is Metadata used?
-      (isTruthy(input$data_matrix_metadata) &
-        isTruthy(input$metadataInput) &
-        isTruthy(input$data_row_anno_metadata) &
-        uploaded_from() == "file_input"
-      ) |
-      uploaded_from() == "VI_data" |
-      # Is Test Data used?
-      uploaded_from() == "testdata"
-    )){
+    if(!upload_inputs_complete(uploaded_from(), upload_files())){
       output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
     } else if (uploaded_from() == "testdata"){
       show_toast(
@@ -1157,235 +1019,57 @@ server <- function(input,output,session){
       omic_type(input[[paste0("omic_type_", uploaded_where)]])
     }
     # Add check if the data upload fails due to no supply of files
-    if(!((isTruthy(input$data_preDone) & uploaded_from() == "precompiled") |
-      # Is File Input used?
-      (isTruthy(input$data_matrix1) &
-        isTruthy(input$data_sample_anno1) &
-        isTruthy(input$data_row_anno1) &
-        uploaded_from() == "file_input"
-      ) |
-      # Is Metadata used?
-      (isTruthy(input$data_matrix_metadata) &
-        isTruthy(input$metadataInput) &
-        isTruthy(input$data_row_anno_metadata) &
-        uploaded_from() == "file_input"
-      ) |
-      # Is Test Data used?
-      (uploaded_from() == "testdata") |
-      (uploaded_from() == "VI_data")
-    )){
+    if(!upload_inputs_complete(uploaded_from(), upload_files())){
       # if it is not evaluted to TRUE
       output$debug <- renderText({
         "<font color=\"#FF0000\"><b>Upload failed, please check your input - Did you specify all files?.</b></font>"
       })
       req(FALSE)
     }
-    # initialize empty data_input object
-    data_input <- list()
     # upload depending on where the button was clicked
-    if(uploaded_from() == "file_input"){
-      tryCatch({
-        data_input <- list(
-          Matrix = read_file(input$data_matrix1$datapath, check.names=T),
-          sample_table = read_file(input$data_sample_anno1$datapath, check.names=T),
-          annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
+    upload <- read_upload(
+      source = uploaded_from(),
+      omic_type = omic_type(),
+      paths = list(
+        matrix = input$data_matrix1$datapath,
+        sample_table = input$data_sample_anno1$datapath,
+        row_annotation = input$data_row_anno1$datapath,
+        metadata_sheet = input$metadataInput$datapath,
+        precompiled = input$data_preDone$datapath,
+        corrected = list(
+          matrix = paste0("www/",session$token,"/updatedMatrix.csv"),
+          sample_table = paste0("www/",session$token,"/updatedSampleTable.csv"),
+          row_annotation = paste0("www/",session$token,"/updatedEntitieAnnotation.csv")
         )
-        # check if only 1 col in anno row,
-        # add dummy col to ensure R does not turn it into a vector
-        if(ncol(data_input$annotation_rows) < 2){
-          data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
-        }
-
-      },error = function(e){
-        output$debug <- renderText({
-          "<font color=\"#FF0000\"><b>Upload failed, please check your input.</b></font>"
-        })
-        reset('data_matrix1')
-        reset('data_sample_anno1')
-        reset('data_row_anno1')
-        session$sendCustomMessage(type = "resetValue", message = "data_matrix1")
-        session$sendCustomMessage(type = "resetValue", message = "data_sample_anno1")
-        session$sendCustomMessage(type = "resetValue", message = "data_row_anno1")
-        return(NULL)
-      })
-    } else if(uploaded_from() == "metadata"){
-      tmp_sampleTable <- fun_readInSampleTable(input$metadataInput$datapath)
-      test_data_upload <- function(){
-        tryCatch({
-          data_input <- list(
-            type = as.character(input[[paste0("omic_type_", uploaded_from())]]),
-            Matrix = read_file(
-              input$data_matrix1$datapath, check.names=T
-              )[,rownames(tmp_sampleTable)],
-            sample_table = tmp_sampleTable,
-            annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
-            )
-          return(data_input)
-        },
-        error = function(){
-          print("Error! Names From SampleTable and Matrix do not fit")
-          output$debug <- renderText({
-            "<font color=\"#FF0000\"><b>Your Sample Names from the Metadata Sheet and from your Matrix do not match!! Data cannot be loaded</b></font>"
-          })
-          reset('metadataInput')
-          session$sendCustomMessage(type = "resetValue", message = "metadataInput")
-          return(NULL)
-        })
-      }
-      data_input <- test_data_upload()
-
-      
-    } else if(uploaded_from() == "precompiled"){
-      # Expand to work with any SummarizedExperiment object
-      # (also works with an 'old' pre-compiled object generated by the app)
-      uploadedFile <- readRDS(file = input$data_preDone$datapath)
-      # Check if the object is a SummarizedExperiment
-      if (is(uploadedFile, "SummarizedExperiment")) {
-       # a SE object - only esnure that naming of the obeject list fits or re-do
-        data_input[[paste0(omic_type(),"_SumExp")]] <- uploadedFile
-        count_matrix <- assay(data_input[[paste0(omic_type(),"_SumExp")]])
-        if (any(is.na(count_matrix))){
-          output$debug <- renderText({
-            "<font color=\"#FF0000\"><b>The assay data contains missing values, those will be removed.</b></font>"
-          })
-        }else{
-          if (any(count_matrix < 0)) {
-            output$debug <- renderText({
-              "<font color=\"#FF0000\"><b>The assay data contains negative values, which are invalid for some pre-processing procedures.</b></font>"
-            })
-          }
-          if (!all(count_matrix == round(count_matrix))) {
-            output$debug <- renderText({
-              "<font color=\"#FF0000\"><b>The assay data contains non-integer values, which is invalid for DESeq2 pre-processing procedure.</b></font>"
-            })
-          }
-        }
-        } else if(is.list(uploadedFile) & any(sapply(uploadedFile, function(x) is(x, "SummarizedExperiment")))){
-        # get the sum exp from the list
-          getIdxOfSumExp <- sapply(uploadedFile, function(x) is(x, "SummarizedExperiment"))
-          if(length(which(getIdxOfSumExp)) > 1){
-          output$debug <- renderText({
-            "<font color=\"#FF0000\"><b>Upload failed. The provided input contains more than one Summarized Experiment object. Please only provide one</b></font>"
-            return(NULL)
-            })
-          }else{
-            data_input[[paste0(omic_type(),"_SumExp")]] <- uploadedFile[[which(getIdxOfSumExp)]]
-            count_matrix <- assay(data_input[[paste0(omic_type(),"_SumExp")]])
-            if (any(is.na(count_matrix))){
-              output$debug <- renderText({
-                "<font color=\"#FF0000\"><b>The assay data contains missing values, those will be removed.</b></font>"
-              })
-            }else{
-              if (any(count_matrix < 0)) {
-                output$debug <- renderText({
-                  "<font color=\"#FF0000\"><b>The assay data contains negative values, which are invalid for some pre-processing procedures.</b></font>"
-                })
-              }
-              if (!all(count_matrix == round(count_matrix))) {
-                output$debug <- renderText({
-                  "<font color=\"#FF0000\"><b>The assay data contains non-integer values, which is invalid for DESeq2 pre-processing procedure.</b></font>"
-                })
-              }
-            }
-
-            }
-        }else{
-        # not a SE object
-        output$debug <- renderText({
-          "<font color=\"#FF0000\"><b>Upload failed. Is the provided input Summarized Experiment object?</b></font>"
-        })
-        return(NULL)
-      }
-
-
-    } else if(uploaded_from() == "testdata"){
-      if(input$omic_type_testdata=="Transcriptomics"){
-        data_input <- readRDS(
-          file = "www/Transcriptomics_only_precompiled-LS.RDS"
-        )
-      }
-      if(input$omic_type_testdata =="Lipidomics"){
-        data_input <- readRDS(
-          file = "www/Lipidomics_only_precompiled-LS.RDS"
-        )
-      }
-      if(input$omic_type_testdata =="Metabolomics"){
-        data_input <- readRDS(
-          file = "www/Metabolomics_only_precompiled-LS.RDS"
-        )
-      }
-
+      ),
+      changed_during_vi = session_data$changedDuringVI
+    )
+    if(uploaded_from() == "testdata"){
       fun_LogIt(session,
         message = paste0("<font color=\"#FF0000\"><b>**Attention** - Test Data set used</b></font>")
       )
-    } else if(uploaded_from() == "VI_data"){
-      if(session_data$changedDuringVI){
-        data_input <- list(
-          Matrix = read_file(paste0("www/",session$token,"/updatedMatrix.csv"), check.names=T),
-          sample_table = read_file(paste0("www/",session$token,"/updatedSampleTable.csv"), check.names=T),
-          annotation_rows = read_file(paste0("www/",session$token,"/updatedEntitieAnnotation.csv"), check.names=T)
-        )
-      }else{
-        data_input <- list(
-          Matrix = read_file(input$data_matrix1$datapath, check.names=T),
-          sample_table = read_file(input$data_sample_anno1$datapath, check.names=T),
-          annotation_rows = read_file(input$data_row_anno1$datapath, check.names=T)
-        )
-        # check if only 1 col in anno row,
-        # add dummy col to ensure R does not turn it into a vector
-        if(ncol(data_input$annotation_rows) < 2){
-          data_input$annotation_rows$origRownames <- rownames(data_input$annotation_rows)
-        }
-      }
-    } else {
-      output$debug <- renderText({
-        "<font color=\"#FF0000\"><b>Upload failed, please check your input.</b></font>"
-      })
+    }
+    # only the last status message is shown
+    if(length(upload$messages) > 0){
+      upload_status <- tail(upload$messages, 1)
+      output$debug <- renderText({upload_status})
+    }
+    if(upload$read_failed){
+      reset('data_matrix1')
+      reset('data_sample_anno1')
+      reset('data_row_anno1')
+      session$sendCustomMessage(type = "resetValue", message = "data_matrix1")
+      session$sendCustomMessage(type = "resetValue", message = "data_sample_anno1")
+      session$sendCustomMessage(type = "resetValue", message = "data_row_anno1")
+    }
+    if(!is.null(upload$error_modal)){
+      error_modal(list(message = upload$error_modal))
+    }
+    if(is.null(upload$se)){
       return(NULL)
     }
 
-    if(!any(class(data_input) == "SummarizedExperiment") & !any(grepl('SumExp',names(data_input))) ){
-      summarized_experiment <- tryCatch(
-        expr = {
-          ## Lets Make a SummarizedExperiment Object for reproducibility and further usage
-          sum_exp <- SummarizedExperiment(
-            assays  = list(raw = data_input$Matrix),
-            rowData = data_input$annotation_rows[rownames(data_input$Matrix),,drop=F],
-            colData = data_input$sample_table
-          )
-          sum_exp
-        },
-        error = function(e){
-          print("Error! Uploading via file input failed")
-          custom_error <- list()
-          custom_error[["message"]] <- "Uploading via file input failed"
-          error_modal(custom_error)
-          output$debug <- renderText({
-            "<font color=\"#FF0000\"><b>Upload failed</b></font>: <br>The uploaded files could not be put into a SummarizedExperiment.<br>Try the 'Inspect data' button for potential errors."
-          })
-          NULL
-        }
-      )
-      if(is.null(summarized_experiment)){
-        return(NULL)
-      } else {
-        #data_input[[paste0(input[[paste0("omic_type_", uploaded_from())]],"_SumExp")]] <- summarized_experiment
-        data_input[[paste0(omic_type(),"_SumExp")]] <- summarized_experiment
-      }
-      #TODO make the copy and tab show process dependent if we get here a results object or 'simple' rds
-    }
-    # TODO SumExp only needed hence more restructuring needed
-
-    # a data.table assay loses its rownames in as.data.frame() (used
-    # downstream), so turn it into a data.frame with the SE's rownames
-    raw_assay <- assay(data_input[[paste0(omic_type(),"_SumExp")]], withDimnames = FALSE)
-    if (inherits(raw_assay, "data.table")) {
-      raw_assay <- as.data.frame(raw_assay)
-      rownames(raw_assay) <- rownames(data_input[[paste0(omic_type(),"_SumExp")]])
-      assay(data_input[[paste0(omic_type(),"_SumExp")]], withDimnames = FALSE) <- raw_assay
-    }
-
-    session_data$data_original <- data_input[[paste0(omic_type(),"_SumExp")]]
+    session_data$data_original <- upload$se
     # Make a copy, to leave original data untouched
     session_data$data <- session_data$data_original
     # Count up updating
@@ -1407,23 +1091,8 @@ server <- function(input,output,session){
 
     # edit annotation columns such that if na is present in the row annotation,
     # the na gets replaced by the rowname
-    ncols_data <- ncol(rowData(session_data$data))
-    if(ncols_data > 0) {
-      for(i in seq_len(ncols_data)){
-        if(any(is.na(rowData(session_data$data)[,i]))){
-          rowData(session_data$data)[is.na(rowData(session_data$data)[,i]),i] <- rownames(session_data$data)[is.na(rowData(session_data$data)[,i])]
-        }
-      }
-    }
-
-    ncols_data_original <- ncol(rowData(session_data$data_original))
-    if(ncols_data_original > 0) {
-      for(i in seq_len(ncols_data_original)){
-        if(any(is.na(rowData(session_data$data_original)[,i]))){
-          rowData(session_data$data_original)[is.na(rowData(session_data$data_original)[,i]),i] <- rownames(session_data$data_original)[is.na(rowData(session_data$data_original)[,i])]
-        }
-      }
-    }
+    session_data$data <- fill_na_row_annotation(session_data$data)
+    session_data$data_original <- fill_na_row_annotation(session_data$data_original)
 
     print(paste0(
       "Number. of anno options annotation_rows lost: ",
