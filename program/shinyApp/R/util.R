@@ -56,12 +56,11 @@ select_data <- function(
   if(any(selected_rows == "all")) {
     rows_selected <- rownames(data)
   } else {
-    rows_selected <- unique(c(
-      rows_selected,
-      rownames(rowData(data))[
-        rowData(data)[, row_type] %in% selected_rows
-      ]
-    ))
+    # an entity is selected if any of its "|"-separated values is chosen
+    row_values <- strsplit(as.character(rowData(data)[, row_type]), "|", fixed = TRUE)
+    rows_selected <- rownames(data)[
+      vapply(row_values, function(values) any(values %in% selected_rows), logical(1))
+    ]
   }
   data <- data[rows_selected,samples_selected]
   return(list(

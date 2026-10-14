@@ -16,10 +16,18 @@ run_selection_script <- function(parameters, data_orig){
   env
 }
 
+# a "|" column: each lipid carries its class and its super class
+SummarizedExperiment::rowData(lipids)$classes <- paste(
+  SummarizedExperiment::rowData(lipids)$CLASS,
+  SummarizedExperiment::rowData(lipids)$SuperClass,
+  sep = "|"
+)
+
 cases <- list(
   all = list(),
   samples = list(sample_type = "diet", sample_selection = c("CD_CD_HFD", "HFD_HFD_CD")),
   entities = list(row_type = "CLASS", row_selection = c("TACG_sat", "PETA", "DACG")),
+  split_values = list(row_type = "classes", row_selection = c("TAG", "PETA")),
   both = list(
     sample_type = "diet", sample_selection = c("CD_CD_HFD", "HFD_HFD_CD"),
     row_type = "CLASS", row_selection = c("TACG_sat", "PETA", "DACG")
