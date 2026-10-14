@@ -243,7 +243,7 @@ Because the environment is baked into the image, packages such as
 ### Adding a new R package
 
 The R environment is tracked in `program/renv.lock`, and the Docker image
-is rebuilt from it automatically (see the image-build workflow). The image
+is rebuilt from it automatically (see `.github/workflows/start_check.yaml`). The image
 is set up so the `rstudio` user can install packages directly and renv can
 record them. (note no `renv::init() or restore` required. From **development mode** above, in the RStudio Console:
 
