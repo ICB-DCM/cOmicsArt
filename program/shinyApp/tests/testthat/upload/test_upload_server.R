@@ -97,3 +97,41 @@ test_that("column-name correction handles each click once after repeated inspect
   expect_equal(calls$correct, 2)
   expect_equal(calls$close, 2)
 })
+
+test_that("gene annotation queries a fixed Ensembl release", {
+  # www.ensembl.org and the mirrors make biomaRt 2.54 fail in getBM()
+  for (organism in names(loadedVersion)){
+    expect_match(
+      loadedVersion[[organism]]$ensmbl@host, "^https://[a-z]{3}[0-9]{4}\\.archive\\.ensembl\\.org"
+    )
+  }
+})
+
+test_that("a failed Ensembl query keeps the Upload and says so", {
+  counts <- matrix(1:4, nrow = 2, dimnames = list(c("g1", "g2"), c("s1", "s2")))
+  files <- write_file_inputs(
+    counts,
+    data.frame(group = c("a", "b"), row.names = c("s1", "s2")),
+    data.frame(id = c("a", "b"), row.names = c("g1", "g2"))
+  )
+  module_env <- environment(upload_server)
+  module_env$getBM <- function(...) stop("HTTP error code: 405")
+  on.exit(rm("getBM", envir = module_env), add = TRUE)
+
+  test_upload_server(values = list(files = files), {
+    do.call(session$setInputs, c(list(omic_type_file_input = "Transcriptomics"), files))
+    session$setInputs(refresh_file_input = 1)
+    raw_before <- session$returned$raw()
+    session$setInputs(AddGeneSymbols = 1)
+    session$setInputs(
+      AddGeneSymbols_organism = "Human genes (GRCh38.p14)",
+      annotation_name = "ensembl_gene_id",
+      annotation_colname = "id"
+    )
+    session$setInputs(do_annotation = 1)
+    expect_match(output$debug, "Gene annotation failed")
+    expect_identical(session$returned$raw(), raw_before)
+    expect_null(session$returned$annotated())
+    expect_false(session$returned$added_gene_anno())
+  })
+})
