@@ -398,20 +398,19 @@ server <- function(input,output,session){
     output$providedRowAnnotationTypes_ui <- renderUI({shinyWidgets::virtualSelectInput(
       inputId = "providedRowAnnotationTypes",
       label = "Which annotation type do you want to select on?",
-      choices = c(colnames(rowData(session_data$data_original))),
+      choices = selection_annotation_columns(session_data$data_original, "entities"),
       multiple = F,
       search = T,
       showSelectedOptionsFirst = T
     )})
     output$row_selection_ui <- renderUI({
       req(input$providedRowAnnotationTypes)
-      if(is.numeric(
-        rowData(session_data$data_original)[,input$providedRowAnnotationTypes])
-      ){
+      choices <- entity_choices(session_data$data_original, input$providedRowAnnotationTypes)
+      if(choices$numeric){
         selectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Your input category is numeric, selection is currently only supported for categorical data!)",
-          choices = c("all"),
+          choices = choices$values,
           selected = "all",
           multiple = T
         )
@@ -419,7 +418,7 @@ server <- function(input,output,session){
         shinyWidgets::virtualSelectInput(
           inputId = "row_selection",
           label = "Which entities to use? (Will be the union if multiple selected)",
-          choices = c("High Values+IQR","all",unique(unlist(strsplit(rowData(session_data$data_original)[,input$providedRowAnnotationTypes],"\\|")))),
+          choices = choices$values,
           selected = "all",
           multiple = T,
           search = T,
@@ -444,8 +443,8 @@ server <- function(input,output,session){
       selectInput(
         inputId = "providedSampleAnnotationTypes",
         label = "Which annotation type do you want to select on?",
-        choices = c(colnames(colData(session_data$data_original))),
-        selected = c(colnames(colData(session_data$data_original)))[1],
+        choices = selection_annotation_columns(session_data$data_original, "samples"),
+        selected = selection_annotation_columns(session_data$data_original, "samples")[1],
         multiple = F
       )
     })
@@ -454,10 +453,7 @@ server <- function(input,output,session){
       selectInput(
         inputId = "sample_selection",
         label = "Which entities to use? (Will be the union if multiple selected)",
-        choices = c(
-          "all",
-          unique(colData(session_data$data_original)[,input$providedSampleAnnotationTypes])
-        ),
+        choices = sample_choices(session_data$data_original, input$providedSampleAnnotationTypes),
         selected = "all",
         multiple = T
       )
@@ -502,30 +498,21 @@ server <- function(input,output,session){
   ## Do Selection ----  
   selectedData <- reactive({
     req(data_input_shiny())
-    row_selection <- input$row_selection %||% "all"
-    sample_selection <- input$sample_selection %||% "all"
-    sample_type <- input$providedSampleAnnotationTypes %||% c(colnames(colData(session_data$data_original)))[1]
-    row_type <- input$providedRowAnnotationTypes %||% c(colnames(rowData(session_data$data_original)))[1]
-    propensity <- input$propensityChoiceUser %||% 1
-    session_params$selected_rows <- row_selection
-    session_params$selected_samples <- sample_selection
-    session_params$row_type <- row_type
-    session_params$sample_type <- sample_type
-    session_params$propensity <- propensity
     print("Alright do Row selection")
-    # Data set selection
-    res_select <- select_data(
-        data = session_data$data_original,
-        selected_rows = row_selection,
-        selected_samples = sample_selection,
-        row_type = row_type,
-        sample_type = sample_type,
-        propensity = propensity
-    )
-    session_data$data <- res_select$data
+    selection <- resolve_selection(session_data$data_original, list(
+      row_selection = input$row_selection,
+      sample_selection = input$sample_selection,
+      row_type = input$providedRowAnnotationTypes,
+      sample_type = input$providedSampleAnnotationTypes,
+      propensity = input$propensityChoiceUser
+    ))
+    session_data$data <- selection$data
     # Store selected IDs (returned from select_data) - using standardized names
-    session_params$selected_samples <- res_select$samples_selected
-    session_params$selected_rows <- res_select$rows_selected
+    session_params$selected_rows <- selection$selected_rows
+    session_params$selected_samples <- selection$selected_samples
+    session_params$row_type <- selection$row_type
+    session_params$sample_type <- selection$sample_type
+    session_params$propensity <- selection$propensity
     return("Selection Success")
   })
   
