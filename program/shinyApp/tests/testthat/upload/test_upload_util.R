@@ -239,6 +239,25 @@ test_that("fill_na_row_annotation replaces NA annotation values by row names", {
   expect_equal(SummarizedExperiment::rowData(filled)$id, c("g1", "g2"))
 })
 
+test_that("dataset_start_copy drops single-value annotation columns before the NA fill", {
+  se <- SummarizedExperiment::SummarizedExperiment(
+    assays = list(raw = small_counts()),
+    rowData = data.frame(
+      symbol = c("A", NA), constant = c("x", "x"), empty = c(NA, NA),
+      row.names = c("g1", "g2")
+    ),
+    colData = data.frame(
+      group = c("a", "b"), batch = c("1", "1"), row.names = c("s1", "s2")
+    )
+  )
+  data <- dataset_start_copy(se)
+  # an all-NA column has a single value, so it is dropped, not filled
+  expect_equal(colnames(SummarizedExperiment::rowData(data)), "symbol")
+  expect_equal(SummarizedExperiment::rowData(data)$symbol, c("A", "g2"))
+  expect_equal(colnames(SummarizedExperiment::colData(data)), "group")
+  expect_equal(dim(data), dim(se))
+})
+
 # Inspect files ----
 test_that("inspect_upload_files passes on the airway files", {
   inspection <- inspect_upload_files(
