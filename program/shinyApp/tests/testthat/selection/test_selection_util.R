@@ -55,9 +55,10 @@ test_that("resolve_selection fills today's defaults for missing inputs", {
   expect_equal(dim(res$data), c(4, 3))
   expect_equal(res$row_type, "pathway")
   expect_equal(res$sample_type, "group")
-  # the resolved IDs replace the chosen values
-  expect_equal(res$selected_rows, paste0("e", 1:4))
-  expect_equal(res$selected_samples, paste0("s", 1:3))
+  expect_equal(res$selected_rows, "all")
+  expect_equal(res$selected_samples, "all")
+  expect_equal(res$rows_selected, paste0("e", 1:4))
+  expect_equal(res$samples_selected, paste0("s", 1:3))
 })
 
 test_that("resolve_selection passes the chosen values to select_data", {
@@ -66,8 +67,8 @@ test_that("resolve_selection passes the chosen values to select_data", {
     sample_selection = "1", sample_type = "batch"
   ))
   # exact match on the annotation value: "a|b" is not "b"
-  expect_equal(res$selected_rows, "e2")
-  expect_equal(res$selected_samples, c("s1", "s2"))
+  expect_equal(res$rows_selected, "e2")
+  expect_equal(res$samples_selected, c("s1", "s2"))
   expect_equal(dim(res$data), c(1, 2))
 })
 

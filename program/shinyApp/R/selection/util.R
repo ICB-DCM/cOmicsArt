@@ -29,8 +29,9 @@ sample_choices <- function(data, column){
 
 # The Selection for the given inputs (any of them may be missing):
 # row_selection, sample_selection, row_type, sample_type.
-# Returns the selected object, the resolved entity and sample IDs and the
-# annotation columns that were used.
+# Returns the selected object, the chosen values (selected_rows,
+# selected_samples, the arguments of select_data()), the resolved entity and
+# sample IDs (rows_selected, samples_selected) and the annotation columns.
 resolve_selection <- function(data, inputs){
   row_selection <- inputs$row_selection %||% "all"
   sample_selection <- inputs$sample_selection %||% "all"
@@ -45,9 +46,24 @@ resolve_selection <- function(data, inputs){
   )
   list(
     data = res_select$data,
-    selected_rows = res_select$rows_selected,
-    selected_samples = res_select$samples_selected,
+    selected_rows = row_selection,
+    selected_samples = sample_selection,
+    rows_selected = res_select$rows_selected,
+    samples_selected = res_select$samples_selected,
     row_type = row_type,
     sample_type = sample_type
+  )
+}
+
+# The Selection as stored in session_params. The R-code download passes the
+# chosen values to select_data(); Pre-processing reads the resolved IDs.
+selection_params <- function(selection){
+  list(
+    selected_rows = selection$selected_rows,
+    selected_samples = selection$selected_samples,
+    rows_selected = selection$rows_selected,
+    samples_selected = selection$samples_selected,
+    row_type = selection$row_type,
+    sample_type = selection$sample_type
   )
 }

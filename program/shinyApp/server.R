@@ -261,8 +261,10 @@ server <- function(input,output,session){
     limma_formula = NULL,               # Limma formula
 
     # Selection parameters (standardized names)
-    selected_rows = NULL,               # Selected row IDs (replaces entities_selected)
-    selected_samples = NULL,            # Selected sample IDs (replaces samples_selected)
+    selected_rows = NULL,               # Chosen entity annotation values (select_data() argument)
+    selected_samples = NULL,            # Chosen sample annotation values (select_data() argument)
+    rows_selected = NULL,               # Selected row IDs
+    samples_selected = NULL,            # Selected sample IDs
     row_type = NULL,                    # Row selection type
     sample_type = NULL,                 # Sample selection type
 
@@ -487,11 +489,8 @@ server <- function(input,output,session){
       sample_type = input$providedSampleAnnotationTypes
     ))
     session_data$data <- selection$data
-    # Store selected IDs (returned from select_data) - using standardized names
-    session_params$selected_rows <- selection$selected_rows
-    session_params$selected_samples <- selection$selected_samples
-    session_params$row_type <- selection$row_type
-    session_params$sample_type <- selection$sample_type
+    params <- selection_params(selection)
+    for (name in names(params)) session_params[[name]] <- params[[name]]
     return("Selection Success")
   })
   
@@ -644,7 +643,7 @@ server <- function(input,output,session){
   output$raw_violin_plot <- renderPlot({
     req(able_to_plot())
     violin_plot(
-      session_data$data_original[session_params$selected_rows, session_params$selected_samples],
+      session_data$data_original[session_params$rows_selected, session_params$samples_selected],
       violin_color = isolate(input$violin_color)
     )
   })
@@ -673,8 +672,8 @@ server <- function(input,output,session){
     batch_column <- input$BatchEffect_Column %||% "NULL"
     omic_type <- session_params$omic_type
     deseq_factors <- input$DESeq_formula_sub %||% NULL
-    rows_selected <- session_params$selected_rows
-    samples_selected <- session_params$selected_samples
+    rows_selected <- session_params$rows_selected
+    samples_selected <- session_params$samples_selected
     filter_threshold <- input$filter_threshold %||% 10
     filter_threshold_samplewise <- input$filter_threshold_samplewise %||% NULL
     filter_samplesize <- input$filter_samplesize %||% NULL
