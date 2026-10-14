@@ -197,6 +197,33 @@ fill_na_row_annotation <- function(se){
   se
 }
 
+# The Dataset's starting copy of an Upload, as read (before the NA fill):
+# annotation columns with a single value are dropped, then NA values in the row
+# annotation are replaced by the row names.
+# Temporary: written to session_data$data by the bridge in server.R.
+dataset_start_copy <- function(se){
+  data <- se
+  colData(data) <- DataFrame(
+    as.data.frame(colData(data)) %>%
+    purrr::keep(~length(unique(.x)) != 1)
+  )
+  print(paste0(
+    "Number. of anno options sample_table lost: ",
+    ncol(se) - ncol(data)
+  ))
+
+  rowData(data) <- DataFrame(
+    as.data.frame(rowData(data)) %>%
+      purrr::keep(~length(unique(.x)) != 1)
+  )
+  data <- fill_na_row_annotation(data)
+  print(paste0(
+    "Number. of anno options annotation_rows lost: ",
+    nrow(se) - nrow(data)
+  ))
+  data
+}
+
 # Inspect files for visual inspection
 # The sample table comes from sample_table_path, else from the metadata workbook
 # at metadata_path, else it is empty.
