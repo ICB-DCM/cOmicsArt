@@ -167,6 +167,31 @@ upload_server <- function(id){
       annotated_se <- raw()
       # Added gene annotation if asked for
       if(input$AddGeneSymbols & omic_type() == "Transcriptomics") {
+        if(input$AddGeneSymbols_organism == "Human genes (GRCh38.p14)"){
+          ensembl_slot <- "hsapiens_gene_ensembl"
+        }else{
+          ensembl_slot <- "mmusculus_gene_ensembl"
+        }
+
+        ensembl <- loadedVersion[[ensembl_slot]]$ensmbl
+        out <- tryCatch(
+          getBM(
+            attributes = c("ensembl_gene_id", "gene_biotype", "external_gene_name", "entrezgene_id"),
+            filter = input$annotation_name,
+            values = rowData(annotated_se)[,input$annotation_colname],
+            mart = ensembl
+          ),
+          error = function(e){
+            print(paste("Gene annotation failed:", conditionMessage(e)))
+            NULL
+          }
+        )
+        if(is.null(out)){
+          # Ensembl could not be reached or refused the query: keep the data as it is
+          output$debug <- renderText({"<font color=\"#ab020a\"><b>Gene annotation failed: Ensembl could not be reached. No annotation was added, please try again later.</b></font>"})
+          removeModal()
+          return()
+        }
         fun_LogIt(session,
           message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added"
         )
@@ -175,19 +200,6 @@ upload_server <- function(id){
         )
 
         output$debug <- renderText({"<font color=\"#00851d\"><b>Added gene annotation</b></font>"})
-        if(input$AddGeneSymbols_organism == "Human genes (GRCh38.p14)"){
-          ensembl_slot <- "hsapiens_gene_ensembl"
-        }else{
-          ensembl_slot <- "mmusculus_gene_ensembl"
-        }
-
-        ensembl <- loadedVersion[[ensembl_slot]]$ensmbl
-        out <- getBM(
-          attributes = c("ensembl_gene_id", "gene_biotype", "external_gene_name", "entrezgene_id"),
-          filter = input$annotation_name,
-          values = rowData(annotated_se)[,input$annotation_colname],
-          mart = ensembl
-        )
         # Align the rows based on matching annotation
         match_indices <- match(
           rowData(annotated_se)[,input$annotation_colname], out[,input$annotation_name]

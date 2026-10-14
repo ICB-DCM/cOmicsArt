@@ -208,6 +208,17 @@ if(format(Sys.Date(), "%d") == "01" && Sys.getenv("COMICSART_OFFLINE") != "true"
   loadedVersion <<- ensembl_objects
 }
 
+# Query a fixed Ensembl release instead of www.ensembl.org or a mirror.
+# For those hosts biomaRt 2.54 first reads Ensembl's archive list, which the
+# site now answers with JSON, so every getBM() failed with "invalid 'file'
+# argument". Archive hosts skip that step and pin the annotation release.
+ENSEMBL_ARCHIVE_HOST <- "https://jun2026.archive.ensembl.org:443/biomart/martservice"
+pinned_ensembl_objects <- loadedVersion
+for(organism in names(pinned_ensembl_objects)){
+  pinned_ensembl_objects[[organism]]$ensmbl@host <- ENSEMBL_ARCHIVE_HOST
+}
+loadedVersion <<- pinned_ensembl_objects
+
 
 # Define the ggplotcustom theme
 CUSTOM_THEME <<- theme_bw(base_size = 15) +  theme(
