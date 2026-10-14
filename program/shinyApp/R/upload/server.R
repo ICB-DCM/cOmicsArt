@@ -164,7 +164,7 @@ upload_server <- function(id){
     observeEvent(input$do_annotation, {
       annotated_se <- raw()
       # Added gene annotation if asked for
-      if(input$AddGeneSymbols & input[[paste0("omic_type_", uploaded_from())]] == "Transcriptomics") {
+      if(input$AddGeneSymbols & omic_type() == "Transcriptomics") {
         fun_LogIt(session,
           message = "**DataInput** - Gene Annotation (SYMBOL and gene type) was added"
         )
