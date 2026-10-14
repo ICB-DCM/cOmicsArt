@@ -42,7 +42,7 @@ select_data <- function(
       sample_type <- c(colnames(colData(data)))[1]
   }
   samples_selected <- c()
-  if(any(selected_samples == "all") | length(selected_samples) == ncol(assay(data))) {
+  if(any(selected_samples == "all")) {
     samples_selected <- colnames(assay(data))
   } else {
     samples_selected <- unique(c(
@@ -53,7 +53,7 @@ select_data <- function(
       ))
   }
   rows_selected <- c()
-  if(any(selected_rows == "all") | length(selected_rows) == nrow(assay(data))) {
+  if(any(selected_rows == "all")) {
     rows_selected <- rownames(data)
   } else {
     rows_selected <- unique(c(
