@@ -66,6 +66,7 @@ source("R/utils/ui_components.R")
 # Source UI components for each panel
 source("R/help_tab/ui.R")
 source("R/upload/ui.R")
+source("R/selection/ui.R")
 source("R/data_selection/ui.R")
 source("R/pre_processing/ui.R")
 source("R/pca/ui.R")

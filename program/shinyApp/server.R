@@ -77,7 +77,7 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
   hideTab(inputId = "tabsetPanel1", target = "ML Classification")
-  shinyjs::hideElement(id = "mainPanel_other")
+  shinyjs::hideElement(id = "selection-mainPanel_other")
   shinyjs::hideElement(id = "data_summary")
   shinyjs::hideElement(id = "div_sampleCorrelation_main_panel")
   shinyjs::hideElement(id = "PCA_main_panel_div")
@@ -343,7 +343,7 @@ server <- function(input,output,session){
     # Count up updating
     updating$count <- updating$count + 1
     # Show the Selection controls and the Pre-processing tab
-    shinyjs::showElement("mainPanel_other")
+    shinyjs::showElement("selection-mainPanel_other")
     if(upload$source() != "testdata"){
       showTab(inputId = "tabsetPanel1", target = "Pre-processing")
     }
@@ -390,83 +390,40 @@ server <- function(input,output,session){
     shinyjs::toggle(id = "console_toggle")
   })
 
-# Data Selection  ----
-## Ui Section ----
-  observe({
-    req(data_input_shiny())
-    # isTruthy(session_data$data)
-    # Row
-    output$providedRowAnnotationTypes_ui <- renderUI({shinyWidgets::virtualSelectInput(
-      inputId = "providedRowAnnotationTypes",
-      label = "Which annotation type do you want to select on?",
-      choices = selection_annotation_columns(session_data$data_original, "entities"),
-      multiple = F,
-      search = T,
-      showSelectedOptionsFirst = T
-    )})
-    output$row_selection_ui <- renderUI({
-      req(input$providedRowAnnotationTypes)
-      choices <- entity_choices(session_data$data_original, input$providedRowAnnotationTypes)
-      if(choices$numeric){
-        selectInput(
-          inputId = "row_selection",
-          label = "Which entities to use? (Your input category is numeric, selection is currently only supported for categorical data!)",
-          choices = choices$values,
-          selected = "all",
-          multiple = T
-        )
-      } else {
-        shinyWidgets::virtualSelectInput(
-          inputId = "row_selection",
-          label = "Which entities to use? (Will be the union if multiple selected)",
-          choices = choices$values,
-          selected = "all",
-          multiple = T,
-          search = T,
-          showSelectedOptionsFirst = T
-        )
-      }
-    })
-    # Column /Sample
-    output$providedSampleAnnotationTypes_ui <- renderUI({
-      req(data_input_shiny())
-      selectInput(
-        inputId = "providedSampleAnnotationTypes",
-        label = "Which annotation type do you want to select on?",
-        choices = selection_annotation_columns(session_data$data_original, "samples"),
-        selected = selection_annotation_columns(session_data$data_original, "samples")[1],
-        multiple = F
-      )
-    })
-    output$sample_selection_ui <- renderUI({
-      req(data_input_shiny(),isTruthy(input$providedSampleAnnotationTypes))
-      selectInput(
-        inputId = "sample_selection",
-        label = "Which entities to use? (Will be the union if multiple selected)",
-        choices = sample_choices(session_data$data_original, input$providedSampleAnnotationTypes),
-        selected = "all",
-        multiple = T
-      )
-    })
+# Selection ----
+  selection <- selection_server(
+    "selection",
+    raw = reactive(session_data$data_original),
+    upload_done = data_input_shiny
+  )
+
+## Bridge (temporary) ----
+  # writes the Selection where the rest of the app reads it
+  selectedData <- reactive({
+    print("Alright do Row selection")
+    current <- selection$selected()
+    session_data$data <- current$data
+    params <- selection_params(current)
+    for (name in names(params)) session_params[[name]] <- params[[name]]
+    return("Selection Success")
   })
-  
-## Log Selection ----
-  observeEvent(c(input$NextPanel, input$use_full_data),{
+  # "Go to Preprocessing" / "Start the Journey": report lines, then Pre-processing
+  observeEvent(selection$confirmed(),{
     able_to_plot(FALSE)
     # Do actual selection before logging
     print(selectedData())
+    chosen <- selection$inputs()
     # add row and col selection options
     fun_LogIt(session, message = "**DataSelection** - The following selection was conducted:")
-    print(length(input$sample_selection))
     fun_LogIt(session, message = paste0(
       "**DataSelection** - Samples:\n\t DataSelection - based on: ",
-      input$providedSampleAnnotationTypes,": ",
-      paste(input$sample_selection,collapse = ", ")
+      chosen$sample_type,": ",
+      paste(chosen$sample_selection,collapse = ", ")
     ))
     fun_LogIt(session, message = paste0(
       "**DataSelection** - Entities:\n\t DataSelection - based on: ",
-      input$providedRowAnnotationTypes,
-      ": ",paste(input$row_selection,collapse = ", ")
+      chosen$row_type,
+      ": ",paste(chosen$row_selection,collapse = ", ")
     ))
     
     fun_LogIt(session, message = "### Publication Snippet")
@@ -476,22 +433,6 @@ server <- function(input,output,session){
     ))
     fun_LogIt(session, message = "<br>")
     showTab(inputId = "tabsetPanel1",target = "Pre-processing",select = T)
-  })
-  
-  ## Do Selection ----  
-  selectedData <- reactive({
-    req(data_input_shiny())
-    print("Alright do Row selection")
-    selection <- resolve_selection(session_data$data_original, list(
-      row_selection = input$row_selection,
-      sample_selection = input$sample_selection,
-      row_type = input$providedRowAnnotationTypes,
-      sample_type = input$providedSampleAnnotationTypes
-    ))
-    session_data$data <- selection$data
-    params <- selection_params(selection)
-    for (name in names(params)) session_params[[name]] <- params[[name]]
-    return("Selection Success")
   })
   
 # Pre-processing after Selection ----
