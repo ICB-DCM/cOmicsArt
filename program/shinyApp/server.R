@@ -398,20 +398,19 @@ server <- function(input,output,session){
   )
 
 ## Bridge (temporary) ----
-  # writes the Selection where the rest of the app reads it
-  selectedData <- reactive({
-    print("Alright do Row selection")
-    current <- selection$selected()
+  # writes the Selection where the rest of the app reads it; only when it is
+  # confirmed or Pre-processing starts, so it never replaces processed data
+  write_selection <- function(){
+    current <- isolate(selection$selected())
     session_data$data <- current$data
     params <- selection_params(current)
     for (name in names(params)) session_params[[name]] <- params[[name]]
-    return("Selection Success")
-  })
+  }
   # "Go to Preprocessing" / "Start the Journey": report lines, then Pre-processing
   observeEvent(selection$confirmed(),{
     able_to_plot(FALSE)
     # Do actual selection before logging
-    print(selectedData())
+    write_selection()
     chosen <- selection$inputs()
     # add row and col selection options
     fun_LogIt(session, message = "**DataSelection** - The following selection was conducted:")
@@ -605,7 +604,7 @@ server <- function(input,output,session){
 
     )
     waiter$show()
-    print(selectedData())
+    write_selection()
     print("Starting the Preprocessing")
     # ---- Value Assignment and Parameter Saving for later use ----
     preprocessing_procedure <- input$PreProcessing_Procedure
@@ -935,7 +934,7 @@ server <- function(input,output,session){
 
   # render plots and ui Parts
   output$violin_plot_color_ui <- renderUI({
-    req(selectedData())
+    req(selection$selected())
     selectInput(
       inputId = "violin_color",
       label = "Color the violin plot by:",
