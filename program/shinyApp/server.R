@@ -443,20 +443,9 @@ server <- function(input,output,session){
   # Dynamically update second dropdown based on Processing Type
   output$dynamic_options_ui <- renderUI({
     req(input$processing_type)  # Ensure input exists
-    choices_list <- switch(input$processing_type,
-                           "No pre-processing" = c("No pre-processing" = "none"),
-                           "Filtering" = c("global Filtering" = "filterOnly",
-                                           "sample-wise Filtering" = "filterPerSample"),
-                           "Omic-Specific" = c("DESeq2" = "vst_DESeq",
-                                               "limma voom" = "limma_voom",
-                                               "TMM" = "TMM"),
-                           "Log-Based" = c("log10" = "log10", "log2" = "log2", "Natural logarithm" = "ln"),
-                           "Miscellaneous" = c("Pareto scaling" = "pareto_scaling",
-                                               "Centering & Scaling" = "simpleCenterScaling",
-                                               "Scaling 0-1" = "Scaling_0_1")
-    )
+    choices <- procedure_choices(input$processing_type)
     tagList(
-    if(!any(choices_list %in% c("none","filterOnly","filterPerSample"))){
+    if(choices$filtering){
       div(style = "margin-left: 15px;",
           selectInput(
             inputId = "PreProcessing_Procedure_filtering",
@@ -472,7 +461,7 @@ server <- function(input,output,session){
       selectInput(
         inputId = "PreProcessing_Procedure",
         label = "Choose Processing Option",
-        choices = choices_list,
+        choices = choices$procedures,
         selected = NULL,
         multiple = FALSE
       )
@@ -483,40 +472,39 @@ server <- function(input,output,session){
   output$additional_inputs_filter_ui <- renderUI({
     req(input$PreProcessing_Procedure)
     print(input$PreProcessing_Procedure)
-    # check if input$PreProcessing_Procedure_filtering is present
-    if(input$PreProcessing_Procedure == "filterOnly" | input$PreProcessing_Procedure == "filterPerSample" |  input$PreProcessing_Procedure == "none"){
-      addFilter <- "no"
-    }else{
-      addFilter <- input$PreProcessing_Procedure_filtering
-    }
-    if (input$PreProcessing_Procedure == "filterOnly" | addFilter == "filterOnly") {
+    filter <- filter_inputs(
+      input$PreProcessing_Procedure, input$PreProcessing_Procedure_filtering,
+      upload$omic_type(), ncol(session_data$data)
+    )
+    if (is.null(filter)) return(NULL)
+    if (filter$kind == "global") {
       tagList(
         div(style = "margin-left: 30px;",
           numericInput(
             inputId = "filter_threshold",
             label = "Specifcy the minimum sum of counts/concentration accross all samples for an entitie to be kept in the analysis.",
-            value = ifelse(upload$omic_type() == "Transcriptomics", 10, 0),
+            value = filter$threshold,
             min = 0
           )
         )
       )
-    }else if (input$PreProcessing_Procedure == "filterPerSample" | addFilter == "filterPerSample"){
+    } else {
       tagList(
         div(style = "margin-left: 30px;",
         numericInput(
             inputId = "filter_threshold_samplewise",
             label = "Specifcy theFiltering threshold of counts/concentration for an entitie",
-            value = ifelse(upload$omic_type() == "Transcriptomics", 10, 0)
+            value = filter$threshold
           ),
         numericInput(
             inputId = "filter_samplesize",
             label = "Number of Samples that need to pass the Filtering threshold",
-            value = 3,
+            value = filter$samplesize,
             min = 1,
-            max = ncol(session_data$data),
+            max = filter$max_samplesize,
             step = 1
           ),
-        helpText(paste0("Note: This number should not exceed ", ncol(session_data$data), "(the number of samples in your data set)")
+        helpText(paste0("Note: This number should not exceed ", filter$max_samplesize, "(the number of samples in your data set)")
         )
         )
       )
@@ -526,24 +514,21 @@ server <- function(input,output,session){
   # Update the batch effect UI based on the available columns
   output$batch_effect_ui <- renderUI({
     req(data_input_shiny())
-    column_names <- colnames(colData(session_data$data_original))
-    filtered_column_names <- column_names[sapply(column_names, function(col) {
-      length(unique(colData(session_data$data_original)[[col]])) < nrow(colData(session_data$data_original))
-    })]
-    if (isTruthy(input$PreProcessing_Procedure) && input$PreProcessing_Procedure == "vst_DESeq") {
-      filtered_column_names <- filtered_column_names[!filtered_column_names %in% c(input$DESeq_formula_sub)]
-    }
     selectInput(
       inputId = "BatchEffect_Column",
       label = "[optional] Select Batch Effect Column",
-      choices = c("NULL", filtered_column_names),
+      choices = batch_column_choices(
+        session_data$data_original, input$PreProcessing_Procedure, input$DESeq_formula_sub
+      ),
       selected = "NULL"
     )
   })
   output$formula_sub_ui <- renderUI({
     req(data_input_shiny())
     req(input$PreProcessing_Procedure)
-    if(input$PreProcessing_Procedure == "vst_DESeq"){
+    design <- design_inputs(session_data$data, input$PreProcessing_Procedure)
+    if (is.null(design)) return(NULL)
+    if(design$kind == "deseq"){
       div(style = "margin-left: 30px;",
         selectInput(
           inputId = "DESeq_formula_sub",
@@ -551,11 +536,11 @@ server <- function(input,output,session){
             "Choose factors to account for ",
             "(App might crash if your factor has only 1 sample per level)"
           ),
-          choices = c(colnames(colData(session_data$data))),
+          choices = design$choices,
           multiple = T,
-          selected = "condition"
+          selected = design$selected
         )) %>% helper(type = "markdown", content = "PreProcessing_DESeq")
-    }else if (input$PreProcessing_Procedure == "limma_voom"){
+    }else{
       div(style = "margin-left: 30px;",
         tagList(
           # add a radiobutton whether one wants an intercept or not
@@ -570,9 +555,9 @@ server <- function(input,output,session){
           label = paste0(
             "Choose the design formula for limma voom"
           ),
-          choices = c(colnames(colData(session_data$data))),
+          choices = design$choices,
           multiple = T,
-          selected = colnames(colData(session_data$data))[1]
+          selected = design$selected
         ) %>% helper(type = "markdown", content = "PreProcessing_voom")
         )
       )
@@ -609,156 +594,60 @@ server <- function(input,output,session){
     write_selection()
     print("Starting the Preprocessing")
     # ---- Value Assignment and Parameter Saving for later use ----
-    preprocessing_procedure <- input$PreProcessing_Procedure
-    preprocessing_filtering <- input$PreProcessing_Procedure_filtering %||% NULL
-    batch_column <- input$BatchEffect_Column %||% "NULL"
-    omic_type <- session_params$omic_type
-    deseq_factors <- input$DESeq_formula_sub %||% NULL
+    options <- preprocessing_options(
+      procedure = input$PreProcessing_Procedure,
+      filtering = input$PreProcessing_Procedure_filtering,
+      batch_column = input$BatchEffect_Column,
+      deseq_factors = input$DESeq_formula_sub,
+      filter_threshold = input$filter_threshold,
+      filter_threshold_samplewise = input$filter_threshold_samplewise,
+      filter_samplesize = input$filter_samplesize,
+      limma_intercept = input$limma_intercept,
+      limma_formula = input$limma_formula
+    )
     rows_selected <- session_params$rows_selected
     samples_selected <- session_params$samples_selected
-    filter_threshold <- input$filter_threshold %||% 10
-    filter_threshold_samplewise <- input$filter_threshold_samplewise %||% NULL
-    filter_samplesize <- input$filter_samplesize %||% NULL
-    limma_intercept <- input$limma_intercept %||% NULL
-    limma_formula <- input$limma_formula %||% NULL
-    # reset data to the selection that was done
-    data <- session_data$data_original[rows_selected,samples_selected]
-    data_selected <- data  # needed for batch correction with DESeq
-    session_params$BatchColumn <- batch_column
+    params <- preprocessing_params(options)
+    for (name in names(params)) session_params[[name]] <- params[[name]]
 
-    session_params$preprocessing_filtering <- preprocessing_filtering
-    session_params$filter_threshold <- filter_threshold
-    session_params$filter_threshold_samplewise <- filter_threshold_samplewise
-    session_params$filter_samplesize <- filter_samplesize
-    session_params$limma_intercept <- limma_intercept
-    session_params$limma_formula <- limma_formula
-
-    # preprocessing
-    print(paste0("Do chosen Preprocessing:",preprocessing_procedure))
-
-    # Check for DESeq option if more than 100 genes avail as it is for omics!
-    tryCatch({
-      preprocess_res <<- preprocessing(
-        data = data,
-        omic_type = omic_type,
-        preprocessing_procedure = preprocessing_procedure,
-        preprocessing_filtering = preprocessing_filtering,
-        deseq_factors = deseq_factors,
-        filter_threshold = filter_threshold,
-        filter_threshold_samplewise = filter_threshold_samplewise,
-        filter_samplesize = filter_samplesize,
-        limma_intercept = limma_intercept,
-        limma_formula = limma_formula
-      )
-      session_params$preprocessing_procedure <- preprocessing_procedure
-      data <- preprocess_res$data
-      if(preprocessing_procedure == "vst_DESeq"){
-        session_data$DESeq_obj <- preprocess_res$DESeq_obj
-        session_params$deseq_formula <- paste("~", paste(deseq_factors, collapse = " + "))
-        session_params$deseq_factors <- deseq_factors
-      }
-    }, error = function(e){
-      error_modal(e)
-      output$Statisitcs_Data <- renderText({ERROR_PREPROC})
-      hide_tabs()
-      waiter$hide()
-      req(FALSE)
-    })
-
-    # Checks and Warnings
-    # check if no entites is left after pre-processing
-    if(nrow(data) == 0){
-      error_modal(
-        "No entities left after pre-processing. Please change your selection and pre-processing options. Maybe your filtering is too harsh?"
-      )
-      output$Statisitcs_Data <- renderText({ERROR_PREPROC})
-      hide_tabs()
-      waiter$hide()
-      req(FALSE)
-    }
-
-    addWarning <- create_warning_preproc(data, preprocessing_procedure)
-    data <- data[complete.cases(assay(data)),]
-
-    # Batch correction after preprocessing
-    console_output <- character(0)
-    warnings_output <- character(0)
-
-    # Capture console output and warnings
-    console_output <- capture.output({
-      withCallingHandlers({
-        tryCatch({
-          res_batch <- batch_correction(
-            data = if(preprocessing_procedure == "vst_DESeq"){data_selected}else{data},
-            preprocessing_procedure = preprocessing_procedure,
-            batch_column = batch_column,
-            deseq_factors = deseq_factors,
-            omic_type = omic_type
-          )
-          session_data$data_batch_corrected <- res_batch$data
-          if(preprocessing_procedure == "vst_DESeq"){
-            session_data$DESeq_obj_batch_corrected <- res_batch$DESeq_obj
-            session_params$DESeq_formula_batch <- paste(
-              "~", paste(c(deseq_factors, batch_column), collapse = " + ")
-            )
+    # reset data to the selection that was done, then pre-process
+    res <- tryCatch(
+      run_preprocessing(
+        data = session_data$data_original[rows_selected, samples_selected],
+        omic_type = session_params$omic_type,
+        options = options
+      ),
+      preprocessing_error = function(e){
+        if (e$step == "normality") {
+          output$Statisitcs_Data <- renderText({ERROR_NORM_TEST})
+        } else {
+          if (e$step == "empty") {
+            error_modal(conditionMessage(e))
+          } else if (e$step == "batch") {
+            error_modal(e$parent, additional_text = ifelse(
+              options$procedure == "vst_DESeq", ERROR_BATCH_DESEQ, ERROR_BATCH_CORR
+            ))
+          } else {
+            error_modal(e$parent)
           }
-        }, error = function(e){
-          error_modal(
-            e, additional_text = ifelse(
-              preprocessing_procedure == "vst_DESeq", ERROR_BATCH_DESEQ, ERROR_BATCH_CORR
-            )
-          )
           output$Statisitcs_Data <- renderText({ERROR_PREPROC})
           hide_tabs()
-          waiter$hide()
-          req(FALSE)
-        })
-      }, warning = function(w) {
-        warnings_output <<- c(warnings_output, paste("Warning:", conditionMessage(w)))
-        invokeRestart("muffleWarning")
-      }, message = function(m) {
-        warnings_output <<- c(warnings_output, paste("Message:", conditionMessage(m)))
-        invokeRestart("muffleMessage")
-      })
-    }, type = "output")
-
-    # Store captured outputs
-    session_data$batch_console_output <- console_output
-    session_data$batch_warnings <- warnings_output
-
-    # add per entities (to rowData) normality test outcome
-    norm_test_output <- capture.output({
-      withCallingHandlers({
-        tryCatch({
-          norm_res <- add_normality_test(data)
-          rowData(data) <- cbind(rowData(data), norm_res[rownames(data),c("p_value_shapiro","p_adjusted_shapiro_FDR")])
-          normality_test_stat <-
-            paste0(
-              "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
-              "<br>Number of entities with p-value < 0.05: ",length(which(norm_res$p_value_shapiro < 0.05)), "/",nrow(data),
-              "<br>Number of entities with adj. p-value < 0.05: ",length(which(norm_res$p_value_shapiro_FDR < 0.05)), "/", nrow(data),
-              "<br>If p < 0.05 the normality assumption is violated.",
-              "<br>For small sample size this test is not reliable.",
-              "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"
-            )
-        }, error = function(e){
-          output$Statisitcs_Data <- renderText({ERROR_NORM_TEST})
-          waiter$hide()
-          req(FALSE)
-        })
-      }, warning = function(w) {
-        warnings_output <<- c(warnings_output, paste("Warning:", conditionMessage(w)))
-        invokeRestart("muffleWarning")
-      }, message = function(m) {
-        warnings_output <<- c(warnings_output, paste("Message:", conditionMessage(m)))
-        invokeRestart("muffleMessage")
-      })
-    }, type = "output")
-
-    # Combine all console outputs
-    all_console_output <- c(console_output, norm_test_output)
-    session_data$all_console_output <- all_console_output
-    session_data$all_warnings <- warnings_output
+        }
+        waiter$hide()
+        req(FALSE)
+      }
+    )
+    data <- res$data
+    for (name in names(res$params)) session_params[[name]] <- res$params[[name]]
+    if (options$procedure == "vst_DESeq") {
+      session_data$DESeq_obj <- res$DESeq_obj
+      session_data$DESeq_obj_batch_corrected <- res$DESeq_obj_batch_corrected
+    }
+    session_data$data_batch_corrected <- res$data_batch_corrected
+    session_data$batch_console_output <- res$batch_console_output
+    session_data$batch_warnings <- res$batch_warnings
+    session_data$all_console_output <- res$console_output
+    session_data$all_warnings <- res$warnings
 
     # assign session_data finally
     session_data$data <- data
@@ -842,28 +731,15 @@ server <- function(input,output,session){
       ifelse(upload$omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"), showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
       showTab(inputId = "tabsetPanel1", target = "ML Classification")
 
-      num_batches <- NA
-      batch_message <- grep("Message: Found\\d+batches", session_data$all_warnings, value = TRUE)
-      if (length(batch_message) > 0) {
-        num_batches <- sub(".*Message: Found(\\d+)batches.*", "\\1", batch_message[1])
-      }
-
-      paste0(
-        "The raw data has dimensions: ",
-        paste0(dim(session_data$data_original),collapse = ", "),
-        "<br>The processed data has dimensions: ",
-        paste0(dim(data),collapse = ", "),
-        "<br>", if (!is.na(num_batches)) paste0("Number of Batches found: ", num_batches) else "",
-        "<br>",ifelse(input$processing_type == "Log-Based","In case of 0's present logX(data+1) is done",""),
-        "<br>","See help for details",
-        "<br>",ifelse(any(as.data.frame(assay(data)) < 0),"Be aware that processed data has negative values!",""), ## IS THAT TRUE??
-        "<br>",normality_test_stat
+      preprocessing_summary(
+        dim(session_data$data_original), data, input$processing_type,
+        session_data$all_warnings, res$normality_summary
       )
     })
     # set the warning as toast
     show_toast(
       title = "Attention",
-      text = HTML(addWarning),
+      text = HTML(res$warning_html),
       position = "top",
       timer = 2500,
       timerProgressBar = T
