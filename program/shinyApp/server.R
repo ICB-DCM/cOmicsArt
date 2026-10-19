@@ -406,6 +406,9 @@ server <- function(input,output,session){
   )
 
 ## Bridge (temporary, removed in Phase 3h) ----
+  # Until then session_data / session_params are what the rest of the app
+  # reads; the module's returns are read only here (and `done` by the
+  # analysis modules). A run reaches them only through these observers.
   # the Selection is written at the start of a run, before the module reads it
   observeEvent(preprocessing$started(), {
     write_selection()

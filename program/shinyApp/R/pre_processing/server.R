@@ -3,7 +3,8 @@
 # Arguments:
 #   raw: reactive, the Upload's raw SummarizedExperiment
 #   omic_type: reactive, the Upload's omic type
-#   selected: reactive, the Selection (resolve_selection())
+#   selected: reactive, the Selection (resolve_selection()): its data is
+#     what a run pre-processes, the controls and the R code read
 #   selection_confirmed: reactive, changes when the Selection is confirmed;
 #     hides the plots until the next run
 #   upload_done: reactive, set after each successful Upload
@@ -43,8 +44,8 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
     able_to_plot <- reactiveVal(FALSE)
 
     shinyjs::hideElement(id = "data_summary")
-    # the Selection the controls offer choices for: as of the last Upload or
-    # confirmed Selection, not while it is being changed
+    # the Selection's data the controls offer choices for: as of the last
+    # Upload or confirmed Selection, not while it is being changed
     controls_data <- reactive({
       upload_done()
       selection_confirmed()
@@ -269,8 +270,7 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
       )
       batch_column <- input$BatchEffect_Column %||% "NULL"
       selection <- selected()
-      # the raw data of the Selection
-      selected_data <- raw()[selection$rows_selected, selection$samples_selected]
+      selected_data <- selection$data
 
       preprocessing_failed <- function(message, additional_text = NULL){
         error_modal(message, additional_text = additional_text)
