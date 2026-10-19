@@ -91,7 +91,7 @@ preprocessing_main_ui <- function(id){
         column(
           6,
           h4("Pre-processed Data"),
-          plotOutput(ns("preprocessed_violin_plot")),
+          plotOutput(ns("processed_violin_plot")),
         )
       ),
       h4("Mean and Standard Deviation of preprocessed data"),
@@ -156,7 +156,7 @@ preprocessing_main_ui <- function(id){
           clipboard_pair_button(
             inputId = ns("copy_violin"),
             first_plot_id = ns("raw_violin_plot"),
-            second_plot_id = ns("preprocessed_violin_plot")
+            second_plot_id = ns("processed_violin_plot")
           )
         ),
         radioGroupButtons(

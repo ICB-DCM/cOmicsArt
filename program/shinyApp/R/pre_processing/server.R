@@ -14,7 +14,7 @@
 #     data_batch_corrected, DESeq_obj and DESeq_obj_batch_corrected (DESeq
 #     objects for vst_DESeq only), with
 #       params: the options, named like the arguments of preprocessing(),
-#         with batch_column and violin_color
+#         with batch_column
 #       selection: the Selection it pre-processed (resolve_selection())
 #       omic_type: the omic type it ran for
 #       run: the number of the run, so that a repeated run is a change
@@ -56,8 +56,6 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       waiter
     }
 
-    react_violin_plot <- reactiveVal(NULL)
-    react_violin_plot_raw <- reactiveVal(NULL)
     react_mean_sd_plot <- reactiveVal(NULL)
     able_to_plot <- reactiveVal(FALSE)
 
@@ -213,13 +211,29 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     output$summary <- renderText(summary_text())
 
 ## Plots ----
+    # The violin colour is not part of a run: the screen, the saved figure,
+    # the report and the R code all use the control's current value, which
+    # must be a sample annotation of the run's data (a new Upload rebuilds
+    # the control before the next run).
+    violin_color <- reactive({
+      req(result(), input$violin_color %in% colnames(colData(result()$data)))
+      input$violin_color
+    })
+    raw_violin <- reactive({
+      violin_plot(result()$selection$data, violin_color = violin_color())
+    })
+    processed_violin <- reactive({
+      violin_plot(result()$data, violin_color = violin_color())
+    })
+    # able_to_plot also hides the plots after a confirmed Selection, until the
+    # next run
     output$raw_violin_plot <- renderPlot({
       req(able_to_plot())
-      violin_plot(result()$selection$data, violin_color = isolate(input$violin_color))
+      raw_violin()
     })
-    output$preprocessed_violin_plot <- renderPlot({
+    output$processed_violin_plot <- renderPlot({
       req(able_to_plot())
-      violin_plot(result()$data, violin_color = input$violin_color)
+      processed_violin()
     })
     output$mean_sd_plot <- renderPlot({
       req(able_to_plot())
@@ -312,14 +326,12 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       )
       if (is.null(res)) return()
       data <- res$data
-      run_params <- c(options, list(batch_column = batch_column, violin_color = input$violin_color))
+      run_params <- c(options, list(batch_column = batch_column))
 
       # everything that can fail before anything is shown or returned
       summary <- preprocessing_summary(
         dim(upload()), data, options$preprocessing_procedure, res$warnings
       )
-      violin <- violin_plot(data = data, violin_color = input$violin_color)
-      violin_raw <- violin_plot(data = selected_data, violin_color = input$violin_color)
       mean_and_obj <- vsn::meanSdPlot(as.matrix(assay(data)), plot=FALSE)
       mean_sd <- mean_and_obj$gg + CUSTOM_THEME + ggtitle("Mean and SD per entity")
 
@@ -339,8 +351,6 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       console_output(res$console_output)
       warnings(res$warnings)
       summary_text(summary)
-      react_violin_plot(violin)
-      react_violin_plot_raw(violin_raw)
       react_mean_sd_plot(mean_sd)
       able_to_plot(TRUE)
       result(c(
@@ -367,10 +377,10 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
 ## Preprocessing save, Report and Code Snippet ----
     # the raw and the pre-processed violin plot side by side
     combined_violin_plot <- function(){
-      raw_plot <- react_violin_plot_raw() +
+      raw_plot <- raw_violin() +
         ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
 
-      preprocessed_plot <- react_violin_plot() +
+      preprocessed_plot <- processed_violin() +
         ggtitle("Count distribution per sample - preprocessed")
 
       # Arrange the plots side by side with more space for the right plot
@@ -381,8 +391,9 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
         widths = c(1, 1.3)
       )
     }
-    # Code.R, Data.rds and the data as csv files for `pipeline_info`
-    rcode_download <- function(pipeline_info){
+    # Code.R, Data.rds and the data as csv files for `pipeline_info`, which
+    # gets `params()`
+    rcode_download <- function(pipeline_info, params = rcode_params){
       downloadHandler(
         filename = function() {
           paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
@@ -390,7 +401,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
         content = function(file) {
           waiter <- show_loading()
           envList <- list(
-            par_tmp = rcode_params()
+            par_tmp = params()
           )
           temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
           dir.create(temp_directory)
@@ -403,7 +414,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
           write(
             create_workflow_script(
               pipeline_info = pipeline_info,
-              par = rcode_params(),
+              par = params(),
               path_to_util = file.path(temp_directory, "util.R")
             ),
             file.path(temp_directory, "Code.R")
@@ -476,10 +487,13 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       file_stem = "Preprocessing_ViolinPlot",
       plot = combined_violin_plot,
       heading = "PreProcessing Violin Plot",
-      info = function() paste0("**PreProcess** - The Samples were plotted after: ",input$violin_color),
+      info = function() paste0("**PreProcess** - The Samples were plotted after: ", violin_color()),
       title = "Violin Plot"
     )
-    output$rcode_violin <- rcode_download(VIOLIN_PLOT_PIPELINE)
+    output$rcode_violin <- rcode_download(
+      VIOLIN_PLOT_PIPELINE,
+      params = reactive(c(rcode_params(), list(violin_color = violin_color())))
+    )
 
     plot_downloads(
       save_id = "save_mean_sd",
