@@ -63,3 +63,17 @@ test_that("changing the processing type after a run keeps the summary and the an
     expect_length(clicks(), n_clicks)
   })
 })
+
+test_that("a failed run leaves the last run where the app reads it", {
+  run_app_preprocessed(LOG2_FILTERED_BATCH, {
+    data <- session_data$data
+    params <- reactiveValuesToList(session_params)
+    session$setInputs(
+      `preprocessing-PreProcessing_Procedure` = "filterOnly",
+      `preprocessing-filter_threshold` = 1e9
+    )
+    session$setInputs(`preprocessing-Do_preprocessing` = 2)
+    expect_identical(session_data$data, data)
+    expect_identical(reactiveValuesToList(session_params), params)
+  })
+})

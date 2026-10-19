@@ -9,12 +9,15 @@
 #     hides the plots until the next run
 #   upload_done: reactive, set after each successful Upload
 # Returns reactives:
-#   processed, batch_corrected: the processed and batch-corrected objects
-#   deseq, deseq_batch_corrected: the DESeq objects (vst_DESeq only)
-#   params: the options of the last run, named like the arguments of
-#     preprocessing(), with batch_column and violin_color
-#   started: changes on every "Get Pre-Processing"
-#   done: counts up after each successful run
+#   result: the last successful run, NULL before; set once at its end, so a
+#     change is the done event. A list of run_preprocessing()'s data,
+#     data_batch_corrected, DESeq_obj and DESeq_obj_batch_corrected (DESeq
+#     objects for vst_DESeq only), with
+#       params: the options, named like the arguments of preprocessing(),
+#         with batch_column and violin_color
+#       selection: the Selection it pre-processed (resolve_selection())
+#       omic_type: the omic type it ran for
+#       run: the number of the run, so that a repeated run is a change
 #   failed: counts up after each run that failed (not for the normality test)
 #   start_discovering: the "Start Discovering" button
 preprocessing_server <- function(id, raw, omic_type, selected, selection_confirmed, upload_done){
@@ -22,21 +25,22 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
     ns <- session$ns
     file_path <- paste0("/www/", session$token, "/")
 
-    processed <- reactiveVal(NULL)
-    batch_corrected <- reactiveVal(NULL)
-    deseq <- reactiveVal(NULL)
-    deseq_batch_corrected <- reactiveVal(NULL)
-    params <- reactiveVal(NULL)
-    # the Selection and the parameters of the last run, for the R code
-    raw_selected <- reactiveVal(NULL)
-    rcode_params <- reactiveVal(NULL)
+    result <- reactiveVal(NULL)
     console_output <- reactiveVal(NULL)
     warnings <- reactiveVal(NULL)
-    done <- reactiveVal(NULL)
     failed <- reactiveVal(NULL)
     count_up <- function(counter){
       counter((isolate(counter()) %||% 0) + 1)
     }
+    # the parameters of the last run with its Selection, for the R code
+    rcode_params <- reactive({
+      req(result())
+      c(
+        selection_params(result()$selection),
+        list(omic_type = result()$omic_type),
+        result()$params
+      )
+    })
 
     react_violin_plot <- reactiveVal(NULL)
     react_violin_plot_raw <- reactiveVal(NULL)
@@ -190,18 +194,18 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
       )
     })
 
-    output$Statisitcs_Data <- renderText({
-      "Press 'Get-Preprocessing' to start!"
-    })
+    # the summary of the last run, or why it failed
+    summary_text <- reactiveVal("Press 'Get-Preprocessing' to start!")
+    output$Statisitcs_Data <- renderText(summary_text())
 
 ## Plots ----
     output$raw_violin_plot <- renderPlot({
       req(able_to_plot())
-      violin_plot(raw_selected(), violin_color = isolate(input$violin_color))
+      violin_plot(result()$selection$data, violin_color = isolate(input$violin_color))
     })
     output$preprocessed_violin_plot <- renderPlot({
       req(able_to_plot())
-      violin_plot(processed(), violin_color = input$violin_color)
+      violin_plot(result()$data, violin_color = input$violin_color)
     })
     output$mean_sd_plot <- renderPlot({
       req(able_to_plot())
@@ -256,6 +260,7 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
         hide_on_render = FALSE
       )
       waiter$show()
+      on.exit(waiter$hide())
       print("Starting the Preprocessing")
       # ---- Options, named like the arguments of preprocessing() ----
       options <- list(
@@ -272,12 +277,12 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
       selection <- selected()
       selected_data <- selection$data
 
+      # returns NULL for `res`
       preprocessing_failed <- function(message, additional_text = NULL){
         error_modal(message, additional_text = additional_text)
-        output$Statisitcs_Data <- renderText({ERROR_PREPROC})
+        summary_text(ERROR_PREPROC)
         count_up(failed)
-        waiter$hide()
-        req(FALSE)
+        NULL
       }
       res <- tryCatch(
         run_preprocessing(
@@ -287,9 +292,8 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
           batch_column = batch_column
         ),
         normality_error = function(e){
-          output$Statisitcs_Data <- renderText({ERROR_NORM_TEST})
-          waiter$hide()
-          req(FALSE)
+          summary_text(ERROR_NORM_TEST)
+          NULL
         },
         batch_error = function(e){
           preprocessing_failed(conditionMessage(e), additional_text = ifelse(
@@ -298,42 +302,18 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
         },
         error = function(e) preprocessing_failed(conditionMessage(e))
       )
+      if (is.null(res)) return()
       data <- res$data
       run_params <- c(options, list(batch_column = batch_column, violin_color = input$violin_color))
-      params(run_params)
-      rcode_params(c(selection_params(selection), list(omic_type = omic_type()), run_params))
-      raw_selected(selected_data)
-      batch_corrected(res$data_batch_corrected)
-      deseq(res$DESeq_obj)
-      deseq_batch_corrected(res$DESeq_obj_batch_corrected)
-      console_output(res$console_output)
-      warnings(res$warnings)
-      processed(data)
 
-      output$Statisitcs_Data <- renderText(preprocessing_summary(
+      # everything that can fail before anything is shown or returned
+      summary <- preprocessing_summary(
         dim(raw()), data, options$preprocessing_procedure, res$warnings
-      ))
-      # set the warning as toast
-      show_toast(
-        title = "Attention",
-        text = HTML(create_warning_preproc(
-          options$preprocessing_procedure, res$n_processed, nrow(data)
-        )),
-        position = "top",
-        timer = 2500,
-        timerProgressBar = T
       )
-      react_violin_plot(violin_plot(
-        data = data,
-        violin_color = input$violin_color
-      ))
-      react_violin_plot_raw(violin_plot(
-        data = selected_data,
-        violin_color = input$violin_color
-      ))
+      violin <- violin_plot(data = data, violin_color = input$violin_color)
+      violin_raw <- violin_plot(data = selected_data, violin_color = input$violin_color)
       mean_and_obj <- vsn::meanSdPlot(as.matrix(assay(data)), plot=FALSE)
-      react_mean_sd_plot(mean_and_obj$gg + CUSTOM_THEME + ggtitle("Mean and SD per entity"))
-      able_to_plot(TRUE)
+      mean_sd <- mean_and_obj$gg + CUSTOM_THEME + ggtitle("Mean and SD per entity")
 
 ## Log preprocessing ----
       fun_LogIt(session, "## Pre Processing {.tabset .tabset-fade}")
@@ -348,8 +328,32 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
       ))
       fun_LogIt(session, message = "<br>")
 
-      count_up(done)
-      waiter$hide()
+      console_output(res$console_output)
+      warnings(res$warnings)
+      summary_text(summary)
+      react_violin_plot(violin)
+      react_violin_plot_raw(violin_raw)
+      react_mean_sd_plot(mean_sd)
+      able_to_plot(TRUE)
+      result(c(
+        res[c("data", "data_batch_corrected", "DESeq_obj", "DESeq_obj_batch_corrected")],
+        list(
+          params = run_params,
+          selection = selection,
+          omic_type = omic_type(),
+          run = input$Do_preprocessing
+        )
+      ))
+      # set the warning as toast
+      show_toast(
+        title = "Attention",
+        text = HTML(create_warning_preproc(
+          options$preprocessing_procedure, res$n_processed, nrow(data)
+        )),
+        position = "top",
+        timer = 2500,
+        timerProgressBar = T
+      )
     })
 
 ## Preprocessing save, Report and Code Snippet ----
@@ -415,119 +419,79 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
       )
     }
 
-    output$SavePlot_Preprocess <- downloadHandler(
-      filename = function() {
-        paste0("Preprocessing_ViolinPlot_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_Preprocess)
-      },
-      content = function(file) {
-        # Save the combined plot
+    # "Save plot" (`save_id`) and "Send only to Report" (`report_id`) for
+    # `plot()`: saved as `file_stem`_<time> with the extension chosen in
+    # `ext_id`; saving also sends it to the Report. The Report gets `heading`,
+    # the line `info()` and the plot, titled `title`.
+    plot_downloads <- function(save_id, report_id, ext_id, file_stem, plot, heading, info, title){
+      save_plot <- function(file){
         ggsave(
           filename = file,
-          plot = combined_violin_plot(),
+          plot = plot(),
           width = 16,  # Increase the width of the figure
           height = 8,  # Adjust height if necessary
           units = "in",
-          device = gsub("\\.","",input$file_ext_Preprocess)
+          device = gsub("\\.","",input[[ext_id]])
         )
-        on.exit({shinyjs::click(ns("only2Report_Preprocess"))})
       }
+      output[[save_id]] <- downloadHandler(
+        filename = function() {
+          paste0(file_stem, "_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input[[ext_id]])
+        },
+        content = function(file) {
+          save_plot(file)
+          on.exit({shinyjs::click(ns(report_id))})
+        }
+      )
+      observeEvent(input[[report_id]],{
+        notificationID <- showNotification("Saving to Report...",duration = 0)
+        tmp_filename <- paste0(
+          getwd(),
+          file_path,
+          paste0(file_stem, "_", format(Sys.time(), "%Y_%m_%d_%H_%M_%S"), input[[ext_id]])
+        )
+        save_plot(tmp_filename)
+        fun_LogIt(session, message = paste0("## ", heading, "{.tabset .tabset-fade}"))
+        fun_LogIt(session, message = "### Info")
+        fun_LogIt(session, message = info())
+        fun_LogIt(session,
+          message = paste0("**PreProcess** - ![", title, "](",tmp_filename,")")
+        )
+        if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
+          fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
+        }
+        # no publication snippet as thats already in the log
+        removeNotification(notificationID)
+        showNotification("Report Saved!",type = "message", duration = 1)
+      })
+    }
+
+    plot_downloads(
+      save_id = "SavePlot_Preprocess",
+      report_id = "only2Report_Preprocess",
+      ext_id = "file_ext_Preprocess",
+      file_stem = "Preprocessing_ViolinPlot",
+      plot = combined_violin_plot,
+      heading = "PreProcessing Violin Plot",
+      info = function() paste0("**PreProcess** - The Samples were plotted after: ",input$violin_color),
+      title = "Violin Plot"
     )
-
-    observeEvent(input$only2Report_Preprocess,{
-      notificationID <- showNotification("Saving to Report...",duration = 0)
-      tmp_filename <- paste0(
-        getwd(),
-        file_path,
-        paste0(
-          "Preprocessing_ViolinPlot_",
-          format(Sys.time(), "%Y_%m_%d_%H_%M_%S"),
-          input$file_ext_Preprocess
-        )
-      )
-      ggsave(
-        filename = tmp_filename,
-        plot = combined_violin_plot(),
-        width = 16,  # Increase the width of the figure
-        height = 8,  # Adjust height if necessary
-        units = "in",
-        device = gsub("\\.","",input$file_ext_Preprocess)
-      )
-      fun_LogIt(session, message = "## PreProcessing Violin Plot{.tabset .tabset-fade}")
-      fun_LogIt(session, message = "### Info")
-      fun_LogIt(session, message = paste0("**PreProcess** - The Samples were plotted after: ",input$violin_color))
-      fun_LogIt(session,
-        message = paste0("**PreProcess** - ![Violin Plot](",tmp_filename,")")
-      )
-      if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
-        fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
-      }
-      # no publication snippet as thats already in the log
-      removeNotification(notificationID)
-      showNotification("Report Saved!",type = "message", duration = 1)
-    })
-
     output$getR_Code_Preprocess <- rcode_download(VIOLIN_PLOT_PIPELINE)
 
-    output$SavePlot_mean_sd_plot <- downloadHandler(
-      filename = function() {
-        paste0("Preprocessing_mean_sd_plot_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_type_mean_sd_plot)
-      },
-      content = function(file) {
-        ggsave(
-          filename = file,
-          plot = react_mean_sd_plot(),
-          width = 16,  # Increase the width of the figure
-          height = 8,  # Adjust height if necessary
-          units = "in",
-          device = gsub("\\.","",input$file_type_mean_sd_plot)
-        )
-        on.exit({shinyjs::click(ns("only2Report_mean_sd_plot"))})
-      }
+    plot_downloads(
+      save_id = "SavePlot_mean_sd_plot",
+      report_id = "only2Report_mean_sd_plot",
+      ext_id = "file_type_mean_sd_plot",
+      file_stem = "Preprocessing_mean_sd_plot",
+      plot = react_mean_sd_plot,
+      heading = "PreProcessing Mean and SD Plot",
+      info = function() "The means of the preprocessed data are plotted agains their standard deviation to check for heteroskedasticity.",
+      title = "Mean and SD Plot"
     )
-
-    observeEvent(input$only2Report_mean_sd_plot,{
-      notificationID <- showNotification("Saving to Report...",duration = 0)
-      tmp_filename <- paste0(
-        getwd(),
-        file_path,
-        paste0(
-          "Preprocessing_mean_sd_plot_",
-          format(Sys.time(), "%Y_%m_%d_%H_%M_%S"),
-          input$file_type_mean_sd_plot
-        )
-      )
-      ggsave(
-        filename = tmp_filename,
-        plot = react_mean_sd_plot(),
-        width = 16,  # Increase the width of the figure
-        height = 8,  # Adjust height if necessary
-        units = "in",
-        device = gsub("\\.","",input$file_type_mean_sd_plot)
-      )
-      fun_LogIt(session, message = "## PreProcessing Mean and SD Plot{.tabset .tabset-fade}")
-      fun_LogIt(session, message = "### Info")
-      fun_LogIt(session, message = "The means of the preprocessed data are plotted agains their standard deviation to check for heteroskedasticity.")
-      fun_LogIt(session,
-        message = paste0("**PreProcess** - ![Mean and SD Plot](",tmp_filename,")")
-      )
-      if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
-        fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
-      }
-      # no publication snippet as thats already in the log
-      removeNotification(notificationID)
-      showNotification("Saved!",type = "message", duration = 1)
-    })
-
     output$getR_Code_mean_sd_plot <- rcode_download(MEAN_SD_PLOT_PIPELINE)
 
     list(
-      processed = reactive(processed()),
-      batch_corrected = reactive(batch_corrected()),
-      deseq = reactive(deseq()),
-      deseq_batch_corrected = reactive(deseq_batch_corrected()),
-      params = reactive(params()),
-      started = reactive(input$Do_preprocessing),
-      done = reactive(done()),
+      result = reactive(result()),
       failed = reactive(failed()),
       start_discovering = reactive(input$GoToStartAnalysis)
     )

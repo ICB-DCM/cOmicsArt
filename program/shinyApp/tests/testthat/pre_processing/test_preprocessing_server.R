@@ -34,29 +34,31 @@ test_that("a log10 run returns the processed object and its parameters", {
   test_env <- environment()
   testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
     report <- local_report(session, test_env)
-    expect_null(session$returned$done())
+    expect_null(session$returned$result())
     session$setInputs(
       processing_type = "Log-Based", PreProcessing_Procedure = "log10",
       PreProcessing_Procedure_filtering = "filterOnly", filter_threshold = 0,
       BatchEffect_Column = "NULL", violin_color = "diet"
     )
     session$setInputs(Do_preprocessing = 1)
-    expect_false(is.null(session$returned$done()))
+    result <- session$returned$result()
+    expect_false(is.null(result))
     expected <- suppressMessages(run_preprocessing(
       lipids, "Lipidomics",
       list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0),
       batch_column = "NULL"
     ))
     expect_equal(
-      SummarizedExperiment::assay(session$returned$processed()),
+      SummarizedExperiment::assay(result$data),
       SummarizedExperiment::assay(expected$data)
     )
-    params <- session$returned$params()
+    expect_equal(result$selection$data, lipids)
+    params <- result$params
     expect_equal(params$preprocessing_procedure, "log10")
     expect_equal(params$filter_threshold, 0)
     expect_equal(params$batch_column, "NULL")
     expect_equal(params$violin_color, "diet")
-    expect_null(session$returned$deseq())
+    expect_null(result$DESeq_obj)
     expect_match(report(), "**PreProcessing** - Procedure: log10", fixed = TRUE)
     expect_match(output$Statisitcs_Data, "logX(data+1) is done", fixed = TRUE)
   })
@@ -73,12 +75,12 @@ test_that("DESeq2 on Transcriptomics returns a DESeq object", {
       DESeq_formula_sub = "condition", BatchEffect_Column = "NULL"
     )
     session$setInputs(Do_preprocessing = 1)
-    expect_s4_class(session$returned$deseq(), "DESeqDataSet")
-    expect_equal(session$returned$params()$deseq_factors, "condition")
+    expect_s4_class(session$returned$result()$DESeq_obj, "DESeqDataSet")
+    expect_equal(session$returned$result()$params$deseq_factors, "condition")
   })
 })
 
-test_that("a failed run leaves no done event", {
+test_that("a failed run returns no result", {
   test_env <- environment()
   testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
     local_report(session, test_env)
@@ -87,8 +89,45 @@ test_that("a failed run leaves no done event", {
       filter_threshold = 1e9, BatchEffect_Column = "NULL"
     )
     session$setInputs(Do_preprocessing = 1)
-    expect_null(session$returned$done())
+    expect_null(session$returned$result())
     expect_false(is.null(session$returned$failed()))
-    expect_null(session$returned$processed())
+  })
+})
+
+test_that("repeating a run returns a new result", {
+  test_env <- environment()
+  testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
+    local_report(session, test_env)
+    session$setInputs(
+      processing_type = "Log-Based", PreProcessing_Procedure = "log10",
+      PreProcessing_Procedure_filtering = "filterOnly", filter_threshold = 0,
+      BatchEffect_Column = "NULL"
+    )
+    session$setInputs(Do_preprocessing = 1)
+    first <- session$returned$result()
+    session$setInputs(Do_preprocessing = 2)
+    expect_false(identical(session$returned$result(), first))
+  })
+})
+
+test_that("Send only to Report saves each plot and adds it to the report", {
+  test_env <- environment()
+  testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
+    report <- local_report(session, test_env)
+    session$setInputs(
+      processing_type = "Log-Based", PreProcessing_Procedure = "log10",
+      PreProcessing_Procedure_filtering = "filterOnly", filter_threshold = 0,
+      BatchEffect_Column = "NULL", violin_color = "diet",
+      file_ext_Preprocess = ".png", file_type_mean_sd_plot = ".png"
+    )
+    session$setInputs(Do_preprocessing = 1)
+    session$setInputs(only2Report_Preprocess = 1)
+    session$setInputs(only2Report_mean_sd_plot = 1)
+    expect_match(report(), "## PreProcessing Violin Plot{.tabset .tabset-fade}", fixed = TRUE)
+    expect_match(report(), "The Samples were plotted after: diet", fixed = TRUE)
+    expect_match(report(), "## PreProcessing Mean and SD Plot{.tabset .tabset-fade}", fixed = TRUE)
+    plots <- regmatches(report(), gregexpr("(?<=\\]\\()[^)]+\\.png", report(), perl = TRUE))[[1]]
+    expect_length(plots, 2)
+    expect_true(all(file.exists(plots)))
   })
 })

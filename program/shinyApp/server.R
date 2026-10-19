@@ -361,7 +361,8 @@ server <- function(input,output,session){
 
 ## Bridge (temporary) ----
   # writes the Selection where the rest of the app reads it; only when it is
-  # confirmed or Pre-processing starts, so it never replaces processed data
+  # confirmed, so it never replaces processed data. A run writes the
+  # Selection it pre-processed itself.
   write_selection <- function(){
     current <- isolate(selection$selected())
     session_data$data <- current$data
@@ -407,20 +408,19 @@ server <- function(input,output,session){
 
 ## Bridge (temporary, removed in Phase 3h) ----
   # Until then session_data / session_params are what the rest of the app
-  # reads; the module's returns are read only here (and `done` by the
-  # analysis modules). A run reaches them only through these observers.
-  # the Selection is written at the start of a run, before the module reads it
-  observeEvent(preprocessing$started(), {
-    write_selection()
-  }, priority = 1)
-  # writes the run where the rest of the app reads it; priority so it runs
-  # before the analysis modules, which react to the same `done`
-  observeEvent(preprocessing$done(), {
-    session_data$data <- preprocessing$processed()
-    session_data$data_batch_corrected <- preprocessing$batch_corrected()
-    session_data$DESeq_obj <- preprocessing$deseq()
-    session_data$DESeq_obj_batch_corrected <- preprocessing$deseq_batch_corrected()
-    params <- preprocessing$params()
+  # reads; the module's returns are read only here (and `result` by the
+  # analysis modules). A run reaches them only through these observers, and
+  # only once it succeeded, so a failed run leaves the last one in place.
+  # writes the run with its Selection where the rest of the app reads it;
+  # priority so it runs before the analysis modules, which react to the same
+  # `result`
+  observeEvent(preprocessing$result(), {
+    run <- preprocessing$result()
+    session_data$data <- run$data
+    session_data$data_batch_corrected <- run$data_batch_corrected
+    session_data$DESeq_obj <- run$DESeq_obj
+    session_data$DESeq_obj_batch_corrected <- run$DESeq_obj_batch_corrected
+    params <- c(selection_params(run$selection), run$params)
     for (name in names(params)) session_params[[name]] <- params[[name]]
     # once per run, not on every change of the controls
     show_tabs(session_params$omic_type)
@@ -440,7 +440,7 @@ server <- function(input,output,session){
     id = "sample_correlation",
     session_data = session_data,
     session_params = session_params,
-    selectedData_processed = preprocessing$done
+    selectedData_processed = preprocessing$result
   )
 
   # Significance Analysis ----
@@ -465,7 +465,7 @@ server <- function(input,output,session){
     session_data = session_data,
     session_params = session_params,
     data_input_shiny = data_input_shiny,
-    selectedData_processed = preprocessing$done
+    selectedData_processed = preprocessing$result
   )
 
   # Single Gene Visualisations ----
@@ -474,7 +474,7 @@ server <- function(input,output,session){
     session_data = session_data,
     session_params = session_params,
     data_input_shiny = data_input_shiny,
-    selectedData_processed = preprocessing$done
+    selectedData_processed = preprocessing$result
   )
 
   # Enrichment Analysis ----
