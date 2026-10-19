@@ -14,16 +14,16 @@ run_app_preprocessed <- function(options, expr){
     session$setInputs(`upload-EasyTestForUser` = 1)
     session$setInputs(`selection-use_full_data` = 1)
     do.call(session$setInputs, .(options))
-    session$setInputs(Do_preprocessing = 1)
+    session$setInputs(`preprocessing-Do_preprocessing` = 1)
     report <- paste(readLines(report_file), collapse = "\n")
     .(expr)
   })))
 }
 
 LOG2_FILTERED_BATCH <- list(
-  processing_type = "Log-Based", PreProcessing_Procedure = "log2",
-  PreProcessing_Procedure_filtering = "filterOnly", filter_threshold = 100,
-  BatchEffect_Column = "diet"
+  `preprocessing-processing_type` = "Log-Based", `preprocessing-PreProcessing_Procedure` = "log2",
+  `preprocessing-PreProcessing_Procedure_filtering` = "filterOnly", `preprocessing-filter_threshold` = 100,
+  `preprocessing-BatchEffect_Column` = "diet"
 )
 
 test_that("the report describes a filtered log2 run with a batch column", {
@@ -49,7 +49,7 @@ test_that("changing the processing type after a run keeps the summary and the an
   )
   run_app_preprocessed(LOG2_FILTERED_BATCH, {
     clicks <- function() session$userData$clicks
-    summary <- output$Statisitcs_Data
+    summary <- output$`preprocessing-Statisitcs_Data`
     expect_match(summary, "logX(data+1) is done", fixed = TRUE)
     # one refresh per analysis tab
     expect_setequal(clicks(), c(
@@ -58,8 +58,8 @@ test_that("changing the processing type after a run keeps the summary and the an
       "sample_correlation-refreshUI", "ml_classification-refreshUI"
     ))
     n_clicks <- length(clicks())
-    session$setInputs(processing_type = "Filtering")
-    expect_equal(output$Statisitcs_Data, summary)
+    session$setInputs(`preprocessing-processing_type` = "Filtering")
+    expect_equal(output$`preprocessing-Statisitcs_Data`, summary)
     expect_length(clicks(), n_clicks)
   })
 })

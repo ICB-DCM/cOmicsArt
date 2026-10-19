@@ -1,12 +1,19 @@
-pre_processing_sidebar_panel <- sidebarPanel(
-  id = "sidebar_pre_processing",
+### Pre-processing module UI
+# The "2. Pre-processing" tab: the sidebar with the options and "Get
+# Pre-Processing", the main panel with the summary, console output, plots,
+# downloads and notes.
+
+preprocessing_sidebar_ui <- function(id){
+  ns <- NS(id)
+  sidebarPanel(
+  id = ns("sidebar_pre_processing"),
   #########################################
   # Do Center & scaling + potential other pre-processing stuff
   #########################################
   # this could be enhanced with personalized procedures
   # First dropdown: Choose Processing Type
   selectInput(
-    inputId = "processing_type",
+    inputId = ns("processing_type"),
     label = "Choose Processing Type",
     choices = c("No pre-processing",
                 "Filtering",
@@ -18,34 +25,37 @@ pre_processing_sidebar_panel <- sidebarPanel(
   ) %>% helper(type = "markdown", content = "PreProcessing_Procedures"),
 
   # Second dropdown: Options based on Processing Type
-  uiOutput(outputId = "dynamic_options_ui"),
+  uiOutput(outputId = ns("dynamic_options_ui")),
 
   # Additional UI elements based on the selected option
-  uiOutput(outputId = "additional_inputs_filter_ui"),
+  uiOutput(outputId = ns("additional_inputs_filter_ui")),
 
 
-  uiOutput(outputId = "formula_sub_ui"),
-  uiOutput(outputId = "batch_effect_ui") %>% helper(type = "markdown", content = "PreProcessing_Batch"),
+  uiOutput(outputId = ns("formula_sub_ui")),
+  uiOutput(outputId = ns("batch_effect_ui")) %>% helper(type = "markdown", content = "PreProcessing_Batch"),
   actionButton(
-    inputId = "Do_preprocessing",
+    inputId = ns("Do_preprocessing"),
     label = "Get Pre-Processing",
     icon(name = "fas fa-mouse-pointer")
   ),
   hr(style = "border-top: 1px solid #000000;"),
-  uiOutput("violin_plot_color_ui")
-)
+  uiOutput(ns("violin_plot_color_ui"))
+  )
+}
 
 
-pre_processing_main_panel <- mainPanel(
-  id = "mainpanel_pre_processing",
+preprocessing_main_ui <- function(id){
+  ns <- NS(id)
+  mainPanel(
+  id = ns("mainpanel_pre_processing"),
   # Statistics to the data
-  htmlOutput(outputId = "Statisitcs_Data", container = pre),
+  htmlOutput(outputId = ns("Statisitcs_Data"), container = pre),
   div(
-    id = "data_summary",
+    id = ns("data_summary"),
     HTML(text = "<br>"),
     fluidRow(column(5,
                     actionButton(
-                      "GoToStartAnalysis", "Start Discovering",
+                      ns("GoToStartAnalysis"), "Start Discovering",
                       width = "100%",
                       icon = icon("fas fa-mouse-pointer"),
                       style = "
@@ -60,62 +70,62 @@ pre_processing_main_panel <- mainPanel(
                     )
     )),
     actionButton(
-      inputId = "console_toggle_button",
+      inputId = ns("console_toggle_button"),
       label = "(show/hide) Further Console Output",
       icon = icon('plus'),
       style = "color: #000000; background-color: transparent; border-color: transparent"
     ),
     div(
-      id = "console_toggle",
+      id = ns("console_toggle"),
       style = "display: none;",
       class = "ConsoleOutput_ui",
-      uiOutput("consoleOutputDisplay"),
+      uiOutput(ns("consoleOutputDisplay")),
       hr(style = "border-top: 1px solid #858585;")
     ),
     fluidRow(
       column(
         6,
         h4("Raw Data"),
-        plotOutput("raw_violin_plot")
+        plotOutput(ns("raw_violin_plot"))
       ),
       column(
         6,
         h4("Pre-processed Data"),
-        plotOutput("preprocessed_violin_plot"),
+        plotOutput(ns("preprocessed_violin_plot")),
       )
     ),
     h4("Mean and Standard Deviation of preprocessed data"),
-    plotOutput("mean_sd_plot"),
+    plotOutput(ns("mean_sd_plot")),
     fluidRow(column(4, ""), column(
       4,
       h5("Mean and SD Plot Download"),
       div(
         style = "margin-bottom: 5px;",
         actionButton(
-          inputId = "only2Report_mean_sd_plot",
+          inputId = ns("only2Report_mean_sd_plot"),
           label = "Send only to Report",
           class = "btn-info"
         )
       ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
       downloadButton(
-          outputId = "getR_Code_mean_sd_plot",
+          outputId = ns("getR_Code_mean_sd_plot"),
           label = "Get underlying R code and data",
           icon = icon(name = "code")
       ),
       div(
         style = "margin-top: 5px; margin-bottom: 5px;",
           downloadButton(
-            outputId = "SavePlot_mean_sd_plot",
+            outputId = ns("SavePlot_mean_sd_plot"),
             label = "Save plot",
             class = "btn-info"
           ),
           clipboard_button(
-            inputId = "copy_mean_sd_plot_btn",
-            plot_id = "mean_sd_plot"
+            inputId = ns("copy_mean_sd_plot_btn"),
+            plot_id = ns("mean_sd_plot")
           )
       ),
       radioGroupButtons(
-        inputId = "file_type_mean_sd_plot",
+        inputId = ns("file_type_mean_sd_plot"),
         label = "File Type:",
         choices = c(".png", ".tiff", ".svg", ".pdf"),
         selected = ".png"
@@ -126,32 +136,35 @@ pre_processing_main_panel <- mainPanel(
       div(
         style = "margin-bottom: 5px;",
         actionButton(
-          inputId = "only2Report_Preprocess",
+          inputId = ns("only2Report_Preprocess"),
           label = "Send only to Report",
           class = "btn-info"
-        ) 
+        )
       ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
       downloadButton(
-          outputId = "getR_Code_Preprocess",
+          outputId = ns("getR_Code_Preprocess"),
           label = "Get underlying R code and data",
           icon = icon(name = "code")
       ),
       div(
         style = "margin-top: 5px; margin-bottom: 5px;",
         downloadButton(
-            outputId = "SavePlot_Preprocess",
+            outputId = ns("SavePlot_Preprocess"),
             label = "Save both plots",
             class = "btn-info"
         ),
         actionButton(
-          inputId = "copy_both_plots_btn", 
+          inputId = ns("copy_both_plots_btn"),
           label = "Copy both plots",
           icon = icon("copy"),
-          class = "btn-primary" 
+          class = "btn-primary",
+          # the two plots copyBothPlotsToClipboardCombined() copies
+          `data-clipboard-raw-plot` = ns("raw_violin_plot"),
+          `data-clipboard-processed-plot` = ns("preprocessed_violin_plot")
         )
       ),
       radioGroupButtons(
-        inputId = "file_ext_Preprocess",
+        inputId = ns("file_ext_Preprocess"),
         label = "File Type:",
         choices = c(".png", ".tiff", ".svg", ".pdf"),
         selected = ".png"
@@ -161,7 +174,7 @@ pre_processing_main_panel <- mainPanel(
       style = "border: 1px solid silver:", cellWidths = c("50%", "50%"),
       cellArgs = list(style = "padding: 15px"),
       div(textAreaInput(
-        inputId = "NotesPreprocessedData",
+        inputId = ns("NotesPreprocessedData"),
         label = "Notes:",
         placeholder = NOTES_PlACEHOLDER,
         width = "1000px"
@@ -170,16 +183,20 @@ pre_processing_main_panel <- mainPanel(
       NULL
     )
   )
-)
+  )
+}
 
 
 
-pre_processing_panel <- tabPanel(
-  title = tagList(tags$span("2. Pre-processing")), 
-  value = "Pre-processing",
-  id = "pre_processing_panel",
-  fluid = T,
-  h4("Data Pre-processing"),
-  pre_processing_sidebar_panel,
-  pre_processing_main_panel
-)
+preprocessing_ui <- function(id){
+  ns <- NS(id)
+  tabPanel(
+    title = tagList(tags$span("2. Pre-processing")),
+    value = "Pre-processing",
+    id = ns("pre_processing_panel"),
+    fluid = T,
+    h4("Data Pre-processing"),
+    preprocessing_sidebar_ui(id),
+    preprocessing_main_ui(id)
+  )
+}
