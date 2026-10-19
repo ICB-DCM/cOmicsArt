@@ -413,7 +413,8 @@ server <- function(input,output,session){
   observeEvent(preprocessing$started(), {
     write_selection()
   }, priority = 1)
-  # writes the run where the rest of the app reads it
+  # writes the run where the rest of the app reads it; priority so it runs
+  # before the analysis modules, which react to the same `done`
   observeEvent(preprocessing$done(), {
     session_data$data <- preprocessing$processed()
     session_data$data_batch_corrected <- preprocessing$batch_corrected()
@@ -426,7 +427,7 @@ server <- function(input,output,session){
     refresh_analysis_tabs()
     # Count up updating
     updating$count <- updating$count + 1
-  })
+  }, priority = 1)
   observeEvent(preprocessing$failed(), {
     hide_tabs()
   })

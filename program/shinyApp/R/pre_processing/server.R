@@ -429,7 +429,7 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
           units = "in",
           device = gsub("\\.","",input$file_ext_Preprocess)
         )
-        on.exit({shinyjs::click("only2Report_Preprocess")})
+        on.exit({shinyjs::click(ns("only2Report_Preprocess"))})
       }
     )
 
@@ -481,7 +481,7 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
           units = "in",
           device = gsub("\\.","",input$file_type_mean_sd_plot)
         )
-        on.exit({shinyjs::click("only2Report_mean_sd_plot")})
+        on.exit({shinyjs::click(ns("only2Report_mean_sd_plot"))})
       }
     )
 
