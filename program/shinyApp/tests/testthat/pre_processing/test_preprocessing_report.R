@@ -1,7 +1,5 @@
 # The report's Pre-processing section: publication snippet and log lines
-genes <- readRDS(
-  file.path(test_path("..", "..", ".."), "www", "Transcriptomics_only_precompiled-LS.RDS")
-)$Transcriptomics_SumExp[1:200, ]
+genes <- test_data("Transcriptomics")[1:200, ]
 
 # session_params after a run: the options named like preprocessing()'s
 # arguments, the omic type and the batch column. Inputs of controls not shown

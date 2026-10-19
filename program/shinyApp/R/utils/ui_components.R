@@ -305,6 +305,39 @@ clipboard_button <- function(inputId, plot_id, label = "Copy plot",
   )
 }
 
+#' Create a button that copies two plots as one image
+#'
+#' Like clipboard_button(), for two plots: the JavaScript handler
+#' (copyBothPlotsToClipboardCombined()) copies them as one image, the first
+#' above the second.
+#'
+#' @param inputId Character. Button ID
+#' @param first_plot_id Character. ID of the plot on top
+#' @param second_plot_id Character. ID of the plot below
+#' @param label Character. Button label (default: "Copy both plots")
+#' @param icon_name Character. Font Awesome icon (default: "copy")
+#' @param class Character. CSS class (default: "btn-primary")
+#' @param ... Additional arguments passed to actionButton()
+#'
+#' @return Action button with data-clipboard-raw-plot and
+#'   data-clipboard-processed-plot attributes
+#'
+#' @export
+clipboard_pair_button <- function(inputId, first_plot_id, second_plot_id,
+                                  label = "Copy both plots", icon_name = "copy",
+                                  class = "btn-primary", ...) {
+  actionButton(
+    inputId = inputId,
+    label = label,
+    icon = icon(icon_name),
+    class = class,
+    # the attributes trigger the JS handler
+    `data-clipboard-raw-plot` = first_plot_id,
+    `data-clipboard-processed-plot` = second_plot_id,
+    ...
+  )
+}
+
 # Helper Attachment ------------------------------------------------------------
 
 #' Attach helper to any UI element

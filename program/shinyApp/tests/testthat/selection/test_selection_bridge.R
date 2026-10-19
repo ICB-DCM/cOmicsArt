@@ -11,10 +11,10 @@ run_app_preprocessed <- function(expr){
     session$setInputs(`upload-EasyTestForUser` = 1)
     session$setInputs(`selection-use_full_data` = 1)
     session$setInputs(
-      `preprocessing-processing_type` = "Log-Based", `preprocessing-PreProcessing_Procedure` = "log10",
-      `preprocessing-PreProcessing_Procedure_filtering` = "filterOnly", `preprocessing-BatchEffect_Column` = "NULL"
+      `preprocessing-processing_type` = "Log-Based", `preprocessing-preprocessing_procedure` = "log10",
+      `preprocessing-preprocessing_filtering` = "filterOnly", `preprocessing-batch_column` = "NULL"
     )
-    session$setInputs(`preprocessing-Do_preprocessing` = 1)
+    session$setInputs(`preprocessing-get_preprocessing` = 1)
     .(expr)
   })))
 }
@@ -23,12 +23,12 @@ test_that("changing the Selection after pre-processing keeps the processed data"
   run_app_preprocessed({
     processed <- session_data$data
     expect_lt(max(SummarizedExperiment::assay(processed)), 10)  # log10
-    invisible(output$`preprocessing-violin_plot_color_ui`)
+    invisible(output$`preprocessing-violin_color_ui`)
     session$setInputs(
       `selection-providedSampleAnnotationTypes` = "diet",
       `selection-sample_selection` = c("CD_CD_HFD", "HFD_HFD_CD")
     )
-    invisible(output$`preprocessing-violin_plot_color_ui`)
+    invisible(output$`preprocessing-violin_color_ui`)
     expect_identical(session_data$data, processed)
   })
 })
@@ -39,7 +39,7 @@ test_that("Pre-processing again uses the changed Selection", {
       `selection-providedSampleAnnotationTypes` = "diet",
       `selection-sample_selection` = c("CD_CD_HFD", "HFD_HFD_CD")
     )
-    session$setInputs(`preprocessing-Do_preprocessing` = 2)
+    session$setInputs(`preprocessing-get_preprocessing` = 2)
     expect_equal(ncol(session_data$data), 12)
     expect_length(session_params$samples_selected, 12)
   })

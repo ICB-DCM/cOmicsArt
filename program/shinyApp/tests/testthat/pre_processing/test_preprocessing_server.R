@@ -1,16 +1,10 @@
 # tests for the Pre-processing module in R/pre_processing/server.R
-app_dir <- normalizePath(test_path("..", "..", ".."))
-app_www <- function(...) file.path(app_dir, "www", ...)
-test_data <- function(omic){
-  rds <- readRDS(app_www(paste0(omic, "_only_precompiled-LS.RDS")))
-  rds[[grep("SumExp", names(rds))[1]]]
-}
 lipids <- test_data("Lipidomics")
 
 # The module's arguments for all of `data` after an Upload
 module_args <- function(data, omic_type){
   list(
-    raw = reactive(data),
+    upload = reactive(data),
     omic_type = reactive(omic_type),
     selected = reactive(resolve_selection(data, list())),
     selection_confirmed = reactive(NULL),
@@ -36,11 +30,11 @@ test_that("a log10 run returns the processed object and its parameters", {
     report <- local_report(session, test_env)
     expect_null(session$returned$result())
     session$setInputs(
-      processing_type = "Log-Based", PreProcessing_Procedure = "log10",
-      PreProcessing_Procedure_filtering = "filterOnly", filter_threshold = 0,
-      BatchEffect_Column = "NULL", violin_color = "diet"
+      processing_type = "Log-Based", preprocessing_procedure = "log10",
+      preprocessing_filtering = "filterOnly", filter_threshold = 0,
+      batch_column = "NULL", violin_color = "diet"
     )
-    session$setInputs(Do_preprocessing = 1)
+    session$setInputs(get_preprocessing = 1)
     result <- session$returned$result()
     expect_false(is.null(result))
     expected <- suppressMessages(run_preprocessing(
@@ -60,7 +54,7 @@ test_that("a log10 run returns the processed object and its parameters", {
     expect_equal(params$violin_color, "diet")
     expect_null(result$DESeq_obj)
     expect_match(report(), "**PreProcessing** - Procedure: log10", fixed = TRUE)
-    expect_match(output$Statisitcs_Data, "logX(data+1) is done", fixed = TRUE)
+    expect_match(output$summary, "logX(data+1) is done", fixed = TRUE)
   })
 })
 
@@ -70,11 +64,11 @@ test_that("DESeq2 on Transcriptomics returns a DESeq object", {
   testServer(preprocessing_server, args = module_args(transcripts, "Transcriptomics"), {
     local_report(session, test_env)
     session$setInputs(
-      processing_type = "Omic-Specific", PreProcessing_Procedure = "vst_DESeq",
-      PreProcessing_Procedure_filtering = "filterOnly", filter_threshold = 10,
-      DESeq_formula_sub = "condition", BatchEffect_Column = "NULL"
+      processing_type = "Omic-Specific", preprocessing_procedure = "vst_DESeq",
+      preprocessing_filtering = "filterOnly", filter_threshold = 10,
+      deseq_factors = "condition", batch_column = "NULL"
     )
-    session$setInputs(Do_preprocessing = 1)
+    session$setInputs(get_preprocessing = 1)
     expect_s4_class(session$returned$result()$DESeq_obj, "DESeqDataSet")
     expect_equal(session$returned$result()$params$deseq_factors, "condition")
   })
@@ -85,10 +79,10 @@ test_that("a failed run returns no result", {
   testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
     local_report(session, test_env)
     session$setInputs(
-      processing_type = "Filtering", PreProcessing_Procedure = "filterOnly",
-      filter_threshold = 1e9, BatchEffect_Column = "NULL"
+      processing_type = "Filtering", preprocessing_procedure = "filterOnly",
+      filter_threshold = 1e9, batch_column = "NULL"
     )
-    session$setInputs(Do_preprocessing = 1)
+    session$setInputs(get_preprocessing = 1)
     expect_null(session$returned$result())
     expect_false(is.null(session$returned$failed()))
   })
@@ -99,35 +93,115 @@ test_that("repeating a run returns a new result", {
   testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
     local_report(session, test_env)
     session$setInputs(
-      processing_type = "Log-Based", PreProcessing_Procedure = "log10",
-      PreProcessing_Procedure_filtering = "filterOnly", filter_threshold = 0,
-      BatchEffect_Column = "NULL"
+      processing_type = "Log-Based", preprocessing_procedure = "log10",
+      preprocessing_filtering = "filterOnly", filter_threshold = 0,
+      batch_column = "NULL"
     )
-    session$setInputs(Do_preprocessing = 1)
+    session$setInputs(get_preprocessing = 1)
     first <- session$returned$result()
-    session$setInputs(Do_preprocessing = 2)
+    session$setInputs(get_preprocessing = 2)
     expect_false(identical(session$returned$result(), first))
   })
 })
 
 test_that("Send only to Report saves each plot and adds it to the report", {
+  # grid.arrange() also draws the combined violin plot on the open device
+  pdf(NULL)
+  withr::defer(dev.off())
   test_env <- environment()
   testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
     report <- local_report(session, test_env)
     session$setInputs(
-      processing_type = "Log-Based", PreProcessing_Procedure = "log10",
-      PreProcessing_Procedure_filtering = "filterOnly", filter_threshold = 0,
-      BatchEffect_Column = "NULL", violin_color = "diet",
-      file_ext_Preprocess = ".png", file_type_mean_sd_plot = ".png"
+      processing_type = "Log-Based", preprocessing_procedure = "log10",
+      preprocessing_filtering = "filterOnly", filter_threshold = 0,
+      batch_column = "NULL", violin_color = "diet",
+      violin_file_type = ".png", mean_sd_file_type = ".png"
     )
-    session$setInputs(Do_preprocessing = 1)
-    session$setInputs(only2Report_Preprocess = 1)
-    session$setInputs(only2Report_mean_sd_plot = 1)
+    session$setInputs(get_preprocessing = 1)
+    session$setInputs(report_violin = 1)
+    session$setInputs(report_mean_sd = 1)
     expect_match(report(), "## PreProcessing Violin Plot{.tabset .tabset-fade}", fixed = TRUE)
     expect_match(report(), "The Samples were plotted after: diet", fixed = TRUE)
     expect_match(report(), "## PreProcessing Mean and SD Plot{.tabset .tabset-fade}", fixed = TRUE)
     plots <- regmatches(report(), gregexpr("(?<=\\]\\()[^)]+\\.png", report(), perl = TRUE))[[1]]
     expect_length(plots, 2)
     expect_true(all(file.exists(plots)))
+  })
+})
+
+test_that("a failed batch correction counts as a failed run", {
+  # the app's functions are not in a package; replace it where the module finds it
+  app_env <- environment(preprocessing_server)
+  original <- app_env$run_preprocessing
+  app_env$run_preprocessing <- function(...) stop(errorCondition("no batch", class = "batch_error"))
+  withr::defer(app_env$run_preprocessing <- original)
+  test_env <- environment()
+  testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
+    local_report(session, test_env)
+    session$setInputs(
+      processing_type = "Log-Based", preprocessing_procedure = "log10",
+      batch_column = "diet"
+    )
+    session$setInputs(get_preprocessing = 1)
+    expect_null(session$returned$result())
+    expect_equal(session$returned$failed(), 1)
+    expect_equal(output$summary, as.character(ERROR_PREPROC))
+  })
+})
+
+test_that("the R-code downloads are greyed out until a run succeeded", {
+  # shinyjs messages the browser; record the state per ID instead
+  local_mocked_bindings(
+    toggleState = function(id, condition, ...) {
+      user_data <- getDefaultReactiveDomain()$userData
+      user_data$enabled[[id]] <- condition
+    },
+    .package = "shinyjs"
+  )
+  test_env <- environment()
+  testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
+    local_report(session, test_env)
+    enabled <- function() unlist(session$userData$enabled)
+    session$setInputs(
+      processing_type = "Filtering", preprocessing_procedure = "filterOnly",
+      filter_threshold = 1e9, batch_column = "NULL"
+    )
+    expect_equal(enabled(), c(rcode_violin = FALSE, rcode_mean_sd = FALSE))
+    session$setInputs(get_preprocessing = 1)
+    expect_equal(enabled(), c(rcode_violin = FALSE, rcode_mean_sd = FALSE))
+    session$setInputs(filter_threshold = 0)
+    session$setInputs(get_preprocessing = 2)
+    expect_equal(enabled(), c(rcode_violin = TRUE, rcode_mean_sd = TRUE))
+  })
+})
+
+test_that("Save plot also sends the plot to the report", {
+  # grid.arrange() also draws the combined violin plot on the open device
+  pdf(NULL)
+  withr::defer(dev.off())
+  # shinyjs::click() messages the browser; record the clicked IDs instead
+  local_mocked_bindings(
+    click = function(id, ...) {
+      user_data <- getDefaultReactiveDomain()$userData
+      user_data$clicks <- c(user_data$clicks, id)
+    },
+    .package = "shinyjs"
+  )
+  test_env <- environment()
+  testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
+    local_report(session, test_env)
+    session$setInputs(
+      processing_type = "Log-Based", preprocessing_procedure = "log10",
+      preprocessing_filtering = "filterOnly", filter_threshold = 0,
+      batch_column = "NULL", violin_color = "diet",
+      violin_file_type = ".png", mean_sd_file_type = ".png"
+    )
+    session$setInputs(get_preprocessing = 1)
+    expect_true(file.exists(output$save_violin))
+    expect_true(file.exists(output$save_mean_sd))
+    expect_equal(
+      session$userData$clicks,
+      c(session$ns("report_violin"), session$ns("report_mean_sd"))
+    )
   })
 })

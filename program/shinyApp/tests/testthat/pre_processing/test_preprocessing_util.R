@@ -1,9 +1,4 @@
 # tests for the Pre-processing helpers in R/pre_processing/util.R
-app_www <- function(...) file.path(test_path("..", "..", ".."), "www", ...)
-test_data <- function(omic){
-  rds <- readRDS(app_www(paste0(omic, "_only_precompiled-LS.RDS")))
-  rds[[grep("SumExp", names(rds))[1]]]
-}
 assay <- SummarizedExperiment::assay
 
 lipids <- test_data("Lipidomics")            # 660 x 28, no NA

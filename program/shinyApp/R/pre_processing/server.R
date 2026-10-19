@@ -1,7 +1,7 @@
 ### Pre-processing module server
 # Runs the Pre-processing on the Selection and shows, saves and reports it.
 # Arguments:
-#   raw: reactive, the Upload's raw SummarizedExperiment
+#   upload: reactive, the Upload's SummarizedExperiment
 #   omic_type: reactive, the Upload's omic type
 #   selected: reactive, the Selection (resolve_selection()): its data is
 #     what a run pre-processes, the controls and the R code read
@@ -20,7 +20,7 @@
 #       run: the number of the run, so that a repeated run is a change
 #   failed: counts up after each run that failed (not for the normality test)
 #   start_discovering: the "Start Discovering" button
-preprocessing_server <- function(id, raw, omic_type, selected, selection_confirmed, upload_done){
+preprocessing_server <- function(id, upload, omic_type, selected, selection_confirmed, upload_done){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     file_path <- paste0("/www/", session$token, "/")
@@ -29,9 +29,6 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
     console_output <- reactiveVal(NULL)
     warnings <- reactiveVal(NULL)
     failed <- reactiveVal(NULL)
-    count_up <- function(counter){
-      counter((isolate(counter()) %||% 0) + 1)
-    }
     # the parameters of the last run with its Selection, for the R code
     rcode_params <- reactive({
       req(result())
@@ -42,6 +39,23 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
       )
     })
 
+    # the R code repeats a run, so its downloads wait for one
+    observe({
+      for (id in c("rcode_violin", "rcode_mean_sd")) {
+        shinyjs::toggleState(id, condition = !is.null(result()))
+      }
+    })
+    # shows the loading screen; returns the waiter to hide it
+    show_loading <- function(){
+      waiter <- Waiter$new(
+        html = LOADING_SCREEN,
+        color = "#3897F147",
+        hide_on_render = FALSE
+      )
+      waiter$show()
+      waiter
+    }
+
     react_violin_plot <- reactiveVal(NULL)
     react_violin_plot_raw <- reactiveVal(NULL)
     react_mean_sd_plot <- reactiveVal(NULL)
@@ -50,7 +64,7 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
     shinyjs::hideElement(id = "data_summary")
     # the Selection's data the controls offer choices for: as of the last
     # Upload or confirmed Selection, not while it is being changed
-    controls_data <- reactive({
+    confirmed_data <- reactive({
       upload_done()
       selection_confirmed()
       isolate(selected()$data)
@@ -68,7 +82,7 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
       if(choices$filtering){
         div(style = "margin-left: 15px;",
             selectInput(
-              inputId = ns("PreProcessing_Procedure_filtering"),
+              inputId = ns("preprocessing_filtering"),
               label = "Choose Filtering",
               choices = c("global Filtering" = "filterOnly",
                           "sample-wise Filtering" = "filterPerSample"),
@@ -79,7 +93,7 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
       },
       div(style = "margin-left: 15px;",
         selectInput(
-          inputId = ns("PreProcessing_Procedure"),
+          inputId = ns("preprocessing_procedure"),
           label = "Choose Processing Option",
           choices = choices$procedures,
           selected = NULL,
@@ -90,10 +104,10 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
     })
     # Show additional numeric input if "Omic-specific filtering" is chosen
     output$additional_inputs_filter_ui <- renderUI({
-      req(input$PreProcessing_Procedure)
+      req(input$preprocessing_procedure)
       filter <- filter_inputs(
-        input$PreProcessing_Procedure, input$PreProcessing_Procedure_filtering,
-        omic_type(), ncol(controls_data())
+        input$preprocessing_procedure, input$preprocessing_filtering,
+        omic_type(), ncol(confirmed_data())
       )
       if (is.null(filter)) return(NULL)
       if (filter$kind == "global") {
@@ -134,23 +148,23 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
     output$batch_effect_ui <- renderUI({
       req(upload_done())
       selectInput(
-        inputId = ns("BatchEffect_Column"),
+        inputId = ns("batch_column"),
         label = "[optional] Select Batch Effect Column",
         choices = batch_column_choices(
-          raw(), input$PreProcessing_Procedure, input$DESeq_formula_sub
+          upload(), input$preprocessing_procedure, input$deseq_factors
         ),
         selected = "NULL"
       )
     })
     output$formula_sub_ui <- renderUI({
       req(upload_done())
-      req(input$PreProcessing_Procedure)
-      design <- design_inputs(controls_data(), input$PreProcessing_Procedure)
+      req(input$preprocessing_procedure)
+      design <- design_inputs(confirmed_data(), input$preprocessing_procedure)
       if (is.null(design)) return(NULL)
       if(design$kind == "deseq"){
         div(style = "margin-left: 30px;",
           selectInput(
-            inputId = ns("DESeq_formula_sub"),
+            inputId = ns("deseq_factors"),
             label = paste0(
               "Choose factors to account for ",
               "(App might crash if your factor has only 1 sample per level)"
@@ -183,20 +197,20 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
       }
     })
 
-    output$violin_plot_color_ui <- renderUI({
+    output$violin_color_ui <- renderUI({
       req(selected())
       selectInput(
         inputId = ns("violin_color"),
         label = "Color the violin plot by:",
-        choices = c(colnames(colData(raw()))),
-        selected = c(colnames(colData(raw())))[1],
+        choices = c(colnames(colData(upload()))),
+        selected = c(colnames(colData(upload())))[1],
         multiple = F
       )
     })
 
     # the summary of the last run, or why it failed
     summary_text <- reactiveVal("Press 'Get-Preprocessing' to start!")
-    output$Statisitcs_Data <- renderText(summary_text())
+    output$summary <- renderText(summary_text())
 
 ## Plots ----
     output$raw_violin_plot <- renderPlot({
@@ -227,7 +241,7 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
     observeEvent(input$console_toggle_button, {
       shinyjs::toggle(id = "console_toggle")
     })
-    output$consoleOutputDisplay <- renderUI({
+    output$console_display <- renderUI({
       # Only show if we have output
       if (!hasConsoleOutput()) return(NULL)
       tagList(
@@ -250,30 +264,24 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
     })
 
 ## Preprocessing ----
-    observeEvent(input$Do_preprocessing, {
+    observeEvent(input$get_preprocessing, {
       # only enter this when you actually click data
-      req(input$Do_preprocessing > 0)
+      req(input$get_preprocessing > 0)
       shinyjs::showElement(id = "data_summary")
-      waiter <- Waiter$new(
-        html = LOADING_SCREEN,
-        color = "#3897F147",
-        hide_on_render = FALSE
-      )
-      waiter$show()
+      waiter <- show_loading()
       on.exit(waiter$hide())
-      print("Starting the Preprocessing")
       # ---- Options, named like the arguments of preprocessing() ----
       options <- list(
-        preprocessing_procedure = input$PreProcessing_Procedure,
-        preprocessing_filtering = input$PreProcessing_Procedure_filtering,
-        deseq_factors = input$DESeq_formula_sub,
+        preprocessing_procedure = input$preprocessing_procedure,
+        preprocessing_filtering = input$preprocessing_filtering,
+        deseq_factors = input$deseq_factors,
         filter_threshold = input$filter_threshold,
         filter_threshold_samplewise = input$filter_threshold_samplewise,
         filter_samplesize = input$filter_samplesize,
         limma_intercept = input$limma_intercept,
         limma_formula = input$limma_formula
       )
-      batch_column <- input$BatchEffect_Column %||% "NULL"
+      batch_column <- input$batch_column %||% "NULL"
       selection <- selected()
       selected_data <- selection$data
 
@@ -308,7 +316,7 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
 
       # everything that can fail before anything is shown or returned
       summary <- preprocessing_summary(
-        dim(raw()), data, options$preprocessing_procedure, res$warnings
+        dim(upload()), data, options$preprocessing_procedure, res$warnings
       )
       violin <- violin_plot(data = data, violin_color = input$violin_color)
       violin_raw <- violin_plot(data = selected_data, violin_color = input$violin_color)
@@ -341,7 +349,7 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
           params = run_params,
           selection = selection,
           omic_type = omic_type(),
-          run = input$Do_preprocessing
+          run = input$get_preprocessing
         )
       ))
       # set the warning as toast
@@ -380,12 +388,7 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
           paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
         },
         content = function(file) {
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
-          waiter$show()
+          waiter <- show_loading()
           envList <- list(
             par_tmp = rcode_params()
           )
@@ -393,7 +396,7 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
           dir.create(temp_directory)
           # save csv files
           save_summarized_experiment(
-            raw(),
+            upload(),
             temp_directory
           )
 
@@ -457,8 +460,8 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
         fun_LogIt(session,
           message = paste0("**PreProcess** - ![", title, "](",tmp_filename,")")
         )
-        if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
-          fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
+        if(isTruthy(input$notes) & !(isEmpty(input$notes))){
+          fun_LogIt(session, message = add_notes_report(shiny::markdown(input$notes)))
         }
         # no publication snippet as thats already in the log
         removeNotification(notificationID)
@@ -467,33 +470,33 @@ preprocessing_server <- function(id, raw, omic_type, selected, selection_confirm
     }
 
     plot_downloads(
-      save_id = "SavePlot_Preprocess",
-      report_id = "only2Report_Preprocess",
-      ext_id = "file_ext_Preprocess",
+      save_id = "save_violin",
+      report_id = "report_violin",
+      ext_id = "violin_file_type",
       file_stem = "Preprocessing_ViolinPlot",
       plot = combined_violin_plot,
       heading = "PreProcessing Violin Plot",
       info = function() paste0("**PreProcess** - The Samples were plotted after: ",input$violin_color),
       title = "Violin Plot"
     )
-    output$getR_Code_Preprocess <- rcode_download(VIOLIN_PLOT_PIPELINE)
+    output$rcode_violin <- rcode_download(VIOLIN_PLOT_PIPELINE)
 
     plot_downloads(
-      save_id = "SavePlot_mean_sd_plot",
-      report_id = "only2Report_mean_sd_plot",
-      ext_id = "file_type_mean_sd_plot",
+      save_id = "save_mean_sd",
+      report_id = "report_mean_sd",
+      ext_id = "mean_sd_file_type",
       file_stem = "Preprocessing_mean_sd_plot",
       plot = react_mean_sd_plot,
       heading = "PreProcessing Mean and SD Plot",
       info = function() "The means of the preprocessed data are plotted agains their standard deviation to check for heteroskedasticity.",
       title = "Mean and SD Plot"
     )
-    output$getR_Code_mean_sd_plot <- rcode_download(MEAN_SD_PLOT_PIPELINE)
+    output$rcode_mean_sd <- rcode_download(MEAN_SD_PLOT_PIPELINE)
 
     list(
       result = reactive(result()),
       failed = reactive(failed()),
-      start_discovering = reactive(input$GoToStartAnalysis)
+      start_discovering = reactive(input$start_discovering)
     )
   })
 }

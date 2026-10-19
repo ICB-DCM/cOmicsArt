@@ -399,7 +399,7 @@ server <- function(input,output,session){
 # Pre-processing ----
   preprocessing <- preprocessing_server(
     "preprocessing",
-    raw = reactive(session_data$data_original),
+    upload = reactive(session_data$data_original),
     omic_type = upload$omic_type,
     selected = selection$selected,
     selection_confirmed = selection$confirmed,

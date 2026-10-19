@@ -1,9 +1,4 @@
 # The downloadable R code repeats the Pre-processing the app did.
-app_www <- function(...) file.path(test_path("..", "..", ".."), "www", ...)
-test_data <- function(omic){
-  rds <- readRDS(app_www(paste0(omic, "_only_precompiled-LS.RDS")))
-  rds[[grep("SumExp", names(rds))[1]]]
-}
 
 # Run the generated select_data() and preprocessing() steps with the
 # parameters the app stores after a run.
