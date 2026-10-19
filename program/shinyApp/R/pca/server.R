@@ -35,7 +35,7 @@ pca_Server <- function(id, session_data, session_params, data_input_shiny){
       data <- reactiveValuesToList(session_data)
 
       output$UseBatch_ui <- renderUI({
-        req(session_params$BatchColumn != "NULL")
+        req(session_params$batch_column != "NULL")
         selectInput(
           inputId = ns("UseBatch"),
           label = "Use batch corrected data?",
@@ -165,7 +165,7 @@ pca_Server <- function(id, session_data, session_params, data_input_shiny){
 
       # assign variables to be used
       useBatch <- ifelse(
-        session_params$BatchColumn != "NULL" && input$UseBatch == "Yes",
+        session_params$batch_column != "NULL" && input$UseBatch == "Yes",
         TRUE,FALSE
       )
       data <- reactiveValuesToList(session_data)

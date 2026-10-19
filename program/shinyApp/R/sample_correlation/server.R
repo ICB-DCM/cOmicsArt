@@ -19,7 +19,7 @@ sample_correlation_server <- function(id, session_data, session_params, selected
         sample_corr_reactive$allow_plot <- FALSE
         data <- reactiveValuesToList(session_data)
         output$UseBatch_ui <- renderUI({
-          req(session_params$BatchColumn != "NULL")
+          req(session_params$batch_column != "NULL")
           selectInput(
             inputId = ns("UseBatch"),
             label = "Use batch corrected data?",
@@ -80,7 +80,7 @@ sample_correlation_server <- function(id, session_data, session_params, selected
         shinyjs::showElement(id = "div_sampleCorrelation_main_panel", asis = T)
         sample_corr_reactive$allow_plot <- TRUE
         # assign variables to be used
-        useBatch <- ifelse(session_params$BatchColumn != "NULL" && input$UseBatch == "Yes",T,F)
+        useBatch <- ifelse(session_params$batch_column != "NULL" && input$UseBatch == "Yes",T,F)
         sample_annotations <- input$SampleAnnotationChoice
         correlation_method <- input$corrMethod
         customTitleSampleCorrelation <- create_default_title_sc(

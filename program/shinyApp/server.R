@@ -221,8 +221,6 @@ server <- function(input,output,session){
     DESeq_obj_batch_corrected = NULL,   # Batch-corrected DESeq object
 
     # Console outputs (for display)
-    batch_console_output = NULL,        # Batch correction console output
-    batch_warnings = NULL,              # Batch correction warnings
     all_console_output = NULL,          # All preprocessing output
     all_warnings = NULL,                # All preprocessing warnings
 
@@ -244,7 +242,7 @@ server <- function(input,output,session){
     # Preprocessing configuration
     preprocessing_procedure = NULL,     # "vst_DESeq", "limma_voom", etc.
     preprocessing_filtering = NULL,     # Filtering method
-    BatchColumn = "NULL",               # Batch effect column name
+    batch_column = "NULL",              # Batch effect column name
 
     # Filtering parameters
     filter_threshold = NULL,            # Main filtering threshold
@@ -252,9 +250,7 @@ server <- function(input,output,session){
     filter_samplesize = NULL,           # Filter sample size
 
     # DESeq2 parameters
-    deseq_formula = NULL,               # DESeq2 formula string
     deseq_factors = NULL,               # DESeq2 factors vector
-    DESeq_formula_batch = NULL,         # Formula including batch
 
     # Limma voom parameters
     limma_intercept = NULL,             # Limma intercept
@@ -593,11 +589,10 @@ server <- function(input,output,session){
     waiter$show()
     write_selection()
     print("Starting the Preprocessing")
-    # ---- Value Assignment and Parameter Saving for later use ----
-    options <- preprocessing_options(
-      procedure = input$PreProcessing_Procedure,
-      filtering = input$PreProcessing_Procedure_filtering,
-      batch_column = input$BatchEffect_Column,
+    # ---- Options, named like the arguments of preprocessing() ----
+    options <- list(
+      preprocessing_procedure = input$PreProcessing_Procedure,
+      preprocessing_filtering = input$PreProcessing_Procedure_filtering,
       deseq_factors = input$DESeq_formula_sub,
       filter_threshold = input$filter_threshold,
       filter_threshold_samplewise = input$filter_threshold_samplewise,
@@ -605,47 +600,45 @@ server <- function(input,output,session){
       limma_intercept = input$limma_intercept,
       limma_formula = input$limma_formula
     )
+    batch_column <- input$BatchEffect_Column %||% "NULL"
     rows_selected <- session_params$rows_selected
     samples_selected <- session_params$samples_selected
-    params <- preprocessing_params(options)
-    for (name in names(params)) session_params[[name]] <- params[[name]]
+    # reset data to the selection that was done
+    selected <- session_data$data_original[rows_selected, samples_selected]
 
-    # reset data to the selection that was done, then pre-process
+    preprocessing_failed <- function(message, additional_text = NULL){
+      error_modal(message, additional_text = additional_text)
+      output$Statisitcs_Data <- renderText({ERROR_PREPROC})
+      hide_tabs()
+      waiter$hide()
+      req(FALSE)
+    }
     res <- tryCatch(
       run_preprocessing(
-        data = session_data$data_original[rows_selected, samples_selected],
+        data = selected,
         omic_type = session_params$omic_type,
-        options = options
+        options = options,
+        batch_column = batch_column
       ),
-      preprocessing_error = function(e){
-        if (e$step == "normality") {
-          output$Statisitcs_Data <- renderText({ERROR_NORM_TEST})
-        } else {
-          if (e$step == "empty") {
-            error_modal(conditionMessage(e))
-          } else if (e$step == "batch") {
-            error_modal(e$parent, additional_text = ifelse(
-              options$procedure == "vst_DESeq", ERROR_BATCH_DESEQ, ERROR_BATCH_CORR
-            ))
-          } else {
-            error_modal(e$parent)
-          }
-          output$Statisitcs_Data <- renderText({ERROR_PREPROC})
-          hide_tabs()
-        }
+      normality_error = function(e){
+        output$Statisitcs_Data <- renderText({ERROR_NORM_TEST})
         waiter$hide()
         req(FALSE)
-      }
+      },
+      batch_error = function(e){
+        preprocessing_failed(conditionMessage(e), additional_text = ifelse(
+          options$preprocessing_procedure == "vst_DESeq", ERROR_BATCH_DESEQ, ERROR_BATCH_CORR
+        ))
+      },
+      error = function(e) preprocessing_failed(conditionMessage(e))
     )
     data <- res$data
-    for (name in names(res$params)) session_params[[name]] <- res$params[[name]]
-    if (options$procedure == "vst_DESeq") {
-      session_data$DESeq_obj <- res$DESeq_obj
-      session_data$DESeq_obj_batch_corrected <- res$DESeq_obj_batch_corrected
-    }
+    # stored only after a successful run, for the analyses and the R code
+    for (name in names(options)) session_params[[name]] <- options[[name]]
+    session_params$batch_column <- batch_column
+    session_data$DESeq_obj <- res$DESeq_obj
+    session_data$DESeq_obj_batch_corrected <- res$DESeq_obj_batch_corrected
     session_data$data_batch_corrected <- res$data_batch_corrected
-    session_data$batch_console_output <- res$batch_console_output
-    session_data$batch_warnings <- res$batch_warnings
     session_data$all_console_output <- res$console_output
     session_data$all_warnings <- res$warnings
 
@@ -732,14 +725,15 @@ server <- function(input,output,session){
       showTab(inputId = "tabsetPanel1", target = "ML Classification")
 
       preprocessing_summary(
-        dim(session_data$data_original), data, input$processing_type,
-        session_data$all_warnings, res$normality_summary
+        dim(session_data$data_original), data, input$processing_type, session_data$all_warnings
       )
     })
     # set the warning as toast
     show_toast(
       title = "Attention",
-      text = HTML(res$warning_html),
+      text = HTML(create_warning_preproc(
+        options$preprocessing_procedure, res$n_processed, nrow(data)
+      )),
       position = "top",
       timer = 2500,
       timerProgressBar = T
@@ -749,7 +743,7 @@ server <- function(input,output,session){
       violin_color = input$violin_color
     ))
     react_violin_plot_raw(violin_plot(
-      data = session_data$data_original[rows_selected, samples_selected],
+      data = selected,
       violin_color = input$violin_color
     ))
     mean_and_obj <- vsn::meanSdPlot(as.matrix(assay(data)), plot=FALSE)
@@ -788,11 +782,11 @@ server <- function(input,output,session){
                input$PreProcessing_Procedure)
       )
     )
-    if(input$BatchEffect_Column != "NULL"){
+    if(session_params$batch_column != "NULL"){
       fun_LogIt(session,
         message = paste0(
           "**PreProcessing** - Batch Effect Correction: ",
-          input$BatchEffect_Column
+          session_params$batch_column
         )
       )
     }

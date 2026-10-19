@@ -28,7 +28,7 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
             "raw data" = "data_original",
             "pre-processed"="data"
           )
-          if(session_params$BatchColumn != "NULL"){
+          if(session_params$batch_column != "NULL"){
             options <- list(
               "raw data" = "data_original",
               "pre-processed" = "data",

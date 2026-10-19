@@ -32,7 +32,7 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         sig_ana_reactive$plot_last <- NULL
 
         output$UseBatch_ui <- renderUI({
-        req(session_params$BatchColumn != "NULL")
+        req(session_params$batch_column != "NULL")
         selectInput(
           inputId = ns("UseBatch"),
           label = "Use batch corrected data?",
@@ -210,7 +210,7 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         print("Start the Significance Analysis")
 
         # define variables to be used
-        useBatch <- session_params$BatchColumn != "NULL" && input$UseBatch == "Yes"
+        useBatch <- session_params$batch_column != "NULL" && input$UseBatch == "Yes"
         preprocessing <- session_params$preprocessing_procedure
         comparisons <- input$comparisons
         test_correction <- input$test_correction

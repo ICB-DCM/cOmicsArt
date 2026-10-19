@@ -349,48 +349,6 @@ design_inputs <- function(data, procedure){
   NULL
 }
 
-# The chosen options with today's defaults for controls never shown.
-preprocessing_options <- function(
-  procedure, filtering = NULL, batch_column = NULL, deseq_factors = NULL,
-  filter_threshold = NULL, filter_threshold_samplewise = NULL,
-  filter_samplesize = NULL, limma_intercept = NULL, limma_formula = NULL
-){
-  list(
-    procedure = procedure,
-    filtering = filtering,
-    batch_column = batch_column %||% "NULL",
-    deseq_factors = deseq_factors,
-    filter_threshold = filter_threshold %||% 10,
-    filter_threshold_samplewise = filter_threshold_samplewise,
-    filter_samplesize = filter_samplesize,
-    limma_intercept = limma_intercept,
-    limma_formula = limma_formula
-  )
-}
-
-# The options as stored in session_params before a run, under the names the
-# analysis modules and the R-code download read.
-preprocessing_params <- function(options){
-  list(
-    BatchColumn = options$batch_column,
-    preprocessing_filtering = options$filtering,
-    filter_threshold = options$filter_threshold,
-    filter_threshold_samplewise = options$filter_threshold_samplewise,
-    filter_samplesize = options$filter_samplesize,
-    limma_intercept = options$limma_intercept,
-    limma_formula = options$limma_formula
-  )
-}
-
-# Signals that a step of the run failed. step: "preprocessing", "empty"
-# (nothing left), "batch" or "normality"; parent: the original error.
-stop_preprocessing <- function(step, message, parent = NULL){
-  stop(structure(
-    class = c("preprocessing_error", "error", "condition"),
-    list(message = message, call = NULL, step = step, parent = parent)
-  ))
-}
-
 # Runs `expr` and collects its console output and its warnings and messages
 # (prefixed "Warning:" / "Message:") instead of showing them.
 capture_run <- function(expr){
@@ -411,105 +369,78 @@ capture_run <- function(expr){
   list(value = value, console = console_output, warnings = warnings_output)
 }
 
-# The whole Pre-processing of the selected data: the procedure, incomplete
-# rows removed, batch correction, normality test per entity. Returns the
-# processed and batch-corrected objects, the DESeq objects, console output and
-# warnings, the warning toast, the normality summary and the parameters the
-# run adds to session_params. A failed step stops with stop_preprocessing().
-run_preprocessing <- function(data, omic_type, options){
-  procedure <- options$procedure
-  data_selected <- data  # needed for batch correction with DESeq
-  params <- list()
+# Runs `expr`; an error in it is signalled again with `class` added.
+with_error_class <- function(class, expr){
+  tryCatch(expr, error = function(e) {
+    class(e) <- c(class, class(e))
+    stop(e)
+  })
+}
 
+# The whole Pre-processing of the selected data: preprocessing() with
+# `options`, incomplete rows removed, batch correction by `batch_column`
+# ("NULL" for none), normality test per entity added to rowData.
+# `options` are named like the arguments of preprocessing(), which is also how
+# session_params stores them for the R code; an absent or NULL option takes
+# preprocessing()'s default, as in the R code.
+# Returns the processed and batch-corrected objects, the DESeq objects, the
+# number of rows before incomplete ones were removed, console output and
+# warnings. A failed batch correction signals a "batch_error", a failed
+# normality test a "normality_error", anything else a plain error.
+run_preprocessing <- function(data, omic_type, options, batch_column){
+  procedure <- options$preprocessing_procedure
   print(paste0("Do chosen Preprocessing:", procedure))
-  preprocess_res <- tryCatch(
-    preprocessing(
-      data = data,
-      omic_type = omic_type,
-      preprocessing_procedure = procedure,
-      preprocessing_filtering = options$filtering,
-      deseq_factors = options$deseq_factors,
-      filter_threshold = options$filter_threshold,
-      filter_threshold_samplewise = options$filter_threshold_samplewise,
-      filter_samplesize = options$filter_samplesize,
-      limma_intercept = options$limma_intercept,
-      limma_formula = options$limma_formula
-    ),
-    error = function(e) stop_preprocessing("preprocessing", conditionMessage(e), e)
+  # data by name, so an error's call doesn't carry the whole object
+  preprocess_res <- do.call(
+    "preprocessing",
+    c(list(data = quote(data), omic_type = omic_type), Filter(Negate(is.null), options))
   )
-  params$preprocessing_procedure <- procedure
-  data <- preprocess_res$data
-  if (procedure == "vst_DESeq") {
-    params$deseq_formula <- paste("~", paste(options$deseq_factors, collapse = " + "))
-    params$deseq_factors <- options$deseq_factors
-  }
-
-  if (nrow(data) == 0) {
-    stop_preprocessing(
-      "empty",
-      "No entities left after pre-processing. Please change your selection and pre-processing options. Maybe your filtering is too harsh?"
+  processed <- preprocess_res$data
+  if (nrow(processed) == 0) {
+    stop(
+      "No entities left after pre-processing. Please change your selection and pre-processing options. Maybe your filtering is too harsh?",
+      call. = FALSE
     )
   }
+  complete <- processed[complete.cases(assay(processed)), ]
 
-  warning_html <- create_warning_preproc(data, procedure)
-  data <- data[complete.cases(assay(data)), ]
+  # DESeq2 batch-corrects the selected data, as it redoes the DESeq2 run
+  batch <- capture_run(with_error_class("batch_error", batch_correction(
+    data = if (procedure == "vst_DESeq") data else complete,
+    preprocessing_procedure = procedure,
+    batch_column = batch_column,
+    deseq_factors = options$deseq_factors,
+    omic_type = omic_type
+  )))
 
-  # Batch correction after preprocessing
-  batch <- capture_run(tryCatch(
-    batch_correction(
-      data = if (procedure == "vst_DESeq") data_selected else data,
-      preprocessing_procedure = procedure,
-      batch_column = options$batch_column,
-      deseq_factors = options$deseq_factors,
-      omic_type = omic_type
-    ),
-    error = function(e) stop_preprocessing("batch", conditionMessage(e), e)
-  ))
-  res_batch <- batch$value
-  if (procedure == "vst_DESeq") {
-    params$DESeq_formula_batch <- paste(
-      "~", paste(c(options$deseq_factors, options$batch_column), collapse = " + ")
+  normality <- capture_run(with_error_class("normality_error", {
+    norm_res <- add_normality_test(complete)
+    rowData(complete) <- cbind(
+      rowData(complete), norm_res[rownames(complete), c("p_value_shapiro", "p_adjusted_shapiro_FDR")]
     )
-  }
-
-  # add per entities (to rowData) normality test outcome
-  normality <- capture_run(tryCatch({
-    norm_res <- add_normality_test(data)
-    rowData(data) <- cbind(
-      rowData(data), norm_res[rownames(data), c("p_value_shapiro", "p_adjusted_shapiro_FDR")]
-    )
-    paste0(
-      "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
-      "<br>Number of entities with p-value < 0.05: ", length(which(norm_res$p_value_shapiro < 0.05)), "/", nrow(data),
-      "<br>Number of entities with adj. p-value < 0.05: ", length(which(norm_res$p_value_shapiro_FDR < 0.05)), "/", nrow(data),
-      "<br>If p < 0.05 the normality assumption is violated.",
-      "<br>For small sample size this test is not reliable.",
-      "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"
-    )
-  }, error = function(e) stop_preprocessing("normality", conditionMessage(e), e)))
+    complete
+  }))
 
   list(
-    data = data,
-    data_batch_corrected = res_batch$data,
+    data = normality$value,
+    data_batch_corrected = batch$value$data,
     DESeq_obj = preprocess_res$DESeq_obj,
-    DESeq_obj_batch_corrected = res_batch$DESeq_obj,
-    batch_console_output = batch$console,
-    batch_warnings = batch$warnings,
+    DESeq_obj_batch_corrected = batch$value$DESeq_obj,
+    n_processed = nrow(processed),
     console_output = c(batch$console, normality$console),
-    warnings = c(batch$warnings, normality$warnings),
-    warning_html = warning_html,
-    normality_summary = normality$value,
-    params = params
+    warnings = c(batch$warnings, normality$warnings)
   )
 }
 
-# The summary shown after a run (HTML).
-preprocessing_summary <- function(raw_dim, data, processing_type, warnings, normality_summary){
+# The summary shown after a run (HTML), including the normality test counts
+# from the rowData of `data`.
+preprocessing_summary <- function(raw_dim, data, processing_type, warnings){
   num_batches <- NA
   batch_message <- grep("Message: Found\\d+batches", warnings, value = TRUE)
   if (length(batch_message) > 0) {
     num_batches <- sub(".*Message: Found(\\d+)batches.*", "\\1", batch_message[1])
   }
+  normality <- rowData(data)
   paste0(
     "The raw data has dimensions: ",
     paste0(raw_dim, collapse = ", "),
@@ -519,6 +450,12 @@ preprocessing_summary <- function(raw_dim, data, processing_type, warnings, norm
     "<br>", ifelse(processing_type == "Log-Based", "In case of 0's present logX(data+1) is done", ""),
     "<br>", "See help for details",
     "<br>", ifelse(any(as.data.frame(assay(data)) < 0), "Be aware that processed data has negative values!", ""), ## IS THAT TRUE??
-    "<br>", normality_summary
+    "<br>",
+    "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
+    "<br>Number of entities with p-value < 0.05: ", sum(normality$p_value_shapiro < 0.05, na.rm = TRUE), "/", nrow(data),
+    "<br>Number of entities with adj. p-value < 0.05: ", sum(normality$p_value_shapiro_FDR < 0.05, na.rm = TRUE), "/", nrow(data),
+    "<br>If p < 0.05 the normality assumption is violated.",
+    "<br>For small sample size this test is not reliable.",
+    "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"
   )
 }

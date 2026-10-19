@@ -27,30 +27,31 @@ run_preprocessing_script <- function(parameters, data_orig){
 
 # What the app stores in session_params after a run on all of `data`
 app_run <- function(data, omic_type, ...){
-  options <- preprocessing_options(...)
-  res <- suppressMessages(run_preprocessing(data, omic_type, options))
+  options <- list(...)
+  res <- suppressMessages(run_preprocessing(data, omic_type, options, batch_column = "NULL"))
   parameters <- c(
     selection_params(resolve_selection(data, list())),
-    list(omic_type = omic_type),
-    preprocessing_params(options),
-    res$params
+    list(omic_type = omic_type, batch_column = "NULL"),
+    options
   )
   list(data = res$data, parameters = parameters)
 }
 
 cases <- list(
   log10 = list(
-    data = "Lipidomics", procedure = "log10", filtering = "filterOnly", filter_threshold = 0
+    data = "Lipidomics", preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0
   ),
+  # filter_threshold absent: the app and the R code both use preprocessing()'s 10
+  default_threshold = list(data = "Metabolomics", preprocessing_procedure = "filterOnly"),
   global_filtering = list(
-    data = "Metabolomics", procedure = "filterOnly", filter_threshold = 1e6
+    data = "Metabolomics", preprocessing_procedure = "filterOnly", filter_threshold = 1e6
   ),
   samplewise_filtering = list(
-    data = "Metabolomics", procedure = "filterPerSample",
+    data = "Metabolomics", preprocessing_procedure = "filterPerSample",
     filter_threshold_samplewise = 1e4, filter_samplesize = 3
   ),
   scaling = list(
-    data = "Lipidomics", procedure = "Scaling_0_1", filtering = "filterOnly", filter_threshold = 100
+    data = "Lipidomics", preprocessing_procedure = "Scaling_0_1", preprocessing_filtering = "filterOnly", filter_threshold = 100
   )
 )
 for (name in names(cases)) {
