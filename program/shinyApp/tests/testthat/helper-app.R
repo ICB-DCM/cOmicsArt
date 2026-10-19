@@ -93,6 +93,7 @@ IDS <- list(
     batch = "BatchEffect_Column"
   ),
   preprocess = "Do_preprocessing",
+  pca_colour = "PCA-coloring_options",  # a PCA sidebar choice
   pre_out = "Statisitcs_Data",
   pre_rcode = "#getR_Code_Preprocess",
   report = "DownloadTestModule-DownloadReport",
