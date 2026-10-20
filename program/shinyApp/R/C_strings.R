@@ -42,10 +42,6 @@ ERROR_PREPROC <<- HTML(paste0(
   "<span style='color: red;'>You should not see this message before moving to analysis!</span><br>"
 ))  # Error shown in the info box upon failed preprocessing
 
-ERROR_NORM_TEST <<- HTML(paste0(
-  "The testing of normalisation failed.<br>This might not necassarily harm your analysis"
-)) 
-
 # --- Error messages Heatmap ---
 ERROR_SEND_GENES_ADD <<- "You only need to change the labels of the rows to portray ENSEMBL IDs ('Choose the label of rows')"
 

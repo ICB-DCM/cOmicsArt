@@ -262,6 +262,12 @@ batch_correction <- function(
   return(batch_res)
 }
 
+# The Shapiro-Wilk p-value of `x`; NA where the test is not possible (fewer
+# than 3 or more than 5000 values, or all identical)
+shapiro_p_value <- function(x){
+  tryCatch(shapiro.test(x)$p.value, error = function(e) NA_real_)
+}
+
 add_normality_test <- function(data){
   data2test <- assay(data)
   # Get feature names (e.g., genes)
@@ -270,7 +276,7 @@ add_normality_test <- function(data){
   # Function to perform the Shapiro-Wilk test per feature (row)
   normality_test <- data.frame(
     entity = feature_names,
-    p_value_shapiro = apply(data2test, 1, function(x) shapiro.test(x)$p.value)
+    p_value_shapiro = apply(data2test, 1, shapiro_p_value)
   )
 
   # Apply multiple testing correction
@@ -398,8 +404,8 @@ with_error_class <- function(class, expr){
 # preprocessing()'s default, as in the R code.
 # Returns the processed and batch-corrected objects, the DESeq objects, the
 # number of rows before incomplete ones were removed, console output and
-# warnings. A failed batch correction signals a "batch_error", a failed
-# normality test a "normality_error", anything else a plain error.
+# warnings. A failed batch correction signals a "batch_error", anything else
+# a plain error; entities the normality test is not possible for get NA.
 run_preprocessing <- function(data, omic_type, options, batch_column){
   procedure <- options$preprocessing_procedure
   print(paste0("Do chosen Preprocessing:", procedure))
@@ -426,13 +432,13 @@ run_preprocessing <- function(data, omic_type, options, batch_column){
     omic_type = omic_type
   )))
 
-  normality <- capture_run(with_error_class("normality_error", {
+  normality <- capture_run({
     norm_res <- add_normality_test(complete)
     rowData(complete) <- cbind(
       rowData(complete), norm_res[rownames(complete), c("p_value_shapiro", "p_adjusted_shapiro_FDR")]
     )
     complete
-  }))
+  })
 
   list(
     data = normality$value,
@@ -445,6 +451,37 @@ run_preprocessing <- function(data, omic_type, options, batch_column){
   )
 }
 
+# The summary's normality section (HTML) for `normality`, one row per entity
+# with p_value_shapiro and p_adjusted_shapiro_FDR (NA where the test was not
+# possible), measured in `n_samples` samples.
+normality_summary <- function(normality, n_samples){
+  n_untested <- sum(is.na(normality$p_value_shapiro))
+  not_possible <- "needs 3 to 5000 values that are not all identical"
+  results <- if (n_untested == nrow(normality)) {
+    paste0(
+      "<br>The normality test was not possible: each entity ", not_possible,
+      if (n_samples < 3 || n_samples > 5000) paste0(" (here: ", n_samples, " samples)"),
+      "."
+    )
+  } else {
+    paste0(
+      "<br>Number of entities with p-value < 0.05: ", sum(normality$p_value_shapiro < 0.05, na.rm = TRUE), "/", nrow(normality),
+      "<br>Number of entities with adj. p-value < 0.05: ", sum(normality$p_adjusted_shapiro_FDR < 0.05, na.rm = TRUE), "/", nrow(normality),
+      if (n_untested > 0) paste0(
+        "<br>Normality test not possible for ", n_untested,
+        if (n_untested == 1) " entity" else " entities", " (it ", not_possible, ")."
+      ),
+      "<br>If p < 0.05 the normality assumption is violated.",
+      "<br>For small sample size this test is not reliable."
+    )
+  }
+  paste0(
+    "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
+    results,
+    "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"
+  )
+}
+
 # The summary shown after a run (HTML) of `procedure`, including the
 # normality test counts from the rowData of `data`.
 preprocessing_summary <- function(raw_dim, data, procedure, warnings){
@@ -453,7 +490,6 @@ preprocessing_summary <- function(raw_dim, data, procedure, warnings){
   if (length(batch_message) > 0) {
     num_batches <- sub(".*Message: Found(\\d+)batches.*", "\\1", batch_message[1])
   }
-  normality <- rowData(data)
   paste0(
     "The raw data has dimensions: ",
     paste0(raw_dim, collapse = ", "),
@@ -464,12 +500,7 @@ preprocessing_summary <- function(raw_dim, data, procedure, warnings){
     "<br>", "See help for details",
     "<br>", ifelse(any(as.data.frame(assay(data)) < 0), "Be aware that processed data has negative values!", ""), ## IS THAT TRUE??
     "<br>",
-    "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
-    "<br>Number of entities with p-value < 0.05: ", sum(normality$p_value_shapiro < 0.05, na.rm = TRUE), "/", nrow(data),
-    "<br>Number of entities with adj. p-value < 0.05: ", sum(normality$p_adjusted_shapiro_FDR < 0.05, na.rm = TRUE), "/", nrow(data),
-    "<br>If p < 0.05 the normality assumption is violated.",
-    "<br>For small sample size this test is not reliable.",
-    "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"
+    normality_summary(rowData(data), ncol(data))
   )
 }
 
