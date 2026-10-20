@@ -47,7 +47,8 @@ preprocessing <- function(
       )
     }
     if(preprocessing_procedure == "vst_DESeq"){
-      return(deseq_processing(data, omic_type, deseq_factors))
+      # the filtered counts too, which the DESeq2 batch correction starts from
+      return(c(deseq_processing(data, omic_type, deseq_factors), list(counts = data)))
     }
     if(preprocessing_procedure == "limma_voom"){
       return(list(
@@ -230,8 +231,12 @@ tmm_proccessing <- function(data){
   return(data)
 }
 
+# ComBat on `data` by `batch_column` ("NULL" for none). DESeq2 redoes its run
+# with the batch column as an extra factor, starting from `counts`, the
+# filtered counts preprocessing() returns.
 batch_correction <- function(
-  data, preprocessing_procedure, batch_column, deseq_factors = NULL, omic_type = NULL
+  data, preprocessing_procedure, batch_column, deseq_factors = NULL, omic_type = NULL,
+  counts = NULL
 ){
   if (batch_column == "NULL"){
     return(list(
@@ -241,7 +246,7 @@ batch_correction <- function(
   batch_res <- list()
   if(preprocessing_procedure == "vst_DESeq"){
     batch_res <- deseq_processing(
-      data = data,
+      data = counts,
       omic_type = omic_type,
       deseq_factors = c(deseq_factors, batch_column)
     )
@@ -412,9 +417,9 @@ run_preprocessing <- function(data, omic_type, options, batch_column){
   }
   complete <- processed[complete.cases(assay(processed)), ]
 
-  # DESeq2 batch-corrects the selected data, as it redoes the DESeq2 run
   batch <- capture_run(with_error_class("batch_error", batch_correction(
-    data = if (procedure == "vst_DESeq") data else complete,
+    data = complete,
+    counts = preprocess_res$counts,
     preprocessing_procedure = procedure,
     batch_column = batch_column,
     deseq_factors = options$deseq_factors,
