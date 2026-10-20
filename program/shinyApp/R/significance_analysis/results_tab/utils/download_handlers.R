@@ -148,7 +148,8 @@ create_rcode_download_handler <- function(session_data, session_params, contrast
       if(is.null(session_params$SigAna)) {
         session_params$SigAna <- list()
       }
-      session_params$SigAna$comp <- paste(contrast[1], "vs", contrast[2])
+      # the name performSigAnalysis() gives this comparison's result
+      session_params$SigAna$comp <- paste(contrast, collapse = ":")
       session_params$SigAna$raw <- raw
 
       envList <- list(par_tmp = reactiveValuesToList(session_params))

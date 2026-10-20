@@ -164,8 +164,12 @@ create_library_code <- function(foo_list){
   # Returns:
   #   lib_sourcing: character, code snippet that sources all libraries
 
-  # Extend foo_list by "select_data" and "preprocessing" as they are always needed
-  foo_list <- c(foo_list, "select_data", "preprocessing")
+  # Extend foo_list by select_data(), preprocessing() and their helpers as
+  # they start every script (see preprocessing_base_script())
+  foo_list <- c(foo_list, unlist(lapply(
+    list(select_data_info, preprocessing_info),
+    function(info) c(info$name, names(info$additional_foos))
+  )))
 
   # Helper function: given the name of a function, return the name of its package.
   get_pkg <- function(fun_name) {
@@ -337,6 +341,9 @@ create_function_script <- function(foo_infos, par, par_mem = NULL, path_to_util=
     res <- paste0(foo_infos$output_name, " <- ")
   }
   function_usage <- paste0(res, function_call, post_res)
+  if (!is.null(foo_infos$plot_name)) {
+    function_usage <- paste0(function_usage, "\n", foo_infos$plot_name)
+  }
   function_script <- paste(function_script, function_usage, sep = "\n")
   return(function_script)
 }

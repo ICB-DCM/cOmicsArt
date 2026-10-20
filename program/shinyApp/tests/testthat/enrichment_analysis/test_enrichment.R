@@ -174,3 +174,11 @@ test_that("check annotation works", {
     expect_equal(res, expected_output[[results_bin_list[[i+20]]]])
   }
 })
+
+test_that("the gene set is mapped to Entrez IDs, entities without one dropped", {
+  data <- SummarizedExperiment::SummarizedExperiment(
+    assays = list(raw = matrix(1:6, nrow = 3, dimnames = list(c("g1", "g2", "g3"), c("s1", "s2")))),
+    rowData = S4Vectors::DataFrame(entrezgene_id = c("7105", NA, "8813"), row.names = c("g1", "g2", "g3"))
+  )
+  expect_equal(gene_set_to_entrez(c("g3", "g2", "g1"), data), c("8813", "7105"))
+})
