@@ -466,7 +466,7 @@ preprocessing_summary <- function(raw_dim, data, procedure, warnings){
     "<br>",
     "<br>Overview normality testing (Shapiro-Wilk test) for each entity: ",
     "<br>Number of entities with p-value < 0.05: ", sum(normality$p_value_shapiro < 0.05, na.rm = TRUE), "/", nrow(data),
-    "<br>Number of entities with adj. p-value < 0.05: ", sum(normality$p_value_shapiro_FDR < 0.05, na.rm = TRUE), "/", nrow(data),
+    "<br>Number of entities with adj. p-value < 0.05: ", sum(normality$p_adjusted_shapiro_FDR < 0.05, na.rm = TRUE), "/", nrow(data),
     "<br>If p < 0.05 the normality assumption is violated.",
     "<br>For small sample size this test is not reliable.",
     "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"

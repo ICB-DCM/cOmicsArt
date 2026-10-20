@@ -210,13 +210,15 @@ test_that("the summary reports dimensions, batches, log and negative values", {
 
 test_that("the summary counts entities with p < 0.05 in the normality test", {
   res <- run(lipids, "Lipidomics", "none")
-  normality <- SummarizedExperiment::rowData(res$data)
   summary <- preprocessing_summary(dim(lipids), res$data, "none", res$warnings)
-  expect_match(
-    summary, paste0("Number of entities with p-value < 0.05: ", sum(normality$p_value_shapiro < 0.05), "/653"),
-    fixed = TRUE
-  )
-  # documents issue 20: it reads p_value_shapiro_FDR, which doesn't exist, so
-  # the adjusted count is always 0
-  expect_match(summary, "adj. p-value < 0.05: 0/653", fixed = TRUE)
+  # 549 of the 653 non-constant Lipidomics entities (checked in issue 20)
+  expect_match(summary, "Number of entities with p-value < 0.05: 549/653", fixed = TRUE)
+})
+
+test_that("the summary counts entities with FDR-adjusted p < 0.05 in the normality test", {
+  res <- run(lipids, "Lipidomics", "none")
+  summary <- preprocessing_summary(dim(lipids), res$data, "none", res$warnings)
+  # 540 of the 653: the raw p-values adjusted with p.adjust(method = "fdr")
+  # (checked in issue 20; the summary showed 0)
+  expect_match(summary, "Number of entities with adj. p-value < 0.05: 540/653", fixed = TRUE)
 })
