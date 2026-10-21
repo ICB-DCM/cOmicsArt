@@ -222,8 +222,12 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     raw_violin <- reactive({
       violin_plot(result()$selection$data, violin_color = violin_color())
     })
+    # with a batch column, the batch-corrected data (NULL without one)
     processed_violin <- reactive({
-      violin_plot(result()$data, violin_color = violin_color())
+      violin_plot(
+        result()$data_batch_corrected %||% result()$data,
+        violin_color = violin_color()
+      )
     })
     # able_to_plot also hides the plots after a confirmed Selection, until the
     # next run

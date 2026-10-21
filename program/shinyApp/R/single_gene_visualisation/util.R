@@ -46,22 +46,42 @@ maybe_add_test <- function(gene_data, add_testing, comparisons) {
   if(!add_testing || length(comparisons) == 0) {
     return(NULL)
   }
-  testMethod <- "t.test"
-  newList <- comparisons
-  xy.list <- vector("list", length(newList))
-  for (i in seq_along(newList)) {
-    xy.list[[i]] <- unlist(strsplit(x = newList[i],split = ":"))
+  # Brackets and labels are drawn as segments and text, as plotly cannot draw
+  # ggsignif's layer (stat_compare_means()); position and labels as there
+  values <- gene_data[,-ncol(gene_data)]
+  value_range <- diff(range(values))
+  segments <- list()
+  labels <- list()
+  for (i in seq_along(comparisons)) {
+    groups <- unlist(strsplit(x = comparisons[i], split = ":"))
+    p_value <- t.test(
+      values[gene_data$annotation == groups[1]],
+      values[gene_data$annotation == groups[2]]
+    )$p.value
+    x <- match(groups, levels(gene_data$annotation))
+    y <- max(values) + value_range * (0.05 + 0.12 * (i - 1))
+    tip <- y - value_range * 0.03
+    segments[[i]] <- data.frame(
+      x = c(x[1], x[1], x[2]), xend = c(x[1], x[2], x[2]),
+      y = c(tip, y, y), yend = c(y, y, tip)
+    )
+    labels[[i]] <- data.frame(x = mean(x), y = y, label = as.character(signif(p_value, 2)))
   }
   additional_layers <- list(
     geom_hline(
-      yintercept = mean(gene_data[,-ncol(gene_data)]),
+      yintercept = mean(values),
       linetype = 2
     ),
-    stat_compare_means(
-      comparisons = xy.list,
-      method = testMethod,
-      label = "p.format",
-      hide.ns = TRUE
+    geom_segment(
+      data = do.call(rbind, segments),
+      aes(x = x, xend = xend, y = y, yend = yend),
+      inherit.aes = FALSE
+    ),
+    geom_text(
+      data = do.call(rbind, labels),
+      aes(x = x, y = y, label = label),
+      vjust = 0,
+      inherit.aes = FALSE
     )
   )
   return(additional_layers)
