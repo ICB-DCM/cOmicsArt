@@ -154,7 +154,7 @@ deseq_processing <- function(
   # --- Sanity checks ---
   if(nrow(data) < 100){
     stop(
-      "The number of samples is too low for a DESeq2 analysis. Please select at least 100 samples."
+      "The number of entities is too low for a DESeq2 analysis. Please select at least 100 entities."
     )
   }
   if (omic_type != "Transcriptomics"){
@@ -303,18 +303,26 @@ procedure_choices <- function(processing_type){
   )
 }
 
+# The filtering a run does: the procedure itself for "filterOnly" and
+# "filterPerSample", none for "none", else the filtering chosen in front of
+# the procedure. The filtering input keeps its value while hidden, so it only
+# counts where preprocessing() uses it.
+applied_filtering <- function(procedure, filtering){
+  if (procedure %in% c("filterOnly", "filterPerSample")) return(procedure)
+  if (procedure == "none" || is.null(filtering)) return("none")
+  filtering
+}
+
 # The filter inputs shown for a procedure and the filtering in front of it:
 # NULL, global (threshold) or sample-wise (threshold, sample count up to
 # n_samples). The threshold defaults to 10 for Transcriptomics, else 0.
 filter_inputs <- function(procedure, filtering, omic_type, n_samples){
-  if (procedure %in% c("filterOnly", "filterPerSample", "none")) {
-    filtering <- "no"
-  }
+  kind <- applied_filtering(procedure, filtering)
   threshold <- ifelse(omic_type == "Transcriptomics", 10, 0)
-  if (procedure == "filterOnly" || identical(filtering, "filterOnly")) {
+  if (kind == "filterOnly") {
     return(list(kind = "global", threshold = threshold))
   }
-  if (procedure == "filterPerSample" || identical(filtering, "filterPerSample")) {
+  if (kind == "filterPerSample") {
     return(list(
       kind = "samplewise", threshold = threshold, samplesize = 3, max_samplesize = n_samples
     ))
@@ -432,9 +440,9 @@ run_preprocessing <- function(data, omic_type, options, batch_column){
   )
 }
 
-# The summary shown after a run (HTML), including the normality test counts
-# from the rowData of `data`.
-preprocessing_summary <- function(raw_dim, data, processing_type, warnings){
+# The summary shown after a run (HTML) of `procedure`, including the
+# normality test counts from the rowData of `data`.
+preprocessing_summary <- function(raw_dim, data, procedure, warnings){
   num_batches <- NA
   batch_message <- grep("Message: Found\\d+batches", warnings, value = TRUE)
   if (length(batch_message) > 0) {
@@ -447,7 +455,7 @@ preprocessing_summary <- function(raw_dim, data, processing_type, warnings){
     "<br>The processed data has dimensions: ",
     paste0(dim(data), collapse = ", "),
     "<br>", if (!is.na(num_batches)) paste0("Number of Batches found: ", num_batches) else "",
-    "<br>", ifelse(processing_type == "Log-Based", "In case of 0's present logX(data+1) is done", ""),
+    "<br>", if (procedure %in% c("log10", "log2", "ln")) "logX(data+1) is done" else "",
     "<br>", "See help for details",
     "<br>", ifelse(any(as.data.frame(assay(data)) < 0), "Be aware that processed data has negative values!", ""), ## IS THAT TRUE??
     "<br>",
@@ -458,4 +466,28 @@ preprocessing_summary <- function(raw_dim, data, processing_type, warnings){
     "<br>For small sample size this test is not reliable.",
     "<br>(See <a href=https://pmc.ncbi.nlm.nih.gov/articles/PMC6350423/#sec1-7:~:text=Why%20to%20test%20the%20normality%20of%20data' target='_blank'>Why test the normality of data?</a>)"
   )
+}
+
+# The report's log lines for a run, from the options as session_params stores
+# them (see run_preprocessing()) and the dimensions of the processed data.
+preprocessing_log_lines <- function(params, data_dim){
+  procedure <- params$preprocessing_procedure
+  filtering <- switch(applied_filtering(procedure, params$preprocessing_filtering),
+    "filterOnly" = paste0("global, sum across all samples > ", params$filter_threshold),
+    "filterPerSample" = paste0(
+      "sample-wise, > ", params$filter_threshold_samplewise,
+      " in at least ", params$filter_samplesize, " samples"
+    ),
+    "none"
+  )
+  if (procedure == "vst_DESeq") {
+    procedure <- paste0(procedure, " ~ ", paste(params$deseq_factors, collapse = " + "))
+  }
+  paste0("**PreProcessing** - ", c(
+    "Always done: removal of all entities which are constant over all samples",
+    paste0("Filtering: ", filtering),
+    paste0("Procedure: ", procedure),
+    if (params$batch_column != "NULL") paste0("Batch Effect Correction: ", params$batch_column),
+    paste0("The resulting dimensions are: ", paste0(data_dim, collapse = ", "))
+  ))
 }

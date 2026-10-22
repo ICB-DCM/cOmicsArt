@@ -50,42 +50,46 @@ snippet_preprocessing <- function(
     data,
     params
 ){
+  procedure <- params$preprocessing_procedure
+  # Filtering, as preprocessing() does it
+  filtering <- switch(applied_filtering(procedure, params$preprocessing_filtering),
+    "filterOnly" = paste0(
+      " Additionally, entities with a sum across all samples less than or equal to ",
+      params$filter_threshold, " were removed."
+    ),
+    "filterPerSample" = paste0(
+      " Additionally, entities were kept only if their value was greater than ",
+      params$filter_threshold_samplewise, " in at least ", params$filter_samplesize, " samples."
+    ),
+    ""
+  )
+  snippet <- paste0(
+    "The data was cleaned by removing entities that were constant across all samples.",
+    filtering, "\n"
+  )
   # Conditional pre-processing procedure
-  snippet <- c()
-  if (params$preprocessing_procedure == "filterOnly") {
-    # Conditional filtering based on omics type
-    if (params$omic_type == "Transcriptomics") {
-      snippet <- paste0(snippet, "The data was cleaned by removing constant entities across all samples and rows with all-zero values. Additionally, entities with total row counts less than or equal to 10 were removed.\n")
-    } else if (params$omic_type == "Metabolomics") {
-      snippet <- paste0(snippet, "The data was cleaned by removing constant entities across all samples and rows with all-zero values. Additionally, entities with a row median of 0 were removed.\n")
-    }else{
-      snippet <- c()
-    }
-  } else if (params$preprocessing_procedure == "simpleCenterScaling") {
+  if (procedure == "simpleCenterScaling") {
     snippet <- paste0(snippet, "The data was centered and scaled. Centering involves subtracting the mean of each entity, and scaling involves dividing by the standard deviation.\n")
-  } else if (params$preprocessing_procedure == "vst_DESeq") {
+  } else if (procedure == "vst_DESeq") {
     snippet <- paste0(snippet, "For the transcriptomics data, DESeq2 was used for normalization and VST transformation applied for visualisation of the normalized data (not for statistical testing)",
                       "(v. ",packageVersion("DESeq2"),") (",print(clean_citation(citation('DESeq2')), style = "text"),"). ",
                       "The formula for analysis was ~ ",
                       paste(c(params$deseq_factors, setdiff(params$batch_column, "NULL")), collapse = " + "),
                       ".\n")
-  } else if (params$preprocessing_procedure == "Scaling_0_1") {
+  } else if (procedure == "Scaling_0_1") {
     snippet <- paste0(snippet, "The data was scaled to fit within the range of 0 to 1. Each entity's values are hence transformed proportionally to ensure a consistent scale.\n")
-  } else if (params$preprocessing_procedure == "log10") {
-    snippet <- paste0(snippet, "The base-10 logarithm of each data point was calculated. If a single zero value was present, 1 was added to all points to avoid undefined results.\n")
-  } else if (params$preprocessing_procedure == "ln") {
-    snippet <- paste0(snippet, "The natural logarithm of each data point was calculated. If a single zero value was present, 1 was added to all points to avoid undefined results.\n")
-  } else if (params$preprocessing_procedure == "log2") {
-    snippet <- paste0(snippet, "The base-2 logarithm of each data point was calculated. If a single zero value was present, 1 was added to all points to avoid undefined results.\n")
-  } else if (params$preprocessing_procedure == "pareto_scaling") {
+  } else if (procedure %in% c("log10", "ln", "log2")) {
+    logarithm <- c(log10 = "base-10 logarithm", ln = "natural logarithm", log2 = "base-2 logarithm")[[procedure]]
+    snippet <- paste0(snippet, "The ", logarithm, " of each data point was calculated after 1 was added to all values to avoid undefined results for zeros.\n")
+  } else if (procedure == "pareto_scaling") {
     snippet <- paste0(snippet, "The data was parteo scaled. Pareto scaling emphasizes the importance of small values by dividing each data point by the square root of its standard deviation.\n")
-  } else if(params$preprocessing_procedure == "None") {
+  } else if (procedure == "none") {
     snippet <- paste0(snippet, "No additional pre-processing was performed within cOmicsART.\n")
   }
-  
+
   # Batch effect correction
-  if (!is.null(params$BatchEffect_Column) ) {
-    snippet <- paste0(snippet, "Batch effect correction was applied using the information about: ", params$BatchEffect_Column, ".\n",
+  if (params$batch_column != "NULL") {
+    snippet <- paste0(snippet, "Batch effect correction was applied using the information about: ", params$batch_column, ".\n",
                       "The correction was performed using the ComBat method from the sva package", "(v. ",packageVersion("sva"),") (",print(clean_citation(citation('sva')), style = "text"),"). \n")
   }
   

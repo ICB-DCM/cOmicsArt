@@ -67,3 +67,23 @@ test_that("Pre-processing: limma voom, TMM, batch correction (Transcriptomics)",
   expect_processed_dim(app, n_rows = 22008, n_samples = 8)
   visit_tab(app, "Differential Analysis (batch corrected)")
 })
+
+test_that("Pre-processing: changing a control without a run keeps the analysis tabs (Lipidomics)", {
+  app <- start_app("preprocessing-controls")
+  on.exit(app$stop(), add = TRUE)
+  load_test_data(app, "Lipidomics")
+  preprocess(app, type = "Log-Based", procedure = "log10")
+  summary_text <- function() app$get_js(sprintf(
+    "document.getElementById('%s')?.innerText ?? ''", IDS$pre_out
+  ))
+  summary <- summary_text()
+
+  set_and_wait(app, !!IDS$tabs := "PCA")
+  set_and_wait(app, !!IDS$pca_colour := "ID")  # default: diet
+  set_and_wait(app, !!IDS$tabs := IDS$pre_tab)
+  set_and_wait(app, !!IDS$processing_type := "Filtering")
+  expect_equal(summary_text(), summary)
+  set_and_wait(app, !!IDS$tabs := "PCA")
+  expect_equal(app$get_value(input = IDS$pca_colour), "ID")
+  expect_no_app_errors(app, "Changing the processing type")
+})

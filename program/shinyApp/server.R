@@ -708,26 +708,17 @@ server <- function(input,output,session){
       }
     })
 
-    show_tabs()
+    # once per run, not on every change of the controls
+    show_tabs(session_params$omic_type)
+    refresh_analysis_tabs()
     
     # Count up updating
     updating$count <- updating$count + 1
 
-    output$Statisitcs_Data <- renderText({
-      shinyjs::click("SignificanceAnalysis-refreshUI",asis = T)
-      shinyjs::click("single_gene_visualisation-refreshUI",asis = T)
-      shinyjs::click("EnrichmentAnalysis-refreshUI",asis = T)
-      shinyjs::click("Heatmap-refreshUI",asis = T)
-      shinyjs::click("PCA-refreshUI",asis = T)
-      shinyjs::click("sample_correlation-refreshUI",asis = T)
-      shinyjs::click("ml_classification-refreshUI",asis = T)
-      ifelse(upload$omic_type() != "Transcriptomics",hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"), showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis"))
-      showTab(inputId = "tabsetPanel1", target = "ML Classification")
-
-      preprocessing_summary(
-        dim(session_data$data_original), data, input$processing_type, session_data$all_warnings
-      )
-    })
+    run_summary <- preprocessing_summary(
+      dim(session_data$data_original), data, options$preprocessing_procedure, res$warnings
+    )
+    output$Statisitcs_Data <- renderText(run_summary)
     # set the warning as toast
     show_toast(
       title = "Attention",
@@ -757,45 +748,11 @@ server <- function(input,output,session){
 ## Log preprocessing ----
   observeEvent(input$Do_preprocessing,{
     print(selectedData_processed())
-    if(session_params$omic_type == "Transcriptomics"){
-      tmp_logMessage <- "Remove anything which row Count <= 10"
-    } else if (session_params$omic_type == "Metabolomics"){
-      tmp_logMessage <- "Remove anything which has a row median of 0"
-    } else {
-      tmp_logMessage <- "none"
-    }
     fun_LogIt(session, "## Pre Processing {.tabset .tabset-fade}")
     fun_LogIt(session, message = "### Info")
-    fun_LogIt(session,
-      message = "**PreProcessing** - Alaways done: removal of all entities which are constant over all samples"
-    )
-    fun_LogIt(session,
-      message = paste0("**PreProcessing** - Preprocessing procedure -standard (depending only on omics-type): ",tmp_logMessage)
-    )
-    fun_LogIt(session,
-      message = paste0(
-        "**PreProcessing** - Preprocessing procedure -specific (user-chosen): ",
-        ifelse(input$PreProcessing_Procedure == "vst_DESeq",
-               paste0(
-                 input$PreProcessing_Procedure,
-                 " ~ ",paste(input$DESeq_formula_sub, collapse=" + ")),
-               input$PreProcessing_Procedure)
-      )
-    )
-    if(session_params$batch_column != "NULL"){
-      fun_LogIt(session,
-        message = paste0(
-          "**PreProcessing** - Batch Effect Correction: ",
-          session_params$batch_column
-        )
-      )
+    for (line in preprocessing_log_lines(reactiveValuesToList(session_params), dim(session_data$data))) {
+      fun_LogIt(session, message = line)
     }
-    fun_LogIt(session,
-      message = paste0(
-        "**PreProcessing** - The resulting dimensions are: ",
-        paste0(dim(session_data$data),collapse = ", ")
-      )
-    )
     fun_LogIt(session, message = "### Publication Snippet")
     fun_LogIt(session, message = snippet_preprocessing(
       data=reactiveValuesToList(session_data),

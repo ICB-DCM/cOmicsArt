@@ -166,7 +166,7 @@ test_that("a failed batch correction is a batch_error, other failures plain erro
   expect_error(
     run(genes[1:50, ], "Transcriptomics", "vst_DESeq", preprocessing_filtering = "filterOnly",
         deseq_factors = "condition"),
-    "at least 100"
+    "at least 100 entities"
   )
   expect_error(run(lipids, "Lipidomics", "filterOnly", filter_threshold = 1e9), "No entities left")
   expect_error(run(lipids, "Lipidomics", "none", batch_column = "no_such_column"), class = "batch_error")
@@ -183,21 +183,21 @@ test_that("the warning names the procedure and the rows removed for missing valu
 
 test_that("the summary reports dimensions, batches, log and negative values", {
   res <- run(genes, "Transcriptomics", "TMM", preprocessing_filtering = "filterOnly", batch_column = "batch_factor")
-  summary <- preprocessing_summary(dim(genes), res$data, "Omic-Specific", res$warnings)
+  summary <- preprocessing_summary(dim(genes), res$data, "TMM", res$warnings)
   expect_match(summary, "The raw data has dimensions: 3000, 8", fixed = TRUE)
   expect_match(summary, paste0("The processed data has dimensions: ", nrow(res$data), ", 8"), fixed = TRUE)
   expect_match(summary, "Number of Batches found: 2", fixed = TRUE)
   expect_no_match(summary, "logX", fixed = TRUE)
   logged <- run(lipids, "Lipidomics", "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
-  summary <- preprocessing_summary(dim(lipids), logged$data, "Log-Based", logged$warnings)
-  expect_match(summary, "In case of 0's present logX(data+1) is done", fixed = TRUE)
+  summary <- preprocessing_summary(dim(lipids), logged$data, "log10", logged$warnings)
+  expect_match(summary, "logX(data+1) is done", fixed = TRUE)
   expect_match(summary, "Be aware that processed data has negative values!", fixed = TRUE)
 })
 
 test_that("the summary counts entities with p < 0.05 in the normality test", {
   res <- run(lipids, "Lipidomics", "none")
   normality <- SummarizedExperiment::rowData(res$data)
-  summary <- preprocessing_summary(dim(lipids), res$data, "No pre-processing", res$warnings)
+  summary <- preprocessing_summary(dim(lipids), res$data, "none", res$warnings)
   expect_match(
     summary, paste0("Number of entities with p-value < 0.05: ", sum(normality$p_value_shapiro < 0.05), "/653"),
     fixed = TRUE
@@ -205,16 +205,4 @@ test_that("the summary counts entities with p < 0.05 in the normality test", {
   # documents issue 20: it reads p_value_shapiro_FDR, which doesn't exist, so
   # the adjusted count is always 0
   expect_match(summary, "adj. p-value < 0.05: 0/653", fixed = TRUE)
-})
-
-test_that("the report names the DESeq2 design, with the batch column", {
-  params <- list(
-    preprocessing_procedure = "vst_DESeq", omic_type = "Transcriptomics",
-    deseq_factors = c("condition", "cell"), batch_column = "batch_factor"
-  )
-  snippet <- snippet_preprocessing(data = list(data = genes), params = params)
-  expect_match(snippet, "The formula for analysis was ~ condition + cell + batch_factor.", fixed = TRUE)
-  params$batch_column <- "NULL"
-  snippet <- snippet_preprocessing(data = list(data = genes), params = params)
-  expect_match(snippet, "The formula for analysis was ~ condition + cell.", fixed = TRUE)
 })

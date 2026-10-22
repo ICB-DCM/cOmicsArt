@@ -279,13 +279,32 @@ hide_tabs <- function(){
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
 }
 
-show_tabs <- function(){
+# The analysis tabs after a successful Pre-processing; Enrichment Analysis
+# only for Transcriptomics.
+show_tabs <- function(omic_type){
   showTab(inputId = "tabsetPanel1", target = "Sample Correlation")
   showTab(inputId = "tabsetPanel1", target = "Differential Analysis")
   showTab(inputId = "tabsetPanel1", target = "PCA")
   showTab(inputId = "tabsetPanel1", target = "Heatmap")
   showTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
-  showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+  if (omic_type == "Transcriptomics") {
+    showTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+  } else {
+    hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+  }
+  showTab(inputId = "tabsetPanel1", target = "ML Classification")
+}
+
+# Re-renders the sidebar of every analysis tab for new pre-processed data;
+# the user's choices there are reset.
+refresh_analysis_tabs <- function(){
+  shinyjs::click("SignificanceAnalysis-refreshUI", asis = TRUE)
+  shinyjs::click("single_gene_visualisation-refreshUI", asis = TRUE)
+  shinyjs::click("EnrichmentAnalysis-refreshUI", asis = TRUE)
+  shinyjs::click("Heatmap-refreshUI", asis = TRUE)
+  shinyjs::click("PCA-refreshUI", asis = TRUE)
+  shinyjs::click("sample_correlation-refreshUI", asis = TRUE)
+  shinyjs::click("ml_classification-refreshUI", asis = TRUE)
 }
 
 # The warning toast after a run: what the procedure did and, if rows with
