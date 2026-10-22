@@ -140,17 +140,36 @@ test_that("DESeq2 returns the DESeq object", {
   expect_null(res$DESeq_obj_batch_corrected)
 })
 
-test_that("batch correction with and without DESeq2", {
+test_that("batch correction keeps the dimensions", {
   tmm <- run(genes, "Transcriptomics", "TMM", preprocessing_filtering = "filterOnly", batch_column = "batch_factor")
   expect_equal(dim(tmm$data_batch_corrected), dim(tmm$data))
   expect_true(any(grepl("Found2batches", tmm$warnings)))
-  deseq <- run(
-    genes, "Transcriptomics", "vst_DESeq", preprocessing_filtering = "filterOnly",
-    deseq_factors = "condition", batch_column = "batch_factor"
+})
+
+test_that("the DESeq2 batch correction uses the filtered counts", {
+  filterings <- list(
+    global = list(preprocessing_filtering = "filterOnly"),
+    samplewise = list(
+      preprocessing_filtering = "filterPerSample",
+      filter_threshold_samplewise = 10, filter_samplesize = 4
+    )
   )
-  expect_s4_class(deseq$DESeq_obj_batch_corrected, "DESeqDataSet")
-  # documents issue 19: the DESeq2 batch correction skips the filtering
-  expect_gt(nrow(deseq$data_batch_corrected), nrow(deseq$data))
+  for (filtering in filterings) {
+    res <- do.call(run, c(
+      list(genes, "Transcriptomics", "vst_DESeq", deseq_factors = "condition",
+           batch_column = "batch_factor"),
+      filtering
+    ))
+    # the filtering removed entities, so a run on all counts would differ
+    expect_lt(nrow(res$data), nrow(genes))
+    expect_equal(rownames(res$data_batch_corrected), rownames(res$data))
+    # the batch-corrected DESeq object counts the same entities as the DESeq run
+    expect_s4_class(res$DESeq_obj_batch_corrected, "DESeqDataSet")
+    expect_equal(
+      DESeq2::counts(res$DESeq_obj_batch_corrected),
+      DESeq2::counts(res$DESeq_obj)
+    )
+  }
 })
 
 test_that("a failed batch correction is a batch_error, other failures plain errors", {
