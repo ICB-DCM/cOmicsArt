@@ -1,5 +1,4 @@
 # The Pre-processing bridge in server.R, tested on the whole app server
-app_dir <- normalizePath(test_path("..", "..", ".."))
 
 # Lipidomics test data, "Go to Preprocessing", pre-processing with `options`
 # (inputs), then `expr`; `report` holds the report text after the run
@@ -14,16 +13,16 @@ run_app_preprocessed <- function(options, expr){
     session$setInputs(`upload-EasyTestForUser` = 1)
     session$setInputs(`selection-use_full_data` = 1)
     do.call(session$setInputs, .(options))
-    session$setInputs(Do_preprocessing = 1)
+    session$setInputs(`preprocessing-get_preprocessing` = 1)
     report <- paste(readLines(report_file), collapse = "\n")
     .(expr)
   })))
 }
 
 LOG2_FILTERED_BATCH <- list(
-  processing_type = "Log-Based", PreProcessing_Procedure = "log2",
-  PreProcessing_Procedure_filtering = "filterOnly", filter_threshold = 100,
-  BatchEffect_Column = "diet"
+  `preprocessing-processing_type` = "Log-Based", `preprocessing-preprocessing_procedure` = "log2",
+  `preprocessing-preprocessing_filtering` = "filterOnly", `preprocessing-filter_threshold` = 100,
+  `preprocessing-batch_column` = "diet"
 )
 
 test_that("the report describes a filtered log2 run with a batch column", {
@@ -49,7 +48,7 @@ test_that("changing the processing type after a run keeps the summary and the an
   )
   run_app_preprocessed(LOG2_FILTERED_BATCH, {
     clicks <- function() session$userData$clicks
-    summary <- output$Statisitcs_Data
+    summary <- output$`preprocessing-summary`
     expect_match(summary, "logX(data+1) is done", fixed = TRUE)
     # one refresh per analysis tab
     expect_setequal(clicks(), c(
@@ -58,8 +57,22 @@ test_that("changing the processing type after a run keeps the summary and the an
       "sample_correlation-refreshUI", "ml_classification-refreshUI"
     ))
     n_clicks <- length(clicks())
-    session$setInputs(processing_type = "Filtering")
-    expect_equal(output$Statisitcs_Data, summary)
+    session$setInputs(`preprocessing-processing_type` = "Filtering")
+    expect_equal(output$`preprocessing-summary`, summary)
     expect_length(clicks(), n_clicks)
+  })
+})
+
+test_that("a failed run leaves the last run where the app reads it", {
+  run_app_preprocessed(LOG2_FILTERED_BATCH, {
+    data <- session_data$data
+    params <- reactiveValuesToList(session_params)
+    session$setInputs(
+      `preprocessing-preprocessing_procedure` = "filterOnly",
+      `preprocessing-filter_threshold` = 1e9
+    )
+    session$setInputs(`preprocessing-get_preprocessing` = 2)
+    expect_identical(session_data$data, data)
+    expect_identical(reactiveValuesToList(session_params), params)
   })
 })

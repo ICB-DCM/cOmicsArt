@@ -5,6 +5,12 @@
    if (!is.null(a)) return(a) else return(b)
 }
 
+# Adds 1 to the reactiveVal `counter` (NULL counts as 0); modules use it to
+# signal an event that can repeat
+count_up <- function(counter){
+  counter((isolate(counter()) %||% 0) + 1)
+}
+
 # tryCatch modal dialog
 error_modal <- function(error_message, additional_text = NULL){
   if (is.null(error_message)){

@@ -100,7 +100,7 @@ ui <- shiny::fluidPage(
     ################################################################################
     help_tab_panel,
     data_selection_panel,
-    pre_processing_panel,
+    preprocessing_ui("preprocessing"),
     sampleCorrelation_UI("sample_correlation"),
     pca_UI("PCA"),
     ml_classification_UI("ml_classification"),

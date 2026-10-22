@@ -78,7 +78,6 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
   hideTab(inputId = "tabsetPanel1", target = "ML Classification")
   shinyjs::hideElement(id = "selection-mainPanel_other")
-  shinyjs::hideElement(id = "data_summary")
   shinyjs::hideElement(id = "div_sampleCorrelation_main_panel")
   shinyjs::hideElement(id = "PCA_main_panel_div")
   shinyjs::hideElement(id = "Significance_div")
@@ -158,10 +157,6 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1",target = "Data selection",select = T)
   })
   
-  observeEvent(input$GoToStartAnalysis, {
-    guide_startDiscover$init()$start()
-  })
-
   output$help_tab_info <- renderText({
     HTML(paste0(
     "Please select an image to display within the sidebar(left)<br>",
@@ -219,10 +214,6 @@ server <- function(input,output,session){
     # DESeq2 objects
     DESeq_obj = NULL,                   # DESeq2 object (if vst_DESeq used)
     DESeq_obj_batch_corrected = NULL,   # Batch-corrected DESeq object
-
-    # Console outputs (for display)
-    all_console_output = NULL,          # All preprocessing output
-    all_warnings = NULL,                # All preprocessing warnings
 
     # Module-specific state storage (session-level for code generation)
     # NOTE: Kept at session level to support R code generation
@@ -361,33 +352,6 @@ server <- function(input,output,session){
     hide_tabs()
   })
 
-## Plots
-  output$raw_violin_plot <- renderPlot({
-    req(able_to_plot())
-    req(react_violin_plot_raw())
-    react_violin_plot_raw()
-  })
-  output$preprocessed_violin_plot <- renderPlot({
-    req(able_to_plot())
-    req(react_violin_plot())
-    react_violin_plot()
-  })
-  output$mean_sd_plot <- renderPlot({
-    req(able_to_plot())
-    req(react_mean_sd_plot())
-    react_mean_sd_plot()
-  })
-
-## Set reactiveVals ----
-  react_violin_plot <- reactiveVal(NULL)
-  react_violin_plot_raw <- reactiveVal(NULL)
-  react_mean_sd_plot <- reactiveVal(NULL)
-  able_to_plot <- reactiveVal(FALSE)
-
-  observeEvent(input$console_toggle_button, {
-    shinyjs::toggle(id = "console_toggle")
-  })
-
 # Selection ----
   selection <- selection_server(
     "selection",
@@ -397,7 +361,8 @@ server <- function(input,output,session){
 
 ## Bridge (temporary) ----
   # writes the Selection where the rest of the app reads it; only when it is
-  # confirmed or Pre-processing starts, so it never replaces processed data
+  # confirmed, so it never replaces processed data. A run writes the
+  # Selection it pre-processed itself.
   write_selection <- function(){
     current <- isolate(selection$selected())
     session_data$data <- current$data
@@ -406,7 +371,6 @@ server <- function(input,output,session){
   }
   # "Go to Preprocessing" / "Start the Journey": report lines, then Pre-processing
   observeEvent(selection$confirmed(),{
-    able_to_plot(FALSE)
     # Do actual selection before logging
     write_selection()
     chosen <- selection$inputs()
@@ -432,569 +396,51 @@ server <- function(input,output,session){
     showTab(inputId = "tabsetPanel1",target = "Pre-processing",select = T)
   })
   
-# Pre-processing after Selection ----
-# Set Selected Data as Head to allow reiteration of pre-processing
+# Pre-processing ----
+  preprocessing <- preprocessing_server(
+    "preprocessing",
+    upload = reactive(session_data$data_original),
+    omic_type = upload$omic_type,
+    selected = selection$selected,
+    selection_confirmed = selection$confirmed,
+    upload_done = data_input_shiny
+  )
 
-## UI section ----
-  # Dynamically update second dropdown based on Processing Type
-  output$dynamic_options_ui <- renderUI({
-    req(input$processing_type)  # Ensure input exists
-    choices <- procedure_choices(input$processing_type)
-    tagList(
-    if(choices$filtering){
-      div(style = "margin-left: 15px;",
-          selectInput(
-            inputId = "PreProcessing_Procedure_filtering",
-            label = "Choose Filtering",
-            choices = c("global Filtering" = "filterOnly",
-                        "sample-wise Filtering" = "filterPerSample"),
-            selected = NULL,
-            multiple = FALSE
-          )
-      )
-    },
-    div(style = "margin-left: 15px;",
-      selectInput(
-        inputId = "PreProcessing_Procedure",
-        label = "Choose Processing Option",
-        choices = choices$procedures,
-        selected = NULL,
-        multiple = FALSE
-      )
-    )
-    )
-  })
-  # Show additional numeric input if "Omic-specific filtering" is chosen
-  output$additional_inputs_filter_ui <- renderUI({
-    req(input$PreProcessing_Procedure)
-    print(input$PreProcessing_Procedure)
-    filter <- filter_inputs(
-      input$PreProcessing_Procedure, input$PreProcessing_Procedure_filtering,
-      upload$omic_type(), ncol(session_data$data)
-    )
-    if (is.null(filter)) return(NULL)
-    if (filter$kind == "global") {
-      tagList(
-        div(style = "margin-left: 30px;",
-          numericInput(
-            inputId = "filter_threshold",
-            label = "Specifcy the minimum sum of counts/concentration accross all samples for an entitie to be kept in the analysis.",
-            value = filter$threshold,
-            min = 0
-          )
-        )
-      )
-    } else {
-      tagList(
-        div(style = "margin-left: 30px;",
-        numericInput(
-            inputId = "filter_threshold_samplewise",
-            label = "Specifcy theFiltering threshold of counts/concentration for an entitie",
-            value = filter$threshold
-          ),
-        numericInput(
-            inputId = "filter_samplesize",
-            label = "Number of Samples that need to pass the Filtering threshold",
-            value = filter$samplesize,
-            min = 1,
-            max = filter$max_samplesize,
-            step = 1
-          ),
-        helpText(paste0("Note: This number should not exceed ", filter$max_samplesize, "(the number of samples in your data set)")
-        )
-        )
-      )
-    }
-  })
-
-  # Update the batch effect UI based on the available columns
-  output$batch_effect_ui <- renderUI({
-    req(data_input_shiny())
-    selectInput(
-      inputId = "BatchEffect_Column",
-      label = "[optional] Select Batch Effect Column",
-      choices = batch_column_choices(
-        session_data$data_original, input$PreProcessing_Procedure, input$DESeq_formula_sub
-      ),
-      selected = "NULL"
-    )
-  })
-  output$formula_sub_ui <- renderUI({
-    req(data_input_shiny())
-    req(input$PreProcessing_Procedure)
-    design <- design_inputs(session_data$data, input$PreProcessing_Procedure)
-    if (is.null(design)) return(NULL)
-    if(design$kind == "deseq"){
-      div(style = "margin-left: 30px;",
-        selectInput(
-          inputId = "DESeq_formula_sub",
-          label = paste0(
-            "Choose factors to account for ",
-            "(App might crash if your factor has only 1 sample per level)"
-          ),
-          choices = design$choices,
-          multiple = T,
-          selected = design$selected
-        )) %>% helper(type = "markdown", content = "PreProcessing_DESeq")
-    }else{
-      div(style = "margin-left: 30px;",
-        tagList(
-          # add a radiobutton whether one wants an intercept or not
-          radioButtons(
-            inputId = "limma_intercept",
-            label = "Include Intercept?",
-            choices = c("Yes" = "TRUE", "No" = "FALSE"),
-            selected = "TRUE"
-          ),
-        selectInput(
-          inputId = "limma_formula",
-          label = paste0(
-            "Choose the design formula for limma voom"
-          ),
-          choices = design$choices,
-          multiple = T,
-          selected = design$selected
-        ) %>% helper(type = "markdown", content = "PreProcessing_voom")
-        )
-      )
-    }
-  })
-
-  output$Statisitcs_Data <- renderText({
-    "Press 'Get-Preprocessing' to start!"
-  })
-  output$raw_violin_plot <- renderPlot({
-    req(able_to_plot())
-    violin_plot(
-      session_data$data_original[session_params$rows_selected, session_params$samples_selected],
-      violin_color = isolate(input$violin_color)
-    )
-  })
-  output$preprocessed_violin_plot <- renderPlot({
-    req(able_to_plot())
-    violin_plot(session_data$data, violin_color = input$violin_color)
-  })
-
-## Preprocessing ----
-  selectedData_processed <- eventReactive(input$Do_preprocessing,{
-    # only enter this when you actually click data
-    req(input$Do_preprocessing > 0)
-    shinyjs::showElement(id = "data_summary")
-    waiter <- Waiter$new(
-      html = LOADING_SCREEN,
-      color = "#3897F147",
-      hide_on_render = FALSE
-
-    )
-    waiter$show()
-    write_selection()
-    print("Starting the Preprocessing")
-    # ---- Options, named like the arguments of preprocessing() ----
-    options <- list(
-      preprocessing_procedure = input$PreProcessing_Procedure,
-      preprocessing_filtering = input$PreProcessing_Procedure_filtering,
-      deseq_factors = input$DESeq_formula_sub,
-      filter_threshold = input$filter_threshold,
-      filter_threshold_samplewise = input$filter_threshold_samplewise,
-      filter_samplesize = input$filter_samplesize,
-      limma_intercept = input$limma_intercept,
-      limma_formula = input$limma_formula
-    )
-    batch_column <- input$BatchEffect_Column %||% "NULL"
-    rows_selected <- session_params$rows_selected
-    samples_selected <- session_params$samples_selected
-    # reset data to the selection that was done
-    selected <- session_data$data_original[rows_selected, samples_selected]
-
-    preprocessing_failed <- function(message, additional_text = NULL){
-      error_modal(message, additional_text = additional_text)
-      output$Statisitcs_Data <- renderText({ERROR_PREPROC})
-      hide_tabs()
-      waiter$hide()
-      req(FALSE)
-    }
-    res <- tryCatch(
-      run_preprocessing(
-        data = selected,
-        omic_type = session_params$omic_type,
-        options = options,
-        batch_column = batch_column
-      ),
-      normality_error = function(e){
-        output$Statisitcs_Data <- renderText({ERROR_NORM_TEST})
-        waiter$hide()
-        req(FALSE)
-      },
-      batch_error = function(e){
-        preprocessing_failed(conditionMessage(e), additional_text = ifelse(
-          options$preprocessing_procedure == "vst_DESeq", ERROR_BATCH_DESEQ, ERROR_BATCH_CORR
-        ))
-      },
-      error = function(e) preprocessing_failed(conditionMessage(e))
-    )
-    data <- res$data
-    # stored only after a successful run, for the analyses and the R code
-    for (name in names(options)) session_params[[name]] <- options[[name]]
-    session_params$batch_column <- batch_column
-    session_data$DESeq_obj <- res$DESeq_obj
-    session_data$DESeq_obj_batch_corrected <- res$DESeq_obj_batch_corrected
-    session_data$data_batch_corrected <- res$data_batch_corrected
-    session_data$all_console_output <- res$console_output
-    session_data$all_warnings <- res$warnings
-
-    # assign session_data finally
-    session_data$data <- data
-
-    hasConsoleOutput <- reactive({
-      # Check if we have output to display, regardless of current input values
-      # Check for console output or warnings
-      has_console <- !is.null(session_data$all_console_output) &&
-        length(session_data$all_console_output) > 0
-
-      has_warnings <- !is.null(session_data$all_warnings) &&
-        length(session_data$all_warnings) > 0
-
-      return(has_console || has_warnings)
-    })
-    observe({
-      if(hasConsoleOutput()) {
-        shinyjs::show("console_toggle_button")
-      } else {
-        shinyjs::hide("console_toggle_button")
-      }
-    })
-
-    output$consoleOutputDisplay <- renderUI({
-      # Check if we have output to display
-      hasOutput <- FALSE
-      hasConsoleOutput <- FALSE
-      hasWarnings <- FALSE
-
-      # Check for console output
-      if (!is.null(session_data$all_console_output) &&
-          length(session_data$all_console_output) > 0) {
-        hasOutput <- TRUE
-        hasConsoleOutput <- TRUE
-      }
-
-      # Check for warnings
-      if (!is.null(session_data$all_warnings) &&
-          length(session_data$all_warnings) > 0) {
-        hasOutput <- TRUE
-        hasWarnings <- TRUE
-      }
-
-      # Only show if we have output
-      if (hasOutput) {
-        tagList(
-          div(
-            class = "console-output-container",
-            if (hasConsoleOutput) {
-              tagList(
-                h4("Console Output:"),
-                tags$pre(paste(session_data$all_console_output, collapse = "\n"))
-              )
-            },
-            if (hasWarnings) {
-              tagList(
-                h4("Warnings and Messages:"),
-                tags$pre(paste(session_data$all_warnings, collapse = "\n"))
-              )
-            }
-          )
-        )
-      } else {
-        NULL  # Return nothing if conditions are not met
-      }
-    })
-
+## Bridge (temporary, removed in Phase 3h) ----
+  # Until then session_data / session_params are what the rest of the app
+  # reads; the module's returns are read only here (and `result` by the
+  # analysis modules). A run reaches them only through these observers, and
+  # only once it succeeded, so a failed run leaves the last one in place.
+  # writes the run with its Selection where the rest of the app reads it;
+  # priority so it runs before the analysis modules, which react to the same
+  # `result`
+  observeEvent(preprocessing$result(), {
+    run <- preprocessing$result()
+    session_data$data <- run$data
+    session_data$data_batch_corrected <- run$data_batch_corrected
+    session_data$DESeq_obj <- run$DESeq_obj
+    session_data$DESeq_obj_batch_corrected <- run$DESeq_obj_batch_corrected
+    params <- c(selection_params(run$selection), run$params)
+    for (name in names(params)) session_params[[name]] <- params[[name]]
     # once per run, not on every change of the controls
     show_tabs(session_params$omic_type)
     refresh_analysis_tabs()
-    
     # Count up updating
     updating$count <- updating$count + 1
-
-    run_summary <- preprocessing_summary(
-      dim(session_data$data_original), data, options$preprocessing_procedure, res$warnings
-    )
-    output$Statisitcs_Data <- renderText(run_summary)
-    # set the warning as toast
-    show_toast(
-      title = "Attention",
-      text = HTML(create_warning_preproc(
-        options$preprocessing_procedure, res$n_processed, nrow(data)
-      )),
-      position = "top",
-      timer = 2500,
-      timerProgressBar = T
-    )
-    react_violin_plot(violin_plot(
-      data = data,
-      violin_color = input$violin_color
-    ))
-    react_violin_plot_raw(violin_plot(
-      data = selected,
-      violin_color = input$violin_color
-    ))
-    mean_and_obj <- vsn::meanSdPlot(as.matrix(assay(data)), plot=FALSE)
-    react_mean_sd_plot(mean_and_obj$gg + CUSTOM_THEME + ggtitle("Mean and SD per entity"))
-    able_to_plot(TRUE)
-    session_params$violin_color <- input$violin_color
-    waiter$hide()
-    return("Pre-Processing successfully")
+  }, priority = 1)
+  observeEvent(preprocessing$failed(), {
+    hide_tabs()
   })
-  
-## Log preprocessing ----
-  observeEvent(input$Do_preprocessing,{
-    print(selectedData_processed())
-    fun_LogIt(session, "## Pre Processing {.tabset .tabset-fade}")
-    fun_LogIt(session, message = "### Info")
-    for (line in preprocessing_log_lines(reactiveValuesToList(session_params), dim(session_data$data))) {
-      fun_LogIt(session, message = line)
-    }
-    fun_LogIt(session, message = "### Publication Snippet")
-    fun_LogIt(session, message = snippet_preprocessing(
-      data=reactiveValuesToList(session_data),
-      params=reactiveValuesToList(session_params)
-    ))
-    fun_LogIt(session, message = "<br>")
+  observeEvent(preprocessing$start_discovering(), {
+    guide_startDiscover$init()$start()
   })
-
-  # render plots and ui Parts
-  output$violin_plot_color_ui <- renderUI({
-    req(selection$selected())
-    selectInput(
-      inputId = "violin_color",
-      label = "Color the violin plot by:",
-      choices = c(colnames(colData(session_data$data_original))),
-      selected = c(colnames(colData(session_data$data_original)))[1],
-      multiple = F
-    )
-  })
-
-  ## Preprocessing save, Report and Code Snippet
-  output$SavePlot_Preprocess <- downloadHandler(
-    filename = function() {
-      paste0("Preprocessing_ViolinPlot_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_Preprocess)
-    },
-    content = function(file) {
-      # Create individual plots
-      raw_plot <- react_violin_plot_raw() +
-        ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
-
-      preprocessed_plot <- react_violin_plot() +
-        ggtitle("Count distribution per sample - preprocessed")
-
-      # Arrange the plots side by side with more space for the right plot
-      combined_plot <- grid.arrange(
-        raw_plot,
-        preprocessed_plot,
-        ncol = 2,
-        widths = c(1, 1.3)
-      )
-
-      # Save the combined plot
-      ggsave(
-        filename = file,
-        plot = combined_plot,
-        width = 16,  # Increase the width of the figure
-        height = 8,  # Adjust height if necessary
-        units = "in",
-        device = gsub("\\.","",input$file_ext_Preprocess)
-      )
-      on.exit({shinyjs::click("only2Report_Preprocess")})
-    }
-  )
-
-  observeEvent(input$only2Report_Preprocess,{
-    notificationID <- showNotification("Saving to Report...",duration = 0)
-    tmp_filename <- paste0(
-      getwd(),
-      file_path,
-      paste0(
-        "Preprocessing_ViolinPlot_",
-        format(Sys.time(), "%Y_%m_%d_%H_%M_%S"),
-        input$file_ext_Preprocess
-      )
-    )
-    raw_plot <- react_violin_plot_raw() +
-      ggtitle("Count distribution per sample - raw") + theme(legend.position = "none")
-
-    preprocessed_plot <- react_violin_plot() +
-      ggtitle("Count distribution per sample - preprocessed")
-
-    # Arrange the plots side by side with more space for the right plot
-    combined_plot <- grid.arrange(
-      raw_plot,
-      preprocessed_plot,
-      ncol = 2,
-      widths = c(1, 1.3)
-    )
-    ggsave(
-      filename = tmp_filename,
-      plot = combined_plot,
-      width = 16,  # Increase the width of the figure
-      height = 8,  # Adjust height if necessary
-      units = "in",
-      device = gsub("\\.","",input$file_ext_Preprocess)
-    )
-    fun_LogIt(session, message = "## PreProcessing Violin Plot{.tabset .tabset-fade}")
-    fun_LogIt(session, message = "### Info")
-    fun_LogIt(session, message = paste0("**PreProcess** - The Samples were plotted after: ",input$violin_color))
-    fun_LogIt(session,
-      message = paste0("**PreProcess** - ![Violin Plot](",tmp_filename,")")
-    )
-    if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
-      fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
-    }
-    # no publication snippet as thats already in the log
-    removeNotification(notificationID)
-    showNotification("Report Saved!",type = "message", duration = 1)
-  })
-
-  output$getR_Code_Preprocess <- downloadHandler(
-    filename = function() {
-      paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
-    },
-    content = function(file) {
-      waiter <- Waiter$new(
-        html = LOADING_SCREEN,
-        color = "#3897F147",
-        hide_on_render = FALSE
-      )
-      waiter$show()
-      envList <- list(
-        par_tmp = reactiveValuesToList(session_params)
-      )
-      temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-      dir.create(temp_directory)
-      # save csv files
-      save_summarized_experiment(
-        session_data$data_original,
-        temp_directory
-      )
-
-      write(
-        create_workflow_script(
-          pipeline_info = VIOLIN_PLOT_PIPELINE,
-          par = reactiveValuesToList(session_params),
-          path_to_util = file.path(temp_directory, "util.R")
-        ),
-        file.path(temp_directory, "Code.R")
-      )
-
-      saveRDS(envList, file.path(temp_directory, "Data.rds"))
-
-      zip::zip(
-        zipfile = file,
-        files = dir(temp_directory),
-        root = temp_directory
-      )
-      waiter$hide()
-    },
-    contentType = "application/zip"
-  )
-  output$SavePlot_mean_sd_plot <- downloadHandler(
-    filename = function() {
-      paste0("Preprocessing_mean_sd_plot_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_type_mean_sd_plot)
-    },
-    content = function(file) {
-      # Save the combined plot
-      ggsave(
-        filename = file,
-        plot = react_mean_sd_plot(),
-        width = 16,  # Increase the width of the figure
-        height = 8,  # Adjust height if necessary
-        units = "in",
-        device = gsub("\\.","",input$file_type_mean_sd_plot)
-      )
-      on.exit({shinyjs::click("only2Report_mean_sd_plot")})
-    }
-  )
-
-  observeEvent(input$only2Report_mean_sd_plot,{
-    notificationID <- showNotification("Saving to Report...",duration = 0)
-    tmp_filename <- paste0(
-      getwd(),
-      file_path,
-      paste0(
-        "Preprocessing_mean_sd_plot_",
-        format(Sys.time(), "%Y_%m_%d_%H_%M_%S"),
-        input$file_type_mean_sd_plot
-      )
-    )
-    ggsave(
-      filename = tmp_filename,
-      plot = react_mean_sd_plot(),
-      width = 16,  # Increase the width of the figure
-      height = 8,  # Adjust height if necessary
-      units = "in",
-      device = gsub("\\.","",input$file_type_mean_sd_plot)
-    )
-    fun_LogIt(session, message = "## PreProcessing Mean and SD Plot{.tabset .tabset-fade}")
-    fun_LogIt(session, message = "### Info")
-    fun_LogIt(session, message = "The means of the preprocessed data are plotted agains their standard deviation to check for heteroskedasticity.")
-    fun_LogIt(session,
-      message = paste0("**PreProcess** - ![Mean and SD Plot](",tmp_filename,")")
-    )
-    if(isTruthy(input$NotesPreprocessedData) & !(isEmpty(input$NotesPreprocessedData))){
-      fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesPreprocessedData)))
-    }
-    # no publication snippet as thats already in the log
-    removeNotification(notificationID)
-    showNotification("Saved!",type = "message", duration = 1)
-  })
-
-  output$getR_Code_mean_sd_plot <- downloadHandler(
-    filename = function() {
-      paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
-    },
-    content = function(file) {
-      waiter <- Waiter$new(
-        html = LOADING_SCREEN,
-        color = "#3897F147",
-        hide_on_render = FALSE
-      )
-      waiter$show()
-      envList <- list(
-        par_tmp = reactiveValuesToList(session_params)
-      )
-      temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-      dir.create(temp_directory)
-      # save csv files
-      save_summarized_experiment(
-        session_data$data_original,
-        temp_directory
-      )
-
-      write(
-        create_workflow_script(
-          pipeline_info = MEAN_SD_PLOT_PIPELINE,
-          par = reactiveValuesToList(session_params),
-          path_to_util = file.path(temp_directory, "util.R")
-        ),
-        file.path(temp_directory, "Code.R")
-      )
-
-      saveRDS(envList, file.path(temp_directory, "Data.rds"))
-
-      zip::zip(
-        zipfile = file,
-        files = dir(temp_directory),
-        root = temp_directory
-      )
-      waiter$hide()
-    },
-    contentType = "application/zip"
-  )
 
   # Sample Correlation ----
   sample_correlation_server(
     id = "sample_correlation",
     session_data = session_data,
     session_params = session_params,
-    selectedData_processed = selectedData_processed
+    selectedData_processed = preprocessing$result
   )
 
   # Significance Analysis ----
@@ -1019,7 +465,7 @@ server <- function(input,output,session){
     session_data = session_data,
     session_params = session_params,
     data_input_shiny = data_input_shiny,
-    selectedData_processed = selectedData_processed
+    selectedData_processed = preprocessing$result
   )
 
   # Single Gene Visualisations ----
@@ -1028,7 +474,7 @@ server <- function(input,output,session){
     session_data = session_data,
     session_params = session_params,
     data_input_shiny = data_input_shiny,
-    selectedData_processed = selectedData_processed
+    selectedData_processed = preprocessing$result
   )
 
   # Enrichment Analysis ----

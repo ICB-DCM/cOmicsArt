@@ -79,23 +79,23 @@ IDS <- list(
     rows = "selection-row_selection",
     go = "selection-NextPanel"
   ),
-  processing_type = "processing_type",
-  procedure = "PreProcessing_Procedure",
+  processing_type = "preprocessing-processing_type",
+  procedure = "preprocessing-preprocessing_procedure",
   # Pre-processing options shown for some procedures only
   pre = list(
-    filtering = "PreProcessing_Procedure_filtering",  # filtering in front
-    threshold = "filter_threshold",                    # global filtering
-    threshold_samplewise = "filter_threshold_samplewise",
-    samplesize = "filter_samplesize",
-    deseq_factors = "DESeq_formula_sub",
-    limma_intercept = "limma_intercept",
-    limma_formula = "limma_formula",
-    batch = "BatchEffect_Column"
+    filtering = "preprocessing-preprocessing_filtering",  # filtering in front
+    threshold = "preprocessing-filter_threshold",                   # global filtering
+    threshold_samplewise = "preprocessing-filter_threshold_samplewise",
+    samplesize = "preprocessing-filter_samplesize",
+    deseq_factors = "preprocessing-deseq_factors",
+    limma_intercept = "preprocessing-limma_intercept",
+    limma_formula = "preprocessing-limma_formula",
+    batch = "preprocessing-batch_column"
   ),
-  preprocess = "Do_preprocessing",
+  preprocess = "preprocessing-get_preprocessing",
   pca_colour = "PCA-coloring_options",  # a PCA sidebar choice
-  pre_out = "Statisitcs_Data",
-  pre_rcode = "#getR_Code_Preprocess",
+  pre_out = "preprocessing-summary",
+  pre_rcode = "#preprocessing-rcode_violin",
   report = "DownloadTestModule-DownloadReport",
   errors = paste(".shiny-output-error:not(.shiny-output-error-validation),",
                  ".modal-title font[color='red']"),  # error_modal() title

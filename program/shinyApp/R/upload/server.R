@@ -31,9 +31,6 @@ upload_server <- function(id){
     )
     data_changed_since_VI <- reactiveVal(TRUE)  # Track if data has changed since last VI
 
-    count_up <- function(counter){
-      counter((isolate(counter()) %||% 0) + 1)
-    }
     start_upload <- function(source){
       uploaded_from(source)
       count_up(commit)

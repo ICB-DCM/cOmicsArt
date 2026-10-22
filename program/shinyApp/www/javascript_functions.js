@@ -140,9 +140,9 @@ function copyPlotToClipboard(plotId) {
   Shiny.setInputValue('plot_copied_status', plotId + '_error_notfound_' + Date.now(), {priority: 'event'});
   return Promise.reject(new Error('No image or canvas found for ' + plotId));
 }
-async function copyBothPlotsToClipboardCombined() {
-  const rawImg = $('#raw_violin_plot img')[0];
-  const processedImg = $('#preprocessed_violin_plot img')[0];
+async function copyBothPlotsToClipboardCombined(rawPlotId, processedPlotId) {
+  const rawImg = $('#' + rawPlotId + ' img')[0];
+  const processedImg = $('#' + processedPlotId + ' img')[0];
 
   if (!rawImg || !processedImg) {
     console.error("One or both images not found.");
@@ -190,7 +190,10 @@ $(document).ready(function() {
   });
 
   // Special handler for combined plots button (uses different function)
-  $(document).on('click', '#copy_both_plots_btn', function () {
-    copyBothPlotsToClipboardCombined();
+  $(document).on('click', '[data-clipboard-raw-plot]', function () {
+    copyBothPlotsToClipboardCombined(
+      $(this).data('clipboard-raw-plot'),
+      $(this).data('clipboard-processed-plot')
+    );
   });
 });
