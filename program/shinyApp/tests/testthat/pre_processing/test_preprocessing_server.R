@@ -224,6 +224,21 @@ test_that("both violin plots follow the colour control after a run", {
   })
 })
 
+test_that("the pre-processed violin plot shows the batch-corrected data", {
+  test_env <- environment()
+  testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
+    local_report(session, test_env)
+    session$setInputs(
+      processing_type = "Log-Based", preprocessing_procedure = "log10",
+      preprocessing_filtering = "filterOnly", filter_threshold = 0,
+      batch_column = "diet", violin_color = "diet"
+    )
+    session$setInputs(get_preprocessing = 1)
+    corrected <- unlist(SummarizedExperiment::assay(session$returned$result()$data_batch_corrected))
+    expect_equal(sort(processed_violin()$data$Counts), sort(unname(corrected)))
+  })
+})
+
 test_that("the saved violin figure and its report line follow the colour control", {
   # keep the figure ggsave() is given instead of writing it
   local_mocked_bindings(

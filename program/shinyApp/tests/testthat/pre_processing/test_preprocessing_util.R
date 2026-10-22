@@ -278,3 +278,11 @@ test_that("the normality summary names the sample count only when it is the caus
   expect_no_match(summary, "here:", fixed = TRUE)
   expect_match(normality_summary(untested, n_samples = 2), "(here: 2 samples).", fixed = TRUE)
 })
+
+test_that("the violin plot data holds each value with its sample's colour only", {
+  plot <- violin_plot(lipids, violin_color = "diet")
+  expect_equal(colnames(plot$data), c("Sample", "Counts", "diet"))
+  expect_equal(nrow(plot$data), prod(dim(lipids)))
+  sample_diet <- setNames(SummarizedExperiment::colData(lipids)$diet, colnames(lipids))
+  expect_equal(plot$data$diet, unname(sample_diet[as.character(plot$data$Sample)]))
+})
