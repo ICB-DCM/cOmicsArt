@@ -55,9 +55,10 @@ test_that("resolve_selection fills today's defaults for missing inputs", {
   expect_equal(dim(res$data), c(4, 3))
   expect_equal(res$row_type, "pathway")
   expect_equal(res$sample_type, "group")
-  # the resolved IDs replace the chosen values
-  expect_equal(res$selected_rows, paste0("e", 1:4))
-  expect_equal(res$selected_samples, paste0("s", 1:3))
+  expect_equal(res$selected_rows, "all")
+  expect_equal(res$selected_samples, "all")
+  expect_equal(res$rows_selected, paste0("e", 1:4))
+  expect_equal(res$samples_selected, paste0("s", 1:3))
 })
 
 test_that("resolve_selection passes the chosen values to select_data", {
@@ -66,8 +67,8 @@ test_that("resolve_selection passes the chosen values to select_data", {
     sample_selection = "1", sample_type = "batch"
   ))
   # exact match on the annotation value: "a|b" is not "b"
-  expect_equal(res$selected_rows, "e2")
-  expect_equal(res$selected_samples, c("s1", "s2"))
+  expect_equal(res$rows_selected, "e2")
+  expect_equal(res$samples_selected, c("s1", "s2"))
   expect_equal(dim(res$data), c(1, 2))
 })
 
@@ -98,10 +99,13 @@ test_that("select_data selects samples and entities by annotation", {
   expect_equal(both$samples_selected, colnames(both$data))
 })
 
-test_that("known bug (issue 08): as many chosen values as samples counts as 'all'", {
-  # s1 is "x", s2 is "y" and "z" matches nothing, so only s1 should be kept;
-  # but 2 chosen values for 2 samples are taken as "all"
+test_that("only 'all' selects everything, not the number of chosen values", {
+  # s1 is "x", s2 is "y" and "z" matches nothing: 2 chosen values for
+  # 2 samples must not count as "all"
   two <- small[, c("s1", "s2")]
   res <- select_data(two, selected_samples = c("x", "z"), sample_type = "group")
-  expect_equal(res$samples_selected, c("s1", "s2"))
+  expect_equal(res$samples_selected, "s1")
+  # the same for entities: 4 values for 4 entities
+  res <- select_data(small, selected_rows = c("b", "c", "y", "z"), row_type = "pathway")
+  expect_equal(res$rows_selected, c("e2", "e3"))
 })
