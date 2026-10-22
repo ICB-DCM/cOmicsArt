@@ -15,38 +15,38 @@ with these answers. Recommendation in brackets.
 1. **Tab structure:** `nested`, `flat` or `picker`? (flat: one tab row less, reads
    as the pipeline Upload → Datasets → MultiOmics, 5 Datasets still fit)
    1. Paul: each dataset its own top level tab
-   2. Lea: TBA
+   2. Lea: agreed
 2. **Dataset name and omic type:** header strip or every sidebar? (header strip,
    plus a coloured dot and the name in the tab label)
    1. Paul: above module tabs or (if possible, slight change to background that is linked to the colored dot?)
-   2. Lea: TBA
+   2. Lea: I would appreciate above the module tabs but extended with path (e.g. Transcriptomics_1/Pre-processing)
 3. **How much Dataset colour:** `stripe` or `frame`? (stripe; frame competes with
    the module sidebar colours. Check that the red and magenta Dataset colours don't
    clash with the logo. ML has no module colour today and is grey here.)
    1. Paul: No strong opinion. Actually like the frame (similar to my suggestion in 2.)
-   2. Lea: TBA
+   2. Lea: like the background would not go with the dark fram around it 
 4. **A removed Dataset:** `gone` or `tombstone`? (gone + toast; a struck-through
    badge only where something still refers to it: MultiOmics results, Upload list)
    1. Paul: Toombstone creates to much clutter potentially. remove completely
-   2. Lea: TBA
+   2. Lea: agreed just remove no tombstone (a plus: learned the spelling of a word)
 5. **Soft cap of 5:** block or warn? (warn with "Add anyway", as built)
    1. Paul: Warn seems good. With a "Don't show again" and a "Dont show again this session"
-   2. Lea: TBA
+   2. Lea: yes we might actually want to check how much performance and memory goes down? maybe rather some actual numbers in the long run would be nice (aka xx RAM used currently)
 6. **Confirm every removal?** (yes; it discards Selection, preprocessing and all
    analyses)
    1. Paul: Yes
-   2. Lea: TBA
+   2. Lea: Yes
 7. **Reuse after removal:** (internal id `ds_k` never reused; display name may be)
    1. Paul: Alow reuse and actually remove the dataset! Keep it in in the Upload with a small info on what was selected and
    optional note on WHY it was deleted.
-   2. Lea: TBA
+   2. Lea: yes agreed with what you say
 8. **Where "Remove" lives:** (header strip only; no "×" on the tab)
    1. Paul: Yes, but make sure it is visible
-   2. Lea: TBA
+   2. Lea: either fine - a cross on the tab would be nice as rather intuituve and less text = leaner design
 9. **MultiOmics with fewer than 2 Datasets:** hidden or disabled with a hint?
    (hidden, as built)
    1. Paul: We can click into it but it will show a "Upload at least two datasets for this!"
-   2. Lea: TBA
+   2. Lea: Si
 
 Needs **shiny >= 1.14.0** (`session$destroy()`). The repo's `program/renv.lock`
 pins 1.8.1.1, so the commands install shiny into a separate throwaway library and
