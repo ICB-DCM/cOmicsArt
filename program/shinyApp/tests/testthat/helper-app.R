@@ -67,6 +67,16 @@ IDS <- list(
     use = "upload-usingVIdata"
   ),
   to_pre = "use_full_data",
+  # Selection: `open` the controls, pick by annotation `column` and `values`
+  # for samples and entities, then `go` to Pre-processing
+  selection = list(
+    open = "select_data",
+    sample_column = "providedSampleAnnotationTypes",
+    samples = "sample_selection",
+    row_column = "providedRowAnnotationTypes",
+    rows = "row_selection",
+    go = "NextPanel"
+  ),
   processing_type = "processing_type",
   procedure = "PreProcessing_Procedure",
   preprocess = "Do_preprocessing",
@@ -198,6 +208,31 @@ expect_status <- function(app, text) {
     "document.getElementById('%s')?.innerText ?? ''", IDS$status
   ))
   expect_match(status, text, fixed = TRUE, label = "Upload status box")
+}
+
+# Open "Select data", choose samples and entities by annotation and go to
+# Pre-processing. `samples`/`rows` are list(column = ..., values = ...).
+select_subset <- function(app, samples, rows) {
+  s <- IDS$selection
+  click_and_wait(app, s$open)
+  set_and_wait(app, !!s$sample_column := samples$column)
+  set_and_wait(app, !!s$samples := samples$values)
+  set_and_wait(app, !!s$row_column := rows$column)
+  set_and_wait(app, !!s$rows := rows$values)
+  expect_no_app_errors(app, "Selection")
+  click_and_wait(app, s$go)
+  expect_equal(app$get_value(input = IDS$tabs), IDS$pre_tab)
+}
+
+# The Pre-processing summary reports these dimensions of the processed data.
+expect_processed_dim <- function(app, n_rows, n_samples) {
+  summary <- app$get_js(sprintf(
+    "document.getElementById('%s')?.innerText ?? ''", IDS$pre_out
+  ))
+  expect_match(
+    summary, sprintf("processed data has dimensions: %d, %d", n_rows, n_samples),
+    fixed = TRUE, label = "Pre-processing summary"
+  )
 }
 
 # `type`/`procedure` are the two pre-processing dropdowns; NULL = defaults.
