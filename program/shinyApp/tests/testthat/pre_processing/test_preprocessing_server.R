@@ -23,18 +23,40 @@ local_report <- function(session, env){
   withr::defer(unlink(report_dir, recursive = TRUE), envir = env)
   function() paste(readLines(file.path(report_dir, "Report.md")), collapse = "\n")
 }
-
-test_that("a log10 run returns the processed object and its parameters", {
-  test_env <- environment()
-  testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
-    report <- local_report(session, test_env)
-    expect_null(session$returned$result())
+# testServer on the module after a log10 run of all Lipidomics data, the
+# violins coloured by diet and both plots saved as PNG; `expr` can read the
+# report with report()
+test_log10_run <- function(expr){
+  expr <- substitute(expr)
+  test_env <- parent.frame()
+  eval(bquote(testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
+    report <- local_report(session, .(test_env))
     session$setInputs(
       processing_type = "Log-Based", preprocessing_procedure = "log10",
       preprocessing_filtering = "filterOnly", filter_threshold = 0,
-      batch_column = "NULL", violin_color = "diet"
+      batch_column = "NULL", violin_color = "diet",
+      violin_file_type = ".png", mean_sd_file_type = ".png"
     )
     session$setInputs(get_preprocessing = 1)
+    .(expr)
+  })))
+}
+# grid.arrange() also draws the combined violin plot on the open device; a
+# null device keeps it from writing Rplots.pdf
+local_null_device <- function(env = parent.frame()){
+  pdf(NULL)
+  withr::defer(dev.off(), envir = env)
+}
+# every text label in a figure (a ggplot turned into grobs, or a gtable)
+figure_labels <- function(grob){
+  c(
+    if (is.character(grob$label)) grob$label,
+    unlist(lapply(c(grob$grobs, grob$children), figure_labels))
+  )
+}
+
+test_that("a log10 run returns the processed object and its parameters", {
+  test_log10_run({
     result <- session$returned$result()
     expect_false(is.null(result))
     expected <- suppressMessages(run_preprocessing(
@@ -51,7 +73,8 @@ test_that("a log10 run returns the processed object and its parameters", {
     expect_equal(params$preprocessing_procedure, "log10")
     expect_equal(params$filter_threshold, 0)
     expect_equal(params$batch_column, "NULL")
-    expect_equal(params$violin_color, "diet")
+    # the violin colour follows the control, it is not part of the run
+    expect_null(params$violin_color)
     expect_null(result$DESeq_obj)
     expect_match(report(), "**PreProcessing** - Procedure: log10", fixed = TRUE)
     expect_match(output$summary, "logX(data+1) is done", fixed = TRUE)
@@ -89,15 +112,7 @@ test_that("a failed run returns no result", {
 })
 
 test_that("repeating a run returns a new result", {
-  test_env <- environment()
-  testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
-    local_report(session, test_env)
-    session$setInputs(
-      processing_type = "Log-Based", preprocessing_procedure = "log10",
-      preprocessing_filtering = "filterOnly", filter_threshold = 0,
-      batch_column = "NULL"
-    )
-    session$setInputs(get_preprocessing = 1)
+  test_log10_run({
     first <- session$returned$result()
     session$setInputs(get_preprocessing = 2)
     expect_false(identical(session$returned$result(), first))
@@ -105,19 +120,8 @@ test_that("repeating a run returns a new result", {
 })
 
 test_that("Send only to Report saves each plot and adds it to the report", {
-  # grid.arrange() also draws the combined violin plot on the open device
-  pdf(NULL)
-  withr::defer(dev.off())
-  test_env <- environment()
-  testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
-    report <- local_report(session, test_env)
-    session$setInputs(
-      processing_type = "Log-Based", preprocessing_procedure = "log10",
-      preprocessing_filtering = "filterOnly", filter_threshold = 0,
-      batch_column = "NULL", violin_color = "diet",
-      violin_file_type = ".png", mean_sd_file_type = ".png"
-    )
-    session$setInputs(get_preprocessing = 1)
+  local_null_device()
+  test_log10_run({
     session$setInputs(report_violin = 1)
     session$setInputs(report_mean_sd = 1)
     expect_match(report(), "## PreProcessing Violin Plot{.tabset .tabset-fade}", fixed = TRUE)
@@ -176,9 +180,7 @@ test_that("the R-code downloads are greyed out until a run succeeded", {
 })
 
 test_that("Save plot also sends the plot to the report", {
-  # grid.arrange() also draws the combined violin plot on the open device
-  pdf(NULL)
-  withr::defer(dev.off())
+  local_null_device()
   # shinyjs::click() messages the browser; record the clicked IDs instead
   local_mocked_bindings(
     click = function(id, ...) {
@@ -187,21 +189,49 @@ test_that("Save plot also sends the plot to the report", {
     },
     .package = "shinyjs"
   )
-  test_env <- environment()
-  testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
-    local_report(session, test_env)
-    session$setInputs(
-      processing_type = "Log-Based", preprocessing_procedure = "log10",
-      preprocessing_filtering = "filterOnly", filter_threshold = 0,
-      batch_column = "NULL", violin_color = "diet",
-      violin_file_type = ".png", mean_sd_file_type = ".png"
-    )
-    session$setInputs(get_preprocessing = 1)
+  test_log10_run({
     expect_true(file.exists(output$save_violin))
     expect_true(file.exists(output$save_mean_sd))
     expect_equal(
       session$userData$clicks,
       c(session$ns("report_violin"), session$ns("report_mean_sd"))
     )
+  })
+})
+
+test_that("both violin plots follow the colour control after a run", {
+  test_log10_run({
+    session$setInputs(violin_color = "ID")
+    expect_equal(raw_violin()$labels$fill, "ID")
+    expect_equal(processed_violin()$labels$fill, "ID")
+  })
+})
+
+test_that("the saved violin figure and its report line follow the colour control", {
+  # keep the figure ggsave() is given instead of writing it
+  local_mocked_bindings(
+    ggsave = function(filename, plot, ...) {
+      user_data <- getDefaultReactiveDomain()$userData
+      user_data$saved <- plot
+    },
+    .package = "ggplot2"
+  )
+  local_null_device()
+  test_log10_run({
+    session$setInputs(violin_color = "ID")
+    session$setInputs(report_violin = 1)
+    labels <- figure_labels(session$userData$saved)
+    expect_true("ID" %in% labels)
+    expect_false("diet" %in% labels)
+    expect_match(report(), "The Samples were plotted after: ID", fixed = TRUE)
+  })
+})
+
+test_that("the violin R code draws the colouring the control shows", {
+  test_log10_run({
+    session$setInputs(violin_color = "ID")
+    unzipped <- withr::local_tempdir()
+    utils::unzip(output$rcode_violin, exdir = unzipped)
+    expect_equal(readRDS(file.path(unzipped, "Data.rds"))$par_tmp$violin_color, "ID")
   })
 })

@@ -255,9 +255,6 @@ server <- function(input,output,session){
     row_type = NULL,                    # Row selection type
     sample_type = NULL,                 # Sample selection type
 
-    # Visualization parameters
-    violin_color = NULL,                # Violin plot color preference
-
     # Module-specific parameters (session-level for code generation)
     Enrichment = list(),                # Enrichment analysis params (nested)
     Heatmap = NULL,                     # Heatmap params
