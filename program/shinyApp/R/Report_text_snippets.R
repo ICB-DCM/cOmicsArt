@@ -66,9 +66,8 @@ snippet_preprocessing <- function(
   } else if (params$preprocessing_procedure == "vst_DESeq") {
     snippet <- paste0(snippet, "For the transcriptomics data, DESeq2 was used for normalization and VST transformation applied for visualisation of the normalized data (not for statistical testing)",
                       "(v. ",packageVersion("DESeq2"),") (",print(clean_citation(citation('DESeq2')), style = "text"),"). ",
-                      "The formula for analysis was ~",
-                      params$DESeq_formula_batch,
-                      ifelse(params$deseq_formula != "NULL",  params$deseq_formula, ""),
+                      "The formula for analysis was ~ ",
+                      paste(c(params$deseq_factors, setdiff(params$batch_column, "NULL")), collapse = " + "),
                       ".\n")
   } else if (params$preprocessing_procedure == "Scaling_0_1") {
     snippet <- paste0(snippet, "The data was scaled to fit within the range of 0 to 1. Each entity's values are hence transformed proportionally to ensure a consistent scale.\n")

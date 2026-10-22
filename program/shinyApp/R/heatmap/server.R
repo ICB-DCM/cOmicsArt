@@ -57,7 +57,7 @@ heatmap_server <- function(id, session_data, session_params, data_input_shiny, s
         )
       })
       output$UseBatch_ui <- renderUI({
-        req(session_params$BatchColumn != "NULL")
+        req(session_params$batch_column != "NULL")
         selectInput(
           inputId = ns("UseBatch"),
           label = "Use batch corrected data?",
@@ -161,7 +161,7 @@ heatmap_server <- function(id, session_data, session_params, data_input_shiny, s
       waiter()$show()
       shinyjs::showElement(id = "Heatmap_div", asis = TRUE)
       # assign variables to be used
-      useBatch <- session_params$BatchColumn != "NULL" && input$UseBatch == "Yes"
+      useBatch <- session_params$batch_column != "NULL" && input$UseBatch == "Yes"
       selection_type <- input$row_selection_options
       top_k_type <- input$TopK_order %||% NULL
       n_top_k <- input$TopK %||% NULL
