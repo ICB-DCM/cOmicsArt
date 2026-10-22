@@ -53,7 +53,8 @@ violin_plot_raw_info <<- list(
     data = "data_orig[rows_selected, samples_selected, drop = FALSE]"
   ),
   to_util = TRUE,
-  output_name = "violin_plot_raw"
+  output_name = "violin_plot_raw",
+  plot_name = "violin_plot_raw"
 )
 violin_plot_info <<- list(
   foo = violin_plot,
@@ -141,7 +142,10 @@ entitieSelection_info <<- list(
     data = "data"
   ),
   output_name = "selected_data",
-  to_util = TRUE
+  to_util = TRUE,
+  additional_foos = list(
+    getLFCs = getLFCs
+  )
 )
 custom_rowAnnotation_info <<- list(
   foo = custom_rowAnnotation,
@@ -229,6 +233,16 @@ gene_set_enrichment_info <<- list(
       geneSetChoice = "gene_set_choice"
   ),
   output_name = "enrichment_results",
+  to_util = TRUE
+)
+gene_set_to_entrez_info <<- list(
+  foo = gene_set_to_entrez,
+  name = "gene_set_to_entrez",
+  input_mapping = list(
+      gene_set = "gene_set_choice",
+      data = "data"
+  ),
+  output_name = "gene_set_choice",
   to_util = TRUE
 )
 over_representation_analysis_info <<- list(
@@ -330,7 +344,8 @@ performSigAnalysis_info <<- list(
   output_name = "sig_results",
   to_util = TRUE,
   additional_foos = list(
-      significance_analysis = significance_analysis
+      significance_analysis = significance_analysis,
+      getLFC = getLFC
   )
 )
 plot_significant_results_info <<- list(
@@ -343,6 +358,7 @@ plot_significant_results_info <<- list(
   output_mapping = list(
     plot = "sig_ana_plot"
   ),
+  plot_name = "sig_ana_plot",
   additional_foos = list(
       prepare_upset_plot = prepare_upset_plot,
       filter_significant_result = filter_significant_result,

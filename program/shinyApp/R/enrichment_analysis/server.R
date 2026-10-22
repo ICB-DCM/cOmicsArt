@@ -535,9 +535,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
                                        input$test_correction))
 
           }else{
-            ea_reactives$tmp_genes <- rowData(ea_data)[ea_reactives$tmp_genes,"entrezgene_id"]
-            # remove NAs
-            ea_reactives$tmp_genes <- ea_reactives$tmp_genes[!is.na(ea_reactives$tmp_genes)]
+            ea_reactives$tmp_genes <- gene_set_to_entrez(ea_reactives$tmp_genes, ea_data)
             ea_reactives$enrichment_results <- tryCatch({
               over_representation_analysis(
                 organism = ea_reactives$organism,

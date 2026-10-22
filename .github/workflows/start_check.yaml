@@ -3,7 +3,10 @@ name: Build & Test Shiny App
 # One pipeline for the environment image and the app checks:
 #   plan  -> decide whether an image must be built, and how
 #   build -> (only if needed) build + push the image
-#   smoke -> start the CURRENT app code inside that image and run the tests
+#   smoke  -> start the CURRENT app code inside that image and run the smoke
+#             and unit tests (every tests/*.R runner except testthat_rcode.R)
+#   R_code -> run the R_code tests (testthat_rcode.R) in the same image, in
+#             parallel with smoke
 #
 # Which image build a change needs:
 #   - Dockerfile changed                       -> full build (./Dockerfile)
@@ -208,9 +211,9 @@ jobs:
           echo "App did not respond within timeout"
           exit 1
 
-      # Browser smoke tests (shinytest2) + existing unit tests, all via
-      # shiny::runTests() in the env image. Mount must be read-write: the app
-      # creates www/<session token>/ folders.
+      # Browser smoke tests (shinytest2) + unit tests: every runner in tests/
+      # except the R_code one, which has its own job. Mount must be read-write:
+      # the app creates www/<session token>/ folders.
       - name: Run tests (shinytest2 + unit tests)
         run: |
           set -o pipefail
@@ -224,7 +227,9 @@ jobs:
             -w /srv/shiny-server/shinyApp \
             --entrypoint Rscript \
             "$TEST_IMAGE" \
-            -e 'shiny::runTests(".")' 2>&1 | tee shinytest2.log
+            -e 'runners <- grep("rcode", list.files("tests", "\\.R$"), value = TRUE, invert = TRUE)' \
+            -e 'shiny::runTests(".", filter = paste0("^(", paste(runners, collapse = "|"), ")$"))' \
+            2>&1 | tee shinytest2.log
 
       - name: Upload test output on failure
         if: failure()
@@ -243,3 +248,47 @@ jobs:
       - name: Clean up
         if: always()
         run: docker rm -f comicsart_app || true
+
+  R_code:
+    needs: [plan, build]
+    # Same conditions and image as smoke; runs next to it.
+    if: >-
+      always() && needs.plan.result == 'success' && needs.plan.outputs.test == 'true' &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TEST_IMAGE: ${{ needs.build.outputs.image || 'pauljonasjost/comicsart:latest' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pull the image
+        run: |
+          echo "Testing against $TEST_IMAGE"
+          docker pull "$TEST_IMAGE"
+
+      # Runs each tab, downloads its "Get R code" zip and runs the script
+      # (tests/testthat/test-rcode-*.R). Mount read-write, as for smoke.
+      - name: Run R_code tests
+        run: |
+          set -o pipefail
+          docker run --rm \
+            -e CI=true \
+            -e NOT_CRAN=true \
+            -e COMICSART_OFFLINE=true \
+            -e SHINYTEST2_LOAD_TIMEOUT=300000 \
+            -e SHINYTEST2_TIMEOUT=120000 \
+            -v "${{ github.workspace }}/program/shinyApp":/srv/shiny-server/shinyApp \
+            -w /srv/shiny-server/shinyApp \
+            --entrypoint Rscript \
+            "$TEST_IMAGE" \
+            -e 'shiny::runTests(".", filter = "rcode")' 2>&1 | tee rcode.log
+
+      - name: Upload test output on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rcode-output
+          path: rcode.log
+          if-no-files-found: ignore

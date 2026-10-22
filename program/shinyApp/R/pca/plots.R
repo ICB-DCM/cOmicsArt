@@ -175,7 +175,7 @@ plot_loadings_matrix <- function(pca, data, entitie_anno, n_pcs, cutoff){
     df_loadings$chosenAnno <- df_loadings$entity
   }
   # Change this to a complexHeatmap + ad possibility to cluster rows
-  loadings_matirx <- ggplot(df_loadings, mapping = aes(
+  loadings_matrix <- ggplot(df_loadings, mapping = aes(
     x = PC,
     y = chosenAnno,
     fill = loading
@@ -188,5 +188,5 @@ plot_loadings_matrix <- function(pca, data, entitie_anno, n_pcs, cutoff){
     labs(x = "PCs", y = entitie_anno, fill = "Loading") +
     ggtitle("Loadings Matrix") +
     CUSTOM_THEME
-  return(loadings_matirx)
+  return(loadings_matrix)
 }

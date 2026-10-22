@@ -126,6 +126,22 @@ IDS <- list(
       out = "#Significance_div [id$='_Volcano']",
       rcode = "#Significance_div [id$='_getR_Code_Volcano']"
     ),
+    "ML Classification (supervised)" = list(
+      tab = "ML Classification",
+      set = list("ml_classification-ml_method_type" = "supervised"),
+      go = "ml_classification-run_classification",
+      out = "#ml_classification-svm_plot",
+      rcode = "#ml_classification-getR_Code_svm"
+    ),
+    # the overview of several comparisons is only shown for more than one;
+    # the comparisons are Lipidomics diet groups
+    "Differential Analysis (2 comparisons)" = list(
+      tab = "Differential Analysis",
+      set = list("SignificanceAnalysis-comparisons" = c("CD_CD_HFD:CD_CD_CD", "HFD_CD_CD:CD_CD_CD")),
+      go = "SignificanceAnalysis-significanceGo",
+      out = "#SignificanceAnalysis-Significant_Plot_final",
+      rcode = "#SignificanceAnalysis-getR_Code_Sig"
+    ),
     "Heatmap" = HEATMAP,
     # after a pre-processing with a batch column
     "PCA (batch corrected)" = list(
@@ -266,6 +282,7 @@ expect_processed_dim <- function(app, n_rows, n_samples) {
 }
 
 # `type`/`procedure` are the two pre-processing dropdowns; NULL = defaults.
+# Returns the violin R-code zip (invisibly).
 # `options`: further inputs by IDS$pre name, set in order after the procedure,
 # e.g. list(threshold = 100, batch = "batch_factor").
 preprocess <- function(app, type = NULL, procedure = NULL, options = list()) {
@@ -277,10 +294,11 @@ preprocess <- function(app, type = NULL, procedure = NULL, options = list()) {
   click_and_wait(app, IDS$preprocess)
   expect_output_shown(app, paste0("#", IDS$pre_out))
   expect_no_app_errors(app, "Pre-processing")
-  expect_download(app, IDS$pre_rcode)
+  expect_download(app, IDS$pre_rcode)  # returns the R-code zip
 }
 
 # Open an analysis tab, run it with defaults and apply the generic checks.
+# Returns the tab's R-code zip (invisibly).
 visit_tab <- function(app, tab) {
   m <- IDS$modules[[tab]]
   set_and_wait(app, !!IDS$tabs := if (is.null(m$tab)) tab else m$tab)
@@ -327,12 +345,15 @@ expect_no_app_errors <- function(app, label) {
   )
 }
 
+# The download behind `selector` is a non-empty file. Returns its path
+# (NA if it failed), invisibly.
 expect_download <- function(app, selector) {
   file <- tryCatch({
     id <- app$get_js(sprintf("document.querySelector(\"%s\").id", selector))
     app$get_download(id)
   }, error = function(e) NA_character_)
   expect_true(isTRUE(file.size(file) > 0), label = paste0("download ", selector, " non-empty"))
+  invisible(file)
 }
 
 # The report is rendered on click and linked from a modal.

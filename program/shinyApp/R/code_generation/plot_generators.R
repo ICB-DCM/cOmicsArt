@@ -35,6 +35,7 @@ HEATMAP_PIPELINE <<- list(
 OA_PIPELINE <<- list(
   get_gene_set_choice_info,
   check_annotation_enrichment_analysis_info,
+  gene_set_to_entrez_info,
   over_representation_analysis_info,
   plot_enrichment_results_info
 )

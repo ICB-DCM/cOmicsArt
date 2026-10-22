@@ -1,5 +1,12 @@
 # Utility functions for enrichment analysis
 
+gene_set_to_entrez <- function(gene_set, data){
+  # The Entrez IDs over_representation_analysis() needs for the entities in
+  # gene_set (row names of data); entities without an Entrez ID are dropped.
+  entrez <- rowData(data)[gene_set, "entrezgene_id"]
+  return(entrez[!is.na(entrez)])
+}
+
 get_gene_set_choice <- function(
   ora_or_gse,
   ora_gene_set_type = NULL,
