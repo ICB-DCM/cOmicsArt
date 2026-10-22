@@ -66,16 +66,16 @@ IDS <- list(
     checks = "upload-OverallChecks",
     use = "upload-usingVIdata"
   ),
-  to_pre = "use_full_data",
+  to_pre = "selection-use_full_data",
   # Selection: `open` the controls, pick by annotation `column` and `values`
   # for samples and entities, then `go` to Pre-processing
   selection = list(
-    open = "select_data",
-    sample_column = "providedSampleAnnotationTypes",
-    samples = "sample_selection",
-    row_column = "providedRowAnnotationTypes",
-    rows = "row_selection",
-    go = "NextPanel"
+    open = "selection-select_data",
+    sample_column = "selection-providedSampleAnnotationTypes",
+    samples = "selection-sample_selection",
+    row_column = "selection-providedRowAnnotationTypes",
+    rows = "selection-row_selection",
+    go = "selection-NextPanel"
   ),
   processing_type = "processing_type",
   procedure = "PreProcessing_Procedure",
