@@ -359,6 +359,8 @@ server <- function(input,output,session){
     session_params$organism <- upload$organism()
   })
   observeEvent(upload$cleared(), {
+    # as before the first Upload: no Selection controls, no Pre-processing tab
+    shinyjs::hideElement("selection-mainPanel_other")
     hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
     hide_tabs()
   })

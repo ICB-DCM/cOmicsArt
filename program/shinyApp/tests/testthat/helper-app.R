@@ -42,7 +42,8 @@ IDS <- list(
         "upload-data_sample_anno1" = AIRWAY$samples,
         "upload-data_row_anno1" = AIRWAY$rows
       ),
-      upload = "upload-refresh_file_input"
+      upload = "upload-refresh_file_input",
+      clear = "upload-clear_FileInput"
     ),
     precompiled = list(
       tab = "Precompiled", omic = "upload-omic_type_precompiled",
@@ -70,6 +71,7 @@ IDS <- list(
   # Selection: `open` the controls, pick by annotation `column` and `values`
   # for samples and entities, then `go` to Pre-processing
   selection = list(
+    block = "selection-mainPanel_other",
     open = "selection-select_data",
     sample_column = "selection-providedSampleAnnotationTypes",
     samples = "selection-sample_selection",
