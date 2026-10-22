@@ -81,6 +81,17 @@ IDS <- list(
   ),
   processing_type = "processing_type",
   procedure = "PreProcessing_Procedure",
+  # Pre-processing options shown for some procedures only
+  pre = list(
+    filtering = "PreProcessing_Procedure_filtering",  # filtering in front
+    threshold = "filter_threshold",                    # global filtering
+    threshold_samplewise = "filter_threshold_samplewise",
+    samplesize = "filter_samplesize",
+    deseq_factors = "DESeq_formula_sub",
+    limma_intercept = "limma_intercept",
+    limma_formula = "limma_formula",
+    batch = "BatchEffect_Column"
+  ),
   preprocess = "Do_preprocessing",
   pre_out = "Statisitcs_Data",
   pre_rcode = "#getR_Code_Preprocess",
@@ -115,6 +126,22 @@ IDS <- list(
       rcode = "#Significance_div [id$='_getR_Code_Volcano']"
     ),
     "Heatmap" = HEATMAP,
+    # after a pre-processing with a batch column
+    "PCA (batch corrected)" = list(
+      tab = "PCA",
+      set = list("PCA-UseBatch" = "Yes"),
+      go = "PCA-Do_PCA",
+      out = "#PCA-PCA_plot",
+      rcode = "#PCA-getR_Code_PCA"
+    ),
+    "Differential Analysis (batch corrected)" = list(
+      tab = "Differential Analysis",
+      set = list("SignificanceAnalysis-UseBatch" = "Yes"),
+      go = "SignificanceAnalysis-significanceGo",
+      after = "#Significance_div a[data-value='Volcano']",
+      out = "#Significance_div [id$='_Volcano']",
+      rcode = "#Significance_div [id$='_getR_Code_Volcano']"
+    ),
     # Transcriptomics: 'all' rows is too slow; the gene list feeds Enrichment
     "Heatmap (top K)" = modifyList(HEATMAP, list(
       tab = "Heatmap",
@@ -238,9 +265,14 @@ expect_processed_dim <- function(app, n_rows, n_samples) {
 }
 
 # `type`/`procedure` are the two pre-processing dropdowns; NULL = defaults.
-preprocess <- function(app, type = NULL, procedure = NULL) {
+# `options`: further inputs by IDS$pre name, set in order after the procedure,
+# e.g. list(threshold = 100, batch = "batch_factor").
+preprocess <- function(app, type = NULL, procedure = NULL, options = list()) {
+  # also when coming back from an analysis tab: hidden outputs don't update
+  set_and_wait(app, !!IDS$tabs := IDS$pre_tab)
   if (!is.null(type)) set_and_wait(app, !!IDS$processing_type := type)
   if (!is.null(procedure)) set_and_wait(app, !!IDS$procedure := procedure)
+  for (name in names(options)) set_and_wait(app, !!IDS$pre[[name]] := options[[name]])
   click_and_wait(app, IDS$preprocess)
   expect_output_shown(app, paste0("#", IDS$pre_out))
   expect_no_app_errors(app, "Pre-processing")
