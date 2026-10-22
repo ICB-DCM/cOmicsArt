@@ -23,7 +23,10 @@ translate_genes_ea <- function(data, annotation_results, organism){
 
   if (all(is.na(matched_out$ensembl_gene_id))) {
     # Most likely wrong organism used
-    output$debug <- renderText({"<font color=\"#ab020a\"><b>You have most likely chosen the wrong organism! No annotation was added</b></font>"})
+    showNotification(
+      "You have most likely chosen the wrong organism! No annotation was added",
+      type = "error"
+    )
   } else {
     # Initialize new columns in the rowData with NA
     rowData(data)$ensembl_gene_id <- NA
@@ -76,7 +79,10 @@ translate_genes_oa <- function(
 
     if (all(is.na(matched_out$ensembl_gene_id))) {
       # Most likely wrong organism used
-      output$debug <- renderText({"<font color=\"#ab020a\"><b>You have most likely chosen the wrong organism! No annotation was added</b></font>"})
+      showNotification(
+        "You have most likely chosen the wrong organism! No annotation was added",
+        type = "error"
+      )
     } else {
       # Initialize new columns in the rowData with NA
       rowData(data)$ensembl_gene_id <- NA
