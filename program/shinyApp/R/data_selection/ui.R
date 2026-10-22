@@ -42,8 +42,7 @@ data_selection_main_panel <- mainPanel(
              div(class = "DataSelection",
                  h4("Row selection - biochemical entities"),
                  uiOutput("providedRowAnnotationTypes_ui"),
-                 uiOutput("row_selection_ui"),
-                 uiOutput("propensityChoiceUser_ui")
+                 uiOutput("row_selection_ui")
              )),
       column(6,
              div(class = "SampleSelection",

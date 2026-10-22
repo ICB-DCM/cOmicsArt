@@ -32,7 +32,7 @@ error_modal <- function(error_message, additional_text = NULL){
 
 
 select_data <- function(
-  data, selected_samples = "all", sample_type = NULL, selected_rows = "all", row_type = NULL, propensity = 1
+  data, selected_samples = "all", sample_type = NULL, selected_rows = "all", row_type = NULL
 ){
   # select data based on selected samples
   if(is.null(row_type)) {
@@ -55,8 +55,6 @@ select_data <- function(
   rows_selected <- c()
   if(any(selected_rows == "all") | length(selected_rows) == nrow(assay(data))) {
     rows_selected <- rownames(data)
-  } else if ("High Values+IQR" %in% selected_rows && length(selected_rows) == 1) {
-    # Do nothing, as we don't want to modify `selected` in this case
   } else {
     rows_selected <- unique(c(
       rows_selected,
@@ -64,16 +62,6 @@ select_data <- function(
         rowData(data)[, row_type] %in% selected_rows
       ]
     ))
-  }
-  if (any(selected_rows == "High Values+IQR")) {
-     if(length(row_selection) == 1) {
-       prefiltered_data <- assay(data)
-       rows_selected <- rownames(data)
-     } else {
-       prefiltered_data <- assay(data)[rows_selected, ]
-     }
-    toKeep <- filter_rna(prefiltered_data, propensity)
-    rows_selected <- intersect(rows_selected, toKeep)
   }
   data <- data[rows_selected,samples_selected]
   return(list(

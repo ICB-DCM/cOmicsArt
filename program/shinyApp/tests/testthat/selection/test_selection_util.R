@@ -30,10 +30,10 @@ test_that("annotation columns to select on, first one is the default", {
   expect_equal(selection_annotation_columns(lipids, "samples"), c("diet", "ID"))
 })
 
-test_that("entity choices split '|' values and offer 'all' and High Values+IQR", {
+test_that("entity choices split '|' values and offer 'all'", {
   choices <- entity_choices(small, "pathway")
   expect_false(choices$numeric)
-  expect_equal(choices$values, c("High Values+IQR", "all", "a", "b", "c"))
+  expect_equal(choices$values, c("all", "a", "b", "c"))
 })
 
 test_that("a numeric entity column only offers 'all'", {
@@ -55,7 +55,6 @@ test_that("resolve_selection fills today's defaults for missing inputs", {
   expect_equal(dim(res$data), c(4, 3))
   expect_equal(res$row_type, "pathway")
   expect_equal(res$sample_type, "group")
-  expect_equal(res$propensity, 1)
   # the resolved IDs replace the chosen values
   expect_equal(res$selected_rows, paste0("e", 1:4))
   expect_equal(res$selected_samples, paste0("s", 1:3))
@@ -64,14 +63,12 @@ test_that("resolve_selection fills today's defaults for missing inputs", {
 test_that("resolve_selection passes the chosen values to select_data", {
   res <- resolve_selection(small, list(
     row_selection = "b", row_type = "pathway",
-    sample_selection = "1", sample_type = "batch",
-    propensity = 0.85
+    sample_selection = "1", sample_type = "batch"
   ))
   # exact match on the annotation value: "a|b" is not "b"
   expect_equal(res$selected_rows, "e2")
   expect_equal(res$selected_samples, c("s1", "s2"))
   expect_equal(dim(res$data), c(1, 2))
-  expect_equal(res$propensity, 0.85)
 })
 
 test_that("select_data keeps everything for 'all'", {
@@ -107,11 +104,4 @@ test_that("known bug (issue 08): as many chosen values as samples counts as 'all
   two <- small[, c("s1", "s2")]
   res <- select_data(two, selected_samples = c("x", "z"), sample_type = "group")
   expect_equal(res$samples_selected, c("s1", "s2"))
-})
-
-test_that("known bug (issue 06): High Values+IQR fails", {
-  expect_error(
-    select_data(lipids, selected_rows = "High Values+IQR", propensity = 0.85),
-    "row_selection"
-  )
 })
