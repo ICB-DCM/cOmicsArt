@@ -18,7 +18,7 @@ entity_choices <- function(data, column){
   }
   list(
     numeric = FALSE,
-    values = c("all", unique(unlist(strsplit(values, "\\|"))))
+    values = c("all", unique(unlist(strsplit(as.character(values), "|", fixed = TRUE))))
   )
 }
 
