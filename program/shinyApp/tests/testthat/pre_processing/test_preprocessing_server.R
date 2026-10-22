@@ -133,6 +133,23 @@ test_that("Send only to Report saves each plot and adds it to the report", {
   })
 })
 
+test_that("a run with 2 samples succeeds without the normality test", {
+  two_samples <- lipids[, 1:2]
+  test_env <- environment()
+  testServer(preprocessing_server, args = module_args(two_samples, "Lipidomics"), {
+    local_report(session, test_env)
+    session$setInputs(
+      processing_type = "Log-Based", preprocessing_procedure = "log10",
+      preprocessing_filtering = "filterOnly", filter_threshold = 0,
+      batch_column = "NULL", violin_color = "diet"
+    )
+    session$setInputs(get_preprocessing = 1)
+    expect_false(is.null(session$returned$result()))
+    expect_null(session$returned$failed())
+    expect_match(output$summary, "The normality test was not possible", fixed = TRUE)
+  })
+})
+
 test_that("a failed batch correction counts as a failed run", {
   # the app's functions are not in a package; replace it where the module finds it
   app_env <- environment(preprocessing_server)

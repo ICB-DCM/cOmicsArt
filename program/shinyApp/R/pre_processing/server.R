@@ -18,7 +18,7 @@
 #       selection: the Selection it pre-processed (resolve_selection())
 #       omic_type: the omic type it ran for
 #       run: the number of the run, so that a repeated run is a change
-#   failed: counts up after each run that failed (not for the normality test)
+#   failed: counts up after each run that failed
 #   start_discovering: the "Start Discovering" button
 preprocessing_server <- function(id, upload, omic_type, selected, selection_confirmed, upload_done){
   moduleServer(id, function(input, output, session){
@@ -313,10 +313,6 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
           options = options,
           batch_column = batch_column
         ),
-        normality_error = function(e){
-          summary_text(ERROR_NORM_TEST)
-          NULL
-        },
         batch_error = function(e){
           preprocessing_failed(conditionMessage(e), additional_text = ifelse(
             options$preprocessing_procedure == "vst_DESeq", ERROR_BATCH_DESEQ, ERROR_BATCH_CORR

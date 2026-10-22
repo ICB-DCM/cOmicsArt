@@ -210,13 +210,71 @@ test_that("the summary reports dimensions, batches, log and negative values", {
 
 test_that("the summary counts entities with p < 0.05 in the normality test", {
   res <- run(lipids, "Lipidomics", "none")
-  normality <- SummarizedExperiment::rowData(res$data)
   summary <- preprocessing_summary(dim(lipids), res$data, "none", res$warnings)
+  # 549 of the 653 non-constant Lipidomics entities (checked in issue 20)
+  expect_match(summary, "Number of entities with p-value < 0.05: 549/653", fixed = TRUE)
+})
+
+test_that("the summary counts entities with FDR-adjusted p < 0.05 in the normality test", {
+  res <- run(lipids, "Lipidomics", "none")
+  summary <- preprocessing_summary(dim(lipids), res$data, "none", res$warnings)
+  # 540 of the 653: the raw p-values adjusted with p.adjust(method = "fdr")
+  # (checked in issue 20; the summary showed 0)
+  expect_match(summary, "Number of entities with adj. p-value < 0.05: 540/653", fixed = TRUE)
+})
+
+test_that("with 2 samples the run completes without the normality test", {
+  two_samples <- lipids[, 1:2]
+  res <- run(two_samples, "Lipidomics", "none")
+  normality <- SummarizedExperiment::rowData(res$data)
+  expect_true(all(is.na(normality$p_value_shapiro)))
+  expect_true(all(is.na(normality$p_adjusted_shapiro_FDR)))
+  summary <- preprocessing_summary(dim(two_samples), res$data, "none", res$warnings)
   expect_match(
-    summary, paste0("Number of entities with p-value < 0.05: ", sum(normality$p_value_shapiro < 0.05), "/653"),
+    summary,
+    "The normality test was not possible: each entity needs 3 to 5000 values that are not all identical (here: 2 samples).",
     fixed = TRUE
   )
-  # documents issue 20: it reads p_value_shapiro_FDR, which doesn't exist, so
-  # the adjusted count is always 0
-  expect_match(summary, "adj. p-value < 0.05: 0/653", fixed = TRUE)
+  expect_no_match(summary, "Number of entities with", fixed = TRUE)
+})
+
+test_that("an entity the normality test is not possible for gets NA", {
+  # 10 entities that vary, as after a run
+  data <- lipids[apply(assay(lipids), 1, sd) != 0, ][1:10, ]
+  # one made constant: shapiro.test() needs values that are not all identical
+  SummarizedExperiment::assay(data)[1, ] <- 1
+  normality <- add_normality_test(data)
+  expect_true(is.na(normality$p_value_shapiro[1]))
+  expect_true(is.na(normality$p_adjusted_shapiro_FDR[1]))
+  expect_false(anyNA(normality$p_value_shapiro[-1]))
+})
+
+test_that("the normality summary counts the entities that could not be tested", {
+  normality <- data.frame(
+    p_value_shapiro = c(NA, 0.01, 0.2, 0.03, NA),
+    p_adjusted_shapiro_FDR = c(NA, 0.02, 0.3, 0.06, NA)
+  )
+  summary <- normality_summary(normality, n_samples = 28)
+  expect_match(summary, "Number of entities with p-value < 0.05: 2/5", fixed = TRUE)
+  expect_match(summary, "Number of entities with adj. p-value < 0.05: 1/5", fixed = TRUE)
+  expect_match(
+    summary,
+    "Normality test not possible for 2 entities (it needs 3 to 5000 values that are not all identical).",
+    fixed = TRUE
+  )
+  one_untested <- normality_summary(normality[1:4, ], n_samples = 28)
+  expect_match(one_untested, "Normality test not possible for 1 entity (", fixed = TRUE)
+})
+
+test_that("the normality summary names the sample count only when it is the cause", {
+  untested <- data.frame(p_value_shapiro = c(NA, NA), p_adjusted_shapiro_FDR = c(NA, NA))
+  # e.g. every entity constant: enough samples, so no sample count
+  summary <- normality_summary(untested, n_samples = 28)
+  expect_match(
+    summary,
+    "The normality test was not possible: each entity needs 3 to 5000 values that are not all identical.",
+    fixed = TRUE
+  )
+  expect_no_match(summary, "here:", fixed = TRUE)
+  expect_match(normality_summary(untested, n_samples = 2), "(here: 2 samples).", fixed = TRUE)
 })
