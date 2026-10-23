@@ -5,7 +5,7 @@ library(cicerone)
 ### Global Constants will be saved here
 
 # Test correction list
-PADJUST_METHOD <<- list(
+PADJUST_METHOD <- list(
   "None" = "none",
   "Bonferroni" = "bonferroni",
   "Benjamini-Hochberg" = "BH",
@@ -16,7 +16,7 @@ PADJUST_METHOD <<- list(
   "FDR" = "BH"
 )
 
-CODE_DOWNLOAD_PREFACE <<- "
+CODE_DOWNLOAD_PREFACE <- "
 
 # Load the data ----
 # The following will try to detect the directory of the file and load the data
@@ -71,7 +71,7 @@ CUSTOM_THEME <- theme_bw(base_size = 15) +
 # Happy Adjusting! :)"
 
 # Geneset enrichment list reset
-GENESETS_RESET <<- list(
+GENESETS_RESET <- list(
   "Hallmarks" = F,
   "C1" = F,
   "C2" = F,
@@ -103,7 +103,7 @@ GENESETS_RESET <<- list(
   "C8" = F
 )
 
-ENRICHMENT_RESULT_RESET <<- list(
+ENRICHMENT_RESULT_RESET <- list(
   "EnrichmentRes_Hallmarks" = NULL,
   "EnrichmentRes_C1" = NULL,
   "EnrichmentRes_C2" = NULL,
@@ -137,13 +137,13 @@ ENRICHMENT_RESULT_RESET <<- list(
 )
 
 # Allowed Annotations
-ENSEMBL_OPT <<- c(
+ENSEMBL_OPT <- c(
   "ensembl", "Ensembl", "ensembl_id", "Ensembl_ID", "Ensemble.ID", "ENSEMBL", "ENS"
 )
-ENTREZ_OPT <<- c(
+ENTREZ_OPT <- c(
   "entrez", "Entrez", "entrez_id", "Entrez_ID", "Entrez_Gene_ID", "ENTREZID", "Entrez.ID"
 )
-SYMBOL_OPT <<- c(
+SYMBOL_OPT <- c(
   "symbol", "Symbol", "gene_symbol", "Gene_Symbol", "Nomenclature", "SYMBOL", "Gene.Symbol"
 )
 
@@ -205,7 +205,7 @@ if(format(Sys.Date(), "%d") == "01" && Sys.getenv("COMICSART_OFFLINE") != "true"
   EnsemblUpdateCheck()
 }else{
   ensembl_objects <- readRDS("www/EnsemblObjects.RDS")
-  loadedVersion <<- ensembl_objects
+  loadedVersion <- ensembl_objects
 }
 
 # Query a fixed Ensembl release instead of www.ensembl.org or a mirror.
@@ -217,11 +217,11 @@ pinned_ensembl_objects <- loadedVersion
 for(organism in names(pinned_ensembl_objects)){
   pinned_ensembl_objects[[organism]]$ensmbl@host <- ENSEMBL_ARCHIVE_HOST
 }
-loadedVersion <<- pinned_ensembl_objects
+loadedVersion <- pinned_ensembl_objects
 
 
 # Define the ggplotcustom theme
-CUSTOM_THEME <<- theme_bw(base_size = 15) +  theme(
+CUSTOM_THEME <- theme_bw(base_size = 15) +  theme(
   axis.title = element_text(size = 15),        # Axis labels
   axis.text = element_text(size = 15),         # Axis tick labels
   legend.text = element_text(size = 15),       # Legend text
@@ -230,7 +230,7 @@ CUSTOM_THEME <<- theme_bw(base_size = 15) +  theme(
 )
 
 # Saving Functions for non ggplots, names list with functions
-SAVE_FUNCTION <<- list(
+SAVE_FUNCTION <- list(
   "pdf" = pdf,
   "png" = png,
   "tiff" = tiff,
@@ -303,7 +303,7 @@ EXAMPLE_LIPID_DESCRIPTION <-
         </div>
     "
 
-guide <<- cicerone::Cicerone$
+guide <- cicerone::Cicerone$
   new(keyboard_control = TRUE)$
   step(
     el = "sidebar_help_tab",
@@ -378,7 +378,7 @@ guide <<- cicerone::Cicerone$
     ")
   )
 
-guide_startDiscover <<- cicerone::Cicerone$
+guide_startDiscover <- cicerone::Cicerone$
   new(keyboard_control = TRUE)$
   step(
     el = "tabsetPanel1",
