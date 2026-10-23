@@ -54,14 +54,9 @@ if (!requireNamespace("hexbin", quietly = TRUE)) {
 }
 library(htmlwidgets)
 
-# Load global constants and utilities
-source("R/C.R")
-source("R/C_strings.R")
-source("R/utils/ui_components.R")
-
-# Note: SourceAll.R CANNOT be moved to global.R without major refactoring
-# because many functions rely on lexical scoping to access 'session'
-# See PHASE1_ISSUES.md for details and solutions
+# Source the app code once per app (R/_disable_autoload.R stops Shiny from
+# sourcing R/ itself)
+source("R/SourceAll.R")
 
 # Source UI components for each panel
 source("R/help_tab/ui.R")

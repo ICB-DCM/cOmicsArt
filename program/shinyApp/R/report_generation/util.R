@@ -1,4 +1,4 @@
-add_notes_report <<- function(notes) {
+add_notes_report <- function(notes) {
   # Add notes to the report
   # Parameters:
   #   notes: character vector of notes to add to the report

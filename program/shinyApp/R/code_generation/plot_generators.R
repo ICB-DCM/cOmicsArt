@@ -2,29 +2,29 @@
 # ATTENTION: The order of the functions in the pipeline is important!
 
 # --- Preprocessing ---
-VIOLIN_PLOT_PIPELINE <<- list(
+VIOLIN_PLOT_PIPELINE <- list(
   violin_plot_info,
   violin_plot_raw_info
 )
-MEAN_SD_PLOT_PIPELINE <<- list(
+MEAN_SD_PLOT_PIPELINE <- list(
   plot_mean_sd_plot_info
 )
 
 # --- Sample Correlation ---
-SAMPLE_CORRELATION_PIPELINE <<- list(
+SAMPLE_CORRELATION_PIPELINE <- list(
   get_sample_correlation_info,
   custom_sample_annotation_info,
   custom_heatmap_info
 )
 
 # --- Single Gene Visualisation ---
-SINGLE_GENE_VISUALISATION_PIPELINE <<- list(
+SINGLE_GENE_VISUALISATION_PIPELINE <- list(
   get_single_gene_data_info,
   single_gene_boxplot_info
 )
 
 # --- Heatmap ---
-HEATMAP_PIPELINE <<- list(
+HEATMAP_PIPELINE <- list(
   entitieSelection_info,
   custom_rowAnnotation_info,
   custom_colAnnotation_info,
@@ -32,14 +32,14 @@ HEATMAP_PIPELINE <<- list(
 )
 
 # --- Enrichment Analysis ---
-OA_PIPELINE <<- list(
+OA_PIPELINE <- list(
   get_gene_set_choice_info,
   check_annotation_enrichment_analysis_info,
   gene_set_to_entrez_info,
   over_representation_analysis_info,
   plot_enrichment_results_info
 )
-EA_PIPELINE <<- list(
+EA_PIPELINE <- list(
   get_gene_set_choice_info,
   check_annotation_enrichment_analysis_info,
   gene_set_enrichment_info,
@@ -47,39 +47,39 @@ EA_PIPELINE <<- list(
 )
 
 # --- Principal Component Analysis ---
-PCA_PIPELINE <<- list(
+PCA_PIPELINE <- list(
   get_pca_info,
   plot_pca_info
 )
-PCA_LOADINGS_PIPELINE <<- list(
+PCA_LOADINGS_PIPELINE <- list(
   get_pca_info,
   plot_pca_loadings_info
 )
-SCREE_PLOT_PIPELINE <<- list(
+SCREE_PLOT_PIPELINE <- list(
   get_pca_info,
   plot_scree_pca_info
 )
-LOADINGS_MATRIX_PIPELINE <<- list(
+LOADINGS_MATRIX_PIPELINE <- list(
   get_pca_info,
   plot_loadings_matrix_info
 )
 
 # --- Significance Analysis ---
-UPSET_PLOT_PIPELINE <<- list(
+UPSET_PLOT_PIPELINE <- list(
   performSigAnalysis_info,
   plot_significant_results_info
 )
-VOLCANO_PIPELINE <<- list(
+VOLCANO_PIPELINE <- list(
   performSigAnalysis_info,
   volcano_plot_info
 )
 
 # --- ML Classification ---
-KMEANS_CLUSTERING_PIPELINE <<- list(
+KMEANS_CLUSTERING_PIPELINE <- list(
   run_kmeans_analysis_info,
   render_kmeans_plot_info
 )
-SVM_CLASSIFICATION_PIPELINE <<- list(
+SVM_CLASSIFICATION_PIPELINE <- list(
   run_svm_classification_info,
   render_svm_plot_info
 )

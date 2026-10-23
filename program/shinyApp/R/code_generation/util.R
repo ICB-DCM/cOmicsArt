@@ -196,7 +196,7 @@ create_library_code <- function(foo_list){
   })))
   all_packages <- setdiff(
     na.omit(all_packages),
-    c("base", "", "package:base", "ggplot2", "SummarizedExperiment")  # Base or already loaded packages
+    c("base", "", "R_GlobalEnv", "package:base", "ggplot2", "SummarizedExperiment")  # Base, the app's own functions or already loaded packages
   )
   all_packages <- c(all_packages, "rstudioapi", "SummarizedExperiment", "ggplot2")
   lib_sourcing <- paste0(
