@@ -15,8 +15,9 @@ server <- function(input,output,session){
 # Security section ----
   options(shiny.maxRequestSize=70*(1024^2)) # request 70MB
 
-  #### Clean Up
-  # create www folder if not present
+  #### Session folder
+  # www/<token>/ holds this session's report and files; it is deleted when
+  # the session ends (onSessionEnded below), never at the start of another
   if(dir.exists("www")){
     setwd("www")
     # create folder with session tokes as name for all files to be saved inside
@@ -41,25 +42,8 @@ server <- function(input,output,session){
             file=paste0(session$token,"/Report.md")
         )
       print(paste0("Created folder for session: ",session$token))
-    } else {
-      # remove all files in the folder
-      setwd(session$token)
-      list <- list.files()
-      file.remove(list.files(path="."))
-      print("Removed old files for fresh start")
-      setwd("..")
     }
     file_path <- paste0("/www/",session$token,"/")
-    print(list.files())
-    file.remove(
-      list.files(path=".") %>%
-        setdiff(list.files(path=".", pattern = ".csv")) %>%
-        setdiff(list.files(path=".", pattern = ".RDS")) %>%
-        setdiff(list.files(path=".", pattern = ".png")) %>%
-        setdiff(list.files(path=".", pattern = ".css")) %>%
-        setdiff(list.files(path=".", pattern = ".js"))
-    )
-    print("Removed old Report files for fresh start")
     setwd("..")
   }
   observe_helpers()
