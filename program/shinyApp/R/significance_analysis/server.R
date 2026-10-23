@@ -278,7 +278,6 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         invisible(lapply(old_tabs, cleanup_tab))
 
         # Helper function to create new tabs
-        # Relies on source(local = TRUE) - input, output, session, file_path accessed via parent scope
         create_tab <- function(comp) {
           idx <- which(comparisons == comp)
           create_new_tab(
@@ -291,7 +290,8 @@ significance_analysis_server <- function(id, session_data, session_params, data_
             preprocess_method = preprocessing,
             value = paste0("Significance_", idx),
             session_data = session_data,
-            session_params = session_params
+            session_params = session_params,
+            file_path = file_path
           )
         }
 

@@ -9,7 +9,7 @@
 #   - plot_name: (optional) character, the name of the plot if the function is a plot
 
 # --- Data Selection ---
-select_data_info <<- list(
+select_data_info <- list(
   foo = select_data,
   name = "select_data",
   input_mapping = list(
@@ -24,7 +24,7 @@ select_data_info <<- list(
 )
 
 # --- Preprocessing ---
-preprocessing_info <<- list(
+preprocessing_info <- list(
   foo = preprocessing,
   name = "preprocessing",
   input_mapping = list(
@@ -46,7 +46,7 @@ preprocessing_info <<- list(
     limma_voom_processing = limma_voom_processing
   )
 )
-violin_plot_raw_info <<- list(
+violin_plot_raw_info <- list(
   foo = violin_plot,
   name = "violin_plot",
   input_mapping = list(
@@ -56,7 +56,7 @@ violin_plot_raw_info <<- list(
   output_name = "violin_plot_raw",
   plot_name = "violin_plot_raw"
 )
-violin_plot_info <<- list(
+violin_plot_info <- list(
   foo = violin_plot,
   name = "violin_plot",
   input_mapping = list(
@@ -65,7 +65,7 @@ violin_plot_info <<- list(
   to_util = FALSE,
   plot_name = "plot2return"
 )
-plot_mean_sd_plot_info <<- list(
+plot_mean_sd_plot_info <- list(
   foo = function(data){
     mean_and_sd_plot <- vsn::meanSdPlot(as.matrix(assay(data)), plot=FALSE)$gg +
       CUSTOM_THEME +
@@ -81,7 +81,7 @@ plot_mean_sd_plot_info <<- list(
 )
 
 # --- Sample Correlation ---
-get_sample_correlation_info <<- list(
+get_sample_correlation_info <- list(
   foo = get_sample_correlation,
   name = "get_sample_correlation",
   input_mapping = list(
@@ -90,7 +90,7 @@ get_sample_correlation_info <<- list(
   output_name = "cormat",
   to_util = TRUE
 )
-custom_sample_annotation_info <<- list(
+custom_sample_annotation_info <- list(
   foo = custom_sample_annotation,
   name = "custom_sample_annotation",
   input_mapping = list(
@@ -101,7 +101,7 @@ custom_sample_annotation_info <<- list(
   ),
   to_util = FALSE
 )
-custom_heatmap_info <<- list(
+custom_heatmap_info <- list(
   foo = custom_heatmap,
   name = "custom_heatmap",
   input_mapping = list(
@@ -112,7 +112,7 @@ custom_heatmap_info <<- list(
 )
 
 # --- Single Gene Visualisation ---
-get_single_gene_data_info <<- list(
+get_single_gene_data_info <- list(
   foo = get_single_gene_data,
   name = "get_single_gene_data",
   input_mapping = list(
@@ -121,7 +121,7 @@ get_single_gene_data_info <<- list(
   output_name = "gene_data",
   to_util = TRUE
 )
-single_gene_boxplot_info <<- list(
+single_gene_boxplot_info <- list(
   foo = single_gene_boxplot,
   name = "single_gene_boxplot",
   input_mapping = list(
@@ -135,7 +135,7 @@ single_gene_boxplot_info <<- list(
 )
 
 # --- Heatmap ---
-entitieSelection_info <<- list(
+entitieSelection_info <- list(
   foo = entitieSelection,
   name = "entitieSelection",
   input_mapping = list(
@@ -147,7 +147,7 @@ entitieSelection_info <<- list(
     getLFCs = getLFCs
   )
 )
-custom_rowAnnotation_info <<- list(
+custom_rowAnnotation_info <- list(
   foo = custom_rowAnnotation,
   name = "custom_rowAnnotation",
   input_mapping = list(
@@ -157,7 +157,7 @@ custom_rowAnnotation_info <<- list(
   output_name = "row_annotation",
   to_util = TRUE
 )
-custom_colAnnotation_info <<- list(
+custom_colAnnotation_info <- list(
   foo = custom_colAnnotation,
   name = "custom_colAnnotation",
   input_mapping = list(
@@ -166,7 +166,7 @@ custom_colAnnotation_info <<- list(
   output_name = "col_annotation",
   to_util = TRUE
 )
-plot_heatmap_info <<- list(
+plot_heatmap_info <- list(
   foo = plot_heatmap,
   name = "plot_heatmap",
   input_mapping = list(
@@ -179,7 +179,7 @@ plot_heatmap_info <<- list(
 )
 
 # --- Enrichment Analysis ---
-get_gene_set_choice_info <<- list(
+get_gene_set_choice_info <- list(
   foo = get_gene_set_choice,
   name = "get_gene_set_choice",
   input_mapping = list(
@@ -191,7 +191,7 @@ get_gene_set_choice_info <<- list(
       getLFCs = getLFCs
   )
 )
-check_annotation_enrichment_analysis_info <<- list(
+check_annotation_enrichment_analysis_info <- list(
   foo = check_annotation_enrichment_analysis,
   name = "check_annotation_enrichment_analysis",
   input_mapping = list(
@@ -203,7 +203,7 @@ check_annotation_enrichment_analysis_info <<- list(
   output_name = "anno_results",
   to_util = TRUE
 )
-translate_genes_ea_info <<- list(
+translate_genes_ea_info <- list(
   foo = translate_genes_ea,
   name = "translate_genes_ea",
   input_mapping = list(
@@ -213,7 +213,7 @@ translate_genes_ea_info <<- list(
   output_name = "data",
   to_util = TRUE
 )
-translate_genes_oa_info <<- list(
+translate_genes_oa_info <- list(
   foo = translate_genes_oa,
   name = "translate_genes_oa",
   input_mapping = list(
@@ -225,7 +225,7 @@ translate_genes_oa_info <<- list(
   output_name = "gene_set_choice",
   to_util = TRUE
 )
-gene_set_enrichment_info <<- list(
+gene_set_enrichment_info <- list(
   foo = gene_set_enrichment,
   name = "gene_set_enrichment",
   input_mapping = list(
@@ -235,7 +235,7 @@ gene_set_enrichment_info <<- list(
   output_name = "enrichment_results",
   to_util = TRUE
 )
-gene_set_to_entrez_info <<- list(
+gene_set_to_entrez_info <- list(
   foo = gene_set_to_entrez,
   name = "gene_set_to_entrez",
   input_mapping = list(
@@ -245,7 +245,7 @@ gene_set_to_entrez_info <<- list(
   output_name = "gene_set_choice",
   to_util = TRUE
 )
-over_representation_analysis_info <<- list(
+over_representation_analysis_info <- list(
   foo = over_representation_analysis,
   name = "over_representation_analysis",
   input_mapping = list(
@@ -255,7 +255,7 @@ over_representation_analysis_info <<- list(
   output_name = "enrichment_results",
   to_util = TRUE
 )
-plot_enrichment_results_info <<- list(
+plot_enrichment_results_info <- list(
   foo = function(enrichment_results, enrich_set){
     enrichment_dotplot <- clusterProfiler::dotplot(
       enrichment_results[[paste0("EnrichmentRes_", enrich_set)]]
@@ -271,7 +271,7 @@ plot_enrichment_results_info <<- list(
 )
 
 # --- Principal Component Analysis ---
-get_pca_info <<- list(
+get_pca_info <- list(
   foo = get_pca,
   name = "get_pca",
   input_mapping = list(
@@ -285,7 +285,7 @@ get_pca_info <<- list(
   ),
   to_util = TRUE
 )
-plot_pca_info <<- list(
+plot_pca_info <- list(
   foo = plot_pca,
   name = "plot_pca",
   input_mapping = list(
@@ -302,7 +302,7 @@ plot_pca_info <<- list(
     pca_ellipses = pca_ellipses
   )
 )
-plot_pca_loadings_info <<- list(
+plot_pca_loadings_info <- list(
   foo = plot_pca_loadings,
   name = "plot_pca_loadings",
   input_mapping = list(
@@ -312,7 +312,7 @@ plot_pca_loadings_info <<- list(
   to_util = FALSE,
   plot_name = "loadings_plot"
 )
-plot_scree_pca_info <<- list(
+plot_scree_pca_info <- list(
   foo = plot_scree_pca,
   name = "plot_scree_pca",
   input_mapping = list(
@@ -322,7 +322,7 @@ plot_scree_pca_info <<- list(
   to_util = FALSE,
   plot_name = "scree_plot"
 )
-plot_loadings_matrix_info <<- list(
+plot_loadings_matrix_info <- list(
   foo = plot_loadings_matrix,
   name = "plot_loadings_matrix",
   input_mapping = list(
@@ -334,7 +334,7 @@ plot_loadings_matrix_info <<- list(
 )
 
 # --- Significance Analysis ---
-performSigAnalysis_info <<- list(
+performSigAnalysis_info <- list(
   foo = performSigAnalysis,
   name = "performSigAnalysis",
   input_mapping = list(
@@ -348,7 +348,7 @@ performSigAnalysis_info <<- list(
       getLFC = getLFC
   )
 )
-plot_significant_results_info <<- list(
+plot_significant_results_info <- list(
   foo = plot_significant_results,
   name = "plot_significant_results",
   input_mapping = list(
@@ -365,7 +365,7 @@ plot_significant_results_info <<- list(
       getLFCs = getLFCs
   )
 )
-volcano_plot_info <<- list(
+volcano_plot_info <- list(
   foo = volcano_plot,
   name = "volcano_plot",
   input_mapping = list(
@@ -376,7 +376,7 @@ volcano_plot_info <<- list(
 )
 
 # --- ML Classification ---
-run_kmeans_analysis_info <<- list(
+run_kmeans_analysis_info <- list(
   foo = run_kmeans_analysis,
   name = "run_kmeans_analysis",
   input_mapping = list(
@@ -393,7 +393,7 @@ run_kmeans_analysis_info <<- list(
   )
 )
 
-render_kmeans_plot_info <<- list(
+render_kmeans_plot_info <- list(
   foo = render_kmeans_plot,
   name = "render_kmeans_plot",
   input_mapping = list(
@@ -405,7 +405,7 @@ render_kmeans_plot_info <<- list(
   plot_name = "cluster_plot"
 )
 
-run_svm_classification_info <<- list(
+run_svm_classification_info <- list(
   foo = run_svm_classification,
   name = "run_svm_classification",
   input_mapping = list(
@@ -422,7 +422,7 @@ run_svm_classification_info <<- list(
   )
 )
 
-render_svm_plot_info <<- list(
+render_svm_plot_info <- list(
   foo = render_svm_plot,
   name = "render_svm_plot",
   input_mapping = list(

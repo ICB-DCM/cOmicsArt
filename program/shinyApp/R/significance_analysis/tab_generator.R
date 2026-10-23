@@ -13,24 +13,13 @@
 #' @param value Tab value for programmatic access
 #' @param session_data ReactiveValues with application data
 #' @param session_params ReactiveValues with application parameters
+#' @param file_path The session folder, as "/www/<token>/"
 #' @return None (appends tab and sets up server logic)
 #' @export
 create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns,
-                           preprocess_method, value, session_data, session_params) {
+                           preprocess_method, value, session_data, session_params, file_path) {
 
   print(paste("Creating new tab for:", contrast[1], "vs", contrast[2]))
-
-  # Get file_path from parent environment (set in significance_analysis/server.R)
-  file_path <- tryCatch({
-    get("file_path", envir = parent.frame())
-  }, error = function(e) {
-    # Fallback if file_path not found
-    session <- getDefaultReactiveDomain()
-    paste0("www/", session$token, "/")
-  })
-
-  # Source all component files
-  source_results_tab_components()
 
   # Create ID factory for this contrast
   ids <- create_contrast_ids(ns, contrast)
@@ -62,34 +51,4 @@ create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns,
     ns = ns
   )
   print(paste("Server logic initialized for:", contrast[1], "vs", contrast[2]))
-}
-
-#' Source all results_tab component files
-#'
-#' Loads all the modular components needed for results tab functionality.
-#' Called automatically by create_new_tab().
-#'
-#' @return None (sources files into the server environment)
-#' @keywords internal
-source_results_tab_components <- function() {
-  base_path <- "R/significance_analysis/results_tab"
-  # Source into the session's server environment (where SourceAll.R put the
-  # helpers these files call, e.g. create_clipboard_plotly), not .GlobalEnv
-  env <- parent.env(environment())
-
-  # Source utilities
-  source(file.path(base_path, "utils/id_factory.R"), local = env)
-  source(file.path(base_path, "utils/summary_generators.R"), local = env)
-  source(file.path(base_path, "utils/download_handlers.R"), local = env)
-  source(file.path(dirname(base_path), "util.R"), local = env)
-
-  # Source UI components
-  source(file.path(base_path, "components/table_ui.R"), local = env)
-  source(file.path(base_path, "components/volcano_ui.R"), local = env)
-  source(file.path(base_path, "ui.R"), local = env)
-
-  # Source server components
-  source(file.path(base_path, "components/table_server.R"), local = env)
-  source(file.path(base_path, "components/volcano_server.R"), local = env)
-  source(file.path(base_path, "server.R"), local = env)
 }

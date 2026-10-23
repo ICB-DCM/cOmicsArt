@@ -260,7 +260,7 @@ getLFC <- function(means, preprocessing){
 }
 
 
-log_messages_volcano<- function(plot, table, contrast, file_path){
+log_messages_volcano <- function(session, plot, table, contrast, file_path){
   if((is.null(plot)) | (is.null(table))){
     return()
   }
