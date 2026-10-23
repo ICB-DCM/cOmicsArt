@@ -416,7 +416,7 @@ significance_analysis_server <- function(id, session_data, session_params, data_
       # download the intersect table
       output$downloadIntersections <- downloadHandler(
         filename = function(){
-          paste0("IntersectionsList_", Sys.time(), ".csv")
+          download_name("Differential", ".csv", "IntersectionsList")
         },
         content = function(file){
           req(input$intersection_high)
@@ -456,7 +456,7 @@ significance_analysis_server <- function(id, session_data, session_params, data_
       output$getR_Code_Sig <- downloadHandler(
 
         filename = function(){
-          paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+          download_name("Differential", "rcode", "Intersections")
         },
         content = function(file){
           waiter()$show()
@@ -493,7 +493,7 @@ significance_analysis_server <- function(id, session_data, session_params, data_
       # Saving Plot
       output$SavePlot_Sig <- downloadHandler(
         filename = function() {
-          paste0(id, format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_Sig)
+          download_name("Differential", input$file_ext_Sig, "Intersections")
         },
         content = function(file){
           ggsave(

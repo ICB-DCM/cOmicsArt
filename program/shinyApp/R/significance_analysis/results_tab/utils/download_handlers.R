@@ -133,7 +133,7 @@ setup_rcode_downloads <- function(output, ids, contrast, session_data, session_p
 create_rcode_download_handler <- function(session_data, session_params, contrast, raw) {
   downloadHandler(
     filename = function() {
-      paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+      download_name("Differential", "rcode", if (raw) "VolcanoRaw" else "Volcano")
     },
     content = function(file) {
       waiter <- Waiter$new(
@@ -210,7 +210,7 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
     file_path = file_path,
     session_data = session_data,
     session_params = session_params,
-    prefix = "VOLCANO_"
+    item = "Volcano"
   )
 
   # Raw volcano save
@@ -225,7 +225,7 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
     file_path = file_path,
     session_data = session_data,
     session_params = session_params,
-    prefix = "raw_VOLCANO"
+    item = "VolcanoRaw"
   )
 
   # Both volcanoes save
@@ -240,7 +240,7 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
     file_path = file_path,
     session_data = session_data,
     session_params = session_params,
-    prefix = "VOLCANO_"
+    item = "VolcanoBoth"
   )
 }
 
@@ -257,15 +257,15 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
 #' @param file_path Path for file operations
 #' @param session_data ReactiveValues with application data
 #' @param session_params ReactiveValues with application parameters
-#' @param prefix Filename prefix
+#' @param item Item of the download name, see download_name()
 #' @return downloadHandler object
 #' @export
 create_plot_save_handler <- function(input, session, id, file_ext_id, plot_reactive,
                                       data_reactive, contrast, file_path,
-                                      session_data, session_params, prefix) {
+                                      session_data, session_params, item) {
   downloadHandler(
     filename = function() {
-      paste0(prefix, format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input[[file_ext_id]])
+      download_name("Differential", input[[file_ext_id]], item)
     },
     content = function(file) {
       ggsave(

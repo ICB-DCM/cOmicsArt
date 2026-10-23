@@ -189,7 +189,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
     # Download handlers for k-means
     output$download_cluster_plot <- downloadHandler(
       filename = function() {
-        paste0("kmeans_clustering_k", input$k_clusters, "_", Sys.Date(), ".png")
+        download_name("ML", ".png", "KMeans")
       },
       content = function(file) {
         session_data_list <- reactiveValuesToList(session_data)
@@ -212,7 +212,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
 
     output$download_cluster_results <- downloadHandler(
       filename = function() {
-        paste0("kmeans_results_k", input$k_clusters, "_", Sys.Date(), ".csv")
+        download_name("ML", ".csv", "KMeansResults")
       },
       content = function(file) {
         cluster_df <- data.frame(
@@ -364,7 +364,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
     # Download handlers for SVM
     output$download_svm_plot <- downloadHandler(
       filename = function() {
-        paste0("svm_classification_", input$condition_column_supervised, "_", Sys.Date(), ".png")
+        download_name("ML", ".png", "SVM")
       },
       content = function(file) {
         ggsave(
@@ -381,7 +381,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
 
     output$download_svm_results <- downloadHandler(
       filename = function() {
-        paste0("svm_predictions_", input$condition_column_supervised, "_", Sys.Date(), ".csv")
+        download_name("ML", ".csv", "SVMPredictions")
       },
       content = function(file) {
         predictions_df <- data.frame(
@@ -440,9 +440,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
 
     output$SavePlot_cluster <- downloadHandler(
       filename = function() {
-        paste0("KMeans_Clustering_k", input$k_clusters, "_",
-               format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),
-               input$file_ext_cluster)
+        download_name("ML", input$file_ext_cluster, "KMeans")
       },
       content = function(file) {
         req(ml_results$cluster_plot)
@@ -461,7 +459,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
 
     output$getR_Code_cluster <- downloadHandler(
       filename = function() {
-        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+        download_name("ML", "rcode", "KMeans")
       },
       content = function(file) {
         waiter <- Waiter$new(
@@ -553,9 +551,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
 
     output$SavePlot_svm <- downloadHandler(
       filename = function() {
-        paste0("SVM_Classification_", input$condition_column_supervised, "_",
-               format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),
-               input$file_ext_svm)
+        download_name("ML", input$file_ext_svm, "SVM")
       },
       content = function(file) {
         req(ml_results$svm_plot)
@@ -574,7 +570,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
 
     output$getR_Code_svm <- downloadHandler(
       filename = function() {
-        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+        download_name("ML", "rcode", "SVM")
       },
       content = function(file) {
         waiter <- Waiter$new(

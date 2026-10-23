@@ -34,7 +34,7 @@ DownloadReport_server<- function(id){
             tags$h4(a(
               href=paste0(session$token, "/Report.html"),
               "Download report",
-              download=NA,
+              download=download_name("Report", ".html"),
               target="_blank"
             )),
             footer=tagList(

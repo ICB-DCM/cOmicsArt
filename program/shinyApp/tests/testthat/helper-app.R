@@ -345,14 +345,19 @@ expect_no_app_errors <- function(app, label) {
   )
 }
 
-# The download behind `selector` is a non-empty file. Returns its path
-# (NA if it failed), invisibly.
+# The download behind `selector` is a non-empty file named by download_name().
+# Returns its path (NA if it failed), invisibly.
 expect_download <- function(app, selector) {
   file <- tryCatch({
     id <- app$get_js(sprintf("document.querySelector(\"%s\").id", selector))
     app$get_download(id)
   }, error = function(e) NA_character_)
   expect_true(isTRUE(file.size(file) > 0), label = paste0("download ", selector, " non-empty"))
+  if (!is.na(file)) expect_match(
+    basename(file),
+    "^cOmicsArt_[A-Za-z0-9_]+_\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}\\.[A-Za-z]+$",
+    label = paste0("download ", selector, " name")
+  )
   invisible(file)
 }
 
