@@ -243,7 +243,7 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
       ## Download R code and data
       # TODO: needs fixing with scenario
       output$getR_Code_SingleEntities <- downloadHandler(filename = function(){
-        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+        download_name("SingleGene", "rcode")
       }, content = function(file){
         waiter <- Waiter$new(
           html = LOADING_SCREEN,
@@ -286,9 +286,7 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
       ## Save plot
       output$SavePlot_singleGene <- downloadHandler(
         filename = function() {
-          paste0(
-            "Single_Gene_Boxplot_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_singleGene
-          )
+          download_name("SingleGene", input$file_ext_singleGene)
         },
         content = function(file){
           ggsave(
