@@ -392,11 +392,11 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       )
     }
     # Code.R, Data.rds and the data as csv files for `pipeline_info`, which
-    # gets `params()`
-    rcode_download <- function(pipeline_info, params = rcode_params){
+    # gets `params()`; `item` names the zip (see download_name())
+    rcode_download <- function(pipeline_info, item, params = rcode_params){
       downloadHandler(
         filename = function() {
-          paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+          download_name("Preprocessing", "rcode", item)
         },
         content = function(file) {
           waiter <- show_loading()
@@ -434,10 +434,11 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     }
 
     # "Save plot" (`save_id`) and "Send only to Report" (`report_id`) for
-    # `plot()`: saved as `file_stem`_<time> with the extension chosen in
-    # `ext_id`; saving also sends it to the Report. The Report gets `heading`,
+    # `plot()`: downloaded as download_name("Preprocessing", <ext>, `item`)
+    # with the extension chosen in `ext_id`; saving also sends it to the
+    # Report, stored there as `file_stem`_<time>. The Report gets `heading`,
     # the line `info()` and the plot, titled `title`.
-    plot_downloads <- function(save_id, report_id, ext_id, file_stem, plot, heading, info, title){
+    plot_downloads <- function(save_id, report_id, ext_id, item, file_stem, plot, heading, info, title){
       save_plot <- function(file){
         ggsave(
           filename = file,
@@ -450,7 +451,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       }
       output[[save_id]] <- downloadHandler(
         filename = function() {
-          paste0(file_stem, "_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input[[ext_id]])
+          download_name("Preprocessing", input[[ext_id]], item)
         },
         content = function(file) {
           save_plot(file)
@@ -484,6 +485,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       save_id = "save_violin",
       report_id = "report_violin",
       ext_id = "violin_file_type",
+      item = "ViolinPlot",
       file_stem = "Preprocessing_ViolinPlot",
       plot = combined_violin_plot,
       heading = "PreProcessing Violin Plot",
@@ -492,6 +494,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     )
     output$rcode_violin <- rcode_download(
       VIOLIN_PLOT_PIPELINE,
+      item = "ViolinPlot",
       params = reactive(c(rcode_params(), list(violin_color = violin_color())))
     )
 
@@ -499,13 +502,14 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       save_id = "save_mean_sd",
       report_id = "report_mean_sd",
       ext_id = "mean_sd_file_type",
+      item = "MeanSD",
       file_stem = "Preprocessing_mean_sd_plot",
       plot = react_mean_sd_plot,
       heading = "PreProcessing Mean and SD Plot",
       info = function() "The means of the preprocessed data are plotted agains their standard deviation to check for heteroskedasticity.",
       title = "Mean and SD Plot"
     )
-    output$rcode_mean_sd <- rcode_download(MEAN_SD_PLOT_PIPELINE)
+    output$rcode_mean_sd <- rcode_download(MEAN_SD_PLOT_PIPELINE, item = "MeanSD")
 
     list(
       result = reactive(result()),

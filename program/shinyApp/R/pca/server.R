@@ -364,7 +364,7 @@ pca_Server <- function(id, session_data, session_params, data_input_shiny){
     ## R Code Download ----
     output$getR_Code_PCA <- downloadHandler(  # Download the R code for PCA
       filename = function(){
-        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+        download_name("PCA", "rcode")
       },
       content = function(file){
         waiter <- Waiter$new(
@@ -405,7 +405,7 @@ pca_Server <- function(id, session_data, session_params, data_input_shiny){
 
     output$getR_Code_Scree_Plot <- downloadHandler(  # Download the R code for Scree Plot
       filename = function(){
-        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+        download_name("PCA", "rcode", "Scree")
       },
       content = function(file){
         waiter <- Waiter$new(
@@ -446,7 +446,7 @@ pca_Server <- function(id, session_data, session_params, data_input_shiny){
 
     output$getR_Code_Loadings <- downloadHandler(  # Download the R code for Loadings
       filename = function(){
-        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+        download_name("PCA", "rcode", "Loadings")
       },
       content = function(file){
         waiter <- Waiter$new(
@@ -487,7 +487,7 @@ pca_Server <- function(id, session_data, session_params, data_input_shiny){
 
     output$getR_Code_Loadings_matrix <- downloadHandler(
       filename = function(){
-        paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+        download_name("PCA", "rcode", "LoadingsMatrix")
       },
       content = function(file){
         waiter <- Waiter$new(
@@ -645,10 +645,7 @@ pca_Server <- function(id, session_data, session_params, data_input_shiny){
 
     output$SavePlot_pos1 <- downloadHandler(
       filename = function() {
-        paste0(create_default_title_pca(
-          pcs = paste0(input$x_axis_selection," vs ",input$y_axis_selection),
-          preprocessing = session_params$preprocessing_procedure
-        ), format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_plot1)
+        download_name("PCA", input$file_ext_plot1)
       },
       content = function(file){
         ggsave(
@@ -662,7 +659,7 @@ pca_Server <- function(id, session_data, session_params, data_input_shiny){
 
     output$SavePlot_Scree <- downloadHandler(
       filename = function() {
-        paste0("Scree_Plot_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_Scree)
+        download_name("PCA", input$file_ext_Scree, "Scree")
       },
       content = function(file){
         ggsave(
@@ -675,7 +672,7 @@ pca_Server <- function(id, session_data, session_params, data_input_shiny){
     )
 
     output$SavePlot_Loadings <- downloadHandler(
-      filename = function() { paste0("LOADINGS_PCA_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_Loadings) },
+      filename = function() { download_name("PCA", input$file_ext_Loadings, "Loadings") },
       content = function(file){
         ggsave(
           file,
@@ -688,7 +685,7 @@ pca_Server <- function(id, session_data, session_params, data_input_shiny){
     )
 
     output$SavePlot_Loadings_matrix <- downloadHandler(
-      filename = function() { paste0("LOADINGS_Matrix_PCA_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_Loadings_matrix) },
+      filename = function() { download_name("PCA", input$file_ext_Loadings_matrix, "LoadingsMatrix") },
       content = function(file){
         ggsave(
           file,

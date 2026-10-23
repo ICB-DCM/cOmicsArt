@@ -51,7 +51,7 @@ enrichment_analysis_geneset_server <- function(
         # download R Code for further plotting
         output$getR_Code <- downloadHandler(
           filename = function(){
-            paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+            download_name("Enrichment", "rcode", gsub("_", "", id))
           },
           content = function(file){
             waiter <- Waiter$new(
@@ -109,7 +109,7 @@ enrichment_analysis_geneset_server <- function(
         # Saving Plot
         output$SavePlot <- downloadHandler(
           filename = function() {
-            paste0(id,format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"),input$file_ext)
+            download_name("Enrichment", input$file_ext, gsub("_", "", id))
           },
           content = function(file){
             ggsave(

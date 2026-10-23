@@ -341,7 +341,7 @@ heatmap_server <- function(id, session_data, session_params, data_input_shiny, s
     })
 
     output$getR_Code_Heatmap <- downloadHandler(filename = function(){
-      paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")
+      download_name("Heatmap", "rcode")
     }, content = function(file){
       waiter()$show()
       envList <- list(
@@ -375,7 +375,7 @@ heatmap_server <- function(id, session_data, session_params, data_input_shiny, s
 
     output$SavePlot_Heatmap <- downloadHandler(
       filename = function() {
-        paste0(isolate(heatmap_title()), "_", format(Sys.time(), "(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_Heatmap)
+        download_name("Heatmap", input$file_ext_Heatmap)
       },
       content = function(file){
         save_complex_heatmap(
