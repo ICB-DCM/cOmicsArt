@@ -2,6 +2,30 @@ Release notes
 =============
 
 
+1.3 series
+..........
+
+
+1.3.0 (2026-10-21)
+------------------
+**General**
+- Faster start-up: sources are loaded once per server instead of per session (#572)
+- UI elements are rendered on the UI side where possible (#576, #581, #582)
+- Every plot has a unified copy-to-clipboard button (#595, #598)
+- Various bugfixes (#575, #577, #601, #603, #610, #617, #619, #621, #627, #629, #631, #633, #642)
+- Updated Shiny to 1.14.0 (#602)
+- **New ML classification tab (SVM, draft)** (#580)
+- Visual inspection is cleared when new data is uploaded (#565)
+- Uppercase file extensions are accepted (#594)
+- Updated data input guidelines (#563)
+- The report names the Selection; the Selection is hidden on Clear Data (#622)
+- Removed the `High Values+IQR` selection option (#616)
+**Single Gene Visualisation**
+- P-values are shown again (#642)
+**Development**
+- CI improvements (#600, #606, #613, #623, #636, #569, #574, #605, #567, #566, #584, #588, #593)
+
+
 1.2 series
 ..........
 
