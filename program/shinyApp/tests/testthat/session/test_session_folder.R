@@ -1,7 +1,7 @@
 # The session folder www/<token>/ that server.R creates at session start
 app_dir <- normalizePath(test_path("..", "..", ".."))
 
-test_that("the session folder is deleted when the session ends (issue 24)", {
+test_that("the session folder is deleted when the session ends", {
   withr::local_dir(app_dir)
   withr::local_options(shiny.testmode = TRUE)
   session_dir <- NULL
@@ -12,12 +12,12 @@ test_that("the session folder is deleted when the session ends (issue 24)", {
   expect_false(dir.exists(session_dir))
 })
 
-test_that("a session start leaves other sessions' folders alone (issue 24)", {
+test_that("a session start leaves other sessions' folders alone", {
   withr::local_dir(app_dir)
   withr::local_options(shiny.testmode = TRUE)
-  other <- file.path("www", "other_session_token")
-  dir.create(other)
-  on.exit(unlink(other, recursive = TRUE), add = TRUE)
+  other <- file.path(app_dir, "www", "other_session_token")
+  dir.create(other, showWarnings = FALSE)
+  withr::defer(unlink(other, recursive = TRUE))
   testServer(shinyAppDir("."), {
     expect_true(dir.exists(other))
   })
