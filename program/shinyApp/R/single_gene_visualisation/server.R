@@ -1,5 +1,13 @@
-# Phase 2: Requires data_input_shiny and selectedData_processed reactives for global sourcing
-single_gene_visualisation_server <- function(id, session_data, session_params, data_input_shiny, selectedData_processed){
+# Single Gene Visualisation Server Module
+# Reads its Dataset through the handle (`dataset`, see dataset_handle()).
+# Returns a reactive: NULL before a run and after a new Dataset version,
+# otherwise list(gene_data, params, version) with
+#   gene_data: the chosen entity's values per sample with their group
+#   params: selected_gene, selected_type, group_by, data_process_stage,
+#     comparisons, add_testing (the R-code download reads them as
+#     parameters$SingleGeneVis)
+#   version: the Dataset version it was computed on
+single_gene_visualisation_server <- function(id, dataset){
   moduleServer(
     id,
     function(input,output,session){
@@ -11,114 +19,128 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
         gene_data = NULL,
         plot = NULL,
         info_text = NULL,
-        allow_plot = FALSE
+        allow_plot = FALSE,
+        result = NULL
       )
 
-      # Refresh UI /Data
-      observeEvent(input$refreshUI,{
-        print("Refresh UI Single Gene")
+      # the data behind each choice of "Choose Data to use"; "raw data" is
+      # the Selection before Pre-processing
+      stage_data <- function(stage){
+        switch(stage,
+          data_original = dataset$raw(),
+          data = dataset$processed(),
+          data_batch_corrected = dataset$processed(batch = TRUE)
+        )
+      }
+
+      # The result belongs to one Dataset version: a new Dataset, run or
+      # clear removes plot, info and result
+      observeEvent(dataset$version(), {
         single_gene_reactives$allow_plot <- FALSE
-        # Access data from session reactiveValues (replaces update_data())
-        data <- reactiveValuesToList(session_data)
-        
-        ## Ui section ----
-        output$type_of_data_gene_ui <- renderUI({
-          req(data_input_shiny())
+        single_gene_reactives$gene_data <- NULL
+        single_gene_reactives$plot <- NULL
+        single_gene_reactives$info_text <- NULL
+        single_gene_reactives$result <- NULL
+      })
+
+      ## Ui section ----
+      # the pickers follow the processed data; a new run resets them
+      output$type_of_data_gene_ui <- renderUI({
+        req(dataset$processed())
+        options <- list(
+          "raw data" = "data_original",
+          "pre-processed"="data"
+        )
+        if(!is.null(dataset$preprocessing()$batch_column)){
           options <- list(
             "raw data" = "data_original",
-            "pre-processed"="data"
+            "pre-processed" = "data",
+            "batch corrected data" = "data_batch_corrected"
           )
-          if(session_params$batch_column != "NULL"){
-            options <- list(
-              "raw data" = "data_original",
-              "pre-processed" = "data",
-              "batch corrected data" = "data_batch_corrected"
-            )
+        }
+        selectInput(
+          inputId = ns("type_of_data_gene"),
+          label = "Choose Data to use (in case of DESeq- vst normalized counts are used)",
+          choices = options,
+          multiple = F ,
+          selected = "data"
+        )
+      })
+      output$accross_condition_ui <- renderUI({
+        data <- req(dataset$processed())
+        selectInput(
+          inputId = ns("accross_condition"),
+          label = "Choose the groups to show the data for",
+          choices = unique(colnames(colData(data))),
+          multiple = F
+        )
+      })
+      output$type_of_visualitsation_ui <- renderUI({
+        req(dataset$processed())
+        selectInput(
+          inputId = ns("add_testing"),
+          label = "Choose the style of visualisation",
+          choices = list(
+            "boxplots" = FALSE,
+            "boxplots with sig. test results" = TRUE),
+          multiple = FALSE,
+          selected = TRUE
+        )
+      })
+      output$Select_GeneAnno_ui <- renderUI({
+        data <- req(dataset$processed())
+        selectInput(
+          inputId = ns("Select_GeneAnno"),
+          label = "Select Annotation you want to select an entitie from",
+          choices = colnames(rowData(data)),
+          multiple = F
+        )
+      })
+      output$Select_Gene_ui <- renderUI({
+        data <- req(dataset$processed())
+        req(input$Select_GeneAnno)
+        shinyWidgets::virtualSelectInput(
+          search = T,
+          showSelectedOptionsFirst = T,
+          inputId = ns("Select_Gene"),
+          label = "Select the Gene from the list",
+          choices = unique(rowData(data)[,input$Select_GeneAnno]),
+          multiple = F
+        )
+      })
+
+      output$chooseComparisons_ui <- renderUI({
+        data <- req(dataset$processed())
+        req(input$Select_GeneAnno)
+        req(input$type_of_data_gene)
+        annoToSelect <- c(colData(data)[,input$accross_condition])
+        if(length(unique(annoToSelect))<2){
+          helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
+        } else {
+          my_comparisons <- t(combn(
+            x = unique(annoToSelect),
+            m = 2
+          ))
+          nrows_comp <- nrow(my_comparisons)
+          xy.list <- vector("list", nrows_comp)
+          if(nrows_comp > 0) {
+            for (i in seq_len(nrows_comp)) {
+              xy.list[[i]] <- c(
+                as.character(my_comparisons[i,1]),
+                as.character(my_comparisons[i,2])
+              )
+            }
           }
-          selectInput(
-            inputId = ns("type_of_data_gene"),
-            label = "Choose Data to use (in case of DESeq- vst normalized counts are used)",
-            choices = options,
-            multiple = F ,
-            selected = "data"
-          )
-        })
-        output$accross_condition_ui <- renderUI({
-          req(data_input_shiny())
-          selectInput(
-            inputId = ns("accross_condition"),
-            label = "Choose the groups to show the data for",
-            choices = unique(colnames(colData(data$data))),
-            multiple = F
-          )
-        })
-        output$type_of_visualitsation_ui <- renderUI({
-          req(data_input_shiny())
-          selectInput(
-            inputId = ns("add_testing"),
-            label = "Choose the style of visualisation",
-            choices = list(
-              "boxplots" = FALSE,
-              "boxplots with sig. test results" = TRUE),
-            multiple = FALSE,
-            selected = TRUE
-          )
-        })
-        output$Select_GeneAnno_ui <- renderUI({
-          req(data_input_shiny())
-          selectInput(
-            inputId = ns("Select_GeneAnno"),
-            label = "Select Annotation you want to select an entitie from",
-            choices = colnames(rowData(data$data)),
-            multiple = F 
-          )
-        })
-        output$Select_Gene_ui <- renderUI({
-          req(data_input_shiny())
-          req(input$Select_GeneAnno)
           shinyWidgets::virtualSelectInput(
             search = T,
             showSelectedOptionsFirst = T,
-            inputId = ns("Select_Gene"),
-            label = "Select the Gene from the list",
-            choices = unique(rowData(data$data)[,input$Select_GeneAnno]),
-            multiple = F 
+            inputId = ns("chooseComparisons"),
+            label = "Select your desired comparisons",
+            choices = sapply(xy.list, paste, collapse=":"),
+            multiple = T,
+            selected = sapply(xy.list, paste, collapse=":")[1]
           )
-        })
-        
-        output$chooseComparisons_ui <- renderUI({
-          req(selectedData_processed())
-          req(input$Select_GeneAnno)
-          req(input$type_of_data_gene)
-          annoToSelect <- c(colData(data$data)[,input$accross_condition])
-          if(length(unique(annoToSelect))<2){
-            helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
-          } else {
-            my_comparisons <- t(combn(
-              x = unique(annoToSelect),
-              m = 2
-            ))
-            nrows_comp <- nrow(my_comparisons)
-            xy.list <- vector("list", nrows_comp)
-            if(nrows_comp > 0) {
-              for (i in seq_len(nrows_comp)) {
-                xy.list[[i]] <- c(
-                  as.character(my_comparisons[i,1]),
-                  as.character(my_comparisons[i,2])
-                )
-              }
-            }
-            shinyWidgets::virtualSelectInput(
-              search = T,
-              showSelectedOptionsFirst = T,
-              inputId = ns("chooseComparisons"),
-              label = "Select your desired comparisons",
-              choices = sapply(xy.list, paste, collapse=":"),
-              multiple = T,
-              selected = sapply(xy.list, paste, collapse=":")[1]
-            )
-          }
-        })
+        }
       })
 
       # Render Plot and Info
@@ -144,16 +166,15 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
       observe({
         req(input$singleGeneGo > 0)
         req(single_gene_reactives$allow_plot)
-        shinyjs::showElement(id = "SingleGene_div", asis = TRUE)
+        shinyjs::showElement(id = "SingleGene_div")
         # assign variables
         data_process_stage <- input$type_of_data_gene
         selected_gene <- input$Select_Gene
         selected_type <- input$Select_GeneAnno
         group_by <- input$accross_condition
 
-        data <- reactiveValuesToList(session_data)
-        post_selection_check <- unique(c(colData(data$data)[,group_by]))
-        data <- data[[data_process_stage]]
+        post_selection_check <- unique(c(colData(dataset$processed())[,group_by]))
+        data <- stage_data(data_process_stage)
 
         # update the data
         gene_data <- NULL
@@ -169,13 +190,16 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
           error_modal(e$message)
         })
         single_gene_reactives$gene_data <- gene_data
-        session_data$SingleGeneVis <- gene_data
-        session_params$SingleGeneVis <- list(
-          selected_gene = selected_gene,
-          selected_type = selected_type,
-          group_by = group_by,
-          post_selection_check = post_selection_check,
-          data_process_stage = data_process_stage
+        single_gene_reactives$result <- if (!is.null(gene_data)) list(
+          gene_data = gene_data,
+          params = list(
+            selected_gene = selected_gene,
+            selected_type = selected_type,
+            group_by = group_by,
+            post_selection_check = post_selection_check,
+            data_process_stage = data_process_stage
+          ),
+          version = dataset$version()
         )
       }) %>% shiny::bindEvent(
         input$accross_condition,
@@ -235,9 +259,9 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
         # assign reactive values
         single_gene_reactives$info_text <- data_note
         single_gene_reactives$plot <- P_boxplots
-        # assign session_params
-        session_params$SingleGeneVis$comparisons <- comparisons
-        session_params$SingleGeneVis$add_testing <- add_testing
+        # the drawing's choices are part of the result
+        single_gene_reactives$result$params$comparisons <- comparisons
+        single_gene_reactives$result$params$add_testing <- add_testing
       })
 
       ## Download R code and data
@@ -251,21 +275,23 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
           hide_on_render = FALSE
         )
         waiter$show()
+        context <- dataset$code_context()
+        par <- c(context$par_tmp, list(SingleGeneVis = single_gene_reactives$result$params))
         envList <- list(
-          par_tmp = reactiveValuesToList(session_params)
+          par_tmp = par
         )
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
-        # save csv files
+        # save csv files: the whole raw data of the Upload
         save_summarized_experiment(
-          session_data$data_original,
+          context$raw,
           temp_directory
         )
 
         write(
           create_workflow_script(
             pipeline_info = SINGLE_GENE_VISUALISATION_PIPELINE,
-            par = reactiveValuesToList(session_params),
+            par = par,
             par_mem = "SingleGeneVis",
             path_to_util = file.path(temp_directory, "util.R")
           ),
@@ -341,12 +367,14 @@ single_gene_visualisation_server <- function(id, session_data, session_params, d
 
         fun_LogIt(session, message = "### Publication Snippet")
         fun_LogIt(session, message = snippet_SingleGene(
-          data = reactiveValuesToList(session_data),
-          params = reactiveValuesToList(session_params)
+          data = NULL,
+          params = list(SingleGeneVis = single_gene_reactives$result$params)
         ))
         removeNotification(notificationID)
         showNotification("Report Saved!",type = "message", duration = 1)
       })
+
+      reactive(single_gene_reactives$result)
     }
   )
 }

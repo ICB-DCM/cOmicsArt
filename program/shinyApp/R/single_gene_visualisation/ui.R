@@ -1,6 +1,6 @@
 single_gene_visualisation_sidebar_ui<- function(ns){
   sidebarPanel(
-    id = "sidebar_single_gene_visualisation",
+    id = ns("sidebar"),
     uiOutput(outputId = ns("type_of_data_gene_ui")) %>% helper(type = "markdown", content = "SingleGene_Options"),
     uiOutput(outputId = ns("type_of_visualitsation_ui")),
     uiOutput(outputId = ns("Select_GeneAnno_ui")),
@@ -11,11 +11,6 @@ single_gene_visualisation_sidebar_ui<- function(ns){
       label = "Get Single Gene Visualisation",
       icon = icon("fas fa-mouse-pointer")
       ),
-    # hidden Button to refresh the UI
-    hidden(actionButton(
-      inputId = ns("refreshUI"),
-      label = "Refresh"
-    )),
     hr(style = "border-top: 1px solid #858585;"),
     uiOutput(outputId = ns("accross_condition_ui")) %>% helper(type = "markdown", content = "SingleGene_Select")
   )
@@ -23,9 +18,9 @@ single_gene_visualisation_sidebar_ui<- function(ns){
 
 single_gene_visualisation_main_ui <- function(ns){
   mainPanel(
-    id = "main_single_gene_visualisation",
+    id = ns("main_panel"),
     textOutput(outputId = ns("SingleGene_Info"), container = pre),
-      div(id = "SingleGene_div",
+      div(id = ns("SingleGene_div"),
       splitLayout(
         style = "border: 1px solid silver:",
         cellWidths = c("50%", "50%"),
@@ -103,7 +98,7 @@ single_gene_visualisation_UI <- function(id){
   single_gene_visualisation_panel <- tabPanel(
     title = tagList(tags$span("8. Single Entitie Visualisation")), 
     value = "Single Gene Visualisations",
-    id = "single_gene_visualisation",
+    id = ns("tab"),
     fluid = TRUE,
     h4("Single Entitie Visualisations"),
     #########################################

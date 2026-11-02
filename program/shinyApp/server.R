@@ -171,8 +171,7 @@ server <- function(input,output,session){
     # Module-specific state storage (session-level for code generation)
     # NOTE: Kept at session level to support R code generation
     Heatmap = NULL,
-    SigAna = NULL,
-    SingleGeneVis = NULL
+    SigAna = NULL
   )
 
   # Parameters and configuration storage
@@ -210,8 +209,7 @@ server <- function(input,output,session){
     # Module-specific parameters (session-level for code generation)
     Enrichment = list(),                # Enrichment analysis params (nested)
     Heatmap = NULL,                     # Heatmap params
-    SigAna = NULL,                      # Significance analysis params
-    SingleGeneVis = NULL                # Single gene visualization params
+    SigAna = NULL                       # Significance analysis params
   )
 
   # Session cleanup: reactiveValues auto-cleanup on session end
@@ -408,15 +406,6 @@ server <- function(input,output,session){
   # Heatmap ----
   heatmap_server(
     id = 'Heatmap',
-    session_data = session_data,
-    session_params = session_params,
-    data_input_shiny = data_input_shiny,
-    selectedData_processed = preprocessing$result
-  )
-
-  # Single Gene Visualisations ----
-  single_gene_visualisation_server(
-    id = 'single_gene_visualisation',
     session_data = session_data,
     session_params = session_params,
     data_input_shiny = data_input_shiny,

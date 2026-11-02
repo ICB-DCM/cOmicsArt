@@ -177,9 +177,9 @@ IDS <- list(
       )
     )),
     "Single Gene Visualisations" = list(
-      go = "single_gene_visualisation-singleGeneGo",
-      out = "#single_gene_visualisation-SingleGenePlot",
-      rcode = "#single_gene_visualisation-getR_Code_SingleEntities"
+      go = "dataset_1-single_gene_visualisation-singleGeneGo",
+      out = "#dataset_1-single_gene_visualisation-SingleGenePlot",
+      rcode = "#dataset_1-single_gene_visualisation-getR_Code_SingleEntities"
     ),
     "Enrichment Analysis" = list(
       set = list(
