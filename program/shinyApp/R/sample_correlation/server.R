@@ -146,7 +146,7 @@ sample_correlation_server <- function(id, session_data, session_params, selected
       
       # Download Section ----
       output$getR_SampleCorrelation <- downloadHandler(
-        filename = function(){ paste0("cOmicsArt_Rcode2Reproduce_", Sys.Date(), ".zip")},
+        filename = function(){ download_name("SampleCorrelation", "rcode")},
         content = function(file){
           waiter <- Waiter$new(
             html = LOADING_SCREEN,
@@ -187,7 +187,7 @@ sample_correlation_server <- function(id, session_data, session_params, selected
       
       output$SavePlot_SampleCorrelation <- downloadHandler(
         filename = function() {
-          paste0(sample_corr_reactive$customTitleSampleCorrelation, format(Sys.time(), "_(%d.%m.%Y)_(%H;%M;%S)"), input$file_ext_SampleCorrelation)
+          download_name("SampleCorrelation", input$file_ext_SampleCorrelation)
         },
         content = function(file){
           save_complex_heatmap(
