@@ -171,7 +171,6 @@ server <- function(input,output,session){
     # Module-specific state storage (session-level for code generation)
     # NOTE: Kept at session level to support R code generation
     Heatmap = NULL,
-    SampleCorrelation = NULL,
     SigAna = NULL,
     SingleGeneVis = NULL
   )
@@ -389,14 +388,6 @@ server <- function(input,output,session){
   # the analysis modules move onto the handle one by one
   # the module id starts with a letter so its IDs are valid CSS selectors
   datasets <- list("1" = dataset_server("dataset_1", upload, selection, preprocessing))
-
-  # Sample Correlation ----
-  sample_correlation_server(
-    id = "sample_correlation",
-    session_data = session_data,
-    session_params = session_params,
-    selectedData_processed = preprocessing$result
-  )
 
   # Significance Analysis ----
   significance_analysis_server(

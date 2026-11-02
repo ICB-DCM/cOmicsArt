@@ -2,30 +2,11 @@
 source(test_path("..", "dataset", "helper-dataset.R"), local = TRUE)
 colData <- SummarizedExperiment::colData
 
-lipids <- test_data("Lipidomics")
-all_lipids <- resolve_selection(lipids, list())
+lipids_dataset <- function() changeable_dataset("Lipidomics")
 log10 <- list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
-run_all <- preprocessing_run(all_lipids, "Lipidomics", log10)
-
-# A pre-processed Lipidomics Dataset whose state the test can change
-# (fake_dataset() is fixed)
-lipids_dataset <- function(){
-  state <- reactiveValues(
-    upload_raw = lipids, selection = all_lipids, omic_type = "Lipidomics",
-    organism = "Mouse", run = run_all, version = 2, results = list()
-  )
-  list(state = state, handle = dataset_handle("1", function(name) state[[name]]))
-}
 
 KMEANS <- list(k_clusters = 3, filter_genes_unsupervised = FALSE, condition_overlay = "none")
 SVM <- list(condition_column_supervised = "diet", filter_genes_supervised = FALSE)
-
-# the files of an R-code zip, unpacked
-unpack <- function(zip_file){
-  dir <- tempfile()
-  utils::unzip(zip_file, exdir = dir)
-  dir
-}
 
 test_that("the condition dropdowns offer the sample annotation of the processed data", {
   ds <- lipids_dataset()
@@ -92,14 +73,14 @@ test_that("the R-code zips carry the Selection, Pre-processing and ML parameters
     do.call(session$setInputs, c(KMEANS, SVM))
     session$setInputs(run_clustering = 1, run_classification = 1)
 
-    kmeans_dir <- unpack(output$getR_Code_cluster)
+    kmeans_dir <- unpack_zip(output$getR_Code_cluster)
     expect_true(all(c("Code.R", "Data.rds") %in% list.files(kmeans_dir)))
     par <- readRDS(file.path(kmeans_dir, "Data.rds"))$par_tmp
     expect_equal(par$MLClassification$k_clusters, 3)
     expect_equal(par$preprocessing_procedure, "log10")
     expect_equal(par$omic_type, "Lipidomics")
 
-    svm_dir <- unpack(output$getR_Code_svm)
+    svm_dir <- unpack_zip(output$getR_Code_svm)
     par <- readRDS(file.path(svm_dir, "Data.rds"))$par_tmp
     expect_equal(par$MLClassification$condition_column_supervised, "diet")
     expect_equal(par$preprocessing_procedure, "log10")
@@ -107,16 +88,9 @@ test_that("the R-code zips carry the Selection, Pre-processing and ML parameters
 })
 
 test_that("dataset_server() puts ML's results into results()$ml; a new run clears them", {
-  args <- list(
-    upload = list(
-      done = reactiveVal(1), raw = reactiveVal(lipids),
-      omic_type = reactiveVal("Lipidomics"), organism = reactiveVal("Mouse"),
-      annotated = reactiveVal(NULL), cleared = reactiveVal(NULL)
-    ),
-    selection = list(selected = reactiveVal(all_lipids), confirmed = reactiveVal(1)),
-    preprocessing = list(result = reactiveVal(NULL), failed = reactiveVal(NULL))
-  )
+  args <- confirmed_dataset_args("Lipidomics")
   testServer(dataset_server, args = args, {
+    run_all <- preprocessing_run(selection$selected(), "Lipidomics", log10)
     preprocessing$result(run_all)
     session$flushReact()
     handle <- session$returned
