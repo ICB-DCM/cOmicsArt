@@ -385,6 +385,10 @@ server <- function(input,output,session){
     guide_startDiscover$init()$start()
   })
 
+# Dataset ----
+  # the analysis modules move onto the handle one by one
+  datasets <- list("1" = dataset_server("1", upload, selection, preprocessing))
+
   # Sample Correlation ----
   sample_correlation_server(
     id = "sample_correlation",
