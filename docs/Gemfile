@@ -6,7 +6,6 @@ gem "nokogiri"
 gem "jekyll"
 gem "jekyll-remote-theme"
 gem "jekyll-seo-tag"
-gem "github-pages", group: :jekyll_plugins
 gem "webrick"
 gem "just-the-docs"
 gem 'bibtex-ruby'
