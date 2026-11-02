@@ -317,7 +317,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
       notificationID <- showNotification("Saving to Report...", duration = 0)
 
       tmp_filename <- paste0(
-        getwd(), "/", session_params$file_path,
+        getwd(), file_path,
         "KMeans_Clustering_", Sys.time(), input$file_ext_cluster
       )
 
@@ -422,7 +422,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
       notificationID <- showNotification("Saving to Report...", duration = 0)
 
       tmp_filename <- paste0(
-        getwd(), "/", session_params$file_path,
+        getwd(), file_path,
         "SVM_Classification_", Sys.time(), input$file_ext_svm
       )
 
