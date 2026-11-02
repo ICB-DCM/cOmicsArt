@@ -55,3 +55,43 @@ fake_dataset <- function(omic_type = "Lipidomics", procedure = "log10", batch_co
   }
   fake_dataset_cache[[key]]
 }
+
+# For the analysis module tests (3b-3g) -------------------------------------
+
+# A pre-processed Dataset of all of the test data for `omic_type` (log10)
+# whose state the test can change, e.g. state$version for a new run
+# (fake_dataset() is fixed). Returns list(state, handle).
+changeable_dataset <- function(omic_type = "Lipidomics"){
+  data <- test_data(omic_type)
+  selection <- resolve_selection(data, list())
+  log10 <- list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
+  state <- reactiveValues(
+    upload_raw = data, selection = selection, omic_type = omic_type,
+    organism = "Mouse", run = preprocessing_run(selection, omic_type, log10),
+    version = 2, results = list()
+  )
+  list(state = state, handle = dataset_handle("dataset_1", function(name) state[[name]]))
+}
+
+# Arguments for testServer(dataset_server, ...): an Upload of all test data
+# for `omic_type`, already confirmed, Pre-processing not run yet; run it with
+# preprocessing$result(...)
+confirmed_dataset_args <- function(omic_type = "Lipidomics"){
+  data <- test_data(omic_type)
+  list(
+    upload = list(
+      done = reactiveVal(1), raw = reactiveVal(data),
+      omic_type = reactiveVal(omic_type), organism = reactiveVal("Mouse"),
+      annotated = reactiveVal(NULL), cleared = reactiveVal(NULL)
+    ),
+    selection = list(selected = reactiveVal(resolve_selection(data, list())), confirmed = reactiveVal(1)),
+    preprocessing = list(result = reactiveVal(NULL), failed = reactiveVal(NULL))
+  )
+}
+
+# The files of an R-code zip, unpacked; returns the folder
+unpack_zip <- function(zip_file){
+  dir <- tempfile()
+  utils::unzip(zip_file, exdir = dir)
+  dir
+}

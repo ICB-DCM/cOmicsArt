@@ -1,6 +1,6 @@
 sampleCorrelation_sidebar_panel <- function(ns){
   sidebarPanel(
-    id = "sidebar_sampleCorrelation",
+    id = ns("sidebar"),
     h4("Sample Correlation") %>% helper(type = "markdown", content = "SampleCorr_Choices"),
     uiOutput(outputId = ns("UseBatch_ui")),
     selectInput(
@@ -16,20 +16,15 @@ sampleCorrelation_sidebar_panel <- function(ns){
     ),
     hr(style = "border-top: 1px solid #000000;"),
     uiOutput(outputId = ns("SampleAnnotationChoice_ui")) %>% helper(type = "markdown", content = "SampleCorr_Color"),
-    # hidden Button to refresh the UI
-    hidden(actionButton(
-      inputId = ns("refreshUI"),
-      label = "Refresh"
-    )),
   )
 }
 
 
 sampleCorrelation_main_panel <- function(ns){
   mainPanel(
-  id = "main_sampleCorrelation",
+  id = ns("main_panel"),
   textOutput(outputId = ns("SampleCorr_Info"), container = pre),
-  div(id = "div_sampleCorrelation_main_panel",
+  div(id = ns("div_main_panel"),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("100%"),
       plotOutput(
@@ -109,7 +104,7 @@ sampleCorrelation_UI <- function(id){
   tabPanel(
     title = tagList(tags$span("3. Sample Correlation")),
     value = "Sample Correlation",
-    id = "sample_correlation",
+    id = ns("tab"),
     fluid = T,
     h4("Sample Correlation"),
     sampleCorrelation_sidebar_panel(ns),
