@@ -3,15 +3,8 @@
 
 ml_classification_sidebar_panel <- function(ns){
   sidebarPanel(
-    id = "sidebar_ml_classification",
+    id = ns("sidebar"),
     h4("ML Classification Settings") %>% helper(type = "markdown", content = "ML_Classification_Overview"),
-
-    # Refresh UI button (hidden, triggered programmatically)
-    actionButton(
-      inputId = ns("refreshUI"),
-      label = "",
-      style = "display: none;"
-    ),
 
     # Method type selection
     radioButtons(
@@ -122,7 +115,7 @@ ml_classification_sidebar_panel <- function(ns){
 
 ml_classification_main_panel <- function(ns){
   mainPanel(
-    id = "mainPanel_ml_classification",
+    id = ns("main_panel"),
 
     # Unsupervised results
     conditionalPanel(
@@ -268,7 +261,7 @@ ml_classification_UI <- function(id){
   tabPanel(
     title = tagList(tags$span("5. ML Classification")),
     value = "ML Classification",
-    id = "ml_classification",
+    id = ns("tab"),
     fluid = TRUE,
 
     h4("ML Classification"),

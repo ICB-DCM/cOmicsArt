@@ -284,7 +284,6 @@ refresh_analysis_tabs <- function(){
   shinyjs::click("Heatmap-refreshUI", asis = TRUE)
   shinyjs::click("PCA-refreshUI", asis = TRUE)
   shinyjs::click("sample_correlation-refreshUI", asis = TRUE)
-  shinyjs::click("ml_classification-refreshUI", asis = TRUE)
 }
 
 # The warning toast after a run: what the procedure did and, if rows with

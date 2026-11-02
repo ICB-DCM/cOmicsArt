@@ -103,7 +103,8 @@ ui <- shiny::fluidPage(
     preprocessing_ui("preprocessing"),
     sampleCorrelation_UI("sample_correlation"),
     pca_UI("PCA"),
-    ml_classification_UI("ml_classification"),
+    # inside Dataset 1 (dataset_server("dataset_1"))
+    ml_classification_UI(NS("dataset_1", "ml_classification")),
     significance_analysis_UI("SignificanceAnalysis"),
     heatmap_UI("Heatmap"),
     single_gene_visualisation_UI("single_gene_visualisation"),
