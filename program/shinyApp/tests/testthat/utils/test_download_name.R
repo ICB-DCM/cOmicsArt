@@ -27,3 +27,7 @@ test_that("an item with an underscore or a space fails", {
   expect_error(download_name("Enrichment", ".png", "GO_BP"), "letters and digits")
   expect_error(download_name("ML", ".png", "k means"), "letters and digits")
 })
+
+test_that("without an extension the name ends after the time (for DT exports, which add it)", {
+  expect_match(download_name("ML", NULL, "KMeansResults"), paste0("^cOmicsArt_ML_KMeansResults_", TIMESTAMP, "$"))
+})
