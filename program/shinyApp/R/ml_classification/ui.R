@@ -173,10 +173,10 @@ ml_classification_main_panel <- function(ns){
         style = "border: 1px solid silver:",
         cellWidths = c("70%", "30%"),
         NULL,
-        selectInput(
+        radioGroupButtons(
           inputId = ns("file_ext_cluster"),
-          label = "Select file type:",
-          choices = c(".png", ".pdf", ".svg"),
+          label = "File Type:",
+          choices = c(".png", ".tiff", ".svg", ".pdf"),
           selected = ".png"
         )
       ),
@@ -246,10 +246,10 @@ ml_classification_main_panel <- function(ns){
         style = "border: 1px solid silver:",
         cellWidths = c("70%", "30%"),
         NULL,
-        selectInput(
+        radioGroupButtons(
           inputId = ns("file_ext_svm"),
-          label = "Select file type:",
-          choices = c(".png", ".pdf", ".svg"),
+          label = "File Type:",
+          choices = c(".png", ".tiff", ".svg", ".pdf"),
           selected = ".png"
         )
       ),
