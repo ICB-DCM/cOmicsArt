@@ -134,54 +134,6 @@ read_file <- function(filename, check.names=T){
   ))
 }
 
-getUserReactiveValues <- function(data = input){
-  # data must be shinys specific Input List of reactive Values
-  tmp <- isolate(reactiveValuesToList(data))
-  to_include <- unlist(lapply(tmp,function(x){
-    if("shinyActionButtonValue" %in%  class(x)){
-      FALSE
-    }else{
-      TRUE
-    }
-  }))
-  return(tmp[to_include])
-}
-
-
-save.function.from.env <- function(wanted,file="utils.R")
-{
-  # This function will go through all your defined functions
-  # and find wanted function
-  funs <- Filter(is.function, sapply(ls( ".GlobalEnv"), get))
-  funs <- funs[names(funs) %in% wanted]
-
-  for(i in seq_along(funs)) {
-    func_text <- paste(capture.output(funs[[i]]), collapse = "\n")
-
-    # Perform the replacements
-    func_text <- gsub("res_tmp\\[\\[session\\$token\\]\\]", "res_tmp", func_text)
-    func_text <- gsub("par_tmp\\[\\[session\\$token\\]\\]", "par_tmp", func_text)
-    func_text <- gsub("req\\(data_input_shiny\\(\\)\\)", "", func_text)
-    cat( # number the function we are about to add
-      paste("\n" , "#------ Function number ", i , "-----------------------------------" ,"\n"),
-      append = T, file = file
-    )
-    cat(    # print the function into the file
-      paste(names(funs)[i] , "<-", func_text, collapse = "\n"),
-      append = T, file = file
-    )
-    cat(
-      paste("\n" , "#-----------------------------------------" ,"\n"),
-      append = T, file = file
-    )
-  }
-  cat( # writing at the end of the file how many new functions where added to it
-    paste("# A total of ", length(funs), " Functions where written into utils"),
-    append = T, file = file
-  )
-  print(paste("A total of ", length(funs), " Functions where written into utils"))
-}
-
 save_complex_heatmap <- function(x, filename, type = "pdf") {
   # Saves a heatmap to a file in different formats
   stopifnot(!missing(x))

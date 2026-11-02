@@ -54,7 +54,7 @@ setup_report_handlers <- function(input, session, ids, contrast, tab_state,
   observeEvent(input[[ids$only2report_volcano]], {
     fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
     fun_LogIt(session, message = "### Info")
-    log_messages_volcano(tab_state$VolcanoPlot, tab_state$data4Volcano, contrast, file_path)
+    log_messages_volcano(session, tab_state$VolcanoPlot, tab_state$data4Volcano, contrast, file_path)
     fun_LogIt(session, message = "### Publication Snippet")
     fun_LogIt(session, message = snippet_SigAna(
       data = reactiveValuesToList(session_data),
@@ -67,6 +67,7 @@ setup_report_handlers <- function(input, session, ids, contrast, tab_state,
     fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
     fun_LogIt(session, message = "### Info")
     log_messages_volcano(
+      session,
       gridExtra::arrangeGrob(tab_state$VolcanoPlot_raw, tab_state$VolcanoPlot),
       tab_state$data4Volcano, contrast, file_path
     )
@@ -81,7 +82,7 @@ setup_report_handlers <- function(input, session, ids, contrast, tab_state,
   observeEvent(input[[ids$only2report_volcano_raw]], {
     fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
     fun_LogIt(session, message = "### Info")
-    log_messages_volcano(tab_state$VolcanoPlot_raw, tab_state$data4Volcano, contrast, file_path)
+    log_messages_volcano(session, tab_state$VolcanoPlot_raw, tab_state$data4Volcano, contrast, file_path)
     fun_LogIt(session, message = "### Publication Snippet")
     fun_LogIt(session, message = snippet_SigAna(
       data = reactiveValuesToList(session_data),
@@ -278,7 +279,7 @@ create_plot_save_handler <- function(input, session, id, file_ext_id, plot_react
       on.exit({
         fun_LogIt(session, message = "## Differential analysis - Volcano {.tabset .tabset-fade}")
         fun_LogIt(session, message = "### Info")
-        log_messages_volcano(plot_reactive(), data_reactive(), contrast, file_path)
+        log_messages_volcano(session, plot_reactive(), data_reactive(), contrast, file_path)
         fun_LogIt(session, message = "### Publication Snippet")
         fun_LogIt(session, message = snippet_SigAna(
           data = reactiveValuesToList(session_data),

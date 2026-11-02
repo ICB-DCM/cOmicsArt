@@ -188,16 +188,18 @@ enrichment_analysis_geneset_server <- function(
 }
 
 
-# Reactive server function that calls the enrichment analysis geneset server function
+# Reactive server function that calls the enrichment analysis geneset server function;
+# `input` and `session` are those of the Enrichment module
 enrichment_analysis_geneset_server_reactive <- function(
-  id, result_all, organism_choice, gene_set_choice, ea_type, session_data, session_params
+  id, result_all, organism_choice, gene_set_choice, ea_type, session_data, session_params,
+  input, session
 ){
   observe({
     result <- result_all()[[paste("EnrichmentRes", id, sep = "_")]]
     # remove old observers and change base value
     if (!is.null(session$userData[[paste0(id, "_Report")]])) {
       session$userData[[paste0(id, "_Report_Val")]] <- isolate(
-        input[[paste0("EnrichmentAnalysis-", id, "-only2Report")]]
+        input[[paste0(id, "-only2Report")]]
       )
       session$userData[[paste0(id, "_Report")]]$destroy()
     }
@@ -239,7 +241,9 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           organism_choice = ea_reactives$organism,
           gene_set_choice = ea_reactives$tmp_genes,
           session_data = data,
-          session_params = params
+          session_params = params,
+          input = input,
+          session = session
         )
       })
       ## Ui section
