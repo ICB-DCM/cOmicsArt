@@ -1,6 +1,13 @@
 # ML Classification Server Module
+# Reads its Dataset through the handle (`dataset`, see dataset_handle()).
+# Returns a reactive list with an entry per method that ran on the current
+# Dataset version (list() before a run and after a new version):
+#   kmeans: assignments (cluster by sample), k, params, version
+#   svm: predictions and truth (by sample), accuracy, confusion, params, version
+# `params` are the inputs of the run; the R-code download reads them as
+# parameters$MLClassification.
 
-ml_classification_Server <- function(id, session_data, session_params, data_input_shiny){
+ml_classification_Server <- function(id, dataset){
   moduleServer(id, function(input, output, session){
 
     # Reactive values for ML results
@@ -20,57 +27,40 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
     file_path <- paste0("/www/", session$token, "/")
 
     ## UI Section ----
-    observeEvent(input$refreshUI, {
-      print("Refreshing UI ML Classification")
-      data <- reactiveValuesToList(session_data)
+    # Condition dropdowns: the sample annotation of the processed data. A new
+    # run gives new processed data, which resets the user's choice.
+    output$condition_overlay_ui <- renderUI({
+      data <- req(dataset$processed())
+      selectInput(
+        inputId = ns("condition_overlay"),
+        label = "Overlay condition (optional):",
+        choices = c("None" = "none", colnames(colData(data))),
+        selected = "none"
+      )
+    })
 
-      # Populate condition overlay dropdown for unsupervised
-      output$condition_overlay_ui <- renderUI({
-        req(data_input_shiny())
-        req(data$data)
+    output$condition_column_supervised_ui <- renderUI({
+      data <- req(dataset$processed())
+      all_cols <- colnames(colData(data))
+      selectInput(
+        inputId = ns("condition_column_supervised"),
+        label = "Condition column (target):",
+        choices = all_cols,
+        selected = all_cols[1]
+      )
+    })
 
-        condition_choices <- c("None" = "none", colnames(colData(data$data)))
-
-        selectInput(
-          inputId = ns("condition_overlay"),
-          label = "Overlay condition (optional):",
-          choices = condition_choices,
-          selected = "none"
-        )
-      })
-
-      # Populate condition column dropdown for supervised
-      output$condition_column_supervised_ui <- renderUI({
-        req(data_input_shiny())
-        req(data$data)
-
-        # Get all columns from sample annotation
-        all_cols <- colnames(colData(data$data))
-
-        selectInput(
-          inputId = ns("condition_column_supervised"),
-          label = "Condition column (target):",
-          choices = all_cols,
-          selected = all_cols[1]
-        )
-      })
-
-      # Clear previous results
-      ml_results$kmeans <- NULL
-      ml_results$svm <- NULL
-      ml_results$cluster_assignments <- NULL
-      ml_results$predictions <- NULL
-      ml_results$accuracy <- NULL
-      ml_results$data_matrix <- NULL
+    # Results belong to one Dataset version: a new Dataset, run or clear
+    # discards them
+    observeEvent(dataset$version(), {
+      for (name in names(reactiveValuesToList(ml_results))) ml_results[[name]] <- NULL
     })
 
     ## k-means Section ----
 
     # Run k-means clustering
     observeEvent(input$run_clustering, {
-      # Get preprocessed data
-      session_data_list <- reactiveValuesToList(session_data)
-      data <- session_data_list$data
+      data <- dataset$processed()
 
       # Validation
       tryCatch({
@@ -102,12 +92,17 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
         ml_results$cluster_assignments <- kmeans_analysis$cluster_assignments
         ml_results$data_matrix <- kmeans_analysis$data_matrix
 
-        # Store parameters for code generation
-        session_params$MLClassification <- list(
-          k_clusters = input$k_clusters,
-          filter_genes_unsupervised = input$filter_genes_unsupervised,
-          n_genes_unsupervised = input$n_genes_unsupervised,
-          condition_overlay = input$condition_overlay
+        # Returned result; its params feed the R-code download
+        ml_results$kmeans_out <- list(
+          assignments = kmeans_analysis$cluster_assignments,
+          k = input$k_clusters,
+          params = list(
+            k_clusters = input$k_clusters,
+            filter_genes_unsupervised = input$filter_genes_unsupervised,
+            n_genes_unsupervised = input$n_genes_unsupervised,
+            condition_overlay = input$condition_overlay
+          ),
+          version = dataset$version()
         )
 
         showNotification("k-means clustering completed successfully!", type = "default")
@@ -135,8 +130,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
     output$cluster_plot <- renderPlotly({
       req(ml_results$kmeans_result)
 
-      session_data_list <- reactiveValuesToList(session_data)
-      data <- session_data_list$data
+      data <- dataset$processed()
 
       # Get condition column for overlay (if selected)
       condition_col <- NULL
@@ -173,9 +167,9 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
       )
 
       # Add condition if available
-      data <- reactiveValuesToList(session_data)
-      if (!is.null(data$data) && !is.null(input$condition_overlay) && input$condition_overlay != "none") {
-        sample_annotation <- as.data.frame(colData(data$data))
+      data <- dataset$processed()
+      if (!is.null(data) && !is.null(input$condition_overlay) && input$condition_overlay != "none") {
+        sample_annotation <- as.data.frame(colData(data))
         cluster_df$Condition <- sample_annotation[[input$condition_overlay]]
       }
 
@@ -186,9 +180,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
 
     # Run SVM classification
     observeEvent(input$run_classification, {
-      # Get data
-      session_data_list <- reactiveValuesToList(session_data)
-      data <- session_data_list$data
+      data <- dataset$processed()
 
       tryCatch({
         # Validate data exists and is correct type
@@ -243,12 +235,19 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
         ml_results$svm_y <- svm_analysis$y
         ml_results$confusion <- svm_analysis$confusion
 
-        # Store parameters for code generation
-        session_params$MLClassification <- list(
-          condition_column_supervised = input$condition_column_supervised,
-          filter_genes_supervised = input$filter_genes_supervised,
-          n_genes_supervised = input$n_genes_supervised,
-          svm_kernel = "radial"
+        # Returned result; its params feed the R-code download
+        ml_results$svm_out <- list(
+          predictions = svm_analysis$predictions,
+          truth = svm_analysis$y,
+          accuracy = svm_analysis$accuracy,
+          confusion = svm_analysis$confusion,
+          params = list(
+            condition_column_supervised = input$condition_column_supervised,
+            filter_genes_supervised = input$filter_genes_supervised,
+            n_genes_supervised = input$n_genes_supervised,
+            svm_kernel = "radial"
+          ),
+          version = dataset$version()
         )
 
         showNotification("SVM classification completed successfully!", type = "message")
@@ -382,17 +381,15 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
 
-        # Save data
-        save_summarized_experiment(
-          session_data$data_original,
-          temp_directory
-        )
+        # Save data: the whole raw data of the Upload
+        context <- dataset$code_context()
+        save_summarized_experiment(context$raw, temp_directory)
 
         # Generate R script
         write(
           create_workflow_script(
             pipeline_info = KMEANS_CLUSTERING_PIPELINE,
-            par = reactiveValuesToList(session_params),
+            par = ml_rcode_par(context, ml_results$kmeans_out),
             par_mem = "MLClassification",
             path_to_util = file.path(temp_directory, "util.R")
           ),
@@ -401,7 +398,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
 
         # Save environment data
         envList <- list(
-          par_tmp = reactiveValuesToList(session_params)
+          par_tmp = ml_rcode_par(context, ml_results$kmeans_out)
         )
         saveRDS(envList, file.path(temp_directory, "Data.rds"))
 
@@ -489,17 +486,15 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
         temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
         dir.create(temp_directory)
 
-        # Save data
-        save_summarized_experiment(
-          session_data$data_original,
-          temp_directory
-        )
+        # Save data: the whole raw data of the Upload
+        context <- dataset$code_context()
+        save_summarized_experiment(context$raw, temp_directory)
 
         # Generate R script
         write(
           create_workflow_script(
             pipeline_info = SVM_CLASSIFICATION_PIPELINE,
-            par = reactiveValuesToList(session_params),
+            par = ml_rcode_par(context, ml_results$svm_out),
             par_mem = "MLClassification",
             path_to_util = file.path(temp_directory, "util.R")
           ),
@@ -508,7 +503,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
 
         # Save environment data
         envList <- list(
-          par_tmp = reactiveValuesToList(session_params)
+          par_tmp = ml_rcode_par(context, ml_results$svm_out)
         )
         saveRDS(envList, file.path(temp_directory, "Data.rds"))
 
@@ -522,5 +517,12 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
       },
       contentType = "application/zip"
     )
+
+    reactive({
+      res <- list()
+      res$kmeans <- ml_results$kmeans_out
+      res$svm <- ml_results$svm_out
+      res
+    })
   })
 }

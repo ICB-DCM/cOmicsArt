@@ -115,9 +115,9 @@ IDS <- list(
       rcode = "#PCA-getR_Code_PCA"
     ),
     "ML Classification" = list(
-      go = "ml_classification-run_clustering",
-      out = "#ml_classification-cluster_plot",
-      rcode = "#ml_classification-getR_Code_cluster"
+      go = "dataset_1-ml_classification-run_clustering",
+      out = "#dataset_1-ml_classification-cluster_plot",
+      rcode = "#dataset_1-ml_classification-getR_Code_cluster"
     ),
     "Differential Analysis" = list(
       go = "SignificanceAnalysis-significanceGo",
@@ -128,10 +128,10 @@ IDS <- list(
     ),
     "ML Classification (supervised)" = list(
       tab = "ML Classification",
-      set = list("ml_classification-ml_method_type" = "supervised"),
-      go = "ml_classification-run_classification",
-      out = "#ml_classification-svm_plot",
-      rcode = "#ml_classification-getR_Code_svm"
+      set = list("dataset_1-ml_classification-ml_method_type" = "supervised"),
+      go = "dataset_1-ml_classification-run_classification",
+      out = "#dataset_1-ml_classification-svm_plot",
+      rcode = "#dataset_1-ml_classification-getR_Code_svm"
     ),
     # the overview of several comparisons is only shown for more than one;
     # the comparisons are Lipidomics diet groups

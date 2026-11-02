@@ -5,6 +5,8 @@
 # makes a new Dataset 1; a new Upload, Clear or gene annotation clears it.
 # Arguments: the returns of upload_server(), selection_server() and
 #   preprocessing_server()
+# Runs the analysis modules that are already on the handle (so far ML) in
+# the Dataset's namespace; what they return is in results(), by module.
 # Returns the Dataset handle (dataset_handle())
 dataset_server <- function(id, upload, selection, preprocessing){
   moduleServer(id, function(input, output, session){
@@ -56,6 +58,17 @@ dataset_server <- function(id, upload, selection, preprocessing){
       ds$results <- list()
     })
 
-    dataset_handle(id, function(name) ds[[name]])
+    handle <- dataset_handle(id, function(name) ds[[name]])
+
+    # Analysis modules; each returns a reactive list of its results on the
+    # current version (list() when there are none)
+    ml <- ml_classification_Server("ml_classification", handle)
+    observeEvent(ml(), {
+      results <- ds$results
+      results$ml <- if (length(ml())) ml()
+      ds$results <- results
+    }, ignoreNULL = FALSE)
+
+    handle
   })
 }
