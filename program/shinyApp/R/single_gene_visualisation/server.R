@@ -36,6 +36,7 @@ single_gene_visualisation_server <- function(id, dataset){
       # The result belongs to one Dataset version: a new Dataset, run or
       # clear removes plot, info and result
       observeEvent(dataset$version(), {
+        shinyjs::hideElement(id = "SingleGene_div")
         single_gene_reactives$allow_plot <- FALSE
         single_gene_reactives$gene_data <- NULL
         single_gene_reactives$plot <- NULL
@@ -145,7 +146,7 @@ single_gene_visualisation_server <- function(id, dataset){
 
       # Render Plot and Info
       output$SingleGenePlot <- renderPlotly({
-        req(single_gene_reactives$allow_plot)
+        req(single_gene_reactives$allow_plot, single_gene_reactives$plot)
 
         # Use helper function for clipboard functionality
         create_clipboard_plotly(

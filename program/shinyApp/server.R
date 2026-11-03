@@ -31,10 +31,8 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
   hideTab(inputId = "tabsetPanel1", target = "ML Classification")
   shinyjs::hideElement(id = "selection-mainPanel_other")
-  shinyjs::hideElement(id = "div_sampleCorrelation_main_panel")
   shinyjs::hideElement(id = "Significance_div")
   shinyjs::hideElement(id = "Heatmap_div")
-  shinyjs::hideElement(id = "SingleGene_div")
   shinyjs::hideElement(id = "enrichment_div")
 
 # Set Up ad Show user Landing page ----
