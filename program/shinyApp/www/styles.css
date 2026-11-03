@@ -57,7 +57,7 @@ body, label, input, button, select, h4, h3, h2 {
 .well.sidebar-sample-correlation {
     background-color: #A208BA35;
 }
-#sidebar_pca {
+.well.sidebar-pca {
     background-color: #FD8D3347;
 }
 #sidebar_significance_analysis {

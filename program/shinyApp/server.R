@@ -32,7 +32,6 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "ML Classification")
   shinyjs::hideElement(id = "selection-mainPanel_other")
   shinyjs::hideElement(id = "div_sampleCorrelation_main_panel")
-  shinyjs::hideElement(id = "PCA_main_panel_div")
   shinyjs::hideElement(id = "Significance_div")
   shinyjs::hideElement(id = "Heatmap_div")
   shinyjs::hideElement(id = "SingleGene_div")
@@ -390,14 +389,6 @@ server <- function(input,output,session){
   # Significance Analysis ----
   significance_analysis_server(
     id = 'SignificanceAnalysis',
-    session_data = session_data,
-    session_params = session_params,
-    data_input_shiny = data_input_shiny
-  )
-
-  # PCA ----
-  pca_Server(
-    id = "PCA",
     session_data = session_data,
     session_params = session_params,
     data_input_shiny = data_input_shiny

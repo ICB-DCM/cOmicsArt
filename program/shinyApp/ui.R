@@ -102,7 +102,7 @@ ui <- shiny::fluidPage(
     data_selection_panel,
     preprocessing_ui("preprocessing"),
     sampleCorrelation_UI(NS("dataset_1", "sample_correlation")),
-    pca_UI("PCA"),
+    pca_UI(NS("dataset_1", "pca")),
     # inside Dataset 1 (dataset_server("dataset_1"))
     ml_classification_UI(NS("dataset_1", "ml_classification")),
     significance_analysis_UI("SignificanceAnalysis"),
