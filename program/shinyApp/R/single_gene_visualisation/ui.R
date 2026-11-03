@@ -1,6 +1,7 @@
 single_gene_visualisation_sidebar_ui<- function(ns){
   sidebarPanel(
     id = ns("sidebar"),
+    class = "sidebar-single-gene",
     uiOutput(outputId = ns("type_of_data_gene_ui")) %>% helper(type = "markdown", content = "SingleGene_Options"),
     uiOutput(outputId = ns("type_of_visualitsation_ui")),
     uiOutput(outputId = ns("Select_GeneAnno_ui")),
