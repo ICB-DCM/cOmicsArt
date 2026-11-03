@@ -40,7 +40,7 @@ create_contrast_ids <- function(ns, contrast) {
     volcano_anno = ns(paste(base, "Volcano_anno_tooltip", sep = "_")),
     show_legend_adj = ns(paste(base, "show_legend_adj", sep = "_")),
     show_legend_raw = ns(paste(base, "show_legend_raw", sep = "_")),
-    aligned_row = ns("aligned_row"),
+    aligned_row = ns(paste(base, "aligned_row", sep = "_")),
 
     # Action button IDs
     only2report_volcano = ns(paste(base, "only2Report_Volcano", sep = "_")),

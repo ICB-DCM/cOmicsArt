@@ -1,6 +1,28 @@
 # Download Handlers for Significance Analysis Results
 # Factory functions to eliminate code duplication
 
+#' The run's parameters with this comparison's volcano values under the
+#' names the volcano template reads (comp, raw, th_psig, th_lfc,
+#' anno_vector); session_params itself is not changed
+#'
+#' @param session_params ReactiveValues with application parameters
+#' @param contrast Character vector c(group1, group2)
+#' @param tab_state ReactiveValues of the comparison (thresholds, annotation)
+#' @param raw Logical, whether the uncorrected p-values are meant
+#' @return list, the parameters
+comparison_params <- function(session_params, contrast, tab_state, raw = FALSE) {
+  par <- reactiveValuesToList(session_params)
+  if (is.null(par$SigAna)) par$SigAna <- list()
+  par$SigAna$volcano <- NULL
+  # the name performSigAnalysis() gives this comparison's result
+  par$SigAna$comp <- paste(contrast, collapse = ":")
+  par$SigAna$raw <- raw
+  par$SigAna$th_psig <- tab_state$th_psig
+  par$SigAna$th_lfc <- tab_state$th_lfc
+  par$SigAna$anno_vector <- tab_state$anno_vector
+  par
+}
+
 #' Setup all volcano plot download handlers
 #'
 #' Creates all download handlers and report action handlers for volcano plots.
@@ -16,7 +38,6 @@
 #' @param session_params ReactiveValues with application parameters
 #' @param file_path Path for file operations
 #' @return None (creates output handlers and observers)
-#' @export
 setup_volcano_downloads <- function(output, input, session, ids, contrast,
                                      tab_state, session_data, session_params, file_path) {
 
@@ -25,7 +46,7 @@ setup_volcano_downloads <- function(output, input, session, ids, contrast,
                         session_data, session_params, file_path)
 
   # R Code download handlers
-  setup_rcode_downloads(output, ids, contrast, session_data, session_params)
+  setup_rcode_downloads(output, ids, contrast, tab_state, session_data, session_params)
 
   # Plot save handlers
   setup_plot_save_handlers(output, input, session, ids, contrast, tab_state,
@@ -46,7 +67,6 @@ setup_volcano_downloads <- function(output, input, session, ids, contrast,
 #' @param session_params ReactiveValues with application parameters
 #' @param file_path Path for file operations
 #' @return None (creates observers)
-#' @export
 setup_report_handlers <- function(input, session, ids, contrast, tab_state,
                                    session_data, session_params, file_path) {
 
@@ -58,7 +78,7 @@ setup_report_handlers <- function(input, session, ids, contrast, tab_state,
     fun_LogIt(session, message = "### Publication Snippet")
     fun_LogIt(session, message = snippet_SigAna(
       data = reactiveValuesToList(session_data),
-      params = reactiveValuesToList(session_params)
+      params = comparison_params(session_params, contrast, tab_state)
     ))
   }, ignoreInit = TRUE)
 
@@ -74,7 +94,7 @@ setup_report_handlers <- function(input, session, ids, contrast, tab_state,
     fun_LogIt(session, message = "### Publication Snippet")
     fun_LogIt(session, message = snippet_SigAna(
       data = reactiveValuesToList(session_data),
-      params = reactiveValuesToList(session_params)
+      params = comparison_params(session_params, contrast, tab_state)
     ))
   }, ignoreInit = TRUE)
 
@@ -86,7 +106,7 @@ setup_report_handlers <- function(input, session, ids, contrast, tab_state,
     fun_LogIt(session, message = "### Publication Snippet")
     fun_LogIt(session, message = snippet_SigAna(
       data = reactiveValuesToList(session_data),
-      params = reactiveValuesToList(session_params)
+      params = comparison_params(session_params, contrast, tab_state)
     ))
   }, ignoreInit = TRUE)
 }
@@ -98,25 +118,22 @@ setup_report_handlers <- function(input, session, ids, contrast, tab_state,
 #' @param output Shiny output object
 #' @param ids List of IDs from create_contrast_ids()
 #' @param contrast Character vector c(group1, group2)
+#' @param tab_state ReactiveValues of the comparison
 #' @param session_data ReactiveValues with application data
 #' @param session_params ReactiveValues with application parameters
 #' @return None (creates output handlers)
-#' @export
-setup_rcode_downloads <- function(output, ids, contrast, session_data, session_params) {
-
+setup_rcode_downloads <- function(output, ids, contrast, tab_state, session_data, session_params) {
   # Adjusted volcano R code
   output[[ids$get_r_code_volcano]] <- create_rcode_download_handler(
     session_data = session_data,
-    session_params = session_params,
-    contrast = contrast,
+    par = function() comparison_params(session_params, contrast, tab_state, raw = FALSE),
     raw = FALSE
   )
 
   # Raw volcano R code
   output[[ids$get_r_code_volcano_raw]] <- create_rcode_download_handler(
     session_data = session_data,
-    session_params = session_params,
-    contrast = contrast,
+    par = function() comparison_params(session_params, contrast, tab_state, raw = TRUE),
     raw = TRUE
   )
 }
@@ -126,12 +143,10 @@ setup_rcode_downloads <- function(output, ids, contrast, session_data, session_p
 #' Reduces duplication - both handlers are nearly identical except for raw parameter.
 #'
 #' @param session_data ReactiveValues with application data
-#' @param session_params ReactiveValues with application parameters
-#' @param contrast Character vector c(group1, group2)
+#' @param par function giving the parameters (comparison_params())
 #' @param raw Logical indicating if this is for raw p-values
 #' @return downloadHandler object
-#' @export
-create_rcode_download_handler <- function(session_data, session_params, contrast, raw) {
+create_rcode_download_handler <- function(session_data, par, raw) {
   downloadHandler(
     filename = function() {
       download_name("Differential", "rcode", if (raw) "VolcanoRaw" else "Volcano")
@@ -145,16 +160,9 @@ create_rcode_download_handler <- function(session_data, session_params, contrast
       waiter$show()
       on.exit(waiter$hide())
 
-      # Prepare parameters
-      if(is.null(session_params$SigAna)) {
-        session_params$SigAna <- list()
-      }
-      # the name performSigAnalysis() gives this comparison's result
-      session_params$SigAna$comp <- paste(contrast, collapse = ":")
-      session_params$SigAna$raw <- raw
-
-      envList <- list(par_tmp = reactiveValuesToList(session_params))
-      temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+      par <- par()
+      envList <- list(par_tmp = par)
+      temp_directory <- tempfile()
       dir.create(temp_directory)
 
       # Save files
@@ -162,7 +170,7 @@ create_rcode_download_handler <- function(session_data, session_params, contrast
       write(
         create_workflow_script(
           pipeline_info = VOLCANO_PIPELINE,
-          par = reactiveValuesToList(session_params),
+          par = par,
           par_mem = "SigAna",
           path_to_util = file.path(temp_directory, "util.R")
         ),
@@ -195,7 +203,6 @@ create_rcode_download_handler <- function(session_data, session_params, contrast
 #' @param session_params ReactiveValues with application parameters
 #' @param file_path Path for file operations
 #' @return None (creates output handlers)
-#' @export
 setup_plot_save_handlers <- function(output, input, session, ids, contrast,
                                       tab_state, session_data, session_params, file_path) {
 
@@ -208,6 +215,7 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
     plot_reactive = reactive(tab_state$VolcanoPlot),
     data_reactive = reactive(tab_state$data4Volcano),
     contrast = contrast,
+    tab_state = tab_state,
     file_path = file_path,
     session_data = session_data,
     session_params = session_params,
@@ -223,6 +231,7 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
     plot_reactive = reactive(tab_state$VolcanoPlot_raw),
     data_reactive = reactive(tab_state$data4Volcano),
     contrast = contrast,
+    tab_state = tab_state,
     file_path = file_path,
     session_data = session_data,
     session_params = session_params,
@@ -238,6 +247,7 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
     plot_reactive = reactive(gridExtra::arrangeGrob(tab_state$VolcanoPlot_raw, tab_state$VolcanoPlot)),
     data_reactive = reactive(tab_state$data4Volcano),
     contrast = contrast,
+    tab_state = tab_state,
     file_path = file_path,
     session_data = session_data,
     session_params = session_params,
@@ -260,9 +270,8 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
 #' @param session_params ReactiveValues with application parameters
 #' @param item Item of the download name, see download_name()
 #' @return downloadHandler object
-#' @export
 create_plot_save_handler <- function(input, session, id, file_ext_id, plot_reactive,
-                                      data_reactive, contrast, file_path,
+                                      data_reactive, contrast, tab_state, file_path,
                                       session_data, session_params, item) {
   downloadHandler(
     filename = function() {
@@ -283,7 +292,7 @@ create_plot_save_handler <- function(input, session, id, file_ext_id, plot_react
         fun_LogIt(session, message = "### Publication Snippet")
         fun_LogIt(session, message = snippet_SigAna(
           data = reactiveValuesToList(session_data),
-          params = reactiveValuesToList(session_params)
+          params = comparison_params(session_params, contrast, tab_state)
         ))
       })
     }
