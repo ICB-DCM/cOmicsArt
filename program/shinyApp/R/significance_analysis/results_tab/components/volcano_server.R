@@ -5,7 +5,6 @@
 #' Handles rendering volcano plots, dynamic UI controls, and plot interactions.
 #'
 #' @param result Data frame with analysis results (not reactive)
-#' @param contrast Character vector c(group1, group2)
 #' @param data The SummarizedExperiment the run used (annotation)
 #' @param ids List of the comparison module's IDs (create_contrast_ids())
 #' @param ns The comparison module's namespace, for inputs made by renderUI
@@ -13,7 +12,7 @@
 #' @param store_volcano function(values) keeping the volcano parameters
 #' @param output,input The comparison module's output and input
 #' @return None (sets up server outputs and observers)
-volcano_server <- function(result, contrast, data, ids, ns, tab_state,
+volcano_server <- function(result, data, ids, ns, tab_state,
                            store_volcano, output, input) {
   # Render dynamic UI controls
   render_volcano_controls(output, input, ids, ns, data)

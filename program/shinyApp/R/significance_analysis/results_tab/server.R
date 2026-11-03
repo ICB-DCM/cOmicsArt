@@ -59,7 +59,6 @@ results_tab_server <- function(id, contrast, result, alpha, preprocess_method,
     # Setup volcano plots and controls
     volcano_server(
       result = result,
-      contrast = contrast,
       data = data,
       ids = ids,
       ns = ns,
