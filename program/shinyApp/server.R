@@ -32,7 +32,6 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "ML Classification")
   shinyjs::hideElement(id = "selection-mainPanel_other")
   shinyjs::hideElement(id = "Significance_div")
-  shinyjs::hideElement(id = "enrichment_div")
 
 # Set Up ad Show user Landing page ----
   # Define the guide
@@ -391,17 +390,4 @@ server <- function(input,output,session){
     data_input_shiny = data_input_shiny
   )
 
-  # Heatmap genes for Enrichment, until Enrichment is on the handle too
-  # (next PR wires them in dataset_server() and removes this)
-  observe({
-    session_data$Heatmap <- list(gene_list = datasets[["1"]]$results()$heatmap$gene_list)
-  })
-
-  # Enrichment Analysis ----
-  enrichment_analysis_Server(
-    id = 'EnrichmentAnalysis',
-    data = session_data,
-    params = session_params,
-    reactive(updating$count)
-  )
 }

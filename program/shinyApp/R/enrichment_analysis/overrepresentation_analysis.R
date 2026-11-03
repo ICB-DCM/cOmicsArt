@@ -1,29 +1,25 @@
 over_representation_analysis <- function(
   organism,
   geneSetChoice,
-  data,
   enrichments2do,
   test_correction,
-  UniverseOfGene
+  universe = NULL
 ){
   # Overrepresentation analysis
   # no translation needed as already done before.
+  # universe: Ensembl IDs of the background genes, NULL for
+  #   clusterProfiler's default
 
   # set Species
   species <- "Mus musculus"
   if(organism == "Human genes (GRCh38.p14)"){
     species <- "Homo sapiens"
   }
-  if(UniverseOfGene == "default"){
+  if(is.null(universe)){
     universeSelected_tranlsated <- NULL
   } else {
-    if(UniverseOfGene == "after_pre_process"){
-      universeSelected <- rownames(data$data)
-    } else if(UniverseOfGene == "before_pre_process"){
-      universeSelected <- rownames(data$data_original)
-    }
     # Note if transcripts are used this will be ignored for enrichment analysis
-    universeSelected <- unique(gsub("\\..*$","",universeSelected))
+    universeSelected <- unique(gsub("\\..*$","",universe))
     print(paste0("Universe genes untranslated: ",length(universeSelected)))
     universeSelected_tranlsated <- bitr(
       universeSelected,

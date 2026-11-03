@@ -237,7 +237,6 @@ over_representation_analysis_info <- list(
   foo = over_representation_analysis,
   name = "over_representation_analysis",
   input_mapping = list(
-      data = "data",
       geneSetChoice = "gene_set_choice"
   ),
   output_name = "enrichment_results",
