@@ -200,13 +200,12 @@ create_rcode_download_handler <- function(code_raw, par, raw) {
 #' @param file_path Path for file operations
 #' @return None (creates output handlers)
 setup_plot_save_handlers <- function(output, input, session, ids, contrast,
-                                      tab_state, code_par, code_raw, file_path) {
+                                      tab_state, code_par, file_path) {
 
   # Adjusted volcano save
   output[[ids$save_plot_volcano]] <- create_plot_save_handler(
     input = input,
     session = session,
-    id = ids$save_plot_volcano,
     file_ext_id = ids$file_ext_volcano,
     plot_reactive = reactive(tab_state$VolcanoPlot),
     data_reactive = reactive(tab_state$data4Volcano),
@@ -221,7 +220,6 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
   output[[ids$save_plot_volcano_raw]] <- create_plot_save_handler(
     input = input,
     session = session,
-    id = ids$save_plot_volcano_raw,
     file_ext_id = ids$file_ext_volcano_raw,
     plot_reactive = reactive(tab_state$VolcanoPlot_raw),
     data_reactive = reactive(tab_state$data4Volcano),
@@ -236,7 +234,6 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
   output[[ids$save_plot_volcano_both]] <- create_plot_save_handler(
     input = input,
     session = session,
-    id = ids$save_plot_volcano_both,
     file_ext_id = ids$file_ext_volcano_both,
     plot_reactive = reactive(gridExtra::arrangeGrob(tab_state$VolcanoPlot_raw, tab_state$VolcanoPlot)),
     data_reactive = reactive(tab_state$data4Volcano),
@@ -253,7 +250,6 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
 #'
 #' @param input Shiny input object
 #' @param session Shiny session object
-#' @param id Download button ID (not used but kept for signature consistency)
 #' @param file_ext_id ID of file extension selector input
 #' @param plot_reactive Reactive expression returning plot object
 #' @param data_reactive Reactive expression returning data for logging
@@ -262,7 +258,7 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
 #' @param code_par function giving the run's parameter list (with SigAna)
 #' @param item Item of the download name, see download_name()
 #' @return downloadHandler object
-create_plot_save_handler <- function(input, session, id, file_ext_id, plot_reactive,
+create_plot_save_handler <- function(input, session, file_ext_id, plot_reactive,
                                       data_reactive, contrast, tab_state, file_path,
                                       code_par, item) {
   downloadHandler(

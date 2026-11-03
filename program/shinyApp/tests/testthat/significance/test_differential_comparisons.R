@@ -33,10 +33,20 @@ local_report <- function(env = parent.frame()){
   for (name in c("fun_LogIt", "log_messages_volcano")) local({
     name <- name
     original <- get(name, envir = module_env)
-    assign(name, function(session, message = "", ...) {
-      lines <<- c(lines, if (name == "fun_LogIt") paste(message, collapse = "\n") else "volcano image")
-      NULL
-    }, envir = module_env)
+    stand_in <- if (name == "fun_LogIt") {
+      function(session, message = "", ...) {
+        lines <<- c(lines, paste(message, collapse = "\n"))
+        NULL
+      }
+    } else {
+      # uses every argument, as log_messages_volcano() does
+      function(session, plot, table, contrast, file_path) {
+        force(plot); force(table); force(contrast); force(file_path)
+        lines <<- c(lines, "volcano image")
+        NULL
+      }
+    }
+    assign(name, stand_in, envir = module_env)
     withr::defer(assign(name, original, envir = module_env), envir = env)
   })
   function() lines
@@ -94,6 +104,21 @@ test_that("each comparison keeps its own volcano thresholds, also in its R code"
     expect_length(par$SigAna$anno_vector, nrow(args$dataset$processed()))
     # the run's parameters are not changed by a download
     expect_null(sig_ana_reactive$result$params$th_psig)
+  })
+})
+
+test_that("saving a volcano plot writes the plot and its report entry", {
+  report <- local_report()
+  args <- lipidomics()
+  testServer(significance_analysis_server, args = args, {
+    do.call(session$setInputs, RUN)
+    session$setInputs(significanceGo = 1)
+    do.call(session$setInputs, volcano_inputs(1, 1, COMPARISONS[1], 0.05))
+    file_ext <- list(".png"); names(file_ext) <- tab_id(1, 1, COMPARISONS[1], "file_ext_Volcano")
+    do.call(session$setInputs, file_ext)
+    saved <- output[[tab_id(1, 1, COMPARISONS[1], "SavePlot_Volcano")]]
+    expect_true(file.exists(saved))
+    expect_equal(sum(report() == "volcano image"), 1)
   })
 })
 

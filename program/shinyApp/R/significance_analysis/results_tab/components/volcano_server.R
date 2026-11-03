@@ -15,7 +15,7 @@
 volcano_server <- function(result, data, ids, ns, tab_state,
                            store_volcano, output, input) {
   # Render dynamic UI controls
-  render_volcano_controls(output, input, ids, ns, data)
+  render_volcano_controls(output, ids, ns, data)
 
   # Reactive to track when all inputs are ready
   volcano_trigger <- create_volcano_trigger(input, ids)
@@ -41,12 +41,11 @@ volcano_server <- function(result, data, ids, ns, tab_state,
 #' Creates dynamic UI for annotation selection and threshold inputs.
 #'
 #' @param output Shiny output object
-#' @param input Shiny input object
 #' @param ids List of IDs from create_contrast_ids()
 #' @param ns Namespace of the inputs the controls make
 #' @param data The SummarizedExperiment the run used
 #' @return None (sets output values)
-render_volcano_controls <- function(output, input, ids, ns, data) {
+render_volcano_controls <- function(output, ids, ns, data) {
   # Annotation tooltip selector
   output[[ids$volcano_anno_ui]] <- renderUI({
     selectInput(
