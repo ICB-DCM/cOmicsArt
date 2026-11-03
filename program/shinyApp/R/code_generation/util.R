@@ -157,10 +157,11 @@ variable_assignment <- function(foo_infos, par, par_mem = NULL){
   return(par_assign)
 }
 
-create_library_code <- function(foo_list){
+create_library_code <- function(foo_list, packages = character(0)){
   # Generate the start of the R script that uses all libraries
   # Parameters:
   #   foo_list: list of function names
+  #   packages: further packages the functions need (called with ::)
   # Returns:
   #   lib_sourcing: character, code snippet that sources all libraries
 
@@ -198,7 +199,7 @@ create_library_code <- function(foo_list){
     na.omit(all_packages),
     c("base", "", "R_GlobalEnv", "package:base", "ggplot2", "SummarizedExperiment")  # Base, the app's own functions or already loaded packages
   )
-  all_packages <- c(all_packages, "rstudioapi", "SummarizedExperiment", "ggplot2")
+  all_packages <- unique(c(all_packages, packages, "rstudioapi", "SummarizedExperiment", "ggplot2"))
   lib_sourcing <- paste0(
     prepare_function_for_util(check_and_install_packages),
     "# Load all necessary libraries\n",
@@ -348,12 +349,20 @@ create_function_script <- function(foo_infos, par, par_mem = NULL, path_to_util=
   return(function_script)
 }
 
-preprocessing_base_script <- function(par, path_to_util = NULL){
+# The data the module's code starts from, like the module's data choice:
+#   "processed": the pre-processed data
+#   "batch_corrected": the batch corrected data (needs parameters$batch_column)
+#   "raw": the Selection before Pre-processing
+DATA_STAGES <- c("processed", "batch_corrected", "raw")
+
+preprocessing_base_script <- function(par, path_to_util = NULL, data_stage = "processed"){
   # Generate the base script that contains the necessary functions and libraries
   # Parameters:
   #   path_to_util: character, path to the util file
+  #   data_stage: one of DATA_STAGES, what `data` is at the end of the script
   # Returns:
   #   prepare_data_script: character, the script to do data selection and processing
+  data_stage <- match.arg(data_stage, DATA_STAGES)
 
   prepare_data_script <- create_data_loading_code()
   data_select_process_script <- paste(
@@ -365,15 +374,36 @@ preprocessing_base_script <- function(par, path_to_util = NULL){
     create_function_script(preprocessing_info, par, path_to_util = path_to_util),
     sep = "\n"
   )
+  if (data_stage == "batch_corrected") {
+    data_select_process_script <- paste(
+      data_select_process_script,
+      "\n",
+      "# --- Batch correction ---",
+      create_function_script(batch_correction_info, par, path_to_util = path_to_util),
+      sep = "\n"
+    )
+  }
+  if (data_stage == "raw") {
+    data_select_process_script <- paste(
+      data_select_process_script,
+      "\n",
+      "# --- The selected data before Pre-processing ---",
+      "data <- data_orig[rows_selected, samples_selected, drop = FALSE]",
+      sep = "\n"
+    )
+  }
   prepare_data_script <- paste(prepare_data_script, data_select_process_script, sep = "\n")
   return(prepare_data_script)
 }
 
-create_workflow_script <- function(pipeline_info, par, par_mem = NULL, path_to_util = NULL){
+create_workflow_script <- function(
+  pipeline_info, par, par_mem = NULL, path_to_util = NULL, data_stage = "processed"
+){
   # Generate the R script that contains the workflow
   # Parameters:
   #   pipeline_info: list of function informations
   #   path_to_util: character, path to the util file
+  #   data_stage: what the pipeline starts from, see DATA_STAGES
   # Returns:
   #   workflow_script: character, the R script that contains the workflow
   function_names <- sapply(pipeline_info, function(x) x$name)
@@ -383,10 +413,15 @@ create_workflow_script <- function(pipeline_info, par, par_mem = NULL, path_to_u
       additional_foos <- sapply(additional_foos, function(x) names(x))
       function_names <- c(function_names, unlist(additional_foos))
   }
-  workflow_script <- create_library_code(function_names)
+  packages <- character(0)
+  if (data_stage == "batch_corrected") {
+    function_names <- c(function_names, batch_correction_info$name)
+    packages <- batch_correction_info$packages
+  }
+  workflow_script <- create_library_code(function_names, packages)
   workflow_script <- paste(
     workflow_script,
-    preprocessing_base_script(par, path_to_util),
+    preprocessing_base_script(par, path_to_util, data_stage),
     sep = "\n"
   )
   function_strings <- sapply(pipeline_info, function(x) create_function_script(x, par, par_mem, path_to_util))

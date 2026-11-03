@@ -295,7 +295,14 @@ single_gene_visualisation_server <- function(id, dataset){
             pipeline_info = SINGLE_GENE_VISUALISATION_PIPELINE,
             par = par,
             par_mem = "SingleGeneVis",
-            path_to_util = file.path(temp_directory, "util.R")
+            path_to_util = file.path(temp_directory, "util.R"),
+            # the data choice: raw = the Selection, or batch corrected
+            data_stage = switch(
+              par$SingleGeneVis$data_process_stage %||% "data",
+              data_original = "raw",
+              data_batch_corrected = "batch_corrected",
+              "processed"
+            )
           ),
           file.path(temp_directory, "Code.R")
         )

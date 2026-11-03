@@ -327,7 +327,8 @@ heatmap_server <- function(id, dataset){moduleServer(
           pipeline_info = HEATMAP_PIPELINE,
           par = par,
           par_mem = "Heatmap",
-          path_to_util = file.path(temp_directory, "util.R")
+          path_to_util = file.path(temp_directory, "util.R"),
+          data_stage = if (isTRUE(par$Heatmap$useBatch)) "batch_corrected" else "processed"
         ),
         file.path(temp_directory, "Code.R")
       )

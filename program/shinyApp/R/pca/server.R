@@ -353,7 +353,8 @@ pca_Server <- function(id, dataset){
               pipeline_info = pipeline,
               par = par,
               par_mem = "PCA",
-              path_to_util = file.path(temp_directory, "util.R")
+              path_to_util = file.path(temp_directory, "util.R"),
+              data_stage = if (isTRUE(par$PCA$useBatch)) "batch_corrected" else "processed"
             ),
             file.path(temp_directory, "Code.R")
           )

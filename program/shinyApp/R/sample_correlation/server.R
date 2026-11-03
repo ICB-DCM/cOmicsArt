@@ -153,7 +153,8 @@ sample_correlation_server <- function(id, dataset){
               pipeline_info = SAMPLE_CORRELATION_PIPELINE,
               par = par,
               par_mem = "SampleCorrelation",
-              path_to_util = file.path(temp_directory, "util.R")
+              path_to_util = file.path(temp_directory, "util.R"),
+              data_stage = if (isTRUE(par$SampleCorrelation$batch)) "batch_corrected" else "processed"
             ),
             file.path(temp_directory, "Code.R")
           )
