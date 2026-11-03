@@ -1,5 +1,16 @@
-# Phase 2: Requires data_input_shiny reactive for global sourcing
-significance_analysis_server <- function(id, session_data, session_params, data_input_shiny){
+# Differential Analysis Server Module
+# Reads its Dataset through the handle (`dataset`, see dataset_handle()).
+# Returns a reactive: NULL before a run and after a new Dataset version,
+# otherwise list(results, params, version) with
+#   results: the result per comparison ("Treatment:Control"), as
+#     performSigAnalysis() returns it (DESeq2 results or the own test's table)
+#   params: what the run used (the R-code templates read them as
+#     parameters$SigAna): preprocessing, comparisons, compare_within,
+#     test_method, useBatch, padjust_method, significance_level, method
+#     ("DESeq2" or the test), volcano (per comparison: th_psig, th_lfc, anno),
+#     overview (and its choices under the names the UpSet template reads)
+#   version: the Dataset version it was computed on
+significance_analysis_server <- function(id, dataset){
   moduleServer(
     id,
     function(input,output,session){
@@ -7,15 +18,14 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         start_analysis = 0,
         update_plot_post_ana = 0,
         info_text = "Press 'Get Differential Analysis' to start!",
-        dds = NULL,
-        scenario = 0,
         comparisons_for_plot = "all",
-        coldata = NULL,
-        sig_results = NULL,
+        result = NULL,
         # module ids of the current comparison tabs, and how many runs made them
         tab_ids = character(0),
         run_count = 0
       )
+      # the DESeq2 path, when the Pre-processing made a DESeq2 object
+      uses_deseq <- reactive(!is.null(dataset$deseq()))
       # make waiter a reactive value and assign it
       waiter <- reactiveVal(Waiter$new(
         html = LOADING_SCREEN,
@@ -30,154 +40,149 @@ significance_analysis_server <- function(id, session_data, session_params, data_
       )
 
       ## Sidebar UI section
-      observeEvent(input$refreshUI, {
-        print("Refreshing UI Heatmap")
-        data <- reactiveValuesToList(session_data)
-        sig_ana_reactive$plot_last <- NULL
-
-        output$UseBatch_ui <- renderUI({
-        req(session_params$batch_column != "NULL")
+      output$UseBatch_ui <- renderUI({
+        req(dataset$preprocessing()$batch_column)
         selectInput(
           inputId = ns("UseBatch"),
           label = "Use batch corrected data?",
           choices = c("No","Yes"),
           selected = "No"
         )
-        })
-        output$type_of_comparison_ui <- renderUI({
-          req(data_input_shiny())
-          if(session_params$preprocessing_procedure == "vst_DESeq"){
-            choices <- session_params$deseq_factors
-          } else {
-            choices <- c(colnames(colData(data$data)))
-          }
-          selectInput(
-            inputId = ns("sample_annotation_types_cmp"),
-            label = "Choose factor to group samples by",
-            choices = choices,
-            multiple = F,
-            selected = NULL
-          )
-        })
-        # UI to choose comparisons
-        output$chooseComparisons_ui <- renderUI({
-          req(input$sample_annotation_types_cmp)
-          annoToSelect <- colData(data$data)[,input$sample_annotation_types_cmp]
-          if(length(annoToSelect) == length(unique(annoToSelect))){
-            # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
-            helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
-          } else {
-            my_comparisons <- subset(expand.grid(rep(list(unique(annoToSelect)),2)), Var1 != Var2)
-            nrows_comp <- nrow(my_comparisons)
-            xy.list <- vector("list", nrows_comp)
-            if(nrows_comp > 0) {
-              for (i in seq_len(nrows_comp)) {
-                xy.list[[i]] <- c(
-                  as.character(my_comparisons[i,1]),
-                  as.character(my_comparisons[i,2])
-                )
-              }
+      })
+      output$type_of_comparison_ui <- renderUI({
+        data <- req(dataset$processed())
+        if(uses_deseq()){
+          choices <- dataset$preprocessing()$deseq_factors
+        } else {
+          choices <- colnames(colData(data))
+        }
+        selectInput(
+          inputId = ns("sample_annotation_types_cmp"),
+          label = "Choose factor to group samples by",
+          choices = choices,
+          multiple = F,
+          selected = NULL
+        )
+      })
+      # UI to choose comparisons
+      output$chooseComparisons_ui <- renderUI({
+        data <- req(dataset$processed())
+        req(input$sample_annotation_types_cmp %in% colnames(colData(data)))
+        annoToSelect <- colData(data)[,input$sample_annotation_types_cmp]
+        if(length(annoToSelect) == length(unique(annoToSelect))){
+          # probably not what user wants, slows done app due to listing a lot of comparisons hence prevent
+          helpText("unique elements, cant perform testing. Try to choose a different option at 'Choose the groups to show the data for'")
+        } else {
+          my_comparisons <- subset(expand.grid(rep(list(unique(annoToSelect)),2)), Var1 != Var2)
+          nrows_comp <- nrow(my_comparisons)
+          xy.list <- vector("list", nrows_comp)
+          if(nrows_comp > 0) {
+            for (i in seq_len(nrows_comp)) {
+              xy.list[[i]] <- c(
+                as.character(my_comparisons[i,1]),
+                as.character(my_comparisons[i,2])
+              )
             }
-            selectInput(
-              inputId = ns("comparisons"),
-              label = "Choose pairwise comparisons. Notation is Treatment:Control",
-              choices = sapply(xy.list, paste, collapse=":"),
-              multiple = T,
-              selected = sapply(xy.list, paste, collapse=":")[1]
-            )
           }
-        })
-        # UI to choose test method
-        output$chooseTest_ui <- renderUI({
-          if(session_params$preprocessing_procedure == "vst_DESeq"){
-            renderText(
-              expr = "DESeq is using a Wald test statistic.\nWe are using the same here.",
-              outputArgs = list(container = pre)
-            )
-          } else {
-            shinyWidgets::virtualSelectInput(
-              search = T,
-              showSelectedOptionsFirst = T,
-              inputId = ns("test_method"),
-              label = "Test method",
-              choices = c("Wilcoxon rank sum test", "T-Test", "Welch-Test"),
-              selected = "T-Test"
-            )
-          }
-        })
-        # UI to select comparisons to visualize
-        output$chooseComparisonsToVisualize_ui <- renderUI({
-          req(input$comparisons)
           selectInput(
-            inputId = ns("comparisons_to_visualize"),
-            label = "Select your desired comparisons to visualize",
-            choices = c("all",sig_ana_reactive$comparisons_for_plot),
+            inputId = ns("comparisons"),
+            label = "Choose pairwise comparisons. Notation is Treatment:Control",
+            choices = sapply(xy.list, paste, collapse=":"),
             multiple = T,
-            selected = "all"
+            selected = sapply(xy.list, paste, collapse=":")[1]
           )
-        })
-        # UI to choose visualization method
-        output$chooseVisualization_ui <- renderUI({
-          req(input$comparisons_to_visualize)
-          # only if the number of comparisons is less than 5, have Venn diagram as option
-          if(length(input$comparisons_to_visualize) < 5){
-            choices <- c("UpSetR plot", "Venn diagram")
-          } else {
-            choices <- c("UpSetR plot")
-          }
+        }
+      })
+      # UI to choose test method
+      output$chooseTest_ui <- renderUI({
+        req(dataset$processed())
+        if(uses_deseq()){
+          renderText(
+            expr = "DESeq is using a Wald test statistic.\nWe are using the same here.",
+            outputArgs = list(container = pre)
+          )
+        } else {
+          shinyWidgets::virtualSelectInput(
+            search = T,
+            showSelectedOptionsFirst = T,
+            inputId = ns("test_method"),
+            label = "Test method",
+            choices = c("Wilcoxon rank sum test", "T-Test", "Welch-Test"),
+            selected = "T-Test"
+          )
+        }
+      })
+      output$chooseComparisonsToVisualize_ui <- renderUI({
+        req(input$comparisons)
+        selectInput(
+          inputId = ns("comparisons_to_visualize"),
+          label = "Select your desired comparisons to visualize",
+          choices = c("all",sig_ana_reactive$comparisons_for_plot),
+          multiple = T,
+          selected = "all"
+        )
+      })
+      # UI to choose visualization method
+      output$chooseVisualization_ui <- renderUI({
+        req(input$comparisons_to_visualize)
+        # only if the number of comparisons is less than 5, have Venn diagram as option
+        if(length(input$comparisons_to_visualize) < 5){
+          choices <- c("UpSetR plot", "Venn diagram")
+        } else {
+          choices <- c("UpSetR plot")
+        }
+        selectInput(
+          inputId = ns("visualization_method"),
+          label = "Visualization method",
+          choices = choices,
+          selected = input$visualization_method
+        )
+      })
+      # UI to choose what genes to look at (e.g. significant, upregulated, downregulated)
+      output$chooseGenesToLookAt_ui <- renderUI({
+        req(input$comparisons_to_visualize)
+        # Up-/Downregulated only for DESeq2 results
+        if(uses_deseq()){
+          choices <- c(
+            "Significant",
+            "Upregulated",
+            "Downregulated",
+            "Significant unadjusted"
+          )
+        } else {
+          choices <- c(
+            "Significant",
+            "Significant unadjusted"
+          )
+        }
+        selectInput(
+          inputId = ns("sig_to_look_at"),
+          label = "Type of significance to look at",
+          choices = choices,
+          selected = input$sig_to_look_at
+        )
+      })
+      # ui to choose intersections to highlight in venn diagram
+      output$chooseIntersections_ui <- renderUI({
+        req(input$visualization_method=="UpSetR plot")
+        # require current plot and upset matrix
+        req(sig_ana_reactive$plot_last)
+        choices <- append("None", sig_ana_reactive$intersect_names)
+        div(
           selectInput(
-            inputId = ns("visualization_method"),
-            label = "Visualization method",
+            inputId = ns("intersection_high"),
+            label = "Intersections to highlight",
             choices = choices,
-            selected = input$visualization_method
+            multiple = T,
+            selected = input$intersection_high
+          ) %>% helper(type = "markdown", content = "SigAna_Intersections"),
+          # Download highlighted intersections as table
+          downloadButton(
+            outputId = ns("downloadIntersections"),
+            label = "Download Intersections",
+            class = "btn-info"
           )
-        })
-        # UI to choose what genes to look at (e.g. significant, upregulated, downregulated)
-        output$chooseGenesToLookAt_ui <- renderUI({
-          req(input$comparisons_to_visualize)
-          # choices dependent on preprocess_method
-          if(session_params$preprocessing_procedure == "vst_DESeq"){
-            choices <- c(
-              "Significant",
-              "Upregulated",
-              "Downregulated",
-              "Significant unadjusted"
-            )
-          } else {
-            choices <- c(
-              "Significant",
-              "Significant unadjusted"
-            )
-          }
-          selectInput(
-            inputId = ns("sig_to_look_at"),
-            label = "Type of significance to look at",
-            choices = choices,
-            selected = input$sig_to_look_at
-          )
-        })
-        # ui to choose intersections to highlight in venn diagram
-        output$chooseIntersections_ui <- renderUI({
-          req(input$visualization_method=="UpSetR plot")
-          # require current plot and upset matrix
-          req(sig_ana_reactive$plot_last)
-          choices <- append("None", sig_ana_reactive$intersect_names)
-          div(
-            selectInput(
-              inputId = ns("intersection_high"),
-              label = "Intersections to highlight",
-              choices = choices,
-              multiple = T,
-              selected = input$intersection_high
-            ) %>% helper(type = "markdown", content = "SigAna_Intersections"),
-            # Download highlighted intersections as table
-            downloadButton(
-              outputId = ns("downloadIntersections"),
-              label = "Download Intersections",
-              class = "btn-info"
-            )
-          )
-        })
+        )
       })
 
       output$significance_analysis_info <- renderText({sig_ana_reactive$info_text})
@@ -195,10 +200,37 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         }
         sig_ana_reactive$tab_ids <- character(0)
       }
+      # parameters of the current result; the comparison tabs and the
+      # overview add theirs
+      set_params <- function(values){
+        result <- sig_ana_reactive$result
+        result$params[names(values)] <- values
+        sig_ana_reactive$result <- result
+      }
+      # the result belongs to one Dataset version: a new Dataset, run or
+      # clear removes it and its comparison tabs
+      observeEvent(dataset$version(), {
+        remove_comparison_tabs()
+        sig_ana_reactive$result <- NULL
+        sig_ana_reactive$plot_last <- NULL
+        sig_ana_reactive$info_text <- "Press 'Get Differential Analysis' to start!"
+        hideTab(
+          inputId = "significance_analysis_results",
+          target = "Multiple_Comparisons_Visualizations"
+        )
+        shinyjs::hideElement(id = "Significance_div")
+      })
+
+      # the parameters for the R code: Selection, Pre-processing and
+      # parameters$SigAna
+      code_par <- function(){
+        c(dataset$code_context()$par_tmp, list(SigAna = sig_ana_reactive$result$params))
+      }
 
       # Analysis initial info
       observeEvent(input$significanceGo,{
-        shinyjs::showElement(id = "Significance_div", asis = T)
+        req(dataset$processed())
+        shinyjs::showElement(id = "Significance_div")
         if(length(input$comparisons) == 1){
           hideTab(
             inputId = "significance_analysis_results",
@@ -224,15 +256,21 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         print("Start the Significance Analysis")
 
         # define variables to be used
-        useBatch <- session_params$batch_column != "NULL" && input$UseBatch == "Yes"
-        preprocessing <- session_params$preprocessing_procedure
+        useBatch <- !is.null(dataset$preprocessing()$batch_column) && identical(input$UseBatch, "Yes")
+        # performSigAnalysis() takes the DESeq2 path for "vst_DESeq"
+        preprocessing <- dataset$preprocessing()$preprocessing_procedure
+        deseq <- uses_deseq()
         comparisons <- input$comparisons
-        test_correction <- input$test_correction
-        significance_level <- input$significance_level
+        test_correction <- input$test_correction %||% "Benjamini-Hochberg"
+        significance_level <- input$significance_level %||% 0.05
         compare_within <- input$sample_annotation_types_cmp
-        test_method <- input$test_method
-        # update the data if needed
-        data <- reactiveValuesToList(session_data)
+        test_method <- if (!deseq) input$test_method %||% "T-Test"
+        data <- list(
+          data = dataset$processed(),
+          data_batch_corrected = dataset$processed(batch = TRUE),
+          DESeq_obj = dataset$deseq(),
+          DESeq_obj_batch_corrected = dataset$deseq(batch = TRUE)
+        )
 
         # perform the analysis
         sig_results <- tryCatch({
@@ -250,21 +288,26 @@ significance_analysis_server <- function(id, session_data, session_params, data_
           waiter()$hide()
           req(FALSE)
         })
-        # the result belongs to this run (not to the factor picker)
-        sig_ana_reactive$sig_results <- sig_results
-        # the run's parameters; the comparison tabs add their volcano values
-        # (volcano), the overview its choices (overview and the names the
-        # UpSet template reads)
-        session_params$SigAna <- list(
-          preprocessing = preprocessing,
-          comparisons = comparisons,
-          compare_within = compare_within,
-          test_method = test_method,
-          useBatch = useBatch,
-          padjust_method = PADJUST_METHOD[[test_correction]],
-          significance_level = significance_level,
-          volcano = list()
+        # the result belongs to this run (not to the factor picker); the
+        # comparison tabs add their volcano values (volcano), the overview
+        # its choices (overview and the names the UpSet template reads)
+        sig_ana_reactive$result <- list(
+          results = sig_results,
+          params = list(
+            preprocessing = preprocessing,
+            comparisons = comparisons,
+            compare_within = compare_within,
+            test_method = test_method,
+            useBatch = useBatch,
+            padjust_method = PADJUST_METHOD[[test_correction]],
+            significance_level = significance_level,
+            method = if (deseq) "DESeq2" else test_method,
+            volcano = list()
+          ),
+          version = dataset$version()
         )
+        # the data the run used, for the volcano annotation
+        run_data <- dataset$processed(batch = useBatch)
 
         ## Tab Management: the run's comparisons replace the last run's
         remove_comparison_tabs()
@@ -283,13 +326,16 @@ significance_analysis_server <- function(id, session_data, session_params, data_
             contrast = contrast_list[[idx]],
             alpha = significance_level,
             ns = ns,
-            preprocess_method = preprocessing,
+            preprocess_method = if (deseq) "vst_DESeq" else preprocessing,
             value = paste0("Significance_", idx),
-            session_data = session_data,
-            session_params = session_params,
+            data = run_data,
+            code_par = code_par,
+            code_raw = function() dataset$code_context()$raw,
             file_path = file_path,
             store_volcano = function(values) {
-              session_params$SigAna$volcano[[comp]] <- values
+              volcano <- sig_ana_reactive$result$params$volcano
+              volcano[[comp]] <- values
+              set_params(list(volcano = volcano))
             }
           )
           tab_ids <<- c(tab_ids, tab_id)
@@ -326,7 +372,7 @@ significance_analysis_server <- function(id, session_data, session_params, data_
       })
       observeEvent(to_update_significance_plot(), {
         req(
-          input$significanceGo,
+          sig_ana_reactive$result,
           input$visualization_method,
           input$comparisons_to_visualize,
           input$sig_to_look_at,
@@ -338,8 +384,8 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         comparisons_to_visualize <- input$comparisons_to_visualize
         sig_to_look_at     <- input$sig_to_look_at
         # the run's level and results
-        significance_level    <- session_params$SigAna$significance_level
-        sig_results <- sig_ana_reactive$sig_results
+        significance_level    <- sig_ana_reactive$result$params$significance_level
+        sig_results <- sig_ana_reactive$result$results
 
         # --- Call the plotting helper function ---
         plot_data <- plot_significant_results(
@@ -358,18 +404,13 @@ significance_analysis_server <- function(id, session_data, session_params, data_
           sig_ana_reactive$intersect_names <- plot_data$intersect_names
           sig_ana_reactive$overlap_list <- plot_data$overlap_list
         }
-        if(is.null(session_params$SigAna)){
-          session_params$SigAna <- list()
-        }
         # the names the UpSet template reads, and together as overview
-        session_params$SigAna$comparisons_to_visualize <- comparisons_to_visualize
-        session_params$SigAna$sig_to_look_at <- sig_to_look_at
-        session_params$SigAna$visualization_method <- visualization_method
-        session_params$SigAna$overview <- list(
+        overview <- list(
           comparisons_to_visualize = comparisons_to_visualize,
           sig_to_look_at = sig_to_look_at,
           visualization_method = visualization_method
         )
+        set_params(c(overview, list(overview = overview)))
       })
       # if we want to change the highlighting
       observeEvent(input$intersection_high,{
@@ -448,20 +489,19 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         },
         content = function(file){
           waiter()$show()
-          envList <- list(
-            par_tmp = reactiveValuesToList(session_params)
-          )
+          par <- code_par()
+          envList <- list(par_tmp = par)
           temp_directory <- tempfile()
           dir.create(temp_directory)
-          # save csv files
+          # save csv files: the whole raw data of the Upload
           save_summarized_experiment(
-            session_data$data_original,
+            dataset$code_context()$raw,
             temp_directory
           )
           write(
             create_workflow_script(
               pipeline_info = UPSET_PLOT_PIPELINE,
-              par = reactiveValuesToList(session_params),
+              par = par,
               par_mem = "SigAna",
               path_to_util = file.path(temp_directory, "util.R")
             ),
@@ -491,8 +531,10 @@ significance_analysis_server <- function(id, session_data, session_params, data_
           )
         }
       )
-      # Print to report
+      # Print to report: what the run and the overview used
       observeEvent(input$only2Report_Sig,{
+        result <- req(sig_ana_reactive$result)
+        params <- result$params
         notificationID <- showNotification(ui = "Saving to Report...",duration = 0)
         tmp_filename <- paste0(getwd(),file_path, paste(id,Sys.time(),".png",sep="_"))
         png(tmp_filename)
@@ -502,75 +544,45 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         fun_LogIt(session, message = "## Differential analysis {.tabset .tabset-fade}")
         fun_LogIt(session, message = "### Info")
         # log which tests were performed
-        if(session_params$preprocessing_procedure == "vst_DESeq"){
+        if(identical(params$method, "DESeq2")){
           fun_LogIt(session,
             message = "- Differential Analysis was performed using DESeq2 pipeline"
           )
         } else {
           fun_LogIt(session, message = paste(
-            "- Differential Analysis was performed using", input$test_method
+            "- Differential Analysis was performed using", params$test_method
           ))
         }
-        # log the significance level
         fun_LogIt(session, message = paste(
-          "- Significance level was set to", input$significance_level
+          "- Significance level was set to", params$significance_level
         ))
-        # log the test correction method
         fun_LogIt(session, message = paste(
-          "- p-values were adjusted using", input$test_correction, "correction method"
+          "- p-values were adjusted using", params$padjust_method, "correction method"
         ))
-        # log which comparisons were performed
+        # the comparisons the overview shows
+        comparisons <- params$comparisons_to_visualize %||% "all"
+        if ("all" %in% comparisons){
+          comparisons <- params$comparisons
+        }
         fun_LogIt(session, message = paste(
-          "- Comparisons performed:",
-          paste0(input$comparisons_to_visualize, collapse = ", ")
+          "- Comparisons performed:", paste0(comparisons, collapse = ", ")
         ))
         # for each comparison, log the number of significant genes before and after correction
         # and the top 5 significant genes
-        comparisons <- input$comparisons_to_visualize
-        if ("all" %in% comparisons){
-          comparisons <- sig_ana_reactive$comparisons_for_plot
-        }
-        for(i in seq_along(comparisons)){
-           fun_LogIt(session, message = paste("####", comparisons[i]))
-          # log the number of significant genes after correction
+        for(comparison in comparisons){
+          comparison_result <- as.data.frame(result$results[[comparison]])
+          fun_LogIt(session, message = paste("####", comparison))
           fun_LogIt(session, message = paste(
-            "- Number of significant genes before correction for",
-            comparisons[i],
-            "is",
-            nrow(
-              sig_ana_reactive$sig_results[[comparisons[i]]][which(sig_ana_reactive$sig_results[[comparisons[i]]]$pvalue < input$significance_level),]
-            )
+            "- Number of significant genes before correction for", comparison, "is",
+            sum(comparison_result$pvalue < params$significance_level, na.rm = TRUE)
           ))
-          # log the number of significant genes before correction
           fun_LogIt(session, message = paste(
-            "- Number of significant genes after correction for",
-            comparisons[i],
-            "is",
-            nrow(
-              sig_ana_reactive$sig_results[[comparisons[i]]][which(sig_ana_reactive$sig_results[[comparisons[i]]]$padj < input$significance_level),]
-            )
+            "- Number of significant genes after correction for", comparison, "is",
+            sum(comparison_result$padj < params$significance_level, na.rm = TRUE)
           ))
-          # log the top 5 significant genes
-          if(session_params$preprocessing_procedure == "vst_DESeq" & "result" %in% names(sig_ana_reactive$sig_results[[comparisons[i]]])){
-            top5 <- head(
-                sig_ana_reactive$sig_results[[comparisons[i]]]@result[order(
-                  sig_ana_reactive$sig_results[[comparisons[i]]]@result$p.adjust,
-                  decreasing = FALSE
-                ),], 5
-              )
-          } else {
-            # get the top 5 significant genes
-            top5 <- as.data.frame(head(
-              sig_ana_reactive$sig_results[[comparisons[i]]][order(
-                sig_ana_reactive$sig_results[[comparisons[i]]]$padj,
-                decreasing = FALSE
-              ),], 5
-            ))
-          }
+          top5 <- head(comparison_result[order(comparison_result$padj, decreasing = FALSE), ], 5)
           fun_LogIt(session, message = paste(
-            "- Top 5 significant entities for",
-            comparisons[i],
-            "are the following:"
+            "- Top 5 significant entities for", comparison, "are the following:"
           ))
           fun_LogIt(session, message = knitr::kable(
             top5,
@@ -583,10 +595,10 @@ significance_analysis_server <- function(id, session_data, session_params, data_
           fun_LogIt(session, message = "\n")
         }
         fun_LogIt(session, message = paste0(
-          "**Overview Plot** - Shown are ",input$sig_to_look_at," entities with a p-value < ",
-          input$significance_level,
-          ". The plot shows the intersection of entities that are significant in the comparisons you selected (.",
-          input$comparisons_to_visualize,")."
+          "**Overview Plot** - Shown are ", params$sig_to_look_at, " entities with a p-value < ",
+          params$significance_level,
+          ". The plot shows the intersection of entities that are significant in the comparisons you selected (",
+          paste0(comparisons, collapse = ", "), ")."
         ))
         fun_LogIt(session, message = paste0(
           "**Overview Plot** - ![Differential Analysis](",tmp_filename,")"
@@ -594,17 +606,15 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         if(isTruthy(input$NotesSigAna) & !(isEmpty(input$NotesSigAna))){
           fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesSigAna)))
         }
-        
-        fun_LogIt(session, message = "### Publication Snippet")
-        fun_LogIt(session, message = snippet_SigAna(
-          data = reactiveValuesToList(session_data),
-          params = reactiveValuesToList(session_params)
-        ))
 
-        
+        fun_LogIt(session, message = "### Publication Snippet")
+        fun_LogIt(session, message = snippet_SigAna(data = NULL, params = list(SigAna = params)))
+
         removeNotification(notificationID)
         showNotification(ui = "Report Saved!",type = "message", duration = 1)
       })
+
+      reactive(sig_ana_reactive$result)
     }
   )
 }

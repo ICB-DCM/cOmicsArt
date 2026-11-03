@@ -6,17 +6,17 @@
 #'
 #' @param result Data frame with analysis results (not reactive)
 #' @param contrast Character vector c(group1, group2)
-#' @param session_data ReactiveValues with application data
+#' @param data The SummarizedExperiment the run used (annotation)
 #' @param ids List of the comparison module's IDs (create_contrast_ids())
 #' @param ns The comparison module's namespace, for inputs made by renderUI
 #' @param tab_state ReactiveValues to store plot state
 #' @param store_volcano function(values) keeping the volcano parameters
 #' @param output,input The comparison module's output and input
 #' @return None (sets up server outputs and observers)
-volcano_server <- function(result, contrast, session_data, ids, ns, tab_state,
+volcano_server <- function(result, contrast, data, ids, ns, tab_state,
                            store_volcano, output, input) {
   # Render dynamic UI controls
-  render_volcano_controls(output, input, ids, ns, session_data)
+  render_volcano_controls(output, input, ids, ns, data)
 
   # Reactive to track when all inputs are ready
   volcano_trigger <- create_volcano_trigger(input, ids)
@@ -31,7 +31,7 @@ volcano_server <- function(result, contrast, session_data, ids, ns, tab_state,
       output = output,
       ids = ids,
       tab_state = tab_state,
-      session_data = session_data,
+      data = data,
       store_volcano = store_volcano
     )
   })
@@ -45,17 +45,16 @@ volcano_server <- function(result, contrast, session_data, ids, ns, tab_state,
 #' @param input Shiny input object
 #' @param ids List of IDs from create_contrast_ids()
 #' @param ns Namespace of the inputs the controls make
-#' @param session_data ReactiveValues with application data
+#' @param data The SummarizedExperiment the run used
 #' @return None (sets output values)
-render_volcano_controls <- function(output, input, ids, ns, session_data) {
+render_volcano_controls <- function(output, input, ids, ns, data) {
   # Annotation tooltip selector
   output[[ids$volcano_anno_ui]] <- renderUI({
-    req(session_data$data)
     selectInput(
       inputId = ns(ids$volcano_anno),
       label = "Select the anno to be shown at tooltip",
-      choices = colnames(rowData(session_data$data)),
-      selected = colnames(rowData(session_data$data))[1],
+      choices = colnames(rowData(data)),
+      selected = colnames(rowData(data))[1],
       multiple = FALSE
     )
   })
@@ -119,11 +118,11 @@ create_volcano_trigger <- function(input, ids) {
 #' @param output Shiny output object
 #' @param ids List of IDs from create_contrast_ids()
 #' @param tab_state ReactiveValues to store plot objects
-#' @param session_data ReactiveValues with application data
+#' @param data The SummarizedExperiment the run used
 #' @param store_volcano function(values) keeping the volcano parameters
 #' @return None (updates tab_state and renders plots)
 generate_volcano_plots <- function(result, input, output, ids, tab_state,
-                                    session_data, store_volcano) {
+                                    data, store_volcano) {
 
   # Show loading screen
   waiter <- Waiter$new(
@@ -140,8 +139,8 @@ generate_volcano_plots <- function(result, input, output, ids, tab_state,
   anno_col_name <- input[[ids$volcano_anno]]
 
   # Prepare annotation vector
-  anno_vector <- rowData(session_data$data)[, anno_col_name]
-  names(anno_vector) <- rownames(session_data$data)
+  anno_vector <- rowData(data)[, anno_col_name]
+  names(anno_vector) <- rownames(data)
 
   # Generate plots
   volcano_obj <- volcano_plot(result, th_psig, th_lfc, anno_vector, raw = FALSE)

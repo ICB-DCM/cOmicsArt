@@ -122,7 +122,7 @@ RCODE_EXTRA <- list(
   "Differential Analysis" = list(
     # visit_tab() leaves the Volcano sub-tab of the first comparison open
     "uncorrected Volcano" = list(
-      rcode = "#Significance_div [id$='_getR_Code_Volcano_raw']"
+      rcode = "#dataset_1-differential-Significance_div [id$='_getR_Code_Volcano_raw']"
     )
   )
 )
