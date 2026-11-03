@@ -213,18 +213,6 @@ translate_genes_ea_info <- list(
   output_name = "data",
   to_util = TRUE
 )
-translate_genes_oa_info <- list(
-  foo = translate_genes_oa,
-  name = "translate_genes_oa",
-  input_mapping = list(
-      annotation_results = "anno_results",
-      geneSetChoice = "gene_set_choice",
-      geneSet2Enrich = "ora_gene_set_type",
-      data = "data"
-  ),
-  output_name = "gene_set_choice",
-  to_util = TRUE
-)
 gene_set_enrichment_info <- list(
   foo = gene_set_enrichment,
   name = "gene_set_enrichment",

@@ -2,9 +2,22 @@
 
 gene_set_to_entrez <- function(gene_set, data){
   # The Entrez IDs over_representation_analysis() needs for the entities in
-  # gene_set (row names of data); entities without an Entrez ID are dropped.
-  entrez <- rowData(data)[gene_set, "entrezgene_id"]
-  return(entrez[!is.na(entrez)])
+  # gene_set: row names of data or, for those that are not, values of its
+  # ensembl_gene_id column (version suffixes ignored). Needs the
+  # entrezgene_id column check_annotation_enrichment_analysis() makes;
+  # entities without an Entrez ID are dropped.
+  annotation <- rowData(data)
+  if (!"entrezgene_id" %in% colnames(annotation)) {
+    stop("The data has no Entrez IDs (column entrezgene_id).")
+  }
+  rows <- match(gene_set, rownames(annotation))
+  if ("ensembl_gene_id" %in% colnames(annotation)) {
+    unversioned <- function(ids) sub("\\..*$", "", ids)
+    by_ensembl <- match(unversioned(gene_set), unversioned(annotation$ensembl_gene_id))
+    rows[is.na(rows)] <- by_ensembl[is.na(rows)]
+  }
+  entrez <- as.character(annotation$entrezgene_id[rows[!is.na(rows)]])
+  return(unique(entrez[!is.na(entrez)]))
 }
 
 get_gene_set_choice <- function(
