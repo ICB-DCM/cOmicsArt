@@ -37,7 +37,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       req(result())
       new_code_context(
         raw = upload(),
-        selection = selection_params(result()$selection),
+        selection = result()$selection$params,
         preprocessing = result()$params,
         omic_type = result()$omic_type
       )

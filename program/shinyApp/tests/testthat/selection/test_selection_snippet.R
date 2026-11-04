@@ -5,7 +5,7 @@ lipids <- test_data("Lipidomics")
 snippet_for <- function(inputs, organism = NULL){
   snippet_dataInput(
     raw = lipids,
-    selection = selection_params(resolve_selection(lipids, inputs)),
+    selection = resolve_selection(lipids, inputs)$params,
     omic_type = "Lipidomics",
     organism = organism
   )

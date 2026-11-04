@@ -50,7 +50,7 @@ dataset_server <- function(id, upload, selection, preprocessing){
     })
     observeEvent(preprocessing$result(), {
       run <- preprocessing$result()
-      if (identical(selection_params(run$selection), selection_params(ds$selection))) {
+      if (identical(run$selection$params, ds$selection$params)) {
         set_dataset(run = run)
       } else {
         new_dataset(run$selection, run$omic_type, run)
