@@ -219,13 +219,15 @@ single_gene_visualisation_server <- function(id, dataset){
           single_gene_reactives$gene_data,
           input$chooseComparisons
         )
-        # assign variables
-        data_process_stage <- input$type_of_data_gene
-        selected_gene <- input$Select_Gene
+        # the run's entity, data and grouping, not what the controls say now;
+        # the comparisons and the test are the drawing's
+        run_params <- single_gene_reactives$result$params
+        data_process_stage <- run_params$data_process_stage
+        selected_gene <- run_params$selected_gene
         comparisons <- input$chooseComparisons
         add_testing <- as.logical(input$add_testing)
         gene_data <- single_gene_reactives$gene_data
-        group_by <- input$accross_condition
+        group_by <- run_params$group_by
         # Pre-compile info message
         # check that plot is valid, needed to align asynchronus calls due to both triggers
         req(ready_to_plot(gene_data, add_testing, comparisons))
@@ -289,6 +291,7 @@ single_gene_visualisation_server <- function(id, dataset){
           download_name("SingleGene", input$file_ext_singleGene)
         },
         content = function(file){
+          req(single_gene_reactives$result)
           ggsave(
             file = file,
             plot = single_gene_reactives$plot,

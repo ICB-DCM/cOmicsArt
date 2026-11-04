@@ -139,6 +139,7 @@ sample_correlation_server <- function(id, dataset){
           download_name("SampleCorrelation", input$file_ext_SampleCorrelation)
         },
         content = function(file){
+          req(sample_corr_reactive$result)
           save_complex_heatmap(
             sample_corr_reactive$corr_plot + sample_corr_reactive$row_anno,
             filename = file,
