@@ -185,3 +185,15 @@ test_that("fake_dataset() gives the batch-corrected data and the DESeq2 objects"
   # no batch column: the uncorrected model
   expect_identical(deseq$deseq(batch = TRUE), deseq$deseq())
 })
+
+test_that("the processed data has one assay, named processed; raw() keeps raw", {
+  lipid <- fake_dataset()
+  expect_equal(SummarizedExperiment::assayNames(lipid$processed()), "processed")
+  expect_equal(SummarizedExperiment::assayNames(lipid$raw()), "raw")
+  tmm <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
+  expect_equal(SummarizedExperiment::assayNames(tmm$processed(batch = TRUE)), "processed")
+  # DESeq2's batch correction starts again from the counts
+  deseq <- fake_dataset("Transcriptomics", "vst_DESeq", batch_column = "batch_factor")
+  expect_equal(SummarizedExperiment::assayNames(deseq$processed()), "processed")
+  expect_equal(SummarizedExperiment::assayNames(deseq$processed(batch = TRUE)), "processed")
+})
