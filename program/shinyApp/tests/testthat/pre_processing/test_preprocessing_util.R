@@ -14,7 +14,7 @@ n_filtered <- function(data, threshold){
   sum(rowSums(values[keep, , drop = FALSE]) > threshold, na.rm = TRUE)
 }
 
-run <- function(data, omic_type, procedure, ..., batch_column = "NULL"){
+run <- function(data, omic_type, procedure, ..., batch_column = NULL){
   options <- list(preprocessing_procedure = procedure, ...)
   suppressMessages(run_preprocessing(data, omic_type, options, batch_column))
 }

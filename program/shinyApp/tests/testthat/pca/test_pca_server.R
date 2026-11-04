@@ -162,14 +162,14 @@ test_that("each R-code zip carries the PCA parameters under the templates' names
     for (zip_file in downloads) {
       dir <- unpack_zip(zip_file)
       expect_true(all(c("Code.R", "Data.rds") %in% list.files(dir)))
-      par <- readRDS(file.path(dir, "Data.rds"))$par_tmp
+      par <- readRDS(file.path(dir, "Data.rds"))$parameters
       expect_true(all(c(
         "sample_selection", "sample_types", "scale_data", "x_axis", "y_axis",
         "color_by", "title", "show_loadings", "plot_ellipses", "entitie_anno",
         "tooltip_var", "n_top", "n_bottom", "cutoff", "n_pcs"
       ) %in% names(par$PCA)))
       expect_equal(par$PCA$color_by, "diet")
-      expect_equal(par$preprocessing_procedure, "log10")
+      expect_equal(par$preprocessing$preprocessing_procedure, "log10")
     }
   })
 })

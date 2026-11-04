@@ -120,10 +120,10 @@ test_that("the R-code zip carries the Selection, Pre-processing and Single Gene 
     run(session, inputs)
     dir <- unpack_zip(output$getR_Code_SingleEntities)
     expect_true(all(c("Code.R", "Data.rds") %in% list.files(dir)))
-    par <- readRDS(file.path(dir, "Data.rds"))$par_tmp
+    par <- readRDS(file.path(dir, "Data.rds"))$parameters
     expect_equal(par$SingleGeneVis$selected_gene, inputs$Select_Gene)
     expect_equal(par$SingleGeneVis$comparisons, inputs$chooseComparisons)
-    expect_equal(par$preprocessing_procedure, "log10")
+    expect_equal(par$preprocessing$preprocessing_procedure, "log10")
   })
 })
 

@@ -14,7 +14,7 @@
 #     data_batch_corrected, DESeq_obj and DESeq_obj_batch_corrected (DESeq
 #     objects for vst_DESeq only), with
 #       params: the options, named like the arguments of preprocessing(),
-#         with batch_column
+#         with batch_column (NULL for none)
 #       selection: the Selection it pre-processed (resolve_selection())
 #       omic_type: the omic type it ran for
 #       run: the number of the run, so that a repeated run is a change
@@ -29,13 +29,16 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     console_output <- reactiveVal(NULL)
     warnings <- reactiveVal(NULL)
     failed <- reactiveVal(NULL)
-    # the parameters of the last run with its Selection, for the R code
-    rcode_params <- reactive({
+    # what the R code of the last run starts from, like the Dataset's
+    # code_context(); Pre-processing has no organism
+    rcode_context <- reactive({
       req(result())
-      c(
-        selection_params(result()$selection),
-        list(omic_type = result()$omic_type),
-        result()$params
+      list(
+        raw = upload(),
+        selection = selection_params(result()$selection),
+        preprocessing = result()$params,
+        omic_type = result()$omic_type,
+        organism = NULL
       )
     })
 
@@ -299,7 +302,8 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
         limma_intercept = input$limma_intercept,
         limma_formula = input$limma_formula
       )
-      batch_column <- input$batch_column %||% "NULL"
+      # the input's "NULL" choice is none
+      batch_column <- if (!identical(input$batch_column, "NULL")) input$batch_column
       selection <- selected()
       selected_data <- selection$data
 
@@ -391,43 +395,17 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
         widths = c(1, 1.3)
       )
     }
-    # Code.R, Data.rds and the data as csv files for `pipeline_info`, which
-    # gets `params()`; `item` names the zip (see download_name())
-    rcode_download <- function(pipeline_info, item, params = rcode_params){
+    # the R code of `pipeline` (rcode_zip()) with the plot's parameters
+    # `module()`; `item` names the zip (see download_name())
+    rcode_download <- function(pipeline, item, module = function() list()){
       downloadHandler(
         filename = function() {
           download_name("Preprocessing", "rcode", item)
         },
         content = function(file) {
           waiter <- show_loading()
-          envList <- list(
-            par_tmp = params()
-          )
-          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-          dir.create(temp_directory)
-          # save csv files
-          save_summarized_experiment(
-            upload(),
-            temp_directory
-          )
-
-          write(
-            create_workflow_script(
-              pipeline_info = pipeline_info,
-              par = params(),
-              path_to_util = file.path(temp_directory, "util.R")
-            ),
-            file.path(temp_directory, "Code.R")
-          )
-
-          saveRDS(envList, file.path(temp_directory, "Data.rds"))
-
-          zip::zip(
-            zipfile = file,
-            files = dir(temp_directory),
-            root = temp_directory
-          )
-          waiter$hide()
+          on.exit(waiter$hide())
+          rcode_zip(file, rcode_context(), module(), pipeline)
         },
         contentType = "application/zip"
       )
@@ -495,7 +473,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     output$rcode_violin <- rcode_download(
       VIOLIN_PLOT_PIPELINE,
       item = "ViolinPlot",
-      params = reactive(c(rcode_params(), list(violin_color = violin_color())))
+      module = function() list(ViolinPlot = list(violin_color = violin_color()))
     )
 
     plot_downloads(

@@ -313,33 +313,12 @@ heatmap_server <- function(id, dataset){moduleServer(
       download_name("Heatmap", "rcode")
     }, content = function(file){
       waiter$show()
-      context <- dataset$code_context()
-      par <- c(context$par_tmp, list(Heatmap = heatmap_reactives$result$params))
-      temp_directory <- tempfile()
-      dir.create(temp_directory)
-      # save csv files: the whole raw data of the Upload
-      save_summarized_experiment(
-        context$raw,
-        temp_directory
+      on.exit(waiter$hide())
+      params <- heatmap_reactives$result$params
+      rcode_zip(
+        file, dataset$code_context(), list(Heatmap = params), HEATMAP_PIPELINE,
+        data_stage = if (isTRUE(params$useBatch)) "batch_corrected" else "processed"
       )
-      write(
-        create_workflow_script(
-          pipeline_info = HEATMAP_PIPELINE,
-          par = par,
-          par_mem = "Heatmap",
-          path_to_util = file.path(temp_directory, "util.R"),
-          data_stage = if (isTRUE(par$Heatmap$useBatch)) "batch_corrected" else "processed"
-        ),
-        file.path(temp_directory, "Code.R")
-      )
-
-      saveRDS(list(par_tmp = par), file.path(temp_directory, "Data.rds"))
-      zip::zip(
-        zipfile = file,
-        files = dir(temp_directory),
-        root = temp_directory
-      )
-      waiter$hide()
     }, contentType = "application/zip")
 
     output$SavePlot_Heatmap <- downloadHandler(

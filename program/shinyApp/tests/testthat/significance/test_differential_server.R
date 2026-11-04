@@ -114,11 +114,11 @@ test_that("the overview's R-code zip carries the run's SigAna parameters", {
     session$setInputs(significanceGo = 1)
     dir <- unpack_zip(output$getR_Code_Sig)
     expect_true(all(c("Code.R", "Data.rds") %in% list.files(dir)))
-    par <- readRDS(file.path(dir, "Data.rds"))$par_tmp
+    par <- readRDS(file.path(dir, "Data.rds"))$parameters
     expect_equal(par$SigAna$comparisons, LIPID_COMPARISONS)
     expect_equal(par$SigAna$sig_to_look_at, "Significant unadjusted")
     expect_equal(par$SigAna$visualization_method, "UpSetR plot")
-    expect_equal(par$preprocessing_procedure, "log10")
+    expect_equal(par$preprocessing$preprocessing_procedure, "log10")
   })
 })
 

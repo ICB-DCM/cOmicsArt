@@ -377,38 +377,11 @@ ml_classification_Server <- function(id, dataset){
           hide_on_render = FALSE
         )
         waiter$show()
-
-        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-        dir.create(temp_directory)
-
-        # Save data: the whole raw data of the Upload
-        context <- dataset$code_context()
-        save_summarized_experiment(context$raw, temp_directory)
-
-        # Generate R script
-        write(
-          create_workflow_script(
-            pipeline_info = KMEANS_CLUSTERING_PIPELINE,
-            par = ml_rcode_par(context, ml_results$kmeans_out),
-            par_mem = "MLClassification",
-            path_to_util = file.path(temp_directory, "util.R")
-          ),
-          file.path(temp_directory, "Code.R")
+        on.exit(waiter$hide())
+        rcode_zip(
+          file, dataset$code_context(),
+          list(MLClassification = ml_results$kmeans_out$params), KMEANS_CLUSTERING_PIPELINE
         )
-
-        # Save environment data
-        envList <- list(
-          par_tmp = ml_rcode_par(context, ml_results$kmeans_out)
-        )
-        saveRDS(envList, file.path(temp_directory, "Data.rds"))
-
-        # Zip everything
-        zip::zip(
-          zipfile = file,
-          files = dir(temp_directory),
-          root = temp_directory
-        )
-        waiter$hide()
       },
       contentType = "application/zip"
     )
@@ -482,38 +455,11 @@ ml_classification_Server <- function(id, dataset){
           hide_on_render = FALSE
         )
         waiter$show()
-
-        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-        dir.create(temp_directory)
-
-        # Save data: the whole raw data of the Upload
-        context <- dataset$code_context()
-        save_summarized_experiment(context$raw, temp_directory)
-
-        # Generate R script
-        write(
-          create_workflow_script(
-            pipeline_info = SVM_CLASSIFICATION_PIPELINE,
-            par = ml_rcode_par(context, ml_results$svm_out),
-            par_mem = "MLClassification",
-            path_to_util = file.path(temp_directory, "util.R")
-          ),
-          file.path(temp_directory, "Code.R")
+        on.exit(waiter$hide())
+        rcode_zip(
+          file, dataset$code_context(),
+          list(MLClassification = ml_results$svm_out$params), SVM_CLASSIFICATION_PIPELINE
         )
-
-        # Save environment data
-        envList <- list(
-          par_tmp = ml_rcode_par(context, ml_results$svm_out)
-        )
-        saveRDS(envList, file.path(temp_directory, "Data.rds"))
-
-        # Zip everything
-        zip::zip(
-          zipfile = file,
-          files = dir(temp_directory),
-          root = temp_directory
-        )
-        waiter$hide()
       },
       contentType = "application/zip"
     )

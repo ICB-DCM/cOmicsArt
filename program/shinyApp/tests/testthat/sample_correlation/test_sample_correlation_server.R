@@ -86,10 +86,10 @@ test_that("the R-code zip carries the Selection, Pre-processing and Sample Corre
     session$setInputs(Do_SampleCorrelation = 1)
     dir <- unpack_zip(output$getR_SampleCorrelation)
     expect_true(all(c("Code.R", "Data.rds") %in% list.files(dir)))
-    par <- readRDS(file.path(dir, "Data.rds"))$par_tmp
+    par <- readRDS(file.path(dir, "Data.rds"))$parameters
     expect_equal(par$SampleCorrelation$correlation_method, "pearson")
     expect_equal(par$SampleCorrelation$sample_annotations, "diet")
-    expect_equal(par$preprocessing_procedure, "log10")
+    expect_equal(par$preprocessing$preprocessing_procedure, "log10")
   })
 })
 

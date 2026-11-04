@@ -17,12 +17,7 @@ dataset_handle <- function(id, get){
     selection_params(get("selection"))
   }
   # the run's options with batch_column (NULL for none)
-  preprocessing <- function() {
-    params <- get("run")$params
-    if (is.null(params)) return(NULL)
-    if (identical(params$batch_column, "NULL")) params["batch_column"] <- list(NULL)
-    params
-  }
+  preprocessing <- function() get("run")$params
   # `batch = TRUE` falls back to the uncorrected object without a batch column
   batch_or_not <- function(corrected, uncorrected, batch) {
     run <- get("run")
@@ -40,8 +35,7 @@ dataset_handle <- function(id, get){
     preprocessing = preprocessing,
     version = function() get("version"),
     results = function() get("results"),
-    # what the R-code download starts from; par_tmp is the parameter list
-    # the R-code templates read today (To be removed)
+    # what the R-code download starts from (rcode_zip())
     code_context = function() {
       if (is.null(get("selection"))) return(NULL)
       list(
@@ -49,12 +43,7 @@ dataset_handle <- function(id, get){
         selection = selection(),
         preprocessing = preprocessing(),
         omic_type = get("omic_type"),
-        organism = get("organism"),
-        par_tmp = c(
-          selection(),
-          list(omic_type = get("omic_type"), organism = get("organism")),
-          get("run")$params
-        )
+        organism = get("organism")
       )
     }
   )

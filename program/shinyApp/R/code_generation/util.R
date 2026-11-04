@@ -238,7 +238,7 @@ create_data_loading_code <- function(){
     "# Load the used parameters and utility functions\n",
     "source(file.path(file_dir, 'util.R'))\n",
     "envList <- readRDS(file.path(file_dir, 'Data.rds'))\n",
-    "parameters <- envList$par_tmp"
+    "parameters <- envList$parameters"
   )
   csv_load <- paste0(
     "data_matrix <- read.csv(file.path(file_dir, 'data_matrix.csv'), row.names = 1)\n",
@@ -351,7 +351,8 @@ create_function_script <- function(foo_infos, par, par_mem = NULL, path_to_util=
 
 # The data the module's code starts from, like the module's data choice:
 #   "processed": the pre-processed data
-#   "batch_corrected": the batch corrected data (needs parameters$batch_column)
+#   "batch_corrected": the batch corrected data (needs
+#     parameters$preprocessing$batch_column)
 #   "raw": the Selection before Pre-processing
 DATA_STAGES <- c("processed", "batch_corrected", "raw")
 
@@ -368,10 +369,10 @@ preprocessing_base_script <- function(par, path_to_util = NULL, data_stage = "pr
   data_select_process_script <- paste(
     "\n",
     "# --- Data Selection ---",
-    create_function_script(select_data_info, par, path_to_util = path_to_util),
+    create_function_script(select_data_info, par, "selection", path_to_util),
     "\n",
     "# --- Preprocessing ---",
-    create_function_script(preprocessing_info, par, path_to_util = path_to_util),
+    create_function_script(preprocessing_info, par, "preprocessing", path_to_util),
     sep = "\n"
   )
   if (data_stage == "batch_corrected") {
@@ -379,7 +380,7 @@ preprocessing_base_script <- function(par, path_to_util = NULL, data_stage = "pr
       data_select_process_script,
       "\n",
       "# --- Batch correction ---",
-      create_function_script(batch_correction_info, par, path_to_util = path_to_util),
+      create_function_script(batch_correction_info, par, "preprocessing", path_to_util),
       sep = "\n"
     )
   }
@@ -428,4 +429,41 @@ create_workflow_script <- function(
   function_strings <- paste(function_strings, collapse = "\n\n")
   workflow_script <- paste(workflow_script, function_strings, sep = "\n\n")
   return(workflow_script)
+}
+
+# The `parameters` a module's R code reads (Data.rds): the Dataset's
+# Selection, Pre-processing, omic type and organism from `context`
+# (code_context()) and `module`, the module's own parameters by its name,
+# e.g. list(PCA = ...). NULL entries are kept.
+code_parameters <- function(context, module){
+  c(context[c("selection", "preprocessing", "omic_type", "organism")], module)
+}
+
+# Writes a module's R-code download to `file`, a zip: the whole raw data of
+# the Upload (`context$raw`) as csv files, Code.R running `pipeline` from
+# `data_stage` (see DATA_STAGES), util.R and Data.rds with the parameters
+# (code_parameters()). The pipeline's own steps read the parameters of
+# `module` (a list of at most one module). `extra_files` are copied in,
+# named as in the zip.
+rcode_zip <- function(
+  file, context, module, pipeline, data_stage = "processed", extra_files = NULL
+){
+  parameters <- code_parameters(context, module)
+  dir <- tempfile("rcode-")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  save_summarized_experiment(context$raw, dir)
+  write(
+    create_workflow_script(
+      pipeline_info = pipeline,
+      par = parameters,
+      par_mem = names(module),
+      path_to_util = file.path(dir, "util.R"),
+      data_stage = data_stage
+    ),
+    file.path(dir, "Code.R")
+  )
+  saveRDS(list(parameters = parameters), file.path(dir, "Data.rds"))
+  if (length(extra_files) > 0) file.copy(extra_files, file.path(dir, names(extra_files)))
+  zip::zip(zipfile = file, files = dir(dir), root = dir)
 }
