@@ -10,16 +10,9 @@
 #   upload_done: reactive, set after each successful Upload; clears the
 #     result
 # Returns reactives:
-#   result: the current run: NULL before a run and after a failed run, a new
-#     Upload or a confirmed Selection; set once at the end of a successful
-#     run, so a new run is the done event. A list of run_preprocessing()'s data,
-#     data_batch_corrected, DESeq_obj and DESeq_obj_batch_corrected (DESeq
-#     objects for vst_DESeq only), with
-#       params: the options, named like the arguments of preprocessing(),
-#         with batch_column (NULL for none)
-#       selection: the Selection it pre-processed (resolve_selection())
-#       omic_type: the omic type it ran for
-#       run: the number of the run, so that a repeated run is a change
+#   result: the current run (new_preprocessing_run()): NULL before a run and
+#     after a failed run, a new Upload or a confirmed Selection; set once at
+#     the end of a successful run, so a new run is the done event
 #   failed: counts up after each run that failed
 #   start_discovering: the "Start Discovering" button
 preprocessing_server <- function(id, upload, omic_type, selected, selection_confirmed, upload_done){
@@ -214,18 +207,15 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     # must be a sample annotation of the run's data (a new Upload rebuilds
     # the control before the next run).
     violin_color <- reactive({
-      req(result(), input$violin_color %in% colnames(colData(result()$data)))
+      req(result(), input$violin_color %in% colnames(colData(run_data(result()))))
       input$violin_color
     })
     raw_violin <- reactive({
       violin_plot(result()$selection$data, violin_color = violin_color())
     })
-    # with a batch column, the batch-corrected data (NULL without one)
+    # with a batch column, the batch-corrected data
     processed_violin <- reactive({
-      violin_plot(
-        result()$data_batch_corrected %||% result()$data,
-        violin_color = violin_color()
-      )
+      violin_plot(run_data(result(), batch = TRUE), violin_color = violin_color())
     })
     # the plots of the current run (none after a failed run, a new Upload or
     # Selection)
@@ -324,8 +314,10 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
         error = function(e) preprocessing_failed(conditionMessage(e))
       )
       if (is.null(res)) return()
-      data <- res$data
-      run_params <- c(options, list(batch_column = batch_column))
+      run <- new_preprocessing_run(
+        res, options, batch_column, selection, omic_type(), input$get_preprocessing
+      )
+      data <- run_data(run)
 
       # everything that can fail before anything is shown or returned
       summary <- preprocessing_summary(
@@ -337,13 +329,13 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
 ## Log preprocessing ----
       fun_LogIt(session, "## Pre Processing {.tabset .tabset-fade}")
       fun_LogIt(session, message = "### Info")
-      for (line in preprocessing_log_lines(run_params, dim(data))) {
+      for (line in preprocessing_log_lines(run$params, dim(data))) {
         fun_LogIt(session, message = line)
       }
       fun_LogIt(session, message = "### Publication Snippet")
       fun_LogIt(session, message = snippet_preprocessing(
         data = list(data = data),
-        params = run_params
+        params = run$params
       ))
       fun_LogIt(session, message = "<br>")
 
@@ -351,15 +343,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       warnings(res$warnings)
       summary_text(summary)
       react_mean_sd_plot(mean_sd)
-      result(c(
-        res[c("data", "data_batch_corrected", "DESeq_obj", "DESeq_obj_batch_corrected")],
-        list(
-          params = run_params,
-          selection = selection,
-          omic_type = omic_type(),
-          run = input$get_preprocessing
-        )
-      ))
+      result(run)
       # set the warning as toast
       show_toast(
         title = "Attention",

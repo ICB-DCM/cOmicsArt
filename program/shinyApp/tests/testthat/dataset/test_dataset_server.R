@@ -80,9 +80,9 @@ test_that("a successful run pre-processes the Dataset, a failed one takes it bac
     confirmed_version <- handle$version()
     preprocessing$result(run_all)
     session$flushReact()
-    expect_equal(assay(handle$processed()), assay(run_all$data))
+    expect_equal(assay(handle$processed()), assay(run_data(run_all)))
     # no batch column: the uncorrected data
-    expect_equal(assay(handle$processed(batch = TRUE)), assay(run_all$data))
+    expect_equal(assay(handle$processed(batch = TRUE)), assay(run_data(run_all)))
     expect_null(handle$deseq())
     expect_equal(handle$preprocessing()$preprocessing_procedure, "log10")
     expect_true("batch_column" %in% names(handle$preprocessing()))
@@ -111,7 +111,7 @@ test_that("a run on a Selection that was not confirmed makes a new Dataset", {
     session$flushReact()
     expect_equal(handle$selection(), two_diets$params)
     expect_equal(handle$raw(), two_diets$data)
-    expect_equal(assay(handle$processed()), assay(run_two_diets$data))
+    expect_equal(assay(handle$processed()), assay(run_data(run_two_diets)))
     # the new Dataset comes with its run, in one step
     expect_equal(handle$version(), run_version + 1)
   })
@@ -171,7 +171,7 @@ test_that("fake_dataset() has the accessors of the real handle", {
   })
   fake <- fake_dataset()
   expect_equal(fake$omic_type(), "Lipidomics")
-  expect_equal(dim(fake$processed()), dim(run_all$data))
+  expect_equal(dim(fake$processed()), dim(run_data(run_all)))
   expect_equal(fake$selection(), all_lipids$params)
 })
 

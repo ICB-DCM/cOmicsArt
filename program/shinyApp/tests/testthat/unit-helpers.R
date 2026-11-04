@@ -19,15 +19,7 @@ LOG10 <- list(preprocessing_procedure = "log10", preprocessing_filtering = "filt
 # Selection's data with `options` (named like the arguments of preprocessing())
 preprocessing_run <- function(selection, omic_type, options, batch_column = NULL, run = 1){
   res <- suppressMessages(run_preprocessing(selection$data, omic_type, options, batch_column))
-  c(
-    res[c("data", "data_batch_corrected", "DESeq_obj", "DESeq_obj_batch_corrected")],
-    list(
-      params = c(options, list(batch_column = batch_column)),
-      selection = selection,
-      omic_type = omic_type,
-      run = run
-    )
-  )
+  new_preprocessing_run(res, options, batch_column, selection, omic_type, run)
 }
 
 # The private state of a Dataset as dataset_server() keeps it: a Selection of

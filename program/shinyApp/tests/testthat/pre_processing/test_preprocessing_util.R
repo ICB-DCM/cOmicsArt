@@ -286,3 +286,39 @@ test_that("the violin plot data holds each value with its sample's colour only",
   sample_diet <- setNames(SummarizedExperiment::colData(lipids)$diet, colnames(lipids))
   expect_equal(plot$data$diet, unname(sample_diet[as.character(plot$data$Sample)]))
 })
+
+# run_preprocessing()'s result, with stand-ins for the objects
+fake_res <- function(batch){
+  list(
+    data = "processed", data_batch_corrected = if (batch) "processed, batch corrected",
+    DESeq_obj = "dds", DESeq_obj_batch_corrected = if (batch) "dds, batch corrected",
+    n_processed = 10, console_output = NULL, warnings = NULL
+  )
+}
+
+test_that("a run holds the objects, the options with batch_column, the Selection, omic type and number", {
+  selection <- resolve_selection(lipids, list())
+  run <- new_preprocessing_run(fake_res(FALSE), LOG10, NULL, selection, "Lipidomics", 3)
+  expect_equal(run$params, c(LOG10, list(batch_column = NULL)))
+  expect_true("batch_column" %in% names(run$params))
+  expect_identical(run$selection, selection)
+  expect_equal(run$omic_type, "Lipidomics")
+  expect_equal(run$run, 3)
+  # not the summary's and console's parts of run_preprocessing()'s result
+  expect_null(run$n_processed)
+  expect_null(run$console_output)
+})
+
+test_that("a run's data and DESeq2 object, batch corrected only with a batch column", {
+  with_batch <- new_preprocessing_run(fake_res(TRUE), LOG10, "batch", NULL, "Lipidomics", 1)
+  expect_equal(run_data(with_batch), "processed")
+  expect_equal(run_data(with_batch, batch = TRUE), "processed, batch corrected")
+  expect_equal(run_deseq(with_batch), "dds")
+  expect_equal(run_deseq(with_batch, batch = TRUE), "dds, batch corrected")
+  without <- new_preprocessing_run(fake_res(FALSE), LOG10, NULL, NULL, "Lipidomics", 1)
+  expect_equal(run_data(without, batch = TRUE), "processed")
+  expect_equal(run_deseq(without, batch = TRUE), "dds")
+  # no run, no data
+  expect_null(run_data(NULL))
+  expect_null(run_deseq(NULL, batch = TRUE))
+})
