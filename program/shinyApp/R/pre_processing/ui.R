@@ -50,7 +50,8 @@ preprocessing_main_ui <- function(id){
     id = ns("mainpanel_pre_processing"),
     # Statistics to the data
     htmlOutput(outputId = ns("summary"), container = pre),
-    div(
+    # shown while there is a run
+    hidden(div(
       id = ns("data_summary"),
       HTML(text = "<br>"),
       fluidRow(column(5,
@@ -178,7 +179,7 @@ preprocessing_main_ui <- function(id){
         helpText(NOTES_HELP)),
         NULL
       )
-    )
+    ))
   )
 }
 

@@ -113,3 +113,31 @@ test_that("the report describes the run, whatever the controls say now; nothing 
     expect_match(report(), "samples were colored after diet", fixed = TRUE)
   })
 })
+
+test_that("the result area shows only while there is a result", {
+  shown <- local_shown()
+  ds <- changeable_dataset("Lipidomics")
+  testServer(sample_correlation_server, args = list(dataset = ds$handle), {
+    session$flushReact()
+    expect_false(shown("div_main_panel"))
+    do.call(session$setInputs, RUN)
+    local({
+      local_failing("get_sample_correlation")
+      session$setInputs(Do_SampleCorrelation = 1)
+    })
+    expect_false(shown("div_main_panel"))
+    session$setInputs(Do_SampleCorrelation = 2)
+    expect_true(shown("div_main_panel"))
+    # a failed run after a successful one
+    local({
+      local_failing("get_sample_correlation")
+      session$setInputs(Do_SampleCorrelation = 3)
+    })
+    expect_false(shown("div_main_panel"))
+    expect_null(session$returned())
+    session$setInputs(Do_SampleCorrelation = 4)
+    ds$state$version <- 3  # a new run
+    session$flushReact()
+    expect_false(shown("div_main_panel"))
+  })
+})

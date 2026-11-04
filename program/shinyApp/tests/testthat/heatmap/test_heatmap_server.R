@@ -194,3 +194,34 @@ test_that("dataset_server() puts the result into results()$heatmap; a new run cl
   })
   expect_length(collected$entities, 10)
 })
+
+test_that("the result area shows only while there is a result", {
+  shown <- local_shown()
+  ds <- changeable_dataset("Lipidomics")
+  testServer(heatmap_server, args = list(dataset = ds$handle), {
+    session$flushReact()
+    expect_false(shown("Heatmap_div"))
+    # Top K without a comparison: fewer than two rows, no result
+    run_heatmap(session, list(row_selection_options = "Top K", TopK = 10, TopK_order = "LogFoldChange"))
+    expect_false(shown("Heatmap_div"))
+    run_heatmap(session, top_k_inputs(ds$handle, "diet"), go = 2)
+    expect_true(shown("Heatmap_div"))
+    # a selection with fewer than two rows after a successful run
+    session$setInputs(TopK = 1)
+    session$setInputs(Do_Heatmap = 3)
+    expect_false(shown("Heatmap_div"))
+    expect_null(session$returned())
+    # a heatmap that can't be drawn
+    session$setInputs(TopK = 10)
+    local({
+      local_failing("plot_heatmap")
+      session$setInputs(Do_Heatmap = 4)
+      expect_false(shown("Heatmap_div"))
+    })
+    session$setInputs(Do_Heatmap = 5)
+    expect_true(shown("Heatmap_div"))
+    ds$state$version <- 3
+    session$flushReact()
+    expect_false(shown("Heatmap_div"))
+  })
+})

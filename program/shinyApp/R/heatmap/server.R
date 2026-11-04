@@ -40,7 +40,13 @@ heatmap_server <- function(id, dataset){moduleServer(
       heatmap_reactives$run <- NULL
       heatmap_reactives$result <- NULL
       heatmap_reactives$info_text <- "Press 'Get Heatmap' to start!"
-      shinyjs::hideElement(id = "Heatmap_div")
+    })
+    # the heatmap and its buttons show while there is a result whose heatmap
+    # could be drawn
+    observe({
+      drawn <- !is.null(heatmap_reactives$result) &&
+        !is.null(tryCatch(heatmap_plot(), shiny.silent.error = function(e) NULL))
+      shinyjs::toggleElement(id = "Heatmap_div", condition = drawn)
     })
 
     ## UI Section ----
@@ -176,13 +182,16 @@ heatmap_server <- function(id, dataset){moduleServer(
         "The heatmap is being calculated and displays a matrix with: ",
         nrow(selection$selected), " rows and ", ncol(selection$selected), " columns."
       )
-      shinyjs::showElement(id = "Heatmap_div")
     }
 
     # Workflow: "Get Heatmap" selects the rows; fewer than two rows stop,
     # more than 100 ask first ("Continue"), otherwise the heatmap is shown
     observeEvent(input$Do_Heatmap, {
       req(dataset$processed(), input$row_selection_options)
+      # a run that fails or is cancelled leaves no result
+      heatmap_reactives$pending <- NULL
+      heatmap_reactives$run <- NULL
+      heatmap_reactives$result <- NULL
       useBatch <- !is.null(dataset$preprocessing()$batch_column) && identical(input$UseBatch, "Yes")
       data <- dataset$processed(batch = useBatch)
       params <- list(
