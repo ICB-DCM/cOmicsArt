@@ -126,31 +126,26 @@ ml_classification_Server <- function(id, dataset){
       })
     })
 
-    # Render clustering plot
-    output$cluster_plot <- renderPlotly({
-      req(ml_results$kmeans_result)
+    # the overlay column of the k-means run, NULL for none
+    run_overlay <- function(){
+      overlay <- ml_results$kmeans_out$params$condition_overlay
+      if (!is.null(overlay) && overlay != "none") overlay else NULL
+    }
 
-      data <- dataset$processed()
-
-      # Get condition column for overlay (if selected)
-      condition_col <- NULL
-      if (!is.null(input$condition_overlay) && input$condition_overlay != "none") {
-        condition_col <- input$condition_overlay
-      }
-
-      # Generate and store plot
-      plot_obj <- render_kmeans_plot(
-        kmeans_result = ml_results$kmeans_result,
-        data = data,
-        condition_column = condition_col
+    # The plot of the k-means run, with the run's overlay; the render, the
+    # download and the report use it. The processed data are the run's: a
+    # new Dataset version clears the run.
+    cluster_plot <- reactive({
+      render_kmeans_plot(
+        kmeans_result = req(ml_results$kmeans_result),
+        data = dataset$processed(),
+        condition_column = run_overlay()
       )
+    })
 
-      # Store for download/report handlers
-      ml_results$cluster_plot <- plot_obj
-
-      # Convert to interactive plotly with clipboard functionality
+    output$cluster_plot <- renderPlotly({
       create_clipboard_plotly(
-        gg_plot = plot_obj,
+        gg_plot = cluster_plot(),
         plot_id = "cluster_plot",
         tooltip = "all"
       )
@@ -166,11 +161,9 @@ ml_classification_Server <- function(id, dataset){
         Cluster = ml_results$cluster_assignments
       )
 
-      # Add condition if available
-      data <- dataset$processed()
-      if (!is.null(data) && !is.null(input$condition_overlay) && input$condition_overlay != "none") {
-        sample_annotation <- as.data.frame(colData(data))
-        cluster_df$Condition <- sample_annotation[[input$condition_overlay]]
+      # the run's overlay condition, if any
+      if (!is.null(run_overlay())) {
+        cluster_df$Condition <- as.data.frame(colData(dataset$processed()))[[run_overlay()]]
       }
 
       results_datatable(cluster_df, download_name("ML", NULL, "KMeansResults"))
@@ -268,22 +261,13 @@ ml_classification_Server <- function(id, dataset){
       sprintf("Training accuracy: %.1f%%", ml_results$accuracy * 100)
     })
 
-    # Render SVM plot
+    # The plot of the SVM run; the render, the download and the report use it
+    svm_plot <- reactive(render_svm_plot(svm_result = req(ml_results$svm_result)))
+
     output$svm_plot <- renderPlotly({
-      req(ml_results$svm_result)
-
-      # Generate and store plot
-      plot_obj <- render_svm_plot(
-        svm_result = ml_results$svm_result
-      )
-
-      # Store for download/report handlers
-      ml_results$svm_plot <- plot_obj
-
-      # Convert to interactive plotly with clipboard functionality
-      # Using "text" tooltip since we created custom tooltip text in the plot
+      # "text" tooltip: the plot has its own tooltip text
       create_clipboard_plotly(
-        gg_plot = plot_obj,
+        gg_plot = svm_plot(),
         plot_id = "svm_plot",
         tooltip = "text"
       )
@@ -311,38 +295,40 @@ ml_classification_Server <- function(id, dataset){
     ## Download and Reporting Handlers ----
 
     # K-means clustering handlers
+    # the report describes the run; its image is a png, which the HTML
+    # report shows, whatever the download format
     observeEvent(input$only2Report_cluster, {
-      req(ml_results$cluster_plot)
+      params <- req(ml_results$kmeans_out)$params
       notificationID <- showNotification("Saving to Report...", duration = 0)
 
       tmp_filename <- paste0(
         getwd(), file_path,
-        "KMeans_Clustering_", Sys.time(), input$file_ext_cluster
+        "KMeans_Clustering_", Sys.time(), ".png"
       )
 
       ggsave(
         tmp_filename,
-        plot = ml_results$cluster_plot,
+        plot = cluster_plot(),
         width = 16,
         height = 9,
         units = "in",
-        device = gsub("\\.","", input$file_ext_cluster)
+        device = "png"
       )
 
       # Log to report with proper section structure
       fun_LogIt(session, message = "## ML Classification - k-means Clustering {.tabset .tabset-fade}")
       fun_LogIt(session, message = "### Info")
       fun_LogIt(session, message = paste0(
-        "**k-means Clustering** - Number of clusters: k=", input$k_clusters
+        "**k-means Clustering** - Number of clusters: k=", params$k_clusters
       ))
-      if (input$filter_genes_unsupervised) {
+      if (params$filter_genes_unsupervised) {
         fun_LogIt(session, message = paste0(
-          "**k-means** - Filtered to top ", input$n_genes_unsupervised, " variable genes"
+          "**k-means** - Filtered to top ", params$n_genes_unsupervised, " variable genes"
         ))
       }
-      if (!is.null(input$condition_overlay) && input$condition_overlay != "none") {
+      if (!is.null(run_overlay())) {
         fun_LogIt(session, message = paste0(
-          "**k-means** - Overlay condition: ", input$condition_overlay
+          "**k-means** - Overlay condition: ", run_overlay()
         ))
       }
       fun_LogIt(session, message = paste0("![k-means Clustering](", tmp_filename, ")"))
@@ -356,10 +342,9 @@ ml_classification_Server <- function(id, dataset){
         download_name("ML", input$file_ext_cluster, "KMeans")
       },
       content = function(file) {
-        req(ml_results$cluster_plot)
         ggsave(
           file,
-          plot = ml_results$cluster_plot,
+          plot = cluster_plot(),
           device = gsub("\\.","", input$file_ext_cluster)
         )
         on.exit({shinyjs::click(ns("only2Report_cluster"))})
@@ -374,40 +359,42 @@ ml_classification_Server <- function(id, dataset){
     })
 
     # SVM classification handlers
+    # as for k-means: the run's parameters, a png image
     observeEvent(input$only2Report_svm, {
-      req(ml_results$svm_plot)
+      svm <- req(ml_results$svm_out)
+      params <- svm$params
       notificationID <- showNotification("Saving to Report...", duration = 0)
 
       tmp_filename <- paste0(
         getwd(), file_path,
-        "SVM_Classification_", Sys.time(), input$file_ext_svm
+        "SVM_Classification_", Sys.time(), ".png"
       )
 
       ggsave(
         tmp_filename,
-        plot = ml_results$svm_plot,
+        plot = svm_plot(),
         width = 16,
         height = 9,
         units = "in",
-        device = gsub("\\.","", input$file_ext_svm)
+        device = "png"
       )
 
       # Log to report with proper section structure
       fun_LogIt(session, message = "## ML Classification - SVM {.tabset .tabset-fade}")
       fun_LogIt(session, message = "### Info")
       fun_LogIt(session, message = paste0(
-        "**SVM Classification** - Predicting: ", input$condition_column_supervised
+        "**SVM Classification** - Predicting: ", params$condition_column_supervised
       ))
       fun_LogIt(session, message = paste0(
-        "**SVM** - Training accuracy: ", round(ml_results$accuracy * 100, 1), "%"
+        "**SVM** - Training accuracy: ", round(svm$accuracy * 100, 1), "%"
       ))
       fun_LogIt(session, message = paste0(
         "**SVM** - Note: This is training accuracy only (no validation). ",
         "Results are exploratory."
       ))
-      if (input$filter_genes_supervised) {
+      if (params$filter_genes_supervised) {
         fun_LogIt(session, message = paste0(
-          "**SVM** - Filtered to top ", input$n_genes_supervised, " variable genes"
+          "**SVM** - Filtered to top ", params$n_genes_supervised, " variable genes"
         ))
       }
       fun_LogIt(session, message = paste0("![SVM Classification](", tmp_filename, ")"))
@@ -421,10 +408,9 @@ ml_classification_Server <- function(id, dataset){
         download_name("ML", input$file_ext_svm, "SVM")
       },
       content = function(file) {
-        req(ml_results$svm_plot)
         ggsave(
           file,
-          plot = ml_results$svm_plot,
+          plot = svm_plot(),
           device = gsub("\\.","", input$file_ext_svm)
         )
         on.exit({shinyjs::click(ns("only2Report_svm"))})

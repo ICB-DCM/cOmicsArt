@@ -299,8 +299,10 @@ single_gene_visualisation_server <- function(id, dataset){
         }
       )
 
-      ## download only to report
+      ## download only to report: what was plotted, not what the controls say now
       observeEvent(input$only2Report_SingleEntities,{
+        result <- req(single_gene_reactives$result)
+        params <- result$params
         notificationID <- showNotification("Saving to Report...",duration = 0)
         tmp_filename <- paste0(
           getwd(),
@@ -319,14 +321,14 @@ single_gene_visualisation_server <- function(id, dataset){
         fun_LogIt(session, message = "### Info")
         fun_LogIt(session, message = paste0(
           "**Single Entitie** - The following single entitie was plotted: ",
-          input$Select_Gene
+          params$selected_gene
         ))
         fun_LogIt(session, message = paste0(
           "**Single Entitie** - Values shown are: ",
-          input$type_of_data_gene, " data input"
+          single_gene_stage_label(params$data_process_stage), " data"
         ))
         fun_LogIt(session, message = paste0(
-          "**Single Entitie** - Values are grouped for all levels within: ", input$accross_condition, " (",paste0(levels(single_gene_reactives$gene_data$anno),collapse = ";"),")"))
+          "**Single Entitie** - Values are grouped for all levels within: ", params$group_by, " (",paste0(levels(result$gene_data$annotation),collapse = ";"),")"))
         fun_LogIt(session, message = "**Single Entitie** - Test for differences: T-Test")  # For now only test method we do
         fun_LogIt(session, message = paste0("**Single Entitie** - pairwise tested"))
 
@@ -342,7 +344,7 @@ single_gene_visualisation_server <- function(id, dataset){
         fun_LogIt(session, message = "### Publication Snippet")
         fun_LogIt(session, message = snippet_SingleGene(
           data = NULL,
-          params = list(SingleGeneVis = single_gene_reactives$result$params)
+          params = list(SingleGeneVis = params)
         ))
         removeNotification(notificationID)
         showNotification("Report Saved!",type = "message", duration = 1)
