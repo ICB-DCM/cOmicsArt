@@ -1,5 +1,4 @@
 # tests for Enrichment on the Dataset handle (issue 34)
-source(test_path("..", "dataset", "helper-dataset.R"), local = TRUE)
 colData <- SummarizedExperiment::colData
 rowData <- SummarizedExperiment::rowData
 
@@ -151,9 +150,7 @@ test_that("the R-code zip of a gene set carries the Enrichment parameters", {
   ds <- human_dataset()
   testServer(enrichment_analysis_Server, args = list(dataset = ds, heatmap_genes = reactiveVal(saved_genes(ds))), {
     start_enrichment(session, ORA_HALLMARKS)
-    dir <- unpack_zip(output$`Hallmarks-getR_Code`)
-    expect_true(all(c("Code.R", "Data.rds") %in% list.files(dir)))
-    par <- readRDS(file.path(dir, "Data.rds"))$parameters
+    par <- rcode_parameters(output$`Hallmarks-getR_Code`)
     expect_equal(par$Enrichment$enrich_set, "Hallmarks")
     expect_equal(par$Enrichment$ora_or_gse, "OverRepresentation_Analysis")
     expect_equal(par$Enrichment$organism, HUMAN)

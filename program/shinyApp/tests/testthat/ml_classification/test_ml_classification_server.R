@@ -1,9 +1,7 @@
 # tests for the ML module on the Dataset handle
-source(test_path("..", "dataset", "helper-dataset.R"), local = TRUE)
 colData <- SummarizedExperiment::colData
 
 lipids_dataset <- function() changeable_dataset("Lipidomics")
-log10 <- list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
 
 KMEANS <- list(k_clusters = 3, filter_genes_unsupervised = FALSE, condition_overlay = "none")
 SVM <- list(condition_column_supervised = "diet", filter_genes_supervised = FALSE)
@@ -73,37 +71,24 @@ test_that("the R-code zips carry the Selection, Pre-processing and ML parameters
     do.call(session$setInputs, c(KMEANS, SVM))
     session$setInputs(run_clustering = 1, run_classification = 1)
 
-    kmeans_dir <- unpack_zip(output$getR_Code_cluster)
-    expect_true(all(c("Code.R", "Data.rds") %in% list.files(kmeans_dir)))
-    par <- readRDS(file.path(kmeans_dir, "Data.rds"))$parameters
+    par <- rcode_parameters(output$getR_Code_cluster)
     expect_equal(par$MLClassification$k_clusters, 3)
     expect_equal(par$preprocessing$preprocessing_procedure, "log10")
     expect_equal(par$omic_type, "Lipidomics")
 
-    svm_dir <- unpack_zip(output$getR_Code_svm)
-    par <- readRDS(file.path(svm_dir, "Data.rds"))$parameters
+    par <- rcode_parameters(output$getR_Code_svm)
     expect_equal(par$MLClassification$condition_column_supervised, "diet")
     expect_equal(par$preprocessing$preprocessing_procedure, "log10")
   })
 })
 
 test_that("dataset_server() puts ML's results into results()$ml; a new run clears them", {
-  args <- confirmed_dataset_args("Lipidomics")
-  testServer(dataset_server, args = args, {
-    run_all <- preprocessing_run(selection$selected(), "Lipidomics", log10)
-    preprocessing$result(run_all)
-    session$flushReact()
-    handle <- session$returned
+  expect_collected("ml", function(session, handle){
     session$setInputs(
       "ml_classification-k_clusters" = 3,
       "ml_classification-filter_genes_unsupervised" = FALSE,
       "ml_classification-condition_overlay" = "none"
     )
     session$setInputs("ml_classification-run_clustering" = 1)
-    expect_equal(handle$results()$ml$kmeans$version, handle$version())
-
-    preprocessing$result(modifyList(run_all, list(run = 2)))
-    session$flushReact()
-    expect_null(handle$results()$ml)
-  })
+  }, version_of = function(result) result$kmeans$version)
 })

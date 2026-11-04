@@ -1,5 +1,4 @@
 # tests for the Pre-processing module in R/pre_processing/server.R
-source(test_path("..", "helper-rcode.R"), local = TRUE)
 lipids <- test_data("Lipidomics")
 
 # The module's arguments for all of `data` after an Upload
@@ -264,18 +263,14 @@ test_that("the saved violin figure and its report line follow the colour control
 test_that("the violin R code draws the colouring the control shows", {
   test_log10_run({
     session$setInputs(violin_color = "ID")
-    unzipped <- withr::local_tempdir()
-    utils::unzip(output$rcode_violin, exdir = unzipped)
-    expect_equal(readRDS(file.path(unzipped, "Data.rds"))$parameters$ViolinPlot$violin_color, "ID")
+    expect_equal(rcode_parameters(output$rcode_violin)$ViolinPlot$violin_color, "ID")
   })
 })
 
 test_that("the R code of a run without a batch column keeps the batch_column entry and runs", {
   test_log10_run({
     zip <- output$rcode_mean_sd
-    unzipped <- withr::local_tempdir()
-    utils::unzip(zip, exdir = unzipped)
-    preprocessing <- readRDS(file.path(unzipped, "Data.rds"))$parameters$preprocessing
+    preprocessing <- rcode_parameters(zip)$preprocessing
     expect_true("batch_column" %in% names(preprocessing))
     expect_null(preprocessing$batch_column)
     expect_rcode_figure(zip, "mean and SD plot")

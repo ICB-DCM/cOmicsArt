@@ -1,5 +1,4 @@
 # The session folder www/<token>/ that server.R creates at session start
-app_dir <- normalizePath(test_path("..", "..", ".."))
 
 test_that("the session folder is deleted when the session ends", {
   withr::local_dir(app_dir)

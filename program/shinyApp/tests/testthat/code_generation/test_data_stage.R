@@ -1,6 +1,5 @@
 # The R code starts from the data the module used: batch corrected
 # or the Selection before Pre-processing, not always the pre-processed data.
-source(test_path("..", "dataset", "helper-dataset.R"), local = TRUE)
 assay <- SummarizedExperiment::assay
 
 # the data part of a script for the Dataset `handle` (no module steps), as text
