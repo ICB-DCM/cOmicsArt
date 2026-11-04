@@ -40,7 +40,7 @@ dataset_handle <- function(id, get){
     version = function() get("version"),
     results = function() get("results"),
     # what the R-code download starts from; par_tmp is the parameter list
-    # the R-code templates read today (removed in Phase 3h)
+    # the R-code templates read today (To be removed)
     code_context = function() {
       if (is.null(get("selection"))) return(NULL)
       list(

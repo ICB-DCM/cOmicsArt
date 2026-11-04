@@ -3,9 +3,8 @@
 # inspection, gene annotation, the status box and the Upload's report lines.
 # Returns reactives:
 #   done: "DataUploadSuccesful" after each successful Upload (passed to the
-#     analysis modules as data_input_shiny)
+#     Selection and Pre-processing)
 #   raw: the raw SummarizedExperiment, also after gene annotation
-#   dataset_copy: the Dataset's starting copy of the last Upload
 #   annotated: counts up after each gene annotation
 #   cleared: counts up when the File Input is cleared
 #   source, omic_type, organism, added_gene_anno: about the current Upload
@@ -18,7 +17,6 @@ upload_server <- function(id){
     uploaded_from <- reactiveVal(NULL)
     omic_type <- reactiveVal(NULL)
     raw <- reactiveVal(NULL)
-    dataset_copy <- reactiveVal(NULL)
     organism <- reactiveVal(NULL)
     added_gene_anno <- reactiveVal(FALSE)
     annotated <- reactiveVal(NULL)
@@ -751,8 +749,6 @@ upload_server <- function(id){
         return(NULL)
       }
 
-      # Make a copy, to leave original data untouched
-      dataset_copy(dataset_start_copy(upload$se))
       # edit annotation columns such that if na is present in the row annotation,
       # the na gets replaced by the rowname
       raw(fill_na_row_annotation(upload$se))
@@ -763,7 +759,6 @@ upload_server <- function(id){
     list(
       done = data_input_shiny,
       raw = reactive(raw()),
-      dataset_copy = reactive(dataset_copy()),
       annotated = reactive(annotated()),
       cleared = reactive(cleared()),
       source = reactive(uploaded_from()),

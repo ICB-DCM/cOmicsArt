@@ -150,64 +150,8 @@ server <- function(input,output,session){
 
 
 
-# Init session-scoped reactiveValues (Phase 2 Refactoring) ----
-  # Data objects storage
-  session_data <- reactiveValues(
-    # Primary data objects
-    data = NULL,                        # Current processed data (main analysis object)
-    data_original = NULL,               # Original uploaded data (preserved)
-    data_batch_corrected = NULL,        # Batch-corrected data (optional)
-
-    # DESeq2 objects
-    DESeq_obj = NULL,                   # DESeq2 object (if vst_DESeq used)
-    DESeq_obj_batch_corrected = NULL,   # Batch-corrected DESeq object
-
-    # Module-specific state storage (session-level for code generation)
-    # NOTE: Kept at session level to support R code generation
-    Heatmap = NULL,
-    SigAna = NULL
-  )
-
-  # Parameters and configuration storage
-  session_params <- reactiveValues(
-    # Data type and organism
-    omic_type = NULL,                   # "Transcriptomics", "Proteomics", etc.
-    organism = NULL,                    # For biomaRt annotation
-    addedGeneAnno = FALSE,              # Gene annotation added flag
-
-    # Preprocessing configuration
-    preprocessing_procedure = NULL,     # "vst_DESeq", "limma_voom", etc.
-    preprocessing_filtering = NULL,     # Filtering method
-    batch_column = "NULL",              # Batch effect column name
-
-    # Filtering parameters
-    filter_threshold = NULL,            # Main filtering threshold
-    filter_threshold_samplewise = NULL, # Sample-wise threshold
-    filter_samplesize = NULL,           # Filter sample size
-
-    # DESeq2 parameters
-    deseq_factors = NULL,               # DESeq2 factors vector
-
-    # Limma voom parameters
-    limma_intercept = NULL,             # Limma intercept
-    limma_formula = NULL,               # Limma formula
-
-    # Selection parameters (standardized names)
-    selected_rows = NULL,               # Chosen entity annotation values (select_data() argument)
-    selected_samples = NULL,            # Chosen sample annotation values (select_data() argument)
-    rows_selected = NULL,               # Selected row IDs
-    samples_selected = NULL,            # Selected sample IDs
-    row_type = NULL,                    # Row selection type
-    sample_type = NULL,                 # Sample selection type
-
-    # Module-specific parameters (session-level for code generation)
-    Enrichment = list(),                # Enrichment analysis params (nested)
-    Heatmap = NULL,                     # Heatmap params
-    SigAna = NULL                       # Significance analysis params
-  )
-
-  # Session cleanup: reactiveValues auto-cleanup on session end
-  # Only need to remove the www/ folder
+# Session folder ----
+  # www/<token>/ is removed when the session ends
   session$onSessionEnded(function() {
     # Delete the folder with the session token
     if(dir.exists(paste0("www/",session$token))){
@@ -220,10 +164,6 @@ server <- function(input,output,session){
       }
     }
   })
-# Init update Object ----
-  # updating is a reative value that counts up whenever data is updated
-  # this is used to trigger the update of the servers
-  updating <- reactiveValues(count = 0)
 ## Quit App Button ----
   observeEvent(input$Quit_App,{
     showModal(
@@ -260,31 +200,13 @@ server <- function(input,output,session){
   
 # Upload ----
   upload <- upload_server("upload")
-  data_input_shiny <- upload$done
 
-## Bridge (temporary, removed in Phase 3h) ----
-  # writes the Upload where the rest of the app reads it
+  # Show the Selection controls and the Pre-processing tab
   observeEvent(upload$done(), {
-    session_data$data_original <- upload$raw()
-    session_data$data <- upload$dataset_copy()
-    session_params$addedGeneAnno <- upload$added_gene_anno()
-    # Count up updating
-    updating$count <- updating$count + 1
-    # Show the Selection controls and the Pre-processing tab
     shinyjs::showElement("selection-mainPanel_other")
     if(upload$source() != "testdata"){
       showTab(inputId = "tabsetPanel1", target = "Pre-processing")
     }
-  })
-  observeEvent(upload$omic_type(), {
-    session_params$omic_type <- upload$omic_type()
-  })
-  # gene annotation edits the raw object
-  observeEvent(upload$annotated(), {
-    session_data$data_original <- upload$raw()
-    session_data$data <- fill_na_row_annotation(session_data$data)
-    session_params$addedGeneAnno <- upload$added_gene_anno()
-    session_params$organism <- upload$organism()
   })
   observeEvent(upload$cleared(), {
     # as before the first Upload: no Selection controls, no Pre-processing tab
@@ -296,24 +218,12 @@ server <- function(input,output,session){
 # Selection ----
   selection <- selection_server(
     "selection",
-    raw = reactive(session_data$data_original),
-    upload_done = data_input_shiny
+    raw = upload$raw,
+    upload_done = upload$done
   )
 
-## Bridge (temporary) ----
-  # writes the Selection where the rest of the app reads it; only when it is
-  # confirmed, so it never replaces processed data. A run writes the
-  # Selection it pre-processed itself.
-  write_selection <- function(){
-    current <- isolate(selection$selected())
-    session_data$data <- current$data
-    params <- selection_params(current)
-    for (name in names(params)) session_params[[name]] <- params[[name]]
-  }
   # "Go to Preprocessing" / "Start the Journey": report lines, then Pre-processing
   observeEvent(selection$confirmed(),{
-    # Do actual selection before logging
-    write_selection()
     chosen <- selection$inputs()
     # add row and col selection options
     fun_LogIt(session, message = "**DataSelection** - The following selection was conducted:")
@@ -330,8 +240,11 @@ server <- function(input,output,session){
     
     fun_LogIt(session, message = "### Publication Snippet")
     fun_LogIt(session, message = snippet_dataInput(
-      data=reactiveValuesToList(session_data),
-      params=reactiveValuesToList(session_params)
+      raw = upload$raw(),
+      selection = selection_params(selection$selected()),
+      omic_type = upload$omic_type(),
+      organism = upload$organism(),
+      added_gene_anno = upload$added_gene_anno()
     ))
     fun_LogIt(session, message = "<br>")
     showTab(inputId = "tabsetPanel1",target = "Pre-processing",select = T)
@@ -340,34 +253,17 @@ server <- function(input,output,session){
 # Pre-processing ----
   preprocessing <- preprocessing_server(
     "preprocessing",
-    upload = reactive(session_data$data_original),
+    upload = upload$raw,
     omic_type = upload$omic_type,
     selected = selection$selected,
     selection_confirmed = selection$confirmed,
-    upload_done = data_input_shiny
+    upload_done = upload$done
   )
 
-## Bridge (temporary, removed in Phase 3h) ----
-  # Until then session_data / session_params are what the rest of the app
-  # reads; the module's returns are read only here (and `result` by the
-  # analysis modules). A run reaches them only through these observers, and
-  # only once it succeeded, so a failed run leaves the last one in place.
-  # writes the run with its Selection where the rest of the app reads it;
-  # priority so it runs before the analysis modules, which react to the same
-  # `result`
+  # the analysis tabs show once per run, not on every change of the controls
   observeEvent(preprocessing$result(), {
-    run <- preprocessing$result()
-    session_data$data <- run$data
-    session_data$data_batch_corrected <- run$data_batch_corrected
-    session_data$DESeq_obj <- run$DESeq_obj
-    session_data$DESeq_obj_batch_corrected <- run$DESeq_obj_batch_corrected
-    params <- c(selection_params(run$selection), run$params)
-    for (name in names(params)) session_params[[name]] <- params[[name]]
-    # once per run, not on every change of the controls
-    show_tabs(session_params$omic_type)
-    # Count up updating
-    updating$count <- updating$count + 1
-  }, priority = 1)
+    show_tabs(preprocessing$result()$omic_type)
+  })
   observeEvent(preprocessing$failed(), {
     hide_tabs()
   })
@@ -376,7 +272,6 @@ server <- function(input,output,session){
   })
 
 # Dataset ----
-  # the analysis modules move onto the handle one by one
   # the module id starts with a letter so its IDs are valid CSS selectors
   datasets <- list("1" = dataset_server("dataset_1", upload, selection, preprocessing))
 

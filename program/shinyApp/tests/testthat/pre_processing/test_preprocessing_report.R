@@ -1,8 +1,8 @@
 # The report's Pre-processing section: publication snippet and log lines
 genes <- test_data("Transcriptomics")[1:200, ]
 
-# session_params after a run: the options named like preprocessing()'s
-# arguments, the omic type and the batch column. Inputs of controls not shown
+# The Dataset's preprocessing() after a run, plus the omic type: the options
+# named like preprocessing()'s arguments and the batch column. Inputs of controls not shown
 # keep their last value, so a run can carry options it didn't use.
 run_params <- function(procedure, ..., omic_type = "Transcriptomics", batch_column = "NULL"){
   c(

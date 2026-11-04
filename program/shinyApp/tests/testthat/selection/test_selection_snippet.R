@@ -3,14 +3,13 @@ lipids <- readRDS(
   file.path(test_path("..", "..", ".."), "www", "Lipidomics_only_precompiled-LS.RDS")
 )$Lipidomics_SumExp
 
-# snippet_dataInput() as the bridge calls it: session_params hold what
-# selection_params() returns, plus the Upload's parameters
+# snippet_dataInput() as server.R calls it on confirm
 snippet_for <- function(inputs){
-  params <- c(
-    selection_params(resolve_selection(lipids, inputs)),
-    list(omic_type = "Lipidomics", addedGeneAnno = FALSE)
+  snippet_dataInput(
+    raw = lipids,
+    selection = selection_params(resolve_selection(lipids, inputs)),
+    omic_type = "Lipidomics"
   )
-  snippet_dataInput(data = list(data_original = lipids), params = params)
 }
 
 test_that("the snippet says no selection was made for 'all'", {
