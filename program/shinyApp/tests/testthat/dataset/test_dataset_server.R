@@ -53,7 +53,7 @@ test_that("a confirm makes the Dataset; editing the Selection alone doesn't chan
     fire(selection$confirmed)
     session$flushReact()
     expect_equal(handle$raw(), lipids)
-    expect_equal(handle$selection(), selection_params(all_lipids))
+    expect_equal(handle$selection(), all_lipids$params)
     expect_equal(handle$omic_type(), "Lipidomics")
     expect_equal(handle$name(), "Lipidomics")
     expect_equal(handle$organism(), "Mouse")
@@ -66,7 +66,7 @@ test_that("a confirm makes the Dataset; editing the Selection alone doesn't chan
     selection$selected(two_diets)
     upload$omic_type("Metabolomics")
     session$flushReact()
-    expect_equal(handle$selection(), selection_params(all_lipids))
+    expect_equal(handle$selection(), all_lipids$params)
     expect_equal(handle$omic_type(), "Lipidomics")
     expect_equal(handle$version(), confirmed_version)
   })
@@ -96,7 +96,7 @@ test_that("a successful run pre-processes the Dataset, a failed one takes it bac
     expect_gt(handle$version(), run_version)
     expect_null(handle$processed())
     expect_null(handle$preprocessing())
-    expect_equal(handle$selection(), selection_params(all_lipids))
+    expect_equal(handle$selection(), all_lipids$params)
   })
 })
 
@@ -109,7 +109,7 @@ test_that("a run on a Selection that was not confirmed makes a new Dataset", {
     run_version <- handle$version()
     preprocessing$result(run_two_diets)
     session$flushReact()
-    expect_equal(handle$selection(), selection_params(two_diets))
+    expect_equal(handle$selection(), two_diets$params)
     expect_equal(handle$raw(), two_diets$data)
     expect_equal(assay(handle$processed()), assay(run_two_diets$data))
     # the new Dataset comes with its run, in one step
@@ -140,7 +140,7 @@ test_that("a new Upload and its confirm in one flush end with the new Dataset", 
     fire(upload$done)
     fire(selection$confirmed)
     session$flushReact()
-    expect_equal(handle$selection(), selection_params(all_lipids))
+    expect_equal(handle$selection(), all_lipids$params)
   })
 })
 
@@ -155,7 +155,7 @@ test_that("code_context() has the raw data, Selection, Pre-processing, omic type
     expect_named(context, c("raw", "selection", "preprocessing", "omic_type", "organism"))
     # the whole Upload, so that the R code starts from it
     expect_equal(context$raw, lipids)
-    expect_equal(context$selection, selection_params(two_diets))
+    expect_equal(context$selection, two_diets$params)
     expect_equal(context$omic_type, "Lipidomics")
     expect_equal(context$organism, "Mouse")
     expect_equal(context$preprocessing$preprocessing_procedure, "log10")
@@ -172,7 +172,7 @@ test_that("fake_dataset() has the accessors of the real handle", {
   fake <- fake_dataset()
   expect_equal(fake$omic_type(), "Lipidomics")
   expect_equal(dim(fake$processed()), dim(run_all$data))
-  expect_equal(fake$selection(), selection_params(all_lipids))
+  expect_equal(fake$selection(), all_lipids$params)
 })
 
 test_that("fake_dataset() gives the batch-corrected data and the DESeq2 objects", {

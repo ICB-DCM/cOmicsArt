@@ -2,9 +2,9 @@
 # Code.R, util.R and Data.rds, whose `parameters` Code.R reads.
 
 # What a module's R code starts from: `raw`, the whole raw data of the
-# Upload, and the Dataset's Selection (selection_params()), Pre-processing
-# (the run's options with batch_column), omic type and organism (NULL
-# for none).
+# Upload, and the Dataset's Selection (resolve_selection()'s params),
+# Pre-processing (the run's options with batch_column), omic type and
+# organism (NULL for none).
 new_code_context <- function(raw, selection, preprocessing, omic_type, organism = NULL){
   list(
     raw = raw,

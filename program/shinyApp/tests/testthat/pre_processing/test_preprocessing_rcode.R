@@ -26,7 +26,7 @@ app_run <- function(data, omic_type, ...){
   res <- suppressMessages(run_preprocessing(data, omic_type, options))
   parameters <- code_parameters(new_code_context(
     raw = data,
-    selection = selection_params(resolve_selection(data, list())),
+    selection = resolve_selection(data, list())$params,
     preprocessing = c(options, list(batch_column = NULL)),
     omic_type = omic_type
   ))

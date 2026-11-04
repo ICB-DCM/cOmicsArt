@@ -18,7 +18,7 @@ clean_citation <- function(citation) {
 ## done as functions
 ## Input. packages 
 # The Upload and the Selection: `raw` is the uploaded data, `selection` is
-# what selection_params() returns, `organism` the organism of the gene
+# the Selection's params (resolve_selection()), `organism` the organism of the gene
 # annotation (NULL if none was added)
 snippet_dataInput <- function(raw, selection, omic_type, organism = NULL){
   snippet <- 

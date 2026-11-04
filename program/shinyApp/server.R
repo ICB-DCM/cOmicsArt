@@ -240,7 +240,7 @@ server <- function(input,output,session){
     fun_LogIt(session, message = "### Publication Snippet")
     fun_LogIt(session, message = snippet_dataInput(
       raw = upload$raw(),
-      selection = selection_params(selection$selected()),
+      selection = selection$selected()$params,
       omic_type = upload$omic_type(),
       organism = upload$organism()
     ))

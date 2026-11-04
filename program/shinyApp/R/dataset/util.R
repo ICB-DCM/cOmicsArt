@@ -12,10 +12,7 @@
 #   results: what the modules returned, by module
 # dataset_server() reads them from reactiveValues, fake_dataset() from a list.
 dataset_handle <- function(id, get){
-  selection <- function() {
-    if (is.null(get("selection"))) return(NULL)
-    selection_params(get("selection"))
-  }
+  selection <- function() get("selection")$params
   # the run's options with batch_column (NULL for none)
   preprocessing <- function() get("run")$params
   # `batch = TRUE` falls back to the uncorrected object without a batch column
