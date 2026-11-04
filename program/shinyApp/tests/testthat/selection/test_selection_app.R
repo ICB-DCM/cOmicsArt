@@ -41,7 +41,7 @@ test_that("Pre-processing again uses the changed Selection", {
     )
     session$setInputs(`preprocessing-get_preprocessing` = 2)
     expect_equal(ncol(datasets[["1"]]$processed()), 12)
-    expect_length(datasets[["1"]]$selection()$samples_selected, 12)
+    expect_length(datasets[["1"]]$selection()$sample_ids, 12)
   })
 })
 

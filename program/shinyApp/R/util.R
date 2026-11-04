@@ -59,7 +59,7 @@ error_modal <- function(error_message, additional_text = NULL){
 
 
 select_data <- function(
-  data, selected_samples = "all", sample_type = NULL, selected_rows = "all", row_type = NULL
+  data, sample_values = "all", sample_type = NULL, row_values = "all", row_type = NULL
 ){
   # select data based on selected samples
   if(is.null(row_type)) {
@@ -68,32 +68,27 @@ select_data <- function(
   if(is.null(sample_type)) {
       sample_type <- c(colnames(colData(data)))[1]
   }
-  samples_selected <- c()
-  if(any(selected_samples == "all")) {
-    samples_selected <- colnames(assay(data))
+  if(any(sample_values == "all")) {
+    sample_ids <- colnames(assay(data))
   } else {
-    samples_selected <- unique(c(
-      samples_selected,
-      rownames(colData(data))[which(
-        colData(data)[,sample_type] %in% selected_samples
-        )]
-      ))
+    sample_ids <- unique(rownames(colData(data))[which(
+      colData(data)[,sample_type] %in% sample_values
+    )])
   }
-  rows_selected <- c()
-  if(any(selected_rows == "all")) {
-    rows_selected <- rownames(data)
+  if(any(row_values == "all")) {
+    row_ids <- rownames(data)
   } else {
     # an entity is selected if any of its "|"-separated values is chosen
-    row_values <- strsplit(as.character(rowData(data)[, row_type]), "|", fixed = TRUE)
-    rows_selected <- rownames(data)[
-      vapply(row_values, function(values) any(values %in% selected_rows), logical(1))
+    entity_values <- strsplit(as.character(rowData(data)[, row_type]), "|", fixed = TRUE)
+    row_ids <- rownames(data)[
+      vapply(entity_values, function(values) any(values %in% row_values), logical(1))
     ]
   }
-  data <- data[rows_selected,samples_selected]
+  data <- data[row_ids, sample_ids]
   return(list(
     data = data,
-    samples_selected = samples_selected,
-    rows_selected = rows_selected
+    sample_ids = sample_ids,
+    row_ids = row_ids
   ))
 }
 
@@ -221,7 +216,7 @@ detect_annotation <- function(data) {
 violin_plot <- function(data, violin_color){
   # create a violin plot based on the provided summarized experiment. Colors by
   # the provided violin_color column and returns the plot
-  # for raw plot replace data with data_orig[rows_selected,samples_selected]
+  # for raw plot replace data with data_orig[row_ids, sample_ids]
   data_frame <- as.data.frame(assay(data))
   data_frame <- reshape2::melt(data_frame, variable.name="Sample", value.name="Counts")
   # only the colour column: merging all of colData is slow and large
