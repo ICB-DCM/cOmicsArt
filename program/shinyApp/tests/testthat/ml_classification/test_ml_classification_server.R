@@ -151,3 +151,40 @@ test_that("the plot downloads write the plots of the runs", {
     expect_gt(file.size(output$SavePlot_svm), 0)
   })
 })
+
+test_that("each result area shows only while there is its result", {
+  shown <- local_shown()
+  ds <- lipids_dataset()
+  testServer(ml_classification_Server, args = list(dataset = ds$handle), {
+    session$flushReact()
+    expect_false(shown("cluster_div"))
+    expect_false(shown("svm_div"))
+    do.call(session$setInputs, c(KMEANS, SVM))
+    local({
+      local_failing("run_kmeans_analysis")
+      local_failing("run_svm_classification")
+      session$setInputs(run_clustering = 1, run_classification = 1)
+    })
+    expect_false(shown("cluster_div"))
+    expect_false(shown("svm_div"))
+    session$setInputs(run_clustering = 2)
+    expect_true(shown("cluster_div"))
+    expect_false(shown("svm_div"))
+    session$setInputs(run_classification = 2)
+    expect_true(shown("svm_div"))
+    # failed runs after successful ones
+    local({
+      local_failing("run_kmeans_analysis")
+      local_failing("run_svm_classification")
+      session$setInputs(run_clustering = 3, run_classification = 3)
+    })
+    expect_false(shown("cluster_div"))
+    expect_false(shown("svm_div"))
+    expect_equal(session$returned(), list())
+    session$setInputs(run_clustering = 4, run_classification = 4)
+    ds$state$version <- 3
+    session$flushReact()
+    expect_false(shown("cluster_div"))
+    expect_false(shown("svm_div"))
+  })
+})

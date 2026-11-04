@@ -45,12 +45,14 @@ sample_correlation_server <- function(id, dataset){
       # The result belongs to one Dataset version: a new Dataset, run or
       # clear removes the plot and resets the info text
       observeEvent(dataset$version(), {
-        shinyjs::hideElement(id = "div_main_panel")
         sample_corr_reactive$corr_plot <- NULL
         sample_corr_reactive$row_anno <- NULL
         sample_corr_reactive$result <- NULL
         sample_corr_reactive$info_text <- "Press 'Get Sample Correlation' to start!"
       })
+
+      # the plot and its buttons show while there is a result
+      observe(shinyjs::toggleElement(id = "div_main_panel", condition = !is.null(sample_corr_reactive$result)))
 
       # Add initial text to help boxes
       output$SampleCorr_Info <- renderText({
@@ -74,13 +76,16 @@ sample_correlation_server <- function(id, dataset){
         req(dataset$processed())
         req(input$Do_SampleCorrelation > 0)
         req(input$SampleAnnotationChoice)
+        # a run that fails leaves no result
+        sample_corr_reactive$result <- NULL
+        sample_corr_reactive$corr_plot <- NULL
+        sample_corr_reactive$row_anno <- NULL
         waiter <- Waiter$new(
           html = LOADING_SCREEN,
           color="#A208BA35"
         )
         waiter$show()
 
-        shinyjs::showElement(id = "div_main_panel")
         # assign variables to be used
         useBatch <- !is.null(dataset$preprocessing()$batch_column) && identical(input$UseBatch, "Yes")
         sample_annotations <- input$SampleAnnotationChoice

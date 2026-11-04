@@ -142,3 +142,30 @@ test_that("dataset_server() puts the result into results()$differential; a new r
   })
   expect_named(collected$results, LIPID_COMPARISONS, ignore.order = TRUE)
 })
+
+test_that("the result area shows only while there is a result", {
+  shown <- local_shown()
+  ds <- changeable_dataset("Lipidomics")
+  testServer(significance_analysis_server, args = list(dataset = ds$handle), {
+    session$flushReact()
+    expect_false(shown("Significance_div"))
+    # no comparison chosen: no result
+    session$setInputs(significanceGo = 1)
+    expect_false(shown("Significance_div"))
+    do.call(session$setInputs, T_TEST)
+    session$setInputs(significanceGo = 2)
+    expect_true(shown("Significance_div"))
+    # a failed run after a successful one
+    local({
+      local_failing("performSigAnalysis")
+      session$setInputs(significanceGo = 3)
+    })
+    expect_false(shown("Significance_div"))
+    expect_null(session$returned())
+    session$setInputs(significanceGo = 4)
+    expect_true(shown("Significance_div"))
+    ds$state$version <- 3
+    session$flushReact()
+    expect_false(shown("Significance_div"))
+  })
+})

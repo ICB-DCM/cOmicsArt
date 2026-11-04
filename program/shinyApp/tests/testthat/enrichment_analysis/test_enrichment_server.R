@@ -193,3 +193,30 @@ test_that("dataset_server() wires the Heatmap's saved genes into Enrichment and 
     expect_null(handle$results()$enrichment)
   })
 })
+
+test_that("the result area shows only while there is a result", {
+  shown <- local_shown()
+  ds <- changeable_dataset("Transcriptomics")
+  mock_analysis("over_representation_analysis")
+  heatmap_genes <- reactiveVal(NULL)
+  testServer(enrichment_analysis_Server, args = list(dataset = ds$handle, heatmap_genes = heatmap_genes), {
+    session$flushReact()
+    expect_false(shown("enrichment_div"))
+    # ORA on Heatmap genes before any were saved: no result
+    start_enrichment(session, ORA_HALLMARKS)
+    expect_false(shown("enrichment_div"))
+    heatmap_genes(head(rownames(ds$handle$processed()), 50))
+    start_enrichment(session, ORA_HALLMARKS, go = 2)
+    expect_true(shown("enrichment_div"))
+    # a failed run after a successful one
+    heatmap_genes(NULL)
+    start_enrichment(session, ORA_HALLMARKS, go = 3)
+    expect_false(shown("enrichment_div"))
+    expect_null(session$returned())
+    heatmap_genes(head(rownames(ds$handle$processed()), 50))
+    start_enrichment(session, ORA_HALLMARKS, go = 4)
+    ds$state$version <- 3
+    session$flushReact()
+    expect_false(shown("enrichment_div"))
+  })
+})
