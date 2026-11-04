@@ -52,7 +52,7 @@ test_that("a log10 run returns the processed object and its parameters", {
       list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
     ))
     expect_equal(
-      SummarizedExperiment::assay(result$data),
+      SummarizedExperiment::assay(run_data(result)),
       SummarizedExperiment::assay(expected$data)
     )
     expect_equal(result$selection$data, lipids)
@@ -64,7 +64,7 @@ test_that("a log10 run returns the processed object and its parameters", {
     expect_null(params$batch_column)
     # the violin colour follows the control, it is not part of the run
     expect_null(params$violin_color)
-    expect_null(result$DESeq_obj)
+    expect_null(run_deseq(result))
     expect_match(report(), "**PreProcessing** - Procedure: log10", fixed = TRUE)
     expect_match(output$summary, "logX(data+1) is done", fixed = TRUE)
   })
@@ -81,7 +81,7 @@ test_that("DESeq2 on Transcriptomics returns a DESeq object", {
       deseq_factors = "condition", batch_column = "NULL"
     )
     session$setInputs(get_preprocessing = 1)
-    expect_s4_class(session$returned$result()$DESeq_obj, "DESeqDataSet")
+    expect_s4_class(run_deseq(session$returned$result()), "DESeqDataSet")
     expect_equal(session$returned$result()$params$deseq_factors, "condition")
   })
 })
@@ -234,7 +234,7 @@ test_that("the pre-processed violin plot shows the batch-corrected data", {
       batch_column = "diet", violin_color = "diet"
     )
     session$setInputs(get_preprocessing = 1)
-    corrected <- unlist(SummarizedExperiment::assay(session$returned$result()$data_batch_corrected))
+    corrected <- unlist(SummarizedExperiment::assay(run_data(session$returned$result(), batch = TRUE)))
     expect_equal(sort(processed_violin()$data$Counts), sort(unname(corrected)))
   })
 })

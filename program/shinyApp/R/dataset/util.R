@@ -15,19 +15,15 @@ dataset_handle <- function(id, get){
   selection <- function() get("selection")$params
   # the run's options with batch_column (NULL for none)
   preprocessing <- function() get("run")$params
-  # `batch = TRUE` falls back to the uncorrected object without a batch column
-  batch_or_not <- function(corrected, uncorrected, batch) {
-    run <- get("run")
-    if (batch && !is.null(run[[corrected]])) run[[corrected]] else run[[uncorrected]]
-  }
   list(
     id = id,
     name = function() get("omic_type"),
     omic_type = function() get("omic_type"),
     organism = function() get("organism"),
     raw = function() get("selection")$data,
-    processed = function(batch = FALSE) batch_or_not("data_batch_corrected", "data", batch),
-    deseq = function(batch = FALSE) batch_or_not("DESeq_obj_batch_corrected", "DESeq_obj", batch),
+    # `batch = TRUE` falls back to the uncorrected object without a batch column
+    processed = function(batch = FALSE) run_data(get("run"), batch),
+    deseq = function(batch = FALSE) run_deseq(get("run"), batch),
     selection = selection,
     preprocessing = preprocessing,
     version = function() get("version"),
