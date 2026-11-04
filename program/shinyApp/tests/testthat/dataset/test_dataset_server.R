@@ -89,9 +89,12 @@ test_that("a successful run pre-processes the Dataset, a failed one takes it bac
     expect_true("batch_column" %in% names(handle$preprocessing()))
     expect_null(handle$preprocessing()$batch_column)
     expect_gt(handle$version(), confirmed_version)
+    run_version <- handle$version()
 
     fire(preprocessing$failed)
     session$flushReact()
+    # the modules clear what they showed of the run
+    expect_gt(handle$version(), run_version)
     expect_null(handle$processed())
     expect_null(handle$preprocessing())
     expect_equal(handle$selection(), selection_params(all_lipids))
@@ -110,8 +113,8 @@ test_that("a run on a Selection that was not confirmed makes a new Dataset", {
     expect_equal(handle$selection(), selection_params(two_diets))
     expect_equal(handle$raw(), two_diets$data)
     expect_equal(assay(handle$processed()), assay(run_two_diets$data))
-    # a new Dataset and a run
-    expect_equal(handle$version(), run_version + 2)
+    # the new Dataset comes with its run, in one step
+    expect_equal(handle$version(), run_version + 1)
   })
 })
 

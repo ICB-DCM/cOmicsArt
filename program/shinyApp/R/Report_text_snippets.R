@@ -18,16 +18,17 @@ clean_citation <- function(citation) {
 ## done as functions
 ## Input. packages 
 # The Upload and the Selection: `raw` is the uploaded data, `selection` is
-# what selection_params() returns
-snippet_dataInput <- function(raw, selection, omic_type, organism = NULL, added_gene_anno = FALSE){
+# what selection_params() returns, `organism` the organism of the gene
+# annotation (NULL if none was added)
+snippet_dataInput <- function(raw, selection, omic_type, organism = NULL){
   snippet <- 
     paste0("The data was uploaded to cOmicsART (v. ", VERSION,") a webapp to perform explorative and statistical analysis with seamless integration to R (Seep et. al. 2024). ",
            "The webapp is majorly built with the shiny package (v. ",packageVersion("shiny"),") (",print(clean_citation(citation('shiny')), style = "text"),"). ",
            "It is currently running on R (v. ", R.version$major, ".", R.version$minor, ") (", print(clean_citation(citation('base')), style = "text"),"). ",
            "Unless otherwise stated, all visulaizations were created using the ggplot2 package (v. ",packageVersion("ggplot2"),") (",print(clean_citation(citation('ggplot2')), style = "text"),"). ",
            "The ", omic_type ," data was uploaded with the original dimensions of ", dim(raw)[1], " features and ", dim(raw)[2], " samples. ",
-           if(added_gene_anno){
-             paste0("Gene annotation was added using the ",organism ,"mart from Ensembl implemented within the biomaRt package 
+           if(!is.null(organism)){
+             paste0("Gene annotation was added using the ",organism ," mart from Ensembl implemented within the biomaRt package 
                     (v. ",packageVersion("biomaRt"),") (",print(clean_citation(citation('biomaRt')), style = "text"),"). ")
              },
            if(any(selection$selected_samples == "all")){

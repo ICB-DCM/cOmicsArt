@@ -2,12 +2,14 @@
 # Everything that brings data into a session: the four sources, visual
 # inspection, gene annotation, the status box and the Upload's report lines.
 # Returns reactives:
-#   done: "DataUploadSuccesful" after each successful Upload (passed to the
+#   done: a new number after each successful Upload; after a failed one it
+#     is NULL or stops with req(), so readers req() it (passed to the
 #     Selection and Pre-processing)
 #   raw: the raw SummarizedExperiment, also after gene annotation
 #   annotated: counts up after each gene annotation
 #   cleared: counts up when the File Input is cleared
-#   source, omic_type, organism, added_gene_anno: about the current Upload
+#   source, omic_type: about the current Upload
+#   organism: the organism of the gene annotation, NULL before one
 upload_server <- function(id){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
@@ -18,7 +20,6 @@ upload_server <- function(id){
     omic_type <- reactiveVal(NULL)
     raw <- reactiveVal(NULL)
     organism <- reactiveVal(NULL)
-    added_gene_anno <- reactiveVal(FALSE)
     annotated <- reactiveVal(NULL)
     cleared <- reactiveVal(NULL)
     vi <- reactiveValues(
@@ -117,7 +118,7 @@ upload_server <- function(id){
     })
 
     observeEvent(input$AddGeneSymbols, {
-      req(data_input_shiny())
+      req(done())
       req(raw())
       annotation_result <- detect_annotation(raw())
       annotation_name <- annotation_result$AnnoType
@@ -224,7 +225,6 @@ upload_server <- function(id){
       # the na gets replaced by the rowname
       raw(fill_na_row_annotation(annotated_se))
 
-      added_gene_anno(TRUE)
       organism(input$AddGeneSymbols_organism)
       count_up(annotated)
       removeModal()
@@ -245,7 +245,7 @@ upload_server <- function(id){
 
     # Show gene annotation and saving after a successful Upload
     observe({
-      req(data_input_shiny() == "DataUploadSuccesful")
+      req(done())
       shinyjs::showElement("upload_done")
     })
 
@@ -620,7 +620,7 @@ upload_server <- function(id){
 
 ## Do Upload ----
     observeEvent(commit(),{
-      req(data_input_shiny())
+      req(done())
       fun_LogIt(session, message = "## Data Selection {.tabset .tabset-fade}")
       fun_LogIt(session, message = "### Info")
       fun_LogIt(session,
@@ -693,7 +693,7 @@ upload_server <- function(id){
     })
 
 ## create data object ----
-    data_input_shiny <- eventReactive(commit(),{
+    done <- eventReactive(commit(),{
       uploaded_where <- isolate(uploaded_from())
       if(uploaded_where == "VI_data") uploaded_where <- "file_input"
       omic_type(input[[paste0("omic_type_", uploaded_where)]])
@@ -752,19 +752,18 @@ upload_server <- function(id){
       # edit annotation columns such that if na is present in the row annotation,
       # the na gets replaced by the rowname
       raw(fill_na_row_annotation(upload$se))
-      added_gene_anno(FALSE)
-      return("DataUploadSuccesful")
+      organism(NULL)
+      commit()
     })
 
     list(
-      done = data_input_shiny,
+      done = done,
       raw = reactive(raw()),
       annotated = reactive(annotated()),
       cleared = reactive(cleared()),
       source = reactive(uploaded_from()),
       omic_type = reactive(omic_type()),
-      organism = reactive(organism()),
-      added_gene_anno = reactive(added_gene_anno())
+      organism = reactive(organism())
     )
   })
 }

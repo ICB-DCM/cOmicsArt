@@ -4,11 +4,12 @@ lipids <- readRDS(
 )$Lipidomics_SumExp
 
 # snippet_dataInput() as server.R calls it on confirm
-snippet_for <- function(inputs){
+snippet_for <- function(inputs, organism = NULL){
   snippet_dataInput(
     raw = lipids,
     selection = selection_params(resolve_selection(lipids, inputs)),
-    omic_type = "Lipidomics"
+    omic_type = "Lipidomics",
+    organism = organism
   )
 }
 
@@ -38,4 +39,13 @@ test_that("the snippet names the annotation column and values of an entity subse
     snippet, "All entities with CLASS being TACG_sat, PETA were selected.",
     fixed = TRUE
   )
+})
+
+test_that("the snippet names the organism of an added gene annotation", {
+  snippet <- snippet_for(list(), organism = "Human genes (GRCh38.p14)")
+  expect_match(snippet, "Gene annotation was added using the Human genes (GRCh38.p14) mart", fixed = TRUE)
+})
+
+test_that("the snippet mentions no gene annotation without an organism", {
+  expect_no_match(snippet_for(list()), "Gene annotation", fixed = TRUE)
 })

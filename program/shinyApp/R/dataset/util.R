@@ -7,7 +7,8 @@
 #   omic_type, organism: as of its Upload
 #   run: the last successful Pre-processing run (preprocessing_server()'s
 #     result), NULL before one and after a failed one
-#   version: counts up on every new Dataset, run and clear; never reset
+#   version: counts up on every new Dataset, run, failed run and clear;
+#     never reset
 #   results: what the modules returned, by module
 # dataset_server() reads them from reactiveValues, fake_dataset() from a list.
 dataset_handle <- function(id, get){

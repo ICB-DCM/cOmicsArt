@@ -212,7 +212,6 @@ server <- function(input,output,session){
     # as before the first Upload: no Selection controls, no Pre-processing tab
     shinyjs::hideElement("selection-mainPanel_other")
     hideTab(inputId = "tabsetPanel1", target = "Pre-processing")
-    hide_tabs()
   })
 
 # Selection ----
@@ -243,8 +242,7 @@ server <- function(input,output,session){
       raw = upload$raw(),
       selection = selection_params(selection$selected()),
       omic_type = upload$omic_type(),
-      organism = upload$organism(),
-      added_gene_anno = upload$added_gene_anno()
+      organism = upload$organism()
     ))
     fun_LogIt(session, message = "<br>")
     showTab(inputId = "tabsetPanel1",target = "Pre-processing",select = T)
@@ -260,13 +258,6 @@ server <- function(input,output,session){
     upload_done = upload$done
   )
 
-  # the analysis tabs show once per run, not on every change of the controls
-  observeEvent(preprocessing$result(), {
-    show_tabs(preprocessing$result()$omic_type)
-  })
-  observeEvent(preprocessing$failed(), {
-    hide_tabs()
-  })
   observeEvent(preprocessing$start_discovering(), {
     guide_startDiscover$init()$start()
   })
@@ -274,5 +265,13 @@ server <- function(input,output,session){
 # Dataset ----
   # the module id starts with a letter so its IDs are valid CSS selectors
   datasets <- list("1" = dataset_server("dataset_1", upload, selection, preprocessing))
+
+  # the analysis tabs show while Dataset 1 is pre-processed; its version
+  # changes once per new Dataset, run or clear, not on every change of the
+  # controls
+  observeEvent(datasets[["1"]]$version(), {
+    dataset <- datasets[["1"]]
+    if (is.null(dataset$processed())) hide_tabs() else show_tabs(dataset$omic_type())
+  })
 
 }
