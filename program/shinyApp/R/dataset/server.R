@@ -57,6 +57,7 @@ dataset_server <- function(id, upload, selection, preprocessing){
     observeEvent(preprocessing$failed(), {
       ds$run <- NULL
       ds$results <- list()
+      ds$version <- ds$version + 1
     })
 
     handle <- dataset_handle(id, function(name) ds[[name]])
