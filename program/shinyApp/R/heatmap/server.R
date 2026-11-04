@@ -309,17 +309,13 @@ heatmap_server <- function(id, dataset){moduleServer(
       showNotification("Heatmap Genes Saved!",type = "message", duration = 2)
     })
 
-    output$getR_Code_Heatmap <- downloadHandler(filename = function(){
-      download_name("Heatmap", "rcode")
-    }, content = function(file){
-      waiter$show()
-      on.exit(waiter$hide())
+    output$getR_Code_Heatmap <- rcode_download("Heatmap", NULL, function(file) {
       params <- heatmap_reactives$result$params
       rcode_zip(
-        file, dataset$code_context(), list(Heatmap = params), HEATMAP_PIPELINE,
-        data_stage = if (isTRUE(params$useBatch)) "batch_corrected" else "processed"
+        file, dataset$code_context(), HEATMAP_PIPELINE, "Heatmap", params,
+        batch_data_stage(params$useBatch)
       )
-    }, contentType = "application/zip")
+    })
 
     output$SavePlot_Heatmap <- downloadHandler(
       filename = function() {

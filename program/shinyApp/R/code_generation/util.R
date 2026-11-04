@@ -83,12 +83,13 @@ save_summarized_experiment <- function(se, path){
   write.csv(row_data, file = file.path(path, "row_annotation.csv"), row.names = TRUE)
 }
 
-variable_assignment <- function(foo_infos, par, par_mem = NULL){
+variable_assignment <- function(foo_infos, par, section = NULL){
   # Extracts parameters of the function foo and creates a code snippet that assigns the neccessary values from "par"
   # Parameters:
   #   foo_infos: function infos
   #   par: list, parameters to assign
-  #   par_mem: in case the parameters are stored in a variable contained in "par"
+  #   section: the entry of "par" holding the function's parameters, e.g.
+  #     "preprocessing" or a module's "PCA"; NULL for "par" itself
   # Returns:
   #   par_assign: character, code snippet that assigns the neccessary values from "par"
   exclusions <- names(foo_infos$input_mapping)
@@ -97,7 +98,7 @@ variable_assignment <- function(foo_infos, par, par_mem = NULL){
   param_list <- param_list[!names(param_list) %in% exclusions]
   param_names <- names(param_list)
 
-  if (!is.null(par_mem) && !is.null(par)) par <- par[[par_mem]]
+  if (!is.null(section) && !is.null(par)) par <- par[[section]]
 
   # check that the parameters without default values are present in "par"
   non_default_params <- names(formals(foo_infos$foo))[sapply(formals(foo_infos$foo), function(x) identical(x, quote(expr=)))]
@@ -113,7 +114,7 @@ variable_assignment <- function(foo_infos, par, par_mem = NULL){
     ))
   }
   par_assign_nondefault <- ""
-  par_loc <- if (is.null(par_mem)) "parameters$" else paste0("parameters$", par_mem, "$")
+  par_loc <- if (is.null(section)) "parameters$" else paste0("parameters$", section, "$")
   if (length(non_default_params) > 0) {
     par_assign_nondefault <- paste0(
       non_default_params, " <- ", par_loc, non_default_params, collapse = "\n"
@@ -258,7 +259,7 @@ create_data_loading_code <- function(){
   return(data_loading)
 }
 
-create_function_script <- function(foo_infos, par, par_mem = NULL, path_to_util=NULL){
+create_function_script <- function(foo_infos, par, section = NULL, path_to_util=NULL){
   # Generate the R script that contains the function definitions.
   # Parameters:
   #   foo_infos: list of function information, contains the following elements:
@@ -269,9 +270,10 @@ create_function_script <- function(foo_infos, par, par_mem = NULL, path_to_util=
   #     - output_name: (optional) character, the name of the output if output_mapping is empty
   #     - to_util: logical, if the function should be saved in the util file
   #   par: list, parameters to assign
+  #   section: see variable_assignment()
   # Returns:
   #   function_script: character, the R script that contains the function definitions
-  function_script <- variable_assignment(foo_infos, par, par_mem)
+  function_script <- variable_assignment(foo_infos, par, section)
   # potentially write "additional functions" to util file
   if (!is.null(foo_infos$additional_foos)){
     foo_names <- names(foo_infos$additional_foos)
@@ -356,6 +358,11 @@ create_function_script <- function(foo_infos, par, par_mem = NULL, path_to_util=
 #   "raw": the Selection before Pre-processing
 DATA_STAGES <- c("processed", "batch_corrected", "raw")
 
+# The data stage of a module's choice to use the batch corrected data
+batch_data_stage <- function(batch){
+  if (isTRUE(batch)) "batch_corrected" else "processed"
+}
+
 preprocessing_base_script <- function(par, path_to_util = NULL, data_stage = "processed"){
   # Generate the base script that contains the necessary functions and libraries
   # Parameters:
@@ -369,10 +376,10 @@ preprocessing_base_script <- function(par, path_to_util = NULL, data_stage = "pr
   data_select_process_script <- paste(
     "\n",
     "# --- Data Selection ---",
-    create_function_script(select_data_info, par, "selection", path_to_util),
+    create_function_script(select_data_info, par, section = "selection", path_to_util = path_to_util),
     "\n",
     "# --- Preprocessing ---",
-    create_function_script(preprocessing_info, par, "preprocessing", path_to_util),
+    create_function_script(preprocessing_info, par, section = "preprocessing", path_to_util = path_to_util),
     sep = "\n"
   )
   if (data_stage == "batch_corrected") {
@@ -380,7 +387,7 @@ preprocessing_base_script <- function(par, path_to_util = NULL, data_stage = "pr
       data_select_process_script,
       "\n",
       "# --- Batch correction ---",
-      create_function_script(batch_correction_info, par, "preprocessing", path_to_util),
+      create_function_script(batch_correction_info, par, section = "preprocessing", path_to_util = path_to_util),
       sep = "\n"
     )
   }
@@ -398,11 +405,14 @@ preprocessing_base_script <- function(par, path_to_util = NULL, data_stage = "pr
 }
 
 create_workflow_script <- function(
-  pipeline_info, par, par_mem = NULL, path_to_util = NULL, data_stage = "processed"
+  pipeline_info, par, section = NULL, path_to_util = NULL, data_stage = "processed"
 ){
   # Generate the R script that contains the workflow
   # Parameters:
   #   pipeline_info: list of function informations
+  #   par: list, the parameters (code_parameters())
+  #   section: the entry of "par" the pipeline's own steps read, see
+  #     variable_assignment()
   #   path_to_util: character, path to the util file
   #   data_stage: what the pipeline starts from, see DATA_STAGES
   # Returns:
@@ -425,45 +435,8 @@ create_workflow_script <- function(
     preprocessing_base_script(par, path_to_util, data_stage),
     sep = "\n"
   )
-  function_strings <- sapply(pipeline_info, function(x) create_function_script(x, par, par_mem, path_to_util))
+  function_strings <- sapply(pipeline_info, function(x) create_function_script(x, par, section, path_to_util))
   function_strings <- paste(function_strings, collapse = "\n\n")
   workflow_script <- paste(workflow_script, function_strings, sep = "\n\n")
   return(workflow_script)
-}
-
-# The `parameters` a module's R code reads (Data.rds): the Dataset's
-# Selection, Pre-processing, omic type and organism from `context`
-# (code_context()) and `module`, the module's own parameters by its name,
-# e.g. list(PCA = ...). NULL entries are kept.
-code_parameters <- function(context, module){
-  c(context[c("selection", "preprocessing", "omic_type", "organism")], module)
-}
-
-# Writes a module's R-code download to `file`, a zip: the whole raw data of
-# the Upload (`context$raw`) as csv files, Code.R running `pipeline` from
-# `data_stage` (see DATA_STAGES), util.R and Data.rds with the parameters
-# (code_parameters()). The pipeline's own steps read the parameters of
-# `module` (a list of at most one module). `extra_files` are copied in,
-# named as in the zip.
-rcode_zip <- function(
-  file, context, module, pipeline, data_stage = "processed", extra_files = NULL
-){
-  parameters <- code_parameters(context, module)
-  dir <- tempfile("rcode-")
-  dir.create(dir)
-  on.exit(unlink(dir, recursive = TRUE))
-  save_summarized_experiment(context$raw, dir)
-  write(
-    create_workflow_script(
-      pipeline_info = pipeline,
-      par = parameters,
-      par_mem = names(module),
-      path_to_util = file.path(dir, "util.R"),
-      data_stage = data_stage
-    ),
-    file.path(dir, "Code.R")
-  )
-  saveRDS(list(parameters = parameters), file.path(dir, "Data.rds"))
-  if (length(extra_files) > 0) file.copy(extra_files, file.path(dir, names(extra_files)))
-  zip::zip(zipfile = file, files = dir(dir), root = dir)
 }

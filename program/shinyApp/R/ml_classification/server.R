@@ -366,25 +366,12 @@ ml_classification_Server <- function(id, dataset){
       }
     )
 
-    output$getR_Code_cluster <- downloadHandler(
-      filename = function() {
-        download_name("ML", "rcode", "KMeans")
-      },
-      content = function(file) {
-        waiter <- Waiter$new(
-          html = LOADING_SCREEN,
-          color = "#3897F147",
-          hide_on_render = FALSE
-        )
-        waiter$show()
-        on.exit(waiter$hide())
-        rcode_zip(
-          file, dataset$code_context(),
-          list(MLClassification = ml_results$kmeans_out$params), KMEANS_CLUSTERING_PIPELINE
-        )
-      },
-      contentType = "application/zip"
-    )
+    output$getR_Code_cluster <- rcode_download("ML", "KMeans", function(file) {
+      rcode_zip(
+        file, dataset$code_context(), KMEANS_CLUSTERING_PIPELINE,
+        "MLClassification", ml_results$kmeans_out$params
+      )
+    })
 
     # SVM classification handlers
     observeEvent(input$only2Report_svm, {
@@ -444,25 +431,12 @@ ml_classification_Server <- function(id, dataset){
       }
     )
 
-    output$getR_Code_svm <- downloadHandler(
-      filename = function() {
-        download_name("ML", "rcode", "SVM")
-      },
-      content = function(file) {
-        waiter <- Waiter$new(
-          html = LOADING_SCREEN,
-          color = "#3897F147",
-          hide_on_render = FALSE
-        )
-        waiter$show()
-        on.exit(waiter$hide())
-        rcode_zip(
-          file, dataset$code_context(),
-          list(MLClassification = ml_results$svm_out$params), SVM_CLASSIFICATION_PIPELINE
-        )
-      },
-      contentType = "application/zip"
-    )
+    output$getR_Code_svm <- rcode_download("ML", "SVM", function(file) {
+      rcode_zip(
+        file, dataset$code_context(), SVM_CLASSIFICATION_PIPELINE,
+        "MLClassification", ml_results$svm_out$params
+      )
+    })
 
     reactive({
       res <- list()

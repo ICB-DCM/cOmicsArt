@@ -126,25 +126,13 @@ sample_correlation_server <- function(id, dataset){
       })
 
       # Download Section ----
-      output$getR_SampleCorrelation <- downloadHandler(
-        filename = function(){ download_name("SampleCorrelation", "rcode")},
-        content = function(file){
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
-          waiter$show()
-          on.exit(waiter$hide())
-          params <- sample_corr_reactive$result$params
-          rcode_zip(
-            file, dataset$code_context(), list(SampleCorrelation = params),
-            SAMPLE_CORRELATION_PIPELINE,
-            data_stage = if (isTRUE(params$batch)) "batch_corrected" else "processed"
-          )
-        },
-        contentType = "application/zip"
-      )
+      output$getR_SampleCorrelation <- rcode_download("SampleCorrelation", NULL, function(file) {
+        params <- sample_corr_reactive$result$params
+        rcode_zip(
+          file, dataset$code_context(), SAMPLE_CORRELATION_PIPELINE,
+          "SampleCorrelation", params, batch_data_stage(params$batch)
+        )
+      })
 
       output$SavePlot_SampleCorrelation <- downloadHandler(
         filename = function() {

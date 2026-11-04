@@ -73,7 +73,7 @@ test_that("every script ends by showing its plot", {
     significance_level = 0.05, sig_to_look_at = "Significant"
   ))
   script <- create_function_script(
-    plot_significant_results_info, par = par, par_mem = "SigAna",
+    plot_significant_results_info, par = par, section = "SigAna",
     path_to_util = withr::local_tempfile()
   )
   expect_match(script, "\nsig_ana_plot\\s*$")

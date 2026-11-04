@@ -221,8 +221,8 @@ significance_analysis_server <- function(id, dataset){
         shinyjs::hideElement(id = "Significance_div")
       })
 
-      # the module's parameters for the R code (parameters$SigAna)
-      code_par <- function() list(SigAna = sig_ana_reactive$result$params)
+      # the run's parameters (parameters$SigAna in the R code)
+      run_params <- function() sig_ana_reactive$result$params
 
       # Analysis initial info
       observeEvent(input$significanceGo,{
@@ -326,7 +326,7 @@ significance_analysis_server <- function(id, dataset){
             preprocess_method = if (deseq) "vst_DESeq" else preprocessing,
             value = paste0("Significance_", idx),
             data = run_data,
-            code_par = code_par,
+            run_params = run_params,
             code_context = dataset$code_context,
             file_path = file_path,
             store_volcano = function(values) {
@@ -479,22 +479,13 @@ significance_analysis_server <- function(id, dataset){
         }
       )
       
-      output$getR_Code_Sig <- downloadHandler(
-
-        filename = function(){
-          download_name("Differential", "rcode", "Intersections")
-        },
-        content = function(file){
-          waiter()$show()
-          on.exit(waiter()$hide())
-          module <- code_par()
-          rcode_zip(
-            file, dataset$code_context(), module, UPSET_PLOT_PIPELINE,
-            data_stage = if (isTRUE(module$SigAna$useBatch)) "batch_corrected" else "processed"
-          )
-        },
-        contentType = "application/zip"
-      )
+      output$getR_Code_Sig <- rcode_download("Differential", "Intersections", function(file) {
+        params <- run_params()
+        rcode_zip(
+          file, dataset$code_context(), UPSET_PLOT_PIPELINE, "SigAna", params,
+          batch_data_stage(params$useBatch)
+        )
+      })
 
       # Saving Plot
       output$SavePlot_Sig <- downloadHandler(

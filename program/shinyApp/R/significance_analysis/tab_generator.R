@@ -15,12 +15,12 @@
 #' @param preprocess_method Character indicating "vst_DESeq" or "manual"
 #' @param value Tab value for programmatic access
 #' @param data The SummarizedExperiment the run used (volcano annotation)
-#' @param code_par,code_context see results_tab_server()
+#' @param run_params,code_context see results_tab_server()
 #' @param file_path The session folder, as "/www/<token>/"
 #' @param store_volcano see results_tab_server()
 #' @return None (appends tab and sets up server logic)
 create_new_tab <- function(id, title, targetPanel, result, contrast, alpha, ns,
-                           preprocess_method, value, data, code_par, code_context,
+                           preprocess_method, value, data, run_params, code_context,
                            file_path, store_volcano) {
   appendTab(
     inputId = targetPanel,
@@ -38,7 +38,7 @@ create_new_tab <- function(id, title, targetPanel, result, contrast, alpha, ns,
     alpha = alpha,
     preprocess_method = preprocess_method,
     data = data,
-    code_par = code_par,
+    run_params = run_params,
     code_context = code_context,
     file_path = file_path,
     store_volcano = store_volcano

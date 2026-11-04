@@ -59,6 +59,7 @@ source("R/ml_classification/methods/svm.R")
 # Source for R code
 source("R/code_generation/function_infos.R")
 source("R/code_generation/util.R")
+source("R/code_generation/rcode_download.R")
 source("R/code_generation/plot_generators.R")
 # Source for Report Generation
 source("R/report_generation/util.R")

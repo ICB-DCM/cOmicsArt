@@ -51,29 +51,17 @@ enrichment_analysis_geneset_server <- function(id, result, ea_type, code_context
       }, server = FALSE)
 
       # download R Code for further plotting
-      output$getR_Code <- downloadHandler(
-        filename = function(){
-          download_name("Enrichment", "rcode", gsub("_", "", id))
-        },
-        content = function(file){
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
-          waiter$show()
-          on.exit(waiter$hide())
-          enrichment <- params()
-          enrichment$enrich_set <- id
-          rcode_zip(
-            file, code_context(), list(Enrichment = enrichment),
-            if (ea_type() == "GeneSetEnrichment") EA_PIPELINE else OA_PIPELINE,
-            # the Ensembl objects the translation uses
-            extra_files = c(EnsemblObjects.rds = file.path("www", "EnsemblObjects.RDS"))
-          )
-        },
-        contentType = "application/zip"
-      )
+      output$getR_Code <- rcode_download("Enrichment", gsub("_", "", id), function(file) {
+        enrichment <- params()
+        enrichment$enrich_set <- id
+        rcode_zip(
+          file, code_context(),
+          if (ea_type() == "GeneSetEnrichment") EA_PIPELINE else OA_PIPELINE,
+          "Enrichment", enrichment,
+          # the Ensembl objects the translation uses
+          extra_files = c(EnsemblObjects.rds = file.path("www", "EnsemblObjects.RDS"))
+        )
+      })
 
       # Saving Plot
       output$SavePlot <- downloadHandler(

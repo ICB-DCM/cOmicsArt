@@ -5,22 +5,21 @@
 #' names the volcano template reads (comp, raw, th_psig, th_lfc,
 #' anno_vector); the run's parameters themselves are not changed
 #'
-#' @param code_par function giving the run's parameters as list(SigAna = ...)
+#' @param run_params function giving the run's parameters
 #' @param contrast Character vector c(group1, group2)
 #' @param tab_state ReactiveValues of the comparison (thresholds, annotation)
 #' @param raw Logical, whether the uncorrected p-values are meant
 #' @return list, the parameters
-comparison_params <- function(code_par, contrast, tab_state, raw = FALSE) {
-  par <- code_par()
-  if (is.null(par$SigAna)) par$SigAna <- list()
-  par$SigAna$volcano <- NULL
+comparison_params <- function(run_params, contrast, tab_state, raw = FALSE) {
+  params <- run_params()
+  params$volcano <- NULL
   # the name performSigAnalysis() gives this comparison's result
-  par$SigAna$comp <- paste(contrast, collapse = ":")
-  par$SigAna$raw <- raw
-  par$SigAna$th_psig <- tab_state$th_psig
-  par$SigAna$th_lfc <- tab_state$th_lfc
-  par$SigAna$anno_vector <- tab_state$anno_vector
-  par
+  params$comp <- paste(contrast, collapse = ":")
+  params$raw <- raw
+  params$th_psig <- tab_state$th_psig
+  params$th_lfc <- tab_state$th_lfc
+  params$anno_vector <- tab_state$anno_vector
+  params
 }
 
 #' Setup all volcano plot download handlers
@@ -34,22 +33,22 @@ comparison_params <- function(code_par, contrast, tab_state, raw = FALSE) {
 #' @param ids List of IDs from create_contrast_ids()
 #' @param contrast Character vector c(group1, group2)
 #' @param tab_state ReactiveValues containing plot objects
-#' @param code_par function giving the run's parameters as list(SigAna = ...)
+#' @param run_params function giving the run's parameters
 #' @param file_path Path for file operations
 #' @return None (creates output handlers and observers)
 setup_volcano_downloads <- function(output, input, session, ids, contrast,
-                                     tab_state, code_par, code_context, file_path) {
+                                     tab_state, run_params, code_context, file_path) {
 
   # Send to Report handlers (using observeEvent, not stored in session$userData)
   setup_report_handlers(input, session, ids, contrast, tab_state,
-                        code_par, file_path)
+                        run_params, file_path)
 
   # R Code download handlers
-  setup_rcode_downloads(output, ids, contrast, tab_state, code_par, code_context)
+  setup_rcode_downloads(output, ids, contrast, tab_state, run_params, code_context)
 
   # Plot save handlers
   setup_plot_save_handlers(output, input, session, ids, contrast, tab_state,
-                           code_par, file_path)
+                           run_params, file_path)
 }
 
 #' Setup "Send to Report" button handlers
@@ -62,11 +61,11 @@ setup_volcano_downloads <- function(output, input, session, ids, contrast,
 #' @param ids List of IDs from create_contrast_ids()
 #' @param contrast Character vector c(group1, group2)
 #' @param tab_state ReactiveValues containing plot objects
-#' @param code_par function giving the run's parameters as list(SigAna = ...)
+#' @param run_params function giving the run's parameters
 #' @param file_path Path for file operations
 #' @return None (creates observers)
 setup_report_handlers <- function(input, session, ids, contrast, tab_state,
-                                   code_par, file_path) {
+                                   run_params, file_path) {
 
   # Adjusted volcano (padj)
   observeEvent(input[[ids$only2report_volcano]], {
@@ -76,7 +75,7 @@ setup_report_handlers <- function(input, session, ids, contrast, tab_state,
     fun_LogIt(session, message = "### Publication Snippet")
     fun_LogIt(session, message = snippet_SigAna(
       data = NULL,
-      params = comparison_params(code_par, contrast, tab_state)
+      params = list(SigAna = comparison_params(run_params, contrast, tab_state))
     ))
   }, ignoreInit = TRUE)
 
@@ -92,7 +91,7 @@ setup_report_handlers <- function(input, session, ids, contrast, tab_state,
     fun_LogIt(session, message = "### Publication Snippet")
     fun_LogIt(session, message = snippet_SigAna(
       data = NULL,
-      params = comparison_params(code_par, contrast, tab_state)
+      params = list(SigAna = comparison_params(run_params, contrast, tab_state))
     ))
   }, ignoreInit = TRUE)
 
@@ -104,7 +103,7 @@ setup_report_handlers <- function(input, session, ids, contrast, tab_state,
     fun_LogIt(session, message = "### Publication Snippet")
     fun_LogIt(session, message = snippet_SigAna(
       data = NULL,
-      params = comparison_params(code_par, contrast, tab_state)
+      params = list(SigAna = comparison_params(run_params, contrast, tab_state))
     ))
   }, ignoreInit = TRUE)
 }
@@ -117,54 +116,22 @@ setup_report_handlers <- function(input, session, ids, contrast, tab_state,
 #' @param ids List of IDs from create_contrast_ids()
 #' @param contrast Character vector c(group1, group2)
 #' @param tab_state ReactiveValues of the comparison
-#' @param code_par function giving the run's parameters as list(SigAna = ...)
-#' @return None (creates output handlers)
-setup_rcode_downloads <- function(output, ids, contrast, tab_state, code_par, code_context) {
-  # Adjusted volcano R code
-  output[[ids$get_r_code_volcano]] <- create_rcode_download_handler(
-    code_context = code_context,
-    par = function() comparison_params(code_par, contrast, tab_state, raw = FALSE),
-    raw = FALSE
-  )
-
-  # Raw volcano R code
-  output[[ids$get_r_code_volcano_raw]] <- create_rcode_download_handler(
-    code_context = code_context,
-    par = function() comparison_params(code_par, contrast, tab_state, raw = TRUE),
-    raw = TRUE
-  )
-}
-
-#' Factory function to create R code download handler
-#'
-#' Reduces duplication - both handlers are nearly identical except for raw parameter.
-#'
+#' @param run_params function giving the run's parameters
 #' @param code_context function giving the Dataset's code_context()
-#' @param par function giving the parameters (comparison_params())
-#' @param raw Logical indicating if this is for raw p-values
-#' @return downloadHandler object
-create_rcode_download_handler <- function(code_context, par, raw) {
-  downloadHandler(
-    filename = function() {
-      download_name("Differential", "rcode", if (raw) "VolcanoRaw" else "Volcano")
-    },
-    content = function(file) {
-      waiter <- Waiter$new(
-        html = LOADING_SCREEN,
-        color = "#3897F147",
-        hide_on_render = FALSE
-      )
-      waiter$show()
-      on.exit(waiter$hide())
-
-      module <- par()
+#' @return None (creates output handlers)
+setup_rcode_downloads <- function(output, ids, contrast, tab_state, run_params, code_context) {
+  # the volcano of the adjusted (`raw = FALSE`) or the raw p-values
+  volcano_rcode <- function(item, raw) {
+    rcode_download("Differential", item, function(file) {
+      params <- comparison_params(run_params, contrast, tab_state, raw)
       rcode_zip(
-        file, code_context(), module, VOLCANO_PIPELINE,
-        data_stage = if (isTRUE(module$SigAna$useBatch)) "batch_corrected" else "processed"
+        file, code_context(), VOLCANO_PIPELINE, "SigAna", params,
+        batch_data_stage(params$useBatch)
       )
-    },
-    contentType = "application/zip"
-  )
+    })
+  }
+  output[[ids$get_r_code_volcano]] <- volcano_rcode("Volcano", raw = FALSE)
+  output[[ids$get_r_code_volcano_raw]] <- volcano_rcode("VolcanoRaw", raw = TRUE)
 }
 
 #' Setup plot save handlers
@@ -177,11 +144,11 @@ create_rcode_download_handler <- function(code_context, par, raw) {
 #' @param ids List of IDs from create_contrast_ids()
 #' @param contrast Character vector c(group1, group2)
 #' @param tab_state ReactiveValues containing plot objects
-#' @param code_par function giving the run's parameters as list(SigAna = ...)
+#' @param run_params function giving the run's parameters
 #' @param file_path Path for file operations
 #' @return None (creates output handlers)
 setup_plot_save_handlers <- function(output, input, session, ids, contrast,
-                                      tab_state, code_par, file_path) {
+                                      tab_state, run_params, file_path) {
 
   # Adjusted volcano save
   output[[ids$save_plot_volcano]] <- create_plot_save_handler(
@@ -193,7 +160,7 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
     contrast = contrast,
     tab_state = tab_state,
     file_path = file_path,
-    code_par = code_par,
+    run_params = run_params,
     item = "Volcano"
   )
 
@@ -207,7 +174,7 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
     contrast = contrast,
     tab_state = tab_state,
     file_path = file_path,
-    code_par = code_par,
+    run_params = run_params,
     item = "VolcanoRaw"
   )
 
@@ -221,7 +188,7 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
     contrast = contrast,
     tab_state = tab_state,
     file_path = file_path,
-    code_par = code_par,
+    run_params = run_params,
     item = "VolcanoBoth"
   )
 }
@@ -236,12 +203,12 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
 #' @param data_reactive Reactive expression returning data for logging
 #' @param contrast Character vector c(group1, group2)
 #' @param file_path Path for file operations
-#' @param code_par function giving the run's parameters as list(SigAna = ...)
+#' @param run_params function giving the run's parameters
 #' @param item Item of the download name, see download_name()
 #' @return downloadHandler object
 create_plot_save_handler <- function(input, session, file_ext_id, plot_reactive,
                                       data_reactive, contrast, tab_state, file_path,
-                                      code_par, item) {
+                                      run_params, item) {
   downloadHandler(
     filename = function() {
       download_name("Differential", input[[file_ext_id]], item)
@@ -261,7 +228,7 @@ create_plot_save_handler <- function(input, session, file_ext_id, plot_reactive,
         fun_LogIt(session, message = "### Publication Snippet")
         fun_LogIt(session, message = snippet_SigAna(
           data = NULL,
-          params = comparison_params(code_par, contrast, tab_state)
+          params = list(SigAna = comparison_params(run_params, contrast, tab_state))
         ))
       })
     }

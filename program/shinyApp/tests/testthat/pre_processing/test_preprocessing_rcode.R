@@ -5,8 +5,8 @@
 run_preprocessing_script <- function(parameters, data_orig){
   util <- tempfile(fileext = ".R")
   script <- paste(
-    create_function_script(select_data_info, parameters, "selection", util),
-    create_function_script(preprocessing_info, parameters, "preprocessing", util),
+    create_function_script(select_data_info, parameters, section = "selection", path_to_util = util),
+    create_function_script(preprocessing_info, parameters, section = "preprocessing", path_to_util = util),
     sep = "\n"
   )
   env <- new.env()
@@ -24,11 +24,12 @@ run_preprocessing_script <- function(parameters, data_orig){
 app_run <- function(data, omic_type, ...){
   options <- list(...)
   res <- suppressMessages(run_preprocessing(data, omic_type, options))
-  parameters <- list(
+  parameters <- code_parameters(new_code_context(
+    raw = data,
     selection = selection_params(resolve_selection(data, list())),
     preprocessing = c(options, list(batch_column = NULL)),
     omic_type = omic_type
-  )
+  ))
   list(data = res$data, parameters = parameters)
 }
 

@@ -33,12 +33,11 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     # code_context(); Pre-processing has no organism
     rcode_context <- reactive({
       req(result())
-      list(
+      new_code_context(
         raw = upload(),
         selection = selection_params(result()$selection),
         preprocessing = result()$params,
-        omic_type = result()$omic_type,
-        organism = NULL
+        omic_type = result()$omic_type
       )
     })
 
@@ -395,22 +394,6 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
         widths = c(1, 1.3)
       )
     }
-    # the R code of `pipeline` (rcode_zip()) with the plot's parameters
-    # `module()`; `item` names the zip (see download_name())
-    rcode_download <- function(pipeline, item, module = function() list()){
-      downloadHandler(
-        filename = function() {
-          download_name("Preprocessing", "rcode", item)
-        },
-        content = function(file) {
-          waiter <- show_loading()
-          on.exit(waiter$hide())
-          rcode_zip(file, rcode_context(), module(), pipeline)
-        },
-        contentType = "application/zip"
-      )
-    }
-
     # "Save plot" (`save_id`) and "Send only to Report" (`report_id`) for
     # `plot()`: downloaded as download_name("Preprocessing", <ext>, `item`)
     # with the extension chosen in `ext_id`; saving also sends it to the
@@ -470,11 +453,12 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       info = function() paste0("**PreProcess** - The Samples were plotted after: ", violin_color()),
       title = "Violin Plot"
     )
-    output$rcode_violin <- rcode_download(
-      VIOLIN_PLOT_PIPELINE,
-      item = "ViolinPlot",
-      module = function() list(ViolinPlot = list(violin_color = violin_color()))
-    )
+    output$rcode_violin <- rcode_download("Preprocessing", "ViolinPlot", function(file) {
+      rcode_zip(
+        file, rcode_context(), VIOLIN_PLOT_PIPELINE,
+        "ViolinPlot", list(violin_color = violin_color())
+      )
+    })
 
     plot_downloads(
       save_id = "save_mean_sd",
@@ -487,7 +471,9 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       info = function() "The means of the preprocessed data are plotted agains their standard deviation to check for heteroskedasticity.",
       title = "Mean and SD Plot"
     )
-    output$rcode_mean_sd <- rcode_download(MEAN_SD_PLOT_PIPELINE, item = "MeanSD")
+    output$rcode_mean_sd <- rcode_download("Preprocessing", "MeanSD", function(file) {
+      rcode_zip(file, rcode_context(), MEAN_SD_PLOT_PIPELINE)
+    })
 
     list(
       result = reactive(result()),

@@ -7,7 +7,7 @@ assay <- SummarizedExperiment::assay
 script_for <- function(handle, data_stage){
   create_workflow_script(
     pipeline_info = list(),
-    par = code_parameters(isolate(handle$code_context()), list()),
+    par = code_parameters(isolate(handle$code_context())),
     path_to_util = tempfile(fileext = ".R"),
     data_stage = data_stage
   )

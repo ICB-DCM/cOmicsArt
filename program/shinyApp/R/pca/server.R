@@ -328,26 +328,13 @@ pca_Server <- function(id, dataset){
     ## R Code Download ----
     # one zip per plot; `item` names the plot in the file name
     code_download <- function(pipeline, item = NULL){
-      downloadHandler(
-        filename = function(){
-          download_name("PCA", "rcode", item)
-        },
-        content = function(file){
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
-          waiter$show()
-          on.exit(waiter$hide())
-          params <- pca_reactives$result$params
-          rcode_zip(
-            file, dataset$code_context(), list(PCA = params), pipeline,
-            data_stage = if (isTRUE(params$useBatch)) "batch_corrected" else "processed"
-          )
-        },
-        contentType = "application/zip"
-      )
+      rcode_download("PCA", item, function(file) {
+        params <- pca_reactives$result$params
+        rcode_zip(
+          file, dataset$code_context(), pipeline, "PCA", params,
+          batch_data_stage(params$useBatch)
+        )
+      })
     }
     output$getR_Code_PCA <- code_download(PCA_PIPELINE)
     output$getR_Code_Scree_Plot <- code_download(SCREE_PLOT_PIPELINE, "Scree")

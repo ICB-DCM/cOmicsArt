@@ -268,20 +268,11 @@ single_gene_visualisation_server <- function(id, dataset){
 
       ## Download R code and data
       # TODO: needs fixing with scenario
-      output$getR_Code_SingleEntities <- downloadHandler(filename = function(){
-        download_name("SingleGene", "rcode")
-      }, content = function(file){
-        waiter <- Waiter$new(
-          html = LOADING_SCREEN,
-          color = "#3897F147",
-          hide_on_render = FALSE
-        )
-        waiter$show()
-        on.exit(waiter$hide())
+      output$getR_Code_SingleEntities <- rcode_download("SingleGene", NULL, function(file) {
         params <- single_gene_reactives$result$params
         rcode_zip(
-          file, dataset$code_context(), list(SingleGeneVis = params),
-          SINGLE_GENE_VISUALISATION_PIPELINE,
+          file, dataset$code_context(), SINGLE_GENE_VISUALISATION_PIPELINE,
+          "SingleGeneVis", params,
           # the data choice: raw = the Selection, or batch corrected
           data_stage = switch(
             params$data_process_stage %||% "data",
@@ -290,9 +281,7 @@ single_gene_visualisation_server <- function(id, dataset){
             "processed"
           )
         )
-      },
-      contentType = "application/zip"
-      )
+      })
 
       ## Save plot
       output$SavePlot_singleGene <- downloadHandler(

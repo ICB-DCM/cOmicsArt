@@ -38,7 +38,7 @@ dataset_handle <- function(id, get){
     # what the R-code download starts from (rcode_zip())
     code_context = function() {
       if (is.null(get("selection"))) return(NULL)
-      list(
+      new_code_context(
         raw = get("upload_raw"),
         selection = selection(),
         preprocessing = preprocessing(),
