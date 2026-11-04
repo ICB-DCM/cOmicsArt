@@ -92,3 +92,62 @@ test_that("dataset_server() puts ML's results into results()$ml; a new run clear
     session$setInputs("ml_classification-run_clustering" = 1)
   }, version_of = function(result) result$kmeans$version)
 })
+
+# the image files the report links to
+report_images <- function(report){
+  regmatches(report, gregexpr("\\]\\(([^)]+)\\)", report))[[1]]
+}
+
+test_that("the k-means report is a png image of the run, whatever the controls say now", {
+  ds <- lipids_dataset()
+  test_env <- environment()
+  testServer(ml_classification_Server, args = list(dataset = ds$handle), {
+    report <- local_session_report(session, test_env)
+    do.call(session$setInputs, KMEANS)
+    session$setInputs(run_clustering = 1)
+    # changed after the run; the report describes the run
+    session$setInputs(k_clusters = 5, file_ext_cluster = ".pdf")
+    session$setInputs(only2Report_cluster = 1)
+    expect_match(report(), "Number of clusters: k=3", fixed = TRUE)
+    images <- report_images(report())
+    expect_length(images, 1)
+    expect_match(images, "\\.png\\)$")
+    expect_true(file.exists(sub("^\\]\\((.*)\\)$", "\\1", images)))
+  })
+})
+
+test_that("the SVM report is a png image of the run, whatever the controls say now", {
+  ds <- lipids_dataset()
+  test_env <- environment()
+  testServer(ml_classification_Server, args = list(dataset = ds$handle), {
+    report <- local_session_report(session, test_env)
+    do.call(session$setInputs, SVM)
+    session$setInputs(run_classification = 1)
+    session$setInputs(condition_column_supervised = "ID", file_ext_svm = ".tiff")
+    session$setInputs(only2Report_svm = 1)
+    expect_match(report(), "Predicting: diet", fixed = TRUE)
+    expect_match(report_images(report()), "\\.png\\)$")
+  })
+})
+
+test_that("the k-means table shows the run's overlay, not the one picked since", {
+  ds <- lipids_dataset()
+  testServer(ml_classification_Server, args = list(dataset = ds$handle), {
+    do.call(session$setInputs, KMEANS)  # no overlay
+    session$setInputs(run_clustering = 1)
+    session$setInputs(condition_overlay = "diet")
+    expect_false(grepl("Condition", output$cluster_table, fixed = TRUE))
+  })
+})
+
+test_that("the plot downloads write the plots of the runs", {
+  ds <- lipids_dataset()
+  test_env <- environment()
+  testServer(ml_classification_Server, args = list(dataset = ds$handle), {
+    local_session_report(session, test_env)
+    do.call(session$setInputs, c(KMEANS, SVM, file_ext_cluster = ".png", file_ext_svm = ".png"))
+    session$setInputs(run_clustering = 1, run_classification = 1)
+    expect_gt(file.size(output$SavePlot_cluster), 0)
+    expect_gt(file.size(output$SavePlot_svm), 0)
+  })
+})

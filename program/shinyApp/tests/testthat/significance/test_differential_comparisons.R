@@ -150,3 +150,26 @@ test_that("the comparison table is rendered client side, so its exports have eve
     expect_match(paste(unlist(buttons), collapse = " "), "cOmicsArt_Differential_Table", fixed = TRUE)
   })
 })
+
+test_that("the raw volcano's report entries say its p-values are unadjusted, the adjusted one's don't", {
+  report <- local_report()
+  args <- lipidomics()
+  testServer(significance_analysis_server, args = args, {
+    do.call(session$setInputs, RUN)
+    session$setInputs(significanceGo = 1)
+    do.call(session$setInputs, volcano_inputs(1, 1, COMPARISONS[1], 0.05))
+    snippets <- function() grep("Differential expression analysis", report(), value = TRUE)
+    click <- function(name){
+      button <- list(1); names(button) <- tab_id(1, 1, COMPARISONS[1], name)
+      do.call(session$setInputs, button)
+    }
+    click("only2Report_Volcano")
+    expect_false(grepl("unadjusted", snippets()[1], fixed = TRUE))
+    click("only2Report_Volcano_raw")
+    expect_match(snippets()[2], "The volcano plot shows the unadjusted p-values.", fixed = TRUE)
+    file_ext <- list(".png"); names(file_ext) <- tab_id(1, 1, COMPARISONS[1], "file_ext_Volcano_raw")
+    do.call(session$setInputs, file_ext)
+    output[[tab_id(1, 1, COMPARISONS[1], "SavePlot_Volcano_raw")]]
+    expect_match(snippets()[3], "The volcano plot shows the unadjusted p-values.", fixed = TRUE)
+  })
+})

@@ -132,3 +132,45 @@ test_that("dataset_server() puts the result into results()$single_gene; a new ru
     session$setInputs("single_gene_visualisation-singleGeneGo" = 1)
   })
 })
+
+test_that("the report describes the run, whatever the controls say now; nothing before a run", {
+  ds <- changeable_dataset("Lipidomics")
+  test_env <- environment()
+  testServer(single_gene_visualisation_server, args = list(dataset = ds$handle), {
+    report <- local_session_report(session, test_env)
+    data <- ds$handle$processed()
+    session$setInputs(only2Report_SingleEntities = 1)
+    expect_equal(report(), "")
+
+    inputs <- gene_inputs(data, "diet")
+    run(session, inputs)
+    annotation <- inputs$Select_GeneAnno
+    # another entity and data choice, not plotted
+    session$setInputs(
+      Select_Gene = as.character(rowData(data)[2, annotation]), type_of_data_gene = "data_original"
+    )
+    session$setInputs(only2Report_SingleEntities = 2)
+    expect_match(report(), paste("was plotted:", inputs$Select_Gene), fixed = TRUE)
+    expect_match(report(), "Values shown are: pre-processed data", fixed = TRUE)
+    groups <- levels(as.factor(colData(data)$diet))
+    expect_match(report(), paste0("within: diet (", paste(groups, collapse = ";"), ")"), fixed = TRUE)
+  })
+})
+
+test_that("a redrawn plot keeps the run's entity and data in its labels", {
+  ds <- changeable_dataset("Lipidomics")
+  testServer(single_gene_visualisation_server, args = list(dataset = ds$handle), {
+    data <- ds$handle$processed()
+    inputs <- gene_inputs(data, "diet")
+    run(session, inputs)
+    groups <- as.character(unique(colData(data)$diet))
+    # another entity and data choice, not run; then a new comparison redraws
+    session$setInputs(
+      Select_Gene = as.character(rowData(data)[2, inputs$Select_GeneAnno]), type_of_data_gene = "data_original"
+    )
+    session$setInputs(chooseComparisons = paste(groups[2:3], collapse = ":"))
+    labels <- single_gene_reactives$plot$labels
+    expect_equal(labels$title, inputs$Select_Gene)
+    expect_equal(labels$y, "Pre-processed Data")
+  })
+})

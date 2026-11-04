@@ -117,6 +117,19 @@ expect_collected <- function(key, run_module, version_of = function(result) resu
   invisible(collected)
 }
 
+# The session's report, www/<token>/Report.md, which the modules write to
+# relative to the app folder, as the app server sets it up. Changes into the
+# app folder until `env` (the test's environment) ends, then deletes the
+# session folder. Returns a function that reads the report.
+local_session_report <- function(session, env){
+  withr::local_dir(app_dir, .local_envir = env)
+  report_dir <- file.path(app_dir, "www", session$token)
+  dir.create(report_dir)
+  file.create(file.path(report_dir, "Report.md"))
+  withr::defer(unlink(report_dir, recursive = TRUE), envir = env)
+  function() paste(readLines(file.path(report_dir, "Report.md")), collapse = "\n")
+}
+
 # The files of an R-code zip, unpacked; returns the folder
 unpack_zip <- function(zip_file){
   dir <- tempfile()

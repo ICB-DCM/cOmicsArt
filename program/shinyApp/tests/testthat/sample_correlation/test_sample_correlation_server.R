@@ -96,3 +96,20 @@ test_that("dataset_server() puts the result into results()$sample_correlation; a
     session$setInputs("sample_correlation-Do_SampleCorrelation" = 1)
   })
 })
+
+test_that("the report describes the run, whatever the controls say now; nothing before a run", {
+  ds <- changeable_dataset("Lipidomics")
+  test_env <- environment()
+  testServer(sample_correlation_server, args = list(dataset = ds$handle), {
+    report <- local_session_report(session, test_env)
+    session$setInputs(only2Report_SampleCorrelation = 1)
+    expect_equal(report(), "")
+
+    do.call(session$setInputs, RUN)
+    session$setInputs(Do_SampleCorrelation = 1)
+    session$setInputs(corrMethod = "spearman")  # not run
+    session$setInputs(only2Report_SampleCorrelation = 2)
+    expect_match(report(), "The correlation method used was: pearson", fixed = TRUE)
+    expect_match(report(), "samples were colored after diet", fixed = TRUE)
+  })
+})

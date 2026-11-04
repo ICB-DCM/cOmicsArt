@@ -103,7 +103,7 @@ setup_report_handlers <- function(input, session, ids, contrast, tab_state,
     fun_LogIt(session, message = "### Publication Snippet")
     fun_LogIt(session, message = snippet_SigAna(
       data = NULL,
-      params = list(SigAna = comparison_params(run_params, contrast, tab_state))
+      params = list(SigAna = comparison_params(run_params, contrast, tab_state, raw = TRUE))
     ))
   }, ignoreInit = TRUE)
 }
@@ -175,7 +175,8 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
     tab_state = tab_state,
     file_path = file_path,
     run_params = run_params,
-    item = "VolcanoRaw"
+    item = "VolcanoRaw",
+    raw = TRUE
   )
 
   # Both volcanoes save
@@ -205,10 +206,11 @@ setup_plot_save_handlers <- function(output, input, session, ids, contrast,
 #' @param file_path Path for file operations
 #' @param run_params function giving the run's parameters
 #' @param item Item of the download name, see download_name()
+#' @param raw Logical, whether the plot shows the uncorrected p-values
 #' @return downloadHandler object
 create_plot_save_handler <- function(input, session, file_ext_id, plot_reactive,
                                       data_reactive, contrast, tab_state, file_path,
-                                      run_params, item) {
+                                      run_params, item, raw = FALSE) {
   downloadHandler(
     filename = function() {
       download_name("Differential", input[[file_ext_id]], item)
@@ -228,7 +230,7 @@ create_plot_save_handler <- function(input, session, file_ext_id, plot_reactive,
         fun_LogIt(session, message = "### Publication Snippet")
         fun_LogIt(session, message = snippet_SigAna(
           data = NULL,
-          params = list(SigAna = comparison_params(run_params, contrast, tab_state))
+          params = list(SigAna = comparison_params(run_params, contrast, tab_state, raw))
         ))
       })
     }
