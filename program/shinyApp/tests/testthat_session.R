@@ -1,6 +1,2 @@
-library(testthat)
-test_dir(
-  "./testthat/session",
-  env = shiny::loadSupport(),
-  reporter = c("progress", "fail")
-)
+source("testthat/run_unit.R")
+run_unit("session")

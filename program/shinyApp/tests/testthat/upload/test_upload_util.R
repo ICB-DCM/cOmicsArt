@@ -1,5 +1,4 @@
 # tests for the Upload helpers in R/upload/util.R
-app_www <- function(...) file.path(test_path("..", "..", ".."), "www", ...)
 
 airway <- list(
   matrix = app_www("airway-read-counts-LS.csv"),
@@ -90,13 +89,13 @@ test_that("read_upload returns a SummarizedExperiment for each source", {
     ),
     c(33469, 8)
   )
-  test_data <- list(
+  test_data_dims <- list(
     Transcriptomics = c(33469, 8), Lipidomics = c(660, 28), Metabolomics = c(108, 35)
   )
-  for (omic in names(test_data)){
+  for (omic in names(test_data_dims)){
     expect_dims(
       read_upload("testdata", omic, test_data_dir = app_www()),
-      test_data[[omic]]
+      test_data_dims[[omic]]
     )
   }
 })
