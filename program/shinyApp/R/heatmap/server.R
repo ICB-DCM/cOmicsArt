@@ -7,7 +7,7 @@
 #   gene_list: the labels saved with "Save genes shown in Heatmap for OA"
 #     (Ensembl IDs, for Enrichment), NULL until saved; a new run clears it
 #   params: what the selection and the plot use (the R-code template reads
-#     them as parameters$Heatmap): useBatch, selection_type, n_top_k,
+#     them as parameters$Heatmap): data_stage, selection_type, n_top_k,
 #     top_k_type, select_by, selection, compare_within, reference,
 #     treatment, significance_level, title, cluster_rows, cluster_cols,
 #     scale_rows, n_max_row_labels, row_labels, row_annotations,
@@ -50,15 +50,8 @@ heatmap_server <- function(id, dataset){moduleServer(
     })
 
     ## UI Section ----
-    output$UseBatch_ui <- renderUI({
-      req(dataset$preprocessing()$batch_column)
-      selectInput(
-        inputId = ns("UseBatch"),
-        label = "Use batch corrected data?",
-        choices = c("No","Yes"),
-        selected = "No"
-      )
-    })
+    # the data the next run uses (DATA_STAGES), from the batch picker
+    data_stage <- batch_toggle(input, output, ns, dataset)
     ### Aesthetic Settings
     output$anno_options_ui <- renderUI({
       data <- req(dataset$processed())
@@ -192,10 +185,10 @@ heatmap_server <- function(id, dataset){moduleServer(
       heatmap_reactives$pending <- NULL
       heatmap_reactives$run <- NULL
       heatmap_reactives$result <- NULL
-      useBatch <- !is.null(dataset$preprocessing()$batch_column) && identical(input$UseBatch, "Yes")
-      data <- dataset$processed(batch = useBatch)
+      stage <- data_stage()
+      data <- dataset$data(stage)
       params <- list(
-        useBatch = useBatch,
+        data_stage = stage,
         selection_type = input$row_selection_options,
         n_top_k = input$TopK %||% NULL,
         top_k_type = input$TopK_order %||% NULL,
@@ -322,7 +315,7 @@ heatmap_server <- function(id, dataset){moduleServer(
       params <- heatmap_reactives$result$params
       rcode_zip(
         file, dataset$code_context(), HEATMAP_PIPELINE, "Heatmap", params,
-        batch_data_stage(params$useBatch)
+        params$data_stage
       )
     })
 

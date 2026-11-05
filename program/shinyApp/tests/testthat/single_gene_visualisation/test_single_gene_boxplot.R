@@ -12,7 +12,7 @@ plotly_texts <- function(plot){
 test_that("the shown boxplot has the t-test p-value of each comparison", {
   plot <- single_gene_boxplot(
     gene_data, add_testing = TRUE, comparisons = c("A:B", "A:C"),
-    selected_gene = "gene", data_process_stage = "data", group_by = "group"
+    selected_gene = "gene", data_stage = "processed", group_by = "group"
   )
   p_value <- function(x, y) {
     t.test(gene_data$value[gene_data$annotation == x], gene_data$value[gene_data$annotation == y])$p.value
@@ -25,7 +25,7 @@ test_that("the shown boxplot has the t-test p-value of each comparison", {
 test_that("the boxplot without testing has no p-values", {
   plot <- single_gene_boxplot(
     gene_data, add_testing = FALSE, comparisons = c("A:B"),
-    selected_gene = "gene", data_process_stage = "data", group_by = "group"
+    selected_gene = "gene", data_stage = "processed", group_by = "group"
   )
   expect_null(plotly_texts(plot))
 })

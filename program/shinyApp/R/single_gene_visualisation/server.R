@@ -3,7 +3,7 @@
 # Returns a reactive: NULL before a run and after a new Dataset version,
 # otherwise list(gene_data, params, version) with
 #   gene_data: the chosen entity's values per sample with their group
-#   params: selected_gene, selected_type, group_by, data_process_stage,
+#   params: selected_gene, selected_type, group_by, data_stage (DATA_STAGES),
 #     comparisons, add_testing (the R-code download reads them as
 #     parameters$SingleGeneVis)
 #   version: the Dataset version it was computed on
@@ -23,16 +23,6 @@ single_gene_visualisation_server <- function(id, dataset){
         result = NULL
       )
 
-      # the data behind each choice of "Choose Data to use"; "raw data" is
-      # the Selection before Pre-processing
-      stage_data <- function(stage){
-        switch(stage,
-          data_original = dataset$raw(),
-          data = dataset$processed(),
-          data_batch_corrected = dataset$processed(batch = TRUE)
-        )
-      }
-
       # The result belongs to one Dataset version: a new Dataset, run or
       # clear removes plot, info and result
       observeEvent(dataset$version(), {
@@ -50,23 +40,16 @@ single_gene_visualisation_server <- function(id, dataset){
       # the pickers follow the processed data; a new run resets them
       output$type_of_data_gene_ui <- renderUI({
         req(dataset$processed())
-        options <- list(
-          "raw data" = "data_original",
-          "pre-processed"="data"
-        )
-        if(!is.null(dataset$preprocessing()$batch_column)){
-          options <- list(
-            "raw data" = "data_original",
-            "pre-processed" = "data",
-            "batch corrected data" = "data_batch_corrected"
-          )
-        }
+        # values are DATA_STAGES; "raw data" is the Selection before
+        # Pre-processing
+        options <- c("raw data" = "raw", "pre-processed" = "processed")
+        if (dataset$has_batch()) options <- c(options, "batch corrected data" = "batch_corrected")
         selectInput(
           inputId = ns("type_of_data_gene"),
           label = "Choose Data to use (in case of DESeq- vst normalized counts are used)",
           choices = options,
           multiple = F ,
-          selected = "data"
+          selected = "processed"
         )
       })
       output$accross_condition_ui <- renderUI({
@@ -171,13 +154,13 @@ single_gene_visualisation_server <- function(id, dataset){
         req(input$singleGeneGo > 0)
         req(single_gene_reactives$allow_plot)
         # assign variables
-        data_process_stage <- input$type_of_data_gene
+        data_stage <- input$type_of_data_gene
         selected_gene <- input$Select_Gene
         selected_type <- input$Select_GeneAnno
         group_by <- input$accross_condition
 
         post_selection_check <- unique(c(colData(dataset$processed())[,group_by]))
-        data <- stage_data(data_process_stage)
+        data <- dataset$data(data_stage)
 
         # update the data
         gene_data <- NULL
@@ -200,7 +183,7 @@ single_gene_visualisation_server <- function(id, dataset){
             selected_type = selected_type,
             group_by = group_by,
             post_selection_check = post_selection_check,
-            data_process_stage = data_process_stage
+            data_stage = data_stage
           ),
           version = dataset$version()
         )
@@ -223,7 +206,7 @@ single_gene_visualisation_server <- function(id, dataset){
         # the run's entity, data and grouping, not what the controls say now;
         # the comparisons and the test are the drawing's
         run_params <- single_gene_reactives$result$params
-        data_process_stage <- run_params$data_process_stage
+        data_stage <- run_params$data_stage
         selected_gene <- run_params$selected_gene
         comparisons <- input$chooseComparisons
         add_testing <- as.logical(input$add_testing)
@@ -258,7 +241,7 @@ single_gene_visualisation_server <- function(id, dataset){
           add_testing = add_testing,
           comparisons = comparisons,
           selected_gene = selected_gene,
-          data_process_stage = data_process_stage,
+          data_stage = data_stage,
           group_by = group_by
         )
         # assign reactive values
@@ -275,14 +258,7 @@ single_gene_visualisation_server <- function(id, dataset){
         params <- single_gene_reactives$result$params
         rcode_zip(
           file, dataset$code_context(), SINGLE_GENE_VISUALISATION_PIPELINE,
-          "SingleGeneVis", params,
-          # the data choice: raw = the Selection, or batch corrected
-          data_stage = switch(
-            params$data_process_stage %||% "data",
-            data_original = "raw",
-            data_batch_corrected = "batch_corrected",
-            "processed"
-          )
+          "SingleGeneVis", params, params$data_stage
         )
       })
 
@@ -329,7 +305,7 @@ single_gene_visualisation_server <- function(id, dataset){
         ))
         fun_LogIt(session, message = paste0(
           "**Single Entitie** - Values shown are: ",
-          single_gene_stage_label(params$data_process_stage), " data"
+          single_gene_stage_label(params$data_stage), " data"
         ))
         fun_LogIt(session, message = paste0(
           "**Single Entitie** - Values are grouped for all levels within: ", params$group_by, " (",paste0(levels(result$gene_data$annotation),collapse = ";"),")"))

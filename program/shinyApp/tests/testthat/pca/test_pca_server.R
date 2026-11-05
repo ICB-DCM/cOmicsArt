@@ -55,7 +55,7 @@ test_that("a run returns the PCA of all samples with its parameters and the Data
     expect_equal(res$percentVar, expected$percentVar)
     expect_equal(res$version, 2)
     expect_equal(res$params$sample_selection, "all")
-    expect_false(res$params$useBatch)
+    expect_equal(res$params$data_stage, "processed")
     expect_true(res$params$scale_data)
     expect_equal(res$params$color_by, "diet")
     expect_equal(res$params$x_axis, "PC1")
@@ -74,7 +74,7 @@ test_that("batch corrected data is used when chosen", {
     session$setInputs(UseBatch = "Yes", coloring_options = "condition", scale_data = "TRUE")
     session$setInputs(Do_PCA = 1)
     res <- session$returned()
-    expect_true(res$params$useBatch)
+    expect_equal(res$params$data_stage, "batch_corrected")
     batch <- get_pca(tmm$processed(batch = TRUE), TRUE, "condition", "all")$pca$x
     expect_equal(res$pca$x, batch)
     expect_false(isTRUE(all.equal(res$pca$x, get_pca(tmm$processed(), TRUE, "condition", "all")$pca$x)))

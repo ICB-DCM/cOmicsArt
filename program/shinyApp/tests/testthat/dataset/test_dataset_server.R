@@ -180,6 +180,22 @@ test_that("fake_dataset() gives the batch-corrected data and the DESeq2 objects"
   expect_identical(deseq$deseq(batch = TRUE), deseq$deseq())
 })
 
+test_that("data(stage) is the data of each DATA_STAGES stage; has_batch() says whether there is a batch column", {
+  tmm <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
+  expect_true(tmm$has_batch())
+  expect_identical(tmm$data("raw"), tmm$raw())
+  expect_identical(tmm$data("processed"), tmm$processed())
+  expect_identical(tmm$data("batch_corrected"), tmm$processed(batch = TRUE))
+  expect_false(isTRUE(all.equal(assay(tmm$data("batch_corrected")), assay(tmm$data("processed")))))
+  lipid <- fake_dataset()
+  expect_false(lipid$has_batch())
+  # no batch column: the processed data
+  expect_identical(lipid$data("batch_corrected"), lipid$processed())
+  expect_error(lipid$data("data_original"))
+  expect_error(lipid$data("proc"))
+  expect_error(lipid$data(NULL))
+})
+
 test_that("the processed data has one assay, named processed; raw() keeps raw", {
   lipid <- fake_dataset()
   expect_equal(SummarizedExperiment::assayNames(lipid$processed()), "processed")

@@ -21,7 +21,7 @@ performSigAnalysis <- function(
   comparisons,       # character vector of comparisons (e.g. "A:B")
   compare_within,    # the name of the sample annotation column used for contrasts
   test_method,       # the testing method (for non-DESeq2)
-  useBatch,          # TRUE/FALSE for using batch correction
+  data_stage,        # "batch_corrected" or "processed" (DATA_STAGES)
   padjust_method     # the correction method (e.g., "BH")
 ) {
   # Perform significance analysis for a given dataset and set of comparisons.
@@ -32,15 +32,17 @@ performSigAnalysis <- function(
   # comparisons: a character vector of comparisons (e.g. "A:B")
   # compare_within: the name of the sample annotation column used for contrasts
   # test_method: the testing method (for non-DESeq2)
-  # useBatch: TRUE/FALSE for using batch correction
+  # data_stage: "batch_corrected" for the batch-corrected data or DESeq2
+  #   object, else the uncorrected ones
   # padjust_method: the correction method (e.g., "BH")
   # Returns:
   # A list of results for each comparison.
+  batch <- identical(data_stage, "batch_corrected")
   contrasts <- lapply(comparisons, function(comp) unlist(strsplit(comp, ":")))
   names(contrasts) <- comparisons
   if (preprocessing == "vst_DESeq") {
-    # Choose the appropriate DESeq object based on the useBatch flag:
-    dds <- if (useBatch) data$DESeq_obj_batch_corrected else data$DESeq_obj
+    # the DESeq object of the data stage
+    dds <- if (batch) data$DESeq_obj_batch_corrected else data$DESeq_obj
 
     tryCatch({
       # For each contrast, run DESeq2::results and collect the result:
@@ -57,7 +59,7 @@ performSigAnalysis <- function(
     })
   } else {
     # Find all unique contrast levels and select the corresponding columns from the data:
-    data <- if (useBatch) data$data_batch_corrected else data$data
+    data <- if (batch) data$data_batch_corrected else data$data
     contrasts_all <- unique(unlist(contrasts))
     index_comparisons <- which(colData(data)[, compare_within] %in% contrasts_all)
     samples_selected <- colData(data)[index_comparisons, ]

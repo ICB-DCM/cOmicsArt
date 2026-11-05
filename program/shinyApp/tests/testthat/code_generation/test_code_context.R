@@ -33,9 +33,9 @@ test_that("no run, no context", {
 
 test_that("an R-code zip has the context's parameters and the module's under its section", {
   zip <- tempfile(fileext = ".zip")
-  rcode_zip(zip, code_context(run), list(), "PCA", list(useBatch = FALSE))
+  rcode_zip(zip, code_context(run), list(), "PCA", list(data_stage = "processed"))
   parameters <- rcode_parameters(zip)
   expect_named(parameters, c("selection", "preprocessing", "omic_type", "organism", "PCA"))
-  expect_equal(parameters$PCA, list(useBatch = FALSE))
+  expect_equal(parameters$PCA, list(data_stage = "processed"))
   expect_equal(parameters$selection$sample_values, c("CD_CD_HFD", "HFD_HFD_CD"))
 })

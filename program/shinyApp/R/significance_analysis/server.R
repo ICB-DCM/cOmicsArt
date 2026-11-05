@@ -6,7 +6,7 @@
 #     performSigAnalysis() returns it (DESeq2 results or the own test's table)
 #   params: what the run used (the R-code templates read them as
 #     parameters$SigAna): preprocessing, comparisons, compare_within,
-#     test_method, useBatch, padjust_method, significance_level, method
+#     test_method, data_stage, padjust_method, significance_level, method
 #     ("DESeq2" or the test), volcano (per comparison: th_psig, th_lfc, anno),
 #     overview (and its choices under the names the UpSet template reads)
 #   version: the Dataset version it was computed on
@@ -40,15 +40,8 @@ significance_analysis_server <- function(id, dataset){
       )
 
       ## Sidebar UI section
-      output$UseBatch_ui <- renderUI({
-        req(dataset$preprocessing()$batch_column)
-        selectInput(
-          inputId = ns("UseBatch"),
-          label = "Use batch corrected data?",
-          choices = c("No","Yes"),
-          selected = "No"
-        )
-      })
+      # the data the next run uses (DATA_STAGES), from the batch picker
+      data_stage <- batch_toggle(input, output, ns, dataset)
       output$type_of_comparison_ui <- renderUI({
         data <- req(dataset$processed())
         if(uses_deseq()){
@@ -259,7 +252,7 @@ significance_analysis_server <- function(id, dataset){
         print("Start the Significance Analysis")
 
         # define variables to be used
-        useBatch <- !is.null(dataset$preprocessing()$batch_column) && identical(input$UseBatch, "Yes")
+        stage <- data_stage()
         # performSigAnalysis() takes the DESeq2 path for "vst_DESeq"
         preprocessing <- dataset$preprocessing()$preprocessing_procedure
         deseq <- uses_deseq()
@@ -283,7 +276,7 @@ significance_analysis_server <- function(id, dataset){
             comparisons = comparisons,
             compare_within = compare_within,
             test_method = test_method,
-            useBatch = useBatch,
+            data_stage = stage,
             padjust_method = PADJUST_METHOD[[test_correction]]
           )
         }, error = function(e) {
@@ -301,7 +294,7 @@ significance_analysis_server <- function(id, dataset){
             comparisons = comparisons,
             compare_within = compare_within,
             test_method = test_method,
-            useBatch = useBatch,
+            data_stage = stage,
             padjust_method = PADJUST_METHOD[[test_correction]],
             significance_level = significance_level,
             method = if (deseq) "DESeq2" else test_method,
@@ -310,7 +303,7 @@ significance_analysis_server <- function(id, dataset){
           version = dataset$version()
         )
         # the data the run used, for the volcano annotation
-        run_data <- dataset$processed(batch = useBatch)
+        run_data <- dataset$data(stage)
 
         ## Tab Management: the run's comparisons replace the last run's
         remove_comparison_tabs()
@@ -489,7 +482,7 @@ significance_analysis_server <- function(id, dataset){
         params <- run_params()
         rcode_zip(
           file, dataset$code_context(), UPSET_PLOT_PIPELINE, "SigAna", params,
-          batch_data_stage(params$useBatch)
+          params$data_stage
         )
       })
 
