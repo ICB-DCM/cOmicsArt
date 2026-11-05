@@ -237,15 +237,15 @@ pca_Server <- function(id, dataset){
         params = c(params, display_params())
       ))
       print("PCA computing done")
-      info_text <- "PCA computed."
+      message <- "PCA computed."
       if (!("all" %in% sample_selection)){
-        info_text <- paste0(
-          info_text,
+        message <- paste0(
+          message,
           "\n\nDue to sample selection, some genes that are constant\n",
           "in the selected samples were temporarily removed in the pca creation."
         )
       }
-      info_text(info_text)
+      info_text(message)
     })
 
     ## Downloads ----
