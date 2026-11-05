@@ -12,15 +12,10 @@
 pca_Server <- function(id, dataset){
   moduleServer(id, function(input,output,session){
     ns <- session$ns
-    file_path <- paste0("/www/",session$token,"/")
 
-    # what get_pca() returned for the current result: the plots draw from it
-    pca_run <- reactiveVal(NULL)
     info_text <- reactiveVal(NULL)
-    result <- module_result(dataset, on_clear = function(){
-      pca_run(NULL)
-      info_text(NULL)
-    })
+    # its run is what get_pca() returned: the plots draw from it
+    result <- module_result(dataset, on_clear = function() info_text(NULL))
     # the plots and their buttons show while there is a result
     observe(shinyjs::toggleElement(id = "PCA_main_panel_div", condition = !is.null(result$get())))
 
@@ -76,50 +71,42 @@ pca_Server <- function(id, dataset){
       )
     })
 
-    # what the plots show; part of the result's params
-    display_params <- reactive({
-      x_axis <- input$x_axis_selection %||% "PC1"
-      y_axis <- input$y_axis_selection %||% "PC2"
-      list(
-        color_by = input$coloring_options,
-        x_axis = x_axis,
-        y_axis = y_axis,
-        show_loadings = as.logical(input$Show_loadings %||% FALSE),
-        plot_ellipses = as.logical(input$Plot_ellipses %||% FALSE),
-        entitie_anno = input$entitie_anno,
-        tooltip_var = input$PCA_anno_tooltip,
-        title = create_default_title_pca(
-          pcs = paste0(x_axis," vs ",y_axis),
-          preprocessing = dataset$preprocessing()$preprocessing_procedure
-        ),
-        n_top = input$topSlider %||% 10,
-        n_bottom = input$bottomSlider %||% 10,
-        cutoff = input$filterValue %||% 0.3,
-        n_pcs = input$nPCAs_to_look_at %||% 2
-      )
-    })
-    # a display change updates the result's params, which re-draws (below);
-    # the PCA stays
+    # what the plots show, each a function of its controls; part of the
+    # result's params
+    display <- list(
+      color_by = function() input$coloring_options,
+      x_axis = function() input$x_axis_selection %||% "PC1",
+      y_axis = function() input$y_axis_selection %||% "PC2",
+      show_loadings = function() as.logical(input$Show_loadings %||% FALSE),
+      plot_ellipses = function() as.logical(input$Plot_ellipses %||% FALSE),
+      entitie_anno = function() input$entitie_anno,
+      tooltip_var = function() input$PCA_anno_tooltip,
+      title = function() create_default_title_pca(
+        pcs = paste0(display$x_axis(), " vs ", display$y_axis()),
+        preprocessing = dataset$preprocessing()$preprocessing_procedure
+      ),
+      n_top = function() input$topSlider %||% 10,
+      n_bottom = function() input$bottomSlider %||% 10,
+      cutoff = function() input$filterValue %||% 0.3,
+      n_pcs = function() input$nPCAs_to_look_at %||% 2
+    )
+    # the display params `names`, as a reactive: it depends only on their
+    # controls, so each plot redraws only for its own
+    display_of <- function(names) reactive(lapply(display[names], function(value) value()))
+    display_params <- display_of(names(display))
+    # a display change updates the result's params; the PCA stays
     observeEvent(display_params(), result$set_params(display_params()), ignoreInit = TRUE)
 
-    # the result's params `names`, changing only when one of them does: a
-    # reactiveVal ignores an identical value, so a plot redraws only for its
-    # own params
-    params_of <- function(names){
-      values <- reactiveVal(NULL)
-      observe(values(result$get()$params[names]))
-      values
-    }
-    pca_params <- params_of(c(
+    pca_display <- display_of(c(
       "x_axis", "y_axis", "color_by", "title", "show_loadings",
       "plot_ellipses", "entitie_anno", "tooltip_var"
     ))
-    loadings_params <- params_of(c("x_axis", "n_top", "n_bottom", "entitie_anno"))
-    matrix_params <- params_of(c("entitie_anno", "n_pcs", "cutoff"))
+    loadings_display <- display_of(c("x_axis", "n_top", "n_bottom", "entitie_anno"))
+    matrix_display <- display_of(c("entitie_anno", "n_pcs", "cutoff"))
 
     pca_plot <- reactive({
-      run <- req(pca_run())
-      params <- req(pca_params())
+      run <- req(result$run())
+      params <- pca_display()
       req(params$color_by)
       plot_pca(
         pca = run$pca,
@@ -137,8 +124,8 @@ pca_Server <- function(id, dataset){
       )
     })
     loadings_plot <- reactive({
-      run <- req(pca_run())
-      params <- req(loadings_params())
+      run <- req(result$run())
+      params <- loadings_display()
       plot_pca_loadings(
         pca = run$pca,
         data = run$data,
@@ -149,12 +136,12 @@ pca_Server <- function(id, dataset){
       )
     })
     scree_plot <- reactive({
-      run <- req(pca_run())
+      run <- req(result$run())
       plot_scree_pca(pca = run$pca, percentVar = run$percentVar)
     })
     loadings_matrix_plot <- reactive({
-      run <- req(pca_run())
-      params <- req(matrix_params())
+      run <- req(result$run())
+      params <- matrix_display()
       plot_loadings_matrix(
         pca = run$pca,
         data = run$data,
@@ -165,8 +152,8 @@ pca_Server <- function(id, dataset){
     })
     # Potentially update the slider for the matrix filter
     observe({
-      run <- req(pca_run())
-      params <- req(matrix_params())
+      run <- req(result$run())
+      params <- matrix_display()
       update_slider_values(
         pca = run$pca,
         n_pcs = params$n_pcs,
@@ -212,19 +199,12 @@ pca_Server <- function(id, dataset){
       sample_selection <- sample_selection %||% "all"
       scale_data <- as.logical(input$scale_data %||% TRUE)
       print("Calculate PCA")
-      pca_res <- with_loading(
-        tryCatch(
-          get_pca(data, scale_data, sample_types, sample_selection),
-          error = function(e){
-            error_modal(e$message)
-            NULL
-          }
-        ),
+      pca_res <- try_run(
+        get_pca(data, scale_data, sample_types, sample_selection),
         color = "#70BF4F47"
       )
       if (is.null(pca_res)) return()
 
-      pca_run(pca_res)
       params <- list(
         sample_selection = sample_selection,
         sample_types = sample_types,
@@ -235,7 +215,7 @@ pca_Server <- function(id, dataset){
         pca = pca_res$pca,
         percentVar = pca_res$percentVar,
         params = c(params, display_params())
-      ))
+      ), run = pca_res)
       print("PCA computing done")
       message <- "PCA computed."
       if (!("all" %in% sample_selection)){
@@ -277,112 +257,51 @@ pca_Server <- function(id, dataset){
     })
 
     ## Report generators ----
-    observeEvent(input$only2Report_pca, {
+    # what was computed, not what the controls say now
+    report <- function(title, stem, plot, info, notes = NULL, snippet){
       params <- req(result$get())$params
-      notificationID <- showNotification("Saving to Report...",duration = 0)
-      pca_report_path <- paste0(getwd(), file_path, "PCA_plot_", Sys.time(), ".png")
-      ggsave(
-        pca_report_path,
-        plot = pca_plot(),
-        device = "png"
+      plot_report(
+        session, title, stem,
+        save = function(file) ggsave(file, plot = plot(), device = "png"),
+        info = info(params),
+        notes = notes,
+        snippet = snippet(data = NULL, params = list(PCA = params))
       )
-      # Add Log Messages
-      fun_LogIt(session, message = "## PCA {.tabset .tabset-fade}")
-      fun_LogIt(session, message = "### Info")
-      if(!("all" %in% params$sample_selection)){
-        fun_LogIt(session,
-          message = paste0("**PCA** - The following PCA-plot is based on a selection of the data. ")
-        )
-        fun_LogIt(session,
-          message = paste0("**PCA** - All samples with ", params$sample_types, " being ", paste(params$sample_selection, collapse = ", "), " were selected.")
-        )
-      }else{
-        fun_LogIt(session, message = "**PCA** - The PCA was computed on the entire dataset.")
-      }
-      fun_LogIt(session, message = paste0("**PCA** - The following PCA-plot is colored after: ", params$color_by))
-      if (isTRUE(params$show_loadings)) fun_LogIt(session, message = "PCA - Added top 5 loadings")
-      fun_LogIt(session, message = paste0("**PCA** - ![PCA](",pca_report_path,")"))
-
-      if(isTruthy(input$NotesPCA) & !(isEmpty(input$NotesPCA))){
-        fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesPCA)))
-      }
-      fun_LogIt(session, message = "### Publication Snippet")
-      fun_LogIt(session, message = snippet_PCA(data = NULL, params = list(PCA = params)))
-      removeNotification(notificationID)
-      showNotification("Report Saved!",type = "message", duration = 1)
-    })
-
-    observeEvent(input$only2Report_Scree_Plot, {
-      params <- req(result$get())$params
-      notificationID <- showNotification("Saving to Report...",duration = 0)
-      tmp_filename <- paste0(
-        getwd(), file_path, "ScreePlot", Sys.time(), ".png"
-      )
-      ggsave(
-        tmp_filename,
-        plot=scree_plot(),
-        device = "png"
-      )
-      # Add Log Messages
-      fun_LogIt(session, message = "## PCA ScreePlot{.tabset .tabset-fade}")
-      fun_LogIt(session, message = "### Info")
-      fun_LogIt(session, message = paste0("**ScreePlot** - The scree Plot shows the Variance explained per Principle Component"))
-      fun_LogIt(session, message = paste0("**ScreePlot** - ![ScreePlot](",tmp_filename,")"))
-      fun_LogIt(session, message = "### Publication Snippet")
-      fun_LogIt(session, message = snippet_PCAscree(data = NULL, params = list(PCA = params)))
-      removeNotification(notificationID)
-      showNotification("Report Saved!",type = "message", duration = 1)
-    })
-
-    observeEvent(input$only2Report_Loadings, {
-      params <- req(result$get())$params
-      notificationID <- showNotification("Saving to Report...",duration = 0)
-      tmp_filename <- paste0(
-        getwd(), file_path, "LOADINGS_PCA_", Sys.time(), ".png"
-      )
-      ggsave(
-        tmp_filename,
-        plot = loadings_plot(),
-        device = "png"
-      )
-      # Add Log Messages
-      fun_LogIt(session, message = "## PCA Loadings{.tabset .tabset-fade}")
-      fun_LogIt(session, message = "### Info")
-      fun_LogIt(session, message = paste0("**LoadingsPCA** - Loadings plot for ", params$x_axis))
-      fun_LogIt(session, message = paste0("**LoadingsPCA** - Showing the the highest ", params$n_top, " and the lowest ", params$n_bottom, " Loadings"))
-      fun_LogIt(session, message = paste0("**LoadingsPCA** - The corresponding Loadingsplot - ![ScreePlot](",tmp_filename,")"))
-      fun_LogIt(session, message = "### Publication Snippet")
-      fun_LogIt(session, message = snippet_PCAloadings(data = NULL, params = list(PCA = params)))
-      removeNotification(notificationID)
-      showNotification("Report Saved!",type = "message", duration = 1)
-    })
-
-    observeEvent(input$only2Report_Loadings_matrix,{
-      params <- req(result$get())$params
-      notificationID <- showNotification("Saving to Report...",duration = 0)
-      # png like the other report images
-      tmp_filename <- paste0(
-          getwd(), file_path,
-          "LOADINGS_Matrix_PCA_", Sys.time(), ".png"
-        )
-      ggsave(
-        tmp_filename,
-        plot = loadings_matrix_plot(),
-        device = "png",
-        dpi = "print"
-      )
-      # Add Log Messages
-      fun_LogIt(session, message = "## PCA Loadings Matrix{.tabset .tabset-fade}")
-      fun_LogIt(session, message = "### Info")
-      fun_LogIt(session, message = paste0("**PCALoadingsMatrix** - Loadings of the first ", params$n_pcs, " Principle Components"))
-      fun_LogIt(session, message = paste0("**PCALoadingsMatrix** - Showing all entities which have an absolute Loadings value of at least ", params$cutoff))
-      fun_LogIt(session, message = paste0("**PCALoadingsMatrix** - The corresponding Loadings Matrix plot - ![PCALoadingsMatrix](",tmp_filename,")"))
-
-      fun_LogIt(session, message = "### Publication Snippet")
-      fun_LogIt(session, message = snippet_PCAloadingsMatrix(data = NULL, params = list(PCA = params)))
-      removeNotification(notificationID)
-      showNotification("Report Saved!",type = "message", duration = 1)
-    })
+    }
+    observeEvent(input$only2Report_pca, report(
+      "PCA", "PCA_plot_", pca_plot,
+      info = function(params) c(
+        if (!("all" %in% params$sample_selection)) c(
+          "**PCA** - The following PCA-plot is based on a selection of the data. ",
+          paste0("**PCA** - All samples with ", params$sample_types, " being ", paste(params$sample_selection, collapse = ", "), " were selected.")
+        ) else "**PCA** - The PCA was computed on the entire dataset.",
+        paste0("**PCA** - The following PCA-plot is colored after: ", params$color_by),
+        if (isTRUE(params$show_loadings)) "PCA - Added top 5 loadings"
+      ),
+      notes = input$NotesPCA,
+      snippet = snippet_PCA
+    ))
+    observeEvent(input$only2Report_Scree_Plot, report(
+      "PCA ScreePlot", "ScreePlot", scree_plot,
+      info = function(params) "**ScreePlot** - The scree Plot shows the Variance explained per Principle Component",
+      snippet = snippet_PCAscree
+    ))
+    observeEvent(input$only2Report_Loadings, report(
+      "PCA Loadings", "LOADINGS_PCA_", loadings_plot,
+      info = function(params) c(
+        paste0("**LoadingsPCA** - Loadings plot for ", params$x_axis),
+        paste0("**LoadingsPCA** - Showing the the highest ", params$n_top, " and the lowest ", params$n_bottom, " Loadings")
+      ),
+      snippet = snippet_PCAloadings
+    ))
+    observeEvent(input$only2Report_Loadings_matrix, report(
+      "PCA Loadings Matrix", "LOADINGS_Matrix_PCA_", loadings_matrix_plot,
+      info = function(params) c(
+        paste0("**PCALoadingsMatrix** - Loadings of the first ", params$n_pcs, " Principle Components"),
+        paste0("**PCALoadingsMatrix** - Showing all entities which have an absolute Loadings value of at least ", params$cutoff)
+      ),
+      snippet = snippet_PCAloadingsMatrix
+    ))
 
     result$get
   })

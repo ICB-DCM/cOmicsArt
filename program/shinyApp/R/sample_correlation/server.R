@@ -11,18 +11,10 @@ sample_correlation_server <- function(id, dataset){
     id,
     function(input,output,session){
       ns <- session$ns
-      file_path <- paste0("/www/",session$token,"/")
       START_TEXT <- "Press 'Get Sample Correlation' to start!"
 
-      # the heatmap of the result: the correlation matrix and the sample
-      # annotation it is coloured by
-      figure <- reactiveValues(corr_plot = NULL, row_anno = NULL)
       info_text <- reactiveVal(START_TEXT)
-      result <- module_result(dataset, on_clear = function(){
-        figure$corr_plot <- NULL
-        figure$row_anno <- NULL
-        info_text(START_TEXT)
-      })
+      result <- module_result(dataset, on_clear = function() info_text(START_TEXT))
 
       # UI Section ----
       # the data the next run uses (DATA_STAGES), from the batch picker
@@ -37,15 +29,18 @@ sample_correlation_server <- function(id, dataset){
 
       output$SampleCorr_Info <- renderText(info_text())
 
-      output$SampleCorrelationPlot <- renderPlot({
-        req(figure$corr_plot)
-        figure$corr_plot + figure$row_anno
+      # the heatmap of the result: its correlation matrix, the samples
+      # coloured by its annotation; the render, the download and the report
+      # use it
+      figure <- reactive({
+        res <- req(result$get())
+        params <- res$params
+        custom_heatmap(res$cormat, params$title, params$correlation_method) +
+          custom_sample_annotation(dataset$data(params$data_stage), params$sample_annotations)
       })
+      output$SampleCorrelationPlot <- renderPlot(figure())
       # a new annotation recolours the samples; the matrix stays
-      observeEvent(input$SampleAnnotationChoice,{
-        params <- req(result$get())$params
-        data <- req(dataset$data(params$data_stage))
-        figure$row_anno <- custom_sample_annotation(data, input$SampleAnnotationChoice)
+      observeEvent(input$SampleAnnotationChoice, {
         result$set_params(list(sample_annotations = input$SampleAnnotationChoice))
       })
 
@@ -55,35 +50,23 @@ sample_correlation_server <- function(id, dataset){
         # a run that fails leaves no result
         result$clear()
         stage <- data_stage()
-        sample_annotations <- input$SampleAnnotationChoice
         correlation_method <- input$corrMethod
-        title <- create_default_title_sc(
-          correlation_method, dataset$preprocessing()$preprocessing_procedure
-        )
-        data <- dataset$data(stage)
-
-        cormat <- with_loading(
-          tryCatch(
-            get_sample_correlation(data, correlation_method),
-            error = function(e){
-              error_modal(e$message)
-              NULL
-            }
-          ),
+        cormat <- try_run(
+          get_sample_correlation(dataset$data(stage), correlation_method),
           color = "#A208BA35"
         )
         if (is.null(cormat)) return()
 
-        figure$corr_plot <- custom_heatmap(cormat, title, correlation_method)
-        figure$row_anno <- custom_sample_annotation(data, sample_annotations)
         info_text("Correlation Matrix successfully computed.")
         result$set(list(
           cormat = cormat,
           params = list(
             correlation_method = correlation_method,
-            sample_annotations = sample_annotations,
+            sample_annotations = input$SampleAnnotationChoice,
             data_stage = stage,
-            title = title
+            title = create_default_title_sc(
+              correlation_method, dataset$preprocessing()$preprocessing_procedure
+            )
           )
         ))
       })
@@ -97,46 +80,23 @@ sample_correlation_server <- function(id, dataset){
       output$SavePlot_SampleCorrelation <- plot_download(
         "SampleCorrelation", NULL,
         ext = reactive(input$file_ext_SampleCorrelation),
-        save = function(file, device){
-          req(result$get())
-          save_complex_heatmap(figure$corr_plot + figure$row_anno, filename = file, type = device)
-        },
+        save = function(file, device) save_complex_heatmap(figure(), filename = file, type = device),
         report_button = ns("only2Report_SampleCorrelation")
       )
 
       # send only to report: what was computed, not what the controls say now
       observeEvent(input$only2Report_SampleCorrelation,{
         params <- req(result$get())$params
-        notificationID <- showNotification("Saving to Report...",duration = 0)
-        # longer names cause issues for saving
-        file_title <- if (nchar(params$title) >= 250) "SampleCorrelation" else params$title
-        tmp_filename <- paste0(getwd(), file_path, paste0(file_title, Sys.Date(), ".png"))
-
-        save_complex_heatmap(
-          figure$corr_plot + figure$row_anno,
-          filename = tmp_filename,
-          type = "png"
+        plot_report(
+          session, "Sample correlation", "SampleCorrelation_",
+          save = function(file) save_complex_heatmap(figure(), filename = file, type = "png"),
+          info = c(
+            paste0("**SampleCorrelation** - The correlation method used was: ", params$correlation_method),
+            paste0("**SampleCorrelation** - The heatmap samples were colored after ", paste(params$sample_annotations))
+          ),
+          notes = input$NotesSampleCorrelation,
+          snippet = snippet_sampleCorr(data = NULL, params = list(SampleCorr = params))
         )
-
-        ## Add Log Messages
-        fun_LogIt(session, "## Sample correlation {.tabset .tabset-fade}")
-        fun_LogIt(session, message = "### Info")
-        fun_LogIt(session, message = paste0("**SampleCorrelation** - The correlation method used was: ", params$correlation_method))
-        fun_LogIt(session, message = paste0("**SampleCorrelation** - The heatmap samples were colored after ", paste(params$sample_annotations)))
-        fun_LogIt(session, message = paste0("**SampleCorrelation** - ![SAMPLE_CORRELATION](",tmp_filename,")"))
-
-        if(isTruthy(input$NotesSampleCorrelation) & !(isEmpty(input$NotesSampleCorrelation))){
-          fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesSampleCorrelation)))
-        }
-
-        fun_LogIt(session, message = "### Publication Snippet")
-        fun_LogIt(session, message = snippet_sampleCorr(
-          data = NULL,
-          params = list(SampleCorr = params)
-        ))
-
-        removeNotification(notificationID)
-        showNotification("Report Saved!",type = "message", duration = 1)
       })
 
       result$get

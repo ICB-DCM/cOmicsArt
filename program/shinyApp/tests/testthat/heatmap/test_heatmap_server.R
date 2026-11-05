@@ -81,7 +81,7 @@ test_that("batch corrected data is used for the selection, labels and annotation
     res <- session$returned()
     expect_equal(res$params$data_stage, "batch_corrected")
     expect_equal(res$entities, expected_top_k(tmm$data("batch_corrected"), "condition"))
-    expect_identical(heatmap_reactives$run$data, tmm$data("batch_corrected"))
+    expect_identical(result$run()$data, tmm$data("batch_corrected"))
   })
 })
 
@@ -136,7 +136,7 @@ test_that("a new Dataset version clears the result", {
     ds$state$version <- 3
     session$flushReact()
     expect_null(session$returned())
-    expect_null(heatmap_reactives$run)
+    expect_null(result$run())
   })
 })
 

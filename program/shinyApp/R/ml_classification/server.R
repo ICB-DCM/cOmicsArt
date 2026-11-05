@@ -12,14 +12,11 @@
 ml_classification_Server <- function(id, dataset){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
-    file_path <- paste0("/www/", session$token, "/")
 
-    # One result per method; behind each the analysis its plot draws
+    # One result per method; its run is the analysis its plot draws
     # (run_kmeans_analysis(), run_svm_classification())
-    kmeans_fit <- reactiveVal(NULL)
-    svm_fit <- reactiveVal(NULL)
-    kmeans_result <- module_result(dataset, on_clear = function() kmeans_fit(NULL))
-    svm_result <- module_result(dataset, on_clear = function() svm_fit(NULL))
+    kmeans_result <- module_result(dataset)
+    svm_result <- module_result(dataset)
 
     ## UI Section ----
     output$condition_overlay_ui <- annotation_picker(
@@ -34,18 +31,14 @@ ml_classification_Server <- function(id, dataset){
     observe(shinyjs::toggleElement(id = "cluster_div", condition = !is.null(kmeans_result$get())))
     observe(shinyjs::toggleElement(id = "svm_div", condition = !is.null(svm_result$get())))
 
-    # `analysis(data)` on the processed data after the input check, behind
-    # the loading screen; an error goes to an error modal as `label`. NULL
-    # when it fails or stops.
+    # `analysis(data)` on the processed data after the input check, with
+    # try_run(): NULL when it fails or stops
     run_analysis <- function(label, min_samples, analysis){
-      with_loading(tryCatch({
+      try_run({
         data <- dataset$processed()
         validate_ml_data(data, min_samples)
         analysis(data)
-      }, error = function(e){
-        error_modal(paste0("Error running ", label, ": ", e$message))
-        NULL
-      }))
+      }, error_prefix = paste0("Error running ", label, ": "))
     }
 
     ## k-means Section ----
@@ -63,9 +56,8 @@ ml_classification_Server <- function(id, dataset){
       })
       if (is.null(fit)) return()
 
-      kmeans_fit(fit)
       # params feed the R-code download
-      kmeans_result$set(list(
+      kmeans_result$set(run = fit, list(
         assignments = fit$cluster_assignments,
         k = input$k_clusters,
         params = list(
@@ -89,7 +81,7 @@ ml_classification_Server <- function(id, dataset){
     # new Dataset version clears the run.
     cluster_plot <- reactive({
       render_kmeans_plot(
-        kmeans_result = req(kmeans_fit()),
+        kmeans_result = req(kmeans_result$run()),
         data = dataset$processed(),
         condition_column = run_overlay()
       )
@@ -141,9 +133,8 @@ ml_classification_Server <- function(id, dataset){
       })
       if (is.null(fit)) return()
 
-      svm_fit(fit)
       # params feed the R-code download
-      svm_result$set(list(
+      svm_result$set(run = fit, list(
         predictions = fit$predictions,
         truth = fit$y,
         accuracy = fit$accuracy,
@@ -163,7 +154,7 @@ ml_classification_Server <- function(id, dataset){
     })
 
     # The plot of the SVM run; the render, the download and the report use it
-    svm_plot <- reactive(render_svm_plot(svm_result = req(svm_fit())))
+    svm_plot <- reactive(render_svm_plot(svm_result = req(svm_result$run())))
 
     output$svm_plot <- renderPlotly({
       # "text" tooltip: the plot has its own tooltip text
@@ -190,48 +181,26 @@ ml_classification_Server <- function(id, dataset){
     }, server = FALSE)
 
     ## Download and Reporting Handlers ----
+    # the report's image of a plot: a 16:9 png, which the HTML report shows,
+    # whatever the download format
+    save_report_plot <- function(file, plot){
+      ggsave(file, plot = plot, width = 16, height = 9, units = "in", device = "png")
+    }
 
-    # K-means clustering handlers
-    # the report describes the run; its image is a png, which the HTML
-    # report shows, whatever the download format
+    # K-means clustering handlers; the report describes the run
     observeEvent(input$only2Report_cluster, {
       params <- req(kmeans_result$get())$params
-      notificationID <- showNotification("Saving to Report...", duration = 0)
-
-      tmp_filename <- paste0(
-        getwd(), file_path,
-        "KMeans_Clustering_", Sys.time(), ".png"
+      plot_report(
+        session, "ML Classification - k-means Clustering", "KMeans_Clustering_",
+        save = function(file) save_report_plot(file, cluster_plot()),
+        info = c(
+          paste0("**k-means Clustering** - Number of clusters: k=", params$k_clusters),
+          if (params$filter_genes_unsupervised) paste0(
+            "**k-means** - Filtered to top ", params$n_genes_unsupervised, " variable genes"
+          ),
+          if (!is.null(run_overlay())) paste0("**k-means** - Overlay condition: ", run_overlay())
+        )
       )
-
-      ggsave(
-        tmp_filename,
-        plot = cluster_plot(),
-        width = 16,
-        height = 9,
-        units = "in",
-        device = "png"
-      )
-
-      # Log to report with proper section structure
-      fun_LogIt(session, message = "## ML Classification - k-means Clustering {.tabset .tabset-fade}")
-      fun_LogIt(session, message = "### Info")
-      fun_LogIt(session, message = paste0(
-        "**k-means Clustering** - Number of clusters: k=", params$k_clusters
-      ))
-      if (params$filter_genes_unsupervised) {
-        fun_LogIt(session, message = paste0(
-          "**k-means** - Filtered to top ", params$n_genes_unsupervised, " variable genes"
-        ))
-      }
-      if (!is.null(run_overlay())) {
-        fun_LogIt(session, message = paste0(
-          "**k-means** - Overlay condition: ", run_overlay()
-        ))
-      }
-      fun_LogIt(session, message = paste0("![k-means Clustering](", tmp_filename, ")"))
-
-      removeNotification(notificationID)
-      showNotification("Saved!", type = "message", duration = 1)
     })
 
     output$SavePlot_cluster <- plot_download(
@@ -246,49 +215,22 @@ ml_classification_Server <- function(id, dataset){
       params = function() kmeans_result$get()$params
     )
 
-    # SVM classification handlers
-    # as for k-means: the run's parameters, a png image
+    # SVM classification handlers; as for k-means
     observeEvent(input$only2Report_svm, {
       svm <- req(svm_result$get())
       params <- svm$params
-      notificationID <- showNotification("Saving to Report...", duration = 0)
-
-      tmp_filename <- paste0(
-        getwd(), file_path,
-        "SVM_Classification_", Sys.time(), ".png"
+      plot_report(
+        session, "ML Classification - SVM", "SVM_Classification_",
+        save = function(file) save_report_plot(file, svm_plot()),
+        info = c(
+          paste0("**SVM Classification** - Predicting: ", params$condition_column_supervised),
+          paste0("**SVM** - Training accuracy: ", round(svm$accuracy * 100, 1), "%"),
+          "**SVM** - Note: This is training accuracy only (no validation). Results are exploratory.",
+          if (params$filter_genes_supervised) paste0(
+            "**SVM** - Filtered to top ", params$n_genes_supervised, " variable genes"
+          )
+        )
       )
-
-      ggsave(
-        tmp_filename,
-        plot = svm_plot(),
-        width = 16,
-        height = 9,
-        units = "in",
-        device = "png"
-      )
-
-      # Log to report with proper section structure
-      fun_LogIt(session, message = "## ML Classification - SVM {.tabset .tabset-fade}")
-      fun_LogIt(session, message = "### Info")
-      fun_LogIt(session, message = paste0(
-        "**SVM Classification** - Predicting: ", params$condition_column_supervised
-      ))
-      fun_LogIt(session, message = paste0(
-        "**SVM** - Training accuracy: ", round(svm$accuracy * 100, 1), "%"
-      ))
-      fun_LogIt(session, message = paste0(
-        "**SVM** - Note: This is training accuracy only (no validation). ",
-        "Results are exploratory."
-      ))
-      if (params$filter_genes_supervised) {
-        fun_LogIt(session, message = paste0(
-          "**SVM** - Filtered to top ", params$n_genes_supervised, " variable genes"
-        ))
-      }
-      fun_LogIt(session, message = paste0("![SVM Classification](", tmp_filename, ")"))
-
-      removeNotification(notificationID)
-      showNotification("Saved!", type = "message", duration = 1)
     })
 
     output$SavePlot_svm <- plot_download(

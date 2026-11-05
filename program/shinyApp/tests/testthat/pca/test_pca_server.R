@@ -93,7 +93,7 @@ test_that("the in-module sample selection computes on those samples, and the plo
     expect_setequal(rownames(res$pca$x), samples)
     expect_equal(res$params$sample_selection, chosen)
     expect_equal(res$params$sample_types, "diet")
-    expect_setequal(colnames(pca_run()$data), samples)
+    expect_setequal(colnames(result$run()$data), samples)
     expect_match(output$PCA_Info, "Due to sample selection", fixed = TRUE)
 
     # switched off again: all samples, whatever the pickers still hold
