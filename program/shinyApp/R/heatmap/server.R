@@ -16,35 +16,27 @@
 heatmap_server <- function(id, dataset){moduleServer(
   id,
   function(input,output,session){
+    ns <- session$ns
+    file_path <- paste0("/www/",session$token,"/")
+    START_TEXT <- "Press 'Get Heatmap' to start!"
+
     heatmap_reactives <- reactiveValues(
-      info_text = "Press 'Get Heatmap' to start!",
       # list(selected, data, params): the selection waiting for "Continue"
       pending = NULL,
       # list(selected, data, params) of the shown heatmap; data is the
       # object it was selected from (batch corrected or not)
-      run = NULL,
-      result = NULL
+      run = NULL
     )
-    waiter <- Waiter$new(
-      html = LOADING_SCREEN,
-      color = "#70BF4F47",
-      hide_on_render = F
-    )
-    ns <- session$ns
-    file_path <- paste0("/www/",session$token,"/")
-
-    # The result belongs to one Dataset version: a new Dataset, run or clear
-    # removes it
-    observeEvent(dataset$version(), {
+    info_text <- reactiveVal(START_TEXT)
+    result <- module_result(dataset, on_clear = function(){
       heatmap_reactives$pending <- NULL
       heatmap_reactives$run <- NULL
-      heatmap_reactives$result <- NULL
-      heatmap_reactives$info_text <- "Press 'Get Heatmap' to start!"
+      info_text(START_TEXT)
     })
     # the heatmap and its buttons show while there is a result whose heatmap
     # could be drawn
     observe({
-      drawn <- !is.null(heatmap_reactives$result) &&
+      drawn <- !is.null(result$get()) &&
         !is.null(tryCatch(heatmap_plot(), shiny.silent.error = function(e) NULL))
       shinyjs::toggleElement(id = "Heatmap_div", condition = drawn)
     })
@@ -53,45 +45,23 @@ heatmap_server <- function(id, dataset){moduleServer(
     # the data the next run uses (DATA_STAGES), from the batch picker
     data_stage <- batch_toggle(input, output, ns, dataset)
     ### Aesthetic Settings
-    output$anno_options_ui <- renderUI({
-      data <- req(dataset$processed())
-      selectInput(
-        inputId = ns("anno_options"),
-        label = "Choose the variable to color the samples after (Multiples are possible)",
-        choices = colnames(colData(data)),
-        multiple = T,
-        selected = NULL
-      )
-    })
-    output$row_anno_options_ui <- renderUI({
-      data <- req(dataset$processed())
-      selectInput(
-        inputId = ns("row_anno_options"),
-        label = "Choose the variable to color the rows after (Multiples are possible)",
-        choices = colnames(rowData(data)),
-        multiple = T,
-        selected = NULL
-      )
-    })
-    output$row_label_options_ui <- renderUI({
-      data <- req(dataset$processed())
-      selectInput(
-        inputId = ns("row_label_options"),
-        label = "Choose the label of rows",
-        choices = colnames(rowData(data)),
-        multiple = F
-      )
-    })
+    output$anno_options_ui <- annotation_picker(
+      "anno_options", "Choose the variable to color the samples after (Multiples are possible)",
+      ns, dataset, "samples", multiple = TRUE, selected = NULL
+    )
+    output$row_anno_options_ui <- annotation_picker(
+      "row_anno_options", "Choose the variable to color the rows after (Multiples are possible)",
+      ns, dataset, "entities", multiple = TRUE, selected = NULL
+    )
+    output$row_label_options_ui <- annotation_picker(
+      "row_label_options", "Choose the label of rows", ns, dataset, "entities"
+    )
     ### Row selection
-    output$sample_annotation_types_cmp_heatmap_ui <- renderUI({
-      data <- req(dataset$processed())
-      selectInput(
-        inputId = ns("sample_annotation_types_cmp_heatmap"),
-        label = "Choose type for LFC-based ordering",
-        choices = colnames(colData(data)),
-        multiple = F
-      )
-    })
+    output$sample_annotation_types_cmp_heatmap_ui <- annotation_picker(
+      "sample_annotation_types_cmp_heatmap", "Choose type for LFC-based ordering",
+      ns, dataset, "samples"
+    )
+    # picks a group (a value) of the LFC column, the `position`th by default
     group_picker <- function(input_id, label, position){
       renderUI({
         data <- req(dataset$processed())
@@ -112,16 +82,10 @@ heatmap_server <- function(id, dataset){moduleServer(
     output$Groups2Compare_treat_heatmap_ui <- group_picker(
       "Groups2Compare_treat_heatmap", "Choose treatment group of log2 FoldChange", 2
     )
-    output$anno_options_heatmap_ui <- renderUI({
-      data <- req(dataset$processed())
-      selectInput(
-        inputId = ns("anno_options_heatmap"),
-        label = "Choose the variable to select the rows after (Multiples are not possible)",
-        choices = colnames(rowData(data)),
-        selected = colnames(rowData(data))[1],
-        multiple = F
-      )
-    })
+    output$anno_options_heatmap_ui <- annotation_picker(
+      "anno_options_heatmap", "Choose the variable to select the rows after (Multiples are not possible)",
+      ns, dataset, "entities"
+    )
     output$row_anno_options_heatmap_ui <- renderUI({
       data <- req(dataset$processed())
       req(input$anno_options_heatmap %in% colnames(rowData(data)))
@@ -136,15 +100,12 @@ heatmap_server <- function(id, dataset){moduleServer(
       )
     })
 
-    output$Heatmap_Info <- renderText({
-      heatmap_reactives$info_text
-    })
+    output$Heatmap_Info <- renderText(info_text())
 
-    # what the plot shows; part of the result's params
+    # what the plot shows; part of the result's params (the title is the run's)
     display_params <- function(run){
       row_label <- input$row_label_options %||% colnames(rowData(run$data))[1]
       list(
-        title = run$params$title,
         cluster_rows = input$cluster_rows %||% TRUE,
         cluster_cols = input$cluster_cols %||% TRUE,
         scale_rows = input$rowWiseScaled %||% FALSE,
@@ -154,27 +115,20 @@ heatmap_server <- function(id, dataset){moduleServer(
         col_annotations = input$anno_options
       )
     }
-    # `[<-` keeps the names of NULL values (the template needs every name)
-    with_display_params <- function(params, run){
-      display <- display_params(run)
-      params[names(display)] <- display
-      params
-    }
 
     # the shown heatmap: a new run, its gene list cleared
     accept <- function(selection){
       heatmap_reactives$pending <- NULL
       heatmap_reactives$run <- selection
-      heatmap_reactives$result <- list(
+      result$set(list(
         entities = rownames(selection$selected),
         gene_list = NULL,
-        params = with_display_params(selection$params, selection),
-        version = dataset$version()
-      )
-      heatmap_reactives$info_text <- paste0(
+        params = c(selection$params, display_params(selection))
+      ))
+      info_text(paste0(
         "The heatmap is being calculated and displays a matrix with: ",
         nrow(selection$selected), " rows and ", ncol(selection$selected), " columns."
-      )
+      ))
     }
 
     # Workflow: "Get Heatmap" selects the rows; fewer than two rows stop,
@@ -182,22 +136,20 @@ heatmap_server <- function(id, dataset){moduleServer(
     observeEvent(input$Do_Heatmap, {
       req(dataset$processed(), input$row_selection_options)
       # a run that fails or is cancelled leaves no result
-      heatmap_reactives$pending <- NULL
-      heatmap_reactives$run <- NULL
-      heatmap_reactives$result <- NULL
+      result$clear()
       stage <- data_stage()
       data <- dataset$data(stage)
       params <- list(
         data_stage = stage,
         selection_type = input$row_selection_options,
-        n_top_k = input$TopK %||% NULL,
-        top_k_type = input$TopK_order %||% NULL,
-        select_by = input$anno_options_heatmap %||% NULL,
-        selection = input$row_anno_options_heatmap %||% NULL,
-        compare_within = input$sample_annotation_types_cmp_heatmap %||% NULL,
-        reference = input$Groups2Compare_ref_heatmap %||% NULL,
-        treatment = input$Groups2Compare_treat_heatmap %||% NULL,
-        significance_level = input$psig_threhsold_heatmap %||% NULL
+        n_top_k = input$TopK,
+        top_k_type = input$TopK_order,
+        select_by = input$anno_options_heatmap,
+        selection = input$row_anno_options_heatmap,
+        compare_within = input$sample_annotation_types_cmp_heatmap,
+        reference = input$Groups2Compare_ref_heatmap,
+        treatment = input$Groups2Compare_treat_heatmap,
+        significance_level = input$psig_threhsold_heatmap
       )
       params$title <- generate_title_heatmap(
         selection_type = params$selection_type,
@@ -205,24 +157,25 @@ heatmap_server <- function(id, dataset){moduleServer(
         n_top_k = params$n_top_k,
         comparison = params$compare_within
       )
-      waiter$show()
-      selected <- entitieSelection(
-        data,
-        selection_type = params$selection_type,
-        n_top_k = params$n_top_k,
-        top_k_type = params$top_k_type,
-        select_by = params$select_by,
-        selection = params$selection,
-        compare_within = params$compare_within,
-        reference = params$reference,
-        treatment = params$treatment,
-        significance_level = params$significance_level
+      selected <- with_loading(
+        entitieSelection(
+          data,
+          selection_type = params$selection_type,
+          n_top_k = params$n_top_k,
+          top_k_type = params$top_k_type,
+          select_by = params$select_by,
+          selection = params$selection,
+          compare_within = params$compare_within,
+          reference = params$reference,
+          treatment = params$treatment,
+          significance_level = params$significance_level
+        ),
+        color = "#70BF4F47"
       )
-      waiter$hide()
       selection <- list(selected = selected, data = data, params = params)
       # entitieSelection() gives NULL without annotation or groups
       if (is.null(selected) || nrow(selected) < 2){
-        heatmap_reactives$info_text <- "The selection results in fewer than two rows. Please revise to have at least two. For single gene visualisation check out the tab Single gene visualisation."
+        info_text("The selection results in fewer than two rows. Please revise to have at least two. For single gene visualisation check out the tab Single gene visualisation.")
       } else if (nrow(selected) > 100) {
         heatmap_reactives$pending <- selection
         showModal(modalDialog(
@@ -247,7 +200,7 @@ heatmap_server <- function(id, dataset){moduleServer(
 
     observeEvent(input$cancel_heatmap, {
       heatmap_reactives$pending <- NULL
-      heatmap_reactives$info_text <- "The heatmap not calculated due to user's choice."
+      info_text("The heatmap not calculated due to user's choice.")
       removeModal()
     })
 
@@ -258,14 +211,13 @@ heatmap_server <- function(id, dataset){moduleServer(
       input$rowWiseScaled, input$row_label_no, input$row_anno_options,
       input$anno_options
     ), {
-      result <- req(heatmap_reactives$result)
-      result$params <- with_display_params(result$params, heatmap_reactives$run)
-      heatmap_reactives$result <- result
+      req(result$get())
+      result$set_params(display_params(heatmap_reactives$run))
     }, ignoreInit = TRUE, ignoreNULL = FALSE)
 
     heatmap_plot <- reactive({
       run <- req(heatmap_reactives$run)
-      params <- req(heatmap_reactives$result)$params
+      params <- req(result$get())$params
       tryCatch({
         plot_heatmap(
           selected_data = run$selected,
@@ -297,8 +249,7 @@ heatmap_server <- function(id, dataset){moduleServer(
 
     observeEvent(input$SaveGeneList_Heatmap, {
       # Save the gene list for Enrichment when asked
-      result <- req(heatmap_reactives$result)
-      genes2send <- result$params$row_labels
+      genes2send <- req(result$get())$params$row_labels
       if(!length(which(grepl("ENS.*",genes2send) == TRUE)) == length(genes2send)){
         error_modal(
           error_message = paste("No genes were saved.", ERROR_NON_ENSEMBL_GENES),
@@ -306,35 +257,29 @@ heatmap_server <- function(id, dataset){moduleServer(
         )
         req(FALSE)
       }
-      result$gene_list <- genes2send
-      heatmap_reactives$result <- result
+      result$update(function(res){
+        res$gene_list <- genes2send
+        res
+      })
       showNotification("Heatmap Genes Saved!",type = "message", duration = 2)
     })
 
-    output$getR_Code_Heatmap <- rcode_download("Heatmap", NULL, function(file) {
-      params <- heatmap_reactives$result$params
-      rcode_zip(
-        file, dataset$code_context(), HEATMAP_PIPELINE, "Heatmap", params,
-        params$data_stage
-      )
-    })
+    output$getR_Code_Heatmap <- dataset$rcode_download(
+      "Heatmap", NULL, HEATMAP_PIPELINE, "Heatmap",
+      params = function() result$get()$params
+    )
 
-    output$SavePlot_Heatmap <- downloadHandler(
-      filename = function() {
-        download_name("Heatmap", input$file_ext_Heatmap)
+    output$SavePlot_Heatmap <- plot_download(
+      "Heatmap", NULL,
+      ext = reactive(input$file_ext_Heatmap),
+      save = function(file, device){
+        save_complex_heatmap(isolate(heatmap_plot()), filename = file, type = device)
       },
-      content = function(file){
-        save_complex_heatmap(
-          isolate(heatmap_plot()),
-          filename=file,
-          type=gsub("\\.","",input$file_ext_Heatmap)
-        )
-        on.exit({shinyjs::click(ns("only2Report_Heatmap"))})
-      }
+      report_button = ns("only2Report_Heatmap")
     )
 
     observeEvent(input$only2Report_Heatmap,{
-      params <- req(heatmap_reactives$result)$params
+      params <- req(result$get())$params
       notificationID <- showNotification("Saving to Report...",duration = 0)
       tmp_filename <- paste0(
         getwd(),
@@ -379,6 +324,6 @@ heatmap_server <- function(id, dataset){moduleServer(
       showNotification("Report Saved!",type = "message", duration = 1)
     })
 
-    reactive(heatmap_reactives$result)
+    result$get
   }
 )}

@@ -39,6 +39,19 @@ test_that("module_result() stamps the Dataset version, merges params and clears 
   })
 })
 
+test_that("update() replaces the result with a function of it, e.g. a new field", {
+  ds <- changeable_dataset("Lipidomics")
+  testServer(result_module, args = list(dataset = ds$handle, on_clear = function() NULL), {
+    session$flushReact()
+    result <- session$returned$result
+    result$set(list(params = list(a = 1)))
+    result$update(function(r){ r$gene_list <- c("g1", "g2"); r })
+    expect_equal(session$returned$get()$gene_list, c("g1", "g2"))
+    expect_equal(session$returned$get()$params, list(a = 1))
+    expect_equal(session$returned$get()$version, 2)
+  })
+})
+
 test_that("set_params() without a result does nothing", {
   ds <- changeable_dataset("Lipidomics")
   testServer(result_module, args = list(dataset = ds$handle, on_clear = function() NULL), {
@@ -75,4 +88,40 @@ test_that("with_loading() hides the loading screen also when `expr` fails", {
   waiter <- fake_waiter()
   expect_error(with_loading(stop("failed"), waiter = waiter), "failed")
   expect_equal(waiter$calls$hide, 1)
+})
+
+# a module with nothing but an annotation picker
+picker_module <- function(id, dataset, ...){
+  moduleServer(id, function(input, output, session){
+    output$picker <- annotation_picker("choice", "Pick", session$ns, dataset, ...)
+  })
+}
+picker_html <- function(dataset, ...){
+  html <- NULL
+  testServer(picker_module, args = list(dataset = dataset, ...), {
+    session$flushReact()
+    html <<- as.character(output$picker$html)
+  })
+  html
+}
+
+test_that("annotation_picker() offers the annotation columns, the first one selected", {
+  lipid <- fake_dataset()
+  samples <- picker_html(lipid, side = "samples")
+  for (column in colnames(SummarizedExperiment::colData(lipid$processed()))) {
+    expect_match(samples, sprintf('value="%s"', column), fixed = TRUE)
+  }
+  first <- colnames(SummarizedExperiment::colData(lipid$processed()))[1]
+  expect_match(samples, sprintf('value="%s" selected', first), fixed = TRUE)
+  entities <- picker_html(lipid, side = "entities")
+  expect_match(entities, sprintf('value="%s"', colnames(SummarizedExperiment::rowData(lipid$processed()))[1]), fixed = TRUE)
+})
+
+test_that("annotation_picker() takes extra choices and another or no selection", {
+  lipid <- fake_dataset()
+  none <- picker_html(lipid, side = "samples", extra_choices = c("None" = "none"), selected = "none")
+  expect_match(none, 'value="none" selected', fixed = TRUE)
+  expect_match(none, ">None<", fixed = TRUE)
+  nothing <- picker_html(lipid, side = "samples", multiple = TRUE, selected = NULL)
+  expect_false(grepl("selected", nothing, fixed = TRUE))
 })
