@@ -435,11 +435,18 @@ run_preprocessing <- function(data, omic_type, options, batch_column = NULL){
 # `selection` (resolve_selection()), with the context of its Upload: `raw`, the
 # whole raw data, `omic_type` and `organism` (NULL without a gene annotation).
 # `run` numbers the run, so that a repeated run is a change. Read its data
-# with run_data() and run_deseq().
+# with run_data() and run_deseq(); without a batch column the batch corrected
+# objects are the uncorrected ones.
 new_preprocessing_run <- function(res, options, batch_column, selection, raw, omic_type, organism, run){
   list(
-    data = list(processed = res$data, batch_corrected = res$data_batch_corrected),
-    deseq = list(processed = res$DESeq_obj, batch_corrected = res$DESeq_obj_batch_corrected),
+    data = list(
+      processed = res$data,
+      batch_corrected = res$data_batch_corrected %||% res$data
+    ),
+    deseq = list(
+      processed = res$DESeq_obj,
+      batch_corrected = res$DESeq_obj_batch_corrected %||% res$DESeq_obj
+    ),
     params = c(options, list(batch_column = batch_column)),
     selection = selection,
     raw = raw,
@@ -450,16 +457,22 @@ new_preprocessing_run <- function(res, options, batch_column, selection, raw, om
 }
 
 # A run's processed data at `stage`, "processed" or "batch_corrected"
-# (DATA_STAGES); a run without a batch column has only the processed data.
-# NULL without a run.
+# (DATA_STAGES; "raw" is the Selection's); anything else is an error. NULL
+# without a run.
 run_data <- function(run, stage = "processed"){
-  run$data[[stage]] %||% run$data$processed
+  run$data[[run_stage(stage)]]
 }
 
 # A run's DESeq2 object (vst_DESeq runs only, NULL otherwise), at `stage` as
 # in run_data()
 run_deseq <- function(run, stage = "processed"){
-  run$deseq[[stage]] %||% run$deseq$processed
+  run$deseq[[run_stage(stage)]]
+}
+
+# `stage` if it is one a run has objects for, else an error
+run_stage <- function(stage){
+  stopifnot(length(stage) == 1, stage %in% c("processed", "batch_corrected"))
+  stage
 }
 
 # The summary's normality section (HTML) for `normality`, one row per entity

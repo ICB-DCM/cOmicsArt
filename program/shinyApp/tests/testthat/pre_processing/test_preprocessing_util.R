@@ -323,6 +323,9 @@ test_that("a run's data and DESeq2 object, batch corrected only with a batch col
   without <- new_preprocessing_run(fake_res(FALSE), LOG10, NULL, NULL, lipids, "Lipidomics", NULL, 1)
   expect_equal(run_data(without, "batch_corrected"), "processed")
   expect_equal(run_deseq(without, "batch_corrected"), "dds")
+  # only the stages a run has objects for
+  expect_error(run_data(with_batch, "raw"))
+  expect_error(run_deseq(with_batch, "batch"))
   # no run, no data
   expect_null(run_data(NULL))
   expect_null(run_deseq(NULL, "batch_corrected"))

@@ -348,7 +348,11 @@ plot_loadings_matrix_info <- list(
 performSigAnalysis_info <- list(
   foo = performSigAnalysis,
   name = "performSigAnalysis",
+  # data and dds: the stage's data and DESeq2 object (NULL unless vst_DESeq),
+  # which the script's Pre-processing and batch correction leave behind
   input_mapping = list(
+    data = "data",
+    dds = "dds",
     preprocessing = "preprocessing_procedure"
   ),
   output_name = "sig_results",
