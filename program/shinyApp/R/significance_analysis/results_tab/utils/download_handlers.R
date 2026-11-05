@@ -126,7 +126,7 @@ setup_rcode_downloads <- function(output, ids, contrast, tab_state, run_params, 
       params <- comparison_params(run_params, contrast, tab_state, raw)
       rcode_zip(
         file, code_context(), VOLCANO_PIPELINE, "SigAna", params,
-        batch_data_stage(params$useBatch)
+        params$data_stage
       )
     })
   }

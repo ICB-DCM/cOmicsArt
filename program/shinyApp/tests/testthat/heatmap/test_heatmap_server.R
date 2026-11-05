@@ -66,7 +66,7 @@ test_that("a Top K run returns the K entities with its parameters and the Datase
     expect_equal(res$version, 2)
     expect_equal(res$params$selection_type, "Top K")
     expect_equal(res$params$n_top_k, 10)
-    expect_false(res$params$useBatch)
+    expect_equal(res$params$data_stage, "processed")
     expect_match(res$params$title, "top 10", fixed = TRUE)
     expect_true(res$params$cluster_rows)
     expect_length(res$params$row_labels, 10)
@@ -79,7 +79,7 @@ test_that("batch corrected data is used for the selection, labels and annotation
   testServer(heatmap_server, args = list(dataset = tmm), {
     run_heatmap(session, c(top_k_inputs(tmm, "condition"), list(UseBatch = "Yes")))
     res <- session$returned()
-    expect_true(res$params$useBatch)
+    expect_equal(res$params$data_stage, "batch_corrected")
     expect_equal(res$entities, expected_top_k(tmm$processed(batch = TRUE), "condition"))
     expect_identical(heatmap_reactives$run$data, tmm$processed(batch = TRUE))
   })

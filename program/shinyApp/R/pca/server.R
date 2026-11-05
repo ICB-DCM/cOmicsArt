@@ -5,7 +5,7 @@
 #   pca: the prcomp object
 #   percentVar: the share of variance per principal component
 #   params: what the run and the plots use (the R-code templates read them
-#     as parameters$PCA): sample_selection, sample_types, useBatch,
+#     as parameters$PCA): sample_selection, sample_types, data_stage,
 #     scale_data, color_by, x_axis, y_axis, show_loadings, plot_ellipses,
 #     entitie_anno, tooltip_var, title, n_top, n_bottom, cutoff, n_pcs
 #   version: the Dataset version it was computed on
@@ -36,15 +36,8 @@ pca_Server <- function(id, dataset){
     observe(shinyjs::toggleElement(id = "PCA_main_panel_div", condition = !is.null(pca_reactives$result)))
 
     ## UI Section ----
-    output$UseBatch_ui <- renderUI({
-      req(dataset$preprocessing()$batch_column)
-      selectInput(
-        inputId = ns("UseBatch"),
-        label = "Use batch corrected data?",
-        choices = c("No","Yes"),
-        selected = "No"
-      )
-    })
+    # the data the next run uses (DATA_STAGES), from the batch picker
+    data_stage <- batch_toggle(input, output, ns, dataset)
     sample_annotation_picker <- function(input_id, label){
       renderUI({
         data <- req(dataset$processed())
@@ -183,8 +176,8 @@ pca_Server <- function(id, dataset){
       print("PCA analysis on pre-selected data")
 
       # assign variables to be used
-      useBatch <- !is.null(dataset$preprocessing()$batch_column) && identical(input$UseBatch, "Yes")
-      data <- dataset$processed(batch = useBatch)
+      stage <- data_stage()
+      data <- dataset$data(stage)
       # the in-module sample selection counts only while it is switched on
       selecting <- isTRUE(input$data_selection_pca)
       sample_types <- if (selecting) input$SampleAnnotationTypes_pca
@@ -213,7 +206,7 @@ pca_Server <- function(id, dataset){
         params = with_display_params(list(
           sample_selection = sample_selection,
           sample_types = sample_types,
-          useBatch = useBatch,
+          data_stage = stage,
           scale_data = scale_data
         )),
         version = dataset$version()
@@ -332,7 +325,7 @@ pca_Server <- function(id, dataset){
         params <- pca_reactives$result$params
         rcode_zip(
           file, dataset$code_context(), pipeline, "PCA", params,
-          batch_data_stage(params$useBatch)
+          params$data_stage
         )
       })
     }

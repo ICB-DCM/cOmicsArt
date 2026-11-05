@@ -74,7 +74,7 @@ test_that("Single Gene's R code for raw data starts from the Selection", {
     annotation <- colnames(SummarizedExperiment::rowData(lipid$handle$processed()))[1]
     groups <- as.character(unique(SummarizedExperiment::colData(lipid$handle$processed())$diet))
     session$setInputs(
-      type_of_data_gene = "data_original", accross_condition = "diet", add_testing = "TRUE",
+      type_of_data_gene = "raw", accross_condition = "diet", add_testing = "TRUE",
       Select_GeneAnno = annotation,
       Select_Gene = as.character(SummarizedExperiment::rowData(lipid$handle$processed())[1, annotation]),
       chooseComparisons = paste(groups[1:2], collapse = ":")
@@ -84,10 +84,4 @@ test_that("Single Gene's R code for raw data starts from the Selection", {
     expected <- as.matrix(assay(lipid$handle$raw()))
     expect_equal(data[rownames(expected), colnames(expected)], expected, tolerance = 1e-6, ignore_attr = TRUE)
   })
-})
-
-test_that("batch_data_stage() starts from the batch corrected data only when chosen", {
-  expect_equal(batch_data_stage(TRUE), "batch_corrected")
-  expect_equal(batch_data_stage(FALSE), "processed")
-  expect_equal(batch_data_stage(NULL), "processed")
 })

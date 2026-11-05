@@ -23,6 +23,18 @@ dataset_handle <- function(id, get){
     # `batch = TRUE` falls back to the uncorrected object without a batch column
     processed = function(batch = FALSE) run_data(get("run"), batch),
     deseq = function(batch = FALSE) run_deseq(get("run"), batch),
+    # the data of a stage of DATA_STAGES: "raw" (the Selection before
+    # Pre-processing), "processed" or "batch_corrected" (processed without a
+    # batch column); anything else is an error
+    data = function(stage) {
+      stopifnot(length(stage) == 1, stage %in% DATA_STAGES)
+      switch(stage,
+        raw = get("selection")$data,
+        processed = run_data(get("run")),
+        batch_corrected = run_data(get("run"), batch = TRUE)
+      )
+    },
+    has_batch = function() !is.null(get("run")$params$batch_column),
     selection = selection,
     preprocessing = preprocessing,
     version = function() get("version"),

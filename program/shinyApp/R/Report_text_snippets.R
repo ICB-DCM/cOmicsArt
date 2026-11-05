@@ -234,9 +234,9 @@ snippet_heatmap <- function(
   return(snippet)
 }
 
-# Single Gene's "Choose Data to use" value in words
+# Single Gene's "Choose Data to use" value (DATA_STAGES) in words
 single_gene_stage_label <- function(stage){
-  c(data_original = "raw", data = "pre-processed", data_batch_corrected = "batch corrected")[[stage]]
+  c(raw = "raw", processed = "pre-processed", batch_corrected = "batch corrected")[[stage]]
 }
 
 snippet_SingleGene <- function(
@@ -245,7 +245,7 @@ snippet_SingleGene <- function(
 ){
   # the parameters the Single Gene module passes
   par <- params$SingleGeneVis
-  data_stage <- single_gene_stage_label(par$data_process_stage)
+  data_stage <- single_gene_stage_label(par$data_stage)
   snippet <- c()
   # Single Entity Plotting
   snippet <- paste0(snippet, "The expression of ", par$selected_gene, " was plotted. ")

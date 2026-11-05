@@ -358,11 +358,6 @@ create_function_script <- function(foo_infos, par, section = NULL, path_to_util=
 #   "raw": the Selection before Pre-processing
 DATA_STAGES <- c("processed", "batch_corrected", "raw")
 
-# The data stage of a module's choice to use the batch corrected data
-batch_data_stage <- function(batch){
-  if (isTRUE(batch)) "batch_corrected" else "processed"
-}
-
 preprocessing_base_script <- function(par, path_to_util = NULL, data_stage = "processed"){
   # Generate the base script that contains the necessary functions and libraries
   # Parameters:
