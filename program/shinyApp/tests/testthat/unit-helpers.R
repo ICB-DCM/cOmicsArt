@@ -24,16 +24,12 @@ preprocessing_run <- function(selection, omic_type, options, batch_column = NULL
   new_preprocessing_run(res, options, batch_column, selection, raw, omic_type, organism, run)
 }
 
-# The private state of a Dataset as dataset_server() keeps it: a Selection of
-# all of `data`, one run of `options` on it (version 2: one new Dataset, one
-# run), no results. No organism, as the test data's Upload has none.
+# The private state of a Dataset as dataset_server() keeps it: one run of
+# `options` on a Selection of all of `data` (version 2: a confirmed Selection,
+# then the run), no results. No organism, as the test data's Upload has none.
 dataset_state <- function(data, omic_type, options = LOG10, batch_column = NULL){
-  selection <- resolve_selection(data, list())
   list(
-    selection = selection,
-    omic_type = omic_type,
-    organism = NULL,
-    run = preprocessing_run(selection, omic_type, options, batch_column),
+    run = preprocessing_run(resolve_selection(data, list()), omic_type, options, batch_column),
     version = 2,
     results = list()
   )

@@ -54,9 +54,9 @@ test_that("a log10 run returns the processed object and its parameters", {
     ))
     expect_equal(
       SummarizedExperiment::assay(run_data(result)),
-      SummarizedExperiment::assay(expected$data)
+      SummarizedExperiment::assay(run_data(expected))
     )
-    expect_equal(result$selection$data, lipids)
+    expect_equal(run_data(result, "raw"), lipids)
     params <- result$params
     expect_equal(params$preprocessing_procedure, "log10")
     expect_equal(params$filter_threshold, 0)

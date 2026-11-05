@@ -379,6 +379,10 @@ preprocessing_base_script <- function(par, path_to_util = NULL, data_stage = "pr
       sep = "\n"
     )
   }
+  # After the script, `data` is the stage's data and `dds` the DESeq2 object
+  # (NULL unless vst_DESeq) of the processed or batch corrected data, both
+  # from the output_mapping of preprocessing_info and batch_correction_info;
+  # the modules' steps read them (e.g. performSigAnalysis_info)
   if (data_stage == "raw") {
     data_select_process_script <- paste(
       data_select_process_script,

@@ -81,7 +81,7 @@ test_that("Single Gene's R code for raw data starts from the Selection", {
     )
     session$setInputs(singleGeneGo = 1)
     data <- data_of_rcode(output$getR_Code_SingleEntities)
-    expected <- as.matrix(assay(lipid$handle$raw()))
+    expected <- as.matrix(assay(lipid$handle$data("raw")))
     expect_equal(data[rownames(expected), colnames(expected)], expected, tolerance = 1e-6, ignore_attr = TRUE)
   })
 })

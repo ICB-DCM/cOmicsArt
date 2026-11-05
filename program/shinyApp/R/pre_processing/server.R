@@ -202,7 +202,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       input$violin_color
     })
     raw_violin <- reactive({
-      violin_plot(result()$selection$data, violin_color = violin_color())
+      violin_plot(run_data(result(), "raw"), violin_color = violin_color())
     })
     # with a batch column, the batch-corrected data
     processed_violin <- reactive({

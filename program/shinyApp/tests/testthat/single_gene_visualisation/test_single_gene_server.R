@@ -65,14 +65,14 @@ test_that("a run returns the entity's values with its parameters and the Dataset
   })
 })
 
-test_that("raw data is the Selection before Pre-processing; batch corrected data is data("batch_corrected")", {
+test_that("raw data is the Selection before Pre-processing; batch corrected data is data('batch_corrected')", {
   ds <- changeable_dataset("Lipidomics")
   testServer(single_gene_visualisation_server, args = list(dataset = ds$handle), {
     inputs <- gene_inputs(ds$handle$processed(), "diet", stage = "raw")
     run(session, inputs)
     expect_equal(
       session$returned()$gene_data,
-      expected_gene_data(ds$handle$raw(), ds$handle$processed(), inputs)
+      expected_gene_data(ds$handle$data("raw"), ds$handle$processed(), inputs)
     )
   })
   tmm <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
