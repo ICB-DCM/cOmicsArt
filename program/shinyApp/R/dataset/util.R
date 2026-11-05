@@ -13,40 +13,36 @@ data_stage_label <- function(stage){
 }
 
 ### Dataset handle
-# What every module reads a Dataset through. `get(name)`
-# returns one piece of the Dataset's private state, NULL before there is a
-# Dataset:
-#   selection: its Selection (resolve_selection())
-#   omic_type, organism: as of its Upload; the run's once there is one
-#   run: the last successful Pre-processing run (preprocessing_server()'s
-#     result), NULL before one and after a failed one
-#   version: counts up on every new Dataset, run, failed run and clear;
-#     never reset
+# What every module reads a Dataset through: a view of its run. `get(name)`
+# returns one piece of the Dataset's private state:
+#   run: the last successful Pre-processing run (new_preprocessing_run()),
+#     NULL before one, after a failed one and after a new Selection, Upload,
+#     Clear or gene annotation
+#   version: counts up on every change of the run, also to NULL; never reset
 #   results: what the modules returned, by module
-# dataset_server() reads them from reactiveValues, fake_dataset() from a list.
+# Every accessor but id, version() and results() is NULL without a run.
+# dataset_server() reads the state from reactiveValues, fake_dataset() from a
+# list.
 dataset_handle <- function(id, get){
-  # the data of a stage of DATA_STAGES; anything else is an error
-  data <- function(stage) {
-    stopifnot(length(stage) == 1, stage %in% DATA_STAGES)
-    if (stage == "raw") get("selection")$data else run_data(get("run"), stage)
-  }
+  run <- function() get("run")
   list(
     id = id,
-    name = function() get("omic_type"),
-    omic_type = function() get("omic_type"),
-    organism = function() get("organism"),
-    data = data,
-    raw = function() data("raw"),
-    processed = function() data("processed"),
-    # the run's DESeq2 object at `stage` (vst_DESeq only, NULL otherwise)
-    deseq = function(stage = "processed") run_deseq(get("run"), stage),
-    has_batch = function() !is.null(get("run")$params$batch_column),
-    selection = function() get("selection")$params,
+    name = function() run()$omic_type,
+    omic_type = function() run()$omic_type,
+    organism = function() run()$organism,
+    # the data of a stage of DATA_STAGES; anything else is an error
+    data = function(stage) run_data(run(), stage),
+    processed = function() run_data(run()),
+    # the DESeq2 object at `stage` (vst_DESeq only, NULL otherwise)
+    deseq = function(stage = "processed") run_deseq(run(), stage),
+    has_batch = function() !is.null(run()$params$batch_column),
+    # the Selection the run pre-processed (resolve_selection()'s params)
+    selection = function() run()$selection,
     # the run's options with batch_column (NULL for none)
-    preprocessing = function() get("run")$params,
+    preprocessing = function() run()$params,
     version = function() get("version"),
     results = function() get("results"),
-    # what the R-code download starts from (rcode_zip()), NULL before a run
-    code_context = function() code_context(get("run"))
+    # what the R-code download starts from (rcode_zip())
+    code_context = function() code_context(run())
   )
 }

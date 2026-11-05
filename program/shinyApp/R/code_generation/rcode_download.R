@@ -11,7 +11,7 @@ code_context <- function(run){
   list(
     raw = run$raw,
     parameters = list(
-      selection = run$selection$params,
+      selection = run$selection,
       preprocessing = run$params,
       omic_type = run$omic_type,
       organism = run$organism

@@ -253,10 +253,11 @@ significance_analysis_server <- function(id, dataset){
 
         # define variables to be used
         stage <- data_stage()
-        # the Pre-processing procedure; with vst_DESeq the stage's DESeq2
-        # object is tested
         preprocessing <- dataset$preprocessing()$preprocessing_procedure
-        deseq <- uses_deseq()
+        # with vst_DESeq, DESeq2 tests the stage's DESeq2 object; else the
+        # own test tests `data`
+        dds <- dataset$deseq(stage)
+        deseq <- !is.null(dds)
         comparisons <- input$comparisons
         test_correction <- input$test_correction %||% "Benjamini-Hochberg"
         significance_level <- input$significance_level %||% 0.05
@@ -269,7 +270,7 @@ significance_analysis_server <- function(id, dataset){
         sig_results <- tryCatch({
           performSigAnalysis(
             data = data,
-            dds = dataset$deseq(stage),
+            dds = dds,
             preprocessing = preprocessing,
             comparisons = comparisons,
             compare_within = compare_within,
@@ -317,7 +318,7 @@ significance_analysis_server <- function(id, dataset){
             contrast = contrast_list[[idx]],
             alpha = significance_level,
             ns = ns,
-            preprocess_method = if (deseq) "vst_DESeq" else preprocessing,
+            preprocess_method = preprocessing,
             value = paste0("Significance_", idx),
             data = data,
             run_params = run_params,

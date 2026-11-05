@@ -1,8 +1,8 @@
 ### Dataset module server
-# Dataset 1 of the single-Dataset app: one long-lived
-# handle whose accessors change only when its Dataset is replaced or cleared.
-# A confirmed Selection, or a run on a Selection that was not confirmed,
-# makes a new Dataset 1; a new Upload, Clear or gene annotation clears it.
+# Dataset 1 of the single-Dataset app: one long-lived handle whose accessors
+# show the Dataset's Pre-processing run. A successful run replaces it; a
+# confirmed Selection, failed run, new Upload, Clear or gene annotation
+# removes it.
 # Arguments: the returns of upload_server(), selection_server() and
 #   preprocessing_server()
 # Runs the analysis modules that are already on the handle (so far ML,
@@ -11,49 +11,22 @@
 # Returns the Dataset handle (dataset_handle())
 dataset_server <- function(id, upload, selection, preprocessing){
   moduleServer(id, function(input, output, session){
-    ds <- reactiveValues(
-      selection = NULL,
-      omic_type = NULL,
-      organism = NULL,
-      run = NULL,
-      version = 0,
-      results = list()
-    )
+    ds <- reactiveValues(run = NULL, version = 0, results = list())
 
     # every change of the Dataset goes through here: the modules' results are
-    # of the old state, and the new version tells the modules to clear
-    set_dataset <- function(...){
-      fields <- list(...)
-      for (name in names(fields)) ds[[name]] <- fields[[name]]
+    # of the old run, and the new version tells the modules to clear
+    set_run <- function(run){
+      ds$run <- run
       ds$results <- list()
       ds$version <- ds$version + 1
     }
-    clear <- function(){
-      set_dataset(selection = NULL, omic_type = NULL, organism = NULL, run = NULL)
-    }
 
-    # before the Selection observers, so a new Upload and its confirm in the
-    # same flush end with the new Dataset
-    observeEvent(upload$done(), clear(), priority = 1)
-    observeEvent(upload$cleared(), clear(), priority = 1)
-    observeEvent(upload$annotated(), clear(), priority = 1)
-
-    observeEvent(selection$confirmed(), {
-      set_dataset(
-        selection = selection$selected(), omic_type = upload$omic_type(),
-        organism = upload$organism(), run = NULL
-      )
-    })
-    # a run brings its Selection and its Upload's context: on the confirmed
-    # Selection they are the Dataset's, on another one they make a new Dataset
-    observeEvent(preprocessing$result(), {
-      run <- preprocessing$result()
-      set_dataset(
-        selection = run$selection, omic_type = run$omic_type,
-        organism = run$organism, run = run
-      )
-    })
-    observeEvent(preprocessing$failed(), set_dataset(run = NULL))
+    observeEvent(upload$done(), set_run(NULL))
+    observeEvent(upload$cleared(), set_run(NULL))
+    observeEvent(upload$annotated(), set_run(NULL))
+    observeEvent(selection$confirmed(), set_run(NULL))
+    observeEvent(preprocessing$failed(), set_run(NULL))
+    observeEvent(preprocessing$result(), set_run(preprocessing$result()))
 
     handle <- dataset_handle(id, function(name) ds[[name]])
 

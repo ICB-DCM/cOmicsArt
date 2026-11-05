@@ -350,7 +350,7 @@ enrichment_analysis_Server <- function(id, dataset, heatmap_genes){
           params["universe"] <- list(switch(
             params$UniverseOfGene,
             after_pre_process = rownames(data),
-            before_pre_process = rownames(dataset$raw()),
+            before_pre_process = rownames(dataset$data("raw")),
             NULL
           ))
         }

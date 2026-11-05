@@ -28,14 +28,14 @@ fire <- function(event) event((event() %||% 0) + 1)
 
 accessors <- function(handle){
   list(
-    raw = handle$raw(), processed = handle$processed(), deseq = handle$deseq(),
+    raw = handle$data("raw"), processed = handle$processed(), deseq = handle$deseq(),
     selection = handle$selection(), preprocessing = handle$preprocessing(),
     omic_type = handle$omic_type(), organism = handle$organism(),
     name = handle$name(), code_context = handle$code_context()
   )
 }
 
-test_that("before a confirm the Dataset is empty", {
+test_that("before a run the Dataset is empty", {
   testServer(dataset_server, args = module_args(), {
     session$flushReact()
     handle <- session$returned
@@ -46,29 +46,21 @@ test_that("before a confirm the Dataset is empty", {
   })
 })
 
-test_that("a confirm makes the Dataset; editing the Selection alone doesn't change it", {
+test_that("a confirmed Selection empties the Dataset; editing the Selection alone doesn't change it", {
   testServer(dataset_server, args = module_args(), {
-    session$flushReact()
     handle <- session$returned
-    before <- handle$version()
+    preprocessing$result(run_all)
+    session$flushReact()
+    run_version <- handle$version()
     fire(selection$confirmed)
     session$flushReact()
-    expect_equal(handle$raw(), lipids)
-    expect_equal(handle$selection(), all_lipids$params)
-    expect_equal(handle$omic_type(), "Lipidomics")
-    expect_equal(handle$name(), "Lipidomics")
-    expect_equal(handle$organism(), "Mouse")
-    expect_gt(handle$version(), before)
-    # not pre-processed yet
-    expect_null(handle$processed())
-    expect_null(handle$preprocessing())
+    for (value in accessors(handle)) expect_null(value)
+    expect_gt(handle$version(), run_version)
 
     confirmed_version <- handle$version()
     selection$selected(two_diets)
     upload$omic_type("Metabolomics")
     session$flushReact()
-    expect_equal(handle$selection(), all_lipids$params)
-    expect_equal(handle$omic_type(), "Lipidomics")
     expect_equal(handle$version(), confirmed_version)
   })
 })
@@ -97,11 +89,11 @@ test_that("a successful run pre-processes the Dataset, a failed one takes it bac
     expect_gt(handle$version(), run_version)
     expect_null(handle$processed())
     expect_null(handle$preprocessing())
-    expect_equal(handle$selection(), all_lipids$params)
+    expect_null(handle$selection())
   })
 })
 
-test_that("a run on a Selection that was not confirmed makes a new Dataset", {
+test_that("a run on another Selection replaces the Dataset's run in one step", {
   testServer(dataset_server, args = module_args(), {
     handle <- session$returned
     fire(selection$confirmed)
@@ -111,23 +103,21 @@ test_that("a run on a Selection that was not confirmed makes a new Dataset", {
     preprocessing$result(run_two_diets)
     session$flushReact()
     expect_equal(handle$selection(), two_diets$params)
-    expect_equal(handle$raw(), two_diets$data)
+    expect_equal(handle$data("raw"), two_diets$data)
     expect_equal(assay(handle$processed()), assay(run_data(run_two_diets)))
-    # the new Dataset comes with its run, in one step
     expect_equal(handle$version(), run_version + 1)
   })
 })
 
-test_that("a run's Upload context is the Dataset's, also on the confirmed Selection", {
+test_that("the Dataset's Upload context is its run's", {
   testServer(dataset_server, args = module_args(), {
     handle <- session$returned
-    fire(selection$confirmed)
-    session$flushReact()
-    expect_equal(handle$organism(), "Mouse")
-    # the confirmed Selection, run with another organism than the Upload's now
+    # run with another organism than the Upload's now
     preprocessing$result(preprocessing_run(all_lipids, "Lipidomics", LOG10, organism = "Human"))
     session$flushReact()
     expect_equal(handle$organism(), "Human")
+    expect_equal(handle$omic_type(), "Lipidomics")
+    expect_equal(handle$name(), "Lipidomics")
     expect_equal(handle$selection(), all_lipids$params)
     expect_equal(handle$code_context()$parameters$organism, "Human")
   })
@@ -148,16 +138,6 @@ test_that("a new Upload, Clear or gene annotation clears the Dataset", {
       expect_gt(handle$version(), run_version)
     })
   }
-})
-
-test_that("a new Upload and its confirm in one flush end with the new Dataset", {
-  testServer(dataset_server, args = module_args(), {
-    handle <- session$returned
-    fire(upload$done)
-    fire(selection$confirmed)
-    session$flushReact()
-    expect_equal(handle$selection(), all_lipids$params)
-  })
 })
 
 test_that("code_context() is the context of the Dataset's run, none before a run", {
@@ -198,7 +178,7 @@ test_that("fake_dataset() gives the batch-corrected data and the DESeq2 objects"
 test_that("data(stage) is the data of each DATA_STAGES stage; has_batch() says whether there is a batch column", {
   tmm <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
   expect_true(tmm$has_batch())
-  expect_identical(tmm$data("raw"), tmm$raw())
+  expect_equal(tmm$data("raw"), test_data("Transcriptomics")[1:3000, ])
   expect_identical(tmm$data("processed"), tmm$processed())
   expect_false(isTRUE(all.equal(assay(tmm$data("batch_corrected")), assay(tmm$data("processed")))))
   lipid <- fake_dataset()
@@ -210,10 +190,10 @@ test_that("data(stage) is the data of each DATA_STAGES stage; has_batch() says w
   expect_error(lipid$data(NULL))
 })
 
-test_that("the processed data has one assay, named processed; raw() keeps raw", {
+test_that("the processed data has one assay, named processed; the raw data keeps raw", {
   lipid <- fake_dataset()
   expect_equal(SummarizedExperiment::assayNames(lipid$processed()), "processed")
-  expect_equal(SummarizedExperiment::assayNames(lipid$raw()), "raw")
+  expect_equal(SummarizedExperiment::assayNames(lipid$data("raw")), "raw")
   tmm <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
   expect_equal(SummarizedExperiment::assayNames(tmm$data("batch_corrected")), "processed")
   # DESeq2's batch correction starts again from the counts
