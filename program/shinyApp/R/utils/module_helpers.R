@@ -8,8 +8,10 @@
 #     returns to dataset_server()
 #   set(payload): sets the result, a list, with `version` = the Dataset's
 #     version it was computed on (the glossary's Stale)
+#   update(fn): replaces the result with fn(result), e.g. to add a field;
+#     stops with req() without a result
 #   set_params(values): merges the named list `values` into the result's
-#     params (a NULL value stays an entry); stops with req() without a result
+#     params (a NULL value stays an entry), via update()
 #   clear(): no result; runs `on_clear()`, the module's own resetting
 # A new Dataset version (new Dataset, run or clear) clears it.
 module_result <- function(dataset, on_clear = function() NULL){
@@ -19,16 +21,19 @@ module_result <- function(dataset, on_clear = function() NULL){
     on_clear()
   }
   observeEvent(dataset$version(), clear())
+  update <- function(fn) value(fn(req(isolate(value()))))
   list(
     get = function() value(),
     set = function(payload){
       payload$version <- isolate(dataset$version())
       value(payload)
     },
+    update = update,
     set_params = function(values){
-      result <- req(isolate(value()))
-      result$params[names(values)] <- values
-      value(result)
+      update(function(result){
+        result$params[names(values)] <- values
+        result
+      })
     },
     clear = clear
   )
@@ -59,12 +64,19 @@ plot_download <- function(module, item = NULL, ext, save, report_button){
 }
 
 # A picker (renderUI) over the annotation columns of the `dataset`'s
-# processed data: `side` "samples" (colData) or "entities" (rowData), the
-# first column selected. A new run resets the user's choice.
-annotation_picker <- function(id, label, ns, dataset, side = c("samples", "entities"), multiple = FALSE){
+# processed data: `side` "samples" (colData) or "entities" (rowData), after
+# the `extra_choices` (e.g. c("None" = "none")). `selected` is the first
+# column when left out; NULL selects nothing. A new run resets the user's
+# choice.
+annotation_picker <- function(id, label, ns, dataset, side = c("samples", "entities"),
+                              multiple = FALSE, selected, extra_choices = NULL){
   side <- match.arg(side)
+  first_column <- missing(selected)
   renderUI({
     columns <- selection_annotation_columns(req(dataset$processed()), side)
-    selectInput(ns(id), label = label, choices = columns, multiple = multiple, selected = columns[1])
+    selectInput(
+      ns(id), label = label, choices = c(extra_choices, columns), multiple = multiple,
+      selected = if (first_column) columns[1] else selected
+    )
   })
 }
