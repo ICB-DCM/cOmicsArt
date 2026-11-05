@@ -16,10 +16,13 @@ test_data <- function(omic){
 LOG10 <- list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
 
 # A run as preprocessing_server() returns it: run_preprocessing() on the
-# Selection's data with `options` (named like the arguments of preprocessing())
-preprocessing_run <- function(selection, omic_type, options, batch_column = NULL, run = 1){
+# Selection's data with `options` (named like the arguments of preprocessing()),
+# of an Upload whose whole raw data is `raw`
+preprocessing_run <- function(selection, omic_type, options, batch_column = NULL, run = 1,
+                              raw = selection$data, organism = NULL){
   res <- suppressMessages(run_preprocessing(selection$data, omic_type, options, batch_column))
-  new_preprocessing_run(res, options, batch_column, selection, omic_type, run)
+  upload <- list(raw = raw, omic_type = omic_type, organism = organism)
+  new_preprocessing_run(res, options, batch_column, selection, upload, run)
 }
 
 # The private state of a Dataset as dataset_server() keeps it: a Selection of
@@ -28,7 +31,6 @@ preprocessing_run <- function(selection, omic_type, options, batch_column = NULL
 dataset_state <- function(data, omic_type, options = LOG10, batch_column = NULL){
   selection <- resolve_selection(data, list())
   list(
-    upload_raw = data,
     selection = selection,
     omic_type = omic_type,
     organism = NULL,

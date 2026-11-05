@@ -12,7 +12,6 @@
 dataset_server <- function(id, upload, selection, preprocessing){
   moduleServer(id, function(input, output, session){
     ds <- reactiveValues(
-      upload_raw = NULL,
       selection = NULL,
       omic_type = NULL,
       organism = NULL,
@@ -31,12 +30,12 @@ dataset_server <- function(id, upload, selection, preprocessing){
     }
     new_dataset <- function(selected, omic_type, run = NULL){
       set_dataset(
-        upload_raw = upload$raw(), selection = selected, omic_type = omic_type,
+        selection = selected, omic_type = omic_type,
         organism = upload$organism(), run = run
       )
     }
     clear <- function(){
-      set_dataset(upload_raw = NULL, selection = NULL, omic_type = NULL, organism = NULL, run = NULL)
+      set_dataset(selection = NULL, omic_type = NULL, organism = NULL, run = NULL)
     }
 
     # before the Selection observers, so a new Upload and its confirm in the

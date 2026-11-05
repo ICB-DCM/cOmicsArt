@@ -410,7 +410,7 @@ create_workflow_script <- function(
   # Generate the R script that contains the workflow
   # Parameters:
   #   pipeline_info: list of function informations
-  #   par: list, the parameters (code_parameters())
+  #   par: list, the parameters (rcode_zip())
   #   section: the entry of "par" the pipeline's own steps read, see
   #     variable_assignment()
   #   path_to_util: character, path to the util file

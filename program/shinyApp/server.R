@@ -255,7 +255,8 @@ server <- function(input,output,session){
     omic_type = upload$omic_type,
     selected = selection$selected,
     selection_confirmed = selection$confirmed,
-    upload_done = upload$done
+    upload_done = upload$done,
+    organism = upload$organism
   )
 
   observeEvent(preprocessing$start_discovering(), {
