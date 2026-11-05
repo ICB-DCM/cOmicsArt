@@ -365,3 +365,42 @@ test_that("correct_upload_names leaves valid names alone", {
   expect_equal(corrected$annotation_rows, annotation_rows)
   expect_true(all(corrected$changes == ""))
 })
+
+test_that("the report of a File Input Upload names its files and dimensions", {
+  files <- list(
+    matrix = list(name = "matrix.csv"),
+    sample_table = list(name = "samples.csv"),
+    row_annotation = list(name = "rows.csv")
+  )
+  report <- upload_report("file_input", "Transcriptomics", files, c(10, 4))
+  expect_equal(report$toast$title, "Transcriptomics Data Upload")
+  expect_match(report$status, "Upload successful", fixed = TRUE)
+  expect_match(report$status, "<br>Data Matrix: matrix.csv<br>Sample Annotation: samples.csv<br>Entitie Annotation: rows.csv", fixed = TRUE)
+  expect_equal(tail(report$log, 2), c(
+    "The following data was used: \n\tmatrix.csv\n\tsamples.csv\n\trows.csv",
+    "**DataInput** - The raw data dimensions are: 10, 4"
+  ))
+})
+
+test_that("the report of a precompiled Upload names its file", {
+  files <- list(precompiled = list(name = "data.RDS"))
+  report <- upload_report("precompiled", "Lipidomics", files, c(10, 4))
+  expect_match(report$status, "<br>Precompiled Data: data.RDS", fixed = TRUE)
+  expect_equal(
+    tail(report$log, 1),
+    "**DataInput** - The used data was precompiled. Filename: \n\tdata.RDS"
+  )
+})
+
+test_that("the report of a test data Upload says so", {
+  report <- upload_report("testdata", "Lipidomics", list(), c(10, 4))
+  expect_equal(report$toast$title, "Lipidomics Example Upload")
+  expect_equal(report$status, "The Test Data Set was used")
+  expect_equal(tail(report$log, 1), "**DataInput** - Uploaded Omic Type: Lipidomics")
+})
+
+test_that("the report of a visual inspection Upload lists no files", {
+  report <- upload_report("VI_data", "Lipidomics", list(), c(10, 4))
+  expect_equal(report$status, "<font color=\"#00851d\"><b>Upload successful</b></font>")
+  expect_match(tail(report$log, 1), "visual inspection", fixed = TRUE)
+})
