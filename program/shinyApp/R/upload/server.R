@@ -2,9 +2,9 @@
 # Everything that brings data into a session: the four sources, visual
 # inspection, gene annotation, the status box and the Upload's report lines.
 # Returns reactives:
-#   done: a new number after each successful Upload; after a failed one it
-#     is NULL or stops with req(), so readers req() it (passed to the
-#     Selection and Pre-processing)
+#   done: counts up after each successful Upload; a failed Upload sets it
+#     back to NULL, so readers req() it for "the current Upload succeeded"
+#     (passed to the Selection and Pre-processing)
 #   raw: the raw SummarizedExperiment, also after gene annotation
 #   annotated: counts up after each gene annotation
 #   cleared: counts up when the File Input is cleared
@@ -20,6 +20,8 @@ upload_server <- function(id){
     omic_type <- reactiveVal(NULL)
     raw <- reactiveVal(NULL)
     organism <- reactiveVal(NULL)
+    done <- reactiveVal(NULL)
+    n_uploads <- 0  # successful Uploads so far
     annotated <- reactiveVal(NULL)
     cleared <- reactiveVal(NULL)
     vi <- reactiveValues(
@@ -619,16 +621,14 @@ upload_server <- function(id){
 
 
 ## Do Upload ----
-    observeEvent(commit(),{
-      req(done())
+    # the report lines of a successful Upload
+    observeEvent(done(),{
       fun_LogIt(session, message = "## Data Selection {.tabset .tabset-fade}")
       fun_LogIt(session, message = "### Info")
       fun_LogIt(session,
         message = paste0("**DataInput** - Uploaded Omic Type: ", omic_type())
       )
-      if(!upload_inputs_complete(uploaded_from(), upload_files())){
-        output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
-      } else if (uploaded_from() == "testdata"){
+      if (uploaded_from() == "testdata"){
         show_toast(
           title = paste(omic_type(),"Example Upload"),
           text = paste(omic_type(),"- Example upload was successful"),
@@ -693,7 +693,10 @@ upload_server <- function(id){
     })
 
 ## create data object ----
-    done <- eventReactive(commit(),{
+    # Every commit uploads; a successful Upload counts done up, a failed one
+    # sets it back to NULL
+    observeEvent(commit(),{
+      done(NULL)
       uploaded_where <- isolate(uploaded_from())
       if(uploaded_where == "VI_data") uploaded_where <- "file_input"
       omic_type(input[[paste0("omic_type_", uploaded_where)]])
@@ -703,7 +706,7 @@ upload_server <- function(id){
         output$debug <- renderText({
           "<font color=\"#FF0000\"><b>Upload failed, please check your input - Did you specify all files?.</b></font>"
         })
-        req(FALSE)
+        return()
       }
       # upload depending on where the button was clicked
       upload <- read_upload(
@@ -746,18 +749,19 @@ upload_server <- function(id){
         error_modal(list(message = upload$error_modal))
       }
       if(is.null(upload$se)){
-        return(NULL)
+        return()
       }
 
       # edit annotation columns such that if na is present in the row annotation,
       # the na gets replaced by the rowname
       raw(fill_na_row_annotation(upload$se))
       organism(NULL)
-      commit()
+      n_uploads <<- n_uploads + 1
+      done(n_uploads)
     })
 
     list(
-      done = done,
+      done = reactive(done()),
       raw = reactive(raw()),
       annotated = reactive(annotated()),
       cleared = reactive(cleared()),
