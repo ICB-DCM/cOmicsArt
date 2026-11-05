@@ -2,7 +2,6 @@
 # What every module reads a Dataset through. `get(name)`
 # returns one piece of the Dataset's private state, NULL before there is a
 # Dataset:
-#   upload_raw: the whole raw SummarizedExperiment of its Upload
 #   selection: its Selection (resolve_selection())
 #   omic_type, organism: as of its Upload
 #   run: the last successful Pre-processing run (preprocessing_server()'s
@@ -28,16 +27,7 @@ dataset_handle <- function(id, get){
     preprocessing = preprocessing,
     version = function() get("version"),
     results = function() get("results"),
-    # what the R-code download starts from (rcode_zip())
-    code_context = function() {
-      if (is.null(get("selection"))) return(NULL)
-      new_code_context(
-        raw = get("upload_raw"),
-        selection = selection(),
-        preprocessing = preprocessing(),
-        omic_type = get("omic_type"),
-        organism = get("organism")
-      )
-    }
+    # what the R-code download starts from (rcode_zip()), NULL before a run
+    code_context = function() code_context(get("run"))
   )
 }

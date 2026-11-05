@@ -8,7 +8,8 @@ module_args <- function(data, omic_type){
     omic_type = reactive(omic_type),
     selected = reactive(resolve_selection(data, list())),
     selection_confirmed = reactive(NULL),
-    upload_done = reactive(1)
+    upload_done = reactive(1),
+    organism = reactive(NULL)
   )
 }
 # testServer on the module after a log10 run of all Lipidomics data, the
@@ -263,6 +264,21 @@ test_that("the violin R code draws the colouring the control shows", {
   test_log10_run({
     session$setInputs(violin_color = "ID")
     expect_equal(rcode_parameters(output$rcode_violin)$ViolinPlot$violin_color, "ID")
+  })
+})
+
+test_that("the R code carries the Upload's organism after a gene annotation", {
+  test_env <- environment()
+  args <- modifyList(module_args(lipids, "Lipidomics"), list(organism = reactive("Mouse genes (GRCm39)")))
+  testServer(preprocessing_server, args = args, {
+    local_session_report(session, test_env)
+    session$setInputs(
+      processing_type = "Log-Based", preprocessing_procedure = "log10",
+      preprocessing_filtering = "filterOnly", filter_threshold = 0,
+      batch_column = "NULL", violin_color = "diet"
+    )
+    session$setInputs(get_preprocessing = 1)
+    expect_equal(rcode_parameters(output$rcode_mean_sd)$organism, "Mouse genes (GRCm39)")
   })
 })
 

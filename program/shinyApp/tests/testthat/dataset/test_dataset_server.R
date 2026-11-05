@@ -7,7 +7,8 @@ two_diets <- resolve_selection(lipids, list(
   sample_type = "diet", sample_selection = c("CD_CD_HFD", "HFD_HFD_CD")
 ))
 run_all <- preprocessing_run(all_lipids, "Lipidomics", LOG10)
-run_two_diets <- preprocessing_run(two_diets, "Lipidomics", LOG10, run = 2)
+# a run on a Selection of the whole Upload, after a gene annotation
+run_two_diets <- preprocessing_run(two_diets, "Lipidomics", LOG10, run = 2, raw = lipids, organism = "Mouse")
 
 # reactiveVals in place of the returns of the Upload, Selection and
 # Pre-processing modules, after an Upload of all Lipidomics data
@@ -144,24 +145,18 @@ test_that("a new Upload and its confirm in one flush end with the new Dataset", 
   })
 })
 
-test_that("code_context() has the raw data, Selection, Pre-processing, omic type and organism", {
+test_that("code_context() is the context of the Dataset's run, none before a run", {
   testServer(dataset_server, args = module_args(), {
     handle <- session$returned
     selection$selected(two_diets)
     fire(selection$confirmed)
+    session$flushReact()
+    expect_null(handle$code_context())
     preprocessing$result(run_two_diets)
     session$flushReact()
-    context <- handle$code_context()
-    expect_named(context, c("raw", "selection", "preprocessing", "omic_type", "organism"))
+    expect_equal(handle$code_context(), code_context(run_two_diets))
     # the whole Upload, so that the R code starts from it
-    expect_equal(context$raw, lipids)
-    expect_equal(context$selection, two_diets$params)
-    expect_equal(context$omic_type, "Lipidomics")
-    expect_equal(context$organism, "Mouse")
-    expect_equal(context$preprocessing$preprocessing_procedure, "log10")
-    # batch_column NULL for none, kept as an entry
-    expect_true("batch_column" %in% names(context$preprocessing))
-    expect_null(context$preprocessing$batch_column)
+    expect_equal(handle$code_context()$raw, lipids)
   })
 })
 

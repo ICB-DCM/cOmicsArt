@@ -9,13 +9,15 @@
 #     clears the result
 #   upload_done: reactive, set after each successful Upload; clears the
 #     result
+#   organism: reactive, the Upload's organism (NULL without a gene
+#     annotation); a run keeps the one it ran with
 # Returns reactives:
 #   result: the current run (new_preprocessing_run()): NULL before a run and
 #     after a failed run, a new Upload or a confirmed Selection; set once at
 #     the end of a successful run, so a new run is the done event
 #   failed: counts up after each run that failed
 #   start_discovering: the "Start Discovering" button
-preprocessing_server <- function(id, upload, omic_type, selected, selection_confirmed, upload_done){
+preprocessing_server <- function(id, upload, omic_type, selected, selection_confirmed, upload_done, organism){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     file_path <- paste0("/www/", session$token, "/")
@@ -24,17 +26,6 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     console_output <- reactiveVal(NULL)
     warnings <- reactiveVal(NULL)
     failed <- reactiveVal(NULL)
-    # what the R code of the last run starts from, like the Dataset's
-    # code_context(); Pre-processing has no organism
-    rcode_context <- reactive({
-      req(result())
-      new_code_context(
-        raw = upload(),
-        selection = result()$selection$params,
-        preprocessing = result()$params,
-        omic_type = result()$omic_type
-      )
-    })
 
     # the plots and their buttons show while there is a run
     observe(shinyjs::toggleElement(id = "data_summary", condition = !is.null(result())))
@@ -315,7 +306,9 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       )
       if (is.null(res)) return()
       run <- new_preprocessing_run(
-        res, options, batch_column, selection, omic_type(), input$get_preprocessing
+        res, options, batch_column, selection,
+        upload = list(raw = upload(), omic_type = omic_type(), organism = organism()),
+        run = input$get_preprocessing
       )
       data <- run_data(run)
 
@@ -434,7 +427,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     )
     output$rcode_violin <- rcode_download("Preprocessing", "ViolinPlot", function(file) {
       rcode_zip(
-        file, rcode_context(), VIOLIN_PLOT_PIPELINE,
+        file, code_context(result()), VIOLIN_PLOT_PIPELINE,
         "ViolinPlot", list(violin_color = violin_color())
       )
     })
@@ -451,7 +444,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       title = "Mean and SD Plot"
     )
     output$rcode_mean_sd <- rcode_download("Preprocessing", "MeanSD", function(file) {
-      rcode_zip(file, rcode_context(), MEAN_SD_PLOT_PIPELINE)
+      rcode_zip(file, code_context(result()), MEAN_SD_PLOT_PIPELINE)
     })
 
     list(

@@ -6,7 +6,7 @@ assay <- SummarizedExperiment::assay
 script_for <- function(handle, data_stage){
   create_workflow_script(
     pipeline_info = list(),
-    par = code_parameters(isolate(handle$code_context())),
+    par = isolate(handle$code_context())$parameters,
     path_to_util = tempfile(fileext = ".R"),
     data_stage = data_stage
   )
@@ -84,4 +84,10 @@ test_that("Single Gene's R code for raw data starts from the Selection", {
     expected <- as.matrix(assay(lipid$handle$raw()))
     expect_equal(data[rownames(expected), colnames(expected)], expected, tolerance = 1e-6, ignore_attr = TRUE)
   })
+})
+
+test_that("batch_data_stage() starts from the batch corrected data only when chosen", {
+  expect_equal(batch_data_stage(TRUE), "batch_corrected")
+  expect_equal(batch_data_stage(FALSE), "processed")
+  expect_equal(batch_data_stage(NULL), "processed")
 })

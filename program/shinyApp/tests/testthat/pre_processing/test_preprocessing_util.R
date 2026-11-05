@@ -296,13 +296,19 @@ fake_res <- function(batch){
   )
 }
 
-test_that("a run holds the objects, the options with batch_column, the Selection, omic type and number", {
+# an Upload as a run keeps it
+lipids_upload <- list(raw = lipids, omic_type = "Lipidomics", organism = NULL)
+
+test_that("a run holds the objects, the options with batch_column, the Selection, its Upload and number", {
   selection <- resolve_selection(lipids, list())
-  run <- new_preprocessing_run(fake_res(FALSE), LOG10, NULL, selection, "Lipidomics", 3)
+  upload <- list(raw = lipids, omic_type = "Lipidomics", organism = "Mouse genes (GRCm39)")
+  run <- new_preprocessing_run(fake_res(FALSE), LOG10, NULL, selection, upload, 3)
   expect_equal(run$params, c(LOG10, list(batch_column = NULL)))
   expect_true("batch_column" %in% names(run$params))
   expect_identical(run$selection, selection)
+  expect_identical(run$raw, lipids)
   expect_equal(run$omic_type, "Lipidomics")
+  expect_equal(run$organism, "Mouse genes (GRCm39)")
   expect_equal(run$run, 3)
   # not the summary's and console's parts of run_preprocessing()'s result
   expect_null(run$n_processed)
@@ -310,12 +316,12 @@ test_that("a run holds the objects, the options with batch_column, the Selection
 })
 
 test_that("a run's data and DESeq2 object, batch corrected only with a batch column", {
-  with_batch <- new_preprocessing_run(fake_res(TRUE), LOG10, "batch", NULL, "Lipidomics", 1)
+  with_batch <- new_preprocessing_run(fake_res(TRUE), LOG10, "batch", NULL, lipids_upload, 1)
   expect_equal(run_data(with_batch), "processed")
   expect_equal(run_data(with_batch, batch = TRUE), "processed, batch corrected")
   expect_equal(run_deseq(with_batch), "dds")
   expect_equal(run_deseq(with_batch, batch = TRUE), "dds, batch corrected")
-  without <- new_preprocessing_run(fake_res(FALSE), LOG10, NULL, NULL, "Lipidomics", 1)
+  without <- new_preprocessing_run(fake_res(FALSE), LOG10, NULL, NULL, lipids_upload, 1)
   expect_equal(run_data(without, batch = TRUE), "processed")
   expect_equal(run_deseq(without, batch = TRUE), "dds")
   # no run, no data

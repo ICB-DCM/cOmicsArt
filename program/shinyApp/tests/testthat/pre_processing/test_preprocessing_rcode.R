@@ -23,14 +23,8 @@ run_preprocessing_script <- function(parameters, data_orig){
 # The parameters of the app's R code after a run on all of `data`
 app_run <- function(data, omic_type, ...){
   options <- list(...)
-  res <- suppressMessages(run_preprocessing(data, omic_type, options))
-  parameters <- code_parameters(new_code_context(
-    raw = data,
-    selection = resolve_selection(data, list())$params,
-    preprocessing = c(options, list(batch_column = NULL)),
-    omic_type = omic_type
-  ))
-  list(data = res$data, parameters = parameters)
+  run <- preprocessing_run(resolve_selection(data, list()), omic_type, options)
+  list(data = run_data(run), parameters = code_context(run)$parameters)
 }
 
 cases <- list(
