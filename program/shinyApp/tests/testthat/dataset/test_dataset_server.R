@@ -83,7 +83,7 @@ test_that("a successful run pre-processes the Dataset, a failed one takes it bac
     session$flushReact()
     expect_equal(assay(handle$processed()), assay(run_data(run_all)))
     # no batch column: the uncorrected data
-    expect_equal(assay(handle$processed(batch = TRUE)), assay(run_data(run_all)))
+    expect_equal(assay(handle$data("batch_corrected")), assay(run_data(run_all)))
     expect_null(handle$deseq())
     expect_equal(handle$preprocessing()$preprocessing_procedure, "log10")
     expect_true("batch_column" %in% names(handle$preprocessing()))
@@ -115,6 +115,21 @@ test_that("a run on a Selection that was not confirmed makes a new Dataset", {
     expect_equal(assay(handle$processed()), assay(run_data(run_two_diets)))
     # the new Dataset comes with its run, in one step
     expect_equal(handle$version(), run_version + 1)
+  })
+})
+
+test_that("a run's Upload context is the Dataset's, also on the confirmed Selection", {
+  testServer(dataset_server, args = module_args(), {
+    handle <- session$returned
+    fire(selection$confirmed)
+    session$flushReact()
+    expect_equal(handle$organism(), "Mouse")
+    # the confirmed Selection, run with another organism than the Upload's now
+    preprocessing$result(preprocessing_run(all_lipids, "Lipidomics", LOG10, organism = "Human"))
+    session$flushReact()
+    expect_equal(handle$organism(), "Human")
+    expect_equal(handle$selection(), all_lipids$params)
+    expect_equal(handle$code_context()$parameters$organism, "Human")
   })
 })
 
@@ -173,11 +188,11 @@ test_that("fake_dataset() has the accessors of the real handle", {
 test_that("fake_dataset() gives the batch-corrected data and the DESeq2 objects", {
   tmm <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
   expect_equal(tmm$preprocessing()$batch_column, "batch_factor")
-  expect_false(isTRUE(all.equal(assay(tmm$processed(batch = TRUE)), assay(tmm$processed()))))
+  expect_false(isTRUE(all.equal(assay(tmm$data("batch_corrected")), assay(tmm$processed()))))
   deseq <- fake_dataset("Transcriptomics", "vst_DESeq")
   expect_s4_class(deseq$deseq(), "DESeqDataSet")
   # no batch column: the uncorrected model
-  expect_identical(deseq$deseq(batch = TRUE), deseq$deseq())
+  expect_identical(deseq$deseq("batch_corrected"), deseq$deseq())
 })
 
 test_that("data(stage) is the data of each DATA_STAGES stage; has_batch() says whether there is a batch column", {
@@ -185,7 +200,6 @@ test_that("data(stage) is the data of each DATA_STAGES stage; has_batch() says w
   expect_true(tmm$has_batch())
   expect_identical(tmm$data("raw"), tmm$raw())
   expect_identical(tmm$data("processed"), tmm$processed())
-  expect_identical(tmm$data("batch_corrected"), tmm$processed(batch = TRUE))
   expect_false(isTRUE(all.equal(assay(tmm$data("batch_corrected")), assay(tmm$data("processed")))))
   lipid <- fake_dataset()
   expect_false(lipid$has_batch())
@@ -201,9 +215,9 @@ test_that("the processed data has one assay, named processed; raw() keeps raw", 
   expect_equal(SummarizedExperiment::assayNames(lipid$processed()), "processed")
   expect_equal(SummarizedExperiment::assayNames(lipid$raw()), "raw")
   tmm <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
-  expect_equal(SummarizedExperiment::assayNames(tmm$processed(batch = TRUE)), "processed")
+  expect_equal(SummarizedExperiment::assayNames(tmm$data("batch_corrected")), "processed")
   # DESeq2's batch correction starts again from the counts
   deseq <- fake_dataset("Transcriptomics", "vst_DESeq", batch_column = "batch_factor")
   expect_equal(SummarizedExperiment::assayNames(deseq$processed()), "processed")
-  expect_equal(SummarizedExperiment::assayNames(deseq$processed(batch = TRUE)), "processed")
+  expect_equal(SummarizedExperiment::assayNames(deseq$data("batch_corrected")), "processed")
 })

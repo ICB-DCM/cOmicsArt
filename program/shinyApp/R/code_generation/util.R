@@ -351,13 +351,6 @@ create_function_script <- function(foo_infos, par, section = NULL, path_to_util=
   return(function_script)
 }
 
-# The data the module's code starts from, like the module's data choice:
-#   "processed": the pre-processed data
-#   "batch_corrected": the batch corrected data (needs
-#     parameters$preprocessing$batch_column)
-#   "raw": the Selection before Pre-processing
-DATA_STAGES <- c("processed", "batch_corrected", "raw")
-
 preprocessing_base_script <- function(par, path_to_util = NULL, data_stage = "processed"){
   # Generate the base script that contains the necessary functions and libraries
   # Parameters:

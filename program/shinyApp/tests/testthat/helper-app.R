@@ -146,14 +146,14 @@ IDS <- list(
     # after a pre-processing with a batch column
     "PCA (batch corrected)" = list(
       tab = "PCA",
-      set = list("dataset_1-pca-UseBatch" = "Yes"),
+      set = list("dataset_1-pca-UseBatch" = "batch_corrected"),
       go = "dataset_1-pca-Do_PCA",
       out = "#dataset_1-pca-PCA_plot",
       rcode = "#dataset_1-pca-getR_Code_PCA"
     ),
     "Differential Analysis (batch corrected)" = list(
       tab = "Differential Analysis",
-      set = list("dataset_1-differential-UseBatch" = "Yes"),
+      set = list("dataset_1-differential-UseBatch" = "batch_corrected"),
       go = "dataset_1-differential-significanceGo",
       after = "#dataset_1-differential-Significance_div a[data-value='Volcano']",
       out = "#dataset_1-differential-Significance_div [id$='_Volcano']",

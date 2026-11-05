@@ -1,9 +1,23 @@
+### Data stages
+# The data a module uses or its R code starts from:
+#   "processed": the pre-processed data
+#   "batch_corrected": the batch corrected data (the processed data without a
+#     batch column; its R code needs parameters$preprocessing$batch_column)
+#   "raw": the Selection before Pre-processing
+DATA_STAGES <- c("processed", "batch_corrected", "raw")
+
+# A stage of DATA_STAGES in words, e.g. "pre-processed data". A function, so
+# that the R code of Single Gene can take it along to util.R.
+data_stage_label <- function(stage){
+  c(raw = "raw data", processed = "pre-processed data", batch_corrected = "batch corrected data")[[stage]]
+}
+
 ### Dataset handle
 # What every module reads a Dataset through. `get(name)`
 # returns one piece of the Dataset's private state, NULL before there is a
 # Dataset:
 #   selection: its Selection (resolve_selection())
-#   omic_type, organism: as of its Upload
+#   omic_type, organism: as of its Upload; the run's once there is one
 #   run: the last successful Pre-processing run (preprocessing_server()'s
 #     result), NULL before one and after a failed one
 #   version: counts up on every new Dataset, run, failed run and clear;
@@ -11,32 +25,25 @@
 #   results: what the modules returned, by module
 # dataset_server() reads them from reactiveValues, fake_dataset() from a list.
 dataset_handle <- function(id, get){
-  selection <- function() get("selection")$params
-  # the run's options with batch_column (NULL for none)
-  preprocessing <- function() get("run")$params
+  # the data of a stage of DATA_STAGES; anything else is an error
+  data <- function(stage) {
+    stopifnot(length(stage) == 1, stage %in% DATA_STAGES)
+    if (stage == "raw") get("selection")$data else run_data(get("run"), stage)
+  }
   list(
     id = id,
     name = function() get("omic_type"),
     omic_type = function() get("omic_type"),
     organism = function() get("organism"),
-    raw = function() get("selection")$data,
-    # `batch = TRUE` falls back to the uncorrected object without a batch column
-    processed = function(batch = FALSE) run_data(get("run"), batch),
-    deseq = function(batch = FALSE) run_deseq(get("run"), batch),
-    # the data of a stage of DATA_STAGES: "raw" (the Selection before
-    # Pre-processing), "processed" or "batch_corrected" (processed without a
-    # batch column); anything else is an error
-    data = function(stage) {
-      stopifnot(length(stage) == 1, stage %in% DATA_STAGES)
-      switch(stage,
-        raw = get("selection")$data,
-        processed = run_data(get("run")),
-        batch_corrected = run_data(get("run"), batch = TRUE)
-      )
-    },
+    data = data,
+    raw = function() data("raw"),
+    processed = function() data("processed"),
+    # the run's DESeq2 object at `stage` (vst_DESeq only, NULL otherwise)
+    deseq = function(stage = "processed") run_deseq(get("run"), stage),
     has_batch = function() !is.null(get("run")$params$batch_column),
-    selection = selection,
-    preprocessing = preprocessing,
+    selection = function() get("selection")$params,
+    # the run's options with batch_column (NULL for none)
+    preprocessing = function() get("run")$params,
     version = function() get("version"),
     results = function() get("results"),
     # what the R-code download starts from (rcode_zip()), NULL before a run

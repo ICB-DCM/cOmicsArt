@@ -206,7 +206,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     })
     # with a batch column, the batch-corrected data
     processed_violin <- reactive({
-      violin_plot(run_data(result(), batch = TRUE), violin_color = violin_color())
+      violin_plot(run_data(result(), "batch_corrected"), violin_color = violin_color())
     })
     # the plots of the current run (none after a failed run, a new Upload or
     # Selection)
@@ -307,7 +307,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       if (is.null(res)) return()
       run <- new_preprocessing_run(
         res, options, batch_column, selection,
-        upload = list(raw = upload(), omic_type = omic_type(), organism = organism()),
+        raw = upload(), omic_type = omic_type(), organism = organism(),
         run = input$get_preprocessing
       )
       data <- run_data(run)

@@ -31,8 +31,10 @@ preprocessing_info <- list(
     data = "data",
     omic_type = "parameters$omic_type"
   ),
+  # dds: the DESeq2 object (vst_DESeq, else NULL), as `data` of the stage
   output_mapping = list(
-    data = "data"
+    data = "data",
+    DESeq_obj = "dds"
   ),
   output_name = "res_preprocess",
   to_util = TRUE,
@@ -59,7 +61,8 @@ batch_correction_info <- list(
     omic_type = "parameters$omic_type"
   ),
   output_mapping = list(
-    data = "data"
+    data = "data",
+    DESeq_obj = "dds"
   ),
   output_name = "batch_res",
   to_util = TRUE,
@@ -150,7 +153,8 @@ single_gene_boxplot_info <- list(
   to_util = FALSE,
   plot_name = "boxplot_plot",
   additional_foos = list(
-      "maybe_add_test" = maybe_add_test
+      "maybe_add_test" = maybe_add_test,
+      "data_stage_label" = data_stage_label
   )
 )
 
@@ -345,7 +349,6 @@ performSigAnalysis_info <- list(
   foo = performSigAnalysis,
   name = "performSigAnalysis",
   input_mapping = list(
-    data = "list(data = data, data_batch_corrected = data, DESeq_obj = res_preprocess$DESeq_obj %||% NULL, DESeq_obj_batch_corrected = if (exists('batch_res')) batch_res$DESeq_obj)",
     preprocessing = "preprocessing_procedure"
   ),
   output_name = "sig_results",

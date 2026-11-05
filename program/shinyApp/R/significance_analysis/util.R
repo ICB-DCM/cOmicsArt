@@ -16,34 +16,29 @@ filter_significant_result <- function(result, alpha, filter_type){
 }
 
 performSigAnalysis <- function(
-  data,              # a SummarizedExperiment or similar object
+  data,              # the SummarizedExperiment to test (non-DESeq2)
+  dds,               # the DESeq2 object to test (vst_DESeq), else NULL
   preprocessing,     # e.g., "vst_DESeq" or other method
   comparisons,       # character vector of comparisons (e.g. "A:B")
   compare_within,    # the name of the sample annotation column used for contrasts
   test_method,       # the testing method (for non-DESeq2)
-  data_stage,        # "batch_corrected" or "processed" (DATA_STAGES)
   padjust_method     # the correction method (e.g., "BH")
 ) {
   # Perform significance analysis for a given dataset and set of comparisons.
   # The function will return a list of results for each comparison.
   # Parameters:
-  # data: a SummarizedExperiment or similar object
+  # data: the SummarizedExperiment to test (non-DESeq2)
+  # dds: the DESeq2 object to test (vst_DESeq), else NULL
   # preprocessing: the preprocessing method used for the data
   # comparisons: a character vector of comparisons (e.g. "A:B")
   # compare_within: the name of the sample annotation column used for contrasts
   # test_method: the testing method (for non-DESeq2)
-  # data_stage: "batch_corrected" for the batch-corrected data or DESeq2
-  #   object, else the uncorrected ones
   # padjust_method: the correction method (e.g., "BH")
   # Returns:
   # A list of results for each comparison.
-  batch <- identical(data_stage, "batch_corrected")
   contrasts <- lapply(comparisons, function(comp) unlist(strsplit(comp, ":")))
   names(contrasts) <- comparisons
   if (preprocessing == "vst_DESeq") {
-    # the DESeq object of the data stage
-    dds <- if (batch) data$DESeq_obj_batch_corrected else data$DESeq_obj
-
     tryCatch({
       # For each contrast, run DESeq2::results and collect the result:
       sig_results <- lapply(contrasts, function(contrast_vals) {
@@ -59,7 +54,6 @@ performSigAnalysis <- function(
     })
   } else {
     # Find all unique contrast levels and select the corresponding columns from the data:
-    data <- if (batch) data$data_batch_corrected else data$data
     contrasts_all <- unique(unlist(contrasts))
     index_comparisons <- which(colData(data)[, compare_within] %in% contrasts_all)
     samples_selected <- colData(data)[index_comparisons, ]

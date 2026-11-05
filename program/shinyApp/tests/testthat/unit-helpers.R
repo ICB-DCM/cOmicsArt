@@ -21,8 +21,7 @@ LOG10 <- list(preprocessing_procedure = "log10", preprocessing_filtering = "filt
 preprocessing_run <- function(selection, omic_type, options, batch_column = NULL, run = 1,
                               raw = selection$data, organism = NULL){
   res <- suppressMessages(run_preprocessing(selection$data, omic_type, options, batch_column))
-  upload <- list(raw = raw, omic_type = omic_type, organism = organism)
-  new_preprocessing_run(res, options, batch_column, selection, upload, run)
+  new_preprocessing_run(res, options, batch_column, selection, raw, omic_type, organism, run)
 }
 
 # The private state of a Dataset as dataset_server() keeps it: a Selection of

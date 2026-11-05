@@ -261,22 +261,18 @@ significance_analysis_server <- function(id, dataset){
         significance_level <- input$significance_level %||% 0.05
         compare_within <- input$sample_annotation_types_cmp
         test_method <- if (!deseq) input$test_method %||% "T-Test"
-        data <- list(
-          data = dataset$processed(),
-          data_batch_corrected = dataset$processed(batch = TRUE),
-          DESeq_obj = dataset$deseq(),
-          DESeq_obj_batch_corrected = dataset$deseq(batch = TRUE)
-        )
+        # the data the run used, also for the volcano annotation
+        run_data <- dataset$data(stage)
 
         # perform the analysis
         sig_results <- tryCatch({
           performSigAnalysis(
-            data = data,
+            data = run_data,
+            dds = dataset$deseq(stage),
             preprocessing = preprocessing,
             comparisons = comparisons,
             compare_within = compare_within,
             test_method = test_method,
-            data_stage = stage,
             padjust_method = PADJUST_METHOD[[test_correction]]
           )
         }, error = function(e) {
@@ -302,8 +298,6 @@ significance_analysis_server <- function(id, dataset){
           ),
           version = dataset$version()
         )
-        # the data the run used, for the volcano annotation
-        run_data <- dataset$data(stage)
 
         ## Tab Management: the run's comparisons replace the last run's
         remove_comparison_tabs()
