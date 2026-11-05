@@ -10,156 +10,110 @@ sample_correlation_server <- function(id, dataset){
   moduleServer(
     id,
     function(input,output,session){
-      sample_corr_reactive <- reactiveValues(
-        info_text = "Press 'Get Sample Correlation' to start!",
-        corr_plot = NULL,
-        row_anno = NULL,
-        result = NULL
-      )
-
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
+      START_TEXT <- "Press 'Get Sample Correlation' to start!"
+
+      # the heatmap of the result: the correlation matrix and the sample
+      # annotation it is coloured by
+      figure <- reactiveValues(corr_plot = NULL, row_anno = NULL)
+      info_text <- reactiveVal(START_TEXT)
+      result <- module_result(dataset, on_clear = function(){
+        figure$corr_plot <- NULL
+        figure$row_anno <- NULL
+        info_text(START_TEXT)
+      })
+
       # UI Section ----
       # the data the next run uses (DATA_STAGES), from the batch picker
       data_stage <- batch_toggle(input, output, ns, dataset)
-      # the sample annotation of the processed data; a new run resets the
-      # user's choice
-      output$SampleAnnotationChoice_ui <- renderUI({
-        data <- req(dataset$processed())
-        selectInput(
-          inputId = ns("SampleAnnotationChoice"),
-          label = "Choose the color annotation for the samples",
-          choices = colnames(colData(data)),
-          multiple = T,
-          selected = colnames(colData(data))[1]
-        )
-      })
-
-      # The result belongs to one Dataset version: a new Dataset, run or
-      # clear removes the plot and resets the info text
-      observeEvent(dataset$version(), {
-        sample_corr_reactive$corr_plot <- NULL
-        sample_corr_reactive$row_anno <- NULL
-        sample_corr_reactive$result <- NULL
-        sample_corr_reactive$info_text <- "Press 'Get Sample Correlation' to start!"
-      })
+      output$SampleAnnotationChoice_ui <- annotation_picker(
+        "SampleAnnotationChoice", "Choose the color annotation for the samples",
+        ns, dataset, "samples", multiple = TRUE
+      )
 
       # the plot and its buttons show while there is a result
-      observe(shinyjs::toggleElement(id = "div_main_panel", condition = !is.null(sample_corr_reactive$result)))
+      observe(shinyjs::toggleElement(id = "div_main_panel", condition = !is.null(result$get())))
 
-      # Add initial text to help boxes
-      output$SampleCorr_Info <- renderText({
-        sample_corr_reactive$info_text
-      })
+      output$SampleCorr_Info <- renderText(info_text())
 
       output$SampleCorrelationPlot <- renderPlot({
-        req(sample_corr_reactive$corr_plot)
-        sample_corr_reactive$corr_plot + sample_corr_reactive$row_anno
+        req(figure$corr_plot)
+        figure$corr_plot + figure$row_anno
       })
       # a new annotation recolours the samples; the matrix stays
       observeEvent(input$SampleAnnotationChoice,{
-        req(sample_corr_reactive$result)
-        data <- req(dataset$data(sample_corr_reactive$result$params$data_stage))
-        sample_corr_reactive$row_anno <- custom_sample_annotation(data, input$SampleAnnotationChoice)
-        sample_corr_reactive$result$params$sample_annotations <- input$SampleAnnotationChoice
+        params <- req(result$get())$params
+        data <- req(dataset$data(params$data_stage))
+        figure$row_anno <- custom_sample_annotation(data, input$SampleAnnotationChoice)
+        result$set_params(list(sample_annotations = input$SampleAnnotationChoice))
       })
 
       # Do sample correlation plot
       observeEvent(input$Do_SampleCorrelation,{
-        req(dataset$processed())
-        req(input$Do_SampleCorrelation > 0)
-        req(input$SampleAnnotationChoice)
+        req(dataset$processed(), input$SampleAnnotationChoice)
         # a run that fails leaves no result
-        sample_corr_reactive$result <- NULL
-        sample_corr_reactive$corr_plot <- NULL
-        sample_corr_reactive$row_anno <- NULL
-        waiter <- Waiter$new(
-          html = LOADING_SCREEN,
-          color="#A208BA35"
-        )
-        waiter$show()
-
-        # assign variables to be used
+        result$clear()
         stage <- data_stage()
         sample_annotations <- input$SampleAnnotationChoice
         correlation_method <- input$corrMethod
-        customTitleSampleCorrelation <- create_default_title_sc(
+        title <- create_default_title_sc(
           correlation_method, dataset$preprocessing()$preprocessing_procedure
         )
         data <- dataset$data(stage)
 
-        # for safety measures, wrap in tryCatch
-        tryCatch({
-          cormat <- get_sample_correlation(data, correlation_method)
-          sample_corr_reactive$info_text <- "Correlation Matrix successfully computed."
-        }, error = function(e){
-          error_modal(e$message)
-          waiter$hide()
-          req(FALSE)
-        })
-        # Create row annotations separately
-        row_anno <- custom_sample_annotation(data, sample_annotations)
+        cormat <- with_loading(
+          tryCatch(
+            get_sample_correlation(data, correlation_method),
+            error = function(e){
+              error_modal(e$message)
+              NULL
+            }
+          ),
+          color = "#A208BA35"
+        )
+        if (is.null(cormat)) return()
 
-        # Generate the heatmap
-        heatmap_plot <- custom_heatmap(cormat, customTitleSampleCorrelation, correlation_method)
-        sample_corr_reactive$corr_plot <- heatmap_plot
-        sample_corr_reactive$row_anno <- row_anno
-        sample_corr_reactive$result <- list(
+        figure$corr_plot <- custom_heatmap(cormat, title, correlation_method)
+        figure$row_anno <- custom_sample_annotation(data, sample_annotations)
+        info_text("Correlation Matrix successfully computed.")
+        result$set(list(
           cormat = cormat,
           params = list(
             correlation_method = correlation_method,
             sample_annotations = sample_annotations,
             data_stage = stage,
-            title = customTitleSampleCorrelation
-          ),
-          version = dataset$version()
-        )
-
-        # Longer names causes issues for saving
-        if(nchar(customTitleSampleCorrelation) >= 250){
-          customTitleSampleCorrelation <- "SampleCorrelation"
-        }
-        sample_corr_reactive$customTitleSampleCorrelation <- customTitleSampleCorrelation
-        waiter$hide()
+            title = title
+          )
+        ))
       })
 
       # Download Section ----
-      output$getR_SampleCorrelation <- rcode_download("SampleCorrelation", NULL, function(file) {
-        params <- sample_corr_reactive$result$params
-        rcode_zip(
-          file, dataset$code_context(), SAMPLE_CORRELATION_PIPELINE,
-          "SampleCorrelation", params, params$data_stage
-        )
-      })
+      output$getR_SampleCorrelation <- dataset$rcode_download(
+        "SampleCorrelation", NULL, SAMPLE_CORRELATION_PIPELINE, "SampleCorrelation",
+        params = function() result$get()$params
+      )
 
-      output$SavePlot_SampleCorrelation <- downloadHandler(
-        filename = function() {
-          download_name("SampleCorrelation", input$file_ext_SampleCorrelation)
+      output$SavePlot_SampleCorrelation <- plot_download(
+        "SampleCorrelation", NULL,
+        ext = reactive(input$file_ext_SampleCorrelation),
+        save = function(file, device){
+          req(result$get())
+          save_complex_heatmap(figure$corr_plot + figure$row_anno, filename = file, type = device)
         },
-        content = function(file){
-          req(sample_corr_reactive$result)
-          save_complex_heatmap(
-            sample_corr_reactive$corr_plot + sample_corr_reactive$row_anno,
-            filename = file,
-            type=gsub("\\.","",input$file_ext_SampleCorrelation)
-          )
-          on.exit({shinyjs::click(ns("only2Report_SampleCorrelation"))})
-
-        }
+        report_button = ns("only2Report_SampleCorrelation")
       )
 
       # send only to report: what was computed, not what the controls say now
       observeEvent(input$only2Report_SampleCorrelation,{
-        params <- req(sample_corr_reactive$result)$params
+        params <- req(result$get())$params
         notificationID <- showNotification("Saving to Report...",duration = 0)
-        tmp_filename <- paste0(
-          getwd(),
-          file_path,
-          paste0(sample_corr_reactive$customTitleSampleCorrelation, Sys.Date(), ".png")
-        )
+        # longer names cause issues for saving
+        file_title <- if (nchar(params$title) >= 250) "SampleCorrelation" else params$title
+        tmp_filename <- paste0(getwd(), file_path, paste0(file_title, Sys.Date(), ".png"))
 
         save_complex_heatmap(
-          sample_corr_reactive$corr_plot + sample_corr_reactive$row_anno,
+          figure$corr_plot + figure$row_anno,
           filename = tmp_filename,
           type = "png"
         )
@@ -185,6 +139,6 @@ sample_correlation_server <- function(id, dataset){
         showNotification("Report Saved!",type = "message", duration = 1)
       })
 
-      reactive(sample_corr_reactive$result)
+      result$get
 })
 }
