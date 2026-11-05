@@ -134,3 +134,32 @@ test_that("a failed Ensembl query keeps the Upload and says so", {
     expect_null(session$returned$organism())
   })
 })
+
+test_that("an Upload sets its data and counts done up", {
+  test_upload_server({
+    session$setInputs(omic_type_testdata = "Lipidomics")
+    session$setInputs(EasyTestForUser = 1)
+    expect_equal(dim(session$returned$raw()), c(660, 28))
+    expect_equal(session$returned$omic_type(), "Lipidomics")
+    expect_equal(session$returned$done(), 1)
+    session$setInputs(omic_type_testdata = "Metabolomics")
+    session$setInputs(EasyTestForUser = 2)
+    expect_equal(session$returned$done(), 2)
+    expect_equal(dim(session$returned$raw()), c(108, 35))
+  })
+})
+
+test_that("a failed Upload sets done back to NULL", {
+  test_upload_server({
+    session$setInputs(omic_type_testdata = "Lipidomics")
+    session$setInputs(EasyTestForUser = 1)
+    expect_equal(session$returned$done(), 1)
+    # "Upload new data" without any files
+    session$setInputs(omic_type_file_input = "Lipidomics")
+    session$setInputs(refresh_file_input = 1)
+    expect_null(session$returned$done())
+    # the next successful Upload counts on
+    session$setInputs(EasyTestForUser = 2)
+    expect_equal(session$returned$done(), 2)
+  })
+})
