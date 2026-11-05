@@ -17,20 +17,15 @@ heatmap_server <- function(id, dataset){moduleServer(
   id,
   function(input,output,session){
     ns <- session$ns
-    file_path <- paste0("/www/",session$token,"/")
     START_TEXT <- "Press 'Get Heatmap' to start!"
 
-    heatmap_reactives <- reactiveValues(
-      # list(selected, data, params): the selection waiting for "Continue"
-      pending = NULL,
-      # list(selected, data, params) of the shown heatmap; data is the
-      # object it was selected from (batch corrected or not)
-      run = NULL
-    )
+    # list(selected, data, params): the selection waiting for "Continue"
+    pending <- reactiveVal(NULL)
     info_text <- reactiveVal(START_TEXT)
+    # its run is the selection of the shown heatmap, list(selected, data,
+    # params); data is the object it was selected from (batch corrected or not)
     result <- module_result(dataset, on_clear = function(){
-      heatmap_reactives$pending <- NULL
-      heatmap_reactives$run <- NULL
+      pending(NULL)
       info_text(START_TEXT)
     })
     # the heatmap and its buttons show while there is a result whose heatmap
@@ -118,13 +113,12 @@ heatmap_server <- function(id, dataset){moduleServer(
 
     # the shown heatmap: a new run, its gene list cleared
     accept <- function(selection){
-      heatmap_reactives$pending <- NULL
-      heatmap_reactives$run <- selection
+      pending(NULL)
       result$set(list(
         entities = rownames(selection$selected),
         gene_list = NULL,
         params = c(selection$params, display_params(selection))
-      ))
+      ), run = selection)
       info_text(paste0(
         "The heatmap is being calculated and displays a matrix with: ",
         nrow(selection$selected), " rows and ", ncol(selection$selected), " columns."
@@ -177,7 +171,7 @@ heatmap_server <- function(id, dataset){moduleServer(
       if (is.null(selected) || nrow(selected) < 2){
         info_text("The selection results in fewer than two rows. Please revise to have at least two. For single gene visualisation check out the tab Single gene visualisation.")
       } else if (nrow(selected) > 100) {
-        heatmap_reactives$pending <- selection
+        pending(selection)
         showModal(modalDialog(
           title = "Warning",
           "The dataset has more than 100 rows. This may cause a high runtime. Do you want to continue?",
@@ -193,13 +187,13 @@ heatmap_server <- function(id, dataset){moduleServer(
 
     observeEvent(input$continue_heatmap, {
       removeModal()
-      # evaluated before accept() clears it
-      pending <- req(heatmap_reactives$pending)
-      accept(pending)
+      # taken before accept() clears it
+      selection <- req(pending())
+      accept(selection)
     })
 
     observeEvent(input$cancel_heatmap, {
-      heatmap_reactives$pending <- NULL
+      pending(NULL)
       info_text("The heatmap not calculated due to user's choice.")
       removeModal()
     })
@@ -211,12 +205,11 @@ heatmap_server <- function(id, dataset){moduleServer(
       input$rowWiseScaled, input$row_label_no, input$row_anno_options,
       input$anno_options
     ), {
-      req(result$get())
-      result$set_params(display_params(heatmap_reactives$run))
+      result$set_params(display_params(req(result$run())))
     }, ignoreInit = TRUE, ignoreNULL = FALSE)
 
     heatmap_plot <- reactive({
-      run <- req(heatmap_reactives$run)
+      run <- req(result$run())
       params <- req(result$get())$params
       tryCatch({
         plot_heatmap(
@@ -280,48 +273,27 @@ heatmap_server <- function(id, dataset){moduleServer(
 
     observeEvent(input$only2Report_Heatmap,{
       params <- req(result$get())$params
-      notificationID <- showNotification("Saving to Report...",duration = 0)
-      tmp_filename <- paste0(
-        getwd(),
-        file_path,
-        paste0(params$title, Sys.Date(), ".png")
+      plot_report(
+        session, "HEATMAP", "Heatmap_",
+        save = function(file) save_complex_heatmap(heatmap_plot(), filename = file, type = "png"),
+        info = c(
+          paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ", params$selection_type),
+          if (params$selection_type == "Select based on Annotation") paste0(
+            "**HEATMAP** - The rows were subsetted based on ", params$select_by, " :",
+            paste0(params$selection, collapse = ",")
+          ),
+          if (params$selection_type == "Top K") c(
+            paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ", params$n_top_k),
+            paste0("**HEATMAP** - Note that the order depends on ", params$top_k_type)
+          ),
+          paste0("**HEATMAP** - The heatmap samples were colored after ", paste0(params$col_annotations, collapse = ", ")),
+          paste0("**HEATMAP** - The heatmap entities were colored after ", paste0(params$row_annotations, collapse = ", ")),
+          if (isTRUE(params$cluster_cols)) "**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete",
+          if (isTRUE(params$cluster_rows)) "**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"
+        ),
+        notes = input$NotesHeatmap,
+        snippet = snippet_heatmap(data = NULL, params = list(Heatmap = params))
       )
-      save_complex_heatmap(
-        isolate(heatmap_plot()),
-        filename=tmp_filename,
-        type="png"
-      )
-      # Add Log Messages
-      fun_LogIt(session, message = "## HEATMAP{.tabset .tabset-fade}")
-      fun_LogIt(session, message = "### Info")
-      fun_LogIt(session, message = paste0("**HEATMAP** - The heatmap was constructed based on the following row selection: ", params$selection_type))
-      if(params$selection_type == "Select based on Annotation"){
-        fun_LogIt(session, message = paste0("**HEATMAP** - The rows were subsetted based on ",
-                                   params$select_by,
-                                   " :",
-                                   paste0(params$selection, collapse = ",")))
-      }
-      if(params$selection_type == "Top K"){
-        fun_LogIt(session, message = paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ", params$n_top_k))
-        fun_LogIt(session, message = paste0("**HEATMAP** - Note that the order depends on ", params$top_k_type))
-      }
-      fun_LogIt(session, message = paste0("**HEATMAP** - The heatmap samples were colored after ",paste0(params$col_annotations, collapse = ", ")))
-      fun_LogIt(session, message = paste0("**HEATMAP** - The heatmap entities were colored after ",paste0(params$row_annotations, collapse = ", ")))
-      if(isTRUE(params$cluster_cols)){
-        fun_LogIt(session, message = paste0("**HEATMAP** - columns were clustered based on: euclidean-distance & agglomeration method: complete"))
-      }
-      if(isTRUE(params$cluster_rows)){
-        fun_LogIt(session, message = paste0("**HEATMAP** - rows were clustered based on: euclidean-distance & agglomeration method: complete"))
-      }
-      fun_LogIt(session, message = paste0("**HEATMAP** - ![HEATMAP](",tmp_filename,")"))
-      if(isTruthy(input$NotesHeatmap) & !(isEmpty(input$NotesHeatmap))){
-        fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesHeatmap)))
-      }
-      fun_LogIt(session, message = "### Publication Snippet")
-      fun_LogIt(session, message = snippet_heatmap(data = NULL, params = list(Heatmap = params)))
-
-      removeNotification(notificationID)
-      showNotification("Report Saved!",type = "message", duration = 1)
     })
 
     result$get

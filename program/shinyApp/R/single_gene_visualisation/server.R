@@ -13,13 +13,6 @@ single_gene_visualisation_server <- function(id, dataset){
     id,
     function(input,output,session){
       ns <- session$ns
-      file_path <- paste0("/www/",session$token,"/")
-
-      # the Dataset version Go was last pressed on: on it, a new grouping
-      # re-runs; a new version (e.g. a new Upload, whose picker shows another
-      # column) waits for Go again. Not reactive: only the run observer reads it.
-      go_version <- NULL
-      last_go <- 0
       result <- module_result(dataset)
 
       # the plot and its buttons show while there is a result
@@ -107,15 +100,8 @@ single_gene_visualisation_server <- function(id, dataset){
       })
 
       # Visualize single Gene ----
-      # a run: Go, and a new grouping once Go was pressed on this Dataset
-      # version; a run that fails leaves no result
-      observeEvent(list(input$accross_condition, input$singleGeneGo), {
-        go <- input$singleGeneGo %||% 0
-        if (go > last_go) {
-          last_go <<- go
-          go_version <<- dataset$version()
-        }
-        req(identical(go_version, dataset$version()))
+      # one run on the current controls; a run that fails leaves no result
+      run_visualisation <- function(){
         result$clear()
         data_stage <- input$type_of_data_gene
         selected_gene <- input$Select_Gene
@@ -123,19 +109,13 @@ single_gene_visualisation_server <- function(id, dataset){
         group_by <- input$accross_condition
         post_selection_check <- unique(c(colData(dataset$processed())[,group_by]))
 
-        gene_data <- tryCatch(
-          get_single_gene_data(
-            data = dataset$data(data_stage),
-            selected_type = selected_type,
-            selected_gene = selected_gene,
-            group_by = group_by,
-            post_selection_check = post_selection_check
-          ),
-          error = function(e){
-            error_modal(e$message)
-            NULL
-          }
-        )
+        gene_data <- try_run(get_single_gene_data(
+          data = dataset$data(data_stage),
+          selected_type = selected_type,
+          selected_gene = selected_gene,
+          group_by = group_by,
+          post_selection_check = post_selection_check
+        ))
         if (is.null(gene_data)) return()
         result$set(list(
           gene_data = gene_data,
@@ -147,7 +127,12 @@ single_gene_visualisation_server <- function(id, dataset){
             data_stage = data_stage
           )
         ))
-      })
+      }
+      # Go runs; a new grouping re-runs while there is a result. A new Dataset
+      # version (e.g. a new Upload, whose picker shows another column) clears
+      # it, so then only Go runs again.
+      observeEvent(input$singleGeneGo, run_visualisation())
+      observeEvent(input$accross_condition, if (!is.null(result$get())) run_visualisation(), ignoreInit = TRUE)
 
       # the comparisons and the test are the drawing's choices, part of the
       # result once they fit its groups; before the plot reads them
@@ -229,53 +214,24 @@ single_gene_visualisation_server <- function(id, dataset){
 
       ## download only to report: what was plotted, not what the controls say now
       observeEvent(input$only2Report_SingleEntities,{
-        run <- req(result$get())
-        params <- run$params
-        notificationID <- showNotification("Saving to Report...",duration = 0)
-        tmp_filename <- paste0(
-          getwd(),
-          file_path,
-          paste0(
-            "Single_Gene_Boxplots_", Sys.time(), ".png"
-          )
+        res <- req(result$get())
+        params <- res$params
+        plot_report(
+          session, "Single Entitie", "Single_Gene_Boxplots_",
+          save = function(file) ggsave(filename = file, plot = drawing()$plot, device = "png"),
+          info = c(
+            paste0("**Single Entitie** - The following single entitie was plotted: ", params$selected_gene),
+            paste0("**Single Entitie** - Values shown are: ", data_stage_label(params$data_stage)),
+            paste0(
+              "**Single Entitie** - Values are grouped for all levels within: ", params$group_by,
+              " (", paste0(levels(res$gene_data$annotation), collapse = ";"), ")"
+            ),
+            "**Single Entitie** - Test for differences: T-Test",  # For now only test method we do
+            "**Single Entitie** - pairwise tested"
+          ),
+          notes = input$NotesSingleEntities,
+          snippet = snippet_SingleGene(data = NULL, params = list(SingleGeneVis = params))
         )
-        ggsave(
-          filename = tmp_filename,
-          plot = drawing()$plot,
-          device = "png"
-        )
-
-        fun_LogIt(session, message = "## Single Entitie{.tabset .tabset-fade}")
-        fun_LogIt(session, message = "### Info")
-        fun_LogIt(session, message = paste0(
-          "**Single Entitie** - The following single entitie was plotted: ",
-          params$selected_gene
-        ))
-        fun_LogIt(session, message = paste0(
-          "**Single Entitie** - Values shown are: ",
-          data_stage_label(params$data_stage)
-        ))
-        fun_LogIt(session, message = paste0(
-          "**Single Entitie** - Values are grouped for all levels within: ", params$group_by, " (",paste0(levels(run$gene_data$annotation),collapse = ";"),")"))
-        fun_LogIt(session, message = "**Single Entitie** - Test for differences: T-Test")  # For now only test method we do
-        fun_LogIt(session, message = paste0("**Single Entitie** - pairwise tested"))
-
-        fun_LogIt(session,
-          message = paste0("**Single Entitie** - ![SingleEntitie](",tmp_filename,")")
-        )
-
-        if(isTruthy(input$NotesSingleEntities) &
-           !(isEmpty(input$NotesSingleEntities))){
-          fun_LogIt(session, message = add_notes_report(shiny::markdown(input$NotesSingleEntities)))
-        }
-
-        fun_LogIt(session, message = "### Publication Snippet")
-        fun_LogIt(session, message = snippet_SingleGene(
-          data = NULL,
-          params = list(SingleGeneVis = params)
-        ))
-        removeNotification(notificationID)
-        showNotification("Report Saved!",type = "message", duration = 1)
       })
 
       result$get
