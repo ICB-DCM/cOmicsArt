@@ -43,6 +43,19 @@ dataset_handle <- function(id, get){
     version = function() get("version"),
     results = function() get("results"),
     # what the R-code download starts from (rcode_zip())
-    code_context = function() code_context(run())
+    code_context = function() code_context(run()),
+    # a module's R-code download (downloadHandler) of `pipeline` on this
+    # Dataset: params() are the module's params, stored under `section`;
+    # the script starts from their data_stage (DATA_STAGES), "processed" for
+    # modules without one (ML)
+    rcode_download = function(tab, item = NULL, pipeline, section, params){
+      rcode_download(tab, item, function(file){
+        module_params <- params()
+        rcode_zip(
+          file, code_context(run()), pipeline, section, module_params,
+          module_params$data_stage %||% "processed"
+        )
+      })
+    }
   )
 }
