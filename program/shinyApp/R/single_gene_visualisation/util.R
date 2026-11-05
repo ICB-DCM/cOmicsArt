@@ -112,12 +112,6 @@ single_gene_boxplot <- function(gene_data, add_testing, comparisons, selected_ge
   # Returns:
   #   ggplot2 object
 
-  # Understandable names for the processing
-  data_types <- list(
-    raw = "Raw Data",
-    processed = "Pre-processed Data",
-    batch_corrected = "Batch Corrected Data"
-  )
   plot_boxplots <- TRUE
   if(all(table(gene_data$annotation)<3)) plot_boxplots <- FALSE
   boxplot_layer <- NULL
@@ -134,7 +128,7 @@ single_gene_boxplot <- function(gene_data, add_testing, comparisons, selected_ge
     geom_point(shape = 21, size=5)+
     scale_fill_brewer(palette="RdBu") +
     xlab(group_by) +
-    ylab(data_types[[data_stage]]) +
+    ylab(tools::toTitleCase(data_stage_label(data_stage))) +
     CUSTOM_THEME +
     boxplot_layer +
     maybe_add_test(gene_data, add_testing, comparisons)

@@ -65,7 +65,7 @@ test_that("a run returns the entity's values with its parameters and the Dataset
   })
 })
 
-test_that("raw data is the Selection before Pre-processing; batch corrected data is processed(batch = TRUE)", {
+test_that("raw data is the Selection before Pre-processing; batch corrected data is data("batch_corrected")", {
   ds <- changeable_dataset("Lipidomics")
   testServer(single_gene_visualisation_server, args = list(dataset = ds$handle), {
     inputs <- gene_inputs(ds$handle$processed(), "diet", stage = "raw")
@@ -80,7 +80,7 @@ test_that("raw data is the Selection before Pre-processing; batch corrected data
     inputs <- gene_inputs(tmm$processed(), "condition", stage = "batch_corrected")
     run(session, inputs)
     gene_data <- session$returned()$gene_data
-    expect_equal(gene_data, expected_gene_data(tmm$processed(batch = TRUE), tmm$processed(), inputs))
+    expect_equal(gene_data, expected_gene_data(tmm$data("batch_corrected"), tmm$processed(), inputs))
     expect_false(isTRUE(all.equal(gene_data, expected_gene_data(tmm$processed(), tmm$processed(), inputs))))
   })
 })
@@ -171,7 +171,7 @@ test_that("a redrawn plot keeps the run's entity and data in its labels", {
     session$setInputs(chooseComparisons = paste(groups[2:3], collapse = ":"))
     labels <- single_gene_reactives$plot$labels
     expect_equal(labels$title, inputs$Select_Gene)
-    expect_equal(labels$y, "Pre-processed Data")
+    expect_equal(labels$y, "Pre-Processed Data")
   })
 })
 

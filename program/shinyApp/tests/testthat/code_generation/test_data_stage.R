@@ -57,10 +57,10 @@ test_that("Single Gene's raw data starts from the Selection", {
 test_that("PCA's R code with batch corrected data computes on the app's batch corrected data", {
   tmm <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
   testServer(pca_Server, args = list(dataset = tmm), {
-    session$setInputs(UseBatch = "Yes", coloring_options = "condition", entitie_anno = "geneName", PCA_anno_tooltip = "condition")
+    session$setInputs(UseBatch = "batch_corrected", coloring_options = "condition", entitie_anno = "geneName", PCA_anno_tooltip = "condition")
     session$setInputs(Do_PCA = 1)
     data <- data_of_rcode(output$getR_Code_PCA)
-    expected <- as.matrix(assay(tmm$processed(batch = TRUE)))
+    expected <- as.matrix(assay(tmm$data("batch_corrected")))
     expect_equal(dim(data), dim(expected))
     expect_equal(data[rownames(expected), colnames(expected)], expected, tolerance = 1e-6, ignore_attr = TRUE)
     # and not the uncorrected data

@@ -430,46 +430,36 @@ run_preprocessing <- function(data, omic_type, options, batch_column = NULL){
 }
 
 # A Pre-processing run as preprocessing_server() returns it and the Dataset
-# keeps it. `res` is run_preprocessing()'s result for `options` (named like
-# the arguments of preprocessing()) and `batch_column` (NULL for none) on
-# `selection` (resolve_selection()) of `upload`, list(raw, omic_type,
-# organism): the Upload's whole raw data, omic type and organism (NULL
-# without a gene annotation). `run` numbers the run, so that a repeated run
-# is a change. Read its objects with run_data() and run_deseq(); its params
-# (the options with batch_column), selection, raw, omic_type and organism
-# are fields; code_context() is what its R code starts from.
-new_preprocessing_run <- function(res, options, batch_column, selection, upload, run){
+# keeps it: run_preprocessing()'s result `res` for `options` (named like the
+# arguments of preprocessing()) and `batch_column` (NULL for none) on
+# `selection` (resolve_selection()), with the context of its Upload: `raw`, the
+# whole raw data, `omic_type` and `organism` (NULL without a gene annotation).
+# `run` numbers the run, so that a repeated run is a change. Read its data
+# with run_data() and run_deseq().
+new_preprocessing_run <- function(res, options, batch_column, selection, raw, omic_type, organism, run){
   list(
-    data = res$data,
-    data_batch_corrected = res$data_batch_corrected,
-    DESeq_obj = res$DESeq_obj,
-    DESeq_obj_batch_corrected = res$DESeq_obj_batch_corrected,
+    data = list(processed = res$data, batch_corrected = res$data_batch_corrected),
+    deseq = list(processed = res$DESeq_obj, batch_corrected = res$DESeq_obj_batch_corrected),
     params = c(options, list(batch_column = batch_column)),
     selection = selection,
-    raw = upload$raw,
-    omic_type = upload$omic_type,
-    organism = upload$organism,
+    raw = raw,
+    omic_type = omic_type,
+    organism = organism,
     run = run
   )
 }
 
-# A run's processed data; with `batch = TRUE` the batch-corrected data, which
-# falls back to the uncorrected data when the run has no batch column. NULL
-# without a run.
-run_data <- function(run, batch = FALSE){
-  run_object(run$data, run$data_batch_corrected, batch)
+# A run's processed data at `stage`, "processed" or "batch_corrected"
+# (DATA_STAGES); a run without a batch column has only the processed data.
+# NULL without a run.
+run_data <- function(run, stage = "processed"){
+  run$data[[stage]] %||% run$data$processed
 }
 
-# A run's DESeq2 object (vst_DESeq runs only, NULL otherwise), with `batch`
-# as in run_data()
-run_deseq <- function(run, batch = FALSE){
-  run_object(run$DESeq_obj, run$DESeq_obj_batch_corrected, batch)
-}
-
-# the batch-corrected object if asked for and there is one, else the
-# uncorrected one
-run_object <- function(uncorrected, corrected, batch){
-  if (batch && !is.null(corrected)) corrected else uncorrected
+# A run's DESeq2 object (vst_DESeq runs only, NULL otherwise), at `stage` as
+# in run_data()
+run_deseq <- function(run, stage = "processed"){
+  run$deseq[[stage]] %||% run$deseq$processed
 }
 
 # The summary's normality section (HTML) for `normality`, one row per entity

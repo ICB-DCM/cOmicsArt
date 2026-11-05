@@ -28,12 +28,6 @@ dataset_server <- function(id, upload, selection, preprocessing){
       ds$results <- list()
       ds$version <- ds$version + 1
     }
-    new_dataset <- function(selected, omic_type, run = NULL){
-      set_dataset(
-        selection = selected, omic_type = omic_type,
-        organism = upload$organism(), run = run
-      )
-    }
     clear <- function(){
       set_dataset(selection = NULL, omic_type = NULL, organism = NULL, run = NULL)
     }
@@ -45,15 +39,19 @@ dataset_server <- function(id, upload, selection, preprocessing){
     observeEvent(upload$annotated(), clear(), priority = 1)
 
     observeEvent(selection$confirmed(), {
-      new_dataset(selection$selected(), upload$omic_type())
+      set_dataset(
+        selection = selection$selected(), omic_type = upload$omic_type(),
+        organism = upload$organism(), run = NULL
+      )
     })
+    # a run brings its Selection and its Upload's context: on the confirmed
+    # Selection they are the Dataset's, on another one they make a new Dataset
     observeEvent(preprocessing$result(), {
       run <- preprocessing$result()
-      if (identical(run$selection$params, ds$selection$params)) {
-        set_dataset(run = run)
-      } else {
-        new_dataset(run$selection, run$omic_type, run)
-      }
+      set_dataset(
+        selection = run$selection, omic_type = run$omic_type,
+        organism = run$organism, run = run
+      )
     })
     observeEvent(preprocessing$failed(), set_dataset(run = NULL))
 

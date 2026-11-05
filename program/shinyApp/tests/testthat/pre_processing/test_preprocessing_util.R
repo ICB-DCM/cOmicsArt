@@ -296,13 +296,12 @@ fake_res <- function(batch){
   )
 }
 
-# an Upload as a run keeps it
-lipids_upload <- list(raw = lipids, omic_type = "Lipidomics", organism = NULL)
-
 test_that("a run holds the objects, the options with batch_column, the Selection, its Upload and number", {
   selection <- resolve_selection(lipids, list())
-  upload <- list(raw = lipids, omic_type = "Lipidomics", organism = "Mouse genes (GRCm39)")
-  run <- new_preprocessing_run(fake_res(FALSE), LOG10, NULL, selection, upload, 3)
+  run <- new_preprocessing_run(
+    fake_res(FALSE), LOG10, NULL, selection,
+    raw = lipids, omic_type = "Lipidomics", organism = "Mouse genes (GRCm39)", run = 3
+  )
   expect_equal(run$params, c(LOG10, list(batch_column = NULL)))
   expect_true("batch_column" %in% names(run$params))
   expect_identical(run$selection, selection)
@@ -316,15 +315,15 @@ test_that("a run holds the objects, the options with batch_column, the Selection
 })
 
 test_that("a run's data and DESeq2 object, batch corrected only with a batch column", {
-  with_batch <- new_preprocessing_run(fake_res(TRUE), LOG10, "batch", NULL, lipids_upload, 1)
+  with_batch <- new_preprocessing_run(fake_res(TRUE), LOG10, "batch", NULL, lipids, "Lipidomics", NULL, 1)
   expect_equal(run_data(with_batch), "processed")
-  expect_equal(run_data(with_batch, batch = TRUE), "processed, batch corrected")
+  expect_equal(run_data(with_batch, "batch_corrected"), "processed, batch corrected")
   expect_equal(run_deseq(with_batch), "dds")
-  expect_equal(run_deseq(with_batch, batch = TRUE), "dds, batch corrected")
-  without <- new_preprocessing_run(fake_res(FALSE), LOG10, NULL, NULL, lipids_upload, 1)
-  expect_equal(run_data(without, batch = TRUE), "processed")
-  expect_equal(run_deseq(without, batch = TRUE), "dds")
+  expect_equal(run_deseq(with_batch, "batch_corrected"), "dds, batch corrected")
+  without <- new_preprocessing_run(fake_res(FALSE), LOG10, NULL, NULL, lipids, "Lipidomics", NULL, 1)
+  expect_equal(run_data(without, "batch_corrected"), "processed")
+  expect_equal(run_deseq(without, "batch_corrected"), "dds")
   # no run, no data
   expect_null(run_data(NULL))
-  expect_null(run_deseq(NULL, batch = TRUE))
+  expect_null(run_deseq(NULL, "batch_corrected"))
 })

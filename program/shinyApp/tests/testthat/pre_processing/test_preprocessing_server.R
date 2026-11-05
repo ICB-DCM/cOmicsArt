@@ -235,7 +235,7 @@ test_that("the pre-processed violin plot shows the batch-corrected data", {
       batch_column = "diet", violin_color = "diet"
     )
     session$setInputs(get_preprocessing = 1)
-    corrected <- unlist(SummarizedExperiment::assay(run_data(session$returned$result(), batch = TRUE)))
+    corrected <- unlist(SummarizedExperiment::assay(run_data(session$returned$result(), "batch_corrected")))
     expect_equal(sort(processed_violin()$data$Counts), sort(unname(corrected)))
   })
 })

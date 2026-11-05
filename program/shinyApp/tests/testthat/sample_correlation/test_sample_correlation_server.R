@@ -42,11 +42,11 @@ test_that("a run returns the correlation matrix of all samples with its paramete
 test_that("batch corrected data is used when chosen", {
   tmm <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
   testServer(sample_correlation_server, args = list(dataset = tmm), {
-    session$setInputs(corrMethod = "pearson", SampleAnnotationChoice = "condition", UseBatch = "Yes")
+    session$setInputs(corrMethod = "pearson", SampleAnnotationChoice = "condition", UseBatch = "batch_corrected")
     session$setInputs(Do_SampleCorrelation = 1)
     res <- session$returned()
     expect_equal(res$params$data_stage, "batch_corrected")
-    expect_equal(res$cormat, get_sample_correlation(tmm$processed(batch = TRUE), "pearson"))
+    expect_equal(res$cormat, get_sample_correlation(tmm$data("batch_corrected"), "pearson"))
     expect_false(isTRUE(all.equal(res$cormat, get_sample_correlation(tmm$processed(), "pearson"))))
   })
 })

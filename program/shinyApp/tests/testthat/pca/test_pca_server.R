@@ -71,11 +71,11 @@ test_that("a run returns the PCA of all samples with its parameters and the Data
 test_that("batch corrected data is used when chosen", {
   tmm <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
   testServer(pca_Server, args = list(dataset = tmm), {
-    session$setInputs(UseBatch = "Yes", coloring_options = "condition", scale_data = "TRUE")
+    session$setInputs(UseBatch = "batch_corrected", coloring_options = "condition", scale_data = "TRUE")
     session$setInputs(Do_PCA = 1)
     res <- session$returned()
     expect_equal(res$params$data_stage, "batch_corrected")
-    batch <- get_pca(tmm$processed(batch = TRUE), TRUE, "condition", "all")$pca$x
+    batch <- get_pca(tmm$data("batch_corrected"), TRUE, "condition", "all")$pca$x
     expect_equal(res$pca$x, batch)
     expect_false(isTRUE(all.equal(res$pca$x, get_pca(tmm$processed(), TRUE, "condition", "all")$pca$x)))
   })

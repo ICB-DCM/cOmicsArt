@@ -42,8 +42,8 @@ single_gene_visualisation_server <- function(id, dataset){
         req(dataset$processed())
         # values are DATA_STAGES; "raw data" is the Selection before
         # Pre-processing
-        options <- c("raw data" = "raw", "pre-processed" = "processed")
-        if (dataset$has_batch()) options <- c(options, "batch corrected data" = "batch_corrected")
+        stages <- c("raw", "processed", if (dataset$has_batch()) "batch_corrected")
+        options <- setNames(stages, vapply(stages, data_stage_label, character(1)))
         selectInput(
           inputId = ns("type_of_data_gene"),
           label = "Choose Data to use (in case of DESeq- vst normalized counts are used)",
@@ -305,7 +305,7 @@ single_gene_visualisation_server <- function(id, dataset){
         ))
         fun_LogIt(session, message = paste0(
           "**Single Entitie** - Values shown are: ",
-          single_gene_stage_label(params$data_stage), " data"
+          data_stage_label(params$data_stage)
         ))
         fun_LogIt(session, message = paste0(
           "**Single Entitie** - Values are grouped for all levels within: ", params$group_by, " (",paste0(levels(result$gene_data$annotation),collapse = ";"),")"))

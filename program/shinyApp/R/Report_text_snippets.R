@@ -234,22 +234,16 @@ snippet_heatmap <- function(
   return(snippet)
 }
 
-# Single Gene's "Choose Data to use" value (DATA_STAGES) in words
-single_gene_stage_label <- function(stage){
-  c(raw = "raw", processed = "pre-processed", batch_corrected = "batch corrected")[[stage]]
-}
-
 snippet_SingleGene <- function(
     data,
     params
 ){
   # the parameters the Single Gene module passes
   par <- params$SingleGeneVis
-  data_stage <- single_gene_stage_label(par$data_stage)
   snippet <- c()
   # Single Entity Plotting
   snippet <- paste0(snippet, "The expression of ", par$selected_gene, " was plotted. ")
-  snippet <- paste0(snippet, "The values shown represent the ", data_stage, " data. ")
+  snippet <- paste0(snippet, "The values shown represent the ", data_stage_label(par$data_stage), ". ")
   snippet <- paste0(snippet, "If the a group of entities is selected through their shared annotation, ",
                     "the median value is used as representative for those entities for the respectice sample. ")
   snippet <- paste0(snippet, "Values are grouped for all levels within the condition: ", par$group_by, ". ")
