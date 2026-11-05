@@ -253,7 +253,8 @@ significance_analysis_server <- function(id, dataset){
 
         # define variables to be used
         stage <- data_stage()
-        # performSigAnalysis() takes the DESeq2 path for "vst_DESeq"
+        # the Pre-processing procedure; with vst_DESeq the stage's DESeq2
+        # object is tested
         preprocessing <- dataset$preprocessing()$preprocessing_procedure
         deseq <- uses_deseq()
         comparisons <- input$comparisons
@@ -262,12 +263,12 @@ significance_analysis_server <- function(id, dataset){
         compare_within <- input$sample_annotation_types_cmp
         test_method <- if (!deseq) input$test_method %||% "T-Test"
         # the data the run used, also for the volcano annotation
-        run_data <- dataset$data(stage)
+        data <- dataset$data(stage)
 
         # perform the analysis
         sig_results <- tryCatch({
           performSigAnalysis(
-            data = run_data,
+            data = data,
             dds = dataset$deseq(stage),
             preprocessing = preprocessing,
             comparisons = comparisons,
@@ -318,7 +319,7 @@ significance_analysis_server <- function(id, dataset){
             ns = ns,
             preprocess_method = if (deseq) "vst_DESeq" else preprocessing,
             value = paste0("Significance_", idx),
-            data = run_data,
+            data = data,
             run_params = run_params,
             code_context = dataset$code_context,
             file_path = file_path,

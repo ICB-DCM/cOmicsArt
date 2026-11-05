@@ -18,7 +18,7 @@ filter_significant_result <- function(result, alpha, filter_type){
 performSigAnalysis <- function(
   data,              # the SummarizedExperiment to test (non-DESeq2)
   dds,               # the DESeq2 object to test (vst_DESeq), else NULL
-  preprocessing,     # e.g., "vst_DESeq" or other method
+  preprocessing,     # the Pre-processing procedure, for the own tests
   comparisons,       # character vector of comparisons (e.g. "A:B")
   compare_within,    # the name of the sample annotation column used for contrasts
   test_method,       # the testing method (for non-DESeq2)
@@ -28,8 +28,9 @@ performSigAnalysis <- function(
   # The function will return a list of results for each comparison.
   # Parameters:
   # data: the SummarizedExperiment to test (non-DESeq2)
-  # dds: the DESeq2 object to test (vst_DESeq), else NULL
-  # preprocessing: the preprocessing method used for the data
+  # dds: the DESeq2 object to test (vst_DESeq), else NULL; with one, DESeq2
+  #   tests and `data` is not used
+  # preprocessing: the Pre-processing procedure, for the own tests
   # comparisons: a character vector of comparisons (e.g. "A:B")
   # compare_within: the name of the sample annotation column used for contrasts
   # test_method: the testing method (for non-DESeq2)
@@ -38,7 +39,7 @@ performSigAnalysis <- function(
   # A list of results for each comparison.
   contrasts <- lapply(comparisons, function(comp) unlist(strsplit(comp, ":")))
   names(contrasts) <- comparisons
-  if (preprocessing == "vst_DESeq") {
+  if (!is.null(dds)) {
     tryCatch({
       # For each contrast, run DESeq2::results and collect the result:
       sig_results <- lapply(contrasts, function(contrast_vals) {

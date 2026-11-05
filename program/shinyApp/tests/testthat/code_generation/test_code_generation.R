@@ -79,6 +79,24 @@ test_that("every script ends by showing its plot", {
   expect_match(script, "\nsig_ana_plot\\s*$")
 })
 
+test_that("Differential tests the stage's data and DESeq2 object the script left behind", {
+  par <- list(SigAna = list(
+    comparisons = "a:b", compare_within = "condition",
+    test_method = "T-Test", padjust_method = "BH"
+  ))
+  script <- create_function_script(
+    performSigAnalysis_info, par = par, section = "SigAna",
+    path_to_util = withr::local_tempfile()
+  )
+  expect_match(script, "data = data,", fixed = TRUE)
+  expect_match(script, "dds = dds,", fixed = TRUE)
+  # both come from Pre-processing (and the batch correction, if used)
+  pre <- create_function_script(preprocessing_info, par = list(preprocessing = list(
+    preprocessing_procedure = "vst_DESeq"
+  )), section = "preprocessing", path_to_util = withr::local_tempfile())
+  expect_match(pre, "dds <- res_preprocess$DESeq_obj", fixed = TRUE)
+})
+
 test_that("the script loads the packages of the Pre-processing helpers", {
   # deseq_processing() calls DESeq2's vst() without DESeq2::
   expect_match(create_library_code("plot_pca"), "library(DESeq2)", fixed = TRUE)
