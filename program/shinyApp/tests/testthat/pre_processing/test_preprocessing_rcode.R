@@ -20,7 +20,7 @@ run_preprocessing_script <- function(parameters, data_orig){
   env
 }
 
-# What the app stores in session_params after a run on all of `data`
+# The parameters of the app's R code after a run on all of `data`
 app_run <- function(data, omic_type, ...){
   options <- list(...)
   res <- suppressMessages(run_preprocessing(data, omic_type, options, batch_column = "NULL"))

@@ -8,7 +8,7 @@ module_args <- function(data, omic_type){
     omic_type = reactive(omic_type),
     selected = reactive(resolve_selection(data, list())),
     selection_confirmed = reactive(NULL),
-    upload_done = reactive("DataUploadSuccesful")
+    upload_done = reactive(1)
   )
 }
 # The module writes the report to www/<token>/Report.md, relative to the app

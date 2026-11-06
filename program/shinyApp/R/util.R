@@ -257,6 +257,7 @@ hide_tabs <- function(){
   hideTab(inputId = "tabsetPanel1", target = "Heatmap")
   hideTab(inputId = "tabsetPanel1", target = "Single Gene Visualisations")
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
+  hideTab(inputId = "tabsetPanel1", target = "ML Classification")
 }
 
 # The analysis tabs after a successful Pre-processing; Enrichment Analysis

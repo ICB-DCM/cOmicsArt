@@ -21,19 +21,22 @@ dataset_server <- function(id, upload, selection, preprocessing){
       results = list()
     )
 
-    new_dataset <- function(selected, omic_type){
-      ds$upload_raw <- upload$raw()
-      ds$selection <- selected
-      ds$omic_type <- omic_type
-      ds$organism <- upload$organism()
-      ds$run <- NULL
+    # every change of the Dataset goes through here: the modules' results are
+    # of the old state, and the new version tells the modules to clear
+    set_dataset <- function(...){
+      fields <- list(...)
+      for (name in names(fields)) ds[[name]] <- fields[[name]]
       ds$results <- list()
       ds$version <- ds$version + 1
     }
+    new_dataset <- function(selected, omic_type, run = NULL){
+      set_dataset(
+        upload_raw = upload$raw(), selection = selected, omic_type = omic_type,
+        organism = upload$organism(), run = run
+      )
+    }
     clear <- function(){
-      for (name in c("upload_raw", "selection", "omic_type", "organism", "run")) ds[[name]] <- NULL
-      ds$results <- list()
-      ds$version <- ds$version + 1
+      set_dataset(upload_raw = NULL, selection = NULL, omic_type = NULL, organism = NULL, run = NULL)
     }
 
     # before the Selection observers, so a new Upload and its confirm in the
@@ -47,17 +50,13 @@ dataset_server <- function(id, upload, selection, preprocessing){
     })
     observeEvent(preprocessing$result(), {
       run <- preprocessing$result()
-      if (!identical(selection_params(run$selection), selection_params(ds$selection))) {
-        new_dataset(run$selection, run$omic_type)
+      if (identical(selection_params(run$selection), selection_params(ds$selection))) {
+        set_dataset(run = run)
+      } else {
+        new_dataset(run$selection, run$omic_type, run)
       }
-      ds$run <- run
-      ds$results <- list()
-      ds$version <- ds$version + 1
     })
-    observeEvent(preprocessing$failed(), {
-      ds$run <- NULL
-      ds$results <- list()
-    })
+    observeEvent(preprocessing$failed(), set_dataset(run = NULL))
 
     handle <- dataset_handle(id, function(name) ds[[name]])
 

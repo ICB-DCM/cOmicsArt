@@ -1,6 +1,6 @@
 # Plain functions behind the Selection controls. They take the raw
 # SummarizedExperiment of the Upload and the Selection inputs, never
-# `input`, `output`, `session_data` or `session_params`.
+# `input` or `output`.
 
 # Annotation columns the user can select on; the first one is the default.
 # side: "entities" (rowData) or "samples" (colData)
@@ -55,8 +55,9 @@ resolve_selection <- function(data, inputs){
   )
 }
 
-# The Selection as stored in session_params. The R-code download passes the
-# chosen values to select_data(); Pre-processing reads the resolved IDs.
+# The Selection as the Dataset's selection() returns it. The R-code download
+# passes the chosen values to select_data(); Pre-processing reads the resolved
+# IDs.
 selection_params <- function(selection){
   list(
     selected_rows = selection$selected_rows,

@@ -1,4 +1,4 @@
-# The Selection bridge in server.R, tested on the whole app server
+# The Selection in the whole app server: what Dataset 1 gets
 app_dir <- normalizePath(test_path("..", "..", ".."))
 
 # Lipidomics test data, "Go to Preprocessing", log10 pre-processing
@@ -21,7 +21,7 @@ run_app_preprocessed <- function(expr){
 
 test_that("changing the Selection after pre-processing keeps the processed data", {
   run_app_preprocessed({
-    processed <- session_data$data
+    processed <- datasets[["1"]]$processed()
     expect_lt(max(SummarizedExperiment::assay(processed)), 10)  # log10
     invisible(output$`preprocessing-violin_color_ui`)
     session$setInputs(
@@ -29,7 +29,7 @@ test_that("changing the Selection after pre-processing keeps the processed data"
       `selection-sample_selection` = c("CD_CD_HFD", "HFD_HFD_CD")
     )
     invisible(output$`preprocessing-violin_color_ui`)
-    expect_identical(session_data$data, processed)
+    expect_identical(datasets[["1"]]$processed(), processed)
   })
 })
 
@@ -40,8 +40,8 @@ test_that("Pre-processing again uses the changed Selection", {
       `selection-sample_selection` = c("CD_CD_HFD", "HFD_HFD_CD")
     )
     session$setInputs(`preprocessing-get_preprocessing` = 2)
-    expect_equal(ncol(session_data$data), 12)
-    expect_length(session_params$samples_selected, 12)
+    expect_equal(ncol(datasets[["1"]]$processed()), 12)
+    expect_length(datasets[["1"]]$selection()$samples_selected, 12)
   })
 })
 

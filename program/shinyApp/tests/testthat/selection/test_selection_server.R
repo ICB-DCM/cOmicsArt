@@ -5,7 +5,7 @@ lipids <- readRDS(
 
 test_that("the module selects samples and entities by annotation", {
   testServer(selection_server, args = list(
-    raw = reactive(lipids), upload_done = reactive("DataUploadSuccesful")
+    raw = reactive(lipids), upload_done = reactive(1)
   ), {
     # before any choice: everything
     expect_equal(dim(session$returned$selected()$data), c(660, 28))
@@ -26,7 +26,7 @@ test_that("the module selects samples and entities by annotation", {
 test_that("the choices follow the chosen annotation column and a new Upload", {
   raw <- reactiveVal(lipids)
   testServer(selection_server, args = list(
-    raw = raw, upload_done = reactive("DataUploadSuccesful")
+    raw = raw, upload_done = reactive(1)
   ), {
     session$setInputs(providedSampleAnnotationTypes = "diet")
     expect_match(output$sample_selection_ui$html, "HFD_HFD_CD", fixed = TRUE)
@@ -52,7 +52,7 @@ test_that("nothing is selected before an Upload", {
 
 test_that("'Go to Preprocessing' and 'Start the Journey' confirm the Selection", {
   testServer(selection_server, args = list(
-    raw = reactive(lipids), upload_done = reactive("DataUploadSuccesful")
+    raw = reactive(lipids), upload_done = reactive(1)
   ), {
     session$setInputs(use_full_data = 0, NextPanel = 0)
     before <- session$returned$confirmed()
