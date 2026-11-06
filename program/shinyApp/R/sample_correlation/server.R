@@ -3,7 +3,7 @@
 # Returns a reactive: NULL before a run and after a new Dataset version,
 # otherwise list(cormat, params, version) with
 #   cormat: the sample x sample correlation matrix
-#   params: correlation_method, sample_annotations, batch, title (the R-code
+#   params: correlation_method, sample_annotations, data_stage, title (the R-code
 #     download reads them as parameters$SampleCorrelation)
 #   version: the Dataset version it was computed on
 sample_correlation_server <- function(id, dataset){
@@ -20,15 +20,8 @@ sample_correlation_server <- function(id, dataset){
       ns <- session$ns
       file_path <- paste0("/www/",session$token,"/")
       # UI Section ----
-      output$UseBatch_ui <- renderUI({
-        req(dataset$preprocessing()$batch_column)
-        selectInput(
-          inputId = ns("UseBatch"),
-          label = "Use batch corrected data?",
-          choices = c("No","Yes"),
-          selected = "No"
-        )
-      })
+      # the data the next run uses (DATA_STAGES), from the batch picker
+      data_stage <- batch_toggle(input, output, ns, dataset)
       # the sample annotation of the processed data; a new run resets the
       # user's choice
       output$SampleAnnotationChoice_ui <- renderUI({
@@ -66,7 +59,7 @@ sample_correlation_server <- function(id, dataset){
       # a new annotation recolours the samples; the matrix stays
       observeEvent(input$SampleAnnotationChoice,{
         req(sample_corr_reactive$result)
-        data <- req(dataset$processed(batch = sample_corr_reactive$result$params$batch))
+        data <- req(dataset$data(sample_corr_reactive$result$params$data_stage))
         sample_corr_reactive$row_anno <- custom_sample_annotation(data, input$SampleAnnotationChoice)
         sample_corr_reactive$result$params$sample_annotations <- input$SampleAnnotationChoice
       })
@@ -87,13 +80,13 @@ sample_correlation_server <- function(id, dataset){
         waiter$show()
 
         # assign variables to be used
-        useBatch <- !is.null(dataset$preprocessing()$batch_column) && identical(input$UseBatch, "Yes")
+        stage <- data_stage()
         sample_annotations <- input$SampleAnnotationChoice
         correlation_method <- input$corrMethod
         customTitleSampleCorrelation <- create_default_title_sc(
           correlation_method, dataset$preprocessing()$preprocessing_procedure
         )
-        data <- dataset$processed(batch = useBatch)
+        data <- dataset$data(stage)
 
         # for safety measures, wrap in tryCatch
         tryCatch({
@@ -116,7 +109,7 @@ sample_correlation_server <- function(id, dataset){
           params = list(
             correlation_method = correlation_method,
             sample_annotations = sample_annotations,
-            batch = useBatch,
+            data_stage = stage,
             title = customTitleSampleCorrelation
           ),
           version = dataset$version()
@@ -135,7 +128,7 @@ sample_correlation_server <- function(id, dataset){
         params <- sample_corr_reactive$result$params
         rcode_zip(
           file, dataset$code_context(), SAMPLE_CORRELATION_PIPELINE,
-          "SampleCorrelation", params, batch_data_stage(params$batch)
+          "SampleCorrelation", params, params$data_stage
         )
       })
 

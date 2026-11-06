@@ -6,6 +6,8 @@
 #   svm: predictions and truth (by sample), accuracy, confusion, params, version
 # `params` are the inputs of the run; the R-code download reads them as
 # parameters$MLClassification.
+# ML always uses the processed data without batch correction, so it has no
+# batch picker and its R code starts from "processed".
 
 ml_classification_Server <- function(id, dataset){
   moduleServer(id, function(input, output, session){

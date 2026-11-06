@@ -1,50 +1,48 @@
+### Data stages
+# The data a module uses or its R code starts from:
+#   "processed": the pre-processed data
+#   "batch_corrected": the batch corrected data (the processed data without a
+#     batch column; its R code needs parameters$preprocessing$batch_column)
+#   "raw": the Selection before Pre-processing
+DATA_STAGES <- c("processed", "batch_corrected", "raw")
+
+# A stage of DATA_STAGES in words, e.g. "pre-processed data". A function, so
+# that the R code of Single Gene can take it along to util.R.
+data_stage_label <- function(stage){
+  c(raw = "raw data", processed = "pre-processed data", batch_corrected = "batch corrected data")[[stage]]
+}
+
 ### Dataset handle
-# What every module reads a Dataset through. `get(name)`
-# returns one piece of the Dataset's private state, NULL before there is a
-# Dataset:
-#   upload_raw: the whole raw SummarizedExperiment of its Upload
-#   selection: its Selection (resolve_selection())
-#   omic_type, organism: as of its Upload
-#   run: the last successful Pre-processing run (preprocessing_server()'s
-#     result), NULL before one and after a failed one
-#   version: counts up on every new Dataset, run, failed run and clear;
-#     never reset
+# What every module reads a Dataset through: a view of its run. `get(name)`
+# returns one piece of the Dataset's private state:
+#   run: the last successful Pre-processing run (new_preprocessing_run()),
+#     NULL before one, after a failed one and after a new Selection, Upload,
+#     Clear or gene annotation
+#   version: counts up on every change of the run, also to NULL; never reset
 #   results: what the modules returned, by module
-# dataset_server() reads them from reactiveValues, fake_dataset() from a list.
+# Every accessor but id, version() and results() is NULL without a run.
+# dataset_server() reads the state from reactiveValues, fake_dataset() from a
+# list.
 dataset_handle <- function(id, get){
-  selection <- function() {
-    if (is.null(get("selection"))) return(NULL)
-    selection_params(get("selection"))
-  }
-  # the run's options with batch_column (NULL for none)
-  preprocessing <- function() get("run")$params
-  # `batch = TRUE` falls back to the uncorrected object without a batch column
-  batch_or_not <- function(corrected, uncorrected, batch) {
-    run <- get("run")
-    if (batch && !is.null(run[[corrected]])) run[[corrected]] else run[[uncorrected]]
-  }
+  run <- function() get("run")
   list(
     id = id,
-    name = function() get("omic_type"),
-    omic_type = function() get("omic_type"),
-    organism = function() get("organism"),
-    raw = function() get("selection")$data,
-    processed = function(batch = FALSE) batch_or_not("data_batch_corrected", "data", batch),
-    deseq = function(batch = FALSE) batch_or_not("DESeq_obj_batch_corrected", "DESeq_obj", batch),
-    selection = selection,
-    preprocessing = preprocessing,
+    name = function() run()$omic_type,
+    omic_type = function() run()$omic_type,
+    organism = function() run()$organism,
+    # the data of a stage of DATA_STAGES; anything else is an error
+    data = function(stage) run_data(run(), stage),
+    processed = function() run_data(run()),
+    # the DESeq2 object at `stage` (vst_DESeq only, NULL otherwise)
+    deseq = function(stage = "processed") run_deseq(run(), stage),
+    has_batch = function() !is.null(run()$params$batch_column),
+    # the Selection the run pre-processed (resolve_selection()'s params)
+    selection = function() run()$selection,
+    # the run's options with batch_column (NULL for none)
+    preprocessing = function() run()$params,
     version = function() get("version"),
     results = function() get("results"),
     # what the R-code download starts from (rcode_zip())
-    code_context = function() {
-      if (is.null(get("selection"))) return(NULL)
-      new_code_context(
-        raw = get("upload_raw"),
-        selection = selection(),
-        preprocessing = preprocessing(),
-        omic_type = get("omic_type"),
-        organism = get("organism")
-      )
-    }
+    code_context = function() code_context(run())
   )
 }

@@ -51,13 +51,15 @@ test_that("sample choices are 'all' and the column's values", {
 
 test_that("resolve_selection fills today's defaults for missing inputs", {
   res <- resolve_selection(small, list())
+  expect_named(res, c("data", "params"))
+  expect_named(res$params, c("row_values", "sample_values", "row_ids", "sample_ids", "row_type", "sample_type"))
   expect_equal(dim(res$data), c(4, 3))
-  expect_equal(res$row_type, "pathway")
-  expect_equal(res$sample_type, "group")
-  expect_equal(res$row_values, "all")
-  expect_equal(res$sample_values, "all")
-  expect_equal(res$row_ids, paste0("e", 1:4))
-  expect_equal(res$sample_ids, paste0("s", 1:3))
+  expect_equal(res$params$row_type, "pathway")
+  expect_equal(res$params$sample_type, "group")
+  expect_equal(res$params$row_values, "all")
+  expect_equal(res$params$sample_values, "all")
+  expect_equal(res$params$row_ids, paste0("e", 1:4))
+  expect_equal(res$params$sample_ids, paste0("s", 1:3))
 })
 
 test_that("resolve_selection passes the chosen values to select_data", {
@@ -66,8 +68,8 @@ test_that("resolve_selection passes the chosen values to select_data", {
     sample_selection = "1", sample_type = "batch"
   ))
   # "b" is one of the "|"-separated values of "a|b"
-  expect_equal(res$row_ids, c("e1", "e2"))
-  expect_equal(res$sample_ids, c("s1", "s2"))
+  expect_equal(res$params$row_ids, c("e1", "e2"))
+  expect_equal(res$params$sample_ids, c("s1", "s2"))
   expect_equal(dim(res$data), c(2, 2))
 })
 

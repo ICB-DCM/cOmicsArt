@@ -33,7 +33,7 @@ cases <- list(
 )
 for (name in names(cases)) {
   test_that(paste("the R code selects the same data as the app:", name), {
-    parameters <- selection_params(resolve_selection(lipids, cases[[name]]))
+    parameters <- resolve_selection(lipids, cases[[name]])$params
     app <- lipids[parameters$row_ids, parameters$sample_ids]
     script <- run_selection_script(parameters, lipids)
     expect_equal(dim(script$data), dim(app))
@@ -43,7 +43,7 @@ for (name in names(cases)) {
 }
 
 test_that("the stored Selection keeps the chosen values apart from the IDs", {
-  parameters <- selection_params(resolve_selection(lipids, cases$samples))
+  parameters <- resolve_selection(lipids, cases$samples)$params
   expect_equal(parameters$sample_values, c("CD_CD_HFD", "HFD_HFD_CD"))
   expect_equal(parameters$sample_type, "diet")
   expect_length(parameters$sample_ids, 12)

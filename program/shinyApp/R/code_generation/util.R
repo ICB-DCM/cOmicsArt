@@ -351,18 +351,6 @@ create_function_script <- function(foo_infos, par, section = NULL, path_to_util=
   return(function_script)
 }
 
-# The data the module's code starts from, like the module's data choice:
-#   "processed": the pre-processed data
-#   "batch_corrected": the batch corrected data (needs
-#     parameters$preprocessing$batch_column)
-#   "raw": the Selection before Pre-processing
-DATA_STAGES <- c("processed", "batch_corrected", "raw")
-
-# The data stage of a module's choice to use the batch corrected data
-batch_data_stage <- function(batch){
-  if (isTRUE(batch)) "batch_corrected" else "processed"
-}
-
 preprocessing_base_script <- function(par, path_to_util = NULL, data_stage = "processed"){
   # Generate the base script that contains the necessary functions and libraries
   # Parameters:
@@ -391,6 +379,10 @@ preprocessing_base_script <- function(par, path_to_util = NULL, data_stage = "pr
       sep = "\n"
     )
   }
+  # After the script, `data` is the stage's data and `dds` the DESeq2 object
+  # (NULL unless vst_DESeq) of the processed or batch corrected data, both
+  # from the output_mapping of preprocessing_info and batch_correction_info;
+  # the modules' steps read them (e.g. performSigAnalysis_info)
   if (data_stage == "raw") {
     data_select_process_script <- paste(
       data_select_process_script,
@@ -410,7 +402,7 @@ create_workflow_script <- function(
   # Generate the R script that contains the workflow
   # Parameters:
   #   pipeline_info: list of function informations
-  #   par: list, the parameters (code_parameters())
+  #   par: list, the parameters (rcode_zip())
   #   section: the entry of "par" the pipeline's own steps read, see
   #     variable_assignment()
   #   path_to_util: character, path to the util file

@@ -16,31 +16,20 @@ test_data <- function(omic){
 LOG10 <- list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
 
 # A run as preprocessing_server() returns it: run_preprocessing() on the
-# Selection's data with `options` (named like the arguments of preprocessing())
-preprocessing_run <- function(selection, omic_type, options, batch_column = NULL, run = 1){
+# Selection's data with `options` (named like the arguments of preprocessing()),
+# of an Upload whose whole raw data is `raw`
+preprocessing_run <- function(selection, omic_type, options, batch_column = NULL, run = 1,
+                              raw = selection$data, organism = NULL){
   res <- suppressMessages(run_preprocessing(selection$data, omic_type, options, batch_column))
-  c(
-    res[c("data", "data_batch_corrected", "DESeq_obj", "DESeq_obj_batch_corrected")],
-    list(
-      params = c(options, list(batch_column = batch_column)),
-      selection = selection,
-      omic_type = omic_type,
-      run = run
-    )
-  )
+  new_preprocessing_run(res, options, batch_column, selection, raw, omic_type, organism, run)
 }
 
-# The private state of a Dataset as dataset_server() keeps it: a Selection of
-# all of `data`, one run of `options` on it (version 2: one new Dataset, one
-# run), no results. No organism, as the test data's Upload has none.
+# The private state of a Dataset as dataset_server() keeps it: one run of
+# `options` on a Selection of all of `data` (version 2: a confirmed Selection,
+# then the run), no results. No organism, as the test data's Upload has none.
 dataset_state <- function(data, omic_type, options = LOG10, batch_column = NULL){
-  selection <- resolve_selection(data, list())
   list(
-    upload_raw = data,
-    selection = selection,
-    omic_type = omic_type,
-    organism = NULL,
-    run = preprocessing_run(selection, omic_type, options, batch_column),
+    run = preprocessing_run(resolve_selection(data, list()), omic_type, options, batch_column),
     version = 2,
     results = list()
   )

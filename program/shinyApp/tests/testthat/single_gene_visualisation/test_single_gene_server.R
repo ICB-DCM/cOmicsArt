@@ -4,7 +4,7 @@ rowData <- SummarizedExperiment::rowData
 
 # inputs for one entity of `data`, grouped by `group_by`, with the first
 # comparison of its groups
-gene_inputs <- function(data, group_by, stage = "data"){
+gene_inputs <- function(data, group_by, stage = "processed"){
   annotation <- colnames(rowData(data))[1]
   groups <- as.character(unique(colData(data)[, group_by]))
   list(
@@ -32,9 +32,9 @@ test_that("the pickers follow the processed data; batch corrected data only with
     session$flushReact()
     data <- ds$handle$processed()
     stages <- as.character(output$type_of_data_gene_ui$html)
-    expect_match(stages, 'value="data_original"', fixed = TRUE)
-    expect_match(stages, 'value="data"', fixed = TRUE)
-    expect_false(grepl("data_batch_corrected", stages, fixed = TRUE))
+    expect_match(stages, 'value="raw"', fixed = TRUE)
+    expect_match(stages, 'value="processed"', fixed = TRUE)
+    expect_false(grepl("batch_corrected", stages, fixed = TRUE))
     groups <- as.character(output$accross_condition_ui$html)
     for (column in colnames(colData(data))) expect_match(groups, sprintf('value="%s"', column), fixed = TRUE)
     annotations <- as.character(output$Select_GeneAnno_ui$html)
@@ -43,7 +43,7 @@ test_that("the pickers follow the processed data; batch corrected data only with
   tmm <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
   testServer(single_gene_visualisation_server, args = list(dataset = tmm), {
     session$flushReact()
-    expect_match(as.character(output$type_of_data_gene_ui$html), 'value="data_batch_corrected"', fixed = TRUE)
+    expect_match(as.character(output$type_of_data_gene_ui$html), 'value="batch_corrected"', fixed = TRUE)
   })
 })
 
@@ -58,29 +58,29 @@ test_that("a run returns the entity's values with its parameters and the Dataset
     expect_equal(res$params$selected_gene, inputs$Select_Gene)
     expect_equal(res$params$selected_type, inputs$Select_GeneAnno)
     expect_equal(res$params$group_by, "diet")
-    expect_equal(res$params$data_process_stage, "data")
+    expect_equal(res$params$data_stage, "processed")
     expect_equal(res$params$comparisons, inputs$chooseComparisons)
     expect_true(res$params$add_testing)
     expect_equal(res$version, 2)
   })
 })
 
-test_that("raw data is the Selection before Pre-processing; batch corrected data is processed(batch = TRUE)", {
+test_that("raw data is the Selection before Pre-processing; batch corrected data is data('batch_corrected')", {
   ds <- changeable_dataset("Lipidomics")
   testServer(single_gene_visualisation_server, args = list(dataset = ds$handle), {
-    inputs <- gene_inputs(ds$handle$processed(), "diet", stage = "data_original")
+    inputs <- gene_inputs(ds$handle$processed(), "diet", stage = "raw")
     run(session, inputs)
     expect_equal(
       session$returned()$gene_data,
-      expected_gene_data(ds$handle$raw(), ds$handle$processed(), inputs)
+      expected_gene_data(ds$handle$data("raw"), ds$handle$processed(), inputs)
     )
   })
   tmm <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
   testServer(single_gene_visualisation_server, args = list(dataset = tmm), {
-    inputs <- gene_inputs(tmm$processed(), "condition", stage = "data_batch_corrected")
+    inputs <- gene_inputs(tmm$processed(), "condition", stage = "batch_corrected")
     run(session, inputs)
     gene_data <- session$returned()$gene_data
-    expect_equal(gene_data, expected_gene_data(tmm$processed(batch = TRUE), tmm$processed(), inputs))
+    expect_equal(gene_data, expected_gene_data(tmm$data("batch_corrected"), tmm$processed(), inputs))
     expect_false(isTRUE(all.equal(gene_data, expected_gene_data(tmm$processed(), tmm$processed(), inputs))))
   })
 })
@@ -147,7 +147,7 @@ test_that("the report describes the run, whatever the controls say now; nothing 
     annotation <- inputs$Select_GeneAnno
     # another entity and data choice, not plotted
     session$setInputs(
-      Select_Gene = as.character(rowData(data)[2, annotation]), type_of_data_gene = "data_original"
+      Select_Gene = as.character(rowData(data)[2, annotation]), type_of_data_gene = "raw"
     )
     session$setInputs(only2Report_SingleEntities = 2)
     expect_match(report(), paste("was plotted:", inputs$Select_Gene), fixed = TRUE)
@@ -166,12 +166,12 @@ test_that("a redrawn plot keeps the run's entity and data in its labels", {
     groups <- as.character(unique(colData(data)$diet))
     # another entity and data choice, not run; then a new comparison redraws
     session$setInputs(
-      Select_Gene = as.character(rowData(data)[2, inputs$Select_GeneAnno]), type_of_data_gene = "data_original"
+      Select_Gene = as.character(rowData(data)[2, inputs$Select_GeneAnno]), type_of_data_gene = "raw"
     )
     session$setInputs(chooseComparisons = paste(groups[2:3], collapse = ":"))
     labels <- single_gene_reactives$plot$labels
     expect_equal(labels$title, inputs$Select_Gene)
-    expect_equal(labels$y, "Pre-processed Data")
+    expect_equal(labels$y, "Pre-Processed Data")
   })
 })
 
