@@ -204,9 +204,10 @@ heatmap_server <- function(id, session_data, session_params, data_input_shiny, s
       }
       session_params$Heatmap[names(par_list)] <- par_list
       # start checks here
-      if (nrow(data2plot) < 2){
+      # entitieSelection() gives NULL without annotation or groups
+      if (is.null(data2plot) || nrow(data2plot) < 2){
         waiter()$hide()
-        heatmap_reactives$info_text <- "The selection results in only one row. Please revise to have at least two. For single gene visualisation check out the tab Single gene visualisation."
+        heatmap_reactives$info_text <- "The selection results in fewer than two rows. Please revise to have at least two. For single gene visualisation check out the tab Single gene visualisation."
         return(NULL)
       } else if (nrow(data2plot) > 100) {
         waiter()$hide()

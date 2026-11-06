@@ -58,16 +58,17 @@ entitieSelection <- function(
       return(filtered_data)
     }
     LFC_output <- getLFCs(filtered_data, ctrl_samples_idx, comparison_samples_idx)
+    # the top K are the highest (absolute) fold changes; NA fold changes last
     if(top_k_type=="LogFoldChange"){
-      filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$LFC)],, drop=F]
+      filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$LFC, decreasing = TRUE)],, drop=F]
     } else if(top_k_type=="absolute LogFoldChange"){
-      filtered_data <- filtered_data[rownames(LFC_output)[order(abs(LFC_output$LFC))],, drop=F]
-    } else if(top_k_type=="LogFoldChange and Significant"){
-      filtered_data <- filtered_data[rownames(LFC_output)[which(LFC_output$p_adj<significance_level)],, drop=F]
-      filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$LFC)],, drop=F]
-    } else if(top_k_type=="absolute LogFoldChange and Significant"){
-      filtered_data <- filtered_data[rownames(LFC_output)[which(LFC_output$p_adj<significance_level)],, drop=F]
-      filtered_data <- filtered_data[rownames(LFC_output)[order(abs(LFC_output$LFC))],, drop=F]
+      filtered_data <- filtered_data[rownames(LFC_output)[order(abs(LFC_output$LFC), decreasing = TRUE)],, drop=F]
+    } else if(top_k_type %in% c("LogFoldChange and Significant", "absolute LogFoldChange and Significant")){
+      # order only the significant entities (ordering all of them re-added
+      # the others as NA rows)
+      significant <- LFC_output[which(LFC_output$p_adj < significance_level), , drop = F]
+      lfc <- if (top_k_type == "LogFoldChange and Significant") significant$LFC else abs(significant$LFC)
+      filtered_data <- filtered_data[rownames(significant)[order(lfc, decreasing = TRUE)],, drop=F]
     }
     if(nrow(filtered_data)>n_top_k){
       filtered_data <- filtered_data[c(1:n_top_k),, drop=F]
