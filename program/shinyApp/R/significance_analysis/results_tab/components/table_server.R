@@ -5,19 +5,13 @@
 #' Handles rendering and styling of the DataTable showing differential
 #' expression results.
 #'
-#' @param id Module ID (unused, kept for signature compatibility)
-#' @param result Reactive containing analysis results data frame
+#' @param result Data frame with the comparison's results
 #' @param alpha Numeric significance threshold
 #' @param preprocess_method Character indicating "vst_DESeq" or "manual"
 #' @param ids List of IDs from create_contrast_ids()
-#' @param output Shiny output object from parent session
-#' @param input Shiny input object from parent session
+#' @param output The comparison module's output
 #' @return None (sets up server outputs)
-#' @export
-table_server <- function(id, result, alpha, preprocess_method, ids, output, input) {
-  # Note: No moduleServer here because IDs are already namespaced from parent
-  # Using moduleServer would create double-namespacing and break rendering
-
+table_server <- function(result, alpha, preprocess_method, ids, output) {
   # Process result data upfront - add significance stars
   processed_result <- addStars(result, alpha)
 
@@ -47,17 +41,15 @@ table_server <- function(id, result, alpha, preprocess_method, ids, output, inpu
     list(list(5, 'asc'), list(6, 'desc'))  # Different column positions for manual
   }
 
-  # Render DataTable
+  # Render DataTable; client side, so the exports have every row (bug 08)
   output[[ids$table]] <- DT::renderDataTable({
-    DT::datatable(
-      data = processed_result,
-      extensions = 'Buttons',
-      filter = 'top',
+    results_datatable(
+      processed_result,
+      download_name("Differential", NULL, "Table"),
+      options = create_datatable_options(hidden_cols, sort_order, processed_result),
       rownames = TRUE,
       colnames = c('Entitie' = 1),
-      options = create_datatable_options(hidden_cols, sort_order, processed_result),
-      escape = FALSE,
-      class = "cell-border compact stripe hover order-column"
+      escape = FALSE
     ) %>%
       formatStyle("log2FoldChange",
         backgroundColor = styleInterval(brks_lfc, clrs_lfc)) %>%
@@ -71,32 +63,18 @@ table_server <- function(id, result, alpha, preprocess_method, ids, output, inpu
         zero.print = NULL,
         rows = NULL
       )
-  })
+  }, server = FALSE)
 }
 
-#' Create DataTable options configuration
+#' The table's own DataTable options (results_datatable() has the rest)
 #'
 #' @param hidden_cols Numeric vector of column indices to hide
 #' @param sort_order List specifying initial sort order
 #' @return List of DataTable options
-#' @export
 create_datatable_options <- function(hidden_cols, sort_order, result) {
   list(
-    paging = TRUE,
-    searching = TRUE,
     fixedColumns = TRUE,
-    autoWidth = TRUE,
-    ordering = TRUE,
     order = sort_order,
-    dom = 'Bfrtip',
-    lengthMenu = c(10, 25, 50, 100, -1),
-    buttons = list(
-      list(extend = 'colvis', text = 'Show/Hide Columns'),
-      'pageLength',
-      'copy',
-      list(extend = 'csv', filename = 'significance_table'),
-      list(extend = 'excel', filename = 'significance_table')
-    ),
     columnDefs = list(
       list(searchable = FALSE, targets = which(colnames(result) == "sig_level")),
       list(visible = FALSE, targets = hidden_cols)

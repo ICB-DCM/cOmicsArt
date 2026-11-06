@@ -4,24 +4,19 @@
 #'
 #' Handles rendering volcano plots, dynamic UI controls, and plot interactions.
 #'
-#' @param id Module ID (unused, kept for signature compatibility)
 #' @param result Data frame with analysis results (not reactive)
 #' @param contrast Character vector c(group1, group2)
 #' @param session_data ReactiveValues with application data
-#' @param session_params ReactiveValues with application parameters
-#' @param ids List of IDs from create_contrast_ids()
+#' @param ids List of the comparison module's IDs (create_contrast_ids())
+#' @param ns The comparison module's namespace, for inputs made by renderUI
 #' @param tab_state ReactiveValues to store plot state
-#' @param output Shiny output object from parent session
-#' @param input Shiny input object from parent session
+#' @param store_volcano function(values) keeping the volcano parameters
+#' @param output,input The comparison module's output and input
 #' @return None (sets up server outputs and observers)
-#' @export
-volcano_server <- function(id, result, contrast, session_data, session_params,
-                           ids, tab_state, output, input) {
-  # Note: No moduleServer here because IDs are already namespaced from parent
-  # Using moduleServer would create double-namespacing and break rendering
-
+volcano_server <- function(result, contrast, session_data, ids, ns, tab_state,
+                           store_volcano, output, input) {
   # Render dynamic UI controls
-  render_volcano_controls(output, input, ids, session_data)
+  render_volcano_controls(output, input, ids, ns, session_data)
 
   # Reactive to track when all inputs are ready
   volcano_trigger <- create_volcano_trigger(input, ids)
@@ -37,8 +32,7 @@ volcano_server <- function(id, result, contrast, session_data, session_params,
       ids = ids,
       tab_state = tab_state,
       session_data = session_data,
-      session_params = session_params,
-      contrast = contrast
+      store_volcano = store_volcano
     )
   })
 }
@@ -50,15 +44,15 @@ volcano_server <- function(id, result, contrast, session_data, session_params,
 #' @param output Shiny output object
 #' @param input Shiny input object
 #' @param ids List of IDs from create_contrast_ids()
+#' @param ns Namespace of the inputs the controls make
 #' @param session_data ReactiveValues with application data
 #' @return None (sets output values)
-#' @export
-render_volcano_controls <- function(output, input, ids, session_data) {
+render_volcano_controls <- function(output, input, ids, ns, session_data) {
   # Annotation tooltip selector
   output[[ids$volcano_anno_ui]] <- renderUI({
     req(session_data$data)
     selectInput(
-      inputId = ids$volcano_anno,
+      inputId = ns(ids$volcano_anno),
       label = "Select the anno to be shown at tooltip",
       choices = colnames(rowData(session_data$data)),
       selected = colnames(rowData(session_data$data))[1],
@@ -69,7 +63,7 @@ render_volcano_controls <- function(output, input, ids, session_data) {
   # P-value threshold input
   output[[ids$psig_th_ui]] <- renderUI({
     numericInput(
-      inputId = ids$psig_th,
+      inputId = ns(ids$psig_th),
       label = "adj. p-value threshold",
       min = 0,
       max = 0.1,
@@ -81,7 +75,7 @@ render_volcano_controls <- function(output, input, ids, session_data) {
   # Log FC threshold input
   output[[ids$lfc_th_ui]] <- renderUI({
     numericInput(
-      inputId = ids$lfc_th,
+      inputId = ns(ids$lfc_th),
       label = "Log FC threshold (both sides!)",
       min = 0,
       max = 10,
@@ -126,12 +120,10 @@ create_volcano_trigger <- function(input, ids) {
 #' @param ids List of IDs from create_contrast_ids()
 #' @param tab_state ReactiveValues to store plot objects
 #' @param session_data ReactiveValues with application data
-#' @param session_params ReactiveValues with application parameters
-#' @param contrast Character vector c(group1, group2)
+#' @param store_volcano function(values) keeping the volcano parameters
 #' @return None (updates tab_state and renders plots)
-#' @export
 generate_volcano_plots <- function(result, input, output, ids, tab_state,
-                                    session_data, session_params, contrast) {
+                                    session_data, store_volcano) {
 
   # Show loading screen
   waiter <- Waiter$new(
@@ -160,13 +152,11 @@ generate_volcano_plots <- function(result, input, output, ids, tab_state,
   tab_state$VolcanoPlot <- volcano_obj$volcano_plt
   tab_state$VolcanoPlot_raw <- volcano_obj_raw$volcano_plt
 
-  # Store in session params for report generation
-  if(is.null(session_params$SigAna)) {
-    session_params$SigAna <- list()
-  }
-  session_params$SigAna$th_psig <- th_psig
-  session_params$SigAna$th_lfc <- th_lfc
-  session_params$SigAna$anno_vector <- anno_vector
+  # this comparison's own volcano parameters (R code, report)
+  tab_state$th_psig <- th_psig
+  tab_state$th_lfc <- th_lfc
+  tab_state$anno_vector <- anno_vector
+  store_volcano(list(th_psig = th_psig, th_lfc = th_lfc, anno = anno_col_name))
 
   # Render plotly outputs using centralized helper function
   output[[ids$volcano_plot_adj]] <- renderPlotly({
