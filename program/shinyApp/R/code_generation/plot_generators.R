@@ -33,14 +33,14 @@ HEATMAP_PIPELINE <- list(
 
 # --- Enrichment Analysis ---
 OA_PIPELINE <- list(
-  get_gene_set_choice_info,
+  ora_genes_info,
   check_annotation_enrichment_analysis_info,
   gene_set_to_entrez_info,
   over_representation_analysis_info,
   plot_enrichment_results_info
 )
 EA_PIPELINE <- list(
-  get_gene_set_choice_info,
+  gsea_ranking_info,
   check_annotation_enrichment_analysis_info,
   gene_set_enrichment_info,
   plot_enrichment_results_info

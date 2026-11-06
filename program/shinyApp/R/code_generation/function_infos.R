@@ -203,9 +203,16 @@ plot_heatmap_info <- list(
 )
 
 # --- Enrichment Analysis ---
-get_gene_set_choice_info <- list(
-  foo = get_gene_set_choice,
-  name = "get_gene_set_choice",
+ora_genes_info <- list(
+  foo = ora_genes,
+  name = "ora_genes",
+  input_mapping = list(),
+  output_name = "gene_set_choice",
+  to_util = TRUE
+)
+gsea_ranking_info <- list(
+  foo = gsea_ranking,
+  name = "gsea_ranking",
   input_mapping = list(
       data = "data"
   ),

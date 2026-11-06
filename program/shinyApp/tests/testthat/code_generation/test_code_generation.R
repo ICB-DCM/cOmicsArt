@@ -97,6 +97,18 @@ test_that("Differential tests the stage's data and DESeq2 object the script left
   expect_match(pre, "dds <- res_preprocess$DESeq_obj", fixed = TRUE)
 })
 
+test_that("a function without input mapping is called with its parameters (ORA's ora_genes())", {
+  par <- list(Enrichment = list(ora_gene_set_type = "heatmap_genes", uploaded_gene_set = NULL, heatmap_genes = "ENSG1"))
+  script <- create_function_script(
+    ora_genes_info, par = par, section = "Enrichment", path_to_util = withr::local_tempfile()
+  )
+  expect_match(
+    script,
+    "gene_set_choice <- ora_genes(\n  ora_gene_set_type = ora_gene_set_type,\n  uploaded_gene_set = uploaded_gene_set,\n  heatmap_genes = heatmap_genes\n)",
+    fixed = TRUE
+  )
+})
+
 test_that("the script loads the packages of the Pre-processing helpers", {
   # deseq_processing() calls DESeq2's vst() without DESeq2::
   expect_match(create_library_code("plot_pca"), "library(DESeq2)", fixed = TRUE)
