@@ -279,7 +279,6 @@ show_tabs <- function(omic_type){
 # the user's choices there are reset.
 refresh_analysis_tabs <- function(){
   shinyjs::click("SignificanceAnalysis-refreshUI", asis = TRUE)
-  shinyjs::click("EnrichmentAnalysis-refreshUI", asis = TRUE)
 }
 
 # The warning toast after a run: what the procedure did and, if rows with

@@ -1,262 +1,232 @@
-enrichment_analysis_geneset_server <- function(
-  id, result, organism_choice, gene_set_choice, ea_type, session_data, session_params
-){
+# The gene sets an enrichment can be done for, one sub-module each
+ENRICHMENT_GENE_SETS <- c(
+  'KEGG', 'GO', 'REACTOME', 'Hallmarks', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6',
+  'C7', 'C8', 'CGP', 'CP', 'BIOCARTA', 'PID', 'WIKIPATHWAYS', 'MIRDB',
+  'MIR_Legacy', 'GTRD', 'TFT_Legacy', 'CGN', 'CM', 'GO_BP', 'GO_CC', 'GO_MF',
+  'HPO', 'IMMUNESIGDB', 'VAX'
+)
+
+# One gene set's plot, table, R code and report. Created once per
+# Enrichment module; follows its result.
+# Arguments:
+#   result: reactive, the enrichResult/gseaResult of this gene set or NULL
+#   ea_type: function, "GeneSetEnrichment" or "OverRepresentation_Analysis"
+#     of the current result
+#   code_par: function, the parameter list for the R-code download
+#     (Selection, Pre-processing and parameters$Enrichment)
+#   code_raw: function, the Upload's raw data for the R-code download
+enrichment_analysis_geneset_server <- function(id, result, ea_type, code_par, code_raw){
   moduleServer(
     id,
     function(input,output,session){
       file_path <- paste0("/www/",session$token,"/")
-      if(is.null(result)){
-        output$EnrichmentFailure <- renderText("Currently there is no result to display.")
-        hideElement(id = "EnrichmentPlot")
-        hideElement(id = "only2Report")
-        hideElement(id = "getR_Code")
-        hideElement(id = "SavePlot")
-        hideElement(id = "file_ext")
-        hideElement(id = "Notes")
-        hideElement(id = "NotesHelper")
-        hideElement(id = "copy_EnrichmentPlot")
-      }else{
-        print(paste(id, "Enrichment Done"))
-        print(result)
-        # Enrichment Result Plot
-        # only plot if the best found adjustment value is significant
-        if(nrow(result@result) > 0){
-          if(result@result$p.adjust[1] < 0.05){
-            showElement(id = "EnrichmentPlot")
-            showElement(id = "only2Report")
-            showElement(id = "getR_Code")
-            showElement(id = "SavePlot")
-            showElement(id = "file_ext")
-            showElement(id = "Notes")
-            showElement(id = "NotesHelper")
-            showElement(id = "copy_EnrichmentPlot")
-            hideElement(id = "EnrichmentFailure")
-            output$EnrichmentPlot <- renderPlot({clusterProfiler::dotplot(result) + CUSTOM_THEME})
-            if(ea_type == "GeneSetEnrichment"){
-              ea_scenario <- 15
-            }else{
-              ea_scenario <- 14
-            }
-          }else{ # print that no significant result was found
-            showElement(id = "EnrichmentFailure")
-            output$EnrichmentFailure <- renderText("No significant result found. For further details check the table.")
-            ea_scenario <- 0
-          }
-        }else{ # print that no significant result was found
-          showElement(id = "EnrichmentFailure")
-          output$EnrichmentFailure <- renderText("No significant result found. For further details check the table.")
-          ea_scenario <- 0
+      result_elements <- c(
+        "EnrichmentPlot", "only2Report", "getR_Code", "SavePlot", "file_ext",
+        "Notes", "NotesHelper", "copy_EnrichmentPlot"
+      )
+      # only plot if the best found adjustment value is significant
+      significant <- reactive({
+        res <- result()
+        !is.null(res) && nrow(res@result) > 0 && res@result$p.adjust[1] < 0.05
+      })
+      observe({
+        for (element in result_elements) shinyjs::toggleElement(id = element, condition = significant())
+        shinyjs::toggleElement(id = "EnrichmentFailure", condition = !significant())
+      })
+      output$EnrichmentFailure <- renderText({
+        if (is.null(result())) {
+          "Currently there is no result to display."
+        } else if (!significant()) {
+          "No significant result found. For further details check the table."
         }
+      })
+      output$EnrichmentPlot <- renderPlot({
+        req(significant())
+        clusterProfiler::dotplot(result()) + CUSTOM_THEME
+      })
+      # result table, every row in the exports
+      output$EnrichmentTable <- DT::renderDataTable({
+        res <- req(result())
+        results_datatable(res@result, download_name("Enrichment", NULL, gsub("_", "", id)))
+      }, server = FALSE)
 
-        # download R Code for further plotting
-        output$getR_Code <- downloadHandler(
-          filename = function(){
-            download_name("Enrichment", "rcode", gsub("_", "", id))
-          },
-          content = function(file){
-            waiter <- Waiter$new(
-              html = LOADING_SCREEN,
-              color = "#3897F147",
-              hide_on_render = FALSE
-            )
-            waiter$show()
-            # add the id to session_params
-            if(is.null(session_params$Enrichment)){
-              session_params$Enrichment <- list()
-            }
-            session_params$Enrichment$enrich_set <- id
-            envList <- list(
-              par_tmp = reactiveValuesToList(session_params)
-            )
-            temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-            dir.create(temp_directory)
-            # save csv files
-            save_summarized_experiment(
-              session_data$data_original,
-              temp_directory
-            )
-            pipeline <- if(ea_type == "GeneSetEnrichment") {
-              EA_PIPELINE
-            } else {
-              OA_PIPELINE
-            }
-            write(
-              create_workflow_script(
-                pipeline_info = pipeline,
-                par = reactiveValuesToList(session_params),
-                par_mem = "Enrichment",
-                path_to_util = file.path(temp_directory, "util.R")
-              ),
-              file.path(temp_directory, "Code.R")
-            )
-            # get the EnsemblObjects.RDS from www and save it
-            file.copy(
-              from = "/www/EnsemblObjects.RDS",
-              to = file.path(temp_directory, "EnsemblObjects.rds")
-            )
-
-            saveRDS(envList, file.path(temp_directory, "Data.rds"))
-            zip::zip(
-              zipfile = file,
-              files = dir(temp_directory),
-              root = temp_directory
-            )
-            waiter$hide()
-          },
-          contentType = "application/zip"
-        )
-
-        # Saving Plot
-        output$SavePlot <- downloadHandler(
-          filename = function() {
-            download_name("Enrichment", input$file_ext, gsub("_", "", id))
-          },
-          content = function(file){
-            ggsave(
-              filename = file,
-              plot = clusterProfiler::dotplot(result, title = "") + CUSTOM_THEME,
-              device = gsub("\\.","",input$file_ext)
-            )
+      # download R Code for further plotting
+      output$getR_Code <- downloadHandler(
+        filename = function(){
+          download_name("Enrichment", "rcode", gsub("_", "", id))
+        },
+        content = function(file){
+          waiter <- Waiter$new(
+            html = LOADING_SCREEN,
+            color = "#3897F147",
+            hide_on_render = FALSE
+          )
+          waiter$show()
+          par <- code_par()
+          par$Enrichment$enrich_set <- id
+          temp_directory <- tempfile()
+          dir.create(temp_directory)
+          # save csv files: the whole raw data of the Upload
+          save_summarized_experiment(
+            code_raw(),
+            temp_directory
+          )
+          pipeline <- if(ea_type() == "GeneSetEnrichment") {
+            EA_PIPELINE
+          } else {
+            OA_PIPELINE
           }
-        )
-
-        # result table
-        output$EnrichmentTable <- DT::renderDataTable({DT::datatable(
-            data = {result@result},
-            extensions = 'Buttons',
-            filter = 'top',
-            rownames = FALSE,
-            options = list(
-              paging = TRUE,
-              searching = TRUE,
-              fixedColumns = TRUE,
-              autoWidth = TRUE,
-              ordering = TRUE,
-              dom = 'Bfrtip',
-              lengthMenu = c(10, 25, 50, 100, -1),
-              buttons = c('pageLength', 'copy', 'csv', 'excel')
+          write(
+            create_workflow_script(
+              pipeline_info = pipeline,
+              par = par,
+              par_mem = "Enrichment",
+              path_to_util = file.path(temp_directory, "util.R")
             ),
-            class = "cell-border compact stripe hover order-column"
-          )}
-        )
-        # download section
-        session$userData[[paste0(id, "_Report")]] <- observeEvent(input$only2Report,{
-          if(!is.null(session$userData[[paste0(id, "_Report_Val")]])){
-            req(input$only2Report > session$userData[[paste0(id, "_Report_Val")]])
-          }
-          notificationID <- showNotification(ui = "Saving to Report...",duration = 0)
-          tmp_filename <- paste0(getwd(),file_path, paste(id,Sys.time(),".png",sep="_"))
+            file.path(temp_directory, "Code.R")
+          )
+          # the Ensembl objects the translation uses
+          file.copy(
+            from = file.path("www", "EnsemblObjects.RDS"),
+            to = file.path(temp_directory, "EnsemblObjects.rds")
+          )
+
+          saveRDS(list(par_tmp = par), file.path(temp_directory, "Data.rds"))
+          zip::zip(
+            zipfile = file,
+            files = dir(temp_directory),
+            root = temp_directory
+          )
+          waiter$hide()
+        },
+        contentType = "application/zip"
+      )
+
+      # Saving Plot
+      output$SavePlot <- downloadHandler(
+        filename = function() {
+          download_name("Enrichment", input$file_ext, gsub("_", "", id))
+        },
+        content = function(file){
           ggsave(
-            filename = tmp_filename,
-            plot = clusterProfiler::dotplot(result) + CUSTOM_THEME,
-            device = "png"
+            filename = file,
+            plot = clusterProfiler::dotplot(result(), title = "") + CUSTOM_THEME,
+            device = gsub("\\.","",input$file_ext)
           )
-          
-          fun_LogIt(session, message = paste0("### ", id, "_ENRICHMENT"))
+        }
+      )
 
-          fun_LogIt(session, 
-            message = paste0(
-              "- The number of found enriched terms (p.adj <0.05): ",
-              nrow(result@result[result@result$p.adjust<0.05,])
-            )
+      # send only to report
+      observeEvent(input$only2Report,{
+        res <- req(result())
+        notificationID <- showNotification(ui = "Saving to Report...",duration = 0)
+        tmp_filename <- paste0(getwd(),file_path, paste(id,Sys.time(),".png",sep="_"))
+        ggsave(
+          filename = tmp_filename,
+          plot = clusterProfiler::dotplot(res) + CUSTOM_THEME,
+          device = "png"
+        )
+
+        fun_LogIt(session, message = paste0("### ", id, "_ENRICHMENT"))
+        fun_LogIt(session,
+          message = paste0(
+            "- The number of found enriched terms (p.adj <0.05): ",
+            nrow(res@result[res@result$p.adjust<0.05,])
           )
-
-          fun_LogIt(session, 
-            message = paste0(
-              "**", id, " ENRICHMENT** - ![", id, " ENRICHMENT](",tmp_filename,")"
-            )
+        )
+        fun_LogIt(session,
+          message = paste0(
+            "**", id, " ENRICHMENT** - ![", id, " ENRICHMENT](",tmp_filename,")"
           )
-          fun_LogIt(session, message = paste("- The top 5 terms are the following (sorted by adj. p.val)"))
-          fun_LogIt(session, message = knitr::kable(
-            head(result@result[order(result@result$p.adjust, decreasing = FALSE),], 5),
-            format = "html",
-            escape = FALSE,
-            row.names = FALSE
-          ) %>%
-            kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
-            scroll_box(width = "100%", height = "300px"))
+        )
+        fun_LogIt(session, message = paste("- The top 5 terms are the following (sorted by adj. p.val)"))
+        fun_LogIt(session, message = knitr::kable(
+          head(res@result[order(res@result$p.adjust, decreasing = FALSE),], 5),
+          format = "html",
+          escape = FALSE,
+          row.names = FALSE
+        ) %>%
+          kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+          scroll_box(width = "100%", height = "300px"))
 
-          if(isTruthy(input$Notes) & !(isEmpty(input$Notes))){
-            fun_LogIt(session, message = add_notes_report(shiny::markdown(input$Notes)))
-          }
-          removeNotification(notificationID)
-          showNotification(ui = "Report Saved!",type = "message", duration = 1)
-        })
-      }
+        if(isTruthy(input$Notes) & !(isEmpty(input$Notes))){
+          fun_LogIt(session, message = add_notes_report(shiny::markdown(input$Notes)))
+        }
+        removeNotification(notificationID)
+        showNotification(ui = "Report Saved!",type = "message", duration = 1)
+      })
     }
   )
 }
 
 
-# Reactive server function that calls the enrichment analysis geneset server function;
-# `input` and `session` are those of the Enrichment module
-enrichment_analysis_geneset_server_reactive <- function(
-  id, result_all, organism_choice, gene_set_choice, ea_type, session_data, session_params,
-  input, session
-){
-  observe({
-    result <- result_all()[[paste("EnrichmentRes", id, sep = "_")]]
-    # remove old observers and change base value
-    if (!is.null(session$userData[[paste0(id, "_Report")]])) {
-      session$userData[[paste0(id, "_Report_Val")]] <- isolate(
-        input[[paste0(id, "-only2Report")]]
-      )
-      session$userData[[paste0(id, "_Report")]]$destroy()
-    }
-    server <- enrichment_analysis_geneset_server(id, result, organism_choice, gene_set_choice, ea_type, session_data, session_params)
-  })
-}
-
-
-enrichment_analysis_Server <- function(id, data, params, updates){
+# Enrichment Analysis Server Module
+# Reads its Dataset through the handle (`dataset`, see dataset_handle()).
+# heatmap_genes: reactive, the genes the Heatmap saved for ORA (or NULL);
+#   wired in dataset_server()
+# Returns a reactive: NULL before a run and after a new Dataset version,
+# otherwise list(results, params, version) with
+#   results: the enrichResult/gseaResult per gene set (named by gene set,
+#     only those computed)
+#   params: what the run used (the R-code templates read them as
+#     parameters$Enrichment): ora_or_gse, ora_gene_set_type,
+#     uploaded_gene_set, heatmap_genes, gse_gene_set_type, compare_within,
+#     reference, treatment, organism, enrichments2do, test_correction,
+#     tmp_genes; for ORA also UniverseOfGene and universe (Ensembl IDs of
+#     the background, NULL for the default)
+#   version: the Dataset version it was computed on
+enrichment_analysis_Server <- function(id, dataset, heatmap_genes){
   moduleServer(
     id,
     function(input,output,session){
       ea_reactives <- reactiveValues(
-        ea_info = "Click 'Do Enrichment' to Start",
-        can_start = FALSE,
-        data = NULL,
-        organism = NULL,
-        enrichments2do = GENESETS_RESET
+        enrichments2do = GENESETS_RESET,
+        # list(data, genes, params, anno) of a Gene Set Enrichment that
+        # waits for the user's annotation type
+        pending = NULL,
+        result = NULL
       )
       ns <- session$ns
-      output$EnrichmentInfo <- renderText({"Press 'Get Enrichment Analysis' to start. Note that this analysis is only meaningful for gene sets at the moment."})
-      ## initialize result as NULL
-      ea_reactives$enrichment_results <- ENRICHMENT_RESULT_RESET
-      # TODO: Call this in a loop.
-      ## Call Modules
-      gene_sets_to_compare <- c(
-        'KEGG', 'GO', 'REACTOME', 'Hallmarks', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6',
-        'C7', 'C8', 'CGP', 'CP', 'BIOCARTA', 'PID', 'WIKIPATHWAYS', 'MIRDB',
-        'MIR_Legacy', 'GTRD', 'TFT_Legacy', 'CGN', 'CM', 'GO_BP', 'GO_CC', 'GO_MF',
-        'HPO', 'IMMUNESIGDB', 'VAX'
+      waiter <- Waiter$new(
+        html = LOADING_SCREEN,
+        color="#70BF4F47"
       )
+      output$EnrichmentInfo <- renderText({"Press 'Get Enrichment Analysis' to start. Note that this analysis is only meaningful for gene sets at the moment."})
 
-      # Delete and Re-create the servers
-      lapply(gene_sets_to_compare, function(id) {
-        enrichment_analysis_geneset_server_reactive(
-          id = id,
-          result_all = reactive(ea_reactives$enrichment_results),
-          ea_type = input$ORA_or_GSE,
-          organism_choice = ea_reactives$organism,
-          gene_set_choice = ea_reactives$tmp_genes,
-          session_data = data,
-          session_params = params,
-          input = input,
-          session = session
+      # The result belongs to one Dataset version: a new Dataset, run or
+      # clear removes it
+      observeEvent(dataset$version(), {
+        ea_reactives$pending <- NULL
+        ea_reactives$result <- NULL
+        shinyjs::hideElement(id = "enrichment_div")
+      })
+
+      ## Call Modules
+      for (gene_set in ENRICHMENT_GENE_SETS) local({
+        gene_set <- gene_set
+        enrichment_analysis_geneset_server(
+          id = gene_set,
+          result = reactive(ea_reactives$result$results[[gene_set]]),
+          ea_type = function() ea_reactives$result$params$ora_or_gse,
+          code_par = function() c(
+            dataset$code_context()$par_tmp,
+            list(Enrichment = ea_reactives$result$params)
+          ),
+          code_raw = function() dataset$code_context()$raw
         )
       })
+
       ## Ui section
       output$OrganismChoice_ui <- renderUI({
-        # Keep the choice visible: the select's initial value already sets
-        # params$organism, so replacing it by text locked users into Mouse
-        if (is.null(params$organism) ||
-            params$organism %in% c("Mouse genes (GRCm39)", "Human genes (GRCh38.p14)")) {
+        # preselect the Upload's organism when it is known
+        organism <- dataset$organism()
+        if (is.null(organism) ||
+            organism %in% c("Mouse genes (GRCm39)", "Human genes (GRCh38.p14)")) {
           selectInput(
             inputId = ns("organism_choice_ea"),
             label = "Choose an organism:",
             choices = c("Mouse genes (GRCm39)", "Human genes (GRCh38.p14)"),
-            selected = params$organism %||% "Mouse genes (GRCm39)"
+            selected = organism %||% "Mouse genes (GRCm39)"
           )
         } else {
           div(
@@ -265,53 +235,36 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           )
         }
       })
-      # observer for Info text
-      observe(
-        shinyjs::html(
-          id = 'EnrichmentFailure',
-          ea_reactives$ea_info
+      output$sample_annotation_types_cmp_GSEA_ui <- renderUI({
+        data <- req(dataset$processed())
+        selectInput(
+          inputId = ns("sample_annotation_types_cmp_GSEA"),
+          label = "Choose type for LFC-based ordering",
+          choices = colnames(colData(data)),
+          multiple = F,
+          selected = colnames(colData(data))[1]
         )
-      )
-      # refresh the UI/data if needed
-      observeEvent(input$refreshUI, {
-        ea_reactives$data <- reactiveValuesToList(data)$data %||% NULL
-        ea_reactives$organism <- params$organism
-        req(ea_reactives$data)
-        output$sample_annotation_types_cmp_GSEA_ui <- renderUI({
+      })
+      group_picker <- function(input_id, label, position){
+        renderUI({
+          data <- req(dataset$processed())
+          req(input$sample_annotation_types_cmp_GSEA %in% colnames(colData(data)))
+          groups <- unique(colData(data)[,input$sample_annotation_types_cmp_GSEA])
           selectInput(
-            inputId = ns("sample_annotation_types_cmp_GSEA"),
-            label = "Choose type for LFC-based ordering",
-            choices = c(colnames(colData(ea_reactives$data))),
+            inputId = ns(input_id),
+            label = label,
+            choices = groups,
             multiple = F,
-            selected = c(colnames(colData(ea_reactives$data)))[1]
+            selected = groups[position]
           )
         })
-        output$Groups2Compare_ref_GSEA_ui <- renderUI({
-          req(input$sample_annotation_types_cmp_GSEA)
-          selectInput(
-            inputId = ns("Groups2Compare_ref_GSEA"),
-            label = "Choose reference of log2 FoldChange",
-            choices = unique(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA]),
-            multiple = F ,
-            selected = unique(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA])[1]
-          )
-        })
-        output$Groups2Compare_treat_GSEA_ui <- renderUI({
-          req(input$sample_annotation_types_cmp_GSEA)
-          selectInput(
-            inputId = ns("Groups2Compare_treat_GSEA"),
-            label = "Choose treatment group of log2 FoldChange",
-            choices = unique(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA]),
-            multiple = F ,
-            selected = unique(colData(ea_reactives$data)[,input$sample_annotation_types_cmp_GSEA])[2]
-          )
-        })
-      })
-      observeEvent(input$organism_choice_ea, {
-        print("Organism choice changed!")
-        params$organism <- input$organism_choice_ea
-        ea_reactives$organism <- input$organism_choice_ea
-      })
+      }
+      output$Groups2Compare_ref_GSEA_ui <- group_picker(
+        "Groups2Compare_ref_GSEA", "Choose reference of log2 FoldChange", 1
+      )
+      output$Groups2Compare_treat_GSEA_ui <- group_picker(
+        "Groups2Compare_treat_GSEA", "Choose treatment group of log2 FoldChange", 2
+      )
       # change values in list to true if selected
       observeEvent(input$GeneSetChoice, {
         # reset list
@@ -330,261 +283,229 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           showTab(inputId = "EnrichmentTabs", target = name)
         }
       })
+
+      translation_modal <- function(data){
+        showModal(modalDialog(
+          title = "No annotation type detected",
+          footer = NULL,
+          p(paste0(
+            "No valid annotation type was detected in your row annotation. ",
+            "Please indicate the type of annotation with which you uploaded your genes.\n",
+            "Here are the first 5 rownames of your row annotation: \n",
+            toString(rownames(data)[1:5])
+          )),
+          selectInput(
+            inputId = ns("AnnotationSelection"),
+            label = "Which annotation are you using?",
+            choices = c("ensembl_gene_id", "external_gene_name", "entrezgene_id"),
+            selected="entrezgene_id",
+            multiple = F
+          ),
+          actionButton(inputId = ns("AMC"), label = "Proceed"),
+        ))
+      }
+
+      # the enrichment itself, once the gene set and the data are translated
+      run_enrichment <- function(data, genes, params){
+        waiter$show()
+        results <- tryCatch({
+          if(params$ora_or_gse == "GeneSetEnrichment"){
+            gene_set_enrichment(
+              params$organism, genes, data, params$enrichments2do, params$test_correction
+            )
+          } else {
+            over_representation_analysis(
+              organism = params$organism,
+              geneSetChoice = genes,
+              enrichments2do = params$enrichments2do,
+              test_correction = params$test_correction,
+              universe = params$universe
+            )
+          }
+        }, error = function(e){
+          error_modal(e$message, "Check that you chose the right organism!")
+          NULL
+        })
+        waiter$hide()
+        req(results)
+        if(params$ora_or_gse == "GeneSetEnrichment"){
+          fun_LogIt(session, message = paste0("**GSEA** Gene Set enrichment analysis was perfomed."))
+          fun_LogIt(session, message = paste0("**GSEA** The genes were sorted by: ", params$gse_gene_set_type))
+          fun_LogIt(session, message = paste0(
+            "**GSEA** Calculation based on ", params$compare_within, ": ",
+            params$treatment, " vs. ", params$reference
+          ))
+        } else {
+          fun_LogIt(session, message = paste0("**ORA** Overrepresentation analysis was perfomed."))
+          fun_LogIt(session, message = paste0("**ORA** The genes were taken from: ", params$ora_gene_set_type))
+          if(identical(params$ora_gene_set_type, "ProvidedGeneSet")){
+            fun_LogIt(session, message = paste0("**ORA** The gene set was provided by the user. Filename: ", params$uploaded_gene_set$name))
+          }
+        }
+        fun_LogIt(session, message = paste0(
+          "**Enrichment general** The adj. p-value threshold was set to 0.05, ",
+          "whereby mutliple testing correction was : ", params$test_correction
+        ))
+        fun_LogIt(session, message = "### Publication Snippet")
+        fun_LogIt(session, message = snippet_Enrichment(data = NULL, params = list(Enrichment = params)))
+        fun_LogIt(session, message = paste0("## Enrichment results {.tabset .tabset-fade}"))
+
+        computed <- results[grep("^EnrichmentRes_", names(results))]
+        names(computed) <- sub("^EnrichmentRes_", "", names(computed))
+        ea_reactives$result <- list(
+          results = Filter(Negate(is.null), computed),
+          params = params,
+          version = dataset$version()
+        )
+      }
+
       ## Do enrichment ----
       observeEvent(input$enrichmentGO,{
-        shinyjs::showElement(id = "enrichment_div", asis = TRUE)
-        waiter <- Waiter$new(
-          html = LOADING_SCREEN,
-          color="#70BF4F47"
-        )
+        data <- req(dataset$processed())
+        shinyjs::showElement(id = "enrichment_div")
         waiter$show()
         message("Start Enrichment")
+        ea_reactives$pending <- NULL
 
-        # assign variables to be used in the enrichment analysis
-        ora_or_gse <- input$ORA_or_GSE %||% "GeneSetEnrichment"
-        ora_gene_set_type <- input$GeneSet2Enrich %||% NULL
-        uploaded_gene_set <- input$UploadedGeneSet %||% NULL
-        heatmap_genes <- data$Heatmap$gene_list %||% NULL
-        gse_gene_set_type <- input$ValueToAttach %||% "LFC"
-        # not `data`: that is the session data this module must write back to
-        ea_data <- ea_reactives$data
-        compare_within <- input$sample_annotation_types_cmp_GSEA
-        reference <- input$Groups2Compare_ref_GSEA
-        treatment <- input$Groups2Compare_treat_GSEA
-        ea_reactives$tmp_genes <- tryCatch({
+        # the choices of this run, read now (a later switch of the analysis
+        # type must not change this run)
+        params <- list(
+          ora_or_gse = input$ORA_or_GSE %||% "GeneSetEnrichment",
+          ora_gene_set_type = input$GeneSet2Enrich,
+          uploaded_gene_set = input$UploadedGeneSet,
+          heatmap_genes = heatmap_genes(),
+          gse_gene_set_type = input$ValueToAttach %||% "LFC",
+          compare_within = input$sample_annotation_types_cmp_GSEA,
+          reference = input$Groups2Compare_ref_GSEA,
+          treatment = input$Groups2Compare_treat_GSEA,
+          organism = input$organism_choice_ea %||% dataset$organism() %||% "Mouse genes (GRCm39)",
+          enrichments2do = ea_reactives$enrichments2do,
+          test_correction = PADJUST_METHOD[[input$test_correction %||% "Benjamini-Hochberg"]]
+        )
+        ora <- params$ora_or_gse == "OverRepresentation_Analysis"
+        if (ora) {
+          params$UniverseOfGene <- input$UniverseOfGene %||% "default"
+          # Ensembl IDs of the background; "before pre-processing" is the
+          # Selection (see .scratch/discussion_necessary)
+          params["universe"] <- list(switch(
+            params$UniverseOfGene,
+            after_pre_process = rownames(data),
+            before_pre_process = rownames(dataset$raw()),
+            NULL
+          ))
+        }
+        genes <- tryCatch({
           get_gene_set_choice(
-            ora_or_gse = ora_or_gse,
-            ora_gene_set_type = ora_gene_set_type,
-            uploaded_gene_set = uploaded_gene_set,
-            heatmap_genes = heatmap_genes,
-            gse_gene_set_type = gse_gene_set_type,
-            data = ea_data,
-            compare_within = compare_within,
-            reference = reference,
-            treatment = treatment
+            ora_or_gse = params$ora_or_gse,
+            ora_gene_set_type = params$ora_gene_set_type,
+            uploaded_gene_set = params$uploaded_gene_set,
+            heatmap_genes = params$heatmap_genes,
+            gse_gene_set_type = params$gse_gene_set_type,
+            data = data,
+            compare_within = params$compare_within,
+            reference = params$reference,
+            treatment = params$treatment
           )
         }, error = function(e){
           waiter$hide()
           error_modal(e$message)
           req(FALSE)
         })
-        # Save params values
-        update_par_tmp <- list(
-          "ora_or_gse" = ora_or_gse,
-          "ora_gene_set_type" = ora_gene_set_type,
-          "uploaded_gene_set" = uploaded_gene_set,
-          "heatmap_genes" = heatmap_genes,
-          "gse_gene_set_type" = gse_gene_set_type,
-          "compare_within" = compare_within,
-          "reference" = reference,
-          "treatment" = treatment
-        )
-        if(is.null(params$Enrichment)){
-          params$Enrichment <- list()
-        }
-        params$Enrichment[names(update_par_tmp)] <- update_par_tmp
+        params$tmp_genes <- genes
         fun_LogIt(session, message = "## Enrichment{.tabset .tabset-fade}")
         fun_LogIt(session, message = "### Info")
-        params$Enrichment$tmp_genes <- ea_reactives$tmp_genes
-        params$Enrichment$enrichments2do <- ea_reactives$enrichments2do
+        fun_LogIt(session, message = paste0("**Enrichment general** The analysed gene set size: ", length(genes)))
+        fun_LogIt(session, message = paste0("**Enrichment general** Chosen Organism (needed for translation): ", params$organism))
+        fun_LogIt(session, message = paste0(
+          "**Enrichment general** The following sets to check an enrichment: ",
+          paste0(names(unlist(params$enrichments2do))[unlist(params$enrichments2do)], collapse = ",")
+        ))
+
         # Check whether the necessary annotation is available
-        anno_results <- check_annotation_enrichment_analysis(ea_reactives$data)
-        ea_reactives$data <- anno_results$new_data
-        ea_reactives$can_start <- anno_results$can_start
-        translation_modal <- function(){
-          showModal(modalDialog(
-            title = "No annotation type detected",
-            footer = NULL,
-            p(paste0(
-              "No valid annotation type was detected in your row annotation. ",
-              "Please indicate the type of annotation with which you uploaded your genes.\n",
-              "Here are the first 5 rownames of your row annotation: \n",
-              toString(rownames(ea_reactives$data)[1:5])
-            )),
-            selectInput(
-              inputId = ns("AnnotationSelection"),
-              label = "Which annotation are you using?",
-              choices = c("ensembl_gene_id", "external_gene_name", "entrezgene_id"),
-              selected="entrezgene_id",
-              multiple = F
-            ),
-            actionButton(inputId = ns("AMC"), label = "Proceed"),
-          ))
-        }
-        if(ora_or_gse == "OverRepresentation_Analysis"){
+        anno_results <- check_annotation_enrichment_analysis(data)
+        data <- anno_results$new_data
+        if(ora){
           # the ORA gene set is Ensembl IDs (heatmap genes and uploaded sets
           # are checked for it): Entrez IDs from the data's own annotation
           # (after the check above) or, without one, from biomaRt
-          ea_reactives$tmp_genes <- tryCatch({
-            if ("entrezgene_id" %in% colnames(rowData(ea_reactives$data))) {
-              gene_set_to_entrez(ea_reactives$tmp_genes, ea_reactives$data)
+          genes <- tryCatch({
+            if ("entrezgene_id" %in% colnames(rowData(data))) {
+              gene_set_to_entrez(genes, data)
             } else {
-              translate_genes_oa(ea_reactives$tmp_genes, ea_reactives$organism)
+              translate_genes_oa(genes, params$organism)
             }
           }, error = function(e){
             waiter$hide()
-            error_modal(
-              "The gene set could not be translated to Entrez IDs. Check that the right organism was selected.",
-            )
+            error_modal("The gene set could not be translated to Entrez IDs. Check that the right organism was selected.")
             req(FALSE)
           })
-          ea_reactives$can_start <- TRUE
-        }else if(anno_results$no_ann){
-          translation_modal()
-        }else if(anno_results$can_start == FALSE){
-          tryCatch({
-            ea_reactives$data <- translate_genes_ea(
-              data = ea_reactives$data,
-              annotation_results = anno_results,
-              organism = ea_reactives$organism
-            )
-          }, error = function(e){
-            waiter$hide()
-            error_modal(
-              "Either the wrong translations were chosen or the wrong organism was selected.",
-            )
-            req(FALSE)
-          })
-          ea_reactives$can_start <- TRUE
-        }
-        # Modal in case translation fails
-        observeEvent(input$translation_again, {
-          # close modal
-          removeModal()
-          # call translation again
-          translation_modal()
-        })
-        # close modal on button click
-        observeEvent(input$AMC, {
-          anno_results$base_annotation <- input$AnnotationSelection
-          removeModal()
-          tryCatch(
-            {
-              # only Gene Set Enrichment asks for the annotation type
-              ea_reactives$data <- translate_genes_ea(
-                data = ea_reactives$data,
-                annotation_results = anno_results,
-                organism = ea_reactives$organism
-              )
-              ea_reactives$can_start <- TRUE
-            },
-            error=function(e){
-              showModal(modalDialog(
-                title = HTML("<font color='red'>An Error occured</font>"),
-                footer = tagList(
-                  actionButton(
-                    inputId = ns("translation_again"),
-                    label = "Choose another annotation type"
-                  ),
-                  modalButton("Close")
-                ),
-                HTML(paste0(
-                  "<font color='red'>Error: ",e$message,"</font><br><br>",
-                  "It is highly likely that the error is caused by the fact that the ",
-                  "gene names in your data set do not match the gene names in the ",
-                  "annotation you selected. Please check your data set and annotation ",
-                  "and try again.<br><br>",
-                  "Otherwise, please contact the cOmicsArtist Lea and Paul ",
-                  "(<a href = 'mailto: cOmicsArtist@outlook.de'>cOmicsArtist@outlook.de</a>)."
-                ))
-              ))
-            }
-          )
-        })
-        # start the analysis if ea_reactives$can_start == TRUE
-        fun_LogIt(session, message = paste0("**Enrichment general** The analysed gene set size: ",
-                                   length(ea_reactives$tmp_genes)))
-        fun_LogIt(session, message = paste0("**Enrichment general** Chosen Organism (needed for translation): ",
-                                   ea_reactives$organism))
-        fun_LogIt(session, message = paste0("**Enrichment general** The following sets to check an enrichment: ",
-                                   paste0(names(unlist(ea_reactives$enrichments2do))[unlist(ea_reactives$enrichments2do)],collapse = ",")))
-
-        observeEvent(ea_reactives$can_start, {
-          req(ea_reactives$can_start == TRUE)
-          if(input$ORA_or_GSE == "GeneSetEnrichment"){
-            ea_reactives$enrichment_results <- tryCatch({
-              gene_set_enrichment(
-                ea_reactives$organism,
-                ea_reactives$tmp_genes,
-                ea_reactives$data,
-                ea_reactives$enrichments2do,
-                PADJUST_METHOD[[input$test_correction]]
-              )
-            }, error = function(e){
-              waiter$hide()
-              error_modal(e$message, "Check that you chose the right organism!")
-              req(FALSE)
-            })
-            # update params, TODO: not pressing but update and align with other functions
-            update_par_tmp <- list(
-              "organism" = ea_reactives$organism,
-              "enrichments2do" = ea_reactives$enrichments2do,
-              "test_correction" = PADJUST_METHOD[[input$test_correction]]
-            )
-            if(is.null(params$Enrichment)){
-              params$Enrichment <- list()
-            }
-            params$Enrichment[names(update_par_tmp)] <- update_par_tmp
-
-            fun_LogIt(session, message = paste0("**GSEA** Gene Set enrichment analysis was perfomed."))
-            fun_LogIt(session, message = paste0("**GSEA** The genes were sorted by: ",input$ValueToAttach))
-            fun_LogIt(session, message = paste0("**GSEA** Calculation based on ",
-                                      input$sample_annotation_types_cmp_GSEA,": ",
-                                       input$Groups2Compare_treat_GSEA,
-                                       " vs. ",
-                                       input$Groups2Compare_ref_GSEA))
-            fun_LogIt(session, message = paste0("**GSEA** The adj. p-value threshold was set to 0.05,
-                                       whereby mutliple testing correction was : ",
-                                       input$test_correction))
-
-          }else{
-            ea_reactives$enrichment_results <- tryCatch({
-              over_representation_analysis(
-                organism = ea_reactives$organism,
-                geneSetChoice = ea_reactives$tmp_genes,
-                data = data,
-                enrichments2do = ea_reactives$enrichments2do,
-                test_correction = PADJUST_METHOD[[input$test_correction]],
-                input$UniverseOfGene %||% "default"
-              )
-            }, error = function(e){
-              waiter$hide()
-              error_modal(e$message, "Check that you chose the right organism!")
-              req(FALSE)
-            })
-            # update params, TODO: not pressing but update and align with other functions
-            update_par_tmp <- list(
-              "organism" = ea_reactives$organism,
-              "enrichments2do" = ea_reactives$enrichments2do,
-              "test_correction" = PADJUST_METHOD[[input$test_correction]],
-              "UniverseOfGene" = input$UniverseOfGene %||% "default"
-            )
-            if(is.null(params$Enrichment)){
-              params$Enrichment <- list()
-            }
-            params$Enrichment[names(update_par_tmp)] <- update_par_tmp
-            fun_LogIt(session, message = paste0("**ORA** Overrepresentation analysis was perfomed."))
-            fun_LogIt(session, message = paste0("**ORA** The genes were taken from: ",input$GeneSet2Enrich))
-            if(input$GeneSet2Enrich =="ProvidedGeneSet"){
-              fun_LogIt(session, message = paste0("**ORA** The gene set was provided by the user. Filename: ",input$UploadedGeneSet$name))
-            }
-            fun_LogIt(session, message = paste0("**ORA** The adj. p-value threshold was set to 0.05,
-                                       whereby mutliple testing correction was : ",
-                                       input$test_correction))
-          }
-          fun_LogIt(session, message = "### Publication Snippet")
-          fun_LogIt(session, message = snippet_Enrichment(
-            data = reactiveValuesToList(data),
-            params = reactiveValuesToList(params)
-          ))
-          fun_LogIt(session, message = paste0("## Enrichment results {.tabset .tabset-fade}"))
+        } else if(anno_results$no_ann){
           waiter$hide()
-          ea_reactives$ea_info <- "**Enrichment Analysis Done!**"
-          # session_data assignment
-
-          data$Enrichment <- ea_reactives$enrichment_results
-        })
+          ea_reactives$pending <- list(data = data, genes = genes, params = params, anno = anno_results)
+          translation_modal(data)
+          return()
+        } else if(!anno_results$can_start){
+          data <- tryCatch({
+            translate_genes_ea(
+              data = data,
+              annotation_results = anno_results,
+              organism = params$organism
+            )
+          }, error = function(e){
+            waiter$hide()
+            error_modal("Either the wrong translations were chosen or the wrong organism was selected.")
+            req(FALSE)
+          })
+        }
+        run_enrichment(data, genes, params)
       })
+
+      # the annotation type the user chose for a waiting Gene Set Enrichment
+      observeEvent(input$AMC, {
+        pending <- req(ea_reactives$pending)
+        removeModal()
+        anno_results <- pending$anno
+        anno_results$base_annotation <- input$AnnotationSelection
+        data <- tryCatch(
+          translate_genes_ea(
+            data = pending$data,
+            annotation_results = anno_results,
+            organism = pending$params$organism
+          ),
+          error = function(e){
+            showModal(modalDialog(
+              title = HTML("<font color='red'>An Error occured</font>"),
+              footer = tagList(
+                actionButton(
+                  inputId = ns("translation_again"),
+                  label = "Choose another annotation type"
+                ),
+                modalButton("Close")
+              ),
+              HTML(paste0(
+                "<font color='red'>Error: ",e$message,"</font><br><br>",
+                "It is highly likely that the error is caused by the fact that the ",
+                "gene names in your data set do not match the gene names in the ",
+                "annotation you selected. Please check your data set and annotation ",
+                "and try again.<br><br>",
+                "Otherwise, please contact the cOmicsArtist Lea and Paul ",
+                "(<a href = 'mailto: cOmicsArtist@outlook.de'>cOmicsArtist@outlook.de</a>)."
+              ))
+            ))
+            NULL
+          }
+        )
+        req(data)
+        ea_reactives$pending <- NULL
+        run_enrichment(data, pending$genes, pending$params)
+      })
+      # Modal in case translation fails
+      observeEvent(input$translation_again, {
+        removeModal()
+        translation_modal(req(ea_reactives$pending)$data)
+      })
+
+      reactive(ea_reactives$result)
     }
   )
 }

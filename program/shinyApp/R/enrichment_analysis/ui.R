@@ -88,7 +88,8 @@ geneset_panel_UI <- function(
 
 ea_sidebar <- function(ns){
   sidebarPanel(
-    id = "sidebar_enrichment_analysis",
+    id = ns("sidebar"),
+    class = "sidebar-enrichment",
     uiOutput(outputId = ns("OrganismChoice_ui")) %>% helper(type = "markdown", content = "EA_Options"),
     radioButtons(
       inputId = ns("ORA_or_GSE"),
@@ -96,7 +97,6 @@ ea_sidebar <- function(ns){
       choices = c("GeneSetEnrichment","OverRepresentation_Analysis"),
       selected = "GeneSetEnrichment"
     ),
-    uiOutput(outputId = ns("UseBatch_ui")),
     conditionalPanel(
       condition = sprintf("input['%s'] == 'GeneSetEnrichment'", ns("ORA_or_GSE")),
       selectInput(
@@ -165,19 +165,15 @@ ea_sidebar <- function(ns){
       icon = icon("fas fa-mouse-pointer")
     ),
     hr(style = "border-top: 1px solid #000000;"),
-    uiOutput(outputId = ns("KeggPathwayID_ui")),
-    # Button to refresh the UI
-    hidden(actionButton(
-      inputId = ns("refreshUI"),
-      label = "Refresh UI"
-    ))
+    uiOutput(outputId = ns("KeggPathwayID_ui"))
   )
 }
 
 ea_main <- function(ns){
   mainPanel(
+    id = ns("main_panel"),
     textOutput(outputId = ns("EnrichmentInfo"), container = pre),
-    div(id = "enrichment_div",
+    hidden(div(id = ns("enrichment_div"),
       tabsetPanel(
         id = ns("EnrichmentTabs"),
         geneset_panel_UI(ns("Hallmarks")),
@@ -210,7 +206,7 @@ ea_main <- function(ns){
         geneset_panel_UI(ns("VAX")),
         geneset_panel_UI(ns("C8"))
       )
-    )
+    ))
   )
 }
 

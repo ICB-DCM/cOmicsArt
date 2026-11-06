@@ -159,9 +159,10 @@ single_gene_visualisation_server <- function(id, dataset){
         single_gene_reactives$info_text
       })
 
-      observe({
+      # before the plot observer below, which needs it in the same flush
+      observeEvent(input$singleGeneGo, {
         single_gene_reactives$allow_plot <- TRUE
-      }) %>% shiny::bindEvent(input$singleGeneGo)
+      }, priority = 1)
 
       # Visualize single Gene ----
       observe({

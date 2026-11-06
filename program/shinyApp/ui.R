@@ -108,7 +108,7 @@ ui <- shiny::fluidPage(
     significance_analysis_UI("SignificanceAnalysis"),
     heatmap_UI(NS("dataset_1", "heatmap")),
     single_gene_visualisation_UI(NS("dataset_1", "single_gene_visualisation")),
-    enrichment_analysis_UI("EnrichmentAnalysis")
+    enrichment_analysis_UI(NS("dataset_1", "enrichment_analysis"))
   ),
   hidden(selectInput(
     "element_02",
