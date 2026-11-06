@@ -205,7 +205,10 @@ heatmap_server <- function(id, dataset){moduleServer(
       input$rowWiseScaled, input$row_label_no, input$row_anno_options,
       input$anno_options
     ), {
-      result$set_params(display_params(req(result$run())))
+      # req() outside display_params(): inside its rowData() argument it would
+      # be an error that ends the session, not a silent stop
+      run <- req(result$run())
+      result$set_params(display_params(run))
     }, ignoreInit = TRUE, ignoreNULL = FALSE)
 
     heatmap_plot <- reactive({

@@ -157,6 +157,19 @@ test_that("a display change updates the parameters, not the selection", {
   })
 })
 
+test_that("a display change before a run does nothing (the session stays)", {
+  ds <- changeable_dataset("Lipidomics")
+  testServer(heatmap_server, args = list(dataset = ds$handle), {
+    session$flushReact()
+    label <- colnames(rowData(ds$handle$processed()))[2]
+    session$setInputs(row_label_options = label, cluster_rows = FALSE)
+    expect_false(session$isClosed())
+    expect_null(session$returned())
+    run_heatmap(session, top_k_inputs(ds$handle, "diet"))
+    expect_false(session$returned()$params$cluster_rows)
+  })
+})
+
 test_that("the R-code zip carries the Heatmap parameters under the template's names", {
   ds <- changeable_dataset("Lipidomics")
   testServer(heatmap_server, args = list(dataset = ds$handle), {
