@@ -70,7 +70,7 @@ get_gene_set_choice <- function(
 
     Data2Plot <- tryCatch({
       getLFCs(
-        assays(data)$raw,
+        assay(data, "processed"),
         ctrl_samples_idx,
         comparison_samples_idx
       )
