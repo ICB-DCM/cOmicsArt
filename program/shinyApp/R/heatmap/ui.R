@@ -1,6 +1,7 @@
 heatmap_sidebar<- function(ns){
   sidebarPanel(
-    id = "sidebar_heatmap",
+    id = ns("sidebar"),
+    class = "sidebar-heatmap",
     #########################################
     # Heatmap
     #########################################
@@ -86,20 +87,15 @@ heatmap_sidebar<- function(ns){
       inputId = ns("rowWiseScaled"),
       label = "row-wise scaling?",
       value = FALSE
-    ),
-    # hidden Button to refresh the UI
-    hidden(actionButton(
-      inputId = ns("refreshUI"),
-      label = "Refresh"
-    )),
+    )
   )
 }
 
 heatmap_main <- function(ns){
   mainPanel(
-    id = "main_heatmap",
+    id = ns("main_panel"),
     textOutput(outputId = ns("Heatmap_Info"), container = pre),
-    div(id = "Heatmap_div",
+    hidden(div(id = ns("Heatmap_div"),
       splitLayout(
         style = "border: 1px solid silver:", cellWidths = c("100%"),
         plotOutput(
@@ -183,7 +179,7 @@ heatmap_main <- function(ns){
         helpText(NOTES_HELP)),
         NULL
       ),
-    )
+    ))
   )
 }
  
@@ -192,7 +188,7 @@ heatmap_UI <- function(id){
   heatmap_panel <- tabPanel(
     title = tagList(tags$span("7. Heatmap")), 
     value = "Heatmap",
-    id = "heatmap",
+    id = ns("tab"),
     fluid = T,
     h4("Heatmap"),
     heatmap_sidebar(ns),

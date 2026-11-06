@@ -63,7 +63,7 @@ body, label, input, button, select, h4, h3, h2 {
 #sidebar_significance_analysis {
     background-color: #FFD33547;
 }
-#sidebar_heatmap {
+.well.sidebar-heatmap {
     background-color: #70BF4F47;
 }
 .well.sidebar-single-gene {

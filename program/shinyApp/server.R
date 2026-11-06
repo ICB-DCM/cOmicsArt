@@ -32,7 +32,6 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "ML Classification")
   shinyjs::hideElement(id = "selection-mainPanel_other")
   shinyjs::hideElement(id = "Significance_div")
-  shinyjs::hideElement(id = "Heatmap_div")
   shinyjs::hideElement(id = "enrichment_div")
 
 # Set Up ad Show user Landing page ----
@@ -392,14 +391,11 @@ server <- function(input,output,session){
     data_input_shiny = data_input_shiny
   )
 
-  # Heatmap ----
-  heatmap_server(
-    id = 'Heatmap',
-    session_data = session_data,
-    session_params = session_params,
-    data_input_shiny = data_input_shiny,
-    selectedData_processed = preprocessing$result
-  )
+  # Heatmap genes for Enrichment, until Enrichment is on the handle too
+  # (next PR wires them in dataset_server() and removes this)
+  observe({
+    session_data$Heatmap <- list(gene_list = datasets[["1"]]$results()$heatmap$gene_list)
+  })
 
   # Enrichment Analysis ----
   enrichment_analysis_Server(

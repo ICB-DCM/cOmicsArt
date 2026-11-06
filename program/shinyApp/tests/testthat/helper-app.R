@@ -6,10 +6,10 @@
 # Precise behaviour belongs in unit tests.
 
 HEATMAP <- list(
-  go = "Heatmap-Do_Heatmap",
-  out = "#Heatmap-HeatmapPlot",
-  rcode = "#Heatmap-getR_Code_Heatmap",
-  after = "#Heatmap-continue_heatmap"  # confirm "more than 100 rows" if shown
+  go = "dataset_1-heatmap-Do_Heatmap",
+  out = "#dataset_1-heatmap-HeatmapPlot",
+  rcode = "#dataset_1-heatmap-getR_Code_Heatmap",
+  after = "#dataset_1-heatmap-continue_heatmap"  # confirm "more than 100 rows" if shown
 )
 
 # Example files the app ships (paths relative to tests/testthat/)
@@ -163,17 +163,17 @@ IDS <- list(
     "Heatmap (top K)" = modifyList(HEATMAP, list(
       tab = "Heatmap",
       set = list(
-        "Heatmap-row_selection_options" = "Top K",
-        "Heatmap-TopK" = 500  # enough genes for a significant enrichment
+        "dataset_1-heatmap-row_selection_options" = "Top K",
+        "dataset_1-heatmap-TopK" = 500  # enough genes for a significant enrichment
       ),
-      after = c(HEATMAP$after, "#Heatmap-SaveGeneList_Heatmap")
+      after = c(HEATMAP$after, "#dataset_1-heatmap-SaveGeneList_Heatmap")
     )),
     "Heatmap (top K, significant)" = modifyList(HEATMAP, list(
       tab = "Heatmap",
       set = list(
-        "Heatmap-row_selection_options" = "Top K",
-        "Heatmap-TopK_order" = "LogFoldChange and Significant",
-        "Heatmap-TopK" = 500
+        "dataset_1-heatmap-row_selection_options" = "Top K",
+        "dataset_1-heatmap-TopK_order" = "LogFoldChange and Significant",
+        "dataset_1-heatmap-TopK" = 500
       )
     )),
     "Single Gene Visualisations" = list(
