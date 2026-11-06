@@ -93,6 +93,17 @@ test_that("ORA on Heatmap genes without saved genes shows the error and returns 
   })
 })
 
+test_that("'Go' without a gene set shows the error and runs nothing", {
+  ds <- human_dataset(heatmap_genes = c("ENSG00000141510", "ENSG00000146648"))
+  ora <- mock_analysis("over_representation_analysis")
+  testServer(enrichment_analysis_Server, args = list(dataset = ds), {
+    no_gene_set <- ORA_HALLMARKS[names(ORA_HALLMARKS) != "GeneSetChoice"]
+    start_enrichment(session, no_gene_set)
+    expect_null(session$returned())
+    expect_length(ora(), 0)
+  })
+})
+
 test_that("the run uses the analysis type chosen when 'Go' is pressed", {
   ds <- human_dataset(saved_genes())
   ora <- mock_analysis("over_representation_analysis")
@@ -223,5 +234,55 @@ test_that("the result area shows only while there is a result", {
     ds$state$version <- 3
     session$flushReact()
     expect_false(shown("enrichment_div"))
+  })
+})
+
+test_that("GSEA on data without a known annotation waits for the annotation type, then runs once", {
+  ds <- human_dataset()
+  data <- isolate(ds$processed())
+  SummarizedExperiment::rowData(data) <- SummarizedExperiment::rowData(data)[, 0]
+  ds$processed <- function() data
+  gsea <- mock_analysis("gene_set_enrichment")
+  translate <- mock_analysis("translate_genes_ea", value = data)
+  testServer(enrichment_analysis_Server, args = list(dataset = ds), {
+    start_enrichment(session, list(
+      organism_choice_ea = HUMAN, ORA_or_GSE = "GeneSetEnrichment", ValueToAttach = "LFC",
+      sample_annotation_types_cmp_GSEA = "condition",
+      Groups2Compare_ref_GSEA = "untrt", Groups2Compare_treat_GSEA = "trt",
+      GeneSetChoice = "Hallmarks", test_correction = "Benjamini-Hochberg"
+    ))
+    expect_null(session$returned())
+    expect_false(is.null(pending()))
+    expect_length(gsea(), 0)
+    session$setInputs(AnnotationSelection = "ensembl_gene_id", AMC = 1)
+    expect_equal(translate()[[1]][[2]]$base_annotation, "ensembl_gene_id")
+    expect_null(pending())
+    expect_length(gsea(), 1)
+    res <- session$returned()
+    expect_equal(res$params$ora_or_gse, "GeneSetEnrichment")
+    expect_equal(res$params$tmp_genes, gsea()[[1]][[2]])
+    # a second "Proceed" does nothing without a waiting run
+    session$setInputs(AMC = 2)
+    expect_length(gsea(), 1)
+  })
+})
+
+test_that("a run reports its info, the analysis and the snippet once it succeeded", {
+  ds <- human_dataset(saved_genes())
+  mock_analysis("over_representation_analysis")
+  REPORT_LINES$lines <- NULL
+  testServer(enrichment_analysis_Server, args = list(dataset = ds), {
+    start_enrichment(session, ORA_HALLMARKS)
+    lines <- REPORT_LINES$lines
+    expect_equal(lines[1:2], c("## Enrichment{.tabset .tabset-fade}", "### Info"))
+    expect_true(any(grepl("analysed gene set size: 300", lines, fixed = TRUE)))
+    expect_true(any(grepl("**ORA** The genes were taken from: heatmap_genes", lines, fixed = TRUE)))
+    expect_equal(tail(lines, 1), "## Enrichment results {.tabset .tabset-fade}")
+  })
+  # a failed run reports nothing
+  REPORT_LINES$lines <- NULL
+  testServer(enrichment_analysis_Server, args = list(dataset = human_dataset()), {
+    start_enrichment(session, ORA_HALLMARKS)
+    expect_null(REPORT_LINES$lines)
   })
 })

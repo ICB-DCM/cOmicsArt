@@ -1,14 +1,17 @@
+# The Ensembl mart (biomaRt) of an Enrichment `organism`, from the loaded
+# Ensembl objects (www/EnsemblObjects.RDS): Human for "Human genes
+# (GRCh38.p14)", Mouse otherwise
+ensembl_mart <- function(organism){
+  slot <- if (organism == "Human genes (GRCh38.p14)") "hsapiens_gene_ensembl" else "mmusculus_gene_ensembl"
+  loadedVersion[[slot]]$ensmbl
+}
+
 translate_genes_ea <- function(data, annotation_results, organism){
   if(annotation_results$no_ann){
     # copy rownames with corresponding annotation as columnname
     rowData(data)[[annotation_results$base_annotation]] <- rownames(rowData(data))  # can this be just data?
   }
-  if(organism == "Human genes (GRCh38.p14)"){
-    ensembl_slot <- "hsapiens_gene_ensembl"
-  }else{
-    ensembl_slot <- "mmusculus_gene_ensembl"
-  }
-  ensembl <- loadedVersion[[ensembl_slot]]$ensmbl
+  ensembl <- ensembl_mart(organism)
   out <- getBM(
     attributes = c("ensembl_gene_id", "gene_biotype", "external_gene_name", "entrezgene_id"),
     filter = annotation_results$base_annotation,
@@ -49,12 +52,7 @@ translate_genes_oa <- function(gene_set, organism){
   # from biomaRt, for data without Entrez annotation; currently only Human
   # and Mouse. Version suffixes are ignored; genes without an Entrez ID are
   # dropped.
-  if(organism == "Human genes (GRCh38.p14)"){
-    ensembl_slot <- "hsapiens_gene_ensembl"
-  }else{
-    ensembl_slot <- "mmusculus_gene_ensembl"
-  }
-  ensembl <- loadedVersion[[ensembl_slot]]$ensmbl
+  ensembl <- ensembl_mart(organism)
   out <- getBM(
     attributes = c("ensembl_gene_id", "entrezgene_id"),
     filter = "ensembl_gene_id",
