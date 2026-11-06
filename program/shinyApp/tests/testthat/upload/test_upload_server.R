@@ -134,3 +134,35 @@ test_that("a failed Ensembl query keeps the Upload and says so", {
     expect_null(session$returned$organism())
   })
 })
+
+test_that("an Upload sets its data and a new done", {
+  test_upload_server({
+    session$setInputs(omic_type_testdata = "Lipidomics")
+    session$setInputs(EasyTestForUser = 1)
+    expect_equal(dim(session$returned$raw()), c(660, 28))
+    expect_equal(session$returned$omic_type(), "Lipidomics")
+    expect_equal(session$returned$done(), 1)
+    session$setInputs(omic_type_testdata = "Metabolomics")
+    session$setInputs(EasyTestForUser = 2)
+    expect_equal(session$returned$done(), 2)
+    expect_equal(dim(session$returned$raw()), c(108, 35))
+  })
+})
+
+test_that("a failed Upload sets done back to NULL and keeps the last Upload", {
+  test_upload_server({
+    session$setInputs(omic_type_testdata = "Lipidomics")
+    session$setInputs(EasyTestForUser = 1)
+    expect_equal(session$returned$done(), 1)
+    # "Upload new data" without any files
+    session$setInputs(omic_type_file_input = "Transcriptomics")
+    session$setInputs(refresh_file_input = 1)
+    expect_null(session$returned$done())
+    expect_equal(session$returned$omic_type(), "Lipidomics")
+    expect_equal(session$returned$source(), "testdata")
+    expect_equal(dim(session$returned$raw()), c(660, 28))
+    # the next successful Upload gets a new done
+    session$setInputs(EasyTestForUser = 2)
+    expect_equal(session$returned$done(), 3)
+  })
+})

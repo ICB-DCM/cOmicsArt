@@ -430,3 +430,68 @@ correct_upload_names <- function(Matrix, sample_table, annotation_rows){
     )
   )
 }
+
+# The report of a successful Upload: its toast, the status box's text and the
+# report lines
+# source, files: like upload_inputs_complete()
+# omic_type: the Upload's omic type
+# dims: dim() of the raw data
+upload_report <- function(source, omic_type, files, dims){
+  log <- c(
+    "## Data Selection {.tabset .tabset-fade}",
+    "### Info",
+    paste0("**DataInput** - Uploaded Omic Type: ", omic_type)
+  )
+  if(source == "testdata"){
+    return(list(
+      toast = list(
+        title = paste(omic_type, "Example Upload"),
+        text = paste(omic_type, "- Example upload was successful")
+      ),
+      status = "The Test Data Set was used",
+      log = log
+    ))
+  }
+  used <- switch(source,
+    file_input = list(
+      "Data Matrix" = files$matrix,
+      "Sample Annotation" = files$sample_table,
+      "Entitie Annotation" = files$row_annotation
+    ),
+    metadata = list(
+      "Data Matrix" = files$metadata_matrix,
+      "Sample Annotation" = files$metadata_sheet,
+      "Entitie Annotation" = files$metadata_row_annotation
+    ),
+    precompiled = list("Precompiled Data" = files$precompiled),
+    VI_data = list()
+  )
+  used_names <- vapply(used, function(file) file$name, character(1))
+  status <- "<font color=\"#00851d\"><b>Upload successful</b></font>"
+  if(length(used) > 0){
+    status <- paste0(
+      status,
+      "<br>The following data files are uploaded to cOmicsArt:",
+      paste0("<br>", names(used), ": ", used_names, collapse = "")
+    )
+  }
+  log <- c(log, switch(source,
+    precompiled = paste0(
+      "**DataInput** - The used data was precompiled. Filename: \n\t",
+      files$precompiled$name
+    ),
+    VI_data = "**DataInput** - The used data was uploaded for visual inspection and changed within.",
+    c(
+      paste0("The following data was used: \n\t", paste(used_names, collapse = "\n\t")),
+      paste0("**DataInput** - The raw data dimensions are: ", paste0(dims, collapse = ", "))
+    )
+  ))
+  list(
+    toast = list(
+      title = paste(omic_type, "Data Upload"),
+      text = paste(omic_type, "- data upload was successful")
+    ),
+    status = status,
+    log = log
+  )
+}

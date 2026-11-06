@@ -1,58 +1,34 @@
 # ML Classification Utility Functions
 
-#' Validate that preprocessed data exists and is ready
-#'
-#' @param data_matrix Matrix of preprocessed data
-#' @return TRUE if valid, otherwise throws validation error
-validate_preprocessed_data <- function(data_matrix) {
-  if (is.null(data_matrix)) {
+# The one input check of k-means and SVM: stops without processed data,
+# with an empty matrix, missing values or fewer than 3 samples; warns below
+# `min_samples` samples.
+validate_ml_data <- function(data, min_samples) {
+  if (is.null(data)) {
     stop("No preprocessed data available. Please run preprocessing first.")
   }
+  data_matrix <- as.matrix(assay(data))
   if (nrow(data_matrix) == 0) {
     stop("Data matrix is empty.")
   }
   if (ncol(data_matrix) == 0) {
     stop("No samples in data matrix.")
   }
-  return(TRUE)
-}
-
-#' Validate no missing values in data
-#'
-#' @param data_matrix Matrix to check
-#' @return TRUE if valid, otherwise throws validation error
-validate_no_missing_values <- function(data_matrix) {
   if (any(is.na(data_matrix))) {
     stop("Data contains missing values (NA). Please handle missing data in preprocessing.")
   }
-  return(TRUE)
-}
-
-#' Check minimum sample size and warn if low
-#'
-#' @param data_matrix Matrix with samples as columns
-#' @param min_samples Minimum recommended samples
-#' @return TRUE, with warning if below threshold
-validate_minimum_samples <- function(data_matrix, min_samples = 10) {
   n_samples <- ncol(data_matrix)
-
   if (n_samples < 3) {
     stop("Too few samples for clustering (minimum 3 required).")
   }
-
   if (n_samples < min_samples) {
-    if (exists("showNotification", mode = "function")) {
-      showNotification(
-        sprintf("Warning: Only %d samples available. Results may be unreliable with few samples.", n_samples),
-        type = "warning",
-        duration = 8
-      )
-    } else {
-      warning(sprintf("Only %d samples available. Results may be unreliable with few samples.", n_samples))
-    }
+    showNotification(
+      sprintf("Warning: Only %d samples available. Results may be unreliable with few samples.", n_samples),
+      type = "warning",
+      duration = 8
+    )
   }
-
-  return(TRUE)
+  TRUE
 }
 
 #' Filter data to top variable genes

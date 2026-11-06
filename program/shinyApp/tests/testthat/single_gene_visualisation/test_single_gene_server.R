@@ -169,7 +169,7 @@ test_that("a redrawn plot keeps the run's entity and data in its labels", {
       Select_Gene = as.character(rowData(data)[2, inputs$Select_GeneAnno]), type_of_data_gene = "raw"
     )
     session$setInputs(chooseComparisons = paste(groups[2:3], collapse = ":"))
-    labels <- single_gene_reactives$plot$labels
+    labels <- drawing()$plot$labels
     expect_equal(labels$title, inputs$Select_Gene)
     expect_equal(labels$y, "Pre-Processed Data")
   })
@@ -199,5 +199,22 @@ test_that("the result area shows only while there is a result", {
     ds$state$version <- 3
     session$flushReact()
     expect_false(shown("SingleGene_div"))
+  })
+})
+
+test_that("after a new Dataset version only Go runs again, not a new grouping", {
+  ds <- changeable_dataset("Lipidomics")
+  testServer(single_gene_visualisation_server, args = list(dataset = ds$handle), {
+    run(session, gene_inputs(ds$handle$processed(), "diet"))
+    expect_false(is.null(session$returned()))
+    # a new grouping on the same version runs again
+    session$setInputs(accross_condition = "ID")
+    expect_equal(session$returned()$params$group_by, "ID")
+    ds$state$version <- 3  # e.g. a new Upload, whose picker shows another column
+    session$flushReact()
+    session$setInputs(accross_condition = "diet")
+    expect_null(session$returned())
+    session$setInputs(singleGeneGo = 2)
+    expect_equal(session$returned()$params$group_by, "diet")
   })
 })

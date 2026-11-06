@@ -2,24 +2,26 @@
 # Everything that brings data into a session: the four sources, visual
 # inspection, gene annotation, the status box and the Upload's report lines.
 # Returns reactives:
-#   done: a new number after each successful Upload; after a failed one it
-#     is NULL or stops with req(), so readers req() it (passed to the
-#     Selection and Pre-processing)
+#   done: a new number after each successful Upload; a failed Upload sets
+#     it back to NULL, so readers req() it for "the last Upload succeeded"
 #   raw: the raw SummarizedExperiment, also after gene annotation
 #   annotated: counts up after each gene annotation
 #   cleared: counts up when the File Input is cleared
-#   source, omic_type: about the current Upload
+#   source, omic_type: of the last successful Upload, like raw
 #   organism: the organism of the gene annotation, NULL before one
 upload_server <- function(id){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
 
-    # Counts up on every "Upload new data" / "Upload test data" / "Use the Data"
+    # The requested Upload, set on every "Upload new data" / "Upload test
+    # data" / "Use the Data": its source and n, which counts up
     commit <- reactiveVal(NULL)
+    # The current Upload, all set together when an Upload succeeds
     uploaded_from <- reactiveVal(NULL)
     omic_type <- reactiveVal(NULL)
     raw <- reactiveVal(NULL)
     organism <- reactiveVal(NULL)
+    done <- reactiveVal(NULL)
     annotated <- reactiveVal(NULL)
     cleared <- reactiveVal(NULL)
     vi <- reactiveValues(
@@ -31,8 +33,7 @@ upload_server <- function(id){
     data_changed_since_VI <- reactiveVal(TRUE)  # Track if data has changed since last VI
 
     start_upload <- function(source){
-      uploaded_from(source)
-      count_up(commit)
+      commit(list(source = source, n = (isolate(commit())$n %||% 0) + 1))
     }
     reset_file_input <- function(){
       reset("data_matrix1")
@@ -245,8 +246,7 @@ upload_server <- function(id){
 
     # Show gene annotation and saving after a successful Upload
     observe({
-      req(done())
-      shinyjs::showElement("upload_done")
+      shinyjs::toggleElement("upload_done", condition = isTruthy(done()))
     })
 
 ## Upload visual inspection ----
@@ -582,8 +582,6 @@ upload_server <- function(id){
     observeEvent(input$usingVIdata,{
       if(vi$passed){
         removeModal()
-        # take specification from file_input as only here VI applicable
-        omic_type(input$omic_type_file_input)
         start_upload("VI_data")
       }else{
         show_toast(
@@ -619,96 +617,26 @@ upload_server <- function(id){
 
 
 ## Do Upload ----
+    # Every commit uploads; a successful Upload sets the current Upload and
+    # sets done to the commit's n, a failed one sets done back to NULL and
+    # keeps the rest of the previous Upload
     observeEvent(commit(),{
-      req(done())
-      fun_LogIt(session, message = "## Data Selection {.tabset .tabset-fade}")
-      fun_LogIt(session, message = "### Info")
-      fun_LogIt(session,
-        message = paste0("**DataInput** - Uploaded Omic Type: ", omic_type())
-      )
-      if(!upload_inputs_complete(uploaded_from(), upload_files())){
-        output$debug <- renderText("The Upload has failed, or you haven't uploaded anything yet")
-      } else if (uploaded_from() == "testdata"){
-        show_toast(
-          title = paste(omic_type(),"Example Upload"),
-          text = paste(omic_type(),"- Example upload was successful"),
-          position = "top",
-          timer = 1500,
-          timerProgressBar = T
-        )
-        output$debug <- renderText({"The Test Data Set was used"})
-      } else {
-        show_toast(
-          title = paste(omic_type(),"Data Upload"),
-          text = paste(omic_type(),"- data upload was successful"),
-          position = "top",
-          timer = 1500,
-          timerProgressBar = T
-        )
-        output$debug <- renderText({
-          paste0(
-          "<font color=\"#00851d\"><b>Upload successful</b></font>",
-          "<br>",ifelse(uploaded_from()=="file_input", paste0("The following data files are uploaded to cOmicsArt:",
-                                                             "<br>Data Matrix: ", input$data_matrix1$name,
-                                                             "<br>Sample Annotation: ", input$data_sample_anno1$name,
-                                                             "<br>Entitie Annotation: ", input$data_row_anno1$name),""),
-          "<br>",ifelse(uploaded_from()=="metadata", paste0("The following data files are uploaded to cOmicsArt:",
-                                                             "<br>Data Matrix: ", input$data_matrix_metadata$name,
-                                                             "<br>Sample Annotation: ", input$metadataInput$name,
-                                                             "<br>Entitie Annotation: ", input$data_row_anno_metadata$name),""),
-          "<br>",ifelse(uploaded_from()=="precompiled", paste0("The following data files are uploaded to cOmicsArt:",
-                                                             "<br>Precompiled Data: ", input$data_preDone$name),"")
-          )
-        })
-        if(isTruthy(input$data_preDone)){
-          # precomplied set used
-          fun_LogIt(session, message = paste0(
-            "**DataInput** - The used data was precompiled. Filename: \n\t",
-            input$data_preDone$name
-          ))
-        } else if(uploaded_from() == "VI_data"){
-          fun_LogIt(session, message = paste0(
-            "**DataInput** - The used data was uploaded for visual inspection and changed within.")
-          )
-          }else {
-          if(uploaded_from() == "metadata"){
-            used_files <- list(input$data_matrix_metadata, input$metadataInput, input$data_row_anno_metadata)
-          } else {
-            used_files <- list(input$data_matrix1, input$data_sample_anno1, input$data_row_anno1)
-          }
-          fun_LogIt(session, message = paste0(
-            "The following data was used: \n\t",
-            used_files[[1]]$name,"\n\t",
-            used_files[[2]]$name,"\n\t",
-            used_files[[3]]$name
-          ))
-
-          fun_LogIt(session, message = paste0(
-            "**DataInput** - The raw data dimensions are: ",
-            paste0(dim(raw()),collapse = ", ")
-          ))
-
-        }
-      }
-    })
-
-## create data object ----
-    done <- eventReactive(commit(),{
-      uploaded_where <- isolate(uploaded_from())
-      if(uploaded_where == "VI_data") uploaded_where <- "file_input"
-      omic_type(input[[paste0("omic_type_", uploaded_where)]])
+      done(NULL)
+      source <- commit()$source
+      # the visual inspection checks the File Input's tables
+      type <- input[[paste0("omic_type_", if(source == "VI_data") "file_input" else source)]]
       # Add check if the data upload fails due to no supply of files
-      if(!upload_inputs_complete(uploaded_from(), upload_files())){
+      if(!upload_inputs_complete(source, upload_files())){
         # if it is not evaluted to TRUE
         output$debug <- renderText({
           "<font color=\"#FF0000\"><b>Upload failed, please check your input - Did you specify all files?.</b></font>"
         })
-        req(FALSE)
+        return()
       }
       # upload depending on where the button was clicked
       upload <- read_upload(
-        source = uploaded_from(),
-        omic_type = omic_type(),
+        source = source,
+        omic_type = type,
         paths = list(
           matrix = input$data_matrix1$datapath,
           sample_table = input$data_sample_anno1$datapath,
@@ -725,7 +653,7 @@ upload_server <- function(id){
         ),
         changed_during_vi = vi$changed
       )
-      if(uploaded_from() == "testdata"){
+      if(source == "testdata"){
         fun_LogIt(session,
           message = paste0("<font color=\"#FF0000\"><b>**Attention** - Test Data set used</b></font>")
         )
@@ -746,18 +674,31 @@ upload_server <- function(id){
         error_modal(list(message = upload$error_modal))
       }
       if(is.null(upload$se)){
-        return(NULL)
+        return()
       }
 
       # edit annotation columns such that if na is present in the row annotation,
       # the na gets replaced by the rowname
       raw(fill_na_row_annotation(upload$se))
       organism(NULL)
-      commit()
+      omic_type(type)
+      uploaded_from(source)
+      done(commit()$n)
+
+      report <- upload_report(source, type, upload_files(), dim(raw()))
+      for(line in report$log) fun_LogIt(session, message = line)
+      show_toast(
+        title = report$toast$title,
+        text = report$toast$text,
+        position = "top",
+        timer = 1500,
+        timerProgressBar = TRUE
+      )
+      output$debug <- renderText(report$status)
     })
 
     list(
-      done = done,
+      done = reactive(done()),
       raw = reactive(raw()),
       annotated = reactive(annotated()),
       cleared = reactive(cleared()),

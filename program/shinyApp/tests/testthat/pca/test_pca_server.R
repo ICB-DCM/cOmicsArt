@@ -61,10 +61,10 @@ test_that("a run returns the PCA of all samples with its parameters and the Data
     expect_equal(res$params$x_axis, "PC1")
     expect_match(res$params$title, "PC1 vs PC2 -- preprocessing: log10", fixed = TRUE)
     # the plots are drawn
-    expect_false(is.null(pca_reactives$PCA_plot))
-    expect_false(is.null(pca_reactives$Scree_plot))
-    expect_false(is.null(pca_reactives$Loadings_plot))
-    expect_false(is.null(pca_reactives$LoadingsMatrix_plot))
+    expect_s3_class(pca_plot(), "ggplot")
+    expect_s3_class(scree_plot(), "ggplot")
+    expect_s3_class(loadings_plot(), "ggplot")
+    expect_s3_class(loadings_matrix_plot(), "ggplot")
   })
 })
 
@@ -93,7 +93,7 @@ test_that("the in-module sample selection computes on those samples, and the plo
     expect_setequal(rownames(res$pca$x), samples)
     expect_equal(res$params$sample_selection, chosen)
     expect_equal(res$params$sample_types, "diet")
-    expect_setequal(colnames(pca_reactives$run$data), samples)
+    expect_setequal(colnames(result$run()$data), samples)
     expect_match(output$PCA_Info, "Due to sample selection", fixed = TRUE)
 
     # switched off again: all samples, whatever the pickers still hold
@@ -113,7 +113,7 @@ test_that("a failed run leaves no result and does not stop the module", {
     session$setInputs(data_selection_pca = TRUE, SampleAnnotationTypes_pca = "diet", sample_selection_pca = "no such group")
     expect_no_error(session$setInputs(Do_PCA = 2))
     expect_null(session$returned())
-    expect_null(pca_reactives$PCA_plot)
+    expect_error(pca_plot())  # req() fails: no run
     # and it still runs afterwards
     session$setInputs(data_selection_pca = FALSE)
     session$setInputs(Do_PCA = 3)
@@ -129,7 +129,7 @@ test_that("a new Dataset version clears the result", {
     ds$state$version <- 3
     session$flushReact()
     expect_null(session$returned())
-    expect_null(pca_reactives$PCA_plot)
+    expect_error(pca_plot())  # req() fails: no run
   })
 })
 
