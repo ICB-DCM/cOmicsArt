@@ -231,14 +231,20 @@ snippet_SingleGene <- function(
     data,
     params
 ){
+  # the parameters the Single Gene module passes
+  par <- params$SingleGeneVis
+  data_stage <- c(
+    data_original = "raw", data = "pre-processed", data_batch_corrected = "batch corrected"
+  )[[par$data_process_stage]]
   snippet <- c()
   # Single Entity Plotting
-  snippet <- paste0(snippet, "The expression of, ", params$SingleEntVis$Select_Gene, ", was plotted. ")
-  snippet <- paste0(snippet, "The values shown represent the ", params$SingleEntVis$type_of_data_gene, " data. ")
-  snippet <- paste0(snippet, "If the a group of entities is selected through their shared annotation, 
-                    the median value is used as representative for those entities for the respectice sample")
-  snippet <- paste0(snippet, "Values are grouped for all levels within the condition: ",  params$SingleEntVis$accross_condition, "). ")
-  snippet <- paste0(snippet, "A test for differences was performed using the ", params$SingleEntVis$testMethod, " method. ")
+  snippet <- paste0(snippet, "The expression of ", par$selected_gene, " was plotted. ")
+  snippet <- paste0(snippet, "The values shown represent the ", data_stage, " data. ")
+  snippet <- paste0(snippet, "If the a group of entities is selected through their shared annotation, ",
+                    "the median value is used as representative for those entities for the respectice sample. ")
+  snippet <- paste0(snippet, "Values are grouped for all levels within the condition: ", par$group_by, ". ")
+  # the module only runs t-tests
+  snippet <- paste0(snippet, "A test for differences was performed using the t-test method. ")
   snippet <- paste0(snippet, "Pairwise tests were performed. The dotted line represents the global mean. ")
   snippet <- paste0(snippet, "Boxplots are only shown if there are more than 3 samples per group. ")
   
