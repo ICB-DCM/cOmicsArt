@@ -58,7 +58,7 @@ file_dir <- dirname(file_path)
 # Load the used parameters and utility functions
 source(file.path(file_dir, 'util.R'))
 envList <- readRDS(file.path(file_dir, 'Data.rds'))
-parameters <- envList$par_tmp
+parameters <- envList$parameters
 data_matrix <- read.csv(file.path(file_dir, 'data_matrix.csv'), row.names = 1)
 sample_annotation <- read.csv(file.path(file_dir, 'sample_annotation.csv'), row.names = 1)
 row_annotation <- read.csv(file.path(file_dir, 'row_annotation.csv'), row.names = 1)
@@ -77,10 +77,10 @@ defined parameters.
 ```r
 # --- Data Selection ---
 # Assign variables from parameter list or default values
-sample_values <- parameters$sample_values %||% "all"
-sample_type <- parameters$sample_type %||% NULL
-row_values <- parameters$row_values %||% "all"
-row_type <- parameters$row_type %||% NULL
+sample_values <- parameters$selection$sample_values %||% "all"
+sample_type <- parameters$selection$sample_type %||% NULL
+row_values <- parameters$selection$row_values %||% "all"
+row_type <- parameters$selection$row_type %||% NULL
 # tmp_res is used as intermediate as return value is a list
 tmp_res <- select_data(
   data = data_orig,
@@ -112,21 +112,20 @@ having to rewrite the code. The code will look like this:
 ```r
 # --- Preprocessing ---
 # Assign variables from parameter list or default values
-omic_type <- parameters$omic_type
-preprocessing_procedure <- parameters$preprocessing_procedure
+preprocessing_procedure <- parameters$preprocessing$preprocessing_procedure
 # Parameters with default values, some might not be used.
-preprocessing_filtering <- parameters$preprocessing_filtering %||% NULL
-deseq_factors <- parameters$deseq_factors %||% NULL
-filter_threshold <- parameters$filter_threshold %||% 10
-filter_threshold_samplewise <- parameters$filter_threshold_samplewise %||% NULL
-filter_samplesize <- parameters$filter_samplesize %||% NULL
-limma_intercept <- parameters$limma_intercept %||% NULL
-limma_formula <- parameters$limma_formula %||% NULL
+preprocessing_filtering <- parameters$preprocessing$preprocessing_filtering %||% NULL
+deseq_factors <- parameters$preprocessing$deseq_factors %||% NULL
+filter_threshold <- parameters$preprocessing$filter_threshold %||% 10
+filter_threshold_samplewise <- parameters$preprocessing$filter_threshold_samplewise %||% NULL
+filter_samplesize <- parameters$preprocessing$filter_samplesize %||% NULL
+limma_intercept <- parameters$preprocessing$limma_intercept %||% NULL
+limma_formula <- parameters$preprocessing$limma_formula %||% NULL
 
 
 res_preprocess <- preprocessing(
   data = data,
-  omic_type = omic_type,
+  omic_type = parameters$omic_type,
   preprocessing_procedure = preprocessing_procedure,
   preprocessing_filtering = preprocessing_filtering,
   deseq_factors = deseq_factors,

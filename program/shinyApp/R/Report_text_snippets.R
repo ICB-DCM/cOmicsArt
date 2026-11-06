@@ -74,7 +74,7 @@ snippet_preprocessing <- function(
     snippet <- paste0(snippet, "For the transcriptomics data, DESeq2 was used for normalization and VST transformation applied for visualisation of the normalized data (not for statistical testing)",
                       "(v. ",packageVersion("DESeq2"),") (",print(clean_citation(citation('DESeq2')), style = "text"),"). ",
                       "The formula for analysis was ~ ",
-                      paste(c(params$deseq_factors, setdiff(params$batch_column, "NULL")), collapse = " + "),
+                      paste(c(params$deseq_factors, params$batch_column), collapse = " + "),
                       ".\n")
   } else if (procedure == "Scaling_0_1") {
     snippet <- paste0(snippet, "The data was scaled to fit within the range of 0 to 1. Each entity's values are hence transformed proportionally to ensure a consistent scale.\n")
@@ -88,7 +88,7 @@ snippet_preprocessing <- function(
   }
 
   # Batch effect correction
-  if (params$batch_column != "NULL") {
+  if (!is.null(params$batch_column)) {
     snippet <- paste0(snippet, "Batch effect correction was applied using the information about: ", params$batch_column, ".\n",
                       "The correction was performed using the ComBat method from the sva package", "(v. ",packageVersion("sva"),") (",print(clean_citation(citation('sva')), style = "text"),"). \n")
   }

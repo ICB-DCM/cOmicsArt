@@ -145,7 +145,7 @@ test_that("a new Upload and its confirm in one flush end with the new Dataset", 
   })
 })
 
-test_that("code_context() has the raw data, Selection, Pre-processing and par_tmp", {
+test_that("code_context() has the raw data, Selection, Pre-processing, omic type and organism", {
   testServer(dataset_server, args = module_args(), {
     handle <- session$returned
     selection$selected(two_diets)
@@ -153,19 +153,16 @@ test_that("code_context() has the raw data, Selection, Pre-processing and par_tm
     preprocessing$result(run_two_diets)
     session$flushReact()
     context <- handle$code_context()
-    expect_named(context, c("raw", "selection", "preprocessing", "omic_type", "organism", "par_tmp"))
+    expect_named(context, c("raw", "selection", "preprocessing", "omic_type", "organism"))
     # the whole Upload, so that the R code starts from it
     expect_equal(context$raw, lipids)
     expect_equal(context$selection, selection_params(two_diets))
     expect_equal(context$omic_type, "Lipidomics")
     expect_equal(context$organism, "Mouse")
-    # par_tmp as the R-code templates read it: batch_column "NULL" for none
-    par <- context$par_tmp
-    expect_equal(par$sample_values, c("CD_CD_HFD", "HFD_HFD_CD"))
-    expect_equal(par$sample_type, "diet")
-    expect_equal(par$omic_type, "Lipidomics")
-    expect_equal(par$preprocessing_procedure, "log10")
-    expect_equal(par$batch_column, "NULL")
+    expect_equal(context$preprocessing$preprocessing_procedure, "log10")
+    # batch_column NULL for none, kept as an entry
+    expect_true("batch_column" %in% names(context$preprocessing))
+    expect_null(context$preprocessing$batch_column)
   })
 })
 

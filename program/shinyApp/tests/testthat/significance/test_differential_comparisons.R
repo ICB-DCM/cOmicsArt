@@ -98,7 +98,7 @@ test_that("each comparison keeps its own volcano thresholds, also in its R code"
     expect_equal(volcano[[COMPARISONS[1]]]$th_psig, 0.01)
     expect_equal(volcano[[COMPARISONS[2]]]$th_psig, 0.05)
     dir <- unpack_zip(output[[tab_id(1, 1, COMPARISONS[1], "getR_Code_Volcano")]])
-    par <- readRDS(file.path(dir, "Data.rds"))$par_tmp
+    par <- readRDS(file.path(dir, "Data.rds"))$parameters
     expect_equal(par$SigAna$comp, COMPARISONS[1])
     expect_equal(par$SigAna$th_psig, 0.01)
     expect_length(par$SigAna$anno_vector, nrow(args$dataset$processed()))

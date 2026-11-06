@@ -231,14 +231,14 @@ tmm_proccessing <- function(data){
   return(data)
 }
 
-# ComBat on `data` by `batch_column` ("NULL" for none). DESeq2 redoes its run
+# ComBat on `data` by `batch_column` (NULL for none). DESeq2 redoes its run
 # with the batch column as an extra factor, starting from `counts`, the
 # filtered counts preprocessing() returns.
 batch_correction <- function(
-  data, preprocessing_procedure, batch_column, deseq_factors = NULL, omic_type = NULL,
+  data, preprocessing_procedure, batch_column = NULL, deseq_factors = NULL, omic_type = NULL,
   counts = NULL
 ){
-  if (batch_column == "NULL"){
+  if (is.null(batch_column)){
     return(list(
       data = NULL
     ))
@@ -341,8 +341,9 @@ filter_inputs <- function(procedure, filtering, omic_type, n_samples){
   NULL
 }
 
-# Batch-column choices: "NULL" and the sample annotation columns with
-# repeated values; for DESeq2 without its design factors.
+# Batch-column choices: "NULL" for none (the run turns it into NULL) and the
+# sample annotation columns with repeated values; for DESeq2 without its
+# design factors.
 batch_column_choices <- function(data, procedure = NULL, deseq_factors = NULL){
   annotation <- colData(data)
   columns <- colnames(annotation)
@@ -398,7 +399,7 @@ with_error_class <- function(class, expr){
 
 # The whole Pre-processing of the selected data: preprocessing() with
 # `options`, incomplete rows removed, batch correction by `batch_column`
-# ("NULL" for none), normality test per entity added to rowData.
+# (NULL for none), normality test per entity added to rowData.
 # `options` are named like the arguments of preprocessing(), which is also how
 # the Dataset's preprocessing() holds them for the R code; an absent or NULL
 # option takes preprocessing()'s default, as in the R code.
@@ -406,7 +407,7 @@ with_error_class <- function(class, expr){
 # number of rows before incomplete ones were removed, console output and
 # warnings. A failed batch correction signals a "batch_error", anything else
 # a plain error; entities the normality test is not possible for get NA.
-run_preprocessing <- function(data, omic_type, options, batch_column){
+run_preprocessing <- function(data, omic_type, options, batch_column = NULL){
   procedure <- options$preprocessing_procedure
   print(paste0("Do chosen Preprocessing:", procedure))
   # data by name, so an error's call doesn't carry the whole object
@@ -524,7 +525,7 @@ preprocessing_log_lines <- function(params, data_dim){
     "Always done: removal of all entities which are constant over all samples",
     paste0("Filtering: ", filtering),
     paste0("Procedure: ", procedure),
-    if (params$batch_column != "NULL") paste0("Batch Effect Correction: ", params$batch_column),
+    if (!is.null(params$batch_column)) paste0("Batch Effect Correction: ", params$batch_column),
     paste0("The resulting dimensions are: ", paste0(data_dim, collapse = ", "))
   ))
 }

@@ -366,52 +366,12 @@ ml_classification_Server <- function(id, dataset){
       }
     )
 
-    output$getR_Code_cluster <- downloadHandler(
-      filename = function() {
-        download_name("ML", "rcode", "KMeans")
-      },
-      content = function(file) {
-        waiter <- Waiter$new(
-          html = LOADING_SCREEN,
-          color = "#3897F147",
-          hide_on_render = FALSE
-        )
-        waiter$show()
-
-        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-        dir.create(temp_directory)
-
-        # Save data: the whole raw data of the Upload
-        context <- dataset$code_context()
-        save_summarized_experiment(context$raw, temp_directory)
-
-        # Generate R script
-        write(
-          create_workflow_script(
-            pipeline_info = KMEANS_CLUSTERING_PIPELINE,
-            par = ml_rcode_par(context, ml_results$kmeans_out),
-            par_mem = "MLClassification",
-            path_to_util = file.path(temp_directory, "util.R")
-          ),
-          file.path(temp_directory, "Code.R")
-        )
-
-        # Save environment data
-        envList <- list(
-          par_tmp = ml_rcode_par(context, ml_results$kmeans_out)
-        )
-        saveRDS(envList, file.path(temp_directory, "Data.rds"))
-
-        # Zip everything
-        zip::zip(
-          zipfile = file,
-          files = dir(temp_directory),
-          root = temp_directory
-        )
-        waiter$hide()
-      },
-      contentType = "application/zip"
-    )
+    output$getR_Code_cluster <- rcode_download("ML", "KMeans", function(file) {
+      rcode_zip(
+        file, dataset$code_context(), KMEANS_CLUSTERING_PIPELINE,
+        "MLClassification", ml_results$kmeans_out$params
+      )
+    })
 
     # SVM classification handlers
     observeEvent(input$only2Report_svm, {
@@ -471,52 +431,12 @@ ml_classification_Server <- function(id, dataset){
       }
     )
 
-    output$getR_Code_svm <- downloadHandler(
-      filename = function() {
-        download_name("ML", "rcode", "SVM")
-      },
-      content = function(file) {
-        waiter <- Waiter$new(
-          html = LOADING_SCREEN,
-          color = "#3897F147",
-          hide_on_render = FALSE
-        )
-        waiter$show()
-
-        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-        dir.create(temp_directory)
-
-        # Save data: the whole raw data of the Upload
-        context <- dataset$code_context()
-        save_summarized_experiment(context$raw, temp_directory)
-
-        # Generate R script
-        write(
-          create_workflow_script(
-            pipeline_info = SVM_CLASSIFICATION_PIPELINE,
-            par = ml_rcode_par(context, ml_results$svm_out),
-            par_mem = "MLClassification",
-            path_to_util = file.path(temp_directory, "util.R")
-          ),
-          file.path(temp_directory, "Code.R")
-        )
-
-        # Save environment data
-        envList <- list(
-          par_tmp = ml_rcode_par(context, ml_results$svm_out)
-        )
-        saveRDS(envList, file.path(temp_directory, "Data.rds"))
-
-        # Zip everything
-        zip::zip(
-          zipfile = file,
-          files = dir(temp_directory),
-          root = temp_directory
-        )
-        waiter$hide()
-      },
-      contentType = "application/zip"
-    )
+    output$getR_Code_svm <- rcode_download("ML", "SVM", function(file) {
+      rcode_zip(
+        file, dataset$code_context(), SVM_CLASSIFICATION_PIPELINE,
+        "MLClassification", ml_results$svm_out$params
+      )
+    })
 
     reactive({
       res <- list()

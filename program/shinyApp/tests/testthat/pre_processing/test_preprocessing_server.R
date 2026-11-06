@@ -1,4 +1,5 @@
 # tests for the Pre-processing module in R/pre_processing/server.R
+source(test_path("..", "helper-rcode.R"), local = TRUE)
 lipids <- test_data("Lipidomics")
 
 # The module's arguments for all of `data` after an Upload
@@ -61,8 +62,7 @@ test_that("a log10 run returns the processed object and its parameters", {
     expect_false(is.null(result))
     expected <- suppressMessages(run_preprocessing(
       lipids, "Lipidomics",
-      list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0),
-      batch_column = "NULL"
+      list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
     ))
     expect_equal(
       SummarizedExperiment::assay(result$data),
@@ -72,7 +72,9 @@ test_that("a log10 run returns the processed object and its parameters", {
     params <- result$params
     expect_equal(params$preprocessing_procedure, "log10")
     expect_equal(params$filter_threshold, 0)
-    expect_equal(params$batch_column, "NULL")
+    # the control's "NULL" choice: no batch column, kept as an entry
+    expect_true("batch_column" %in% names(params))
+    expect_null(params$batch_column)
     # the violin colour follows the control, it is not part of the run
     expect_null(params$violin_color)
     expect_null(result$DESeq_obj)
@@ -264,6 +266,18 @@ test_that("the violin R code draws the colouring the control shows", {
     session$setInputs(violin_color = "ID")
     unzipped <- withr::local_tempdir()
     utils::unzip(output$rcode_violin, exdir = unzipped)
-    expect_equal(readRDS(file.path(unzipped, "Data.rds"))$par_tmp$violin_color, "ID")
+    expect_equal(readRDS(file.path(unzipped, "Data.rds"))$parameters$ViolinPlot$violin_color, "ID")
+  })
+})
+
+test_that("the R code of a run without a batch column keeps the batch_column entry and runs", {
+  test_log10_run({
+    zip <- output$rcode_mean_sd
+    unzipped <- withr::local_tempdir()
+    utils::unzip(zip, exdir = unzipped)
+    preprocessing <- readRDS(file.path(unzipped, "Data.rds"))$parameters$preprocessing
+    expect_true("batch_column" %in% names(preprocessing))
+    expect_null(preprocessing$batch_column)
+    expect_rcode_figure(zip, "mean and SD plot")
   })
 })

@@ -4,7 +4,7 @@ genes <- test_data("Transcriptomics")[1:200, ]
 # The Dataset's preprocessing() after a run, plus the omic type: the options
 # named like preprocessing()'s arguments and the batch column. Inputs of controls not shown
 # keep their last value, so a run can carry options it didn't use.
-run_params <- function(procedure, ..., omic_type = "Transcriptomics", batch_column = "NULL"){
+run_params <- function(procedure, ..., omic_type = "Transcriptomics", batch_column = NULL){
   c(
     list(preprocessing_procedure = procedure, ...),
     list(omic_type = omic_type, batch_column = batch_column)
@@ -83,7 +83,7 @@ test_that("the report names the DESeq2 design, with the batch column", {
     deseq_factors = c("condition", "cell"), batch_column = "batch_factor"
   )
   expect_match(snippet(params), "The formula for analysis was ~ condition + cell + batch_factor.", fixed = TRUE)
-  params$batch_column <- "NULL"
+  params["batch_column"] <- list(NULL)
   expect_match(snippet(params), "The formula for analysis was ~ condition + cell.", fixed = TRUE)
 })
 
@@ -99,7 +99,7 @@ test_that("the batch column is named when set", {
     fixed = TRUE
   )
   expect_match(log_lines(params), "Batch Effect Correction: batch_factor", fixed = TRUE)
-  params$batch_column <- "NULL"
+  params["batch_column"] <- list(NULL)
   expect_no_match(snippet(params), "Batch effect correction", fixed = TRUE)
   expect_no_match(log_lines(params), "Batch Effect Correction", fixed = TRUE)
 })
