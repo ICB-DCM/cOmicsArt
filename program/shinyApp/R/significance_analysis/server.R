@@ -503,7 +503,8 @@ significance_analysis_server <- function(id, dataset){
               pipeline_info = UPSET_PLOT_PIPELINE,
               par = par,
               par_mem = "SigAna",
-              path_to_util = file.path(temp_directory, "util.R")
+              path_to_util = file.path(temp_directory, "util.R"),
+              data_stage = if (isTRUE(par$SigAna$useBatch)) "batch_corrected" else "processed"
             ),
             file.path(temp_directory, "Code.R")
           )
