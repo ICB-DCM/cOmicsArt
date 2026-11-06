@@ -6,10 +6,9 @@
 #' including download buttons and parameter inputs.
 #'
 #' @param ids List of IDs from create_contrast_ids()
-#' @param contrast Character vector c(group1, group2)
 #' @return tabPanel for volcano plots
 #' @export
-create_volcano_tab_ui <- function(ids, contrast) {
+create_volcano_tab_ui <- function(ids) {
   tabPanel(
     title = "Volcano",
 

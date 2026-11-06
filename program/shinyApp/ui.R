@@ -105,7 +105,7 @@ ui <- shiny::fluidPage(
     pca_UI(NS("dataset_1", "pca")),
     # inside Dataset 1 (dataset_server("dataset_1"))
     ml_classification_UI(NS("dataset_1", "ml_classification")),
-    significance_analysis_UI("SignificanceAnalysis"),
+    significance_analysis_UI(NS("dataset_1", "differential")),
     heatmap_UI(NS("dataset_1", "heatmap")),
     single_gene_visualisation_UI(NS("dataset_1", "single_gene_visualisation")),
     enrichment_analysis_UI(NS("dataset_1", "enrichment_analysis"))

@@ -6,7 +6,7 @@
 # Arguments: the returns of upload_server(), selection_server() and
 #   preprocessing_server()
 # Runs the analysis modules that are already on the handle (so far ML,
-# Sample Correlation, Single Gene, PCA, Heatmap and Enrichment) in
+# Sample Correlation, Single Gene, PCA, Heatmap, Enrichment and Differential Analysis) in
 # the Dataset's namespace; what they return is in results(), by module.
 # Returns the Dataset handle (dataset_handle())
 dataset_server <- function(id, upload, selection, preprocessing){
@@ -77,6 +77,7 @@ dataset_server <- function(id, upload, selection, preprocessing){
     collect("pca", pca_Server("pca", handle))
     heatmap <- heatmap_server("heatmap", handle)
     collect("heatmap", heatmap)
+    collect("differential", significance_analysis_server("differential", handle))
     # the genes the Heatmap saved feed Enrichment's over-representation analysis
     collect("enrichment", enrichment_analysis_Server(
       "enrichment_analysis", handle,

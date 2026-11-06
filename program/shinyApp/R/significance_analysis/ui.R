@@ -1,6 +1,7 @@
 significance_analysis_sidebar_ui<- function(ns){
   sidebarPanel(
-    id = "sidebar_significance_analysis",
+    id = ns("sidebar"),
+    class = "sidebar-differential",
     h5(" ") %>% helper(type = "markdown", content = "SigAna_Choices"),
     uiOutput(outputId = ns("UseBatch_ui")),
     uiOutput(outputId = ns("type_of_comparison_ui")),
@@ -30,10 +31,6 @@ significance_analysis_sidebar_ui<- function(ns){
       label = "Get Differential Analysis",
       icon = icon("fas fa-mouse-pointer")
     ),
-    hidden(actionButton(
-      inputId = ns("refreshUI"),
-      label = "Refresh UI"
-    )),
     hr(style = "border-top: 1px solid #858585;")
   )
 }
@@ -41,9 +38,9 @@ significance_analysis_sidebar_ui<- function(ns){
 # Main panel
 significance_analysis_main_ui <- function(ns){
   mainPanel(
-    id = "main_significance_analysis",
+    id = ns("main_panel"),
     htmlOutput(outputId = ns("significance_analysis_info"), container = pre),
-    div(id = "Significance_div",
+    hidden(div(id = ns("Significance_div"),
       tabsetPanel(
         id = ns("significance_analysis_results"),
         tabPanel(
@@ -134,7 +131,7 @@ significance_analysis_main_ui <- function(ns){
           )
         ),
       ),
-    )
+    ))
   )
 }
 
@@ -145,7 +142,7 @@ significance_analysis_UI <- function(id){
   tabPanel(
     title = tagList(tags$span("6. Differential Analysis")), 
     value = "Differential Analysis",
-    id = "significance_analysis",
+    id = ns("tab"),
     fluid = T,
     h4("Differential Analysis"),
     # sidebar

@@ -120,11 +120,11 @@ IDS <- list(
       rcode = "#dataset_1-ml_classification-getR_Code_cluster"
     ),
     "Differential Analysis" = list(
-      go = "SignificanceAnalysis-significanceGo",
+      go = "dataset_1-differential-significanceGo",
       # one results tab per comparison, IDs derived from the group names
-      after = "#Significance_div a[data-value='Volcano']",
-      out = "#Significance_div [id$='_Volcano']",
-      rcode = "#Significance_div [id$='_getR_Code_Volcano']"
+      after = "#dataset_1-differential-Significance_div a[data-value='Volcano']",
+      out = "#dataset_1-differential-Significance_div [id$='_Volcano']",
+      rcode = "#dataset_1-differential-Significance_div [id$='_getR_Code_Volcano']"
     ),
     "ML Classification (supervised)" = list(
       tab = "ML Classification",
@@ -137,10 +137,10 @@ IDS <- list(
     # the comparisons are Lipidomics diet groups
     "Differential Analysis (2 comparisons)" = list(
       tab = "Differential Analysis",
-      set = list("SignificanceAnalysis-comparisons" = c("CD_CD_HFD:CD_CD_CD", "HFD_CD_CD:CD_CD_CD")),
-      go = "SignificanceAnalysis-significanceGo",
-      out = "#SignificanceAnalysis-Significant_Plot_final",
-      rcode = "#SignificanceAnalysis-getR_Code_Sig"
+      set = list("dataset_1-differential-comparisons" = c("CD_CD_HFD:CD_CD_CD", "HFD_CD_CD:CD_CD_CD")),
+      go = "dataset_1-differential-significanceGo",
+      out = "#dataset_1-differential-Significant_Plot_final",
+      rcode = "#dataset_1-differential-getR_Code_Sig"
     ),
     "Heatmap" = HEATMAP,
     # after a pre-processing with a batch column
@@ -153,11 +153,11 @@ IDS <- list(
     ),
     "Differential Analysis (batch corrected)" = list(
       tab = "Differential Analysis",
-      set = list("SignificanceAnalysis-UseBatch" = "Yes"),
-      go = "SignificanceAnalysis-significanceGo",
-      after = "#Significance_div a[data-value='Volcano']",
-      out = "#Significance_div [id$='_Volcano']",
-      rcode = "#Significance_div [id$='_getR_Code_Volcano']"
+      set = list("dataset_1-differential-UseBatch" = "Yes"),
+      go = "dataset_1-differential-significanceGo",
+      after = "#dataset_1-differential-Significance_div a[data-value='Volcano']",
+      out = "#dataset_1-differential-Significance_div [id$='_Volcano']",
+      rcode = "#dataset_1-differential-Significance_div [id$='_getR_Code_Volcano']"
     ),
     # Transcriptomics: 'all' rows is too slow; the gene list feeds Enrichment
     "Heatmap (top K)" = modifyList(HEATMAP, list(
