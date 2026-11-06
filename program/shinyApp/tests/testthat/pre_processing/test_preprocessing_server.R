@@ -11,18 +11,6 @@ module_args <- function(data, omic_type){
     upload_done = reactive(1)
   )
 }
-# The module writes the report to www/<token>/Report.md, relative to the app
-# folder, as the app server sets it up; `env` is the test's environment,
-# which cleans up when it ends.
-# Returns a function that reads the report.
-local_report <- function(session, env){
-  withr::local_dir(app_dir, .local_envir = env)
-  report_dir <- file.path(app_dir, "www", session$token)
-  dir.create(report_dir)
-  file.create(file.path(report_dir, "Report.md"))
-  withr::defer(unlink(report_dir, recursive = TRUE), envir = env)
-  function() paste(readLines(file.path(report_dir, "Report.md")), collapse = "\n")
-}
 # testServer on the module after a log10 run of all Lipidomics data, the
 # violins coloured by diet and both plots saved as PNG; `expr` can read the
 # report with report()
@@ -30,7 +18,7 @@ test_log10_run <- function(expr){
   expr <- substitute(expr)
   test_env <- parent.frame()
   eval(bquote(testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
-    report <- local_report(session, .(test_env))
+    report <- local_session_report(session, .(test_env))
     session$setInputs(
       processing_type = "Log-Based", preprocessing_procedure = "log10",
       preprocessing_filtering = "filterOnly", filter_threshold = 0,
@@ -86,7 +74,7 @@ test_that("DESeq2 on Transcriptomics returns a DESeq object", {
   transcripts <- test_data("Transcriptomics")
   test_env <- environment()
   testServer(preprocessing_server, args = module_args(transcripts, "Transcriptomics"), {
-    local_report(session, test_env)
+    local_session_report(session, test_env)
     session$setInputs(
       processing_type = "Omic-Specific", preprocessing_procedure = "vst_DESeq",
       preprocessing_filtering = "filterOnly", filter_threshold = 10,
@@ -101,7 +89,7 @@ test_that("DESeq2 on Transcriptomics returns a DESeq object", {
 test_that("a failed run returns no result", {
   test_env <- environment()
   testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
-    local_report(session, test_env)
+    local_session_report(session, test_env)
     session$setInputs(
       processing_type = "Filtering", preprocessing_procedure = "filterOnly",
       filter_threshold = 1e9, batch_column = "NULL"
@@ -138,7 +126,7 @@ test_that("a run with 2 samples succeeds without the normality test", {
   two_samples <- lipids[, 1:2]
   test_env <- environment()
   testServer(preprocessing_server, args = module_args(two_samples, "Lipidomics"), {
-    local_report(session, test_env)
+    local_session_report(session, test_env)
     session$setInputs(
       processing_type = "Log-Based", preprocessing_procedure = "log10",
       preprocessing_filtering = "filterOnly", filter_threshold = 0,
@@ -159,7 +147,7 @@ test_that("a failed batch correction counts as a failed run", {
   withr::defer(app_env$run_preprocessing <- original)
   test_env <- environment()
   testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
-    local_report(session, test_env)
+    local_session_report(session, test_env)
     session$setInputs(
       processing_type = "Log-Based", preprocessing_procedure = "log10",
       batch_column = "diet"
@@ -182,7 +170,7 @@ test_that("the R-code downloads are greyed out until a run succeeded", {
   )
   test_env <- environment()
   testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
-    local_report(session, test_env)
+    local_session_report(session, test_env)
     enabled <- function() unlist(session$userData$enabled)
     session$setInputs(
       processing_type = "Filtering", preprocessing_procedure = "filterOnly",
@@ -228,7 +216,7 @@ test_that("both violin plots follow the colour control after a run", {
 test_that("the pre-processed violin plot shows the batch-corrected data", {
   test_env <- environment()
   testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
-    local_report(session, test_env)
+    local_session_report(session, test_env)
     session$setInputs(
       processing_type = "Log-Based", preprocessing_procedure = "log10",
       preprocessing_filtering = "filterOnly", filter_threshold = 0,

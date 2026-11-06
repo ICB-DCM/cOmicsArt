@@ -139,6 +139,7 @@ sample_correlation_server <- function(id, dataset){
           download_name("SampleCorrelation", input$file_ext_SampleCorrelation)
         },
         content = function(file){
+          req(sample_corr_reactive$result)
           save_complex_heatmap(
             sample_corr_reactive$corr_plot + sample_corr_reactive$row_anno,
             filename = file,
@@ -149,8 +150,9 @@ sample_correlation_server <- function(id, dataset){
         }
       )
 
-      # send only to report
+      # send only to report: what was computed, not what the controls say now
       observeEvent(input$only2Report_SampleCorrelation,{
+        params <- req(sample_corr_reactive$result)$params
         notificationID <- showNotification("Saving to Report...",duration = 0)
         tmp_filename <- paste0(
           getwd(),
@@ -167,8 +169,8 @@ sample_correlation_server <- function(id, dataset){
         ## Add Log Messages
         fun_LogIt(session, "## Sample correlation {.tabset .tabset-fade}")
         fun_LogIt(session, message = "### Info")
-        fun_LogIt(session, message = paste0("**SampleCorrelation** - The correlation method used was: ",input$corrMethod))
-        fun_LogIt(session, message = paste0("**SampleCorrelation** - The heatmap samples were colored after ",paste(input$SampleAnnotationChoice)))
+        fun_LogIt(session, message = paste0("**SampleCorrelation** - The correlation method used was: ", params$correlation_method))
+        fun_LogIt(session, message = paste0("**SampleCorrelation** - The heatmap samples were colored after ", paste(params$sample_annotations)))
         fun_LogIt(session, message = paste0("**SampleCorrelation** - ![SAMPLE_CORRELATION](",tmp_filename,")"))
 
         if(isTruthy(input$NotesSampleCorrelation) & !(isEmpty(input$NotesSampleCorrelation))){
@@ -178,7 +180,7 @@ sample_correlation_server <- function(id, dataset){
         fun_LogIt(session, message = "### Publication Snippet")
         fun_LogIt(session, message = snippet_sampleCorr(
           data = NULL,
-          params = list(SampleCorr = sample_corr_reactive$result$params)
+          params = list(SampleCorr = params)
         ))
 
         removeNotification(notificationID)
