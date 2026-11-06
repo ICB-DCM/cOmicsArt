@@ -44,14 +44,10 @@ dataset_server <- function(id, upload, selection, preprocessing){
     collect("sample_correlation", sample_correlation_server("sample_correlation", handle))
     collect("single_gene", single_gene_visualisation_server("single_gene_visualisation", handle))
     collect("pca", pca_Server("pca", handle))
-    heatmap <- heatmap_server("heatmap", handle)
-    collect("heatmap", heatmap)
+    collect("heatmap", heatmap_server("heatmap", handle))
     collect("differential", significance_analysis_server("differential", handle))
-    # the genes the Heatmap saved feed Enrichment's over-representation analysis
-    collect("enrichment", enrichment_analysis_Server(
-      "enrichment_analysis", handle,
-      heatmap_genes = reactive(heatmap()$gene_list)
-    ))
+    # reads the genes the Heatmap saved from results()$heatmap
+    collect("enrichment", enrichment_analysis_Server("enrichment_analysis", handle))
 
     handle
   })

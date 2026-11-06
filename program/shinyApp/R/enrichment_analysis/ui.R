@@ -144,7 +144,7 @@ ea_sidebar <- function(ns){
     selectInput(
       inputId = ns("GeneSetChoice"),
       label = "Choose sets to do enrichment for",
-      choices = names(GENESETS_RESET),
+      choices = ENRICHMENT_GENE_SETS,
       multiple = T ,
       selected = c(
         "KEGG", "Hallmarks", "GO_CC"
@@ -164,8 +164,7 @@ ea_sidebar <- function(ns){
       label = "Get Enrichment Analysis",
       icon = icon("fas fa-mouse-pointer")
     ),
-    hr(style = "border-top: 1px solid #000000;"),
-    uiOutput(outputId = ns("KeggPathwayID_ui"))
+    hr(style = "border-top: 1px solid #000000;")
   )
 }
 
@@ -174,38 +173,11 @@ ea_main <- function(ns){
     id = ns("main_panel"),
     textOutput(outputId = ns("EnrichmentInfo"), container = pre),
     hidden(div(id = ns("enrichment_div"),
-      tabsetPanel(
-        id = ns("EnrichmentTabs"),
-        geneset_panel_UI(ns("Hallmarks")),
-        geneset_panel_UI(ns("C1")),
-        geneset_panel_UI(ns("C2")),
-        geneset_panel_UI(ns("CGP")),
-        geneset_panel_UI(ns("CP")),
-        geneset_panel_UI(ns("BIOCARTA")),
-        geneset_panel_UI(ns("KEGG")),
-        geneset_panel_UI(ns("PID")),
-        geneset_panel_UI(ns("REACTOME")),
-        geneset_panel_UI(ns("WIKIPATHWAYS")),
-        geneset_panel_UI(ns("C3")),
-        geneset_panel_UI(ns("MIRDB")),
-        geneset_panel_UI(ns("MIR_Legacy")),
-        geneset_panel_UI(ns("GTRD")),
-        geneset_panel_UI(ns("TFT_Legacy")),
-        geneset_panel_UI(ns("C4")),
-        geneset_panel_UI(ns("CGN")),
-        geneset_panel_UI(ns("CM")),
-        geneset_panel_UI(ns("C5")),
-        geneset_panel_UI(ns("GO")),
-        geneset_panel_UI(ns("GO_BP")),
-        geneset_panel_UI(ns("GO_CC")),
-        geneset_panel_UI(ns("GO_MF")),
-        geneset_panel_UI(ns("HPO")),
-        geneset_panel_UI(ns("C6")),
-        geneset_panel_UI(ns("C7")),
-        geneset_panel_UI(ns("IMMUNESIGDB")),
-        geneset_panel_UI(ns("VAX")),
-        geneset_panel_UI(ns("C8"))
-      )
+      # one tab per gene set
+      do.call(tabsetPanel, c(
+        list(id = ns("EnrichmentTabs")),
+        lapply(ENRICHMENT_GENE_SETS, function(gene_set) geneset_panel_UI(ns(gene_set)))
+      ))
     ))
   )
 }

@@ -1,11 +1,3 @@
-# The gene sets an enrichment can be done for, one sub-module each
-ENRICHMENT_GENE_SETS <- c(
-  'KEGG', 'GO', 'REACTOME', 'Hallmarks', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6',
-  'C7', 'C8', 'CGP', 'CP', 'BIOCARTA', 'PID', 'WIKIPATHWAYS', 'MIRDB',
-  'MIR_Legacy', 'GTRD', 'TFT_Legacy', 'CGN', 'CM', 'GO_BP', 'GO_CC', 'GO_MF',
-  'HPO', 'IMMUNESIGDB', 'VAX'
-)
-
 # One gene set's plot, table, R code and report. Created once per
 # Enrichment module; follows its result.
 # Arguments:
@@ -40,9 +32,12 @@ enrichment_analysis_geneset_server <- function(id, result, ea_type, code_context
           "No significant result found. For further details check the table."
         }
       })
+      # the dot plot of the result; the render, the download and the report
+      # use it
+      figure <- reactive(plot_enrichment_results(req(result())))
       output$EnrichmentPlot <- renderPlot({
         req(significant())
-        clusterProfiler::dotplot(result()) + CUSTOM_THEME
+        figure()
       })
       # result table, every row in the exports
       output$EnrichmentTable <- DT::renderDataTable({
@@ -71,7 +66,7 @@ enrichment_analysis_geneset_server <- function(id, result, ea_type, code_context
         content = function(file){
           ggsave(
             filename = file,
-            plot = clusterProfiler::dotplot(result(), title = "") + CUSTOM_THEME,
+            plot = figure(),
             device = gsub("\\.","",input$file_ext)
           )
         }
@@ -84,7 +79,7 @@ enrichment_analysis_geneset_server <- function(id, result, ea_type, code_context
         tmp_filename <- paste0(getwd(),file_path, paste(id,Sys.time(),".png",sep="_"))
         ggsave(
           filename = tmp_filename,
-          plot = clusterProfiler::dotplot(res) + CUSTOM_THEME,
+          plot = figure(),
           device = "png"
         )
 
@@ -123,8 +118,8 @@ enrichment_analysis_geneset_server <- function(id, result, ea_type, code_context
 
 # Enrichment Analysis Server Module
 # Reads its Dataset through the handle (`dataset`, see dataset_handle()).
-# heatmap_genes: reactive, the genes the Heatmap saved for ORA (or NULL);
-#   wired in dataset_server()
+# ORA on the Heatmap's genes reads them from the Dataset's results()
+# (results()$heatmap$gene_list) when it runs.
 # Returns a reactive: NULL before a run and after a new Dataset version,
 # otherwise list(results, params, version) with
 #   results: the enrichResult/gseaResult per gene set (named by gene set,
@@ -136,12 +131,11 @@ enrichment_analysis_geneset_server <- function(id, result, ea_type, code_context
 #     tmp_genes; for ORA also UniverseOfGene and universe (Ensembl IDs of
 #     the background, NULL for the default)
 #   version: the Dataset version it was computed on
-enrichment_analysis_Server <- function(id, dataset, heatmap_genes){
+enrichment_analysis_Server <- function(id, dataset){
   moduleServer(
     id,
     function(input,output,session){
       ea_reactives <- reactiveValues(
-        enrichments2do = GENESETS_RESET,
         # list(data, genes, params, anno) of a Gene Set Enrichment that
         # waits for the user's annotation type
         pending = NULL,
@@ -224,22 +218,14 @@ enrichment_analysis_Server <- function(id, dataset, heatmap_genes){
       output$Groups2Compare_treat_GSEA_ui <- group_picker(
         "Groups2Compare_treat_GSEA", "Choose treatment group of log2 FoldChange", 2
       )
-      # change values in list to true if selected
+      # only the tabs of the chosen gene sets show
       observeEvent(input$GeneSetChoice, {
-        # reset list
-        ea_reactives$enrichments2do <- GENESETS_RESET
-        if(length(input$GeneSetChoice) > 0){
-          for(i in seq_along(input$GeneSetChoice)){
-            ea_reactives$enrichments2do[[input$GeneSetChoice[i]]] <- TRUE
+        for (gene_set in ENRICHMENT_GENE_SETS) {
+          if (gene_set %in% input$GeneSetChoice) {
+            showTab(inputId = "EnrichmentTabs", target = gene_set)
+          } else {
+            hideTab(inputId = "EnrichmentTabs", target = gene_set)
           }
-        }
-        # hide the unselected ones
-        for(name in names(which(ea_reactives$enrichments2do == FALSE))){
-          hideTab(inputId = "EnrichmentTabs", target = name)
-        }
-        # show the selected ones
-        for(name in names(which(ea_reactives$enrichments2do == TRUE))){
-          showTab(inputId = "EnrichmentTabs", target = name)
         }
       })
 
@@ -333,13 +319,17 @@ enrichment_analysis_Server <- function(id, dataset, heatmap_genes){
           ora_or_gse = input$ORA_or_GSE %||% "GeneSetEnrichment",
           ora_gene_set_type = input$GeneSet2Enrich,
           uploaded_gene_set = input$UploadedGeneSet,
-          heatmap_genes = heatmap_genes(),
+          # the genes the Heatmap saved on this Dataset version
+          heatmap_genes = dataset$results()$heatmap$gene_list,
           gse_gene_set_type = input$ValueToAttach %||% "LFC",
           compare_within = input$sample_annotation_types_cmp_GSEA,
           reference = input$Groups2Compare_ref_GSEA,
           treatment = input$Groups2Compare_treat_GSEA,
           organism = input$organism_choice_ea %||% dataset$organism() %||% "Mouse genes (GRCm39)",
-          enrichments2do = ea_reactives$enrichments2do,
+          # TRUE for every gene set chosen in the picker
+          enrichments2do = as.list(setNames(
+            ENRICHMENT_GENE_SETS %in% input$GeneSetChoice, ENRICHMENT_GENE_SETS
+          )),
           test_correction = PADJUST_METHOD[[input$test_correction %||% "Benjamini-Hochberg"]]
         )
         ora <- params$ora_or_gse == "OverRepresentation_Analysis"
