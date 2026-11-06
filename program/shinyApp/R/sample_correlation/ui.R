@@ -1,6 +1,7 @@
 sampleCorrelation_sidebar_panel <- function(ns){
   sidebarPanel(
     id = ns("sidebar"),
+    class = "sidebar-sample-correlation",
     h4("Sample Correlation") %>% helper(type = "markdown", content = "SampleCorr_Choices"),
     uiOutput(outputId = ns("UseBatch_ui")),
     selectInput(
