@@ -1,6 +1,2 @@
-library(testthat)
-test_dir(
-  "./testthat/pre_processing",
-  env = shiny::loadSupport(),
-  reporter = c("progress", "fail")
-)
+source("testthat/run_unit.R")
+run_unit("pre_processing")

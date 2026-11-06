@@ -1,7 +1,5 @@
 # tests for the Selection module in R/selection/server.R
-lipids <- readRDS(
-  file.path(test_path("..", "..", ".."), "www", "Lipidomics_only_precompiled-LS.RDS")
-)$Lipidomics_SumExp
+lipids <- test_data("Lipidomics")
 
 test_that("the module selects samples and entities by annotation", {
   testServer(selection_server, args = list(

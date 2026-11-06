@@ -1,5 +1,4 @@
 # tests for Sample Correlation on the Dataset handle (issue 30)
-source(test_path("..", "dataset", "helper-dataset.R"), local = TRUE)
 colData <- SummarizedExperiment::colData
 
 RUN <- list(corrMethod = "pearson", SampleAnnotationChoice = "diet")
@@ -84,9 +83,7 @@ test_that("the R-code zip carries the Selection, Pre-processing and Sample Corre
   testServer(sample_correlation_server, args = list(dataset = ds$handle), {
     do.call(session$setInputs, RUN)
     session$setInputs(Do_SampleCorrelation = 1)
-    dir <- unpack_zip(output$getR_SampleCorrelation)
-    expect_true(all(c("Code.R", "Data.rds") %in% list.files(dir)))
-    par <- readRDS(file.path(dir, "Data.rds"))$parameters
+    par <- rcode_parameters(output$getR_SampleCorrelation)
     expect_equal(par$SampleCorrelation$correlation_method, "pearson")
     expect_equal(par$SampleCorrelation$sample_annotations, "diet")
     expect_equal(par$preprocessing$preprocessing_procedure, "log10")
@@ -94,18 +91,8 @@ test_that("the R-code zip carries the Selection, Pre-processing and Sample Corre
 })
 
 test_that("dataset_server() puts the result into results()$sample_correlation; a new run clears it", {
-  log10 <- list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
-  testServer(dataset_server, args = confirmed_dataset_args("Lipidomics"), {
-    run_all <- preprocessing_run(selection$selected(), "Lipidomics", log10)
-    preprocessing$result(run_all)
-    session$flushReact()
-    handle <- session$returned
+  expect_collected("sample_correlation", function(session, handle){
     session$setInputs("sample_correlation-corrMethod" = "pearson", "sample_correlation-SampleAnnotationChoice" = "diet")
     session$setInputs("sample_correlation-Do_SampleCorrelation" = 1)
-    expect_equal(handle$results()$sample_correlation$version, handle$version())
-
-    preprocessing$result(modifyList(run_all, list(run = 2)))
-    session$flushReact()
-    expect_null(handle$results()$sample_correlation)
   })
 })

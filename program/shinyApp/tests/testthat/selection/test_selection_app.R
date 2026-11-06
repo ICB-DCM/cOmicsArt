@@ -1,5 +1,4 @@
 # The Selection in the whole app server: what Dataset 1 gets
-app_dir <- normalizePath(test_path("..", "..", ".."))
 
 # Lipidomics test data, "Go to Preprocessing", log10 pre-processing
 run_app_preprocessed <- function(expr){

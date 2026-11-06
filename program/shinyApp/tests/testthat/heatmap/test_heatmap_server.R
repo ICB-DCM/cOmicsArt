@@ -1,5 +1,4 @@
 # tests for Heatmap on the Dataset handle (issue 33)
-source(test_path("..", "dataset", "helper-dataset.R"), local = TRUE)
 colData <- SummarizedExperiment::colData
 rowData <- SummarizedExperiment::rowData
 
@@ -162,9 +161,7 @@ test_that("the R-code zip carries the Heatmap parameters under the template's na
   ds <- changeable_dataset("Lipidomics")
   testServer(heatmap_server, args = list(dataset = ds$handle), {
     run_heatmap(session, top_k_inputs(ds$handle, "diet"))
-    dir <- unpack_zip(output$getR_Code_Heatmap)
-    expect_true(all(c("Code.R", "Data.rds") %in% list.files(dir)))
-    par <- readRDS(file.path(dir, "Data.rds"))$parameters
+    par <- rcode_parameters(output$getR_Code_Heatmap)
     expect_true(all(c(
       "selection_type", "n_top_k", "top_k_type", "compare_within", "reference",
       "treatment", "significance_level", "title", "cluster_rows", "cluster_cols",
@@ -186,12 +183,7 @@ test_that("the snippet names the annotations the samples and entities were colou
 })
 
 test_that("dataset_server() puts the result into results()$heatmap; a new run clears it", {
-  log10 <- list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
-  testServer(dataset_server, args = confirmed_dataset_args("Lipidomics"), {
-    run_all <- preprocessing_run(selection$selected(), "Lipidomics", log10)
-    preprocessing$result(run_all)
-    session$flushReact()
-    handle <- session$returned
+  collected <- expect_collected("heatmap", function(session, handle){
     groups <- unique(colData(handle$processed())$diet)
     session$setInputs(
       "heatmap-row_selection_options" = "Top K", "heatmap-TopK" = 10, "heatmap-TopK_order" = "LogFoldChange",
@@ -199,11 +191,6 @@ test_that("dataset_server() puts the result into results()$heatmap; a new run cl
       "heatmap-Groups2Compare_ref_heatmap" = groups[1], "heatmap-Groups2Compare_treat_heatmap" = groups[2]
     )
     session$setInputs("heatmap-Do_Heatmap" = 1)
-    expect_equal(handle$results()$heatmap$version, handle$version())
-    expect_length(handle$results()$heatmap$entities, 10)
-
-    preprocessing$result(modifyList(run_all, list(run = 2)))
-    session$flushReact()
-    expect_null(handle$results()$heatmap)
   })
+  expect_length(collected$entities, 10)
 })
