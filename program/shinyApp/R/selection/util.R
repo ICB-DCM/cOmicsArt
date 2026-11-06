@@ -29,27 +29,27 @@ sample_choices <- function(data, column){
 
 # The Selection for the given inputs (any of them may be missing):
 # row_selection, sample_selection, row_type, sample_type.
-# Returns the selected object, the chosen values (selected_rows,
-# selected_samples, the arguments of select_data()), the resolved entity and
-# sample IDs (rows_selected, samples_selected) and the annotation columns.
+# Returns the selected object, the chosen values (row_values,
+# sample_values, the arguments of select_data()), the resolved entity and
+# sample IDs (row_ids, sample_ids) and the annotation columns.
 resolve_selection <- function(data, inputs){
-  row_selection <- inputs$row_selection %||% "all"
-  sample_selection <- inputs$sample_selection %||% "all"
+  row_values <- inputs$row_selection %||% "all"
+  sample_values <- inputs$sample_selection %||% "all"
   row_type <- inputs$row_type %||% selection_annotation_columns(data, "entities")[1]
   sample_type <- inputs$sample_type %||% selection_annotation_columns(data, "samples")[1]
   res_select <- select_data(
     data = data,
-    selected_rows = row_selection,
-    selected_samples = sample_selection,
+    row_values = row_values,
+    sample_values = sample_values,
     row_type = row_type,
     sample_type = sample_type
   )
   list(
     data = res_select$data,
-    selected_rows = row_selection,
-    selected_samples = sample_selection,
-    rows_selected = res_select$rows_selected,
-    samples_selected = res_select$samples_selected,
+    row_values = row_values,
+    sample_values = sample_values,
+    row_ids = res_select$row_ids,
+    sample_ids = res_select$sample_ids,
     row_type = row_type,
     sample_type = sample_type
   )
@@ -60,10 +60,10 @@ resolve_selection <- function(data, inputs){
 # IDs.
 selection_params <- function(selection){
   list(
-    selected_rows = selection$selected_rows,
-    selected_samples = selection$selected_samples,
-    rows_selected = selection$rows_selected,
-    samples_selected = selection$samples_selected,
+    row_values = selection$row_values,
+    sample_values = selection$sample_values,
+    row_ids = selection$row_ids,
+    sample_ids = selection$sample_ids,
     row_type = selection$row_type,
     sample_type = selection$sample_type
   )

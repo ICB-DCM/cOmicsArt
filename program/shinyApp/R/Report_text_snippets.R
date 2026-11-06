@@ -31,15 +31,15 @@ snippet_dataInput <- function(raw, selection, omic_type, organism = NULL){
              paste0("Gene annotation was added using the ",organism ," mart from Ensembl implemented within the biomaRt package 
                     (v. ",packageVersion("biomaRt"),") (",print(clean_citation(citation('biomaRt')), style = "text"),"). ")
              },
-           if(any(selection$selected_samples == "all")){
+           if(any(selection$sample_values == "all")){
              paste0("No sample selection was performed. ")
            }else{
-             paste0("All samples with ",selection$sample_type," being ",paste(selection$selected_samples,collapse = ", ")," were selected. ")
+             paste0("All samples with ",selection$sample_type," being ",paste(selection$sample_values,collapse = ", ")," were selected. ")
            },
-           if(any(selection$selected_rows == "all")){
+           if(any(selection$row_values == "all")){
              paste0("No entity selection was performed. ")
            }else{
-             paste0("All entities with ",selection$row_type," being ",paste(selection$selected_rows,collapse = ", ")," were selected. ")
+             paste0("All entities with ",selection$row_type," being ",paste(selection$row_values,collapse = ", ")," were selected. ")
            }
            
            )

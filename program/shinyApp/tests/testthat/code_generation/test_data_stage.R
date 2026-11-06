@@ -29,7 +29,7 @@ data_of_rcode <- function(zip_file){
     steps <- vapply(exprs, function(e) paste(deparse(e), collapse = " "), character(1))
     last_steps <- c(
       "data <- batch_res$data",
-      "data <- data_orig[rows_selected, samples_selected, drop = FALSE]",
+      "data <- data_orig[row_ids, sample_ids, drop = FALSE]",
       "data <- res_preprocess$data"
     )
     last <- max(which(steps == last_steps[last_steps %in% steps][1]))
@@ -52,7 +52,7 @@ test_that("the script starts from the batch corrected data when the module used 
 test_that("Single Gene's raw data starts from the Selection", {
   lipid <- fake_dataset("Lipidomics", "log10")
   script <- script_for(lipid, "raw")
-  expect_match(script, "data <- data_orig[rows_selected, samples_selected, drop = FALSE]", fixed = TRUE)
+  expect_match(script, "data <- data_orig[row_ids, sample_ids, drop = FALSE]", fixed = TRUE)
 })
 
 test_that("PCA's R code with batch corrected data computes on the app's batch corrected data", {

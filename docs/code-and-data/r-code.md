@@ -77,23 +77,21 @@ defined parameters.
 ```r
 # --- Data Selection ---
 # Assign variables from parameter list or default values
-selected_samples <- parameters$selected_samples %||% "all"
+sample_values <- parameters$sample_values %||% "all"
 sample_type <- parameters$sample_type %||% NULL
-selected_rows <- parameters$selected_rows %||% "all"
+row_values <- parameters$row_values %||% "all"
 row_type <- parameters$row_type %||% NULL
-propensity <- parameters$propensity %||% 1
 # tmp_res is used as intermediate as return value is a list
 tmp_res <- select_data(
   data = data_orig,
-  selected_samples = selected_samples,
+  sample_values = sample_values,
   sample_type = sample_type,
-  selected_rows = selected_rows,
-  row_type = row_type,
-  propensity = propensity
+  row_values = row_values,
+  row_type = row_type
 )
 data <- tmp_res$data
-samples_selected <- tmp_res$samples_selected
-rows_selected <- tmp_res$rows_selected
+sample_ids <- tmp_res$sample_ids
+row_ids <- tmp_res$row_ids
 ```
 
 This code already reveals a structure within this code:

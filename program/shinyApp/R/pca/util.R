@@ -29,7 +29,7 @@ get_pca <- function(data, scale_data, sample_types, sample_selection){
   # Potentially select samples
   data <- select_data(
     data = data,
-    selected_samples = sample_selection,
+    sample_values = sample_selection,
     sample_type = sample_types
   )$data
   # remove again all contant entities (due to potentially reduced sample size)
