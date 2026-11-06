@@ -4,14 +4,18 @@ rowData <- SummarizedExperiment::rowData
 
 HUMAN <- "Human genes (GRCh38.p14)"
 # the Transcriptomics test Dataset (airway, human, with Entrez IDs) with an
-# organism from its Upload
-human_dataset <- function(){
+# organism from its Upload; `heatmap_genes` are the genes the Heatmap saved
+# (results()$heatmap$gene_list), NULL for none
+human_dataset <- function(heatmap_genes = NULL){
   handle <- fake_dataset("Transcriptomics", "TMM")
   handle$organism <- function() HUMAN
+  handle$results <- function() list(heatmap = list(gene_list = heatmap_genes))
   handle
 }
 # 300 genes as the Heatmap would save them (Ensembl IDs)
-saved_genes <- function(handle) head(rownames(isolate(handle$processed())), 300)
+saved_genes <- function() head(rownames(isolate(fake_dataset("Transcriptomics", "TMM")$processed())), 300)
+# the Heatmap of a changeable_dataset() saves `genes`
+save_heatmap_genes <- function(ds, genes) ds$state$results <- list(heatmap = list(gene_list = genes))
 ORA_HALLMARKS <- list(
   organism_choice_ea = HUMAN,
   ORA_or_GSE = "OverRepresentation_Analysis",
@@ -49,29 +53,31 @@ local({
 
 test_that("the organism picker preselects the Upload's organism", {
   ds <- human_dataset()
-  testServer(enrichment_analysis_Server, args = list(dataset = ds, heatmap_genes = reactiveVal(NULL)), {
+  testServer(enrichment_analysis_Server, args = list(dataset = ds), {
     session$flushReact()
     expect_match(as.character(output$OrganismChoice_ui$html), sprintf('<option value="%s" selected>', HUMAN), fixed = TRUE)
   })
   unknown <- fake_dataset("Transcriptomics", "TMM")
-  testServer(enrichment_analysis_Server, args = list(dataset = unknown, heatmap_genes = reactiveVal(NULL)), {
+  testServer(enrichment_analysis_Server, args = list(dataset = unknown), {
     session$flushReact()
     expect_match(as.character(output$OrganismChoice_ui$html), '<option value="Mouse genes (GRCm39)" selected>', fixed = TRUE)
   })
 })
 
 test_that("ORA on the Heatmap's genes returns the Hallmarks result with its parameters and the version", {
-  ds <- human_dataset()
-  genes <- reactiveVal(saved_genes(ds))
-  testServer(enrichment_analysis_Server, args = list(dataset = ds, heatmap_genes = genes), {
+  ds <- human_dataset(saved_genes())
+  testServer(enrichment_analysis_Server, args = list(dataset = ds), {
     expect_null(session$returned())
     start_enrichment(session, ORA_HALLMARKS)
     res <- session$returned()
     expect_named(res$results, "Hallmarks")
     expect_s4_class(res$results$Hallmarks, "enrichResult")
     expect_equal(res$params$ora_or_gse, "OverRepresentation_Analysis")
-    expect_equal(res$params$heatmap_genes, saved_genes(ds))
+    expect_equal(res$params$heatmap_genes, saved_genes())
     expect_equal(res$params$organism, HUMAN)
+    # every gene set, TRUE for the picked ones
+    expect_named(res$params$enrichments2do, ENRICHMENT_GENE_SETS)
+    expect_equal(names(which(unlist(res$params$enrichments2do))), "Hallmarks")
     expect_equal(res$params$UniverseOfGene, "default")
     expect_null(res$params$universe)
     expect_true("universe" %in% names(res$params))
@@ -81,17 +87,17 @@ test_that("ORA on the Heatmap's genes returns the Hallmarks result with its para
 
 test_that("ORA on Heatmap genes without saved genes shows the error and returns nothing", {
   ds <- human_dataset()
-  testServer(enrichment_analysis_Server, args = list(dataset = ds, heatmap_genes = reactiveVal(NULL)), {
+  testServer(enrichment_analysis_Server, args = list(dataset = ds), {
     start_enrichment(session, ORA_HALLMARKS)
     expect_null(session$returned())
   })
 })
 
 test_that("the run uses the analysis type chosen when 'Go' is pressed", {
-  ds <- human_dataset()
+  ds <- human_dataset(saved_genes())
   ora <- mock_analysis("over_representation_analysis")
   gsea <- mock_analysis("gene_set_enrichment")
-  testServer(enrichment_analysis_Server, args = list(dataset = ds, heatmap_genes = reactiveVal(saved_genes(ds))), {
+  testServer(enrichment_analysis_Server, args = list(dataset = ds), {
     start_enrichment(session, ORA_HALLMARKS)
     expect_equal(session$returned()$params$ora_or_gse, "OverRepresentation_Analysis")
     session$setInputs(
@@ -107,9 +113,9 @@ test_that("the run uses the analysis type chosen when 'Go' is pressed", {
 })
 
 test_that("two runs compute twice, not more", {
-  ds <- human_dataset()
+  ds <- human_dataset(saved_genes())
   ora <- mock_analysis("over_representation_analysis")
-  testServer(enrichment_analysis_Server, args = list(dataset = ds, heatmap_genes = reactiveVal(saved_genes(ds))), {
+  testServer(enrichment_analysis_Server, args = list(dataset = ds), {
     start_enrichment(session, ORA_HALLMARKS)
     session$setInputs(enrichmentGO = 2)
     session$setInputs(enrichmentGO = 3)
@@ -118,9 +124,9 @@ test_that("two runs compute twice, not more", {
 })
 
 test_that("the universe is the processed data's or the Selection's genes", {
-  ds <- human_dataset()
+  ds <- human_dataset(saved_genes())
   ora <- mock_analysis("over_representation_analysis")
-  testServer(enrichment_analysis_Server, args = list(dataset = ds, heatmap_genes = reactiveVal(saved_genes(ds))), {
+  testServer(enrichment_analysis_Server, args = list(dataset = ds), {
     start_enrichment(session, c(ORA_HALLMARKS, list(UniverseOfGene = "after_pre_process")))
     expect_equal(ora()[[1]]$universe, rownames(ds$processed()))
     session$setInputs(UniverseOfGene = "before_pre_process")
@@ -136,8 +142,8 @@ test_that("the universe is the processed data's or the Selection's genes", {
 test_that("a new Dataset version clears the result", {
   ds <- changeable_dataset("Transcriptomics")
   ora <- mock_analysis("over_representation_analysis")
-  genes <- head(rownames(isolate(ds$handle$processed())), 50)
-  testServer(enrichment_analysis_Server, args = list(dataset = ds$handle, heatmap_genes = reactiveVal(genes)), {
+  save_heatmap_genes(ds, head(rownames(isolate(ds$handle$processed())), 50))
+  testServer(enrichment_analysis_Server, args = list(dataset = ds$handle), {
     start_enrichment(session, ORA_HALLMARKS)
     expect_false(is.null(session$returned()))
     ds$state$version <- 3
@@ -147,8 +153,8 @@ test_that("a new Dataset version clears the result", {
 })
 
 test_that("the R-code zip of a gene set carries the Enrichment parameters", {
-  ds <- human_dataset()
-  testServer(enrichment_analysis_Server, args = list(dataset = ds, heatmap_genes = reactiveVal(saved_genes(ds))), {
+  ds <- human_dataset(saved_genes())
+  testServer(enrichment_analysis_Server, args = list(dataset = ds), {
     start_enrichment(session, ORA_HALLMARKS)
     par <- rcode_parameters(output$`Hallmarks-getR_Code`)
     expect_equal(par$Enrichment$enrich_set, "Hallmarks")
@@ -158,7 +164,7 @@ test_that("the R-code zip of a gene set carries the Enrichment parameters", {
   })
 })
 
-test_that("dataset_server() wires the Heatmap's saved genes into Enrichment and collects results()$enrichment", {
+test_that("Enrichment reads the Heatmap's saved genes from dataset_server()'s results() and is collected as results()$enrichment", {
   tmm <- list(preprocessing_procedure = "TMM", preprocessing_filtering = "filterOnly", filter_threshold = 0)
   args <- confirmed_dataset_args("Transcriptomics")
   args$upload$organism <- reactiveVal(HUMAN)
@@ -198,22 +204,21 @@ test_that("the result area shows only while there is a result", {
   shown <- local_shown()
   ds <- changeable_dataset("Transcriptomics")
   mock_analysis("over_representation_analysis")
-  heatmap_genes <- reactiveVal(NULL)
-  testServer(enrichment_analysis_Server, args = list(dataset = ds$handle, heatmap_genes = heatmap_genes), {
+  testServer(enrichment_analysis_Server, args = list(dataset = ds$handle), {
     session$flushReact()
     expect_false(shown("enrichment_div"))
     # ORA on Heatmap genes before any were saved: no result
     start_enrichment(session, ORA_HALLMARKS)
     expect_false(shown("enrichment_div"))
-    heatmap_genes(head(rownames(ds$handle$processed()), 50))
+    save_heatmap_genes(ds, head(rownames(ds$handle$processed()), 50))
     start_enrichment(session, ORA_HALLMARKS, go = 2)
     expect_true(shown("enrichment_div"))
     # a failed run after a successful one
-    heatmap_genes(NULL)
+    save_heatmap_genes(ds, NULL)
     start_enrichment(session, ORA_HALLMARKS, go = 3)
     expect_false(shown("enrichment_div"))
     expect_null(session$returned())
-    heatmap_genes(head(rownames(ds$handle$processed()), 50))
+    save_heatmap_genes(ds, head(rownames(ds$handle$processed()), 50))
     start_enrichment(session, ORA_HALLMARKS, go = 4)
     ds$state$version <- 3
     session$flushReact()
