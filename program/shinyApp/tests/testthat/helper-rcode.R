@@ -107,16 +107,16 @@ RCODE_EXTRA <- list(
   ),
   "PCA" = list(
     "Loadings" = list(
-      open = "#PCA_main_panel_div a[data-value='PCA_Loadings']",
-      rcode = "#PCA-getR_Code_Loadings"
+      open = "#dataset_1-pca-PCA_main_panel_div a[data-value='PCA_Loadings']",
+      rcode = "#dataset_1-pca-getR_Code_Loadings"
     ),
     "Loadings matrix" = list(
-      open = "#PCA_main_panel_div a[data-value='PCA_Loadings_matrix']",
-      rcode = "#PCA-getR_Code_Loadings_matrix"
+      open = "#dataset_1-pca-PCA_main_panel_div a[data-value='PCA_Loadings_matrix']",
+      rcode = "#dataset_1-pca-getR_Code_Loadings_matrix"
     ),
     "Scree plot" = list(
-      open = "#PCA_main_panel_div a[data-value='Scree_Plot']",
-      rcode = "#PCA-getR_Code_Scree_Plot"
+      open = "#dataset_1-pca-PCA_main_panel_div a[data-value='Scree_Plot']",
+      rcode = "#dataset_1-pca-getR_Code_Scree_Plot"
     )
   ),
   "Differential Analysis" = list(

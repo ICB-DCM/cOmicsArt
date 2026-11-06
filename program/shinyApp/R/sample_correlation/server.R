@@ -45,6 +45,7 @@ sample_correlation_server <- function(id, dataset){
       # The result belongs to one Dataset version: a new Dataset, run or
       # clear removes the plot and resets the info text
       observeEvent(dataset$version(), {
+        shinyjs::hideElement(id = "div_main_panel")
         sample_corr_reactive$corr_plot <- NULL
         sample_corr_reactive$row_anno <- NULL
         sample_corr_reactive$result <- NULL

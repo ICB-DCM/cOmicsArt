@@ -25,7 +25,7 @@ sampleCorrelation_main_panel <- function(ns){
   mainPanel(
   id = ns("main_panel"),
   textOutput(outputId = ns("SampleCorr_Info"), container = pre),
-  div(id = ns("div_main_panel"),
+  hidden(div(id = ns("div_main_panel"),
     splitLayout(
       style = "border: 1px solid silver:", cellWidths = c("100%"),
       plotOutput(
@@ -94,7 +94,7 @@ sampleCorrelation_main_panel <- function(ns){
       helpText(NOTES_HELP)),
       NULL
     ),
-  )
+  ))
 )
 }
 

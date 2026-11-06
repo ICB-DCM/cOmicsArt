@@ -1,16 +1,3 @@
-check_calculations <- function(current_parameters, module, session_data, session_params){
-  if (is.null(session_data[[module]])){  # check whether result is existent
-    return(FALSE)
-  }
-  # check whether all parameters are identical to the current existing result
-  if (identical(session_params[[module]], current_parameters)){
-    return(TRUE)
-  }
-  # The remaining case is an existing result with other parameters,
-  # which will trigger an alert
-  return(FALSE)
-}
-
 create_default_title_pca <- function(pcs, preprocessing){
     # Create a default title for the correlation plot
     # Parameters:
@@ -36,6 +23,8 @@ get_pca <- function(data, scale_data, sample_types, sample_selection){
   #   pca, PCA object
   #   pcaData, data.frame, PCA data
   #   percentVar, numeric, percentage of variance explained
+  #   data, the SummarizedExperiment the PCA was computed on (selected
+  #     samples, without constant entities)
 
   # Potentially select samples
   data <- select_data(
@@ -61,7 +50,8 @@ get_pca <- function(data, scale_data, sample_types, sample_selection){
   return(list(
       pca = pca,
       pcaData = pcaData,
-      percentVar = percentVar
+      percentVar = percentVar,
+      data = data
   ))
 }
 

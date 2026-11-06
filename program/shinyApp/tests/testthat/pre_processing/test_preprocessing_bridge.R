@@ -53,7 +53,7 @@ test_that("changing the processing type after a run keeps the summary and the an
     # one refresh per analysis tab that is not on the Dataset handle yet
     expect_setequal(clicks(), c(
       "SignificanceAnalysis-refreshUI", "EnrichmentAnalysis-refreshUI",
-      "Heatmap-refreshUI", "PCA-refreshUI"
+      "Heatmap-refreshUI"
     ))
     n_clicks <- length(clicks())
     session$setInputs(`preprocessing-processing_type` = "Filtering")

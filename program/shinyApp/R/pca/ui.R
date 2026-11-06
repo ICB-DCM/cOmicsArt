@@ -1,6 +1,7 @@
 pca_sidebar_panel <- function(ns){
   sidebarPanel(
-    id = "sidebar_pca",
+    id = ns("sidebar"),
+    class = "sidebar-pca",
     #########################################
     # explorative analysis
     # PCA
@@ -59,23 +60,18 @@ pca_sidebar_panel <- function(ns){
       selected = TRUE
     ),
     uiOutput(outputId = ns("entitie_anno_ui")),
-    hr(style = "border-top: 1px dashed #000000;"),
-    # hidden Button to refresh the UI
-    hidden(actionButton(
-      inputId = ns("refreshUI"),
-      label = "Refresh"
-    ))
+    hr(style = "border-top: 1px dashed #000000;")
   )
 }
 
 
 pca_main_panel <- function(ns){
   mainPanel(
-    id = "mainpanel_pca",
+    id = ns("main_panel"),
     textOutput(outputId = ns("PCA_Info"), container = pre),
-      div(id = "PCA_main_panel_div",
+      hidden(div(id = ns("PCA_main_panel_div"),
       tabsetPanel(
-        id = "plot_panels_pca",
+        id = ns("plot_panels_pca"),
         type = "pills",
         tabPanel(
           title = "PCA_plot",
@@ -339,7 +335,7 @@ pca_main_panel <- function(ns){
           )
         )
       )
-    )
+    ))
   )
 }
 
@@ -350,7 +346,7 @@ pca_UI <- function(id){
   tabPanel(
     title = tagList(tags$span("4. PCA")),
     value = "PCA",
-    id = "pca",
+    id = ns("tab"),
     fluid = T,
     h4("PCA"),
     pca_sidebar_panel(ns),
