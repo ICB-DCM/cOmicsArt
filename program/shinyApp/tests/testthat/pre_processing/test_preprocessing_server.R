@@ -159,29 +159,40 @@ test_that("a failed batch correction counts as a failed run", {
   })
 })
 
-test_that("the R-code downloads are greyed out until a run succeeded", {
-  # shinyjs messages the browser; record the state per ID instead
-  local_mocked_bindings(
-    toggleState = function(id, condition, ...) {
-      user_data <- getDefaultReactiveDomain()$userData
-      user_data$enabled[[id]] <- condition
-    },
-    .package = "shinyjs"
-  )
+test_that("the result area shows only while there is a run: not after a failed one, a new Upload or Selection", {
+  shown <- local_shown()
   test_env <- environment()
-  testServer(preprocessing_server, args = module_args(lipids, "Lipidomics"), {
+  args <- modifyList(module_args(lipids, "Lipidomics"), list(
+    selection_confirmed = reactiveVal(NULL), upload_done = reactiveVal(1)
+  ))
+  testServer(preprocessing_server, args = args, {
     local_session_report(session, test_env)
-    enabled <- function() unlist(session$userData$enabled)
+    session$flushReact()
+    expect_false(shown("data_summary"))
+    # nothing passes the filter: the run fails
     session$setInputs(
       processing_type = "Filtering", preprocessing_procedure = "filterOnly",
       filter_threshold = 1e9, batch_column = "NULL"
     )
-    expect_equal(enabled(), c(rcode_violin = FALSE, rcode_mean_sd = FALSE))
     session$setInputs(get_preprocessing = 1)
-    expect_equal(enabled(), c(rcode_violin = FALSE, rcode_mean_sd = FALSE))
+    expect_false(shown("data_summary"))
     session$setInputs(filter_threshold = 0)
     session$setInputs(get_preprocessing = 2)
-    expect_equal(enabled(), c(rcode_violin = TRUE, rcode_mean_sd = TRUE))
+    expect_true(shown("data_summary"))
+    # a failed run after a successful one
+    session$setInputs(filter_threshold = 1e9)
+    session$setInputs(get_preprocessing = 3)
+    expect_false(shown("data_summary"))
+    expect_null(session$returned$result())
+    session$setInputs(filter_threshold = 0)
+    session$setInputs(get_preprocessing = 4)
+    args$selection_confirmed(1)
+    session$flushReact()
+    expect_false(shown("data_summary"))
+    session$setInputs(get_preprocessing = 5)
+    args$upload_done(2)
+    session$flushReact()
+    expect_false(shown("data_summary"))
   })
 })
 
