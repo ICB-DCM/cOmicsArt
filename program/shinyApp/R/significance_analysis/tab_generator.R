@@ -16,19 +16,17 @@
 #' @param value Tab value for programmatic access
 #' @param data The SummarizedExperiment the run used (volcano annotation)
 #' @param run_params,code_context see results_tab_server()
-#' @param file_path The session folder, as "/www/<token>/"
-#' @param store_volcano see results_tab_server()
-#' @return None (appends tab and sets up server logic)
+#' @return the comparison module's return, see results_tab_server()
 create_new_tab <- function(id, title, targetPanel, result, contrast, alpha, ns,
-                           preprocess_method, value, data, run_params, code_context,
-                           file_path, store_volcano) {
+                           preprocess_method, value, data, run_params, code_context) {
   appendTab(
     inputId = targetPanel,
     tab = results_tab_ui(
       id = ns(id),
       title = title,
       value = value,
-      contrast = contrast
+      contrast = contrast,
+      annotations = colnames(rowData(data))
     )
   )
   results_tab_server(
@@ -39,8 +37,6 @@ create_new_tab <- function(id, title, targetPanel, result, contrast, alpha, ns,
     preprocess_method = preprocess_method,
     data = data,
     run_params = run_params,
-    code_context = code_context,
-    file_path = file_path,
-    store_volcano = store_volcano
+    code_context = code_context
   )
 }

@@ -123,8 +123,8 @@ IDS <- list(
       go = "dataset_1-differential-significanceGo",
       # one results tab per comparison, IDs derived from the group names
       after = "#dataset_1-differential-Significance_div a[data-value='Volcano']",
-      out = "#dataset_1-differential-Significance_div [id$='_Volcano']",
-      rcode = "#dataset_1-differential-Significance_div [id$='_getR_Code_Volcano']"
+      out = "#dataset_1-differential-Significance_div [id$='-Volcano']",
+      rcode = "#dataset_1-differential-Significance_div [id$='-getR_Code_Volcano']"
     ),
     "ML Classification (supervised)" = list(
       tab = "ML Classification",
@@ -156,8 +156,8 @@ IDS <- list(
       set = list("dataset_1-differential-UseBatch" = "batch_corrected"),
       go = "dataset_1-differential-significanceGo",
       after = "#dataset_1-differential-Significance_div a[data-value='Volcano']",
-      out = "#dataset_1-differential-Significance_div [id$='_Volcano']",
-      rcode = "#dataset_1-differential-Significance_div [id$='_getR_Code_Volcano']"
+      out = "#dataset_1-differential-Significance_div [id$='-Volcano']",
+      rcode = "#dataset_1-differential-Significance_div [id$='-getR_Code_Volcano']"
     ),
     # Transcriptomics: 'all' rows is too slow; the gene list feeds Enrichment
     "Heatmap (top K)" = modifyList(HEATMAP, list(

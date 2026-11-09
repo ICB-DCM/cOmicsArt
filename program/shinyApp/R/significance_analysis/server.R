@@ -7,8 +7,8 @@
 #   params: what the run used (the R-code templates read them as
 #     parameters$SigAna): preprocessing, comparisons, compare_within,
 #     test_method, data_stage, padjust_method, significance_level, method
-#     ("DESeq2" or the test), volcano (per comparison: th_psig, th_lfc, anno),
-#     overview (and its choices under the names the UpSet template reads)
+#     ("DESeq2" or the test), overview (and its choices under the names the
+#     UpSet template reads)
 #   version: the Dataset version it was computed on
 significance_analysis_server <- function(id, dataset){
   moduleServer(
@@ -283,8 +283,8 @@ significance_analysis_server <- function(id, dataset){
           req(FALSE)
         })
         # the result belongs to this run (not to the factor picker); the
-        # comparison tabs add their volcano values (volcano), the overview
-        # its choices (overview and the names the UpSet template reads)
+        # overview adds its choices (overview and the names the UpSet
+        # template reads)
         sig_ana_reactive$result <- list(
           results = sig_results,
           params = list(
@@ -295,8 +295,7 @@ significance_analysis_server <- function(id, dataset){
             data_stage = stage,
             padjust_method = PADJUST_METHOD[[test_correction]],
             significance_level = significance_level,
-            method = if (deseq) "DESeq2" else test_method,
-            volcano = list()
+            method = if (deseq) "DESeq2" else test_method
           ),
           version = dataset$version()
         )
@@ -321,14 +320,8 @@ significance_analysis_server <- function(id, dataset){
             preprocess_method = preprocessing,
             value = paste0("Significance_", idx),
             data = data,
-            run_params = run_params,
-            code_context = dataset$code_context,
-            file_path = file_path,
-            store_volcano = function(values) {
-              volcano <- sig_ana_reactive$result$params$volcano
-              volcano[[comp]] <- values
-              set_params(list(volcano = volcano))
-            }
+            run_params = sig_ana_reactive$result$params,
+            code_context = dataset$code_context
           )
           tab_ids <<- c(tab_ids, tab_id)
         })

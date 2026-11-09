@@ -257,30 +257,6 @@ getLFC <- function(means, preprocessing){
 }
 
 
-log_messages_volcano <- function(session, plot, table, contrast, file_path){
-  if((is.null(plot)) | (is.null(table))){
-    return()
-  }
-  notificationID <- showNotification("Saving to Report...",duration = 0)
-
-  tmp_filename <- paste0(
-    getwd(),file_path,paste(paste0("VOLCANO_", Sys.time(), ".png"))
-    )
-
-  ggsave(tmp_filename, plot=plot, device = "png")
-
-  # Add Log Messages
-
-  fun_LogIt(session, message = paste(
-    "**VOLCANO** - Underlying Volcano Comparison:", contrast[1],"vs", contrast[2]
-  ))
-  fun_LogIt(session, message = paste0("**VOLCANO** - ![VOLCANO](",tmp_filename,")"))
-
-  removeNotification(notificationID)
-  showNotification("Report Saved!",type = "message", duration = 1)
-}
-
-
 addStars <- function(result, alpha){ # assumes padj column present
   result <- as.data.frame(result) %>%
     mutate(sig_level = case_when(

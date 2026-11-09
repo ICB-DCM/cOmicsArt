@@ -163,7 +163,7 @@ snippet_SigAna <- function(
     snippet <- paste0(snippet, "Differential expression analysis was performed using the ", par$test_method, ". ")
   }
   snippet <- paste0(snippet, "The reported adjusted p-values were adjusted by ", par$padjust_method, ". ")
-  # the volcano of the raw p-values (comparison_params())
+  # the volcano of the raw p-values (a comparison tab sets raw)
   if (isTRUE(par$raw)) {
     snippet <- paste0(snippet, "The volcano plot shows the unadjusted p-values. ")
   }
