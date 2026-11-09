@@ -9,17 +9,16 @@
 #' @param contrast Character vector c(group1, group2)
 #' @param result Data frame with the comparison's results (not reactive)
 #' @param alpha Numeric significance threshold of the run
-#' @param preprocess_method Character, "vst_DESeq" or another procedure
+#' @param deseq Logical, whether DESeq2 made the result
 #' @param data The SummarizedExperiment the run used (volcano annotation)
 #' @param run_params The run's parameters (parameters$SigAna in the R code)
 #' @param code_context function giving the Dataset's code_context() for the
 #'   R code
 #' @return A reactive: the volcano's settings, list(th_psig, th_lfc, anno)
-results_tab_server <- function(id, contrast, result, alpha, preprocess_method,
+results_tab_server <- function(id, contrast, result, alpha, deseq,
                                data, run_params, code_context) {
   moduleServer(id, function(input, output, session) {
     result <- as.data.frame(result)
-    deseq <- preprocess_method == "vst_DESeq"
 
     output$summary <- renderText({
       summary_text <- if (deseq) {

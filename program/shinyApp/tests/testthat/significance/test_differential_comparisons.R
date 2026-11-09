@@ -29,7 +29,7 @@ comparison_args <- function(){
   )
   list(
     contrast = strsplit(COMPARISONS[1], ":")[[1]], result = results[[COMPARISONS[1]]],
-    alpha = 0.05, preprocess_method = "log10", data = data, run_params = run_params,
+    alpha = 0.05, deseq = FALSE, data = data, run_params = run_params,
     code_context = fake_dataset("Lipidomics", "log10")$code_context
   )
 }
@@ -43,9 +43,9 @@ test_that("a run creates one comparison module per comparison with that comparis
     do.call(session$setInputs, RUN)
     session$setInputs(significanceGo = 1)
     expect_equal(sig_ana_reactive$tab_ids, c("comparison1_1", "comparison1_2"))
-    expect_named(sig_ana_reactive$result$results, COMPARISONS, ignore.order = TRUE)
+    expect_named(session$returned()$results, COMPARISONS, ignore.order = TRUE)
     summary <- output[[tab_id(1, 2, "summary")]]
-    result <- sig_ana_reactive$result$results[[COMPARISONS[2]]]
+    result <- session$returned()$results[[COMPARISONS[2]]]
     expect_match(summary, paste("Total number of entities compared:", nrow(result)), fixed = TRUE)
     expect_false(is.null(output[[tab_id(1, 1, "table")]]))
   })
@@ -97,7 +97,7 @@ test_that("each comparison of a run has its own volcano thresholds", {
     expect_equal(rcode_parameters(output[[tab_id(1, 1, "getR_Code_Volcano")]])$SigAna$th_psig, 0.01)
     expect_equal(rcode_parameters(output[[tab_id(1, 2, "getR_Code_Volcano")]])$SigAna$th_psig, 0.05)
     # the run's parameters are not changed by a download
-    expect_null(sig_ana_reactive$result$params$th_psig)
+    expect_null(session$returned()$params$th_psig)
   })
 })
 
@@ -142,8 +142,12 @@ test_that("changing the factor picker after a run does not change the overview's
     session$setInputs(sample_annotation_types_cmp = "ID")
     session$setInputs(sig_to_look_at = "Significant")
     expect_false(is.null(sig_ana_reactive$plot_last))
-    expect_equal(sig_ana_reactive$result$params$overview$sig_to_look_at, "Significant")
-    expect_equal(sig_ana_reactive$result$params$compare_within, "diet")
+    expect_equal(session$returned()$params$sig_to_look_at, "Significant")
+    expect_equal(session$returned()$params$compare_within, "diet")
+    expect_null(session$returned()$params$overview)  # stored once, at the top level
+    # the overview offers the run's comparisons
+    choices <- as.character(output$chooseComparisonsToVisualize_ui$html)
+    for (comparison in COMPARISONS) expect_match(choices, comparison, fixed = TRUE)
   })
 })
 
