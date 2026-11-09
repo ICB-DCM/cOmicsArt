@@ -376,11 +376,22 @@ expect_download <- function(app, selector) {
   invisible(file)
 }
 
-# The report is rendered on click and linked from a modal.
+# The report is rendered on click and linked from a modal. Waits for the link
+# (rendering can outlast the idle wait); without one, the failure shows the
+# app's log lines since the click.
 expect_report <- function(app) {
+  n_logs <- nrow(as.data.frame(app$get_logs()))
   click_and_wait(app, IDS$report)
-  href <- app$get_js("document.querySelector('.modal a[download]')?.getAttribute('href')")
-  expect_true(is.character(href), label = "report link shown")
+  link <- "document.querySelector('.modal a[download]')?.getAttribute('href')"
+  shown <- tryCatch({
+    app$wait_for_js(paste0("!!", link), timeout = TIMEOUT); TRUE
+  }, error = function(e) FALSE)
+  logs <- as.data.frame(app$get_logs())
+  expect(shown, paste0(
+    "report link shown; app log since the click:\n",
+    paste(utils::tail(logs$message[seq_len(nrow(logs)) > n_logs], 60), collapse = "\n")
+  ))
+  href <- app$get_js(link)
   res <- httr::GET(paste0(sub("/?(\\?.*)?$", "/", app$get_url()), href))
   expect_equal(httr::status_code(res), 200L)
   expect_gt(length(httr::content(res, as = "raw")), 0)
