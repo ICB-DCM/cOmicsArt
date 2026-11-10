@@ -69,7 +69,7 @@ body, label, input, button, select, h4, h3, h2 {
 .well.sidebar-single-gene {
     background-color: #3897F147;
 }
-#sidebar_enrichment_analysis {
+.well.sidebar-enrichment {
     background-color: #A208BA35;
 }
 .tabbable > .nav > li > a[data-value='Data selection'] {

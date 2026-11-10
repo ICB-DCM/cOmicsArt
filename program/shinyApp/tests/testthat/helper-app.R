@@ -183,14 +183,14 @@ IDS <- list(
     ),
     "Enrichment Analysis" = list(
       set = list(
-        "EnrichmentAnalysis-organism_choice_ea" = "Human genes (GRCh38.p14)",
-        "EnrichmentAnalysis-ORA_or_GSE" = "OverRepresentation_Analysis",
-        "EnrichmentAnalysis-GeneSet2Enrich" = "heatmap_genes",
-        "EnrichmentAnalysis-GeneSetChoice" = "Hallmarks"  # msigdbr, offline
+        "dataset_1-enrichment_analysis-organism_choice_ea" = "Human genes (GRCh38.p14)",
+        "dataset_1-enrichment_analysis-ORA_or_GSE" = "OverRepresentation_Analysis",
+        "dataset_1-enrichment_analysis-GeneSet2Enrich" = "heatmap_genes",
+        "dataset_1-enrichment_analysis-GeneSetChoice" = "Hallmarks"  # msigdbr, offline
       ),
-      go = "EnrichmentAnalysis-enrichmentGO",
-      out = "#EnrichmentAnalysis-Hallmarks-EnrichmentPlot",
-      rcode = "#EnrichmentAnalysis-Hallmarks-getR_Code"
+      go = "dataset_1-enrichment_analysis-enrichmentGO",
+      out = "#dataset_1-enrichment_analysis-Hallmarks-EnrichmentPlot",
+      rcode = "#dataset_1-enrichment_analysis-Hallmarks-getR_Code"
     )
   )
 )
