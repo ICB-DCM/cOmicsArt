@@ -275,12 +275,6 @@ show_tabs <- function(omic_type){
   showTab(inputId = "tabsetPanel1", target = "ML Classification")
 }
 
-# Re-renders the sidebar of every analysis tab for new pre-processed data;
-# the user's choices there are reset.
-refresh_analysis_tabs <- function(){
-  shinyjs::click("SignificanceAnalysis-refreshUI", asis = TRUE)
-}
-
 # The warning toast after a run: what the procedure did and, if rows with
 # missing values were removed, how many rows were left (n_before -> n_after).
 create_warning_preproc <- function(preprocessing_procedure, n_before, n_after){

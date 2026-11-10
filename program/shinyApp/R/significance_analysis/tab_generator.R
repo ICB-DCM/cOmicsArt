@@ -14,13 +14,13 @@
 #' @param ns Namespace function from parent module
 #' @param preprocess_method Character indicating "vst_DESeq" or "manual"
 #' @param value Tab value for programmatic access
-#' @param session_data ReactiveValues with application data
-#' @param session_params ReactiveValues with application parameters
+#' @param data The SummarizedExperiment the run used (volcano annotation)
+#' @param code_par,code_raw see results_tab_server()
 #' @param file_path The session folder, as "/www/<token>/"
 #' @param store_volcano see results_tab_server()
 #' @return None (appends tab and sets up server logic)
 create_new_tab <- function(id, title, targetPanel, result, contrast, alpha, ns,
-                           preprocess_method, value, session_data, session_params,
+                           preprocess_method, value, data, code_par, code_raw,
                            file_path, store_volcano) {
   appendTab(
     inputId = targetPanel,
@@ -37,8 +37,9 @@ create_new_tab <- function(id, title, targetPanel, result, contrast, alpha, ns,
     result = result,
     alpha = alpha,
     preprocess_method = preprocess_method,
-    session_data = session_data,
-    session_params = session_params,
+    data = data,
+    code_par = code_par,
+    code_raw = code_raw,
     file_path = file_path,
     store_volcano = store_volcano
   )

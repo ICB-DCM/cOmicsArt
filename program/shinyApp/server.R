@@ -31,7 +31,6 @@ server <- function(input,output,session){
   hideTab(inputId = "tabsetPanel1", target = "Enrichment Analysis")
   hideTab(inputId = "tabsetPanel1", target = "ML Classification")
   shinyjs::hideElement(id = "selection-mainPanel_other")
-  shinyjs::hideElement(id = "Significance_div")
 
 # Set Up ad Show user Landing page ----
   # Define the guide
@@ -366,7 +365,6 @@ server <- function(input,output,session){
     for (name in names(params)) session_params[[name]] <- params[[name]]
     # once per run, not on every change of the controls
     show_tabs(session_params$omic_type)
-    refresh_analysis_tabs()
     # Count up updating
     updating$count <- updating$count + 1
   }, priority = 1)
@@ -381,13 +379,5 @@ server <- function(input,output,session){
   # the analysis modules move onto the handle one by one
   # the module id starts with a letter so its IDs are valid CSS selectors
   datasets <- list("1" = dataset_server("dataset_1", upload, selection, preprocessing))
-
-  # Significance Analysis ----
-  significance_analysis_server(
-    id = 'SignificanceAnalysis',
-    session_data = session_data,
-    session_params = session_params,
-    data_input_shiny = data_input_shiny
-  )
 
 }

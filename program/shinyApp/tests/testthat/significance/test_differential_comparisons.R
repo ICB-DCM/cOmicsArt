@@ -1,17 +1,11 @@
-# Differential Analysis: comparison tabs as sub-modules (issue 35)
+# Differential Analysis: comparison tabs as sub-modules (issue 35), on the
+# Dataset handle since issue 36
 source(test_path("..", "dataset", "helper-dataset.R"), local = TRUE)
 colData <- SummarizedExperiment::colData
 rowData <- SummarizedExperiment::rowData
 
-# the app's bags after a log10 Pre-processing of the Lipidomics test data
-lipidomics_bags <- function(){
-  handle <- fake_dataset("Lipidomics", "log10")
-  context <- handle$code_context()
-  list(
-    session_data = reactiveValues(data = handle$processed(), data_original = context$raw),
-    session_params = do.call(reactiveValues, context$par_tmp)
-  )
-}
+# a log10 Pre-processing of the Lipidomics test data
+lipidomics <- function() list(dataset = fake_dataset("Lipidomics", "log10"))
 COMPARISONS <- c("CD_CD_HFD:CD_CD_CD", "HFD_CD_CD:CD_CD_CD")
 RUN <- list(
   sample_annotation_types_cmp = "diet", comparisons = COMPARISONS,
@@ -39,24 +33,34 @@ local_report <- function(env = parent.frame()){
   for (name in c("fun_LogIt", "log_messages_volcano")) local({
     name <- name
     original <- get(name, envir = module_env)
-    assign(name, function(session, message = "", ...) {
-      lines <<- c(lines, if (name == "fun_LogIt") paste(message, collapse = "\n") else "volcano image")
-      NULL
-    }, envir = module_env)
+    stand_in <- if (name == "fun_LogIt") {
+      function(session, message = "", ...) {
+        lines <<- c(lines, paste(message, collapse = "\n"))
+        NULL
+      }
+    } else {
+      # uses every argument, as log_messages_volcano() does
+      function(session, plot, table, contrast, file_path) {
+        force(plot); force(table); force(contrast); force(file_path)
+        lines <<- c(lines, "volcano image")
+        NULL
+      }
+    }
+    assign(name, stand_in, envir = module_env)
     withr::defer(assign(name, original, envir = module_env), envir = env)
   })
   function() lines
 }
 
 test_that("a run creates one comparison module per comparison with that comparison's result", {
-  bags <- lipidomics_bags()
-  testServer(significance_analysis_server, args = c(bags, list(data_input_shiny = reactiveVal(1))), {
+  args <- lipidomics()
+  testServer(significance_analysis_server, args = args, {
     do.call(session$setInputs, RUN)
     session$setInputs(significanceGo = 1)
     expect_equal(sig_ana_reactive$tab_ids, c("comparison1_1", "comparison1_2"))
-    expect_named(sig_ana_reactive$sig_results, COMPARISONS, ignore.order = TRUE)
+    expect_named(sig_ana_reactive$result$results, COMPARISONS, ignore.order = TRUE)
     summary <- output[[tab_id(1, 2, COMPARISONS[2], "summary")]]
-    result <- sig_ana_reactive$sig_results[[COMPARISONS[2]]]
+    result <- sig_ana_reactive$result$results[[COMPARISONS[2]]]
     expect_match(summary, paste("Total number of entities compared:", nrow(result)), fixed = TRUE)
     table <- output[[tab_id(1, 1, COMPARISONS[1], "table")]]
     expect_false(is.null(table))
@@ -65,8 +69,8 @@ test_that("a run creates one comparison module per comparison with that comparis
 
 test_that("a second run destroys the old comparison modules: one report entry per click", {
   report <- local_report()
-  bags <- lipidomics_bags()
-  testServer(significance_analysis_server, args = c(bags, list(data_input_shiny = reactiveVal(1))), {
+  args <- lipidomics()
+  testServer(significance_analysis_server, args = args, {
     do.call(session$setInputs, RUN)
     session$setInputs(significanceGo = 1)
     session$setInputs(significanceGo = 2)
@@ -84,28 +88,43 @@ test_that("a second run destroys the old comparison modules: one report entry pe
 })
 
 test_that("each comparison keeps its own volcano thresholds, also in its R code", {
-  bags <- lipidomics_bags()
-  testServer(significance_analysis_server, args = c(bags, list(data_input_shiny = reactiveVal(1))), {
+  args <- lipidomics()
+  testServer(significance_analysis_server, args = args, {
     do.call(session$setInputs, RUN)
     session$setInputs(significanceGo = 1)
     do.call(session$setInputs, volcano_inputs(1, 1, COMPARISONS[1], 0.01))
     do.call(session$setInputs, volcano_inputs(1, 2, COMPARISONS[2], 0.05))
-    volcano <- session_params$SigAna$volcano
+    volcano <- sig_ana_reactive$result$params$volcano
     expect_equal(volcano[[COMPARISONS[1]]]$th_psig, 0.01)
     expect_equal(volcano[[COMPARISONS[2]]]$th_psig, 0.05)
     dir <- unpack_zip(output[[tab_id(1, 1, COMPARISONS[1], "getR_Code_Volcano")]])
     par <- readRDS(file.path(dir, "Data.rds"))$par_tmp
     expect_equal(par$SigAna$comp, COMPARISONS[1])
     expect_equal(par$SigAna$th_psig, 0.01)
-    expect_length(par$SigAna$anno_vector, nrow(bags$session_data$data))
-    # the shared parameters are not changed by a download
-    expect_null(session_params$SigAna$th_psig)
+    expect_length(par$SigAna$anno_vector, nrow(args$dataset$processed()))
+    # the run's parameters are not changed by a download
+    expect_null(sig_ana_reactive$result$params$th_psig)
+  })
+})
+
+test_that("saving a volcano plot writes the plot and its report entry", {
+  report <- local_report()
+  args <- lipidomics()
+  testServer(significance_analysis_server, args = args, {
+    do.call(session$setInputs, RUN)
+    session$setInputs(significanceGo = 1)
+    do.call(session$setInputs, volcano_inputs(1, 1, COMPARISONS[1], 0.05))
+    file_ext <- list(".png"); names(file_ext) <- tab_id(1, 1, COMPARISONS[1], "file_ext_Volcano")
+    do.call(session$setInputs, file_ext)
+    saved <- output[[tab_id(1, 1, COMPARISONS[1], "SavePlot_Volcano")]]
+    expect_true(file.exists(saved))
+    expect_equal(sum(report() == "volcano image"), 1)
   })
 })
 
 test_that("changing the factor picker after a run does not change the overview's result", {
-  bags <- lipidomics_bags()
-  testServer(significance_analysis_server, args = c(bags, list(data_input_shiny = reactiveVal(1))), {
+  args <- lipidomics()
+  testServer(significance_analysis_server, args = args, {
     do.call(session$setInputs, RUN)
     session$setInputs(
       visualization_method = "UpSetR plot", comparisons_to_visualize = "all",
@@ -116,19 +135,19 @@ test_that("changing the factor picker after a run does not change the overview's
     session$setInputs(sample_annotation_types_cmp = "ID")
     session$setInputs(sig_to_look_at = "Significant")
     expect_false(is.null(sig_ana_reactive$plot_last))
-    expect_equal(session_params$SigAna$overview$sig_to_look_at, "Significant")
-    expect_equal(session_params$SigAna$compare_within, "diet")
+    expect_equal(sig_ana_reactive$result$params$overview$sig_to_look_at, "Significant")
+    expect_equal(sig_ana_reactive$result$params$compare_within, "diet")
   })
 })
 
 test_that("the comparison table is rendered client side, so its exports have every row", {
-  bags <- lipidomics_bags()
-  testServer(significance_analysis_server, args = c(bags, list(data_input_shiny = reactiveVal(1))), {
+  args <- lipidomics()
+  testServer(significance_analysis_server, args = args, {
     do.call(session$setInputs, RUN)
     session$setInputs(significanceGo = 1)
     table <- output[[tab_id(1, 1, COMPARISONS[1], "table")]]
     widget <- jsonlite::fromJSON(table)
-    expect_true(nrow(isolate(bags$session_data$data)) %in% dim(widget$x$data))
+    expect_true(nrow(args$dataset$processed()) %in% dim(widget$x$data))
     buttons <- widget$x$options$buttons
     expect_match(paste(unlist(buttons), collapse = " "), "cOmicsArt_Differential_Table", fixed = TRUE)
   })

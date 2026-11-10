@@ -21,7 +21,7 @@ results_tab_ui <- function(id, title, value, contrast) {
       create_table_tab_ui(ids, contrast),
 
       # Volcano tab
-      create_volcano_tab_ui(ids, contrast)
+      create_volcano_tab_ui(ids)
     )
   )
 }
