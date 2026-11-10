@@ -411,25 +411,33 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             actionButton(inputId = ns("AMC"), label = "Proceed"),
           ))
         }
-        if(anno_results$no_ann){
+        if(ora_or_gse == "OverRepresentation_Analysis"){
+          # the ORA gene set is Ensembl IDs (heatmap genes and uploaded sets
+          # are checked for it): Entrez IDs from the data's own annotation
+          # (after the check above) or, without one, from biomaRt
+          ea_reactives$tmp_genes <- tryCatch({
+            if ("entrezgene_id" %in% colnames(rowData(ea_reactives$data))) {
+              gene_set_to_entrez(ea_reactives$tmp_genes, ea_reactives$data)
+            } else {
+              translate_genes_oa(ea_reactives$tmp_genes, ea_reactives$organism)
+            }
+          }, error = function(e){
+            waiter$hide()
+            error_modal(
+              "The gene set could not be translated to Entrez IDs. Check that the right organism was selected.",
+            )
+            req(FALSE)
+          })
+          ea_reactives$can_start <- TRUE
+        }else if(anno_results$no_ann){
           translation_modal()
         }else if(anno_results$can_start == FALSE){
           tryCatch({
-            if(input$ORA_or_GSE == "GeneSetEnrichment"){
-              ea_reactives$data <- translate_genes_ea(
-                data = ea_reactives$data,
-                annotation_results = anno_results,
-                organism = ea_reactives$organism
-              )
-            }else{
-              ea_reactives$tmp_genes <- translate_genes_oa(
-                annotation_results = anno_results,
-                geneSetChoice = ea_reactives$tmp_genes,
-                geneSet2Enrich = input$GeneSet2Enrich,
-                data = ea_reactives$data,
-                organism = ea_reactives$organism
-              )
-            }
+            ea_reactives$data <- translate_genes_ea(
+              data = ea_reactives$data,
+              annotation_results = anno_results,
+              organism = ea_reactives$organism
+            )
           }, error = function(e){
             waiter$hide()
             error_modal(
@@ -452,21 +460,12 @@ enrichment_analysis_Server <- function(id, data, params, updates){
           removeModal()
           tryCatch(
             {
-              if(input$ORA_or_GSE == "GeneSetEnrichment"){
-                ea_reactives$data <- translate_genes_ea(
-                  data = ea_reactives$data,
-                  annotation_results = anno_results,
-                  organism = ea_reactives$organism
-                )
-              }else{
-                ea_reactives$tmp_genes <- translate_genes_oa(
-                  annotation_results = anno_results,
-                  geneSetChoice = ea_reactives$tmp_genes,
-                  geneSet2Enrich = input$GeneSet2Enrich,
-                  data = ea_reactives$data,
-                  organism = ea_reactives$organism
-                )
-              }
+              # only Gene Set Enrichment asks for the annotation type
+              ea_reactives$data <- translate_genes_ea(
+                data = ea_reactives$data,
+                annotation_results = anno_results,
+                organism = ea_reactives$organism
+              )
               ea_reactives$can_start <- TRUE
             },
             error=function(e){
@@ -539,7 +538,6 @@ enrichment_analysis_Server <- function(id, data, params, updates){
                                        input$test_correction))
 
           }else{
-            ea_reactives$tmp_genes <- gene_set_to_entrez(ea_reactives$tmp_genes, ea_data)
             ea_reactives$enrichment_results <- tryCatch({
               over_representation_analysis(
                 organism = ea_reactives$organism,
@@ -566,7 +564,7 @@ enrichment_analysis_Server <- function(id, data, params, updates){
             }
             params$Enrichment[names(update_par_tmp)] <- update_par_tmp
             fun_LogIt(session, message = paste0("**ORA** Overrepresentation analysis was perfomed."))
-            fun_LogIt(session, message = paste0("**ORA** The genes were taken from: ",input$ValueToAttach))
+            fun_LogIt(session, message = paste0("**ORA** The genes were taken from: ",input$GeneSet2Enrich))
             if(input$GeneSet2Enrich =="ProvidedGeneSet"){
               fun_LogIt(session, message = paste0("**ORA** The gene set was provided by the user. Filename: ",input$UploadedGeneSet$name))
             }

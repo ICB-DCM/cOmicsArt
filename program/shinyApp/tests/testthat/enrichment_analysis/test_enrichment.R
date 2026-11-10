@@ -182,3 +182,56 @@ test_that("the gene set is mapped to Entrez IDs, entities without one dropped", 
   )
   expect_equal(gene_set_to_entrez(c("g3", "g2", "g1"), data), c("8813", "7105"))
 })
+
+# bug: the ORA gene set (Ensembl IDs) to Entrez IDs
+ora_data <- function(rownames, ensembl = NULL, entrez = c("7105", NA, "8813")){
+  annotation <- S4Vectors::DataFrame(entrezgene_id = entrez, row.names = rownames)
+  if (!is.null(ensembl)) annotation$ensembl_gene_id <- ensembl
+  SummarizedExperiment::SummarizedExperiment(
+    assays = list(raw = matrix(1:6, nrow = 3, dimnames = list(rownames, c("s1", "s2")))),
+    rowData = annotation
+  )
+}
+
+test_that("gene_set_to_entrez() also finds Ensembl IDs in the ensembl_gene_id column, versions ignored", {
+  data <- ora_data(
+    c("TSPAN6", "TNMD", "DPM1"),
+    ensembl = c("ENSG00000000003.15", "ENSG00000000005", "ENSG00000000419")
+  )
+  expect_equal(
+    gene_set_to_entrez(c("ENSG00000000003", "ENSG00000000005.6", "ENSG00000000419.2"), data),
+    c("7105", "8813")
+  )
+})
+
+test_that("gene_set_to_entrez() names the missing Entrez annotation", {
+  data <- ora_data(c("g1", "g2", "g3"))
+  SummarizedExperiment::rowData(data)$entrezgene_id <- NULL
+  expect_error(gene_set_to_entrez("g1", data), "no Entrez IDs")
+})
+
+test_that("gene_set_to_entrez() works on the data check_annotation_enrichment_analysis() returns", {
+  # an Entrez column under another name: only the checked data has entrezgene_id
+  data <- ora_data(c("ENSG1", "ENSG2", "ENSG3"))
+  SummarizedExperiment::rowData(data)$ENTREZID <- SummarizedExperiment::rowData(data)$entrezgene_id
+  SummarizedExperiment::rowData(data)$entrezgene_id <- NULL
+  checked <- check_annotation_enrichment_analysis(data)
+  expect_true(checked$can_start)
+  expect_equal(gene_set_to_entrez(c("ENSG1", "ENSG3"), checked$new_data), c("7105", "8813"))
+})
+
+test_that("translate_genes_oa() translates an Ensembl gene set with biomaRt, without the data", {
+  queried <- NULL
+  local_mocked_bindings(
+    getBM = function(attributes, filters, values, mart, ...) {
+      queried <<- values
+      data.frame(ensembl_gene_id = c("ENSG1", "ENSG2", "ENSG3"), entrezgene_id = c(11, NA, 33))
+    },
+    .package = "biomaRt"
+  )
+  assign("loadedVersion", list(hsapiens_gene_ensembl = list(ensmbl = "mart")), envir = globalenv())
+  withr::defer(rm("loadedVersion", envir = globalenv()))
+  entrez <- translate_genes_oa(c("ENSG1.4", "ENSG2", "ENSG3", "ENSG1"), "Human genes (GRCh38.p14)")
+  expect_equal(queried, c("ENSG1", "ENSG2", "ENSG3"))
+  expect_equal(entrez, c("11", "33"))
+})
