@@ -18,167 +18,93 @@ filter_significant_result <- function(result, alpha, filter_type){
 performSigAnalysis <- function(
   data,              # the SummarizedExperiment to test (non-DESeq2)
   dds,               # the DESeq2 object to test (vst_DESeq), else NULL
-  preprocessing,     # the Pre-processing procedure, for the own tests
-  comparisons,       # character vector of comparisons (e.g. "A:B")
+  preprocessing,     # the Pre-processing procedure, for the fold changes
+  comparisons,       # character vector of comparisons ("Treatment:Control")
   compare_within,    # the name of the sample annotation column used for contrasts
   test_method,       # the testing method (for non-DESeq2)
   padjust_method     # the correction method (e.g., "BH")
 ) {
-  # Perform significance analysis for a given dataset and set of comparisons.
-  # The function will return a list of results for each comparison.
-  # Parameters:
-  # data: the SummarizedExperiment to test (non-DESeq2)
-  # dds: the DESeq2 object to test (vst_DESeq), else NULL; with one, DESeq2
-  #   tests and `data` is not used
-  # preprocessing: the Pre-processing procedure, for the own tests
-  # comparisons: a character vector of comparisons (e.g. "A:B")
-  # compare_within: the name of the sample annotation column used for contrasts
-  # test_method: the testing method (for non-DESeq2)
-  # padjust_method: the correction method (e.g., "BH")
-  # Returns:
-  # A list of results for each comparison.
-  contrasts <- lapply(comparisons, function(comp) unlist(strsplit(comp, ":")))
-  names(contrasts) <- comparisons
-  if (!is.null(dds)) {
-    tryCatch({
-      # For each contrast, run DESeq2::results and collect the result:
-      sig_results <- lapply(contrasts, function(contrast_vals) {
-        DESeq2::results(
-          dds,
-          contrast = c(compare_within, contrast_vals[1], contrast_vals[2]),
-          pAdjustMethod = padjust_method
-        )
-      })
-    }, error = function(e) {
-      # extend the error message to include the contrast that caused the error
-      stop(paste("Error in DESeq2::results for contrasts:", contrasts, "\n", e))
-    })
-  } else {
-    # Find all unique contrast levels and select the corresponding columns from the data:
-    contrasts_all <- unique(unlist(contrasts))
-    index_comparisons <- which(colData(data)[, compare_within] %in% contrasts_all)
-    samples_selected <- colData(data)[index_comparisons, ]
-    data_selected <- as.matrix(assay(data))[, index_comparisons]
-    rownames(data_selected) <- rownames(data)
-
-    # Wrap the custom significance_analysis in tryCatch (modify it so that it returns its results)
-    sig_results <- tryCatch({
-      significance_analysis(
-        df = as.data.frame(data_selected),
-        samples = as.data.frame(samples_selected),
-        contrasts = contrasts,
-        method = test_method,
-        correction = padjust_method,
-        contrast_level = compare_within,
-        preprocessing = preprocessing
-      )
-      # Assume that significance_analysis returns the results directly.
-    }, error = function(e) {
-      stop(paste("Error in significance_analysis for contrast:", contrasts, "<br>", e))
-    })
-  }
-  return(sig_results)
+  # One compare_groups() per comparison, named by the comparison. With a
+  # DESeq2 object DESeq2 tests and `data` is not used.
+  sig_results <- lapply(comparisons, function(comparison) {
+    groups <- strsplit(comparison, ":")[[1]]
+    tryCatch(
+      compare_groups(
+        data, compare_within, treat = groups[1], ctrl = groups[2],
+        test = test_method, correction = padjust_method,
+        preprocessing = preprocessing, dds = dds
+      ),
+      error = function(e) stop(paste0("Error in the comparison ", comparison, ":<br>", conditionMessage(e)))
+    )
+  })
+  names(sig_results) <- comparisons
+  sig_results
 }
 
 
-significance_analysis <- function(
-  df, samples, contrasts, method, correction, contrast_level, preprocessing
+compare_groups <- function(
+  data, group_col, treat, ctrl, test = "Welch-Test", correction = "BH",
+  preprocessing, dds = NULL
 ){
-  # perform significance analysis
-  # df: dataframe or matrix with the data
-  # samples: dataframe with the samples
-  # contrasts: list of contrasts to compare
-  # method: method to use for the test
-  # correction: correction method to use
-  # contrast_level: the name of the column in samples to use for contrasts
-  # preprocessing: the preprocessing method used for the data
-  if(method == "T-Test"){
-    # TODO test for Varianz Homogenität (Levene Test) - 
-    # intermediate Lösung könnte sein einfach standard abweichungen der Gruppen anzugeben
-    # User hinweisen diese zu untersuchen!
-    test_function <- function(...) t.test(..., var.equal = TRUE)
-      
-  }else if(method == "Welch-Test"){
-    test_function <- function(...) t.test(..., var.equal = FALSE)
-  }
-  else{
-      test_function <- wilcox.test
-  }
-  # add the rownames as a column
-  df$gene <- rownames(df)
-  t_test_per_gene <- function(df, grp1, grp2) {
-    x <- df[grp1]
-    y <- df[grp2]
-    x <- as.numeric(x)
-    y <- as.numeric(y)
-    tryCatch(
-      {
-        results <- test_function(x, y)
-        return(list(
-          "pvalue" = results$p.value,
-          "baseMean" = results$estimate[[2]],
-          "treatMean" = results$estimate[[1]],
-          "stat" = results$statistic
-        ))
-      },
-      error = function(e) {
-        cat(
-          "Error in gene ", df["gene"], ":\n  ",
-          as.character(e), "  Values are:\n",
-          "   x: ", paste(x),
-          "\n   y: ", paste(y), "\n",
-          "NA will be returned instead. \n",
-          sep = ""
-          )
-        return(NA)
-      }
-    )
-  }
-  sig_results <- list()
-
-  # for each comparison get the data and do the test
-  # introduce a running parameter alongside the loop for the name
-  comp_name <- 1
-  for(contrast in contrasts){
-    # get the samples for the comparison
-    idx <- rownames(samples[samples[contrast_level] == contrast[[1]],, drop = FALSE])
-    idy <- rownames(samples[samples[contrast_level] == contrast[[2]],, drop = FALSE])
-    # perform the test
-    res <- apply(
-      X = df,
-      MARGIN = 1,
-      FUN = t_test_per_gene,
-      grp1 = idx,
-      grp2 = idy
-    )
-    res <- as.data.frame(do.call(rbind, res))
-    if (identical(test_function, wilcox.test)) {
-      res$baseMean <- apply(df[,idy], 1, mean)
-      res$treatMean <- apply(df[,idx], 1, mean)
+  # Compares the treatment group `treat` with the control group `ctrl` of the
+  # sample annotation `group_col`, feature by feature. Used for fold changes
+  # and p-values, so that they are computed one way.
+  # data: a SummarizedExperiment; its first assay is tested
+  # test: "Welch-Test", "T-Test" (equal variances) or "Wilcoxon rank sum
+  #   test", all unpaired
+  # correction: a p.adjust() method, or "none"
+  # preprocessing: the Pre-processing procedure, for the fold change (getLFC())
+  # dds: the DESeq2 object (vst_DESeq), else NULL; with one, DESeq2's Wald
+  #   test and fold change, and `group_col` must be in its design
+  # Returns one row per feature (rownames) with baseMean (DESeq2: the mean of
+  # all samples; else the control's mean), log2FoldChange, stat, pvalue and
+  # padj (DESeq2 adds lfcSE); a test that fails for a feature gives NA.
+  if (!is.null(dds)) {
+    if (!group_col %in% all.vars(DESeq2::design(dds))) {
+      stop(sprintf(
+        "\"%s\" is not in the DESeq2 design. Add it to the DESeq2 design in Pre-processing.",
+        group_col
+      ))
     }
-    # turn columns to numerics again
-    res <- transform(
-      res, 
-      baseMean=as.numeric(baseMean),
-      treatMean=as.numeric(treatMean),
-      pvalue=as.numeric(pvalue),
-      stat=as.numeric(stat)
-    )
-    means <- subset(res, select = c(baseMean,treatMean))
-    # drop mean of treatment
-    res <- subset(res, select = -c(treatMean))
-    # create a dataframe with the results
-    res$padj <- p.adjust(res$pvalue, method = correction)
-    res$log2FoldChange <- getLFC(means, preprocessing)
-    res <- transform(res, pvalue=as.numeric(pvalue),
-                     baseMean=as.numeric(baseMean), stat=as.numeric(stat))
-
-
-
-    sig_results[[names(contrasts)[comp_name]]] <- res
-    comp_name <- comp_name + 1
+    return(DESeq2::results(dds, contrast = c(group_col, treat, ctrl), pAdjustMethod = correction))
   }
-  return(sig_results)
+  test_function <- switch(test,
+    "Welch-Test" = function(x, y) t.test(x, y, var.equal = FALSE),
+    "T-Test" = function(x, y) t.test(x, y, var.equal = TRUE),
+    "Wilcoxon rank sum test" = wilcox.test,
+    stop("Unknown test: ", test)
+  )
+  groups <- SummarizedExperiment::colData(data)[[group_col]]
+  for (group in c(treat, ctrl)) {
+    if (!any(groups %in% group)) {
+      stop(sprintf("No samples of \"%s\" in the sample annotation \"%s\".", group, group_col))
+    }
+  }
+  values <- as.matrix(SummarizedExperiment::assay(data))
+  treat_values <- values[, groups %in% treat, drop = FALSE]
+  ctrl_values <- values[, groups %in% ctrl, drop = FALSE]
+  tests <- vapply(seq_len(nrow(values)), function(i) {
+    tryCatch({
+      result <- test_function(treat_values[i, ], ctrl_values[i, ])
+      c(result$statistic[[1]], result$p.value)
+    }, error = function(e) {
+      message("No test for ", rownames(values)[i], ": ", conditionMessage(e))
+      c(NA_real_, NA_real_)
+    })
+  }, numeric(2))
+  means <- data.frame(
+    baseMean = rowMeans(ctrl_values, na.rm = TRUE),
+    treatMean = rowMeans(treat_values, na.rm = TRUE),
+    row.names = rownames(values)
+  )
+  data.frame(
+    baseMean = means$baseMean,
+    log2FoldChange = getLFC(means, preprocessing),
+    stat = tests[1, ],
+    pvalue = tests[2, ],
+    padj = p.adjust(tests[2, ], method = correction),
+    row.names = rownames(values)
+  )
 }
 
 

@@ -365,7 +365,7 @@ performSigAnalysis_info <- list(
   output_name = "sig_results",
   to_util = TRUE,
   additional_foos = list(
-      significance_analysis = significance_analysis,
+      compare_groups = compare_groups,
       getLFC = getLFC
   )
 )

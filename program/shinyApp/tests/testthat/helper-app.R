@@ -137,7 +137,12 @@ IDS <- list(
     # the comparisons are Lipidomics diet groups
     "Differential Analysis (2 comparisons)" = list(
       tab = "Differential Analysis",
-      set = list("dataset_1-differential-comparisons" = c("CD_CD_HFD:CD_CD_CD", "HFD_CD_CD:CD_CD_CD")),
+      # Student's t-test: with the default Welch, the raw Lipidomics data have no
+      # adjusted hit in HFD_CD_CD:CD_CD_CD, so the overview would have nothing to draw
+      set = list(
+        "dataset_1-differential-comparisons" = c("CD_CD_HFD:CD_CD_CD", "HFD_CD_CD:CD_CD_CD"),
+        "dataset_1-differential-test_method" = "T-Test"
+      ),
       go = "dataset_1-differential-significanceGo",
       out = "#dataset_1-differential-Significant_Plot_final",
       rcode = "#dataset_1-differential-getR_Code_Sig"

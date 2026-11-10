@@ -68,6 +68,19 @@ test_that("a t-test run returns the results per comparison with its parameters a
   })
 })
 
+test_that("without a chosen test, a run uses Welch, the app-wide default", {
+  lipid <- fake_dataset("Lipidomics", "log10")
+  testServer(significance_analysis_server, args = list(dataset = lipid), {
+    do.call(session$setInputs, T_TEST[names(T_TEST) != "test_method"])
+    session$setInputs(significanceGo = 1)
+    res <- session$returned()
+    expect_equal(res$params$method, "Welch-Test")
+    groups <- strsplit(LIPID_COMPARISONS[1], ":")[[1]]
+    welch <- compare_groups(lipid$processed(), "diet", treat = groups[1], ctrl = groups[2], preprocessing = "log10")
+    expect_equal(res$results[[LIPID_COMPARISONS[1]]], welch)
+  })
+})
+
 test_that("a DESeq2 run uses the Dataset's DESeq2 object, batch corrected when chosen", {
   deseq <- fake_dataset("Transcriptomics", "vst_DESeq", batch_column = "batch_factor")
   testServer(significance_analysis_server, args = list(dataset = deseq), {

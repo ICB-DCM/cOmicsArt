@@ -16,7 +16,7 @@
 3. **Test Method**  
    - Options depend on preprocessing:
      - **DESeq:** Wald test.  
-     - **Other methods:** Wilcoxon, T-Test, or Welch-Test.
+     - **Other methods:** Welch-Test (default; does not assume equal variances), T-Test or Wilcoxon.
 
 4. **Significance Level**  
    - Set alpha (default: 0.05) via a slider (range: 0.005–0.1).
