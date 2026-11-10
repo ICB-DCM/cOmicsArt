@@ -1,4 +1,4 @@
-# The Pre-processing bridge in server.R, tested on the whole app server
+# Pre-processing in the whole app server: report and analysis tabs
 
 # Lipidomics test data, "Go to Preprocessing", pre-processing with `options`
 # (inputs), then `expr`; `report` holds the report text after the run
@@ -55,19 +55,5 @@ test_that("changing the processing type after a run keeps the summary and the an
     session$setInputs(`preprocessing-processing_type` = "Filtering")
     expect_equal(output$`preprocessing-summary`, summary)
     expect_length(clicks(), 0)
-  })
-})
-
-test_that("a failed run leaves the last run where the app reads it", {
-  run_app_preprocessed(LOG2_FILTERED_BATCH, {
-    data <- session_data$data
-    params <- reactiveValuesToList(session_params)
-    session$setInputs(
-      `preprocessing-preprocessing_procedure` = "filterOnly",
-      `preprocessing-filter_threshold` = 1e9
-    )
-    session$setInputs(`preprocessing-get_preprocessing` = 2)
-    expect_identical(session_data$data, data)
-    expect_identical(reactiveValuesToList(session_params), params)
   })
 })

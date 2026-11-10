@@ -290,8 +290,8 @@ add_normality_test <- function(data){
 
 
 # Plain functions behind the Pre-processing controls and the run. They take
-# the selected SummarizedExperiment and the chosen options, never `input`,
-# `output`, `session_data` or `session_params`.
+# the selected SummarizedExperiment and the chosen options, never `input`
+# or `output`.
 
 # Procedures offered for a processing type, and whether a filtering choice is
 # offered in front of them.
@@ -400,8 +400,8 @@ with_error_class <- function(class, expr){
 # `options`, incomplete rows removed, batch correction by `batch_column`
 # ("NULL" for none), normality test per entity added to rowData.
 # `options` are named like the arguments of preprocessing(), which is also how
-# session_params stores them for the R code; an absent or NULL option takes
-# preprocessing()'s default, as in the R code.
+# the Dataset's preprocessing() holds them for the R code; an absent or NULL
+# option takes preprocessing()'s default, as in the R code.
 # Returns the processed and batch-corrected objects, the DESeq objects, the
 # number of rows before incomplete ones were removed, console output and
 # warnings. A failed batch correction signals a "batch_error", anything else
@@ -504,8 +504,9 @@ preprocessing_summary <- function(raw_dim, data, procedure, warnings){
   )
 }
 
-# The report's log lines for a run, from the options as session_params stores
-# them (see run_preprocessing()) and the dimensions of the processed data.
+# The report's log lines for a run, from the options as the Dataset's
+# preprocessing() holds them (see run_preprocessing()) and the dimensions of
+# the processed data.
 preprocessing_log_lines <- function(params, data_dim){
   procedure <- params$preprocessing_procedure
   filtering <- switch(applied_filtering(procedure, params$preprocessing_filtering),

@@ -17,29 +17,29 @@ clean_citation <- function(citation) {
 ## Text Snippets
 ## done as functions
 ## Input. packages 
-snippet_dataInput <- function(
-  data,
-  params
-){
+# The Upload and the Selection: `raw` is the uploaded data, `selection` is
+# what selection_params() returns, `organism` the organism of the gene
+# annotation (NULL if none was added)
+snippet_dataInput <- function(raw, selection, omic_type, organism = NULL){
   snippet <- 
     paste0("The data was uploaded to cOmicsART (v. ", VERSION,") a webapp to perform explorative and statistical analysis with seamless integration to R (Seep et. al. 2024). ",
            "The webapp is majorly built with the shiny package (v. ",packageVersion("shiny"),") (",print(clean_citation(citation('shiny')), style = "text"),"). ",
            "It is currently running on R (v. ", R.version$major, ".", R.version$minor, ") (", print(clean_citation(citation('base')), style = "text"),"). ",
            "Unless otherwise stated, all visulaizations were created using the ggplot2 package (v. ",packageVersion("ggplot2"),") (",print(clean_citation(citation('ggplot2')), style = "text"),"). ",
-           "The ", params$omic_type ," data was uploaded with the original dimensions of ", dim(data$data_original)[1], " features and ", dim(data$data_original)[2], " samples. ",
-           if(params$addedGeneAnno){
-             paste0("Gene annotation was added using the ",params$organism ,"mart from Ensembl implemented within the biomaRt package 
+           "The ", omic_type ," data was uploaded with the original dimensions of ", dim(raw)[1], " features and ", dim(raw)[2], " samples. ",
+           if(!is.null(organism)){
+             paste0("Gene annotation was added using the ",organism ," mart from Ensembl implemented within the biomaRt package 
                     (v. ",packageVersion("biomaRt"),") (",print(clean_citation(citation('biomaRt')), style = "text"),"). ")
              },
-           if(any(params$selected_samples == "all")){
+           if(any(selection$selected_samples == "all")){
              paste0("No sample selection was performed. ")
            }else{
-             paste0("All samples with ",params$sample_type," being ",paste(params$selected_samples,collapse = ", ")," were selected. ")
+             paste0("All samples with ",selection$sample_type," being ",paste(selection$selected_samples,collapse = ", ")," were selected. ")
            },
-           if(any(params$selected_rows == "all")){
+           if(any(selection$selected_rows == "all")){
              paste0("No entity selection was performed. ")
            }else{
-             paste0("All entities with ",params$row_type," being ",paste(params$selected_rows,collapse = ", ")," were selected. ")
+             paste0("All entities with ",selection$row_type," being ",paste(selection$selected_rows,collapse = ", ")," were selected. ")
            }
            
            )
