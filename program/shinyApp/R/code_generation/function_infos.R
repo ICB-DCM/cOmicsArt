@@ -46,6 +46,24 @@ preprocessing_info <- list(
     limma_voom_processing = limma_voom_processing
   )
 )
+# --- Batch correction (when a module uses the batch corrected data) ---
+# the app's run: ComBat on the complete rows of the processed data, DESeq2
+# redone from the filtered counts with the batch column as extra factor
+batch_correction_info <- list(
+  foo = batch_correction,
+  name = "batch_correction",
+  input_mapping = list(
+    data = "data[complete.cases(assay(data)), ]",
+    counts = "res_preprocess$counts"
+  ),
+  output_mapping = list(
+    data = "data"
+  ),
+  output_name = "batch_res",
+  to_util = TRUE,
+  # sva::ComBat is called with its namespace, so it is not found by name
+  packages = "sva"
+)
 violin_plot_raw_info <- list(
   foo = violin_plot,
   name = "violin_plot",
@@ -325,7 +343,7 @@ performSigAnalysis_info <- list(
   foo = performSigAnalysis,
   name = "performSigAnalysis",
   input_mapping = list(
-    data = "list(data = data, DESeq_obj = res_preprocess$DESeq_obj %||% NULL)",
+    data = "list(data = data, data_batch_corrected = data, DESeq_obj = res_preprocess$DESeq_obj %||% NULL, DESeq_obj_batch_corrected = if (exists('batch_res')) batch_res$DESeq_obj)",
     preprocessing = "preprocessing_procedure"
   ),
   output_name = "sig_results",
