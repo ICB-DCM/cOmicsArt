@@ -105,9 +105,9 @@ IDS <- list(
   # is not the tab value.
   modules = list(
     "Sample Correlation" = list(
-      go = "sample_correlation-Do_SampleCorrelation",
-      out = "#sample_correlation-SampleCorrelationPlot",
-      rcode = "#sample_correlation-getR_SampleCorrelation"
+      go = "dataset_1-sample_correlation-Do_SampleCorrelation",
+      out = "#dataset_1-sample_correlation-SampleCorrelationPlot",
+      rcode = "#dataset_1-sample_correlation-getR_SampleCorrelation"
     ),
     "PCA" = list(
       go = "PCA-Do_PCA",
