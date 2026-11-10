@@ -50,11 +50,11 @@ test_that("changing the processing type after a run keeps the summary and the an
     clicks <- function() session$userData$clicks
     summary <- output$`preprocessing-summary`
     expect_match(summary, "logX(data+1) is done", fixed = TRUE)
-    # one refresh per analysis tab
+    # one refresh per analysis tab that is not on the Dataset handle yet
     expect_setequal(clicks(), c(
       "SignificanceAnalysis-refreshUI", "single_gene_visualisation-refreshUI",
       "EnrichmentAnalysis-refreshUI", "Heatmap-refreshUI", "PCA-refreshUI",
-      "sample_correlation-refreshUI", "ml_classification-refreshUI"
+      "sample_correlation-refreshUI"
     ))
     n_clicks <- length(clicks())
     session$setInputs(`preprocessing-processing_type` = "Filtering")

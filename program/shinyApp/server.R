@@ -387,7 +387,8 @@ server <- function(input,output,session){
 
 # Dataset ----
   # the analysis modules move onto the handle one by one
-  datasets <- list("1" = dataset_server("1", upload, selection, preprocessing))
+  # the module id starts with a letter so its IDs are valid CSS selectors
+  datasets <- list("1" = dataset_server("dataset_1", upload, selection, preprocessing))
 
   # Sample Correlation ----
   sample_correlation_server(
@@ -437,13 +438,5 @@ server <- function(input,output,session){
     data = session_data,
     params = session_params,
     reactive(updating$count)
-  )
-
-  # ML Classification ----
-  ml_classification_Server(
-    id = "ml_classification",
-    session_data = session_data,
-    session_params = session_params,
-    data_input_shiny = data_input_shiny
   )
 }

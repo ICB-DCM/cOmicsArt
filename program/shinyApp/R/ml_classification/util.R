@@ -162,3 +162,10 @@ validate_condition_column_supervised <- function(condition_col, sample_annotatio
 
   return(TRUE)
 }
+
+# The parameters an ML R-code download reads (`parameters` in Code.R): the
+# Dataset's Selection and Pre-processing (code_context()$par_tmp) plus the
+# method's run parameters as MLClassification
+ml_rcode_par <- function(context, result){
+  c(context$par_tmp, list(MLClassification = result$params))
+}
