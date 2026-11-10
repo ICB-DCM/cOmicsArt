@@ -179,56 +179,8 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
         cluster_df$Condition <- sample_annotation[[input$condition_overlay]]
       }
 
-      DT::datatable(
-        cluster_df,
-        options = list(pageLength = 10, scrollX = TRUE),
-        rownames = FALSE
-      )
-    })
-
-    # Download handlers for k-means
-    output$download_cluster_plot <- downloadHandler(
-      filename = function() {
-        download_name("ML", ".png", "KMeans")
-      },
-      content = function(file) {
-        session_data_list <- reactiveValuesToList(session_data)
-        data <- session_data_list$data
-        condition_col <- if(!is.null(input$condition_overlay) && input$condition_overlay != "none") input$condition_overlay else NULL
-
-        ggsave(
-          file,
-          plot = render_kmeans_plot(
-            kmeans_result = ml_results$kmeans_result,
-            data = data,
-            condition_column = condition_col
-          ),
-          width = 10,
-          height = 8,
-          dpi = 300
-        )
-      }
-    )
-
-    output$download_cluster_results <- downloadHandler(
-      filename = function() {
-        download_name("ML", ".csv", "KMeansResults")
-      },
-      content = function(file) {
-        cluster_df <- data.frame(
-          Sample = names(ml_results$cluster_assignments),
-          Cluster = ml_results$cluster_assignments
-        )
-
-        data <- reactiveValuesToList(session_data)
-        if (!is.null(data$data) && !is.null(input$condition_overlay) && input$condition_overlay != "none") {
-          sample_annotation <- as.data.frame(colData(data$data))
-          cluster_df$Condition <- sample_annotation[[input$condition_overlay]]
-        }
-
-        write.csv(cluster_df, file, row.names = FALSE)
-      }
-    )
+      results_datatable(cluster_df, download_name("ML", NULL, "KMeansResults"))
+    }, server = FALSE)
 
     ## SVM Section ----
 
@@ -350,50 +302,12 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
         Correct = ml_results$predictions == ml_results$svm_y
       )
 
-      DT::datatable(
-        predictions_df,
-        options = list(pageLength = 10, scrollX = TRUE),
-        rownames = FALSE
-      ) %>%
+      results_datatable(predictions_df, download_name("ML", NULL, "SVMPredictions")) %>%
         DT::formatStyle(
           'Correct',
           backgroundColor = DT::styleEqual(c(TRUE, FALSE), c('#d4edda', '#f8d7da'))
         )
-    })
-
-    # Download handlers for SVM
-    output$download_svm_plot <- downloadHandler(
-      filename = function() {
-        download_name("ML", ".png", "SVM")
-      },
-      content = function(file) {
-        ggsave(
-          file,
-          plot = render_svm_plot(
-            svm_result = ml_results$svm_result
-          ),
-          width = 12,
-          height = 8,
-          dpi = 300
-        )
-      }
-    )
-
-    output$download_svm_results <- downloadHandler(
-      filename = function() {
-        download_name("ML", ".csv", "SVMPredictions")
-      },
-      content = function(file) {
-        predictions_df <- data.frame(
-          Sample = names(ml_results$predictions),
-          True_Label = as.character(ml_results$svm_y),
-          Predicted_Label = as.character(ml_results$predictions),
-          Correct = ml_results$predictions == ml_results$svm_y
-        )
-
-        write.csv(predictions_df, file, row.names = FALSE)
-      }
-    )
+    }, server = FALSE)
 
     ## Download and Reporting Handlers ----
 
@@ -403,7 +317,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
       notificationID <- showNotification("Saving to Report...", duration = 0)
 
       tmp_filename <- paste0(
-        getwd(), "/", session_params$file_path,
+        getwd(), file_path,
         "KMeans_Clustering_", Sys.time(), input$file_ext_cluster
       )
 
@@ -447,10 +361,6 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
         ggsave(
           file,
           plot = ml_results$cluster_plot,
-          width = 16,
-          height = 9,
-          units = "in",
-          dpi = "print",
           device = gsub("\\.","", input$file_ext_cluster)
         )
         on.exit({shinyjs::click(ns("only2Report_cluster"))})
@@ -512,7 +422,7 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
       notificationID <- showNotification("Saving to Report...", duration = 0)
 
       tmp_filename <- paste0(
-        getwd(), "/", session_params$file_path,
+        getwd(), file_path,
         "SVM_Classification_", Sys.time(), input$file_ext_svm
       )
 
@@ -558,10 +468,6 @@ ml_classification_Server <- function(id, session_data, session_params, data_inpu
         ggsave(
           file,
           plot = ml_results$svm_plot,
-          width = 16,
-          height = 9,
-          units = "in",
-          dpi = "print",
           device = gsub("\\.","", input$file_ext_svm)
         )
         on.exit({shinyjs::click(ns("only2Report_svm"))})
