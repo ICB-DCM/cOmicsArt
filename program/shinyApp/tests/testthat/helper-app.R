@@ -177,9 +177,9 @@ IDS <- list(
       )
     )),
     "Single Gene Visualisations" = list(
-      go = "single_gene_visualisation-singleGeneGo",
-      out = "#single_gene_visualisation-SingleGenePlot",
-      rcode = "#single_gene_visualisation-getR_Code_SingleEntities"
+      go = "dataset_1-single_gene_visualisation-singleGeneGo",
+      out = "#dataset_1-single_gene_visualisation-SingleGenePlot",
+      rcode = "#dataset_1-single_gene_visualisation-getR_Code_SingleEntities"
     ),
     "Enrichment Analysis" = list(
       set = list(
@@ -346,13 +346,28 @@ expect_no_app_errors <- function(app, label) {
 }
 
 # The download behind `selector` is a non-empty file named by download_name().
-# Returns its path (NA if it failed), invisibly.
+# Waits until the link is usable first: Shiny sets its href once the output
+# is bound, and some links are enabled only after a run (shinyjs), which can
+# arrive after the output the test checked. Returns the file's path (NA if it
+# failed), invisibly; a failure reports why.
 expect_download <- function(app, selector) {
+  error <- NULL
   file <- tryCatch({
+    app$wait_for_js(sprintf(
+      "(function(){var e=document.querySelector(\"%s\"); if(!e) return false;
+        var href=e.getAttribute('href');
+        return !!href && href !== '#' && !e.hasAttribute('disabled') &&
+          !e.classList.contains('disabled');})()", selector), timeout = TIMEOUT)
     id <- app$get_js(sprintf("document.querySelector(\"%s\").id", selector))
     app$get_download(id)
-  }, error = function(e) NA_character_)
-  expect_true(isTRUE(file.size(file) > 0), label = paste0("download ", selector, " non-empty"))
+  }, error = function(e) {
+    error <<- conditionMessage(e)
+    NA_character_
+  })
+  expect_true(
+    isTRUE(file.size(file) > 0),
+    label = paste0("download ", selector, " non-empty", if (!is.null(error)) paste0(" (", error, ")"))
+  )
   if (!is.na(file)) expect_match(
     basename(file),
     "^cOmicsArt_[A-Za-z0-9_]+_\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}\\.[A-Za-z]+$",

@@ -279,7 +279,6 @@ show_tabs <- function(omic_type){
 # the user's choices there are reset.
 refresh_analysis_tabs <- function(){
   shinyjs::click("SignificanceAnalysis-refreshUI", asis = TRUE)
-  shinyjs::click("single_gene_visualisation-refreshUI", asis = TRUE)
   shinyjs::click("EnrichmentAnalysis-refreshUI", asis = TRUE)
   shinyjs::click("Heatmap-refreshUI", asis = TRUE)
   shinyjs::click("PCA-refreshUI", asis = TRUE)

@@ -107,7 +107,7 @@ ui <- shiny::fluidPage(
     ml_classification_UI(NS("dataset_1", "ml_classification")),
     significance_analysis_UI("SignificanceAnalysis"),
     heatmap_UI("Heatmap"),
-    single_gene_visualisation_UI("single_gene_visualisation"),
+    single_gene_visualisation_UI(NS("dataset_1", "single_gene_visualisation")),
     enrichment_analysis_UI("EnrichmentAnalysis")
   ),
   hidden(selectInput(
