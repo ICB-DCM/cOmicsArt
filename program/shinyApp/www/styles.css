@@ -54,7 +54,7 @@ body, label, input, button, select, h4, h3, h2 {
 #preprocessing-sidebar_pre_processing {
     background-color: #3897F147;
 }
-#sidebar_sampleCorrelation {
+.well.sidebar-sample-correlation {
     background-color: #A208BA35;
 }
 #sidebar_pca {
@@ -66,7 +66,7 @@ body, label, input, button, select, h4, h3, h2 {
 #sidebar_heatmap {
     background-color: #70BF4F47;
 }
-#sidebar_single_gene_visualisation {
+.well.sidebar-single-gene {
     background-color: #3897F147;
 }
 #sidebar_enrichment_analysis {
