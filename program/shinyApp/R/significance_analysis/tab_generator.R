@@ -2,7 +2,10 @@
 
 #' Create a new significance analysis results tab
 #'
+#' Appends the comparison's tab and starts its module. The caller removes
+#' the tab and calls session$destroy(id) when the next run replaces it.
 #'
+#' @param id Module id of the comparison, unique per run
 #' @param title Tab title displayed to user
 #' @param targetPanel ID of tabsetPanel to append to
 #' @param result Data frame with differential expression results
@@ -14,33 +17,22 @@
 #' @param session_data ReactiveValues with application data
 #' @param session_params ReactiveValues with application parameters
 #' @param file_path The session folder, as "/www/<token>/"
+#' @param store_volcano see results_tab_server()
 #' @return None (appends tab and sets up server logic)
-#' @export
-create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns,
-                           preprocess_method, value, session_data, session_params, file_path) {
-
-  print(paste("Creating new tab for:", contrast[1], "vs", contrast[2]))
-
-  # Create ID factory for this contrast
-  ids <- create_contrast_ids(ns, contrast)
-
-  # Phase 1: Create and append the UI
-  print(paste("Appending UI tab for:", contrast[1], "vs", contrast[2]))
+create_new_tab <- function(id, title, targetPanel, result, contrast, alpha, ns,
+                           preprocess_method, value, session_data, session_params,
+                           file_path, store_volcano) {
   appendTab(
     inputId = targetPanel,
     tab = results_tab_ui(
-      ids = ids,
+      id = ns(id),
       title = title,
       value = value,
       contrast = contrast
     )
   )
-  print(paste("UI tab appended for:", contrast[1], "vs", contrast[2]))
-
-  # Phase 2: Initialize server logic for this tab
-  print(paste("Initializing server logic for:", contrast[1], "vs", contrast[2]))
   results_tab_server(
-    id = paste(contrast[1], contrast[2], sep = "_"),
+    id = id,
     contrast = contrast,
     result = result,
     alpha = alpha,
@@ -48,7 +40,6 @@ create_new_tab <- function(title, targetPanel, result, contrast, alpha, ns,
     session_data = session_data,
     session_params = session_params,
     file_path = file_path,
-    ns = ns
+    store_volcano = store_volcano
   )
-  print(paste("Server logic initialized for:", contrast[1], "vs", contrast[2]))
 }

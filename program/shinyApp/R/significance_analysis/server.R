@@ -10,7 +10,11 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         dds = NULL,
         scenario = 0,
         comparisons_for_plot = "all",
-        coldata = NULL
+        coldata = NULL,
+        sig_results = NULL,
+        # module ids of the current comparison tabs, and how many runs made them
+        tab_ids = character(0),
+        run_count = 0
       )
       # make waiter a reactive value and assign it
       waiter <- reactiveVal(Waiter$new(
@@ -182,6 +186,16 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         print(sig_ana_reactive$plot_last)
       })
 
+      # The comparison tabs of the last run: their tabs are removed and their
+      # module scopes destroyed (observers, outputs and inputs with them)
+      remove_comparison_tabs <- function(){
+        for (idx in seq_along(sig_ana_reactive$tab_ids)) {
+          removeTab("significance_analysis_results", target = paste0("Significance_", idx))
+          session$destroy(sig_ana_reactive$tab_ids[idx])
+        }
+        sig_ana_reactive$tab_ids <- character(0)
+      }
+
       # Analysis initial info
       observeEvent(input$significanceGo,{
         shinyjs::showElement(id = "Significance_div", asis = T)
@@ -236,54 +250,36 @@ significance_analysis_server <- function(id, session_data, session_params, data_
           waiter()$hide()
           req(FALSE)
         })
+        # the result belongs to this run (not to the factor picker)
         sig_ana_reactive$sig_results <- sig_results
-        # Update session_data/session_params
-        if(is.null(session_data$SigAna)){
-          session_data$SigAna <- list()
-        }
-        session_data$SigAna[[compare_within]] <- sig_results
-        par_list <- list(
+        # the run's parameters; the comparison tabs add their volcano values
+        # (volcano), the overview its choices (overview and the names the
+        # UpSet template reads)
+        session_params$SigAna <- list(
           preprocessing = preprocessing,
           comparisons = comparisons,
           compare_within = compare_within,
           test_method = test_method,
           useBatch = useBatch,
-          padjust_method = PADJUST_METHOD[[test_correction]]
+          padjust_method = PADJUST_METHOD[[test_correction]],
+          significance_level = significance_level,
+          volcano = list()
         )
-        if(is.null(session_params$SigAna)){
-          session_params$SigAna <- list()
-        }
-        session_params$SigAna[names(par_list)] <- par_list
 
-        ## Tab Management
+        ## Tab Management: the run's comparisons replace the last run's
+        remove_comparison_tabs()
+        sig_ana_reactive$run_count <- sig_ana_reactive$run_count + 1
         contrast_list <- lapply(comparisons, function(comp) unlist(strsplit(comp, ":")))
-        new_tabs <- comparisons
-        old_tabs <- sig_ana_reactive$active_tabs
-
-        # Helper function to clean up tabs and associated elements
-        cleanup_tab <- function(comp) {
-          con <- unlist(strsplit(comp, ":"))
-          name <- paste(con[1], con[2], "only2Report_Volcano", sep = "_")
-
-          lapply(c("", "_both", "_raw"), function(button) {
-            input_id <- paste0(name, button)
-            session$userData[[paste0(input_id, "_val")]] <- isolate(input[[input_id]])
-            if (!is.null(session$userData[[ns(input_id)]])) session$userData[[ns(input_id)]]$destroy()
-          })
-
-          removeTab("significance_analysis_results", target = paste0("Significance_", which(sig_ana_reactive$active_tabs == comp)))
-        }
-
-        # Remove old tabs
-        invisible(lapply(old_tabs, cleanup_tab))
-
-        # Helper function to create new tabs
-        create_tab <- function(comp) {
-          idx <- which(comparisons == comp)
+        tab_ids <- character(0)
+        for (idx in seq_along(comparisons)) local({
+          idx <- idx
+          comp <- comparisons[idx]
+          tab_id <- paste0("comparison", sig_ana_reactive$run_count, "_", idx)
           create_new_tab(
+            id = tab_id,
             title = comp,
             targetPanel = "significance_analysis_results",
-            result = sig_ana_reactive$sig_results[[comp]],
+            result = sig_results[[comp]],
             contrast = contrast_list[[idx]],
             alpha = significance_level,
             ns = ns,
@@ -291,25 +287,14 @@ significance_analysis_server <- function(id, session_data, session_params, data_
             value = paste0("Significance_", idx),
             session_data = session_data,
             session_params = session_params,
-            file_path = file_path
+            file_path = file_path,
+            store_volcano = function(values) {
+              session_params$SigAna$volcano[[comp]] <- values
+            }
           )
-        }
-
-        # Add new tabs
-        # Phase 2: Add error handling to diagnose tab creation issues
-        lapply(new_tabs, function(comp) {
-          tryCatch({
-            print(paste("Creating tab for:", comp))
-            create_tab(comp)
-            print(paste("Successfully created tab for:", comp))
-          }, error = function(e) {
-            print(paste("ERROR creating tab for:", comp))
-            print(e)
-          })
+          tab_ids <<- c(tab_ids, tab_id)
         })
-
-        # Update the list of active tabs
-        sig_ana_reactive$active_tabs <- comparisons
+        sig_ana_reactive$tab_ids <- tab_ids
         sig_ana_reactive$info_text <- "Analysis is Done!"
         # update plot
         sig_ana_reactive$update_plot_post_ana <- sig_ana_reactive$update_plot_post_ana + 1
@@ -352,11 +337,9 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         visualization_method   <- input$visualization_method
         comparisons_to_visualize <- input$comparisons_to_visualize
         sig_to_look_at     <- input$sig_to_look_at
-        significance_level    <- input$significance_level
-        compare_within   <- input$sample_annotation_types_cmp
-
-        # Retrieve the significance results (for safety, as in your original code)
-        sig_results <- session_data$SigAna[[compare_within]]
+        # the run's level and results
+        significance_level    <- session_params$SigAna$significance_level
+        sig_results <- sig_ana_reactive$sig_results
 
         # --- Call the plotting helper function ---
         plot_data <- plot_significant_results(
@@ -378,10 +361,15 @@ significance_analysis_server <- function(id, session_data, session_params, data_
         if(is.null(session_params$SigAna)){
           session_params$SigAna <- list()
         }
+        # the names the UpSet template reads, and together as overview
         session_params$SigAna$comparisons_to_visualize <- comparisons_to_visualize
         session_params$SigAna$sig_to_look_at <- sig_to_look_at
         session_params$SigAna$visualization_method <- visualization_method
-        session_params$SigAna$significance_level <- significance_level
+        session_params$SigAna$overview <- list(
+          comparisons_to_visualize = comparisons_to_visualize,
+          sig_to_look_at = sig_to_look_at,
+          visualization_method = visualization_method
+        )
       })
       # if we want to change the highlighting
       observeEvent(input$intersection_high,{
@@ -463,7 +451,7 @@ significance_analysis_server <- function(id, session_data, session_params, data_
           envList <- list(
             par_tmp = reactiveValuesToList(session_params)
           )
-          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+          temp_directory <- tempfile()
           dir.create(temp_directory)
           # save csv files
           save_summarized_experiment(
@@ -507,8 +495,6 @@ significance_analysis_server <- function(id, session_data, session_params, data_
       observeEvent(input$only2Report_Sig,{
         notificationID <- showNotification(ui = "Saving to Report...",duration = 0)
         tmp_filename <- paste0(getwd(),file_path, paste(id,Sys.time(),".png",sep="_"))
-        # assign sig_results again for safety
-        sig_results <- session_data$SigAna[[input$sample_annotation_types_cmp]]
         png(tmp_filename)
         print(sig_ana_reactive$plot_last)
         dev.off()
