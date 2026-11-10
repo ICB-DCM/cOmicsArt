@@ -12,15 +12,16 @@
 #' @param alpha Numeric significance threshold of the run
 #' @param preprocess_method Character, "vst_DESeq" or another procedure
 #' @param data The SummarizedExperiment the run used (volcano annotation)
-#' @param code_par function giving the run's parameter list for the R code
-#'   (with SigAna)
-#' @param code_raw function giving the Upload's raw data for the R code
+#' @param run_params function giving the run's parameters (parameters$SigAna
+#'   in the R code)
+#' @param code_context function giving the Dataset's code_context() for the
+#'   R code
 #' @param file_path Session folder for report images
 #' @param store_volcano function(values): keeps this comparison's volcano
 #'   parameters (th_psig, th_lfc, anno) in the run's parameters
 #' @return None (sets up server outputs and observers)
 results_tab_server <- function(id, contrast, result, alpha, preprocess_method,
-                                data, code_par, code_raw, file_path, store_volcano) {
+                                data, run_params, code_context, file_path, store_volcano) {
   moduleServer(id, function(input, output, session) {
     # the module's own (not namespaced) names; ns() makes them DOM ids
     ids <- create_contrast_ids(function(x) x, contrast)
@@ -76,8 +77,8 @@ results_tab_server <- function(id, contrast, result, alpha, preprocess_method,
       ids = ids,
       contrast = contrast,
       tab_state = tab_state,
-      code_par = code_par,
-      code_raw = code_raw,
+      run_params = run_params,
+      code_context = code_context,
       file_path = file_path
     )
   })

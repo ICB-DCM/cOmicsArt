@@ -221,11 +221,8 @@ significance_analysis_server <- function(id, dataset){
         shinyjs::hideElement(id = "Significance_div")
       })
 
-      # the parameters for the R code: Selection, Pre-processing and
-      # parameters$SigAna
-      code_par <- function(){
-        c(dataset$code_context()$par_tmp, list(SigAna = sig_ana_reactive$result$params))
-      }
+      # the run's parameters (parameters$SigAna in the R code)
+      run_params <- function() sig_ana_reactive$result$params
 
       # Analysis initial info
       observeEvent(input$significanceGo,{
@@ -329,8 +326,8 @@ significance_analysis_server <- function(id, dataset){
             preprocess_method = if (deseq) "vst_DESeq" else preprocessing,
             value = paste0("Significance_", idx),
             data = run_data,
-            code_par = code_par,
-            code_raw = function() dataset$code_context()$raw,
+            run_params = run_params,
+            code_context = dataset$code_context,
             file_path = file_path,
             store_volcano = function(values) {
               volcano <- sig_ana_reactive$result$params$volcano
@@ -482,42 +479,13 @@ significance_analysis_server <- function(id, dataset){
         }
       )
       
-      output$getR_Code_Sig <- downloadHandler(
-
-        filename = function(){
-          download_name("Differential", "rcode", "Intersections")
-        },
-        content = function(file){
-          waiter()$show()
-          par <- code_par()
-          envList <- list(par_tmp = par)
-          temp_directory <- tempfile()
-          dir.create(temp_directory)
-          # save csv files: the whole raw data of the Upload
-          save_summarized_experiment(
-            dataset$code_context()$raw,
-            temp_directory
-          )
-          write(
-            create_workflow_script(
-              pipeline_info = UPSET_PLOT_PIPELINE,
-              par = par,
-              par_mem = "SigAna",
-              path_to_util = file.path(temp_directory, "util.R"),
-              data_stage = if (isTRUE(par$SigAna$useBatch)) "batch_corrected" else "processed"
-            ),
-            file.path(temp_directory, "Code.R")
-          )
-          saveRDS(envList, file.path(temp_directory, "Data.rds"))
-          zip::zip(
-            zipfile = file,
-            files = dir(temp_directory),
-            root = temp_directory
-          )
-          waiter()$hide()
-        },
-        contentType = "application/zip"
-      )
+      output$getR_Code_Sig <- rcode_download("Differential", "Intersections", function(file) {
+        params <- run_params()
+        rcode_zip(
+          file, dataset$code_context(), UPSET_PLOT_PIPELINE, "SigAna", params,
+          batch_data_stage(params$useBatch)
+        )
+      })
 
       # Saving Plot
       output$SavePlot_Sig <- downloadHandler(

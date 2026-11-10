@@ -75,15 +75,15 @@ test_that("the R-code zips carry the Selection, Pre-processing and ML parameters
 
     kmeans_dir <- unpack_zip(output$getR_Code_cluster)
     expect_true(all(c("Code.R", "Data.rds") %in% list.files(kmeans_dir)))
-    par <- readRDS(file.path(kmeans_dir, "Data.rds"))$par_tmp
+    par <- readRDS(file.path(kmeans_dir, "Data.rds"))$parameters
     expect_equal(par$MLClassification$k_clusters, 3)
-    expect_equal(par$preprocessing_procedure, "log10")
+    expect_equal(par$preprocessing$preprocessing_procedure, "log10")
     expect_equal(par$omic_type, "Lipidomics")
 
     svm_dir <- unpack_zip(output$getR_Code_svm)
-    par <- readRDS(file.path(svm_dir, "Data.rds"))$par_tmp
+    par <- readRDS(file.path(svm_dir, "Data.rds"))$parameters
     expect_equal(par$MLClassification$condition_column_supervised, "diet")
-    expect_equal(par$preprocessing_procedure, "log10")
+    expect_equal(par$preprocessing$preprocessing_procedure, "log10")
   })
 })
 

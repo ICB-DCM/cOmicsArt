@@ -28,7 +28,8 @@ preprocessing_info <- list(
   foo = preprocessing,
   name = "preprocessing",
   input_mapping = list(
-    data = "data"
+    data = "data",
+    omic_type = "parameters$omic_type"
   ),
   output_mapping = list(
     data = "data"
@@ -54,7 +55,8 @@ batch_correction_info <- list(
   name = "batch_correction",
   input_mapping = list(
     data = "data[complete.cases(assay(data)), ]",
-    counts = "res_preprocess$counts"
+    counts = "res_preprocess$counts",
+    omic_type = "parameters$omic_type"
   ),
   output_mapping = list(
     data = "data"

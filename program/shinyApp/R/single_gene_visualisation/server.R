@@ -268,55 +268,20 @@ single_gene_visualisation_server <- function(id, dataset){
 
       ## Download R code and data
       # TODO: needs fixing with scenario
-      output$getR_Code_SingleEntities <- downloadHandler(filename = function(){
-        download_name("SingleGene", "rcode")
-      }, content = function(file){
-        waiter <- Waiter$new(
-          html = LOADING_SCREEN,
-          color = "#3897F147",
-          hide_on_render = FALSE
-        )
-        waiter$show()
-        context <- dataset$code_context()
-        par <- c(context$par_tmp, list(SingleGeneVis = single_gene_reactives$result$params))
-        envList <- list(
-          par_tmp = par
-        )
-        temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-        dir.create(temp_directory)
-        # save csv files: the whole raw data of the Upload
-        save_summarized_experiment(
-          context$raw,
-          temp_directory
-        )
-
-        write(
-          create_workflow_script(
-            pipeline_info = SINGLE_GENE_VISUALISATION_PIPELINE,
-            par = par,
-            par_mem = "SingleGeneVis",
-            path_to_util = file.path(temp_directory, "util.R"),
-            # the data choice: raw = the Selection, or batch corrected
-            data_stage = switch(
-              par$SingleGeneVis$data_process_stage %||% "data",
-              data_original = "raw",
-              data_batch_corrected = "batch_corrected",
-              "processed"
-            )
-          ),
-          file.path(temp_directory, "Code.R")
-        )
-
-        saveRDS(envList, file.path(temp_directory, "Data.rds"))
-          zip::zip(
-            zipfile = file,
-            files = dir(temp_directory),
-            root = temp_directory
+      output$getR_Code_SingleEntities <- rcode_download("SingleGene", NULL, function(file) {
+        params <- single_gene_reactives$result$params
+        rcode_zip(
+          file, dataset$code_context(), SINGLE_GENE_VISUALISATION_PIPELINE,
+          "SingleGeneVis", params,
+          # the data choice: raw = the Selection, or batch corrected
+          data_stage = switch(
+            params$data_process_stage %||% "data",
+            data_original = "raw",
+            data_batch_corrected = "batch_corrected",
+            "processed"
           )
-          waiter$hide()
-        },
-        contentType = "application/zip"
-      )
+        )
+      })
 
       ## Save plot
       output$SavePlot_singleGene <- downloadHandler(

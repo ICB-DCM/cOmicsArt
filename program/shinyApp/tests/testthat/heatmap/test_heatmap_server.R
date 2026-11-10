@@ -164,14 +164,14 @@ test_that("the R-code zip carries the Heatmap parameters under the template's na
     run_heatmap(session, top_k_inputs(ds$handle, "diet"))
     dir <- unpack_zip(output$getR_Code_Heatmap)
     expect_true(all(c("Code.R", "Data.rds") %in% list.files(dir)))
-    par <- readRDS(file.path(dir, "Data.rds"))$par_tmp
+    par <- readRDS(file.path(dir, "Data.rds"))$parameters
     expect_true(all(c(
       "selection_type", "n_top_k", "top_k_type", "compare_within", "reference",
       "treatment", "significance_level", "title", "cluster_rows", "cluster_cols",
       "scale_rows", "n_max_row_labels", "row_labels", "row_annotations", "col_annotations"
     ) %in% names(par$Heatmap)))
     expect_equal(par$Heatmap$compare_within, "diet")
-    expect_equal(par$preprocessing_procedure, "log10")
+    expect_equal(par$preprocessing$preprocessing_procedure, "log10")
   })
 })
 

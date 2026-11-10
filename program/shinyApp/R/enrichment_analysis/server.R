@@ -12,10 +12,10 @@ ENRICHMENT_GENE_SETS <- c(
 #   result: reactive, the enrichResult/gseaResult of this gene set or NULL
 #   ea_type: function, "GeneSetEnrichment" or "OverRepresentation_Analysis"
 #     of the current result
-#   code_par: function, the parameter list for the R-code download
-#     (Selection, Pre-processing and parameters$Enrichment)
-#   code_raw: function, the Upload's raw data for the R-code download
-enrichment_analysis_geneset_server <- function(id, result, ea_type, code_par, code_raw){
+#   code_context: function, the Dataset's code_context() for the R-code
+#     download
+#   params: function, the Enrichment's run parameters (parameters$Enrichment)
+enrichment_analysis_geneset_server <- function(id, result, ea_type, code_context, params){
   moduleServer(
     id,
     function(input,output,session){
@@ -51,56 +51,17 @@ enrichment_analysis_geneset_server <- function(id, result, ea_type, code_par, co
       }, server = FALSE)
 
       # download R Code for further plotting
-      output$getR_Code <- downloadHandler(
-        filename = function(){
-          download_name("Enrichment", "rcode", gsub("_", "", id))
-        },
-        content = function(file){
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
-          waiter$show()
-          par <- code_par()
-          par$Enrichment$enrich_set <- id
-          temp_directory <- tempfile()
-          dir.create(temp_directory)
-          # save csv files: the whole raw data of the Upload
-          save_summarized_experiment(
-            code_raw(),
-            temp_directory
-          )
-          pipeline <- if(ea_type() == "GeneSetEnrichment") {
-            EA_PIPELINE
-          } else {
-            OA_PIPELINE
-          }
-          write(
-            create_workflow_script(
-              pipeline_info = pipeline,
-              par = par,
-              par_mem = "Enrichment",
-              path_to_util = file.path(temp_directory, "util.R")
-            ),
-            file.path(temp_directory, "Code.R")
-          )
+      output$getR_Code <- rcode_download("Enrichment", gsub("_", "", id), function(file) {
+        enrichment <- params()
+        enrichment$enrich_set <- id
+        rcode_zip(
+          file, code_context(),
+          if (ea_type() == "GeneSetEnrichment") EA_PIPELINE else OA_PIPELINE,
+          "Enrichment", enrichment,
           # the Ensembl objects the translation uses
-          file.copy(
-            from = file.path("www", "EnsemblObjects.RDS"),
-            to = file.path(temp_directory, "EnsemblObjects.rds")
-          )
-
-          saveRDS(list(par_tmp = par), file.path(temp_directory, "Data.rds"))
-          zip::zip(
-            zipfile = file,
-            files = dir(temp_directory),
-            root = temp_directory
-          )
-          waiter$hide()
-        },
-        contentType = "application/zip"
-      )
+          extra_files = c(EnsemblObjects.rds = file.path("www", "EnsemblObjects.RDS"))
+        )
+      })
 
       # Saving Plot
       output$SavePlot <- downloadHandler(
@@ -208,11 +169,8 @@ enrichment_analysis_Server <- function(id, dataset, heatmap_genes){
           id = gene_set,
           result = reactive(ea_reactives$result$results[[gene_set]]),
           ea_type = function() ea_reactives$result$params$ora_or_gse,
-          code_par = function() c(
-            dataset$code_context()$par_tmp,
-            list(Enrichment = ea_reactives$result$params)
-          ),
-          code_raw = function() dataset$code_context()$raw
+          code_context = dataset$code_context,
+          params = function() ea_reactives$result$params
         )
       })
 

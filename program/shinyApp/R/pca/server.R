@@ -328,46 +328,13 @@ pca_Server <- function(id, dataset){
     ## R Code Download ----
     # one zip per plot; `item` names the plot in the file name
     code_download <- function(pipeline, item = NULL){
-      downloadHandler(
-        filename = function(){
-          download_name("PCA", "rcode", item)
-        },
-        content = function(file){
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
-          waiter$show()
-          context <- dataset$code_context()
-          par <- c(context$par_tmp, list(PCA = pca_reactives$result$params))
-          temp_directory <- tempfile()
-          dir.create(temp_directory)
-          # save csv files: the whole raw data of the Upload
-          save_summarized_experiment(
-            context$raw,
-            temp_directory
-          )
-          write(
-            create_workflow_script(
-              pipeline_info = pipeline,
-              par = par,
-              par_mem = "PCA",
-              path_to_util = file.path(temp_directory, "util.R"),
-              data_stage = if (isTRUE(par$PCA$useBatch)) "batch_corrected" else "processed"
-            ),
-            file.path(temp_directory, "Code.R")
-          )
-          saveRDS(list(par_tmp = par), file.path(temp_directory, "Data.rds"))
-          zip::zip(
-            zipfile = file,
-            files = dir(temp_directory),
-            root = temp_directory
-          )
-          waiter$hide()
-        },
-        contentType = "application/zip"
-      )
+      rcode_download("PCA", item, function(file) {
+        params <- pca_reactives$result$params
+        rcode_zip(
+          file, dataset$code_context(), pipeline, "PCA", params,
+          batch_data_stage(params$useBatch)
+        )
+      })
     }
     output$getR_Code_PCA <- code_download(PCA_PIPELINE)
     output$getR_Code_Scree_Plot <- code_download(SCREE_PLOT_PIPELINE, "Scree")

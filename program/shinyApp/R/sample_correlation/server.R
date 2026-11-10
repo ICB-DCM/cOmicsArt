@@ -126,48 +126,13 @@ sample_correlation_server <- function(id, dataset){
       })
 
       # Download Section ----
-      output$getR_SampleCorrelation <- downloadHandler(
-        filename = function(){ download_name("SampleCorrelation", "rcode")},
-        content = function(file){
-          waiter <- Waiter$new(
-            html = LOADING_SCREEN,
-            color = "#3897F147",
-            hide_on_render = FALSE
-          )
-          waiter$show()
-          context <- dataset$code_context()
-          par <- c(context$par_tmp, list(SampleCorrelation = sample_corr_reactive$result$params))
-          envList <- list(
-            par_tmp = par
-          )
-          temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
-          dir.create(temp_directory)
-          # save csv files: the whole raw data of the Upload
-          save_summarized_experiment(
-            context$raw,
-            temp_directory
-          )
-
-          write(
-            create_workflow_script(
-              pipeline_info = SAMPLE_CORRELATION_PIPELINE,
-              par = par,
-              par_mem = "SampleCorrelation",
-              path_to_util = file.path(temp_directory, "util.R"),
-              data_stage = if (isTRUE(par$SampleCorrelation$batch)) "batch_corrected" else "processed"
-            ),
-            file.path(temp_directory, "Code.R")
-          )
-          saveRDS(envList, file.path(temp_directory, "Data.rds"))
-          zip::zip(
-            zipfile = file,
-            files = dir(temp_directory),
-            root = temp_directory
-          )
-          waiter$hide()
-        },
-        contentType = "application/zip"
-      )
+      output$getR_SampleCorrelation <- rcode_download("SampleCorrelation", NULL, function(file) {
+        params <- sample_corr_reactive$result$params
+        rcode_zip(
+          file, dataset$code_context(), SAMPLE_CORRELATION_PIPELINE,
+          "SampleCorrelation", params, batch_data_stage(params$batch)
+        )
+      })
 
       output$SavePlot_SampleCorrelation <- downloadHandler(
         filename = function() {

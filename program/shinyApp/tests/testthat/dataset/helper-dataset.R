@@ -8,7 +8,7 @@ test_data <- function(omic){
 
 # A run as preprocessing_server() returns it: run_preprocessing() on the
 # Selection's data with `options` (named like the arguments of preprocessing())
-preprocessing_run <- function(selection, omic_type, options, batch_column = "NULL", run = 1){
+preprocessing_run <- function(selection, omic_type, options, batch_column = NULL, run = 1){
   res <- suppressMessages(run_preprocessing(selection$data, omic_type, options, batch_column))
   c(
     res[c("data", "data_batch_corrected", "DESeq_obj", "DESeq_obj_batch_corrected")],
@@ -27,7 +27,7 @@ fake_dataset_cache <- new.env()
 # further options, which replace the defaults (global filtering at 0; for
 # vst_DESeq the condition column as factor). Cached per arguments.
 fake_dataset <- function(omic_type = "Lipidomics", procedure = "log10", batch_column = NULL, ...){
-  key <- paste(omic_type, procedure, batch_column %||% "NULL", deparse(list(...)))
+  key <- paste(omic_type, procedure, batch_column %||% "none", deparse(list(...)))
   if (is.null(fake_dataset_cache[[key]])) {
     data <- test_data(omic_type)
     # 3000 genes are enough for DESeq2 and keep the tests fast
@@ -46,7 +46,7 @@ fake_dataset <- function(omic_type = "Lipidomics", procedure = "log10", batch_co
       selection = selection,
       omic_type = omic_type,
       organism = NULL,
-      run = preprocessing_run(selection, omic_type, options, batch_column %||% "NULL"),
+      run = preprocessing_run(selection, omic_type, options, batch_column),
       # one new Dataset, one run
       version = 2,
       results = list()
