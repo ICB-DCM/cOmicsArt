@@ -1,5 +1,5 @@
 # Global String Constants
-CHECK_TEMPLATE_VI <<- "Some overall Checks have been done:\n
+CHECK_TEMPLATE_VI <- "Some overall Checks have been done:\n
 <b>REQUIRED</b> (must all be Yes):\n
 Data Matrix is a real csv (has ',' as separators): %s\n
 Data Matrix has only numeric values: %s\n
@@ -12,14 +12,14 @@ Sample table has no NA (missing values): %s\n
 Entity table has no NA (missing values): %s\n"
 
 # --- Notes ---
-NOTES_PlACEHOLDER <<- "Notes will be added upon clicking 'Send only to report'"
-NOTES_HELP <<- HTML(
+NOTES_PlACEHOLDER <- "Notes will be added upon clicking 'Send only to report'"
+NOTES_HELP <- HTML(
   "You can use markdown syntax for your notes <br>
   <a href='https://www.markdownguide.org/cheat-sheet/' target='_blank'>
   Here you can find a Markdown Cheat Sheet</a> <br> Please do not use heading mardkown
   syntax (e.g. ## Heading) - <br> this will interfere with the reports hierachy"
 )
-NOTES_ADDITIONAL <<- paste(
+NOTES_ADDITIONAL <- paste(
   '<textarea id="myTextarea" name="textarea" rows="5" cols="30" placeholder="Place here additional notes on the fly..."></textarea>\n',
   '<button id="saveBtn">Add Note</button>\n',
   sep = "\n"
@@ -27,14 +27,14 @@ NOTES_ADDITIONAL <<- paste(
 
 # --- Error messages Preprocessing ---
 # Error messages in modal due to failed batch correction
-ERROR_BATCH_CORR <<- "Batch correction failed. Make sure the batch effect column is correct or NULL!"
-ERROR_BATCH_DESEQ <<- paste0(
+ERROR_BATCH_CORR <- "Batch correction failed. Make sure the batch effect column is correct or NULL!"
+ERROR_BATCH_DESEQ <- paste0(
   "Batch correction using DESeq failed. Most likely due to linear dependencies ",
   "in the design matrix (one or more factors informing about another one).",
   "Make sure the batch effect column is correct and ",
   "that the design matrix is not singular!"
 )  # Error shown in Modal caused by DESeq2 batch correction
-ERROR_PREPROC <<- HTML(paste0(
+ERROR_PREPROC <- HTML(paste0(
   "<span style='color: red;'>There has been an error</span><br>",
   "The current data might not be what you expect.<br>",
   "Ensure you change something within the data or the Pre-Processing,<br>",
@@ -43,17 +43,17 @@ ERROR_PREPROC <<- HTML(paste0(
 ))  # Error shown in the info box upon failed preprocessing
 
 # --- Error messages Heatmap ---
-ERROR_SEND_GENES_ADD <<- "You only need to change the labels of the rows to portray ENSEMBL IDs ('Choose the label of rows')"
+ERROR_SEND_GENES_ADD <- "You only need to change the labels of the rows to portray ENSEMBL IDs ('Choose the label of rows')"
 
 # --- Error messages Enrichment Analysis ---
-ERROR_INVALID_ANALYSIS <<- "EnrichmentAnalysis type must be either 'GeneSetEnrichment' or 'OverRepresentation_Analysis'"
-ERROR_NO_GENESET <<- "No gene set provided for enrichment analysis"
-ERROR_NON_ENSEMBL_GENES <<- "Provided gene set must be in ENSEMBL-IDs format"
-ERROR_NO_HEATMAP_GENES <<- "No heatmap genes provided for enrichment analysis"
-ERROR_HEATMAP_IN_APP <<- "Change to 'Heatmap' tab, produce a heatmap and save the genes to use for enrichment analysis via button below the plot."
-ERROR_LFCS_EMPTY <<- "The fold-change calculation returned NULL. Check the compare_within, reference and treatment groups."
+ERROR_INVALID_ANALYSIS <- "EnrichmentAnalysis type must be either 'GeneSetEnrichment' or 'OverRepresentation_Analysis'"
+ERROR_NO_GENESET <- "No gene set provided for enrichment analysis"
+ERROR_NON_ENSEMBL_GENES <- "Provided gene set must be in ENSEMBL-IDs format"
+ERROR_NO_HEATMAP_GENES <- "No heatmap genes provided for enrichment analysis"
+ERROR_HEATMAP_IN_APP <- "Change to 'Heatmap' tab, produce a heatmap and save the genes to use for enrichment analysis via button below the plot."
+ERROR_LFCS_EMPTY <- "The fold-change calculation returned NULL. Check the compare_within, reference and treatment groups."
 
 # --- Report Strings ---
-SAVE_EDITED_HTML <<- paste(readLines("R/report_generation/download_updated_report.html"), collapse = "\n")
-NOTES_BASE_HTML <<- paste(readLines("R/report_generation/notes_per_plot.html"), collapse = "\n")
+SAVE_EDITED_HTML <- paste(readLines("R/report_generation/download_updated_report.html"), collapse = "\n")
+NOTES_BASE_HTML <- paste(readLines("R/report_generation/notes_per_plot.html"), collapse = "\n")
 
