@@ -21,7 +21,7 @@ single_gene_visualisation_main_ui <- function(ns){
   mainPanel(
     id = ns("main_panel"),
     textOutput(outputId = ns("SingleGene_Info"), container = pre),
-      div(id = ns("SingleGene_div"),
+      hidden(div(id = ns("SingleGene_div"),
       splitLayout(
         style = "border: 1px solid silver:",
         cellWidths = c("50%", "50%"),
@@ -89,7 +89,7 @@ single_gene_visualisation_main_ui <- function(ns){
         helpText(NOTES_HELP)),
         NULL
       ),
-    )
+    ))
   )
 }
 

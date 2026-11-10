@@ -117,8 +117,9 @@ snippet_PCA <- function(
 ){
   #ifelse(input$Show_loadings == "Yes",fun_LogIt(message = paste0("PCA - Number of top Loadings added: ", length(TopK))),print(""))
   snippet <- c()
-  snippet <- paste0(snippet, "Principal component analysis (PCA) was performed on the centered and scaled data, implemented within the stats package (v.",packageVersion("stats"),") (",print(clean_citation(citation('stats')), style = "text"),"). ")
-  snippet <- paste0(snippet,  if(params$PCA$show_loadings){"The top 5 loadings were identified based on the largest Euclidean distances spanned by any two loading vectors. "})
+  centering <- if (isTRUE(params$PCA$scale_data)) "centered and scaled" else "centered"
+  snippet <- paste0(snippet, "Principal component analysis (PCA) was performed on the ", centering, " data, implemented within the stats package (v.",packageVersion("stats"),") (",print(clean_citation(citation('stats')), style = "text"),"). ")
+  snippet <- paste0(snippet,  if(isTRUE(params$PCA$show_loadings)){"The top 5 loadings were identified based on the largest Euclidean distances spanned by any two loading vectors. "})
   return(snippet)
 }
 
@@ -136,7 +137,7 @@ snippet_PCAloadings <- function(
     params
 ){
   snippet <- c()
-  snippet <- paste0(snippet, "The top ",params$PCA$topSlider," positive loadings and the top ",params$PCA$bottomSlider," negative loadings were seleceted to assess an entities' impact on the principal components ")
+  snippet <- paste0(snippet, "The top ",params$PCA$n_top," positive loadings and the top ",params$PCA$n_bottom," negative loadings were seleceted to assess an entities' impact on the principal components. ")
   return(snippet)
 }
 
@@ -145,7 +146,7 @@ snippet_PCAloadingsMatrix <- function(
     params
 ){
   snippet <- c()
-  snippet <- paste0(snippet, "The loadings matrix was created by taking all absolute loading values higher than ",params$PCA$filterValue ," into account for the first ",gsub("PC","",params$PCA$x_axis_selection," PCs. "))
+  snippet <- paste0(snippet, "The loadings matrix was created by taking all absolute loading values higher than ",params$PCA$cutoff ," into account for the first ",params$PCA$n_pcs," PCs. ")
   snippet <- paste0(snippet, "The resulting matrix allows a visual assessment of the impact of each entity accross multiple principal components. ")
   return(snippet)
 }

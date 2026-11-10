@@ -93,7 +93,7 @@ IDS <- list(
     batch = "preprocessing-batch_column"
   ),
   preprocess = "preprocessing-get_preprocessing",
-  pca_colour = "PCA-coloring_options",  # a PCA sidebar choice
+  pca_colour = "dataset_1-pca-coloring_options",  # a PCA sidebar choice
   pre_out = "preprocessing-summary",
   pre_rcode = "#preprocessing-rcode_violin",
   report = "DownloadTestModule-DownloadReport",
@@ -110,9 +110,9 @@ IDS <- list(
       rcode = "#dataset_1-sample_correlation-getR_SampleCorrelation"
     ),
     "PCA" = list(
-      go = "PCA-Do_PCA",
-      out = "#PCA-PCA_plot",
-      rcode = "#PCA-getR_Code_PCA"
+      go = "dataset_1-pca-Do_PCA",
+      out = "#dataset_1-pca-PCA_plot",
+      rcode = "#dataset_1-pca-getR_Code_PCA"
     ),
     "ML Classification" = list(
       go = "dataset_1-ml_classification-run_clustering",
@@ -146,10 +146,10 @@ IDS <- list(
     # after a pre-processing with a batch column
     "PCA (batch corrected)" = list(
       tab = "PCA",
-      set = list("PCA-UseBatch" = "Yes"),
-      go = "PCA-Do_PCA",
-      out = "#PCA-PCA_plot",
-      rcode = "#PCA-getR_Code_PCA"
+      set = list("dataset_1-pca-UseBatch" = "Yes"),
+      go = "dataset_1-pca-Do_PCA",
+      out = "#dataset_1-pca-PCA_plot",
+      rcode = "#dataset_1-pca-getR_Code_PCA"
     ),
     "Differential Analysis (batch corrected)" = list(
       tab = "Differential Analysis",

@@ -6,7 +6,7 @@
 # Arguments: the returns of upload_server(), selection_server() and
 #   preprocessing_server()
 # Runs the analysis modules that are already on the handle (so far ML,
-# Sample Correlation and Single Gene) in
+# Sample Correlation, Single Gene and PCA) in
 # the Dataset's namespace; what they return is in results(), by module.
 # Returns the Dataset handle (dataset_handle())
 dataset_server <- function(id, upload, selection, preprocessing){
@@ -74,6 +74,7 @@ dataset_server <- function(id, upload, selection, preprocessing){
     collect("ml", ml_classification_Server("ml_classification", handle))
     collect("sample_correlation", sample_correlation_server("sample_correlation", handle))
     collect("single_gene", single_gene_visualisation_server("single_gene_visualisation", handle))
+    collect("pca", pca_Server("pca", handle))
 
     handle
   })
