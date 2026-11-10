@@ -388,7 +388,7 @@ preprocessing_base_script <- function(par, path_to_util = NULL, data_stage = "pr
       data_select_process_script,
       "\n",
       "# --- The selected data before Pre-processing ---",
-      "data <- data_orig[rows_selected, samples_selected, drop = FALSE]",
+      "data <- data_orig[row_ids, sample_ids, drop = FALSE]",
       sep = "\n"
     )
   }

@@ -17,8 +17,8 @@ select_data_info <- list(
   ),
   output_mapping = list(
     data = "data",
-    samples_selected = "samples_selected",
-    rows_selected = "rows_selected"
+    sample_ids = "sample_ids",
+    row_ids = "row_ids"
   ),
   to_util = TRUE
 )
@@ -68,7 +68,7 @@ violin_plot_raw_info <- list(
   foo = violin_plot,
   name = "violin_plot",
   input_mapping = list(
-    data = "data_orig[rows_selected, samples_selected, drop = FALSE]"
+    data = "data_orig[row_ids, sample_ids, drop = FALSE]"
   ),
   to_util = TRUE,
   output_name = "violin_plot_raw",
