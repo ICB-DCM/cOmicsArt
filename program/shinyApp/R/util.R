@@ -280,7 +280,6 @@ show_tabs <- function(omic_type){
 refresh_analysis_tabs <- function(){
   shinyjs::click("SignificanceAnalysis-refreshUI", asis = TRUE)
   shinyjs::click("EnrichmentAnalysis-refreshUI", asis = TRUE)
-  shinyjs::click("Heatmap-refreshUI", asis = TRUE)
 }
 
 # The warning toast after a run: what the procedure did and, if rows with
