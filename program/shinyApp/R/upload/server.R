@@ -81,7 +81,7 @@ upload_server <- function(id){
 
     output$SaveInputAsList <- downloadHandler(
      filename = function() {
-       paste0(omic_type(), "_only_precompiled", " ", Sys.time(), ".RDS") },
+       download_name("Upload", ".RDS", omic_type()) },
       content = function(file){
         # TODO Q: What to save here? only original enough?
         saveRDS(
@@ -518,7 +518,7 @@ upload_server <- function(id){
     # Handle data download
     output$DownloadUpdatedMatrix <- downloadHandler(
       filename = function() {
-        paste0("updated_dataMatrix", Sys.Date(), ".csv") # Dynamic filename
+        download_name("Upload", ".csv", "DataMatrix")
       },
       content = function(file) {
         write.csv(vi$tables$matrix, file, row.names = TRUE) # Save the reactive data with row names
@@ -526,7 +526,7 @@ upload_server <- function(id){
     )
     output$DownloadUpdatedSampleTable <- downloadHandler(
       filename = function() {
-        paste0("updated_SampleTable", Sys.Date(), ".csv") # Dynamic filename
+        download_name("Upload", ".csv", "SampleTable")
       },
       content = function(file) {
         write.csv(vi$tables$sample_table, file, row.names = TRUE) # Save the reactive data with row names
@@ -534,7 +534,7 @@ upload_server <- function(id){
     )
     output$DownloadUpdatedEntitieAnnotation <- downloadHandler(
       filename = function() {
-        paste0("updated_EntitieAnno", Sys.Date(), ".csv") # Dynamic filename
+        download_name("Upload", ".csv", "EntityAnnotation")
       },
       content = function(file) {
         write.csv(vi$tables$annotation_rows, file, row.names = TRUE) # Save the reactive data with row names

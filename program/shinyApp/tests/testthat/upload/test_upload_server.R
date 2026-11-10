@@ -31,11 +31,11 @@ write_file_inputs <- function(matrix, sample_table, annotation_rows){
   )
 }
 
-test_that("the save-for-later filename starts with the Upload's omic type", {
+test_that("the save-for-later filename names the Upload's omic type", {
   test_upload_server({
     session$setInputs(omic_type_testdata = "Lipidomics")
     session$setInputs(EasyTestForUser = 1)
-    expect_match(basename(output$SaveInputAsList), "^Lipidomics_only_precompiled ")
+    expect_match(basename(output$SaveInputAsList), "^cOmicsArt_Upload_Lipidomics_.*\\.RDS$")
   })
 })
 
