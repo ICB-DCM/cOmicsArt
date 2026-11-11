@@ -1,5 +1,4 @@
 # Differential Analysis on the Dataset handle (issue 36)
-source(test_path("..", "dataset", "helper-dataset.R"), local = TRUE)
 colData <- SummarizedExperiment::colData
 
 # report lines are recorded instead of written into www/<token>/
@@ -112,9 +111,7 @@ test_that("the overview's R-code zip carries the run's SigAna parameters", {
       sig_to_look_at = "Significant unadjusted"
     )
     session$setInputs(significanceGo = 1)
-    dir <- unpack_zip(output$getR_Code_Sig)
-    expect_true(all(c("Code.R", "Data.rds") %in% list.files(dir)))
-    par <- readRDS(file.path(dir, "Data.rds"))$parameters
+    par <- rcode_parameters(output$getR_Code_Sig)
     expect_equal(par$SigAna$comparisons, LIPID_COMPARISONS)
     expect_equal(par$SigAna$sig_to_look_at, "Significant unadjusted")
     expect_equal(par$SigAna$visualization_method, "UpSetR plot")
@@ -137,21 +134,11 @@ test_that("the snippet names the test and the adjustment method", {
 })
 
 test_that("dataset_server() puts the result into results()$differential; a new run clears it", {
-  log10 <- list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
-  testServer(dataset_server, args = confirmed_dataset_args("Lipidomics"), {
-    run_all <- preprocessing_run(selection$selected(), "Lipidomics", log10)
-    preprocessing$result(run_all)
-    session$flushReact()
-    handle <- session$returned
+  collected <- expect_collected("differential", function(session, handle){
     inputs <- T_TEST
     names(inputs) <- paste0("differential-", names(inputs))
     do.call(session$setInputs, inputs)
     session$setInputs("differential-significanceGo" = 1)
-    expect_equal(handle$results()$differential$version, handle$version())
-    expect_named(handle$results()$differential$results, LIPID_COMPARISONS, ignore.order = TRUE)
-
-    preprocessing$result(modifyList(run_all, list(run = 2)))
-    session$flushReact()
-    expect_null(handle$results()$differential)
   })
+  expect_named(collected$results, LIPID_COMPARISONS, ignore.order = TRUE)
 })

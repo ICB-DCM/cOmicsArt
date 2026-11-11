@@ -1,8 +1,7 @@
 # tests for the Selection helpers in R/selection/util.R and select_data()
-app_www <- function(...) file.path(test_path("..", "..", ".."), "www", ...)
 
 # Lipidomics test data: 660 lipids x 28 samples
-lipids <- readRDS(app_www("Lipidomics_only_precompiled-LS.RDS"))$Lipidomics_SumExp
+lipids <- test_data("Lipidomics")
 
 small_se <- function(row_data, col_data){
   SummarizedExperiment::SummarizedExperiment(

@@ -1,7 +1,5 @@
 # The publication snippet of the report names the Selection that was made
-lipids <- readRDS(
-  file.path(test_path("..", "..", ".."), "www", "Lipidomics_only_precompiled-LS.RDS")
-)$Lipidomics_SumExp
+lipids <- test_data("Lipidomics")
 
 # snippet_dataInput() as server.R calls it on confirm
 snippet_for <- function(inputs, organism = NULL){

@@ -1,5 +1,4 @@
 # tests for the Upload module in R/upload/server.R
-app_dir <- normalizePath(test_path("..", "..", ".."))
 
 # Run testServer on the Upload module from the app folder, with the session
 # folder and report the app creates at session start. testServer evaluates

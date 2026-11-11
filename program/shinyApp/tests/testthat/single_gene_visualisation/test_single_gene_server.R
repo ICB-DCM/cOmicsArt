@@ -1,5 +1,4 @@
 # tests for Single Gene on the Dataset handle (issue 31)
-source(test_path("..", "dataset", "helper-dataset.R"), local = TRUE)
 colData <- SummarizedExperiment::colData
 rowData <- SummarizedExperiment::rowData
 
@@ -118,9 +117,7 @@ test_that("the R-code zip carries the Selection, Pre-processing and Single Gene 
   testServer(single_gene_visualisation_server, args = list(dataset = ds$handle), {
     inputs <- gene_inputs(ds$handle$processed(), "diet")
     run(session, inputs)
-    dir <- unpack_zip(output$getR_Code_SingleEntities)
-    expect_true(all(c("Code.R", "Data.rds") %in% list.files(dir)))
-    par <- readRDS(file.path(dir, "Data.rds"))$parameters
+    par <- rcode_parameters(output$getR_Code_SingleEntities)
     expect_equal(par$SingleGeneVis$selected_gene, inputs$Select_Gene)
     expect_equal(par$SingleGeneVis$comparisons, inputs$chooseComparisons)
     expect_equal(par$preprocessing$preprocessing_procedure, "log10")
@@ -128,20 +125,10 @@ test_that("the R-code zip carries the Selection, Pre-processing and Single Gene 
 })
 
 test_that("dataset_server() puts the result into results()$single_gene; a new run clears it", {
-  log10 <- list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
-  testServer(dataset_server, args = confirmed_dataset_args("Lipidomics"), {
-    run_all <- preprocessing_run(selection$selected(), "Lipidomics", log10)
-    preprocessing$result(run_all)
-    session$flushReact()
-    handle <- session$returned
+  expect_collected("single_gene", function(session, handle){
     inputs <- gene_inputs(handle$processed(), "diet")
     names(inputs) <- paste0("single_gene_visualisation-", names(inputs))
     do.call(session$setInputs, inputs)
     session$setInputs("single_gene_visualisation-singleGeneGo" = 1)
-    expect_equal(handle$results()$single_gene$version, handle$version())
-
-    preprocessing$result(modifyList(run_all, list(run = 2)))
-    session$flushReact()
-    expect_null(handle$results()$single_gene)
   })
 })

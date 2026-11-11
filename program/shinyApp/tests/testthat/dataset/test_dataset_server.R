@@ -6,9 +6,8 @@ all_lipids <- resolve_selection(lipids, list())
 two_diets <- resolve_selection(lipids, list(
   sample_type = "diet", sample_selection = c("CD_CD_HFD", "HFD_HFD_CD")
 ))
-log10 <- list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
-run_all <- preprocessing_run(all_lipids, "Lipidomics", log10)
-run_two_diets <- preprocessing_run(two_diets, "Lipidomics", log10, run = 2)
+run_all <- preprocessing_run(all_lipids, "Lipidomics", LOG10)
+run_two_diets <- preprocessing_run(two_diets, "Lipidomics", LOG10, run = 2)
 
 # reactiveVals in place of the returns of the Upload, Selection and
 # Pre-processing modules, after an Upload of all Lipidomics data

@@ -1,5 +1,4 @@
 # tests for PCA on the Dataset handle (issue 32)
-source(test_path("..", "dataset", "helper-dataset.R"), local = TRUE)
 colData <- SummarizedExperiment::colData
 rowData <- SummarizedExperiment::rowData
 
@@ -160,9 +159,7 @@ test_that("each R-code zip carries the PCA parameters under the templates' names
       output$getR_Code_Loadings, output$getR_Code_Loadings_matrix
     )
     for (zip_file in downloads) {
-      dir <- unpack_zip(zip_file)
-      expect_true(all(c("Code.R", "Data.rds") %in% list.files(dir)))
-      par <- readRDS(file.path(dir, "Data.rds"))$parameters
+      par <- rcode_parameters(zip_file)
       expect_true(all(c(
         "sample_selection", "sample_types", "scale_data", "x_axis", "y_axis",
         "color_by", "title", "show_loadings", "plot_ellipses", "entitie_anno",
@@ -175,18 +172,8 @@ test_that("each R-code zip carries the PCA parameters under the templates' names
 })
 
 test_that("dataset_server() puts the result into results()$pca; a new run clears it", {
-  log10 <- list(preprocessing_procedure = "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
-  testServer(dataset_server, args = confirmed_dataset_args("Lipidomics"), {
-    run_all <- preprocessing_run(selection$selected(), "Lipidomics", log10)
-    preprocessing$result(run_all)
-    session$flushReact()
-    handle <- session$returned
+  expect_collected("pca", function(session, handle){
     session$setInputs("pca-coloring_options" = "diet")
     session$setInputs("pca-Do_PCA" = 1)
-    expect_equal(handle$results()$pca$version, handle$version())
-
-    preprocessing$result(modifyList(run_all, list(run = 2)))
-    session$flushReact()
-    expect_null(handle$results()$pca)
   })
 })

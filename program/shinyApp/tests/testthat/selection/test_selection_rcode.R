@@ -1,7 +1,5 @@
 # The downloadable R code repeats the Selection the app made.
-lipids <- readRDS(
-  file.path(test_path("..", "..", ".."), "www", "Lipidomics_only_precompiled-LS.RDS")
-)$Lipidomics_SumExp
+lipids <- test_data("Lipidomics")
 
 # Run the generated select_data() step with the parameters the app stores.
 run_selection_script <- function(parameters, data_orig){
