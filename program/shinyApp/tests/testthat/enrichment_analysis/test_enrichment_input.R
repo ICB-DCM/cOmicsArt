@@ -99,13 +99,13 @@ test_that("ORA names a failed translation", {
 test_that("GSEA ranks by the fold change; Entrez-annotated data starts without translation", {
   translate <- local_app_function("translate_genes_ea", function(...) stop("not expected"))
   data <- transcriptomics()
-  prepared <- prepare_gsea_input(data, gsea_params())
+  prepared <- prepare_gsea_input(data, gsea_params(), "TMM")
   expect_false(prepared$needs_annotation)
   expect_equal(names(prepared$genes), rownames(data))
   expect_equal(prepared$gene_set, prepared$genes)
   expect_true("entrezgene_id" %in% colnames(rowData(prepared$data)))
   expect_length(translate(), 0)
-  abs_lfc <- prepare_gsea_input(data, gsea_params(gse_gene_set_type = "LFC_abs"))$genes
+  abs_lfc <- prepare_gsea_input(data, gsea_params(gse_gene_set_type = "LFC_abs"), "TMM")$genes
   expect_equal(unname(abs_lfc), unname(abs(prepared$genes)))
 })
 
@@ -116,7 +116,7 @@ test_that("GSEA on data annotated by gene symbols translates them", {
     rowData(data)$entrezgene_id <- c("1", "2", "3")
     data
   })
-  prepared <- prepare_gsea_input(small_data(list(external_gene_name = c("A", "B", "C"))), gsea_params())
+  prepared <- prepare_gsea_input(small_data(list(external_gene_name = c("A", "B", "C"))), gsea_params(), "TMM")
   expect_false(prepared$needs_annotation)
   expect_equal(rowData(prepared$data)$entrezgene_id, c("1", "2", "3"))
   expect_equal(translate()[[1]][[2]]$base_annotation, "external_gene_name")
@@ -129,7 +129,7 @@ test_that("GSEA on data without a known annotation needs the annotation; then it
     data
   })
   data <- without_annotation(transcriptomics())
-  prepared <- prepare_gsea_input(data, gsea_params())
+  prepared <- prepare_gsea_input(data, gsea_params(), "TMM")
   expect_true(prepared$needs_annotation)
   expect_length(translate(), 0)
   expect_equal(names(prepared$genes), rownames(data))
@@ -146,6 +146,25 @@ test_that("GSEA names a failed translation and stops without a ranking type", {
   local_app_function("translate_genes_ea", function(...) stop("biomaRt down"))
   data <- transcriptomics()
   rowData(data) <- S4Vectors::DataFrame(external_gene_name = rownames(data), row.names = rownames(data))
-  expect_error(prepare_gsea_input(data, gsea_params()), "wrong organism was selected")
-  expect_error(prepare_gsea_input(transcriptomics(), gsea_params(gse_gene_set_type = NULL)), ERROR_INVALID_ANALYSIS, fixed = TRUE)
+  expect_error(prepare_gsea_input(data, gsea_params(), "TMM"), "wrong organism was selected")
+  expect_error(prepare_gsea_input(transcriptomics(), gsea_params(gse_gene_set_type = NULL), "TMM"), ERROR_INVALID_ANALYSIS, fixed = TRUE)
+})
+
+test_that("the GSEA ranking is compare_groups()'s fold change or statistic (issue 59)", {
+  # e1: a log10 difference of 1 (log2 fold change 3.32), ratio of the means 2
+  values <- rbind(
+    ENSG1 = c(0.9, 1, 1.1, 1.9, 2, 2.1),
+    ENSG2 = c(0.05, 0.1, 0.15, 0.45, 0.5, 0.55)
+  )
+  colnames(values) <- paste0("s", 1:6)
+  data <- SummarizedExperiment::SummarizedExperiment(
+    assays = list(processed = values),
+    colData = S4Vectors::DataFrame(group = rep(c("ctrl", "trt"), each = 3), row.names = colnames(values))
+  )
+  expected <- compare_groups(data, "group", treat = "trt", ctrl = "ctrl", preprocessing = "log10")
+  lfc <- gsea_ranking(data, "LFC", "group", reference = "ctrl", treatment = "trt", preprocessing = "log10")
+  expect_equal(lfc, setNames(expected$log2FoldChange, c("ENSG1", "ENSG2")))
+  expect_equal(unname(lfc[1]), log2(10))
+  statistic <- gsea_ranking(data, "statistic_value", "group", reference = "ctrl", treatment = "trt", preprocessing = "log10")
+  expect_equal(statistic, setNames(expected$stat, c("ENSG1", "ENSG2")))
 })

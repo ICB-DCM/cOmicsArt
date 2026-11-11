@@ -154,6 +154,8 @@ single_gene_boxplot_info <- list(
   plot_name = "boxplot_plot",
   additional_foos = list(
       "maybe_add_test" = maybe_add_test,
+      "compare_groups" = compare_groups,
+      "getLFC" = getLFC,
       "data_stage_label" = data_stage_label
   )
 )
@@ -162,13 +164,17 @@ single_gene_boxplot_info <- list(
 entitieSelection_info <- list(
   foo = entitieSelection,
   name = "entitieSelection",
+  # dds: the stage's DESeq2 object (NULL unless vst_DESeq), for Top K
   input_mapping = list(
-    data = "data"
+    data = "data",
+    preprocessing = "preprocessing_procedure",
+    dds = "dds"
   ),
   output_name = "selected_data",
   to_util = TRUE,
   additional_foos = list(
-    getLFCs = getLFCs
+    compare_groups = compare_groups,
+    getLFC = getLFC
   )
 )
 custom_rowAnnotation_info <- list(
@@ -213,13 +219,17 @@ ora_genes_info <- list(
 gsea_ranking_info <- list(
   foo = gsea_ranking,
   name = "gsea_ranking",
+  # dds: the stage's DESeq2 object (NULL unless vst_DESeq)
   input_mapping = list(
-      data = "data"
+      data = "data",
+      preprocessing = "preprocessing_procedure",
+      dds = "dds"
   ),
   output_name = "gene_set_choice",
   to_util = TRUE,
   additional_foos = list(
-      getLFCs = getLFCs
+      compare_groups = compare_groups,
+      getLFC = getLFC
   )
 )
 check_annotation_enrichment_analysis_info <- list(
@@ -365,7 +375,7 @@ performSigAnalysis_info <- list(
   output_name = "sig_results",
   to_util = TRUE,
   additional_foos = list(
-      significance_analysis = significance_analysis,
+      compare_groups = compare_groups,
       getLFC = getLFC
   )
 )
@@ -382,8 +392,7 @@ plot_significant_results_info <- list(
   plot_name = "sig_ana_plot",
   additional_foos = list(
       prepare_upset_plot = prepare_upset_plot,
-      filter_significant_result = filter_significant_result,
-      getLFCs = getLFCs
+      filter_significant_result = filter_significant_result
   )
 )
 volcano_plot_info <- list(

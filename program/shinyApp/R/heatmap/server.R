@@ -77,6 +77,11 @@ heatmap_server <- function(id, dataset){moduleServer(
     output$Groups2Compare_treat_heatmap_ui <- group_picker(
       "Groups2Compare_treat_heatmap", "Choose treatment group of log2 FoldChange", 2
     )
+    output$comparison_hint_ui <- renderUI({
+      req(dataset$processed())
+      # the stage the next run compares
+      comparison_hint(!is.null(dataset$deseq(data_stage())))
+    })
     output$anno_options_heatmap_ui <- annotation_picker(
       "anno_options_heatmap", "Choose the variable to select the rows after (Multiples are not possible)",
       ns, dataset, "entities"
@@ -145,13 +150,20 @@ heatmap_server <- function(id, dataset){moduleServer(
         treatment = input$Groups2Compare_treat_heatmap,
         significance_level = input$psig_threhsold_heatmap
       )
+      # Top K compares the groups like Differential (compare_groups())
+      dds <- if (params$selection_type == "Top K") dataset$deseq(stage)
+      if (params$selection_type == "Top K") {
+        params$comparison_method <- comparison_method(!is.null(dds))
+      }
       params$title <- generate_title_heatmap(
         selection_type = params$selection_type,
         top_k_type = params$top_k_type,
         n_top_k = params$n_top_k,
         comparison = params$compare_within
       )
-      selected <- with_loading(
+      # a comparison that can't be computed (e.g. a column outside the DESeq2
+      # design) shows its error; no selection is NULL (info text below)
+      selected <- tryCatch(with_loading(
         entitieSelection(
           data,
           selection_type = params$selection_type,
@@ -162,10 +174,16 @@ heatmap_server <- function(id, dataset){moduleServer(
           compare_within = params$compare_within,
           reference = params$reference,
           treatment = params$treatment,
-          significance_level = params$significance_level
+          significance_level = params$significance_level,
+          preprocessing = dataset$preprocessing()$preprocessing_procedure,
+          dds = dds
         ),
         color = "#70BF4F47"
-      )
+      ), error = function(e) e)
+      if (inherits(selected, "error")) {
+        error_modal(conditionMessage(selected))
+        return()
+      }
       selection <- list(selected = selected, data = data, params = params)
       # entitieSelection() gives NULL without annotation or groups
       if (is.null(selected) || nrow(selected) < 2){
@@ -287,7 +305,8 @@ heatmap_server <- function(id, dataset){moduleServer(
           ),
           if (params$selection_type == "Top K") c(
             paste0("**HEATMAP** - The selection was reduced to the top entities. Total Number: ", params$n_top_k),
-            paste0("**HEATMAP** - Note that the order depends on ", params$top_k_type)
+            paste0("**HEATMAP** - Note that the order depends on ", params$top_k_type),
+            paste0("**HEATMAP** - Fold changes and p-values: ", params$comparison_method)
           ),
           paste0("**HEATMAP** - The heatmap samples were colored after ", paste0(params$col_annotations, collapse = ", ")),
           paste0("**HEATMAP** - The heatmap entities were colored after ", paste0(params$row_annotations, collapse = ", ")),

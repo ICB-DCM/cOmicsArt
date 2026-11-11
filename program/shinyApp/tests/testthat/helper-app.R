@@ -137,7 +137,12 @@ IDS <- list(
     # the comparisons are Lipidomics diet groups
     "Differential Analysis (2 comparisons)" = list(
       tab = "Differential Analysis",
-      set = list("dataset_1-differential-comparisons" = c("CD_CD_HFD:CD_CD_CD", "HFD_CD_CD:CD_CD_CD")),
+      # Student's t-test: with the default Welch, the raw Lipidomics data have no
+      # adjusted hit in HFD_CD_CD:CD_CD_CD, so the overview would have nothing to draw
+      set = list(
+        "dataset_1-differential-comparisons" = c("CD_CD_HFD:CD_CD_CD", "HFD_CD_CD:CD_CD_CD"),
+        "dataset_1-differential-test_method" = "T-Test"
+      ),
       go = "dataset_1-differential-significanceGo",
       out = "#dataset_1-differential-Significant_Plot_final",
       rcode = "#dataset_1-differential-getR_Code_Sig"
@@ -164,6 +169,9 @@ IDS <- list(
       tab = "Heatmap",
       set = list(
         "dataset_1-heatmap-row_selection_options" = "Top K",
+        # significant genes: by DESeq2's fold change alone (issue 58) the top
+        # 500 are mostly noisy low-count genes, with no significant Hallmark
+        "dataset_1-heatmap-TopK_order" = "LogFoldChange and Significant",
         "dataset_1-heatmap-TopK" = 500  # enough genes for a significant enrichment
       ),
       after = c(HEATMAP$after, "#dataset_1-heatmap-SaveGeneList_Heatmap")

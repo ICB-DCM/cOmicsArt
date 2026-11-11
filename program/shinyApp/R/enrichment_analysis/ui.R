@@ -110,7 +110,9 @@ ea_sidebar <- function(ns){
       ),
       uiOutput(outputId = ns("sample_annotation_types_cmp_GSEA_ui")),
       uiOutput(outputId = ns("Groups2Compare_ref_GSEA_ui")),
-      uiOutput(outputId = ns("Groups2Compare_treat_GSEA_ui"))
+      uiOutput(outputId = ns("Groups2Compare_treat_GSEA_ui")),
+      uiOutput(outputId = ns("comparison_hint_ui")),
+      uiOutput(outputId = ns("UseBatch_ui"))
     ),
     conditionalPanel(
       condition = sprintf("input['%s'] == 'OverRepresentation_Analysis'", ns("ORA_or_GSE")),

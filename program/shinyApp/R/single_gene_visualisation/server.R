@@ -87,14 +87,18 @@ single_gene_visualisation_server <- function(id, dataset){
               )
             }
           }
-          shinyWidgets::virtualSelectInput(
-            search = T,
-            showSelectedOptionsFirst = T,
-            inputId = ns("chooseComparisons"),
-            label = "Select your desired comparisons",
-            choices = sapply(xy.list, paste, collapse=":"),
-            multiple = T,
-            selected = sapply(xy.list, paste, collapse=":")[1]
+          tagList(
+            shinyWidgets::virtualSelectInput(
+              search = T,
+              showSelectedOptionsFirst = T,
+              inputId = ns("chooseComparisons"),
+              label = "Select your desired comparisons",
+              choices = sapply(xy.list, paste, collapse=":"),
+              multiple = T,
+              selected = sapply(xy.list, paste, collapse=":")[1]
+            ),
+            # the tests maybe_add_test() draws (compare_groups())
+            helpText("Welch t-test, unadjusted p-values. For adjusted p-values or another test, use Differential Analysis.")
           )
         }
       })
@@ -160,7 +164,7 @@ single_gene_visualisation_server <- function(id, dataset){
         if(params$add_testing){
           info <- paste(
             info,
-            "The p-values are calculated using a t-test.",
+            "The p-values are calculated using a Welch t-test and are unadjusted.",
             "The dotted line represents the mean of all the data.",
             sep = "\n"
           )
@@ -226,8 +230,10 @@ single_gene_visualisation_server <- function(id, dataset){
               "**Single Entitie** - Values are grouped for all levels within: ", params$group_by,
               " (", paste0(levels(res$gene_data$annotation), collapse = ";"), ")"
             ),
-            "**Single Entitie** - Test for differences: T-Test",  # For now only test method we do
-            "**Single Entitie** - pairwise tested"
+            if (isTRUE(params$add_testing)) c(
+              "**Single Entitie** - Test for differences: Welch t-test, unadjusted p-values",
+              "**Single Entitie** - pairwise tested"
+            )
           ),
           notes = input$NotesSingleEntities,
           snippet = snippet_SingleGene(data = NULL, params = list(SingleGeneVis = params))

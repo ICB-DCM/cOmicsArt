@@ -36,7 +36,8 @@ get_single_gene_data <- function(
 }
 
 maybe_add_test <- function(gene_data, add_testing, comparisons) {
-  # Function to add a t.test to the boxplot
+  # Function to add the tests to the boxplot: per comparison "A:B" the
+  # unadjusted p-value of compare_groups() (Welch, as in Differential)
   # Parameters:
   #   gene_data: data.frame, data to visualize
   #   add_testing: logical, whether to add the testing column
@@ -50,14 +51,21 @@ maybe_add_test <- function(gene_data, add_testing, comparisons) {
   # ggsignif's layer (stat_compare_means()); position and labels as there
   values <- gene_data[,-ncol(gene_data)]
   value_range <- diff(range(values))
+  # the plotted values as one entity, for compare_groups()
+  samples <- paste0("s", seq_along(values))
+  plotted <- SummarizedExperiment::SummarizedExperiment(
+    assays = list(values = matrix(values, nrow = 1, dimnames = list("plotted", samples))),
+    colData = S4Vectors::DataFrame(group = as.character(gene_data$annotation), row.names = samples)
+  )
   segments <- list()
   labels <- list()
   for (i in seq_along(comparisons)) {
     groups <- unlist(strsplit(x = comparisons[i], split = ":"))
-    p_value <- t.test(
-      values[gene_data$annotation == groups[1]],
-      values[gene_data$annotation == groups[2]]
-    )$p.value
+    # one entity, so no correction; no fold change (not shown)
+    p_value <- compare_groups(
+      plotted, "group", treat = groups[1], ctrl = groups[2],
+      test = "Welch-Test", correction = "none", preprocessing = NULL
+    )$pvalue
     x <- match(groups, levels(gene_data$annotation))
     y <- max(values) + value_range * (0.05 + 0.12 * (i - 1))
     tip <- y - value_range * 0.03
@@ -65,7 +73,7 @@ maybe_add_test <- function(gene_data, add_testing, comparisons) {
       x = c(x[1], x[1], x[2]), xend = c(x[1], x[2], x[2]),
       y = c(tip, y, y), yend = c(y, y, tip)
     )
-    labels[[i]] <- data.frame(x = mean(x), y = y, label = as.character(signif(p_value, 2)))
+    labels[[i]] <- data.frame(x = mean(x), y = y, label = if (is.na(p_value)) "p not computable" else paste0("p = ", signif(p_value, 2), " (unadjusted)"))
   }
   additional_layers <- list(
     geom_hline(

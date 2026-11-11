@@ -119,7 +119,7 @@ significance_analysis_server <- function(id, dataset){
             inputId = ns("test_method"),
             label = "Test method",
             choices = c("Wilcoxon rank sum test", "T-Test", "Welch-Test"),
-            selected = "T-Test"
+            selected = "Welch-Test"
           )
         }
       })
@@ -220,7 +220,7 @@ significance_analysis_server <- function(id, dataset){
         test_correction <- input$test_correction %||% "Benjamini-Hochberg"
         significance_level <- input$significance_level %||% 0.05
         compare_within <- input$sample_annotation_types_cmp
-        test_method <- if (!deseq) input$test_method %||% "T-Test"
+        test_method <- if (!deseq) input$test_method %||% "Welch-Test"
         # the data the run used, also for the volcano annotation
         data <- dataset$data(stage)
         sig_results <- try_run(performSigAnalysis(

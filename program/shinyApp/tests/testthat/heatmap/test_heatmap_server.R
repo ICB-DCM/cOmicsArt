@@ -4,7 +4,7 @@ rowData <- SummarizedExperiment::rowData
 
 # Top K by fold change between the first two groups of `column`
 top_k_inputs <- function(handle, column, k = 10){
-  groups <- unique(isolate(colData(handle$processed()))[[column]])
+  groups <- as.character(unique(isolate(colData(handle$processed()))[[column]]))
   list(
     row_selection_options = "Top K", TopK = k, TopK_order = "LogFoldChange",
     sample_annotation_types_cmp_heatmap = column,
@@ -16,12 +16,14 @@ run_heatmap <- function(session, inputs, go = 1){
   do.call(session$setInputs, inputs)
   session$setInputs(Do_Heatmap = go)
 }
-expected_top_k <- function(data, column, k = 10){
+expected_top_k <- function(handle, column, k = 10, stage = "processed"){
+  data <- isolate(handle$data(stage))
   groups <- unique(colData(data)[[column]])
   rownames(entitieSelection(
     data, selection_type = "Top K", n_top_k = k, top_k_type = "LogFoldChange",
     compare_within = column, reference = groups[1], treatment = groups[2],
-    significance_level = 0.05
+    significance_level = 0.05,
+    preprocessing = isolate(handle$preprocessing())$preprocessing_procedure
   ))
 }
 # a rowData column of Ensembl IDs (Transcriptomics test data)
@@ -60,7 +62,7 @@ test_that("a Top K run returns the K entities with its parameters and the Datase
     expect_null(session$returned())
     run_heatmap(session, top_k_inputs(ds$handle, "diet"))
     res <- session$returned()
-    expect_equal(res$entities, expected_top_k(ds$handle$processed(), "diet"))
+    expect_equal(res$entities, expected_top_k(ds$handle, "diet"))
     expect_length(res$entities, 10)
     expect_null(res$gene_list)
     expect_equal(res$version, 2)
@@ -80,7 +82,7 @@ test_that("batch corrected data is used for the selection, labels and annotation
     run_heatmap(session, c(top_k_inputs(tmm, "condition"), list(UseBatch = "batch_corrected")))
     res <- session$returned()
     expect_equal(res$params$data_stage, "batch_corrected")
-    expect_equal(res$entities, expected_top_k(tmm$data("batch_corrected"), "condition"))
+    expect_equal(res$entities, expected_top_k(tmm, "condition", stage = "batch_corrected"))
     expect_identical(result$run()$data, tmm$data("batch_corrected"))
   })
 })
@@ -236,5 +238,43 @@ test_that("the result area shows only while there is a result", {
     ds$state$version <- 3
     session$flushReact()
     expect_false(shown("Heatmap_div"))
+  })
+})
+
+test_that("Top K compares like Differential: Welch, or DESeq2 on a DESeq2 Dataset; the hint names it", {
+  ds <- changeable_dataset("Lipidomics")
+  testServer(heatmap_server, args = list(dataset = ds$handle), {
+    session$flushReact()
+    expect_match(as.character(output$comparison_hint_ui$html), "Welch t-test, Benjamini-Hochberg adjusted", fixed = TRUE)
+    expect_match(as.character(output$comparison_hint_ui$html), "For another test, use Differential Analysis.", fixed = TRUE)
+    run_heatmap(session, top_k_inputs(ds$handle, "diet"))
+    expect_equal(session$returned()$params$comparison_method, "Welch t-test, Benjamini-Hochberg adjusted")
+  })
+  deseq <- fake_dataset("Transcriptomics", "vst_DESeq")
+  testServer(heatmap_server, args = list(dataset = deseq), {
+    session$flushReact()
+    expect_match(as.character(output$comparison_hint_ui$html), "DESeq2 Wald test, Benjamini-Hochberg adjusted", fixed = TRUE)
+    run_heatmap(session, top_k_inputs(deseq, "condition"))
+    groups <- as.character(unique(colData(deseq$processed())$condition))
+    expected <- DESeq2::results(deseq$deseq(), contrast = c("condition", groups[2], groups[1]), pAdjustMethod = "BH")
+    expect_equal(
+      session$returned()$entities,
+      rownames(expected)[order(expected$log2FoldChange, decreasing = TRUE)][1:10]
+    )
+    expect_equal(session$returned()$params$comparison_method, "DESeq2 Wald test, Benjamini-Hochberg adjusted")
+  })
+})
+
+test_that("on a DESeq2 Dataset, Top K by a column outside the design is refused with the hint, no result", {
+  deseq <- fake_dataset("Transcriptomics", "vst_DESeq")
+  shown <- new.env()
+  rlang::local_bindings(
+    error_modal = function(error_message, ...) shown$message <- error_message,
+    .env = environment(dataset_server)
+  )
+  testServer(heatmap_server, args = list(dataset = deseq), {
+    run_heatmap(session, top_k_inputs(deseq, "cell"))
+    expect_null(session$returned())
+    expect_match(shown$message, "\"cell\" is not in the DESeq2 design. Add it to the DESeq2 design in Pre-processing.", fixed = TRUE)
   })
 })

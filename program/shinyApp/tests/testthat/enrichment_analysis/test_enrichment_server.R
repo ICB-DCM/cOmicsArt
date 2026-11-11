@@ -242,6 +242,7 @@ test_that("GSEA on data without a known annotation waits for the annotation type
   data <- isolate(ds$processed())
   SummarizedExperiment::rowData(data) <- SummarizedExperiment::rowData(data)[, 0]
   ds$processed <- function() data
+  ds$data <- function(stage = "processed") data  # GSEA ranks the stage's data
   gsea <- mock_analysis("gene_set_enrichment")
   translate <- mock_analysis("translate_genes_ea", value = data)
   testServer(enrichment_analysis_Server, args = list(dataset = ds), {
@@ -284,5 +285,60 @@ test_that("a run reports its info, the analysis and the snippet once it succeede
   testServer(enrichment_analysis_Server, args = list(dataset = human_dataset()), {
     start_enrichment(session, ORA_HALLMARKS)
     expect_null(REPORT_LINES$lines)
+  })
+})
+
+## GSEA compares like Differential (issue 59)
+GSEA_HALLMARKS <- list(
+  organism_choice_ea = HUMAN, ORA_or_GSE = "GeneSetEnrichment", ValueToAttach = "LFC",
+  sample_annotation_types_cmp_GSEA = "condition",
+  Groups2Compare_ref_GSEA = "untrt", Groups2Compare_treat_GSEA = "trt",
+  GeneSetChoice = "Hallmarks", test_correction = "Benjamini-Hochberg"
+)
+
+test_that("GSEA ranks the batch corrected data when chosen; the hint and the params name the comparison", {
+  ds <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
+  ds$organism <- function() HUMAN
+  gsea <- mock_analysis("gene_set_enrichment")
+  REPORT_LINES$lines <- NULL
+  testServer(enrichment_analysis_Server, args = list(dataset = ds), {
+    session$flushReact()
+    expect_match(as.character(output$UseBatch_ui$html), "Use batch corrected data?", fixed = TRUE)
+    expect_match(as.character(output$comparison_hint_ui$html), "Welch t-test, Benjamini-Hochberg adjusted", fixed = TRUE)
+    start_enrichment(session, c(GSEA_HALLMARKS, list(UseBatch = "batch_corrected")))
+    res <- session$returned()
+    expect_equal(res$params$data_stage, "batch_corrected")
+    expect_equal(res$params$comparison_method, "Welch t-test, Benjamini-Hochberg adjusted")
+    expected <- gsea_ranking(ds$data("batch_corrected"), "LFC", "condition", "untrt", "trt", preprocessing = "TMM")
+    expect_equal(res$params$tmp_genes, expected)
+    report <- paste(REPORT_LINES$lines, collapse = "\n")
+    expect_match(report, "Welch t-test, Benjamini-Hochberg adjusted, on the batch corrected data", fixed = TRUE)
+    expect_match(report, "Benjamini-Hochberg adjusted on the batch corrected data.", fixed = TRUE)
+  })
+})
+
+test_that("on a DESeq2 Dataset GSEA ranks by DESeq2; a column outside the design is refused with the hint", {
+  ds <- fake_dataset("Transcriptomics", "vst_DESeq")
+  ds$organism <- function() HUMAN
+  gsea <- mock_analysis("gene_set_enrichment")
+  shown <- new.env()
+  rlang::local_bindings(
+    error_modal = function(error_message, ...) shown$message <- error_message,
+    .env = environment(dataset_server)
+  )
+  testServer(enrichment_analysis_Server, args = list(dataset = ds), {
+    session$flushReact()
+    expect_match(as.character(output$comparison_hint_ui$html), "DESeq2 Wald test, Benjamini-Hochberg adjusted", fixed = TRUE)
+    start_enrichment(session, GSEA_HALLMARKS)
+    expected <- DESeq2::results(ds$deseq(), contrast = c("condition", "trt", "untrt"), pAdjustMethod = "BH")
+    ranking <- session$returned()$params$tmp_genes
+    expect_equal(unname(ranking), expected$log2FoldChange[match(names(ranking), rownames(expected))])
+    cells <- as.character(unique(colData(ds$processed())$cell))
+    start_enrichment(session, list(
+      sample_annotation_types_cmp_GSEA = "cell",
+      Groups2Compare_ref_GSEA = cells[1], Groups2Compare_treat_GSEA = cells[2]
+    ), go = 2)
+    expect_null(session$returned())
+    expect_match(shown$message, "\"cell\" is not in the DESeq2 design. Add it to the DESeq2 design in Pre-processing.", fixed = TRUE)
   })
 })

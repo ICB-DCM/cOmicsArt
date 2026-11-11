@@ -202,6 +202,10 @@ snippet_heatmap <- function(
                       params$Heatmap$n_top_k, " entities. ")
     snippet <- paste0(snippet, "The order of the entities was determined by ", 
                       params$Heatmap$top_k_type, ". ")
+    if (!is.null(params$Heatmap$comparison_method)) {
+      snippet <- paste0(snippet, "Fold changes and p-values were computed with the ",
+                        params$Heatmap$comparison_method, ". ")
+    }
     if(grepl("Significant",params$Heatmap$top_k_type)){
       snippet <- paste0(snippet, 
                         "An entities was deemed significant with a significance level of",
@@ -247,13 +251,13 @@ snippet_SingleGene <- function(
   snippet <- paste0(snippet, "If the a group of entities is selected through their shared annotation, ",
                     "the median value is used as representative for those entities for the respectice sample. ")
   snippet <- paste0(snippet, "Values are grouped for all levels within the condition: ", par$group_by, ". ")
-  # the module only runs t-tests
-  snippet <- paste0(snippet, "A test for differences was performed using the t-test method. ")
-  snippet <- paste0(snippet, "Pairwise tests were performed. The dotted line represents the global mean. ")
+  # the tests maybe_add_test() draws (compare_groups()), when drawn
+  if (isTRUE(par$add_testing)) {
+    snippet <- paste0(snippet, "A test for differences was performed using a Welch t-test; the p-values are unadjusted. ")
+    snippet <- paste0(snippet, "Pairwise tests were performed. The dotted line represents the global mean. ")
+  }
   snippet <- paste0(snippet, "Boxplots are only shown if there are more than 3 samples per group. ")
-  
-  snippet <- paste0(snippet, "The plot was extended to include and visualize the statistical results with the R packge ggpubr", "(v. ",packageVersion("ggpubr"),") (",print(clean_citation(citation('ggpubr')), style = "text"),"). ")
-  
+
   return(snippet)
 }
 
@@ -294,6 +298,9 @@ snippet_Enrichment <- function(
                       params$Enrichment$compare_within, " for ",
                       params$Enrichment$treatment, " vs. ",
                       params$Enrichment$reference, ". ")
+    snippet <- paste0(snippet, "Fold changes and statistics were computed with the ",
+                      params$Enrichment$comparison_method, " on the ",
+                      data_stage_label(params$Enrichment$data_stage), ". ")
     snippet <- paste0(snippet, 
                       "The adjusted p-value threshold was set to 0.05, 
                       with multiple testing correction applied using ", 

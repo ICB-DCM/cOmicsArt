@@ -38,29 +38,28 @@ ora_genes <- function(ora_gene_set_type, uploaded_gene_set = NULL, heatmap_genes
   stop(ERROR_INVALID_ANALYSIS)
 }
 
-# The ranking of a gene set enrichment: the fold change of `treatment` vs.
+# The ranking of a gene set enrichment: the comparison of `treatment` with
 # `reference` (groups of the sample annotation `compare_within`) per entity
-# of `data`, by `gse_gene_set_type` "LFC", "LFC_abs" (absolute) or
-# "statistic_value" (t-statistic); named by entity. The R code starts from it.
-gsea_ranking <- function(data, gse_gene_set_type, compare_within, reference, treatment){
+# of `data`, as every module computes it (compare_groups(): Welch, or DESeq2
+# with the DESeq2 object `dds`), by `gse_gene_set_type` "LFC" (log2 fold
+# change), "LFC_abs" (absolute) or "statistic_value" (the test statistic);
+# named by entity. `preprocessing` is the Pre-processing procedure. The R
+# code starts from it.
+gsea_ranking <- function(data, gse_gene_set_type, compare_within, reference, treatment,
+                         preprocessing, dds = NULL){
   if (!isTRUE(gse_gene_set_type %in% c("LFC", "LFC_abs", "statistic_value"))) {
     stop(ERROR_INVALID_ANALYSIS)
   }
-  lfcs <- tryCatch(
-    getLFCs(
-      assay(data, "processed"),
-      which(colData(data)[, compare_within] %in% reference),
-      which(colData(data)[, compare_within] %in% treatment)
-    ),
-    error = function(e) stop(paste("An error occured in fold-change calculation; ", e$message))
+  comparison <- compare_groups(
+    data, compare_within, treat = treatment, ctrl = reference,
+    preprocessing = preprocessing, dds = dds
   )
-  if (is.null(lfcs)) stop(ERROR_LFCS_EMPTY)
   ranking <- switch(gse_gene_set_type,
-    LFC = lfcs$LFC,
-    LFC_abs = abs(lfcs$LFC),
-    statistic_value = lfcs$statistic
+    LFC = comparison$log2FoldChange,
+    LFC_abs = abs(comparison$log2FoldChange),
+    statistic_value = comparison$stat
   )
-  names(ranking) <- lfcs$probename
+  names(ranking) <- rownames(comparison)
   ranking
 }
 
@@ -87,7 +86,8 @@ prepare_ora_input <- function(data, params){
 
 # What a gene set enrichment on `data` with the run's `params` takes:
 # list(gene_set, genes, data, annotation, needs_annotation) with
-#   gene_set, genes: the ranking (gsea_ranking())
+#   gene_set, genes: the ranking (gsea_ranking(), with the Pre-processing
+#     procedure `preprocessing` and the DESeq2 object `dds`, NULL for none)
 #   data: `data` with Entrez IDs (entrezgene_id), translated with biomaRt
 #     where its annotation is Ensembl IDs or gene symbols
 #   annotation: check_annotation_enrichment_analysis()'s result
@@ -95,9 +95,10 @@ prepare_ora_input <- function(data, params){
 #     then `data` is untranslated and annotate_gsea_input() finishes it with
 #     the annotation type the user names
 # Stops with the message to show.
-prepare_gsea_input <- function(data, params){
+prepare_gsea_input <- function(data, params, preprocessing, dds = NULL){
   ranking <- gsea_ranking(
-    data, params$gse_gene_set_type, params$compare_within, params$reference, params$treatment
+    data, params$gse_gene_set_type, params$compare_within, params$reference, params$treatment,
+    preprocessing = preprocessing, dds = dds
   )
   annotation <- check_annotation_enrichment_analysis(data)
   input <- list(

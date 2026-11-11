@@ -13,8 +13,8 @@ test_that("Transcriptomics: DESeq2 -> Differential, Heatmap -> Enrichment", {
 
 test_that("Transcriptomics: Heatmap Top K ordered by 'LogFoldChange and Significant'", {
   # the "... and Significant" orders used to re-add every gene that is
-  # not significant as an NA row. "Significant" is still the heatmap's own
-  # t-test, not the Differential tab's result (see .scratch/bugs/01).
+  # not significant as an NA row. "Significant" is DESeq2's adjusted p-value,
+  # as in Differential (compare_groups(), issue 58).
   app <- start_app("transcriptomics-topk-significant")
   on.exit(app$stop(), add = TRUE)
   load_test_data(app, "Transcriptomics")
