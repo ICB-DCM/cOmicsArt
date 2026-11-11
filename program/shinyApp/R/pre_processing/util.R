@@ -1,5 +1,8 @@
 # preprocessing procedures
 
+# The pre-processed data (one assay, named "processed") of `data` by
+# `preprocessing_procedure`; for vst_DESeq also the DESeq2 object and the
+# filtered counts the DESeq2 batch correction starts from.
 preprocessing <- function(
     data,
     omic_type,
@@ -13,72 +16,43 @@ preprocessing <- function(
     limma_formula = NULL){
   print("Remove all entities which are constant over all samples")
   data <- data[rownames(data[which(apply(assay(data),1,sd) != 0),]),]
-  if(preprocessing_procedure %in% c("none", "filterOnly", "filterPerSample")){
-    if(preprocessing_procedure == "filterOnly"){
-      return(list(
-        data = prefiltering_user(data ,filter_threshold = filter_threshold)
-      ))
-    }
-    if(preprocessing_procedure == "filterPerSample"){
-      return(list(
-        data = prefiltering_user(
-          data,
-          filter_threshold = NULL,
-          filter_threshold_samplewise = filter_threshold_samplewise,
-          filter_samplesize = filter_samplesize
-        )
-      ))
-    }
-    if(preprocessing_procedure == "none"){
-      return(list(
-        data = data
-      ))
-    }
-  }else{
-    if(preprocessing_filtering == "filterOnly"){
-      data <- prefiltering_user(data, filter_threshold = filter_threshold)
-    }
-    if(preprocessing_filtering == "filterPerSample"){
-      data <- prefiltering_user(
-        data,
-        filter_threshold = NULL,
-        filter_threshold_samplewise = filter_threshold_samplewise,
-        filter_samplesize = filter_samplesize
-      )
-    }
-    if(preprocessing_procedure == "vst_DESeq"){
-      # the filtered counts too, which the DESeq2 batch correction starts from
-      return(c(deseq_processing(data, omic_type, deseq_factors), list(counts = data)))
-    }
-    if(preprocessing_procedure == "limma_voom"){
-      return(list(
-        data = limma_voom_processing(data, limma_intercept, limma_formula)
-      ))
-    }
-    if(preprocessing_procedure == "TMM"){
-      return(list(
-        data = tmm_proccessing(data)
-      ))
-    }
-
-    if(preprocessing_procedure == "simpleCenterScaling"){
-      return(list(
-        data = simple_center_scaling(data)
-      ))
-    }
-    if(preprocessing_procedure %in% c("Scaling_0_1", "pareto_scaling")){
-      return(list(
-        data = scaling_normalisation(data, preprocessing_procedure)
-      ))
-    }
-    if(preprocessing_procedure %in% c("log10", "ln", "log2")){
-      return(list(
-        data = ln_normalisation(data, preprocessing_procedure)
-      ))
-    }
-    # if nothing is chosen, raise an error
-    stop("No valid Preprocessing procedure chosen")
+  # "none" and the filtering procedures stand for themselves, the others
+  # filter by the option
+  filtering <- if (preprocessing_procedure %in% c("none", "filterOnly", "filterPerSample")) {
+    preprocessing_procedure
+  } else {
+    preprocessing_filtering
   }
+  if (identical(filtering, "filterOnly")) {
+    data <- prefiltering_user(data, filter_threshold = filter_threshold)
+  }
+  if (identical(filtering, "filterPerSample")) {
+    data <- prefiltering_user(
+      data,
+      filter_threshold = NULL,
+      filter_threshold_samplewise = filter_threshold_samplewise,
+      filter_samplesize = filter_samplesize
+    )
+  }
+  res <- switch(
+    preprocessing_procedure,
+    none = ,
+    filterOnly = ,
+    filterPerSample = list(data = data),
+    # the filtered counts too, which the DESeq2 batch correction starts from
+    vst_DESeq = c(deseq_processing(data, omic_type, deseq_factors), list(counts = data)),
+    limma_voom = list(data = limma_voom_processing(data, limma_intercept, limma_formula)),
+    TMM = list(data = tmm_proccessing(data)),
+    simpleCenterScaling = list(data = simple_center_scaling(data)),
+    Scaling_0_1 = ,
+    pareto_scaling = list(data = scaling_normalisation(data, preprocessing_procedure)),
+    log10 = ,
+    ln = ,
+    log2 = list(data = ln_normalisation(data, preprocessing_procedure)),
+    stop("No valid Preprocessing procedure chosen")
+  )
+  assayNames(res$data) <- "processed"
+  return(res)
 }
 
 prefiltering_user <- function(data,
@@ -258,6 +232,9 @@ batch_correction <- function(
   )
   # only use complete cases
   data <- data[complete.cases(assay(data)),]
+  # also after DESeq2, which started again from the counts (the Upload's
+  # assay name)
+  assayNames(data) <- "processed"
   batch_res$data <- data
   return(batch_res)
 }

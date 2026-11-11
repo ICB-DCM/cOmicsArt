@@ -56,6 +56,7 @@ for (name in names(cases)) {
     data <- test_data(case$data)
     app <- do.call(app_run, c(list(data, case$data), case[names(case) != "data"]))
     script <- run_preprocessing_script(app$parameters, data)
+    expect_equal(SummarizedExperiment::assayNames(script$data), "processed")
     expect_equal(dim(script$data), dim(app$data))
     expect_equal(rownames(script$data), rownames(app$data))
     expect_equal(
