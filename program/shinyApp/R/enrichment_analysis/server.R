@@ -159,8 +159,9 @@ enrichment_analysis_Server <- function(id, dataset, heatmap_genes){
       observeEvent(dataset$version(), {
         ea_reactives$pending <- NULL
         ea_reactives$result <- NULL
-        shinyjs::hideElement(id = "enrichment_div")
       })
+      # the gene set tabs show while there is a result
+      observe(shinyjs::toggleElement(id = "enrichment_div", condition = !is.null(ea_reactives$result)))
 
       ## Call Modules
       for (gene_set in ENRICHMENT_GENE_SETS) local({
@@ -320,10 +321,11 @@ enrichment_analysis_Server <- function(id, dataset, heatmap_genes){
       ## Do enrichment ----
       observeEvent(input$enrichmentGO,{
         data <- req(dataset$processed())
-        shinyjs::showElement(id = "enrichment_div")
         waiter$show()
         message("Start Enrichment")
+        # a run that fails leaves no result
         ea_reactives$pending <- NULL
+        ea_reactives$result <- NULL
 
         # the choices of this run, read now (a later switch of the analysis
         # type must not change this run)

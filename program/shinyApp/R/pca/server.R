@@ -28,11 +28,12 @@ pca_Server <- function(id, dataset){
       for (name in c("run", "result", "info_text", "PCA_plot", "Scree_plot", "Loadings_plot", "LoadingsMatrix_plot")) {
         pca_reactives[[name]] <- NULL
       }
-      shinyjs::hideElement(id = "PCA_main_panel_div")
     }
     # The result belongs to one Dataset version: a new Dataset, run or clear
     # removes it
     observeEvent(dataset$version(), clear())
+    # the plots and their buttons show while there is a result
+    observe(shinyjs::toggleElement(id = "PCA_main_panel_div", condition = !is.null(pca_reactives$result)))
 
     ## UI Section ----
     output$UseBatch_ui <- renderUI({
@@ -227,7 +228,6 @@ pca_Server <- function(id, dataset){
         )
       }
       pca_reactives$info_text <- info_text
-      shinyjs::showElement(id = "PCA_main_panel_div")
       waiter$hide()
     })
 

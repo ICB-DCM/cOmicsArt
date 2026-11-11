@@ -6,11 +6,13 @@
 #   selected: reactive, the Selection (resolve_selection()): its data is
 #     what a run pre-processes, the controls and the R code read
 #   selection_confirmed: reactive, changes when the Selection is confirmed;
-#     hides the plots until the next run
-#   upload_done: reactive, set after each successful Upload
+#     clears the result
+#   upload_done: reactive, set after each successful Upload; clears the
+#     result
 # Returns reactives:
-#   result: the last successful run, NULL before; set once at its end, so a
-#     change is the done event. A list of run_preprocessing()'s data,
+#   result: the current run: NULL before a run and after a failed run, a new
+#     Upload or a confirmed Selection; set once at the end of a successful
+#     run, so a new run is the done event. A list of run_preprocessing()'s data,
 #     data_batch_corrected, DESeq_obj and DESeq_obj_batch_corrected (DESeq
 #     objects for vst_DESeq only), with
 #       params: the options, named like the arguments of preprocessing(),
@@ -41,12 +43,8 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       )
     })
 
-    # the R code repeats a run, so its downloads wait for one
-    observe({
-      for (id in c("rcode_violin", "rcode_mean_sd")) {
-        shinyjs::toggleState(id, condition = !is.null(result()))
-      }
-    })
+    # the plots and their buttons show while there is a run
+    observe(shinyjs::toggleElement(id = "data_summary", condition = !is.null(result())))
     # shows the loading screen; returns the waiter to hide it
     show_loading <- function(){
       waiter <- Waiter$new(
@@ -59,9 +57,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     }
 
     react_mean_sd_plot <- reactiveVal(NULL)
-    able_to_plot <- reactiveVal(FALSE)
 
-    shinyjs::hideElement(id = "data_summary")
     # the Selection's data the controls offer choices for: as of the last
     # Upload or confirmed Selection, not while it is being changed
     confirmed_data <- reactive({
@@ -69,9 +65,9 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       selection_confirmed()
       isolate(selected()$data)
     })
-    observeEvent(selection_confirmed(), {
-      able_to_plot(FALSE)
-    })
+    # a new Upload or Selection: the run is not theirs
+    observeEvent(selection_confirmed(), result(NULL))
+    observeEvent(upload_done(), result(NULL))
 
 ## UI section ----
     # Dynamically update second dropdown based on Processing Type
@@ -231,18 +227,18 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
         violin_color = violin_color()
       )
     })
-    # able_to_plot also hides the plots after a confirmed Selection, until the
-    # next run
+    # the plots of the current run (none after a failed run, a new Upload or
+    # Selection)
     output$raw_violin_plot <- renderPlot({
-      req(able_to_plot())
+      req(result())
       raw_violin()
     })
     output$processed_violin_plot <- renderPlot({
-      req(able_to_plot())
+      req(result())
       processed_violin()
     })
     output$mean_sd_plot <- renderPlot({
-      req(able_to_plot())
+      req(result())
       req(react_mean_sd_plot())
       react_mean_sd_plot()
     })
@@ -287,7 +283,6 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     observeEvent(input$get_preprocessing, {
       # only enter this when you actually click data
       req(input$get_preprocessing > 0)
-      shinyjs::showElement(id = "data_summary")
       waiter <- show_loading()
       on.exit(waiter$hide())
       # ---- Options, named like the arguments of preprocessing() ----
@@ -310,6 +305,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       preprocessing_failed <- function(message, additional_text = NULL){
         error_modal(message, additional_text = additional_text)
         summary_text(ERROR_PREPROC)
+        result(NULL)
         count_up(failed)
         NULL
       }
@@ -355,7 +351,6 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       warnings(res$warnings)
       summary_text(summary)
       react_mean_sd_plot(mean_sd)
-      able_to_plot(TRUE)
       result(c(
         res[c("data", "data_batch_corrected", "DESeq_obj", "DESeq_obj_batch_corrected")],
         list(

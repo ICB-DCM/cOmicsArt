@@ -36,13 +36,15 @@ single_gene_visualisation_server <- function(id, dataset){
       # The result belongs to one Dataset version: a new Dataset, run or
       # clear removes plot, info and result
       observeEvent(dataset$version(), {
-        shinyjs::hideElement(id = "SingleGene_div")
         single_gene_reactives$allow_plot <- FALSE
         single_gene_reactives$gene_data <- NULL
         single_gene_reactives$plot <- NULL
         single_gene_reactives$info_text <- NULL
         single_gene_reactives$result <- NULL
       })
+
+      # the plot and its buttons show while there is a result
+      observe(shinyjs::toggleElement(id = "SingleGene_div", condition = !is.null(single_gene_reactives$result)))
 
       ## Ui section ----
       # the pickers follow the processed data; a new run resets them
@@ -168,7 +170,6 @@ single_gene_visualisation_server <- function(id, dataset){
       observe({
         req(input$singleGeneGo > 0)
         req(single_gene_reactives$allow_plot)
-        shinyjs::showElement(id = "SingleGene_div")
         # assign variables
         data_process_stage <- input$type_of_data_gene
         selected_gene <- input$Select_Gene

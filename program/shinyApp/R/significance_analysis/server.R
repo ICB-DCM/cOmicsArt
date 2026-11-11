@@ -209,17 +209,22 @@ significance_analysis_server <- function(id, dataset){
       }
       # the result belongs to one Dataset version: a new Dataset, run or
       # clear removes it and its comparison tabs
-      observeEvent(dataset$version(), {
+      # the result and what shows it; a new run starts without them
+      clear_result <- function(){
         remove_comparison_tabs()
         sig_ana_reactive$result <- NULL
         sig_ana_reactive$plot_last <- NULL
+      }
+      observeEvent(dataset$version(), {
+        clear_result()
         sig_ana_reactive$info_text <- "Press 'Get Differential Analysis' to start!"
         hideTab(
           inputId = "significance_analysis_results",
           target = "Multiple_Comparisons_Visualizations"
         )
-        shinyjs::hideElement(id = "Significance_div")
       })
+      # the results and their buttons show while there is a result
+      observe(shinyjs::toggleElement(id = "Significance_div", condition = !is.null(sig_ana_reactive$result)))
 
       # the run's parameters (parameters$SigAna in the R code)
       run_params <- function() sig_ana_reactive$result$params
@@ -227,7 +232,8 @@ significance_analysis_server <- function(id, dataset){
       # Analysis initial info
       observeEvent(input$significanceGo,{
         req(dataset$processed())
-        shinyjs::showElement(id = "Significance_div")
+        # a run that fails leaves no result
+        clear_result()
         if(length(input$comparisons) == 1){
           hideTab(
             inputId = "significance_analysis_results",

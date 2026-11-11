@@ -56,11 +56,17 @@ ml_classification_Server <- function(id, dataset){
       for (name in names(reactiveValuesToList(ml_results))) ml_results[[name]] <- NULL
     })
 
+    # each method's plot, table and buttons show while there is its result
+    observe(shinyjs::toggleElement(id = "cluster_div", condition = !is.null(ml_results$kmeans_out)))
+    observe(shinyjs::toggleElement(id = "svm_div", condition = !is.null(ml_results$svm_out)))
+
     ## k-means Section ----
 
     # Run k-means clustering
     observeEvent(input$run_clustering, {
       data <- dataset$processed()
+      # a run that fails leaves no result
+      for (name in c("kmeans_out", "kmeans_result", "kmeans", "cluster_assignments")) ml_results[[name]] <- NULL
 
       # Validation
       tryCatch({
@@ -174,6 +180,8 @@ ml_classification_Server <- function(id, dataset){
     # Run SVM classification
     observeEvent(input$run_classification, {
       data <- dataset$processed()
+      # a run that fails leaves no result
+      for (name in c("svm_out", "svm_result", "svm", "predictions", "accuracy", "svm_y", "confusion")) ml_results[[name]] <- NULL
 
       tryCatch({
         # Validate data exists and is correct type

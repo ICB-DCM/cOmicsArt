@@ -130,6 +130,27 @@ local_session_report <- function(session, env){
   function() paste(readLines(file.path(report_dir, "Report.md")), collapse = "\n")
 }
 
+# shinyjs::toggleElement() messages the browser; this records the last
+# condition per element id instead, until `env` ends. Returns a function
+# giving it for an id: TRUE shown, FALSE hidden, NULL never toggled.
+local_shown <- function(env = parent.frame()){
+  shown <- new.env()
+  local_mocked_bindings(
+    toggleElement = function(id = NULL, condition = NULL, ...) assign(id, condition, envir = shown),
+    .package = "shinyjs", .env = env
+  )
+  function(id) shown[[id]]
+}
+
+# Makes the app function `name` fail until `env` ends, e.g. the computation
+# of a module, to test what a failed run leaves behind
+local_failing <- function(name, env = parent.frame()){
+  rlang::local_bindings(
+    !!name := function(...) stop("failed for the test"),
+    .env = environment(dataset_server), .frame = env
+  )
+}
+
 # The files of an R-code zip, unpacked; returns the folder
 unpack_zip <- function(zip_file){
   dir <- tempfile()

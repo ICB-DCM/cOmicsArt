@@ -124,60 +124,63 @@ ml_classification_main_panel <- function(ns){
 
       h4("Clustering Results"),
 
-      plotlyOutput(ns("cluster_plot"), height = "600px"),
+      # shown while there is a k-means result
+      hidden(div(id = ns("cluster_div"),
+        plotlyOutput(ns("cluster_plot"), height = "600px"),
 
-      splitLayout(
-        style = "border: 1px solid silver:",
-        cellWidths = c("70%", "30%"),
-        NULL,
-        actionButton(
-          inputId = ns("only2Report_cluster"),
-          label = "Send only to Report"
-        )
-      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
-      splitLayout(
-        style = "border: 1px solid silver:",
-        cellWidths = c("70%", "30%"),
-        NULL,
-        downloadButton(
-          outputId = ns("getR_Code_cluster"),
-          label = "Get underlying R code and data",
-          icon = icon("code")
-        )
-      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
-      splitLayout(
-        style = "border: 1px solid silver:",
-        cellWidths = c("70%", "30%"),
-        NULL,
-        div(
-          style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
-          downloadButton(
-            outputId = ns("SavePlot_cluster"),
-            label = "Save plot",
-            class = "btn-info"
-          ),
-          clipboard_button(
-            inputId = ns("copy_cluster_plot"),
-            plot_id = ns("cluster_plot")
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          actionButton(
+            inputId = ns("only2Report_cluster"),
+            label = "Send only to Report"
           )
-        )
-      ),
-      splitLayout(
-        style = "border: 1px solid silver:",
-        cellWidths = c("70%", "30%"),
-        NULL,
-        radioGroupButtons(
-          inputId = ns("file_ext_cluster"),
-          label = "File Type:",
-          choices = c(".png", ".tiff", ".svg", ".pdf"),
-          selected = ".png"
-        )
-      ),
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          downloadButton(
+            outputId = ns("getR_Code_cluster"),
+            label = "Get underlying R code and data",
+            icon = icon("code")
+          )
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          div(
+            style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
+            downloadButton(
+              outputId = ns("SavePlot_cluster"),
+              label = "Save plot",
+              class = "btn-info"
+            ),
+            clipboard_button(
+              inputId = ns("copy_cluster_plot"),
+              plot_id = ns("cluster_plot")
+            )
+          )
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          radioGroupButtons(
+            inputId = ns("file_ext_cluster"),
+            label = "File Type:",
+            choices = c(".png", ".tiff", ".svg", ".pdf"),
+            selected = ".png"
+          )
+        ),
 
-      hr(),
+        hr(),
 
-      h5("Cluster Assignments"),
-      DT::dataTableOutput(ns("cluster_table"))
+        h5("Cluster Assignments"),
+        DT::dataTableOutput(ns("cluster_table"))
+      ))
     ),
 
     # Supervised results
@@ -187,70 +190,73 @@ ml_classification_main_panel <- function(ns){
 
       h4("Classification Results"),
 
-      # Accuracy display with disclaimer
-      wellPanel(
-        h5("Training Accuracy"),
-        textOutput(ns("svm_accuracy_text")),
-        helpText(
-          "Note: This is training accuracy only (no validation) and there is no test. ",
-          "Results are exploratory. Cross-validation coming in future release."
-        )
-      ),
-
-      plotlyOutput(ns("svm_plot"), height = "600px"),
-
-      splitLayout(
-        style = "border: 1px solid silver:",
-        cellWidths = c("70%", "30%"),
-        NULL,
-        actionButton(
-          inputId = ns("only2Report_svm"),
-          label = "Send only to Report"
-        )
-      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
-      splitLayout(
-        style = "border: 1px solid silver:",
-        cellWidths = c("70%", "30%"),
-        NULL,
-        downloadButton(
-          outputId = ns("getR_Code_svm"),
-          label = "Get underlying R code and data",
-          icon = icon("code")
-        )
-      ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
-      splitLayout(
-        style = "border: 1px solid silver:",
-        cellWidths = c("70%", "30%"),
-        NULL,
-        div(
-          style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
-          downloadButton(
-            outputId = ns("SavePlot_svm"),
-            label = "Save plot",
-            class = "btn-info"
-          ),
-          clipboard_button(
-            inputId = ns("copy_svm_plot"),
-            plot_id = ns("svm_plot")
+      # shown while there is an SVM result
+      hidden(div(id = ns("svm_div"),
+        # Accuracy display with disclaimer
+        wellPanel(
+          h5("Training Accuracy"),
+          textOutput(ns("svm_accuracy_text")),
+          helpText(
+            "Note: This is training accuracy only (no validation) and there is no test. ",
+            "Results are exploratory. Cross-validation coming in future release."
           )
-        )
-      ),
-      splitLayout(
-        style = "border: 1px solid silver:",
-        cellWidths = c("70%", "30%"),
-        NULL,
-        radioGroupButtons(
-          inputId = ns("file_ext_svm"),
-          label = "File Type:",
-          choices = c(".png", ".tiff", ".svg", ".pdf"),
-          selected = ".png"
-        )
-      ),
+        ),
 
-      hr(),
+        plotlyOutput(ns("svm_plot"), height = "600px"),
 
-      h5("Predictions"),
-      DT::dataTableOutput(ns("svm_predictions_table"))
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          actionButton(
+            inputId = ns("only2Report_svm"),
+            label = "Send only to Report"
+          )
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          downloadButton(
+            outputId = ns("getR_Code_svm"),
+            label = "Get underlying R code and data",
+            icon = icon("code")
+          )
+        ) %>% helper(type = "markdown", content = "SampleCorr_Downloads"),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          div(
+            style = "display: flex; justify-content: flex-start; gap: 5px; margin-bottom: 5px;",
+            downloadButton(
+              outputId = ns("SavePlot_svm"),
+              label = "Save plot",
+              class = "btn-info"
+            ),
+            clipboard_button(
+              inputId = ns("copy_svm_plot"),
+              plot_id = ns("svm_plot")
+            )
+          )
+        ),
+        splitLayout(
+          style = "border: 1px solid silver:",
+          cellWidths = c("70%", "30%"),
+          NULL,
+          radioGroupButtons(
+            inputId = ns("file_ext_svm"),
+            label = "File Type:",
+            choices = c(".png", ".tiff", ".svg", ".pdf"),
+            selected = ".png"
+          )
+        ),
+
+        hr(),
+
+        h5("Predictions"),
+        DT::dataTableOutput(ns("svm_predictions_table"))
+      ))
     )
   )
 }

@@ -174,3 +174,30 @@ test_that("a redrawn plot keeps the run's entity and data in its labels", {
     expect_equal(labels$y, "Pre-processed Data")
   })
 })
+
+test_that("the result area shows only while there is a result", {
+  shown <- local_shown()
+  ds <- changeable_dataset("Lipidomics")
+  testServer(single_gene_visualisation_server, args = list(dataset = ds$handle), {
+    session$flushReact()
+    expect_false(shown("SingleGene_div"))
+    do.call(session$setInputs, gene_inputs(ds$handle$processed(), "diet"))
+    local({
+      local_failing("get_single_gene_data")
+      session$setInputs(singleGeneGo = 1)
+    })
+    expect_false(shown("SingleGene_div"))
+    session$setInputs(singleGeneGo = 2)
+    expect_true(shown("SingleGene_div"))
+    # a failed run after a successful one
+    local({
+      local_failing("get_single_gene_data")
+      session$setInputs(singleGeneGo = 3)
+    })
+    expect_false(shown("SingleGene_div"))
+    session$setInputs(singleGeneGo = 4)
+    ds$state$version <- 3
+    session$flushReact()
+    expect_false(shown("SingleGene_div"))
+  })
+})
