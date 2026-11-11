@@ -53,7 +53,8 @@ compare_groups <- function(
   # test: "Welch-Test", "T-Test" (equal variances) or "Wilcoxon rank sum
   #   test", all unpaired
   # correction: a p.adjust() method, or "none"
-  # preprocessing: the Pre-processing procedure, for the fold change (getLFC())
+  # preprocessing: the Pre-processing procedure, for the fold change
+  #   (getLFC()); NULL for no fold change (NA), when only the tests matter
   # dds: the DESeq2 object (vst_DESeq), else NULL; with one, DESeq2's Wald
   #   test and fold change, and `group_col` must be in its design; the result
   #   has the rows of `data` (the stage can have fewer than the DESeq2
@@ -102,7 +103,7 @@ compare_groups <- function(
   )
   data.frame(
     baseMean = means$baseMean,
-    log2FoldChange = getLFC(means, preprocessing),
+    log2FoldChange = if (is.null(preprocessing)) NA_real_ else getLFC(means, preprocessing),
     stat = tests[1, ],
     pvalue = tests[2, ],
     padj = p.adjust(tests[2, ], method = correction),

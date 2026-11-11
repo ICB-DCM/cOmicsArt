@@ -251,13 +251,13 @@ snippet_SingleGene <- function(
   snippet <- paste0(snippet, "If the a group of entities is selected through their shared annotation, ",
                     "the median value is used as representative for those entities for the respectice sample. ")
   snippet <- paste0(snippet, "Values are grouped for all levels within the condition: ", par$group_by, ". ")
-  # the module only runs t-tests
-  snippet <- paste0(snippet, "A test for differences was performed using the t-test method. ")
-  snippet <- paste0(snippet, "Pairwise tests were performed. The dotted line represents the global mean. ")
+  # the tests maybe_add_test() draws (compare_groups()), when drawn
+  if (isTRUE(par$add_testing)) {
+    snippet <- paste0(snippet, "A test for differences was performed using a Welch t-test; the p-values are unadjusted. ")
+    snippet <- paste0(snippet, "Pairwise tests were performed. The dotted line represents the global mean. ")
+  }
   snippet <- paste0(snippet, "Boxplots are only shown if there are more than 3 samples per group. ")
-  
-  snippet <- paste0(snippet, "The plot was extended to include and visualize the statistical results with the R packge ggpubr", "(v. ",packageVersion("ggpubr"),") (",print(clean_citation(citation('ggpubr')), style = "text"),"). ")
-  
+
   return(snippet)
 }
 

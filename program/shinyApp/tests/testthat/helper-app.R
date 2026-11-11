@@ -169,6 +169,9 @@ IDS <- list(
       tab = "Heatmap",
       set = list(
         "dataset_1-heatmap-row_selection_options" = "Top K",
+        # significant genes: by DESeq2's fold change alone (issue 58) the top
+        # 500 are mostly noisy low-count genes, with no significant Hallmark
+        "dataset_1-heatmap-TopK_order" = "LogFoldChange and Significant",
         "dataset_1-heatmap-TopK" = 500  # enough genes for a significant enrichment
       ),
       after = c(HEATMAP$after, "#dataset_1-heatmap-SaveGeneList_Heatmap")

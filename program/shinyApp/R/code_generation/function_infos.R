@@ -154,6 +154,8 @@ single_gene_boxplot_info <- list(
   plot_name = "boxplot_plot",
   additional_foos = list(
       "maybe_add_test" = maybe_add_test,
+      "compare_groups" = compare_groups,
+      "getLFC" = getLFC,
       "data_stage_label" = data_stage_label
   )
 )

@@ -9,7 +9,7 @@ plotly_texts <- function(plot){
   unlist(lapply(built$x$data, function(trace) if (identical(trace$mode, "text")) trace$text))
 }
 
-test_that("the shown boxplot has the t-test p-value of each comparison", {
+test_that("the shown boxplot has the unadjusted Welch p-value of each comparison, labelled so (issue 60)", {
   plot <- single_gene_boxplot(
     gene_data, add_testing = TRUE, comparisons = c("A:B", "A:C"),
     selected_gene = "gene", data_stage = "processed", group_by = "group"
@@ -18,8 +18,8 @@ test_that("the shown boxplot has the t-test p-value of each comparison", {
     t.test(gene_data$value[gene_data$annotation == x], gene_data$value[gene_data$annotation == y])$p.value
   }
   texts <- plotly_texts(plot)
-  expect_true(as.character(signif(p_value("A", "B"), 2)) %in% texts)
-  expect_true(as.character(signif(p_value("A", "C"), 2)) %in% texts)
+  expect_true(paste0("p = ", signif(p_value("A", "B"), 2), " (unadjusted)") %in% texts)
+  expect_true(paste0("p = ", signif(p_value("A", "C"), 2), " (unadjusted)") %in% texts)
 })
 
 test_that("the boxplot without testing has no p-values", {
@@ -28,4 +28,13 @@ test_that("the boxplot without testing has no p-values", {
     selected_gene = "gene", data_stage = "processed", group_by = "group"
   )
   expect_null(plotly_texts(plot))
+})
+
+test_that("a comparison that can't be tested says so instead of p = NA (issue 60)", {
+  constant <- data.frame(value = c(rep(1, 4), rep(1, 4)), annotation = factor(rep(c("A", "B"), each = 4)))
+  plot <- suppressMessages(single_gene_boxplot(
+    constant, add_testing = TRUE, comparisons = "A:B",
+    selected_gene = "gene", data_stage = "processed", group_by = "group"
+  ))
+  expect_true("p not computable" %in% plotly_texts(plot))
 })

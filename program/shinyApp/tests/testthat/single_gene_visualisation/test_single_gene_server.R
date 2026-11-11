@@ -218,3 +218,13 @@ test_that("after a new Dataset version only Go runs again, not a new grouping", 
     expect_equal(session$returned()$params$group_by, "diet")
   })
 })
+
+test_that("the comparison picker says the tests are unadjusted Welch tests and points to Differential (issue 60)", {
+  ds <- changeable_dataset("Lipidomics")
+  testServer(single_gene_visualisation_server, args = list(dataset = ds$handle), {
+    data <- ds$handle$processed()
+    do.call(session$setInputs, gene_inputs(data, "diet"))
+    picker <- as.character(output$chooseComparisons_ui$html)
+    expect_match(picker, "Welch t-test, unadjusted p-values. For adjusted p-values or another test, use Differential Analysis.", fixed = TRUE)
+  })
+})

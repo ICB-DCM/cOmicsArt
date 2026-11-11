@@ -106,3 +106,11 @@ test_that("with a DESeq2 object, the result has the rows of `data`, in its order
                         preprocessing = "vst_DESeq", dds = dds)
   expect_equal(rownames(res), rownames(data))
 })
+
+test_that("without a Pre-processing (NULL) there is no fold change, quietly", {
+  # Single Gene only needs the p-values; negative means would warn in log2()
+  negative <- two_groups(rbind(gene1 = c(-1, -2, -4, -5, -6, -8), gene2 = c(3, 5, 4, 2, 9, 7)))
+  expect_no_warning(res <- compare_groups(negative, "group", treat = "b", ctrl = "a", preprocessing = NULL))
+  expect_true(all(is.na(res$log2FoldChange)))
+  expect_equal(res$pvalue[1], t.test(c(-5, -6, -8), c(-1, -2, -4))$p.value)
+})
