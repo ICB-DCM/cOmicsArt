@@ -55,7 +55,9 @@ compare_groups <- function(
   # correction: a p.adjust() method, or "none"
   # preprocessing: the Pre-processing procedure, for the fold change (getLFC())
   # dds: the DESeq2 object (vst_DESeq), else NULL; with one, DESeq2's Wald
-  #   test and fold change, and `group_col` must be in its design
+  #   test and fold change, and `group_col` must be in its design; the result
+  #   has the rows of `data` (the stage can have fewer than the DESeq2
+  #   object, e.g. rows batch correction dropped), in its order
   # Returns one row per feature (rownames) with baseMean (DESeq2: the mean of
   # all samples; else the control's mean), log2FoldChange, stat, pvalue and
   # padj (DESeq2 adds lfcSE); a test that fails for a feature gives NA.
@@ -66,7 +68,8 @@ compare_groups <- function(
         group_col
       ))
     }
-    return(DESeq2::results(dds, contrast = c(group_col, treat, ctrl), pAdjustMethod = correction))
+    result <- DESeq2::results(dds, contrast = c(group_col, treat, ctrl), pAdjustMethod = correction)
+    return(result[intersect(rownames(data), rownames(result)), ])
   }
   test_function <- switch(test,
     "Welch-Test" = function(x, y) t.test(x, y, var.equal = FALSE),

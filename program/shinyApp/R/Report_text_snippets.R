@@ -298,6 +298,9 @@ snippet_Enrichment <- function(
                       params$Enrichment$compare_within, " for ",
                       params$Enrichment$treatment, " vs. ",
                       params$Enrichment$reference, ". ")
+    snippet <- paste0(snippet, "Fold changes and statistics were computed with the ",
+                      params$Enrichment$comparison_method, " on the ",
+                      data_stage_label(params$Enrichment$data_stage), ". ")
     snippet <- paste0(snippet, 
                       "The adjusted p-value threshold was set to 0.05, 
                       with multiple testing correction applied using ", 

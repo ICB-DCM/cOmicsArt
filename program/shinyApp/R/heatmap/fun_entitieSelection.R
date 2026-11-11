@@ -66,9 +66,6 @@ entitieSelection <- function(
       data, compare_within, treat = treatment, ctrl = reference,
       preprocessing = preprocessing, dds = dds
     )
-    # DESeq2 compares all its genes; the stage's data can have fewer (rows
-    # incomplete after batch correction are dropped)
-    LFC_output <- LFC_output[rownames(LFC_output) %in% rownames(filtered_data), , drop = FALSE]
     # the top K are the highest (absolute) fold changes; NA fold changes last
     if(top_k_type=="LogFoldChange"){
       filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$log2FoldChange, decreasing = TRUE)],, drop=F]

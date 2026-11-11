@@ -94,3 +94,15 @@ test_that("a group without samples is refused, not tested to NA", {
     "No samples of \"b\" in the sample annotation \"condition\".", fixed = TRUE
   )
 })
+
+test_that("with a DESeq2 object, the result has the rows of `data`, in its order", {
+  # the stage's data can have fewer rows than the DESeq2 object (batch
+  # correction drops incomplete ones), and GSEA names a ranking by position
+  deseq <- fake_dataset("Transcriptomics", "vst_DESeq")
+  dds <- shiny::isolate(deseq$deseq("processed"))
+  data <- shiny::isolate(deseq$processed())[c(20, 3, 7), ]
+  groups <- as.character(unique(SummarizedExperiment::colData(data)$condition))
+  res <- compare_groups(data, "condition", treat = groups[1], ctrl = groups[2],
+                        preprocessing = "vst_DESeq", dds = dds)
+  expect_equal(rownames(res), rownames(data))
+})

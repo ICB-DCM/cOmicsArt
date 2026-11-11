@@ -51,7 +51,6 @@ ERROR_NO_GENESET <- "No gene set provided for enrichment analysis"
 ERROR_NON_ENSEMBL_GENES <- "Provided gene set must be in ENSEMBL-IDs format"
 ERROR_NO_HEATMAP_GENES <- "No heatmap genes provided for enrichment analysis"
 ERROR_HEATMAP_IN_APP <- "Change to 'Heatmap' tab, produce a heatmap and save the genes to use for enrichment analysis via button below the plot."
-ERROR_LFCS_EMPTY <- "The fold-change calculation returned NULL. Check the compare_within, reference and treatment groups."
 
 # --- Report Strings ---
 SAVE_EDITED_HTML <- paste(readLines("R/report_generation/download_updated_report.html"), collapse = "\n")

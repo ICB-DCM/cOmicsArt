@@ -124,7 +124,8 @@ enrichment_analysis_geneset_server <- function(id, result, params, dataset){
 #     parameters$Enrichment): ora_or_gse, ora_gene_set_type,
 #     uploaded_gene_set, heatmap_genes, gse_gene_set_type, compare_within,
 #     reference, treatment, organism, enrichments2do, test_correction,
-#     tmp_genes; for ORA also UniverseOfGene and universe (Ensembl IDs of
+#     tmp_genes; for GSEA also data_stage (DATA_STAGES; the R code starts
+#     from it) and comparison_method (comparison_method()); for ORA also UniverseOfGene and universe (Ensembl IDs of
 #     the background, NULL for the default)
 #   version: the Dataset version it was computed on
 enrichment_analysis_Server <- function(id, dataset){
@@ -136,6 +137,8 @@ enrichment_analysis_Server <- function(id, dataset){
       # user's annotation type (prepare_gsea_input())
       pending <- reactiveVal(NULL)
       result <- module_result(dataset, on_clear = function() pending(NULL))
+      # the data a Gene Set Enrichment ranks (DATA_STAGES), from the batch picker
+      data_stage <- batch_toggle(input, output, ns, dataset)
       output$EnrichmentInfo <- renderText({"Press 'Get Enrichment Analysis' to start. Note that this analysis is only meaningful for gene sets at the moment."})
 
       # the gene set tabs show while there is a result
@@ -201,6 +204,11 @@ enrichment_analysis_Server <- function(id, dataset){
       output$Groups2Compare_treat_GSEA_ui <- group_picker(
         "Groups2Compare_treat_GSEA", "Choose treatment group of log2 FoldChange", 2
       )
+      # the stage the next Gene Set Enrichment ranks
+      output$comparison_hint_ui <- renderUI({
+        req(dataset$processed())
+        comparison_hint(!is.null(dataset$deseq(data_stage())))
+      })
       # only the tabs of the chosen gene sets show
       observeEvent(input$GeneSetChoice, {
         for (gene_set in ENRICHMENT_GENE_SETS) {
@@ -306,6 +314,10 @@ enrichment_analysis_Server <- function(id, dataset){
             "**GSEA** Calculation based on ", params$compare_within, ": ",
             params$treatment, " vs. ", params$reference
           ))
+          fun_LogIt(session, message = paste0(
+            "**GSEA** Fold changes and statistics: ", params$comparison_method,
+            ", on the ", data_stage_label(params$data_stage)
+          ))
         } else {
           fun_LogIt(session, message = paste0("**ORA** Overrepresentation analysis was perfomed."))
           fun_LogIt(session, message = paste0("**ORA** The genes were taken from: ", params$ora_gene_set_type))
@@ -340,12 +352,23 @@ enrichment_analysis_Server <- function(id, dataset){
           return()
         }
         params <- run_params(data)
+        if (params$ora_or_gse == "GeneSetEnrichment") {
+          # GSEA ranks like every module compares (compare_groups())
+          params$data_stage <- data_stage()
+          dds <- dataset$deseq(params$data_stage)
+          params$comparison_method <- comparison_method(!is.null(dds))
+        }
         prepared <- try_run(
           if (params$ora_or_gse == "OverRepresentation_Analysis") {
             prepare_ora_input(data, params)
           } else {
-            prepare_gsea_input(data, params)
+            prepare_gsea_input(
+              dataset$data(params$data_stage), params,
+              preprocessing = dataset$preprocessing()$preprocessing_procedure, dds = dds
+            )
           },
+          # which step failed, for the ranking's errors (e.g. the DESeq2 design)
+          error_prefix = if (params$ora_or_gse == "GeneSetEnrichment") "The GSEA ranking failed: " else "",
           color = "#70BF4F47"
         )
         if (is.null(prepared)) return()
