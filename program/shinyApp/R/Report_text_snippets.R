@@ -163,6 +163,10 @@ snippet_SigAna <- function(
     snippet <- paste0(snippet, "Differential expression analysis was performed using the ", par$test_method, ". ")
   }
   snippet <- paste0(snippet, "The reported adjusted p-values were adjusted by ", par$padjust_method, ". ")
+  # the volcano of the raw p-values (comparison_params())
+  if (isTRUE(par$raw)) {
+    snippet <- paste0(snippet, "The volcano plot shows the unadjusted p-values. ")
+  }
 
   # Significance level
   snippet <- paste0(snippet, "The significance level was set to ", par$significance_level, ". ")
@@ -230,15 +234,18 @@ snippet_heatmap <- function(
   return(snippet)
 }
 
+# Single Gene's "Choose Data to use" value in words
+single_gene_stage_label <- function(stage){
+  c(data_original = "raw", data = "pre-processed", data_batch_corrected = "batch corrected")[[stage]]
+}
+
 snippet_SingleGene <- function(
     data,
     params
 ){
   # the parameters the Single Gene module passes
   par <- params$SingleGeneVis
-  data_stage <- c(
-    data_original = "raw", data = "pre-processed", data_batch_corrected = "batch corrected"
-  )[[par$data_process_stage]]
+  data_stage <- single_gene_stage_label(par$data_process_stage)
   snippet <- c()
   # Single Entity Plotting
   snippet <- paste0(snippet, "The expression of ", par$selected_gene, " was plotted. ")
