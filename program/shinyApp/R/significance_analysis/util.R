@@ -108,6 +108,21 @@ compare_groups <- function(
 }
 
 
+# What compare_groups() runs with its defaults, for the modules that use them
+# without a test picker: DESeq2 on a DESeq2 Dataset (`deseq`), else Welch
+comparison_method <- function(deseq){
+  if (deseq) "DESeq2 Wald test, Benjamini-Hochberg adjusted" else "Welch t-test, Benjamini-Hochberg adjusted"
+}
+
+# The line under such a module's comparison pickers
+comparison_hint <- function(deseq){
+  helpText(paste0(
+    "Fold changes and p-values: ", comparison_method(deseq),
+    ". For another test, use Differential Analysis."
+  ))
+}
+
+
 prepare_upset_plot <- function(res2plot){
   # Prepare a Significance analysis result for Upset plotting and for intersection
   # download.

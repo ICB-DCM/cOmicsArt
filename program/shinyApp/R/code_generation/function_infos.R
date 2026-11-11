@@ -162,13 +162,17 @@ single_gene_boxplot_info <- list(
 entitieSelection_info <- list(
   foo = entitieSelection,
   name = "entitieSelection",
+  # dds: the stage's DESeq2 object (NULL unless vst_DESeq), for Top K
   input_mapping = list(
-    data = "data"
+    data = "data",
+    preprocessing = "preprocessing_procedure",
+    dds = "dds"
   ),
   output_name = "selected_data",
   to_util = TRUE,
   additional_foos = list(
-    getLFCs = getLFCs
+    compare_groups = compare_groups,
+    getLFC = getLFC
   )
 )
 custom_rowAnnotation_info <- list(

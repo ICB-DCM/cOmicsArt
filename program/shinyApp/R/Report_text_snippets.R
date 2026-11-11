@@ -202,6 +202,10 @@ snippet_heatmap <- function(
                       params$Heatmap$n_top_k, " entities. ")
     snippet <- paste0(snippet, "The order of the entities was determined by ", 
                       params$Heatmap$top_k_type, ". ")
+    if (!is.null(params$Heatmap$comparison_method)) {
+      snippet <- paste0(snippet, "Fold changes and p-values were computed with the ",
+                        params$Heatmap$comparison_method, ". ")
+    }
     if(grepl("Significant",params$Heatmap$top_k_type)){
       snippet <- paste0(snippet, 
                         "An entities was deemed significant with a significance level of",

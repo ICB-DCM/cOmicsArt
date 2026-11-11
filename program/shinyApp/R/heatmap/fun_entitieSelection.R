@@ -8,7 +8,9 @@ entitieSelection <- function(
   compare_within=NULL,
   reference=NULL,
   treatment=NULL,
-  significance_level=NULL
+  significance_level=NULL,
+  preprocessing=NULL,
+  dds=NULL
 ){
   # Select entities for heatmap based on selection type
   # Parameters:
@@ -22,6 +24,10 @@ entitieSelection <- function(
   #   reference: character, if selection_type is "Top K", reference group
   #   treatment: character, if selection_type is "Top K", treatment group
   #   significance_level: numeric, if selection_type is "Top K", significance level
+  #   preprocessing: character, if selection_type is "Top K", the Pre-processing
+  #     procedure (for the fold change)
+  #   dds: if selection_type is "Top K", the DESeq2 object (vst_DESeq), else NULL;
+  #     with one, DESeq2 compares, and compare_within must be in its design
   # Returns:
   #   assay of data, selected entities
 
@@ -43,9 +49,7 @@ entitieSelection <- function(
     return(filtered_data)
   }
   if (selection_type=="Top K"){
-    # TODO: Replace this with already calculated LFCs from Significance Analysis
-    # calculate the LFCs
-    if(any(is.null(compare_within)) & any(is.null(reference)) & any(is.null(treatment))){
+    if(is.null(compare_within) || is.null(reference) || is.null(treatment)){
       print("No sample annotation selected!")
       filtered_data <- NULL
       return(filtered_data)
@@ -57,17 +61,24 @@ entitieSelection <- function(
       filtered_data <- NULL
       return(filtered_data)
     }
-    LFC_output <- getLFCs(filtered_data, ctrl_samples_idx, comparison_samples_idx)
+    # the comparison every module uses (Welch or DESeq2, BH-adjusted)
+    LFC_output <- compare_groups(
+      data, compare_within, treat = treatment, ctrl = reference,
+      preprocessing = preprocessing, dds = dds
+    )
+    # DESeq2 compares all its genes; the stage's data can have fewer (rows
+    # incomplete after batch correction are dropped)
+    LFC_output <- LFC_output[rownames(LFC_output) %in% rownames(filtered_data), , drop = FALSE]
     # the top K are the highest (absolute) fold changes; NA fold changes last
     if(top_k_type=="LogFoldChange"){
-      filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$LFC, decreasing = TRUE)],, drop=F]
+      filtered_data <- filtered_data[rownames(LFC_output)[order(LFC_output$log2FoldChange, decreasing = TRUE)],, drop=F]
     } else if(top_k_type=="absolute LogFoldChange"){
-      filtered_data <- filtered_data[rownames(LFC_output)[order(abs(LFC_output$LFC), decreasing = TRUE)],, drop=F]
+      filtered_data <- filtered_data[rownames(LFC_output)[order(abs(LFC_output$log2FoldChange), decreasing = TRUE)],, drop=F]
     } else if(top_k_type %in% c("LogFoldChange and Significant", "absolute LogFoldChange and Significant")){
       # order only the significant entities (ordering all of them re-added
       # the others as NA rows)
-      significant <- LFC_output[which(LFC_output$p_adj < significance_level), , drop = F]
-      lfc <- if (top_k_type == "LogFoldChange and Significant") significant$LFC else abs(significant$LFC)
+      significant <- LFC_output[which(LFC_output$padj < significance_level), , drop = F]
+      lfc <- if (top_k_type == "LogFoldChange and Significant") significant$log2FoldChange else abs(significant$log2FoldChange)
       filtered_data <- filtered_data[rownames(significant)[order(lfc, decreasing = TRUE)],, drop=F]
     }
     if(nrow(filtered_data)>n_top_k){

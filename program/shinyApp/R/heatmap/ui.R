@@ -35,6 +35,7 @@ heatmap_sidebar<- function(ns){
       uiOutput(outputId = ns("sample_annotation_types_cmp_heatmap_ui")),
       uiOutput(outputId = ns("Groups2Compare_ref_heatmap_ui")),
       uiOutput(outputId = ns("Groups2Compare_treat_heatmap_ui")),
+      uiOutput(outputId = ns("comparison_hint_ui")),
       numericInput(
         inputId = ns("psig_threhsold_heatmap"),
         label = "adj. p-value threshold",
