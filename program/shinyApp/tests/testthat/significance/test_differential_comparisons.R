@@ -1,5 +1,5 @@
-# Differential Analysis: comparison tabs as sub-modules (issue 35), on the
-# Dataset handle since issue 36
+# Differential Analysis: one module per comparison (results_tab_server()),
+# created by a run of the Differential server
 colData <- SummarizedExperiment::colData
 rowData <- SummarizedExperiment::rowData
 
@@ -10,46 +10,32 @@ RUN <- list(
   sample_annotation_types_cmp = "diet", comparisons = COMPARISONS,
   test_method = "T-Test", test_correction = "Benjamini-Hochberg", significance_level = 0.05
 )
-# the comparison module's (not namespaced) ids of `comparison` in run `run`, tab `idx`
-tab_id <- function(run, idx, comparison, name){
-  base <- paste(strsplit(comparison, ":")[[1]], collapse = "_")
-  paste0("comparison", run, "_", idx, "-", base, "_", name)
-}
-# the volcano controls of one tab
-volcano_inputs <- function(run, idx, comparison, psig){
-  inputs <- list(psig, 1, colnames(rowData(test_data("Lipidomics")))[1])
-  names(inputs) <- c(
-    tab_id(run, idx, comparison, "psig_th"), tab_id(run, idx, comparison, "lfc_th"),
-    tab_id(run, idx, comparison, "Volcano_anno_tooltip")
+# the input or output `name` of comparison `idx` of run `run`, from the
+# Differential server
+tab_id <- function(run, idx, name) paste0("comparison", run, "_", idx, "-", name)
+
+# the comparison module of COMPARISONS[1] after a T-Test run of the
+# Lipidomics data, as the Differential server starts it
+comparison_args <- function(){
+  data <- fake_dataset("Lipidomics", "log10")$processed()
+  run_params <- list(
+    preprocessing = "log10", comparisons = COMPARISONS[1], compare_within = "diet",
+    test_method = "T-Test", data_stage = "processed", padjust_method = "BH",
+    significance_level = 0.05, method = "T-Test"
   )
-  inputs
+  results <- performSigAnalysis(
+    data = data, dds = NULL, preprocessing = "log10", comparisons = COMPARISONS[1],
+    compare_within = "diet", test_method = "T-Test", padjust_method = "BH"
+  )
+  list(
+    contrast = strsplit(COMPARISONS[1], ":")[[1]], result = results[[COMPARISONS[1]]],
+    alpha = 0.05, deseq = FALSE, data = data, run_params = run_params,
+    code_context = fake_dataset("Lipidomics", "log10")$code_context
+  )
 }
-# report lines are recorded instead of written into www/<token>/
-local_report <- function(env = parent.frame()){
-  force(env)  # before local() below, where parent.frame() would differ
-  lines <- character(0)
-  module_env <- environment(significance_analysis_server)
-  for (name in c("fun_LogIt", "log_messages_volcano")) local({
-    name <- name
-    original <- get(name, envir = module_env)
-    stand_in <- if (name == "fun_LogIt") {
-      function(session, message = "", ...) {
-        lines <<- c(lines, paste(message, collapse = "\n"))
-        NULL
-      }
-    } else {
-      # uses every argument, as log_messages_volcano() does
-      function(session, plot, table, contrast, file_path) {
-        force(plot); force(table); force(contrast); force(file_path)
-        lines <<- c(lines, "volcano image")
-        NULL
-      }
-    }
-    assign(name, stand_in, envir = module_env)
-    withr::defer(assign(name, original, envir = module_env), envir = env)
-  })
-  function() lines
-}
+VOLCANO <- function(psig = 0.05) list(
+  psig_th = psig, lfc_th = 1, anno = colnames(rowData(test_data("Lipidomics")))[1]
+)
 
 test_that("a run creates one comparison module per comparison with that comparison's result", {
   args <- lipidomics()
@@ -57,66 +43,89 @@ test_that("a run creates one comparison module per comparison with that comparis
     do.call(session$setInputs, RUN)
     session$setInputs(significanceGo = 1)
     expect_equal(sig_ana_reactive$tab_ids, c("comparison1_1", "comparison1_2"))
-    expect_named(sig_ana_reactive$result$results, COMPARISONS, ignore.order = TRUE)
-    summary <- output[[tab_id(1, 2, COMPARISONS[2], "summary")]]
-    result <- sig_ana_reactive$result$results[[COMPARISONS[2]]]
+    expect_named(session$returned()$results, COMPARISONS, ignore.order = TRUE)
+    summary <- output[[tab_id(1, 2, "summary")]]
+    result <- session$returned()$results[[COMPARISONS[2]]]
     expect_match(summary, paste("Total number of entities compared:", nrow(result)), fixed = TRUE)
-    table <- output[[tab_id(1, 1, COMPARISONS[1], "table")]]
-    expect_false(is.null(table))
+    expect_false(is.null(output[[tab_id(1, 1, "table")]]))
   })
 })
 
 test_that("a second run destroys the old comparison modules: one report entry per click", {
-  report <- local_report()
   args <- lipidomics()
+  test_env <- environment()
   testServer(significance_analysis_server, args = args, {
+    report <- local_session_report(session, test_env)
     do.call(session$setInputs, RUN)
     session$setInputs(significanceGo = 1)
     session$setInputs(significanceGo = 2)
     expect_equal(sig_ana_reactive$tab_ids, c("comparison2_1", "comparison2_2"))
     # the old module's button does nothing any more
-    old_button <- list(1); names(old_button) <- tab_id(1, 1, COMPARISONS[1], "only2Report_Volcano")
-    do.call(session$setInputs, old_button)
-    expect_length(report(), 0)
+    old <- VOLCANO(); names(old) <- tab_id(1, 1, names(old))
+    do.call(session$setInputs, old)
+    do.call(session$setInputs, setNames(list(1), tab_id(1, 1, "only2Report_Volcano")))
+    expect_equal(report(), "")
     # the new one reports once
-    do.call(session$setInputs, volcano_inputs(2, 1, COMPARISONS[1], 0.05))
-    new_button <- list(1); names(new_button) <- tab_id(2, 1, COMPARISONS[1], "only2Report_Volcano")
-    do.call(session$setInputs, new_button)
-    expect_equal(sum(report() == "volcano image"), 1)
+    new <- VOLCANO(); names(new) <- tab_id(2, 1, names(new))
+    do.call(session$setInputs, new)
+    do.call(session$setInputs, setNames(list(1), tab_id(2, 1, "only2Report_Volcano")))
+    expect_equal(lengths(regmatches(report(), gregexpr("Underlying Volcano Comparison", report()))), 1)
   })
 })
 
-test_that("each comparison keeps its own volcano thresholds, also in its R code", {
-  args <- lipidomics()
-  testServer(significance_analysis_server, args = args, {
-    do.call(session$setInputs, RUN)
-    session$setInputs(significanceGo = 1)
-    do.call(session$setInputs, volcano_inputs(1, 1, COMPARISONS[1], 0.01))
-    do.call(session$setInputs, volcano_inputs(1, 2, COMPARISONS[2], 0.05))
-    volcano <- sig_ana_reactive$result$params$volcano
-    expect_equal(volcano[[COMPARISONS[1]]]$th_psig, 0.01)
-    expect_equal(volcano[[COMPARISONS[2]]]$th_psig, 0.05)
-    par <- rcode_parameters(output[[tab_id(1, 1, COMPARISONS[1], "getR_Code_Volcano")]])
+test_that("a comparison returns its volcano settings and puts them into its R code", {
+  testServer(results_tab_server, args = comparison_args(), {
+    do.call(session$setInputs, VOLCANO(0.01))
+    expect_equal(session$returned(), list(th_psig = 0.01, th_lfc = 1, anno = VOLCANO()$anno))
+    par <- rcode_parameters(output$getR_Code_Volcano)
     expect_equal(par$SigAna$comp, COMPARISONS[1])
     expect_equal(par$SigAna$th_psig, 0.01)
-    expect_length(par$SigAna$anno_vector, nrow(args$dataset$processed()))
-    # the run's parameters are not changed by a download
-    expect_null(sig_ana_reactive$result$params$th_psig)
+    expect_false(par$SigAna$raw)
+    expect_length(par$SigAna$anno_vector, nrow(data))
+    expect_true(rcode_parameters(output$getR_Code_VolcanoRaw)$SigAna$raw)
   })
 })
 
-test_that("saving a volcano plot writes the plot and its report entry", {
-  report <- local_report()
+test_that("each comparison of a run has its own volcano thresholds", {
   args <- lipidomics()
   testServer(significance_analysis_server, args = args, {
     do.call(session$setInputs, RUN)
     session$setInputs(significanceGo = 1)
-    do.call(session$setInputs, volcano_inputs(1, 1, COMPARISONS[1], 0.05))
-    file_ext <- list(".png"); names(file_ext) <- tab_id(1, 1, COMPARISONS[1], "file_ext_Volcano")
-    do.call(session$setInputs, file_ext)
-    saved <- output[[tab_id(1, 1, COMPARISONS[1], "SavePlot_Volcano")]]
-    expect_true(file.exists(saved))
-    expect_equal(sum(report() == "volcano image"), 1)
+    first <- VOLCANO(0.01); names(first) <- tab_id(1, 1, names(first))
+    second <- VOLCANO(0.05); names(second) <- tab_id(1, 2, names(second))
+    do.call(session$setInputs, c(first, second))
+    expect_equal(rcode_parameters(output[[tab_id(1, 1, "getR_Code_Volcano")]])$SigAna$th_psig, 0.01)
+    expect_equal(rcode_parameters(output[[tab_id(1, 2, "getR_Code_Volcano")]])$SigAna$th_psig, 0.05)
+    # the run's parameters are not changed by a download
+    expect_null(session$returned()$params$th_psig)
+  })
+})
+
+test_that("every volcano plot can be saved", {
+  withr::local_pdf(NULL)  # arrangeGrob() of both volcanoes would open Rplots.pdf
+  testServer(results_tab_server, args = comparison_args(), {
+    do.call(session$setInputs, VOLCANO())
+    for (item in names(VOLCANO_ITEMS)) {
+      do.call(session$setInputs, setNames(list(".png"), paste0("file_ext_", item)))
+      saved <- output[[paste0("SavePlot_", item)]]
+      expect_true(file.exists(saved), label = item)
+      expect_match(basename(saved), paste0("Differential_", item), fixed = TRUE)
+    }
+  })
+})
+
+test_that("the raw volcano's report entries say its p-values are unadjusted, the adjusted one's don't", {
+  withr::local_pdf(NULL)  # arrangeGrob() of both volcanoes would open Rplots.pdf
+  test_env <- environment()
+  testServer(results_tab_server, args = comparison_args(), {
+    report <- local_session_report(session, test_env)
+    do.call(session$setInputs, VOLCANO())
+    session$setInputs(only2Report_Volcano = 1)
+    expect_false(grepl("unadjusted", report(), fixed = TRUE))
+    session$setInputs(only2Report_VolcanoRaw = 1)
+    expect_match(report(), "The volcano plot shows the unadjusted p-values.", fixed = TRUE)
+    session$setInputs(only2Report_VolcanoBoth = 1)
+    expect_equal(lengths(regmatches(report(), gregexpr("Underlying Volcano Comparison", report()))), 3)
   })
 })
 
@@ -133,43 +142,20 @@ test_that("changing the factor picker after a run does not change the overview's
     session$setInputs(sample_annotation_types_cmp = "ID")
     session$setInputs(sig_to_look_at = "Significant")
     expect_false(is.null(sig_ana_reactive$plot_last))
-    expect_equal(sig_ana_reactive$result$params$overview$sig_to_look_at, "Significant")
-    expect_equal(sig_ana_reactive$result$params$compare_within, "diet")
+    expect_equal(session$returned()$params$sig_to_look_at, "Significant")
+    expect_equal(session$returned()$params$compare_within, "diet")
+    expect_null(session$returned()$params$overview)  # stored once, at the top level
+    # the overview offers the run's comparisons
+    choices <- as.character(output$chooseComparisonsToVisualize_ui$html)
+    for (comparison in COMPARISONS) expect_match(choices, comparison, fixed = TRUE)
   })
 })
 
 test_that("the comparison table is rendered client side, so its exports have every row", {
-  args <- lipidomics()
-  testServer(significance_analysis_server, args = args, {
-    do.call(session$setInputs, RUN)
-    session$setInputs(significanceGo = 1)
-    table <- output[[tab_id(1, 1, COMPARISONS[1], "table")]]
-    widget <- jsonlite::fromJSON(table)
-    expect_true(nrow(args$dataset$processed()) %in% dim(widget$x$data))
+  testServer(results_tab_server, args = comparison_args(), {
+    widget <- jsonlite::fromJSON(output$table)
+    expect_true(nrow(data) %in% dim(widget$x$data))
     buttons <- widget$x$options$buttons
     expect_match(paste(unlist(buttons), collapse = " "), "cOmicsArt_Differential_Table", fixed = TRUE)
-  })
-})
-
-test_that("the raw volcano's report entries say its p-values are unadjusted, the adjusted one's don't", {
-  report <- local_report()
-  args <- lipidomics()
-  testServer(significance_analysis_server, args = args, {
-    do.call(session$setInputs, RUN)
-    session$setInputs(significanceGo = 1)
-    do.call(session$setInputs, volcano_inputs(1, 1, COMPARISONS[1], 0.05))
-    snippets <- function() grep("Differential expression analysis", report(), value = TRUE)
-    click <- function(name){
-      button <- list(1); names(button) <- tab_id(1, 1, COMPARISONS[1], name)
-      do.call(session$setInputs, button)
-    }
-    click("only2Report_Volcano")
-    expect_false(grepl("unadjusted", snippets()[1], fixed = TRUE))
-    click("only2Report_Volcano_raw")
-    expect_match(snippets()[2], "The volcano plot shows the unadjusted p-values.", fixed = TRUE)
-    file_ext <- list(".png"); names(file_ext) <- tab_id(1, 1, COMPARISONS[1], "file_ext_Volcano_raw")
-    do.call(session$setInputs, file_ext)
-    output[[tab_id(1, 1, COMPARISONS[1], "SavePlot_Volcano_raw")]]
-    expect_match(snippets()[3], "The volcano plot shows the unadjusted p-values.", fixed = TRUE)
   })
 })
