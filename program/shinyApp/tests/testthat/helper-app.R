@@ -230,10 +230,21 @@ fill_source <- function(app, source, omic) {
   for (id in names(s$files)) app$upload_file(!!id := s$files[[id]])
 }
 
-# Click "Go to Preprocessing" after a successful Upload.
+# Click "Go to Preprocessing" after a successful Upload. Waits for the tab
+# to change (the switch can outlast the idle wait); without a change, the
+# failure shows the app's log lines since the click.
 go_to_preprocessing <- function(app) {
+  n_logs <- nrow(as.data.frame(app$get_logs()))
   click_and_wait(app, IDS$to_pre)
-  expect_equal(app$get_value(input = IDS$tabs), IDS$pre_tab)
+  tab <- tryCatch(
+    app$wait_for_value(input = IDS$tabs, ignore = list(NULL, "", IDS$data_tab), timeout = TIMEOUT),
+    error = function(e) app$get_value(input = IDS$tabs)
+  )
+  logs <- as.data.frame(app$get_logs())
+  expect(identical(tab, IDS$pre_tab), paste0(
+    "Pre-processing tab selected, not ", deparse(tab), "; app log since the click:\n",
+    paste(utils::tail(logs$message[seq_len(nrow(logs)) > n_logs], 60), collapse = "\n")
+  ))
 }
 
 # Upload through one source and go to Pre-processing.

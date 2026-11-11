@@ -298,20 +298,16 @@ create_function_script <- function(foo_infos, par, section = NULL, path_to_util=
         "\n")
     ))
   }
-  args_input <- paste0(
-    names(foo_infos$input_mapping), " = ", foo_infos$input_mapping, collapse = ",\n  "
-  )
-  # function call, start with args_input, all other params are called param = param
-  additional_assign <- paste0(
-    names(formals(foo_infos$foo))[!names(formals(foo_infos$foo)) %in% names(foo_infos$input_mapping)],
-    " = ",
-    names(formals(foo_infos$foo))[!names(formals(foo_infos$foo)) %in% names(foo_infos$input_mapping)],
-    collapse = ",\n  "
+  # function call, the input mapping first, all other params are called
+  # param = param (a function may have no input mapping, e.g. ora_genes())
+  mapped <- names(foo_infos$input_mapping)
+  others <- setdiff(names(formals(foo_infos$foo)), mapped)
+  call_args <- c(
+    if (length(mapped) > 0) paste0(mapped, " = ", foo_infos$input_mapping),
+    if (length(others) > 0) paste0(others, " = ", others)
   )
   function_call <- paste0(
-    foo_infos$name, "(\n  ", args_input,
-    ifelse(additional_assign != " = ", paste0(",\n  ", additional_assign), ""),
-    "\n)\n"
+    foo_infos$name, "(\n  ", paste(call_args, collapse = ",\n  "), "\n)\n"
   )
   # write function to util file
   if(!is.null(path_to_util)){

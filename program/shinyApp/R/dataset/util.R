@@ -47,13 +47,16 @@ dataset_handle <- function(id, get){
     # a module's R-code download (downloadHandler) of `pipeline` on this
     # Dataset: params() are the module's params, stored under `section`;
     # the script starts from their data_stage (DATA_STAGES), "processed" for
-    # modules without one (ML)
-    rcode_download = function(tab, item = NULL, pipeline, section, params){
+    # modules without one (ML); `pipeline` may be a function giving it when
+    # the download starts (Enrichment: ORA or GSEA); `extra_files` go into
+    # the zip (rcode_zip())
+    rcode_download = function(tab, item = NULL, pipeline, section, params, extra_files = NULL){
       rcode_download(tab, item, function(file){
         module_params <- params()
         rcode_zip(
-          file, code_context(run()), pipeline, section, module_params,
-          module_params$data_stage %||% "processed"
+          file, code_context(run()), if (is.function(pipeline)) pipeline() else pipeline,
+          section, module_params,
+          module_params$data_stage %||% "processed", extra_files
         )
       })
     }

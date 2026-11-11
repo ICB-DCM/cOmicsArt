@@ -70,70 +70,13 @@ CUSTOM_THEME <- theme_bw(base_size = 15) +
 
 # Happy Adjusting! :)"
 
-# Geneset enrichment list reset
-GENESETS_RESET <- list(
-  "Hallmarks" = F,
-  "C1" = F,
-  "C2" = F,
-  "CGP" = F,
-  "CP" = F,
-  "BIOCARTA" = F,
-  "KEGG" = F,
-  "PID" = F,
-  "REACTOME" = F,
-  "WIKIPATHWAYS" = F,
-  "C3" = F,
-  "MIRDB" = F,
-  "MIR_Legacy" = F,
-  "GTRD" = F,
-  "TFT_Legacy" = F,
-  "C4" = F,
-  "CGN" = F,
-  "CM" = F,
-  "C5" = F,
-  "GO" = F,
-  "GO_BP" = F,
-  "GO_CC" = F,
-  "GO_MF" = F,
-  "HPO" = F,
-  "C6" = F,
-  "C7" = F,
-  "IMMUNESIGDB" = F,
-  "VAX" = F,
-  "C8" = F
-)
-
-ENRICHMENT_RESULT_RESET <- list(
-  "EnrichmentRes_Hallmarks" = NULL,
-  "EnrichmentRes_C1" = NULL,
-  "EnrichmentRes_C2" = NULL,
-  "EnrichmentRes_CGP" = NULL,
-  "EnrichmentRes_CP" = NULL,
-  "EnrichmentRes_BIOCARTA" = NULL,
-  "EnrichmentRes_KEGG" = NULL,
-  "EnrichmentRes_PID" = NULL,
-  "EnrichmentRes_REACTOME" = NULL,
-  "EnrichmentRes_WIKIPATHWAYS" = NULL,
-  "EnrichmentRes_C3" = NULL,
-  "EnrichmentRes_MIRDB" = NULL,
-  "EnrichmentRes_MIR_Legacy" = NULL,
-  "EnrichmentRes_GTRD" = NULL,
-  "EnrichmentRes_TFT_Legacy" = NULL,
-  "EnrichmentRes_C4" = NULL,
-  "EnrichmentRes_CGN" = NULL,
-  "EnrichmentRes_CM" = NULL,
-  "EnrichmentRes_C5" = NULL,
-  "EnrichmentRes_GO" = NULL,
-  "EnrichmentRes_GO_BP" = NULL,
-  "EnrichmentRes_GO_CC" = NULL,
-  "EnrichmentRes_GO_MF" = NULL,
-  "EnrichmentRes_HPO" = NULL,
-  "EnrichmentRes_C6" = NULL,
-  "EnrichmentRes_C7" = NULL,
-  "EnrichmentRes_IMMUNESIGDB" = NULL,
-  "EnrichmentRes_VAX" = NULL,
-  "EnrichmentRes_C8" = NULL,
-  "geneSetChoice_tranlsated" = NULL
+# The gene sets an enrichment can be done for, in the order of the
+# Enrichment tabs and picker; one sub-module and tab each
+ENRICHMENT_GENE_SETS <- c(
+  "Hallmarks", "C1", "C2", "CGP", "CP", "BIOCARTA", "KEGG", "PID", "REACTOME",
+  "WIKIPATHWAYS", "C3", "MIRDB", "MIR_Legacy", "GTRD", "TFT_Legacy", "C4",
+  "CGN", "CM", "C5", "GO", "GO_BP", "GO_CC", "GO_MF", "HPO", "C6", "C7",
+  "IMMUNESIGDB", "VAX", "C8"
 )
 
 # Allowed Annotations
