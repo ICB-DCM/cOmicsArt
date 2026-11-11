@@ -29,9 +29,12 @@ sample_choices <- function(data, column){
 
 # The Selection for the given inputs (any of them may be missing):
 # row_selection, sample_selection, row_type, sample_type.
-# Returns the selected object, the chosen values (row_values,
-# sample_values, the arguments of select_data()), the resolved entity and
-# sample IDs (row_ids, sample_ids) and the annotation columns.
+# Returns list(data, params): the selected object, and the Selection as the
+# Dataset's selection() returns it and the R code reads it:
+#   row_values, sample_values: the chosen values (select_data()'s arguments)
+#   row_type, sample_type: the annotation columns they were chosen on
+#   row_ids, sample_ids: the entities and samples they resolved to on this
+#     Upload, so two Selections are the same only on the same data
 resolve_selection <- function(data, inputs){
   row_values <- inputs$row_selection %||% "all"
   sample_values <- inputs$sample_selection %||% "all"
@@ -46,25 +49,13 @@ resolve_selection <- function(data, inputs){
   )
   list(
     data = res_select$data,
-    row_values = row_values,
-    sample_values = sample_values,
-    row_ids = res_select$row_ids,
-    sample_ids = res_select$sample_ids,
-    row_type = row_type,
-    sample_type = sample_type
-  )
-}
-
-# The Selection as the Dataset's selection() returns it. The R-code download
-# passes the chosen values to select_data(); Pre-processing reads the resolved
-# IDs.
-selection_params <- function(selection){
-  list(
-    row_values = selection$row_values,
-    sample_values = selection$sample_values,
-    row_ids = selection$row_ids,
-    sample_ids = selection$sample_ids,
-    row_type = selection$row_type,
-    sample_type = selection$sample_type
+    params = list(
+      row_values = row_values,
+      sample_values = sample_values,
+      row_ids = res_select$row_ids,
+      sample_ids = res_select$sample_ids,
+      row_type = row_type,
+      sample_type = sample_type
+    )
   )
 }

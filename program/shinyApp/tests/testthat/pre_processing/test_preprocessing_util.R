@@ -80,16 +80,16 @@ test_that("design inputs for DESeq2 and limma voom", {
 
 test_that("absent options take preprocessing()'s defaults, like the R code", {
   res <- run(metabolites, "Metabolomics", "filterOnly", filter_threshold = NULL)
-  expect_equal(nrow(res$data), n_filtered(metabolites, 10))
+  expect_equal(nrow(run_data(res)), n_filtered(metabolites, 10))
 })
 
 test_that("'none' only removes constant entities and adds the normality test", {
   res <- run(lipids, "Lipidomics", "none")
-  expect_equal(dim(res$data), c(653, 28))  # 651 after a global filter at 0
+  expect_equal(dim(run_data(res)), c(653, 28))  # 651 after a global filter at 0
   expect_true(all(
-    c("p_value_shapiro", "p_adjusted_shapiro_FDR") %in% colnames(SummarizedExperiment::rowData(res$data))
+    c("p_value_shapiro", "p_adjusted_shapiro_FDR") %in% colnames(SummarizedExperiment::rowData(run_data(res)))
   ))
-  expect_null(res$data_batch_corrected)
+  expect_identical(run_data(res, "batch_corrected"), run_data(res))
   expect_equal(res$n_processed, 653)
 })
 
@@ -97,52 +97,52 @@ test_that("rows with missing values are removed after pre-processing and counted
   with_negative <- lipids
   SummarizedExperiment::assay(with_negative)[1, 1] <- -5  # log10(-5 + 1) is NaN
   res <- suppressWarnings(run(with_negative, "Lipidomics", "log10", preprocessing_filtering = "none"))
-  expect_false(anyNA(assay(res$data)))
-  expect_equal(c(res$n_processed, nrow(res$data)), c(653, 652))
+  expect_false(anyNA(assay(run_data(res))))
+  expect_equal(c(res$n_processed, nrow(run_data(res))), c(653, 652))
 })
 
 test_that("global and sample-wise filtering", {
   global <- run(metabolites, "Metabolomics", "filterOnly", filter_threshold = 1e6)
-  expect_equal(nrow(global$data), n_filtered(metabolites, 1e6))  # 71
+  expect_equal(nrow(run_data(global)), n_filtered(metabolites, 1e6))  # 71
   samplewise <- run(
     metabolites, "Metabolomics", "filterPerSample",
     filter_threshold_samplewise = 1e4, filter_samplesize = 3
   )
-  expect_equal(dim(samplewise$data), c(84, 35))
+  expect_equal(dim(run_data(samplewise)), c(84, 35))
 })
 
 test_that("a log procedure with filtering in front", {
   res <- run(lipids, "Lipidomics", "log2", preprocessing_filtering = "filterOnly", filter_threshold = 100)
-  expect_equal(nrow(res$data), n_filtered(lipids, 100))  # 231
-  kept <- rownames(res$data)
+  expect_equal(nrow(run_data(res)), n_filtered(lipids, 100))  # 231
+  kept <- rownames(run_data(res))
   expect_equal(
-    as.matrix(assay(res$data)), log2(as.matrix(assay(lipids)[kept, ]) + 1), ignore_attr = TRUE
+    as.matrix(assay(run_data(res))), log2(as.matrix(assay(lipids)[kept, ]) + 1), ignore_attr = TRUE
   )
 })
 
 test_that("scaling, limma voom and TMM keep the filtered entities", {
   scaled <- run(lipids, "Lipidomics", "Scaling_0_1", preprocessing_filtering = "filterOnly", filter_threshold = 0)
-  expect_equal(nrow(scaled$data), 651)
-  expect_equal(range(assay(scaled$data)), c(0, 1))
+  expect_equal(nrow(run_data(scaled)), 651)
+  expect_equal(range(assay(run_data(scaled))), c(0, 1))
   voom <- run(
     genes, "Transcriptomics", "limma_voom", preprocessing_filtering = "filterOnly",
     limma_intercept = "TRUE", limma_formula = "condition"
   )
-  expect_equal(nrow(voom$data), n_filtered(genes, 10))
+  expect_equal(nrow(run_data(voom)), n_filtered(genes, 10))
   tmm <- run(genes, "Transcriptomics", "TMM", preprocessing_filtering = "filterOnly")
-  expect_equal(nrow(tmm$data), n_filtered(genes, 10))
+  expect_equal(nrow(run_data(tmm)), n_filtered(genes, 10))
 })
 
 test_that("DESeq2 returns the DESeq object", {
   res <- run(genes, "Transcriptomics", "vst_DESeq", preprocessing_filtering = "filterOnly", deseq_factors = "condition")
-  expect_equal(nrow(res$data), n_filtered(genes, 10))
-  expect_s4_class(res$DESeq_obj, "DESeqDataSet")
-  expect_null(res$DESeq_obj_batch_corrected)
+  expect_equal(nrow(run_data(res)), n_filtered(genes, 10))
+  expect_s4_class(run_deseq(res), "DESeqDataSet")
+  expect_identical(run_deseq(res, "batch_corrected"), run_deseq(res))
 })
 
 test_that("batch correction keeps the dimensions", {
   tmm <- run(genes, "Transcriptomics", "TMM", preprocessing_filtering = "filterOnly", batch_column = "batch_factor")
-  expect_equal(dim(tmm$data_batch_corrected), dim(tmm$data))
+  expect_equal(dim(run_data(tmm, "batch_corrected")), dim(run_data(tmm)))
   expect_true(any(grepl("Found2batches", tmm$warnings)))
 })
 
@@ -161,13 +161,13 @@ test_that("the DESeq2 batch correction uses the filtered counts", {
       filtering
     ))
     # the filtering removed entities, so a run on all counts would differ
-    expect_lt(nrow(res$data), nrow(genes))
-    expect_equal(rownames(res$data_batch_corrected), rownames(res$data))
+    expect_lt(nrow(run_data(res)), nrow(genes))
+    expect_equal(rownames(run_data(res, "batch_corrected")), rownames(run_data(res)))
     # the batch-corrected DESeq object counts the same entities as the DESeq run
-    expect_s4_class(res$DESeq_obj_batch_corrected, "DESeqDataSet")
+    expect_s4_class(run_deseq(res, "batch_corrected"), "DESeqDataSet")
     expect_equal(
-      DESeq2::counts(res$DESeq_obj_batch_corrected),
-      DESeq2::counts(res$DESeq_obj)
+      DESeq2::counts(run_deseq(res, "batch_corrected")),
+      DESeq2::counts(run_deseq(res))
     )
   }
 })
@@ -197,27 +197,27 @@ test_that("the warning names the procedure and the rows removed for missing valu
 
 test_that("the summary reports dimensions, batches, log and negative values", {
   res <- run(genes, "Transcriptomics", "TMM", preprocessing_filtering = "filterOnly", batch_column = "batch_factor")
-  summary <- preprocessing_summary(dim(genes), res$data, "TMM", res$warnings)
+  summary <- preprocessing_summary(dim(genes), run_data(res), "TMM", res$warnings)
   expect_match(summary, "The raw data has dimensions: 3000, 8", fixed = TRUE)
-  expect_match(summary, paste0("The processed data has dimensions: ", nrow(res$data), ", 8"), fixed = TRUE)
+  expect_match(summary, paste0("The processed data has dimensions: ", nrow(run_data(res)), ", 8"), fixed = TRUE)
   expect_match(summary, "Number of Batches found: 2", fixed = TRUE)
   expect_no_match(summary, "logX", fixed = TRUE)
   logged <- run(lipids, "Lipidomics", "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
-  summary <- preprocessing_summary(dim(lipids), logged$data, "log10", logged$warnings)
+  summary <- preprocessing_summary(dim(lipids), run_data(logged), "log10", logged$warnings)
   expect_match(summary, "logX(data+1) is done", fixed = TRUE)
   expect_match(summary, "Be aware that processed data has negative values!", fixed = TRUE)
 })
 
 test_that("the summary counts entities with p < 0.05 in the normality test", {
   res <- run(lipids, "Lipidomics", "none")
-  summary <- preprocessing_summary(dim(lipids), res$data, "none", res$warnings)
+  summary <- preprocessing_summary(dim(lipids), run_data(res), "none", res$warnings)
   # 549 of the 653 non-constant Lipidomics entities (checked in issue 20)
   expect_match(summary, "Number of entities with p-value < 0.05: 549/653", fixed = TRUE)
 })
 
 test_that("the summary counts entities with FDR-adjusted p < 0.05 in the normality test", {
   res <- run(lipids, "Lipidomics", "none")
-  summary <- preprocessing_summary(dim(lipids), res$data, "none", res$warnings)
+  summary <- preprocessing_summary(dim(lipids), run_data(res), "none", res$warnings)
   # 540 of the 653: the raw p-values adjusted with p.adjust(method = "fdr")
   # (checked in issue 20; the summary showed 0)
   expect_match(summary, "Number of entities with adj. p-value < 0.05: 540/653", fixed = TRUE)
@@ -226,10 +226,10 @@ test_that("the summary counts entities with FDR-adjusted p < 0.05 in the normali
 test_that("with 2 samples the run completes without the normality test", {
   two_samples <- lipids[, 1:2]
   res <- run(two_samples, "Lipidomics", "none")
-  normality <- SummarizedExperiment::rowData(res$data)
+  normality <- SummarizedExperiment::rowData(run_data(res))
   expect_true(all(is.na(normality$p_value_shapiro)))
   expect_true(all(is.na(normality$p_adjusted_shapiro_FDR)))
-  summary <- preprocessing_summary(dim(two_samples), res$data, "none", res$warnings)
+  summary <- preprocessing_summary(dim(two_samples), run_data(res), "none", res$warnings)
   expect_match(
     summary,
     "The normality test was not possible: each entity needs 3 to 5000 values that are not all identical (here: 2 samples).",
@@ -285,4 +285,53 @@ test_that("the violin plot data holds each value with its sample's colour only",
   expect_equal(nrow(plot$data), prod(dim(lipids)))
   sample_diet <- setNames(SummarizedExperiment::colData(lipids)$diet, colnames(lipids))
   expect_equal(plot$data$diet, unname(sample_diet[as.character(plot$data$Sample)]))
+})
+
+# run_preprocessing()'s result, with stand-ins for the objects
+fake_res <- function(){
+  list(
+    data = list(raw = "raw", processed = "processed", batch_corrected = "processed, batch corrected"),
+    deseq = list(processed = "dds", batch_corrected = "dds, batch corrected"),
+    n_processed = 10, console_output = NULL, warnings = NULL
+  )
+}
+
+test_that("a run holds the objects, the options with batch_column, the Selection, its Upload and number", {
+  selection <- resolve_selection(lipids, list())
+  run <- new_preprocessing_run(
+    fake_res(), LOG10, NULL, selection,
+    raw = lipids, omic_type = "Lipidomics", organism = "Mouse genes (GRCm39)", run = 3
+  )
+  expect_equal(run$params, c(LOG10, list(batch_column = NULL)))
+  expect_true("batch_column" %in% names(run$params))
+  expect_identical(run$selection, selection$params)
+  expect_identical(run$raw, lipids)
+  expect_equal(run$omic_type, "Lipidomics")
+  expect_equal(run$organism, "Mouse genes (GRCm39)")
+  expect_equal(run$run, 3)
+  # not the summary's and console's parts of run_preprocessing()'s result
+  expect_null(run$n_processed)
+  expect_null(run$console_output)
+})
+
+test_that("a run's data by stage and its DESeq2 object", {
+  run <- new_preprocessing_run(fake_res(), LOG10, "batch", NULL, lipids, "Lipidomics", NULL, 1)
+  expect_equal(run_data(run), "processed")
+  expect_equal(run_data(run, "raw"), "raw")
+  expect_equal(run_data(run, "batch_corrected"), "processed, batch corrected")
+  expect_equal(run_deseq(run), "dds")
+  expect_equal(run_deseq(run, "batch_corrected"), "dds, batch corrected")
+  # only stages of DATA_STAGES, and no DESeq2 object of the raw data
+  expect_error(run_data(run, "batch"))
+  expect_error(run_data(run, NULL))
+  expect_error(run_deseq(run, "raw"))
+  # no run, no data
+  expect_null(run_data(NULL))
+  expect_null(run_deseq(NULL, "batch_corrected"))
+})
+
+test_that("run_preprocessing() gives the Selection's data as raw and, without a batch column, the uncorrected objects as batch corrected", {
+  res <- run(lipids, "Lipidomics", "log10", preprocessing_filtering = "filterOnly", filter_threshold = 0)
+  expect_identical(run_data(res, "raw"), lipids)
+  expect_identical(run_data(res, "batch_corrected"), run_data(res))
 })

@@ -9,20 +9,15 @@
 #     clears the result
 #   upload_done: reactive, set after each successful Upload; clears the
 #     result
+#   organism: reactive, the Upload's organism (NULL without a gene
+#     annotation); a run keeps the one it ran with
 # Returns reactives:
-#   result: the current run: NULL before a run and after a failed run, a new
-#     Upload or a confirmed Selection; set once at the end of a successful
-#     run, so a new run is the done event. A list of run_preprocessing()'s data,
-#     data_batch_corrected, DESeq_obj and DESeq_obj_batch_corrected (DESeq
-#     objects for vst_DESeq only), with
-#       params: the options, named like the arguments of preprocessing(),
-#         with batch_column (NULL for none)
-#       selection: the Selection it pre-processed (resolve_selection())
-#       omic_type: the omic type it ran for
-#       run: the number of the run, so that a repeated run is a change
+#   result: the current run (new_preprocessing_run()): NULL before a run and
+#     after a failed run, a new Upload or a confirmed Selection; set once at
+#     the end of a successful run, so a new run is the done event
 #   failed: counts up after each run that failed
 #   start_discovering: the "Start Discovering" button
-preprocessing_server <- function(id, upload, omic_type, selected, selection_confirmed, upload_done){
+preprocessing_server <- function(id, upload, omic_type, selected, selection_confirmed, upload_done, organism){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     file_path <- paste0("/www/", session$token, "/")
@@ -31,17 +26,6 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     console_output <- reactiveVal(NULL)
     warnings <- reactiveVal(NULL)
     failed <- reactiveVal(NULL)
-    # what the R code of the last run starts from, like the Dataset's
-    # code_context(); Pre-processing has no organism
-    rcode_context <- reactive({
-      req(result())
-      new_code_context(
-        raw = upload(),
-        selection = selection_params(result()$selection),
-        preprocessing = result()$params,
-        omic_type = result()$omic_type
-      )
-    })
 
     # the plots and their buttons show while there is a run
     observe(shinyjs::toggleElement(id = "data_summary", condition = !is.null(result())))
@@ -214,18 +198,15 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     # must be a sample annotation of the run's data (a new Upload rebuilds
     # the control before the next run).
     violin_color <- reactive({
-      req(result(), input$violin_color %in% colnames(colData(result()$data)))
+      req(result(), input$violin_color %in% colnames(colData(run_data(result()))))
       input$violin_color
     })
     raw_violin <- reactive({
-      violin_plot(result()$selection$data, violin_color = violin_color())
+      violin_plot(run_data(result(), "raw"), violin_color = violin_color())
     })
-    # with a batch column, the batch-corrected data (NULL without one)
+    # with a batch column, the batch-corrected data
     processed_violin <- reactive({
-      violin_plot(
-        result()$data_batch_corrected %||% result()$data,
-        violin_color = violin_color()
-      )
+      violin_plot(run_data(result(), "batch_corrected"), violin_color = violin_color())
     })
     # the plots of the current run (none after a failed run, a new Upload or
     # Selection)
@@ -324,8 +305,12 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
         error = function(e) preprocessing_failed(conditionMessage(e))
       )
       if (is.null(res)) return()
-      data <- res$data
-      run_params <- c(options, list(batch_column = batch_column))
+      run <- new_preprocessing_run(
+        res, options, batch_column, selection,
+        raw = upload(), omic_type = omic_type(), organism = organism(),
+        run = input$get_preprocessing
+      )
+      data <- run_data(run)
 
       # everything that can fail before anything is shown or returned
       summary <- preprocessing_summary(
@@ -337,13 +322,13 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
 ## Log preprocessing ----
       fun_LogIt(session, "## Pre Processing {.tabset .tabset-fade}")
       fun_LogIt(session, message = "### Info")
-      for (line in preprocessing_log_lines(run_params, dim(data))) {
+      for (line in preprocessing_log_lines(run$params, dim(data))) {
         fun_LogIt(session, message = line)
       }
       fun_LogIt(session, message = "### Publication Snippet")
       fun_LogIt(session, message = snippet_preprocessing(
         data = list(data = data),
-        params = run_params
+        params = run$params
       ))
       fun_LogIt(session, message = "<br>")
 
@@ -351,15 +336,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       warnings(res$warnings)
       summary_text(summary)
       react_mean_sd_plot(mean_sd)
-      result(c(
-        res[c("data", "data_batch_corrected", "DESeq_obj", "DESeq_obj_batch_corrected")],
-        list(
-          params = run_params,
-          selection = selection,
-          omic_type = omic_type(),
-          run = input$get_preprocessing
-        )
-      ))
+      result(run)
       # set the warning as toast
       show_toast(
         title = "Attention",
@@ -450,7 +427,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     )
     output$rcode_violin <- rcode_download("Preprocessing", "ViolinPlot", function(file) {
       rcode_zip(
-        file, rcode_context(), VIOLIN_PLOT_PIPELINE,
+        file, code_context(result()), VIOLIN_PLOT_PIPELINE,
         "ViolinPlot", list(violin_color = violin_color())
       )
     })
@@ -467,7 +444,7 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
       title = "Mean and SD Plot"
     )
     output$rcode_mean_sd <- rcode_download("Preprocessing", "MeanSD", function(file) {
-      rcode_zip(file, rcode_context(), MEAN_SD_PLOT_PIPELINE)
+      rcode_zip(file, code_context(result()), MEAN_SD_PLOT_PIPELINE)
     })
 
     list(

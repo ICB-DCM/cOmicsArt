@@ -63,7 +63,7 @@ test_that("a t-test run returns the results per comparison with its parameters a
     expect_equal(res$params$method, "T-Test")
     expect_equal(res$params$padjust_method, "BH")
     expect_equal(res$params$compare_within, "diet")
-    expect_false(res$params$useBatch)
+    expect_equal(res$params$data_stage, "processed")
     expect_equal(res$version, 2)
   })
 })
@@ -80,11 +80,11 @@ test_that("a DESeq2 run uses the Dataset's DESeq2 object, batch corrected when c
     expect_s4_class(res$results[[run$comparisons]], "DESeqResults")
     expect_equal(as.data.frame(res$results[[run$comparisons]]), as.data.frame(deseq_result(deseq$deseq(), run$comparisons)))
 
-    session$setInputs(UseBatch = "Yes")
+    session$setInputs(UseBatch = "batch_corrected")
     session$setInputs(significanceGo = 2)
     res <- session$returned()
-    expect_true(res$params$useBatch)
-    expect_equal(as.data.frame(res$results[[run$comparisons]]), as.data.frame(deseq_result(deseq$deseq(batch = TRUE), run$comparisons)))
+    expect_equal(res$params$data_stage, "batch_corrected")
+    expect_equal(as.data.frame(res$results[[run$comparisons]]), as.data.frame(deseq_result(deseq$deseq("batch_corrected"), run$comparisons)))
   })
 })
 

@@ -380,9 +380,14 @@ with_error_class <- function(class, expr){
 # `options` are named like the arguments of preprocessing(), which is also how
 # the Dataset's preprocessing() holds them for the R code; an absent or NULL
 # option takes preprocessing()'s default, as in the R code.
-# Returns the processed and batch-corrected objects, the DESeq objects, the
-# number of rows before incomplete ones were removed, console output and
-# warnings. A failed batch correction signals a "batch_error", anything else
+# Returns
+#   data: the objects by stage of DATA_STAGES: raw (`data`), processed and
+#     batch_corrected (the processed object without a batch column)
+#   deseq: the DESeq2 objects (vst_DESeq only, else NULL) at processed and
+#     batch_corrected, as for data
+#   n_processed: the number of rows before incomplete ones were removed
+#   console_output, warnings
+# Read data and deseq with run_data() and run_deseq(). A failed batch correction signals a "batch_error", anything else
 # a plain error; entities the normality test is not possible for get NA.
 run_preprocessing <- function(data, omic_type, options, batch_column = NULL){
   procedure <- options$preprocessing_procedure
@@ -419,14 +424,55 @@ run_preprocessing <- function(data, omic_type, options, batch_column = NULL){
   })
 
   list(
-    data = normality$value,
-    data_batch_corrected = batch$value$data,
-    DESeq_obj = preprocess_res$DESeq_obj,
-    DESeq_obj_batch_corrected = batch$value$DESeq_obj,
+    data = list(
+      raw = data,
+      processed = normality$value,
+      batch_corrected = batch$value$data %||% normality$value
+    ),
+    deseq = list(
+      processed = preprocess_res$DESeq_obj,
+      batch_corrected = batch$value$DESeq_obj %||% preprocess_res$DESeq_obj
+    ),
     n_processed = nrow(processed),
     console_output = c(batch$console, normality$console),
     warnings = c(batch$warnings, normality$warnings)
   )
+}
+
+# A Pre-processing run as preprocessing_server() returns it and the Dataset
+# keeps it: the data and DESeq2 objects of run_preprocessing()'s result `res`
+# (read them with run_data() and run_deseq()) for `options` (named like the
+# arguments of preprocessing()) and `batch_column` (NULL for none), with
+#   selection: the params of the Selection it pre-processed
+#     (resolve_selection()); its data is the run's "raw" stage
+#   raw, omic_type, organism: its Upload's whole raw data, omic type and
+#     organism (NULL without a gene annotation)
+#   run: numbers the run, so that a repeated run is a change
+new_preprocessing_run <- function(res, options, batch_column, selection, raw, omic_type, organism, run){
+  list(
+    data = res$data,
+    deseq = res$deseq,
+    params = c(options, list(batch_column = batch_column)),
+    selection = selection$params,
+    raw = raw,
+    omic_type = omic_type,
+    organism = organism,
+    run = run
+  )
+}
+
+# The data of a run (or of run_preprocessing()'s result) at `stage`, one of
+# DATA_STAGES; anything else is an error. NULL without a run.
+run_data <- function(run, stage = "processed"){
+  stopifnot(length(stage) == 1, stage %in% DATA_STAGES)
+  run$data[[stage]]
+}
+
+# A run's DESeq2 object (vst_DESeq runs only, NULL otherwise) at `stage`,
+# "processed" or "batch_corrected"; there is none of the raw data.
+run_deseq <- function(run, stage = "processed"){
+  stopifnot(length(stage) == 1, stage %in% c("processed", "batch_corrected"))
+  run$deseq[[stage]]
 }
 
 # The summary's normality section (HTML) for `normality`, one row per entity

@@ -6,7 +6,7 @@
 #     performSigAnalysis() returns it (DESeq2 results or the own test's table)
 #   params: what the run used (the R-code templates read them as
 #     parameters$SigAna): preprocessing, comparisons, compare_within,
-#     test_method, useBatch, padjust_method, significance_level, method
+#     test_method, data_stage, padjust_method, significance_level, method
 #     ("DESeq2" or the test), volcano (per comparison: th_psig, th_lfc, anno),
 #     overview (and its choices under the names the UpSet template reads)
 #   version: the Dataset version it was computed on
@@ -40,15 +40,8 @@ significance_analysis_server <- function(id, dataset){
       )
 
       ## Sidebar UI section
-      output$UseBatch_ui <- renderUI({
-        req(dataset$preprocessing()$batch_column)
-        selectInput(
-          inputId = ns("UseBatch"),
-          label = "Use batch corrected data?",
-          choices = c("No","Yes"),
-          selected = "No"
-        )
-      })
+      # the data the next run uses (DATA_STAGES), from the batch picker
+      data_stage <- batch_toggle(input, output, ns, dataset)
       output$type_of_comparison_ui <- renderUI({
         data <- req(dataset$processed())
         if(uses_deseq()){
@@ -259,31 +252,29 @@ significance_analysis_server <- function(id, dataset){
         print("Start the Significance Analysis")
 
         # define variables to be used
-        useBatch <- !is.null(dataset$preprocessing()$batch_column) && identical(input$UseBatch, "Yes")
-        # performSigAnalysis() takes the DESeq2 path for "vst_DESeq"
+        stage <- data_stage()
         preprocessing <- dataset$preprocessing()$preprocessing_procedure
-        deseq <- uses_deseq()
+        # with vst_DESeq, DESeq2 tests the stage's DESeq2 object; else the
+        # own test tests `data`
+        dds <- dataset$deseq(stage)
+        deseq <- !is.null(dds)
         comparisons <- input$comparisons
         test_correction <- input$test_correction %||% "Benjamini-Hochberg"
         significance_level <- input$significance_level %||% 0.05
         compare_within <- input$sample_annotation_types_cmp
         test_method <- if (!deseq) input$test_method %||% "T-Test"
-        data <- list(
-          data = dataset$processed(),
-          data_batch_corrected = dataset$processed(batch = TRUE),
-          DESeq_obj = dataset$deseq(),
-          DESeq_obj_batch_corrected = dataset$deseq(batch = TRUE)
-        )
+        # the data the run used, also for the volcano annotation
+        data <- dataset$data(stage)
 
         # perform the analysis
         sig_results <- tryCatch({
           performSigAnalysis(
             data = data,
+            dds = dds,
             preprocessing = preprocessing,
             comparisons = comparisons,
             compare_within = compare_within,
             test_method = test_method,
-            useBatch = useBatch,
             padjust_method = PADJUST_METHOD[[test_correction]]
           )
         }, error = function(e) {
@@ -301,7 +292,7 @@ significance_analysis_server <- function(id, dataset){
             comparisons = comparisons,
             compare_within = compare_within,
             test_method = test_method,
-            useBatch = useBatch,
+            data_stage = stage,
             padjust_method = PADJUST_METHOD[[test_correction]],
             significance_level = significance_level,
             method = if (deseq) "DESeq2" else test_method,
@@ -309,8 +300,6 @@ significance_analysis_server <- function(id, dataset){
           ),
           version = dataset$version()
         )
-        # the data the run used, for the volcano annotation
-        run_data <- dataset$processed(batch = useBatch)
 
         ## Tab Management: the run's comparisons replace the last run's
         remove_comparison_tabs()
@@ -329,9 +318,9 @@ significance_analysis_server <- function(id, dataset){
             contrast = contrast_list[[idx]],
             alpha = significance_level,
             ns = ns,
-            preprocess_method = if (deseq) "vst_DESeq" else preprocessing,
+            preprocess_method = preprocessing,
             value = paste0("Significance_", idx),
-            data = run_data,
+            data = data,
             run_params = run_params,
             code_context = dataset$code_context,
             file_path = file_path,
@@ -489,7 +478,7 @@ significance_analysis_server <- function(id, dataset){
         params <- run_params()
         rcode_zip(
           file, dataset$code_context(), UPSET_PLOT_PIPELINE, "SigAna", params,
-          batch_data_stage(params$useBatch)
+          params$data_stage
         )
       })
 

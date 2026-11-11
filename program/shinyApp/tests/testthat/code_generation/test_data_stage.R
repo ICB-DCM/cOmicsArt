@@ -6,7 +6,7 @@ assay <- SummarizedExperiment::assay
 script_for <- function(handle, data_stage){
   create_workflow_script(
     pipeline_info = list(),
-    par = code_parameters(isolate(handle$code_context())),
+    par = isolate(handle$code_context())$parameters,
     path_to_util = tempfile(fileext = ".R"),
     data_stage = data_stage
   )
@@ -57,10 +57,10 @@ test_that("Single Gene's raw data starts from the Selection", {
 test_that("PCA's R code with batch corrected data computes on the app's batch corrected data", {
   tmm <- fake_dataset("Transcriptomics", "TMM", batch_column = "batch_factor")
   testServer(pca_Server, args = list(dataset = tmm), {
-    session$setInputs(UseBatch = "Yes", coloring_options = "condition", entitie_anno = "geneName", PCA_anno_tooltip = "condition")
+    session$setInputs(UseBatch = "batch_corrected", coloring_options = "condition", entitie_anno = "geneName", PCA_anno_tooltip = "condition")
     session$setInputs(Do_PCA = 1)
     data <- data_of_rcode(output$getR_Code_PCA)
-    expected <- as.matrix(assay(tmm$processed(batch = TRUE)))
+    expected <- as.matrix(assay(tmm$data("batch_corrected")))
     expect_equal(dim(data), dim(expected))
     expect_equal(data[rownames(expected), colnames(expected)], expected, tolerance = 1e-6, ignore_attr = TRUE)
     # and not the uncorrected data
@@ -74,14 +74,14 @@ test_that("Single Gene's R code for raw data starts from the Selection", {
     annotation <- colnames(SummarizedExperiment::rowData(lipid$handle$processed()))[1]
     groups <- as.character(unique(SummarizedExperiment::colData(lipid$handle$processed())$diet))
     session$setInputs(
-      type_of_data_gene = "data_original", accross_condition = "diet", add_testing = "TRUE",
+      type_of_data_gene = "raw", accross_condition = "diet", add_testing = "TRUE",
       Select_GeneAnno = annotation,
       Select_Gene = as.character(SummarizedExperiment::rowData(lipid$handle$processed())[1, annotation]),
       chooseComparisons = paste(groups[1:2], collapse = ":")
     )
     session$setInputs(singleGeneGo = 1)
     data <- data_of_rcode(output$getR_Code_SingleEntities)
-    expected <- as.matrix(assay(lipid$handle$raw()))
+    expected <- as.matrix(assay(lipid$handle$data("raw")))
     expect_equal(data[rownames(expected), colnames(expected)], expected, tolerance = 1e-6, ignore_attr = TRUE)
   })
 })
