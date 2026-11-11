@@ -55,12 +55,7 @@ rcode_zip <- function(
 rcode_download <- function(tab, item = NULL, write_zip){
   downloadHandler(
     filename = function() download_name(tab, "rcode", item),
-    content = function(file) {
-      waiter <- Waiter$new(html = LOADING_SCREEN, color = "#3897F147", hide_on_render = FALSE)
-      waiter$show()
-      on.exit(waiter$hide())
-      write_zip(file)
-    },
+    content = function(file) with_loading(write_zip(file)),
     contentType = "application/zip"
   )
 }

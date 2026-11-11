@@ -29,16 +29,6 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
 
     # the plots and their buttons show while there is a run
     observe(shinyjs::toggleElement(id = "data_summary", condition = !is.null(result())))
-    # shows the loading screen; returns the waiter to hide it
-    show_loading <- function(){
-      waiter <- Waiter$new(
-        html = LOADING_SCREEN,
-        color = "#3897F147",
-        hide_on_render = FALSE
-      )
-      waiter$show()
-      waiter
-    }
 
     react_mean_sd_plot <- reactiveVal(NULL)
 
@@ -261,11 +251,9 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
     })
 
 ## Preprocessing ----
-    observeEvent(input$get_preprocessing, {
-      # only enter this when you actually click data
-      req(input$get_preprocessing > 0)
-      waiter <- show_loading()
-      on.exit(waiter$hide())
+    # one run of the Pre-processing, behind the loading screen (a function, so
+    # that it can return early)
+    run_clicked <- function(){
       # ---- Options, named like the arguments of preprocessing() ----
       options <- list(
         preprocessing_procedure = input$preprocessing_procedure,
@@ -347,6 +335,11 @@ preprocessing_server <- function(id, upload, omic_type, selected, selection_conf
         timer = 2500,
         timerProgressBar = T
       )
+    }
+    observeEvent(input$get_preprocessing, {
+      # only enter this when you actually click data
+      req(input$get_preprocessing > 0)
+      with_loading(run_clicked())
     })
 
 ## Preprocessing save, Report and Code Snippet ----

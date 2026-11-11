@@ -81,7 +81,7 @@ test_that("batch corrected data is used for the selection, labels and annotation
     res <- session$returned()
     expect_equal(res$params$data_stage, "batch_corrected")
     expect_equal(res$entities, expected_top_k(tmm$data("batch_corrected"), "condition"))
-    expect_identical(heatmap_reactives$run$data, tmm$data("batch_corrected"))
+    expect_identical(result$run()$data, tmm$data("batch_corrected"))
   })
 })
 
@@ -136,7 +136,7 @@ test_that("a new Dataset version clears the result", {
     ds$state$version <- 3
     session$flushReact()
     expect_null(session$returned())
-    expect_null(heatmap_reactives$run)
+    expect_null(result$run())
   })
 })
 
@@ -154,6 +154,19 @@ test_that("a display change updates the parameters, not the selection", {
     expect_equal(after$params$row_labels, rowData(ds$handle$processed())[after$entities, label])
     expect_equal(after$entities, before$entities)
     expect_equal(after$version, before$version)
+  })
+})
+
+test_that("a display change before a run does nothing (the session stays)", {
+  ds <- changeable_dataset("Lipidomics")
+  testServer(heatmap_server, args = list(dataset = ds$handle), {
+    session$flushReact()
+    label <- colnames(rowData(ds$handle$processed()))[2]
+    session$setInputs(row_label_options = label, cluster_rows = FALSE)
+    expect_false(session$isClosed())
+    expect_null(session$returned())
+    run_heatmap(session, top_k_inputs(ds$handle, "diet"))
+    expect_false(session$returned()$params$cluster_rows)
   })
 })
 
